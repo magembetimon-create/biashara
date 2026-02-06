@@ -33,9 +33,7 @@ DEBUG = os.getenv('DEBUG', '0').lower() in ['true', 't', '1']
 # ALLOWED_HOSTS = [os.getenv('HOST']
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS')
-# ALLOWED_HOSTS = [
-#     'localhost', 'fanyabiashara.com', 'https://google.com', 'fanyabiashara-behqabgwdsh8dvb8.centralus-01.azurewebsites.net' 
-#     ]
+
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
@@ -155,8 +153,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# DEFAULT_FILE_STORAGE = 'business.azure_storage.AzureMediaStorage'
-# STATICFILES_STORAGE = 'business.azure_storage.AzureStaticStorage'
+
 
 STATIC_LOCATION = "static"
 MEDIA_LOCATION = "media"
