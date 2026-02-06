@@ -1,0 +1,76 @@
+
+
+    <div class="buttons_panel">
+        <div class="row">
+             <div class="col-9">
+                    <button class="btn btn-default btn-sm raise">
+                                <svg xmlns="http://www.w3.org/2000/svg" title="{% if useri.langSet == 0 %}Kukoza{% else %}Bold{% endif %}" onclick="execCmd('bold');"  width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bold"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path></svg>
+                            </button>
+                        
+                            <button class="btn btn-default btn-sm reise">
+                                <svg xmlns="http://www.w3.org/2000/svg" title="{% if useri.langSet == 0 %}Uralo{% else %}Italic{% endif %}"  onclick="execCmd('italic');" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-italic"><line x1="19" y1="4" x2="10" y2="4"></line><line x1="14" y1="20" x2="5" y2="20"></line><line x1="15" y1="4" x2="9" y2="20"></line></svg>       
+                            </button>
+
+                            <button class="btn btn-default btn-sm raise" title="{% if useri.langSet == 0 %}Weka Tovuti{% else %}Add link{% endif %}" onclick="execCmd('createLink', prompt('Enter a URL', 'http://'));" >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>        
+                            </button>
+
+                            <button class="btn btn-default btn-sm raise" title="{% if useri.langSet == 0 %}Orodha kwa namba{% else %}Ordered List{% endif %}"  onclick="execCmd('insertOrderedList');" >
+                                <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
+                                    <path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/>
+                                    </svg>       
+                            </button>
+
+
+
+
+                            <button class="btn btn-default btn-sm raise" title="{% if useri.langSet == 0 %}Orodha{% else %}Unordered List{% endif %}"  onclick="execCmd('insertUnorderedList');" >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                </svg>        
+                            </button>
+
+                            <button class="btn btn-default btn-sm raise" title="{% if useri.langSet == 0 %}Pigia Mstari{% else %}Underline{% endif %}"  onclick="execCmd('underline');" >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-underline"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"></path><line x1="4" y1="21" x2="20" y2="21"></line></svg>       
+                            </button>                            
+
+                            Fore Color <input type="color" style="width: 25px; height: 20px;" onchange="execCommandWithArg('foreColor', this.value);">
+
+                            <select class="raise" onchange="execCommandWithArg('fontSize', this.value);">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                            </select>                
+             </div>
+
+             <div class="col-3 text-right">
+                <button type="button" class="btn btn-default btn-sm raise" onclick="execCmd('undo');">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
+                        <path d="M280-200v-80h284q63 0 109.5-40T720-420q0-60-46.5-100T564-560H312l104 104-56 56-200-200 200-200 56 56-104 104h252q97 0 166.5 63T800-420q0 94-69.5 157T564-200H280Z"/>
+                    </svg>
+                </button>
+                <button type="button" class="btn btn-default btn-sm raise" onclick="execCmd('redo');">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M396-200q-97 0-166.5-63T160-420q0-94 69.5-157T396-640h252L544-744l56-56 200 200-200 200-56-56 104-104H396q-63 0-109.5 40T240-420q0 60 46.5 100T396-280h284v80H396Z"/></svg>
+                </button>
+             </div>
+        </div>
+       
+
+    </div>
+
+
+<iframe name="richTextField" id="richTextField" contenteditable="true" class="border"  style="width: 100%; min-height: 70vh;">
+ 
+</iframe>
+
+
+

@@ -1,0 +1,180 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+{% block Dashboard %}
+<div  class="whiteBg py-2 px-2 pb-5" style="min-height: 80vh;margin-top:-19px" >
+    <h6 class="p-2" > 
+        <a class="noprimary" href="{% if the_group or the_Pgroup %}/ecommerce/itmsWithPlace?c={{c}}&r={{r}}&d={{d}}{% else %}#{% endif %}">
+            {% if useri.langSet == 0 %}Bidhaa na huduma{% else %}Items & services{% endif %}
+        </a>
+        {% if the_group or the_Pgroup %}
+
+        
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+        <a  href="/ecommerce/itmsWithPlace?c={{c}}&r={{r}}&d={{d}}&grp={{the_Pgroup.id}}">
+          <i class="darkblue">
+            
+             {% if useri.langSet == 0 %}{{the_Pgroup.jina | title}} {% else %}{{the_Pgroup.name | title}}{% endif %}
+          </i>
+            
+            
+        </a>
+
+        
+
+        {% endif %}
+        {% if the_group  %}
+
+        
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+        <a  href="#">
+          <i class="darkblue">
+             {% if useri.langSet == 0 %}{{the_group.jina | title}} {% else %}{{the_group.name | title}}{% endif %}
+          </i>
+        </a>
+
+        {% endif %}
+         
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+        <u class="text-primary">
+          
+            {% if wilaya  %}
+                {{useri.mtaa.kata.wilaya.wilaya |title}}, {{useri.mtaa.kata.wilaya.mkoa.mkoa |title}}, {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+            
+             {% endif%}
+            
+             {% if mkoa %}
+                {{useri.mtaa.kata.wilaya.mkoa.mkoa |title}}, {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+             {% endif %}
+
+          {% if nchi %}
+                {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+                       
+          {% endif %}
+        </u> 
+</h6>
+
+
+
+<hr>
+
+    <div class="categs " >
+        {% for b in bibi %}
+        <div class="dropdown open mx-1 d-inline"  >
+            <a class="btn btn-light btn-sm darkblue smallerFont weight600  dropdown-toggle" type="button" id="triggerId" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="true">
+                        {% if useri.langSet == 0 %} {{b.bidhaa.bidhaa_aina.mahi.aina.aina.jina | title}} {% else %} {{b.bidhaa.bidhaa_aina.mahi.aina.aina.name | title }}{% endif %}
+         </a>
+            <div class="dropdown-menu" aria-labelledby="triggerId">
+                {% for m in mama %}
+                {% if m.bidhaa.bidhaa_aina.mahi.aina.aina == b.bidhaa.bidhaa_aina.mahi.aina.aina %}
+                    <a class="dropdown-item btn-sm smallerFont weight600" href="/ecommerce/itmsWithPlace?c={{c}}&d={{d}}&r={{r}}&gr={{m.bidhaa.bidhaa_aina.mahi.aina.id}}">
+                        {% if useri.langSet == 0 %} {{m.bidhaa.bidhaa_aina.mahi.aina.jina | title}} {% else %} {{m.bidhaa.bidhaa_aina.mahi.aina.name | title }}{% endif %}
+
+                    </a>
+                {% endif %}
+            
+            {% endfor %} 
+            </div>
+        </div>
+        {% endfor %}
+    </div>    
+
+
+
+
+<div class="container">
+    <div class=" row mb-5">
+  {% for b in bidhaa %}
+  
+             
+  <a href="{% url 'displaySelItem' %}?value={{b.shop.id}}&i={{b.id}}" class="pt-2 noprimary mb-md-4 mt-2 item_show col-md-4 col-lg-3 ">
+  
+      <div class=" d-flex classic_div justify-content-center" style="align-items:center;width: 200px;height:30vh">
+          {% if b.img %}
+              <img src="{{b.img.url}}" style="max-width: 100%;max-height:100%" alt="">
+          {% else %}
+          <span style="color:rgb(163, 163, 163)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                  <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                  <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+              </svg>
+          </span>
+          {% endif %}
+
+          
+      </div>
+      <div class="pt-2 text-center brown" >
+         <small class="darkblue" > {{b.shop.currencii}}</small>.<strong>  {{b.bei | floatformat:'-2' | intcomma }}</strong></div>
+      <div class=" text-center weight600">
+          {% if b.name|length > 30 %}
+          {{b.name|slice:30 | title}} ...
+          {% else %}
+          {{b.name | title}} 
+          {% endif %}
+      </div>
+      <div class="text-center smallerFont">
+         {{b.shop.name | title }} | 
+          <span class="darkblue">
+            {{b.shop.mtaa.kata.wilaya.wilaya |title}}, {{b.shop.mtaa.kata.wilaya.mkoa.mkoa |title}}, {{b.shop.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+        </span>
+      </div>
+  </a>
+      
+      
+
+  
+  {% endfor %}
+</div>
+
+</div>
+
+
+
+<p class="py-2" style="-webkit-box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14); 
+box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14);">
+
+    {% if page.has_previous %}
+      <a href="{% url 'itmsWithPlace' %}?page=1&c={{c}}&r={{r}}&d={{d}}&gr={{gr}}" type="button"  class="btn btn-default border0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+        </svg>
+        </a>
+  
+        <a href="{% url 'itmsWithPlace' %}?page={{page.previous_page_number}}&c={{c}}&r={{r}}&d={{d}}&gr={{gr}}" type="button"  class="btn btn-default  border0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+          </svg>
+        </a>
+      {% endif %}
+  
+    {% if page.has_next %}
+        <a href="{% url 'itmsWithPlace' %}?page={{page.next_page_number}}&c={{c}}&r={{r}}&d={{d}}&gr={{gr}}" type="button" class="btn btn-default border0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </a>
+  
+        <a href="{% url 'itmsWithPlace' %}?page={{pages}}&c={{c}}&r={{r}}&d={{d}}&gr={{gr}}" type="button"  class="btn btn-default border0" >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+          </svg>
+        </a>
+  {% endif %}
+        <p >
+         
+          {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+  
+        </p>
+</p>
+
+</div>
+{% endblock %}    
+{% block dash-map %}
+   {% if useri.langSet == 0 %}Bidhaa na huduma{% else %}Items & services{% endif %}
+{% endblock %}

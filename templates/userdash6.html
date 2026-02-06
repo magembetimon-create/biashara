@@ -1,0 +1,880 @@
+{% load static %}
+{% static "pics" as baseUrl %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FanyaBiashara</title>
+
+
+    
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css'>
+
+
+<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css'>
+
+    
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+     
+<link href='https://fonts.googleapis.com/css?family=Assistant' rel='stylesheet'>
+<link href='https://fonts.googleapis.com/css?family=Montserrat Alternates' rel='stylesheet'>
+<link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twbs-pagination/1.3.1/jquery.twbsPagination.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/1000hz-bootstrap-validator/0.11.5/validator.min.js"></script>
+	<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+        <link href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet">
+
+
+<style class="cp-pen-styles">
+  @import url("https://fonts.googleapis.com/css?family=Open+Sans:300,400,400i,600,700&subset=latin-ext");
+
+
+
+
+</style>
+
+<link rel="stylesheet" href="{% static 'css/userdashslider.css' %}">
+<link rel="stylesheet" href="{% static 'css/mediascreen.css' %}">
+<link rel="stylesheet" href="{% static 'css/usedashanimations.css' %}">
+<link rel="stylesheet" href="{% static 'css/toggleswitch.css' %}">
+  
+</head>
+<body style="background: #f2f2f2;">
+
+  
+    <header class="l-header">
+
+ 
+
+        <div class="l-header__inner clearfix">
+
+ <div class="logo">
+        <div class="logo__txt" id="brandlogo">
+          <a href="/">  
+            <img  style="width:40px" src="{%  static 'pics/justlogo.svg'  %}" />
+          </a>
+        </div>
+      </div>
+
+          <div class="c-header-icon js-hamburger">
+            <div class="hamburger-toggle"><span class="bar-top"></span><span class="bar-mid"></span><span class="bar-bot"></span></div>
+          </div>
+        
+    
+    
+        <div class="header-icons-group">
+          <div class="c-header-icon basket">
+            <span class="c-badge c-badge--header-icon animated shake">12</span>
+            <i class="material-icons">
+              shopping_cart
+            </i>    
+            </div>
+    
+          <div class="c-header-icon basket">
+            <span class="c-badge c-badge--header-icon animated shake">12</span>
+            <i class="material-icons">
+              textsms
+            </i>      
+            </div>
+          <div class="c-header-icon basket">
+            <span class="c-badge c-badge--header-icon animated shake">2</span>
+            <i class="material-icons">
+              notifications
+            </i>    
+            </div>
+    
+    
+    
+    
+          
+            <div class="c-header-icon logout p-3" style="overflow:hidden">
+              {% if useri.picha.url is not null %}
+                    
+
+              <div class="d-flex p-1  justify-content-center bg-light rounded-circle " >
+                <img style="width:30px;height:30px;" class="rounded-circle userimage"  src="{{ useri.picha.url }}" alt="">
+
+                </div>
+                {% else %}
+
+                <div class="d-flex p-0 justify-content-center bg-light rounded-circle ">
+                <img style="width:30px;height:30px;" class="rounded-circle userimage" src="{{baseUrl}}/{{'userlogo.png'}}" alt="image">
+
+                </div>
+
+                {% endif %}    
+              </div>
+    
+    
+              <div class="user_option_panel pr-2" style="z-index: 88 !important;">
+    
+                <div class="bg-primary  " id="pointer_div">
+                </div>
+    
+               <div class="row bg-primary  rounded-top  p-0" style="padding: 0;">
+                 <div class="col-4 d-flex py-2">
+                   {% if useri.picha.url is not null %}
+                    
+
+                    <div class="d-flex p-1 justify-content-center bg-light rounded-circle ">
+                      <img style="width:60px;height:60px" class="rounded-circle  userimage" src="{{ useri.picha.url }}" alt="">
+  
+                      </div>
+                      {% else %}
+
+                      <div class="d-flex p-1 justify-content-center bg-light rounded-circle ">
+                      <img style="width:100%;" class="rounded-circle userimage" src="{{baseUrl}}/{{'userlogo.png'}}" alt="image">
+  
+                      </div>
+
+                      {% endif %}
+                 
+                </div>
+                 <div class="d-flex-col-8 pt-3">
+                  <p class=" user-name-panel text-default  text-center" style="font-size:large;color:#ececec">
+                  {{ user.first_name |title }}   {{ user.last_name |title }}
+                    
+                    </p>      
+                    <p class=" user-name-panel   text-center" style="margin-top: -12px;font-size:smaller"> 
+                
+                         {{ cheo.cheo |title }}
+                      
+                    </p> 
+                 </div>
+    
+               <div class="py-3  px-0 col-12" style="background: #fff;">
+                <ul id="userp-profile" class="list-unstyled">
+              
+                  <li class="p-0">
+                    <a href="#" class="d-block  px-3 py-4" onclick="
+                    $('.user_option_panel').hide()
+                    $('.div_profile').addClass('bounce-in-top')
+                    $('.div_profile').removeClass('before_show')
+                    $('.div_profile').removeClass('scale-out-center')
+
+                    
+                    "> 
+                      <ion-icon name="person-outline"></ion-icon>   Profile
+                    </a>
+                   
+                  </li>
+                  
+                  <li class="p-0">
+                    <a href="#user_profile" class="d-block  px-3 py-4"> 
+                      <ion-icon name="settings-outline"></ion-icon>   settings
+                    </a>
+                  </li>
+    
+                {% if duka.owner_id == user.id %}
+                  <li class="p-0">
+                    <a href="#user_profile" class="d-block  px-3 py-4"> 
+                      <ion-icon name="key-outline"></ion-icon>   Interprises
+                    </a>
+                   
+                  </li>
+
+                  {% endif %}
+    
+                  <li class="p-0">
+                    <a href="logout" class="d-block px-3 py-4"> 
+                      <ion-icon name="power-sharp"></ion-icon>   logout
+                    </a>
+                   
+                  </li>
+               
+   
+    
+                </ul>
+              </div>
+     
+              </div>
+    
+              
+    
+        </div>
+    
+        </div>
+      </header>
+
+
+      <div class="l-sidebar">
+    
+    
+    
+    
+      
+<!--     
+        <div class="user-logo mt-3">
+          <div class="logo__user d-flex justify-content-center" >
+           
+    <div class="d-inline rounded-circle bg-primary px-3 py-2 " style="font-size: 24px;color:#fff">
+    
+    
+      <i class="fa fa-user" ></i>
+    </div>
+      </div>
+    
+   
+    <p class=" user-name   text-center" style="font-size:small"> 
+    {{ user.first_name }}
+    </p>      
+    <p class=" user-name   text-center" style="margin-top: -8px;font-size:smaller"> 
+    </p>   --
+        </div>
+     -->
+        
+        <div class="l-sidebar__content ">
+          <nav class="c-menu js-menu">
+            <ul class="u-list list-unstyled mt-4 fixed-left">
+              <li class="c-menu__item style-none is-active" data-toggle="tooltip" title="Dashboard">
+                <div class="c-menu__item__inner">
+                  <img src="{% static 'pics/home.svg' %}" alt="">           
+                  <div class="c-menu-item__title"><span>Dashboard</span></div>
+                </div>
+              </li>
+    
+              <li class="c-menu__item has-submenu" data-toggle="tooltip" title="Mauzo">
+                <div class="c-menu__item__inner">
+                  <ion-icon name="cart-outline"></ion-icon>
+                  <div class="c-menu-item__title"><span>Mauzo</span></div>
+                </div>
+              </li>
+              <li class="c-menu__item has-submenu" data-toggle="tooltip" title="Matumizi">
+                <div class="c-menu__item__inner">
+                  <ion-icon name="wine-outline"></ion-icon>
+                  <div class="c-menu-item__title"><span>Matumizi</span></div>
+                </div>
+              </li>
+              <li class="c-menu__item has-submenu" data-toggle="tooltip" title="Charts">
+                <div class="c-menu__item__inner">
+                  <ion-icon name="bar-chart-outline"></ion-icon>
+                  <div class="c-menu-item__title"><span>Charts</span></div>
+                </div>
+              </li>
+              <li class="c-menu__item has-submenu" data-toggle="tooltip" title="Stock">
+                <div class="c-menu__item__inner">
+                  <ion-icon name="layers-outline"></ion-icon>                  
+                  <div class="c-menu-item__title"><span>Stock</span></div>
+                </div>
+              </li>
+              <li class="c-menu__item has-submenu" data-toggle="tooltip" title="Accounting">
+                <div class="c-menu__item__inner">
+                  <ion-icon name="card-outline"></ion-icon>
+                  <div class="c-menu-item__title"><span>Accounting</span></div>
+                </div>
+              </li>
+              <li class="c-menu__item has-submenu" data-toggle="tooltip" title="Huduma nyingine">
+                <div class="c-menu__item__inner">
+                  <ion-icon name="list-outline"></ion-icon>                   
+                    <div class="c-menu-item__title"><span>Huduma nyingine</span></div>
+                </div>
+              </li>
+              <li class="c-menu__item has-submenu" data-toggle="tooltip" data-placement="right" title="Profile">
+                <div class="c-menu__item__inner">
+                  <ion-icon name="grid-outline"></ion-icon>
+                <div class="c-menu-item__title"><span>Profile</span></div>
+                </div>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+<div id="topper"></div>
+      <main class="l-main">
+        <div class="content-wrapper content-wrapper--with-bg" style="height: 1000px;">
+
+
+          <div class="row p-sm-3  p-0 mb-3 mb-sm-0">
+            <div class="col-12 col-sm-6  pl-sm-0 m-sm-0 ">
+              <h6  class=""><b>{{duka|title}}</b></h6> 
+              <p class="mt-0 smallFont pt-0"><span class="text-primary" >Home </span>  <span class="text-muted"><ion-icon name="chevron-forward"></ion-icon></span> <span class="text-muted">Analytics</span>  </p>
+            
+            </div>
+            <div class="col-12 col-sm-6  pr-0 ml-0 pt-sm-2 pb-sm-0"> 
+
+            <button class="btn btn-primary  float-sm-right btn-sm robotoFont smallFont mr-2">
+              <span><b>+</b> </span>
+              <span class="ml-1">
+                Mauzo
+                </span>
+            </button> 
+            <button class="btn btn-primary float-sm-right btn-sm robotoFont smallFont mr-2">
+              <span> <b>+</b></span>
+              <span class="ml-1">
+               Matumizi 
+                </span> </button>
+            <button class="btn btn-primary  float-sm-right btn-sm robotoFont smallFont mr-2">
+              <span> <b>+</b></span>
+              <span class="ml-1">
+                Manunuzi
+                </span> </button>
+          </div>
+       </div>
+      
+          <div  class="page-content Analytical">Content goes here</div>
+
+ <div class="div_profile  before_show  " >
+   <button  class="float-right close  "
+   onclick="
+   $('.div_profile').removeClass('bounce-in-top')
+   $('.div_profile').addClass('scale-out-center')
+
+   
+   "
+    style="margin-top:-12px"
+   >
+      <ion-icon size="medium" name="close-outline"></ion-icon>
+      </button>
+     <div class="row">
+
+   
+
+            <div class="col-12 col-md-4 col-lg-3 col-xl-3 pt-0">
+
+
+                              <h5 class="px-3 mt-0  mb-4 text-center"><b>User profile</b> </h5>
+
+                             
+                    <div class="userphoto d-flex justify-content-center pb-2 px-1" style="overflow:hidden;max-height: 250px;">
+
+                      {% if useri.picha.url is not null %}
+                    <img class="userimage" style="width: 100%;" src="{{useri.picha.url}}" alt="Weka picha">
+
+                      {% else %}  
+                        <img class="userimage" style="width: auto;" src="{{baseUrl}}/{{'userlogo.png'}}" alt="Weka picha">
+
+                  {% endif %}  
+
+                              </div>
+
+       <div class="p-3  d-flex justify-content-center">
+        <form action="saveuserimg" id="saveuserimg"  enctype="multipart/form-data" method="POST">
+          {% csrf_token %}
+        <div class="row p-0">
+          <div class="col-7 p-0 mx-0">
+
+        <div class="upload-btn-wrapper">
+          <button class="btn btn-light btn-sm text-primary" style="font-size: smaller;" id="chaguo">
+            <ion-icon size="medium" name="image-outline" ></ion-icon> 
+            <span class="robotoFont">Chagua picha</span>
+            </button>
+          <input type="file" name="userpic" id="userpic" onchange="
+          if($(this).val()!=''){
+            $(this).siblings('button').addClass('text-primary')
+            $(this).siblings('button').children('span').text($(this).val())
+            $('#userpicsubmit').prop('disabled',false)}else{ $('#userpicsubmit').prop('disabled',true)}" 
+            
+            />
+
+
+        </div>            
+          </div>
+          <div class="col-5">
+                      <button style="font-size: smaller;" class="btn-outline-success btn-sm btn robotoFont" id="userpicsubmit" type="submit" disabled>Upload</button>
+          </div>
+        </div>
+
+        </form>
+
+        
+        </div>
+      
+
+
+
+
+
+       
+
+
+
+
+
+        </div>
+        <div class="col-12 col-md-8 col-lg-9 col-xl-9">
+
+         
+
+          <h5 class="mt-md-0 mt-sm-3 pb-2 "><b>User details</b>
+
+     
+</h5>
+    <form action="userdetails" method="POST" id="userdetails">
+              {% csrf_token  %}
+          <div class="row mx-0 px-0 pt-2">
+
+
+            <div class="col-12 col-md-6  pl-0">
+              <div class="row m-0 p-0">
+                <div class="col-6 col-md-12  pl-0 pr-md-0 col-lg-6">
+                      <div class="form-group">
+                          <label for="exampleInputEmail1">Jina la kwanza</label>
+                          <input type="text" ya="Jina la kwanza"  class="form-control userdetail" id="name1" aria-describedby="emailHelp" value="{{ user.first_name }}">
+                      </div>
+                </div>
+
+                <div class="col-6 col-md-12  m-0 pr-0 pl-md-0  pl-lg-1 col-lg-6" >
+
+                        <div class="form-group">
+                          <label for="exampleInputEmail1">Jina la mwisho</label>
+                          <input type="text" ya="Jina la mwisho" class="form-control userdetail" id="name2" aria-describedby="emailHelp" value="{{ user.last_name }}">
+                      </div>            
+                    </div>
+              </div>
+
+
+              <div class="form-group">
+                <label for="exampleInputEmail1">Email address</label>
+                <input type="email" ya="Email address" class="form-control userdetail" id="exampleInputEmail1" value="{{ user.email }}" aria-describedby="emailHelp" placeholder="Andika email">
+              </div>
+
+              <div class="form-group">
+                <label for="exampleInputPassword1">Kama</label>
+                <input type="text" ya="Cheo" class="form-control userdetail" id="cheoUser" value="{{ cheo.cheo }}">
+              </div>
+
+
+
+
+
+
+
+          </div>
+          <div class="col-12 col-md-6 mt-4 pl-0">
+        
+
+         
+     
+            <div class="row p-0 mx-0 ">
+              <div class="col-5 col-md-4 form-group">
+                   <label for="exampleInputPassword1"><b>Simu 1</b></label>
+
+              </div>
+
+              <div class="col-7 col-md-8 px-0 form-group">
+                 <input type="text" ya="Simu 1" id="simu1" name="simu1" value="{{ user }}" class="form-control userdetail">
+
+              </div>
+             
+            </div>
+
+            <div class="row p-0 mx-0 ">
+              <div class="col-5 col-md-4 form-group">
+                   <label for="exampleInputPassword1"><b>Simu 2</b></label>
+
+              </div>
+
+              <div class="col-7 col-md-8 px-0 form-group">
+                 <input type="number" ya="Simu 2" name="simu2" id="simu2" class="form-control userdetail" placeholder="Ongeza namba ya simu" value="{{useri.simu2}}"  >
+
+              </div>
+             
+            </div>
+            <div class="row p-0 mx-0 ">
+              <div class="col-5 col-md-4 form-group">
+                   <label for="exampleInputPassword1"><b>Neno la siri</b></label>
+
+              </div>
+
+              <div class="col-7 col-md-8 px-0 form-group" >
+                  <button type="button" data-toggle="modal" style="font-size: smaller;" data-target="#userpw" class="btn btn-outline-primary btn-sm robotoFont">Badili neno la siri</button>
+          
+              </div>
+             
+            </div>
+
+            </div>
+
+  <div class="container justify-content-right mb-4">
+ 
+
+          <button disabled type="submit" id="savechanges" class="btn btn-success float-right robotoFont smallFont">
+            Save changes
+          </button> 
+          
+    <button class="float-right btn btn-light mr-3 robotoFont smallFont" type="button"
+    onclick="
+    $('.div_profile').removeClass('bounce-in-top')
+    $('.div_profile').addClass('scale-out-center')
+    ">
+       close
+       </button>
+        </div>
+
+        </div>
+
+      
+      </form>
+
+          </div>
+
+
+     
+
+      </div>
+
+      <hr/>
+
+    
+<div class="row mb-5 pl-md-3">
+  <div class="col-md-6 col-lg-7 col-12">
+
+    <div class="userinfo-wrapper py-2 px-3">
+  
+   
+ 
+   <ul class="list-group">
+      <li class="list-group-item">
+        <h6 class="latoFont">Interprise : {{duka | title}}</h6>
+      </li>
+      <li class="list-group-item latoFont">
+           Mtumiaji : {{user.first_name}}  {{user.last_name}}
+       </li>
+      <li class="list-group-item latoFont">
+          Simu : {{user}}  
+              {% if useri.simu2 is not null %}
+    
+          , {{useri.simu2}}
+    
+          {%endif %}
+      </li>
+      <li class="list-group-item latoFont">
+        {% if user.email is not null %}
+          email : {{user.email}}  
+        {% endif %}
+      </li>
+      <li class="list-group-item latoFont">
+          Kama :  {{cheo.cheo}}
+      </li>
+    </ul>
+
+
+    </div>
+
+
+   
+
+    
+  </div>
+
+  <div class="col-md-6 col-lg-5 col-12 py-1 pl-0" id="staff">
+      <div class="ml-3">
+        <h5 class="pt-2 mb-3"><b>Staff</b>
+          {% if duka.owner_id == user.id %}
+          
+          <button class="btn-primary btn smallFont float-right btn-sm  position-absolute mr-3 robotoFont" style="right: 20px;"  data-toggle="modal" data-target="#addstaff" type="button"><span><ion-icon name="person-add-outline"></ion-icon><span class="ml-1">Ongeza staff</span></span></button>
+                   {% endif %}
+        </h5>
+      </div>
+  <div id="staffs" style="max-height: 300px;overflow-y:scroll">
+    
+  </div>
+  </div>
+
+</div>
+
+        </div>
+        </div>
+
+<!-- moda password settings -->
+
+        <div class="modal fade" id="userpw" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Badili neno la siri</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                  <form action="userpwd" id="change_pwd" method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                    <div class="col-4 form-group">
+                      <label for="passw1">Nenosiri la awali</label>
+
+                    </div>
+                    <div class="col-8 form-group">
+                      <input type="password" id="ogpassword" name="ogpassword" class="form-control">
+
+                    </div>  
+                    
+                    </div>
+                    <div class="row">
+                    <div class="col-4 form-group">
+                      <label for="passw1">Nenosiri  jipya</label>
+
+                    </div>
+                    <div class="col-8 form-group">
+                      <input type="password" id="password" name="password" class="form-control">
+                      <div id="strengthMessage" class="mt-0"></div> 
+                    </div>  
+                    
+                    </div>
+                    <div class="row">
+                    <div class="col-4 form-group">
+                      <label for="passw1">Hakiki</label>
+
+                    </div>
+                    <div class="col-8 form-group">
+                      <input type="password" id="confirmpassword" name="confirmpassword" class="form-control">
+
+
+                      <p id="passerror" class="pt-3"></p>
+                    </div>  
+                    
+                    </div>
+
+
+ <div class="modal-footer">
+                <button type="button"  class="btn btn-secondary robotoFont smallFont" data-dismiss="modal">Close</button>
+                <button id="changepwd" type="submit" disabled class="btn btn-primary smallFont robotoFont">Save changes</button>
+              </div>
+
+                  </form>
+
+
+              </div>
+             
+            </div>
+          </div>
+        </div>
+ 
+<script src="{% static 'js/userprofile.js' %}"></script>
+
+        <!-- Modal Profile Loader-->
+<div class="modal fade" id="loadMe"  tabindex="-1" data-backdrop="static" role="dialog" aria-labelledby="loadMeLabel" aria-hidden="true">
+  <div class="modal-dialog  modal-dialog-centered d-flex justify-content-center" role="document" >
+    <div class="modal-content" style="width:212px;">
+      <div class="modal-body text-left" style="padding:0 11px;width:211px">
+	  <div  style="padding:0">
+	  
+	  <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+	  
+			 
+         <div style="display:inline-block;position:absolute;top:7px"> <p class="ml-3">Tafadhari Subiri...</p></div>
+		</div>
+      </div>
+	  </div>
+    </div>
+  </div>
+<!--End of Modal Profile Loader-->
+
+
+
+<!-- Add Staff Modal -->
+
+
+
+  <div class="modal fade" id="addstaff" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog animate" role="document">
+      <div class="modal-content border-0">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Ongeza Staff</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body px-4">
+          <form action="addStaff_form" method="POST" id='savestaff_form'> 
+            {% csrf_token %}
+
+            <div class="row">
+              <div class="col-6">
+                <div class="form-group">
+                  <label for="f_name">Jina la kwanza <sup class="text-danger">*</sup></label>
+                  <input type="text" id="f_name" name="f_name" class="form-control newstaff">
+                </div>
+      
+              </div>
+              <div class="col-6">
+                <div class="form-group">
+                  <label for="l_name">Jina la Mwisho<sup class="text-danger">*</sup></label>
+                  <input type="text" id="l_name" name="l_name" class="form-control newstaff">
+                </div>
+      
+              </div>
+            </div>
+
+            <div class="form-group ">
+              <label for="staffsimu">namba ya Simu <sup class="text-danger">*</sup></label>
+
+             
+                <input type="number" class="form-control newstaff" id="staffsimu" name="staffsimu" placeholder="mfano. 0712345678" aria-label="Default" aria-describedby="inputGroup-sizing-default">
+
+            </div>
+
+         <div class="form-group">
+           <label for="staffpass">Neno la siri <sup class="text-danger">*</sup></label>
+           <input type="text" class="form-control newstaff" name="staffpass" id="staffpass">
+          </div>
+
+         <div class="form-group">
+           <label for="staffcheo">kama <sup class="text-danger">*</sup></label>
+           <input type="text" class="form-control newstaff" name="staffcheo" id="staffcheo">
+          </div>
+
+          <p id="erroP" class="text-danger" hidden ><ion-icon name="warning-outline"></ion-icon> Tafadhari jaza sehemu zote</p>
+
+          <button type="submit" id="staffdetils" class="form-control  btn btn-primary btn-lg robotoFont">Save Staff</button>
+
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- End of addStaff Model -->
+
+<!-- <script>
+  $('#loadMe').modal("show")
+</script> -->
+
+
+
+      </main>
+
+
+      
+<!-- Users Online -->
+<div id="storeUseronline" style="display: none;font-size:1px"></div>
+    
+      
+
+
+    
+      
+      
+      
+     
+
+
+
+
+
+      
+      <script>
+     
+      
+      
+         
+      
+
+
+
+
+
+        $('.logout').hover(
+            function () {
+              $('.user_option_panel').show(100);
+            }, 
+            function () {
+              $('.user_option_panel').hide();
+            }
+          );
+        
+          $('.user_option_panel').hover(
+            function () {
+              $(this).show();
+            }, 
+            function () {
+              $(this).hide();
+            }
+          );
+
+
+
+
+          
+var Dashboard = function () {
+	var global = {
+		tooltipOptions: {
+      placement: "right",
+      position:"absolute"
+		},
+		menuClass: ".c-menu"
+	};
+
+	var menuChangeActive = function menuChangeActive(el) {
+		var hasSubmenu = $(el).hasClass("has-submenu");
+		$(global.menuClass + " .is-active").removeClass("is-active");
+		$(el).addClass("is-active");
+
+	
+	};
+
+	var sidebarChangeWidth = function sidebarChangeWidth() {
+		var $menuItemsTitle = $("li .menu-item__title");
+
+		$("body").toggleClass("sidebar-is-reduced sidebar-is-expanded");
+    $(".hamburger-toggle").toggleClass("is-opened");
+    
+
+		if ($("body").hasClass("sidebar-is-expanded")) {
+     $('[data-toggle="tooltip"]').tooltip('dispose');
+      $('.user-name ').addClass("user-name_expanded")
+      $('.user-name ').removeClass("user-name_shrink")
+
+      $('.logo ').addClass("l-logo-expanded")
+      $('.logo ').removeClass("l-logo-shrink")
+
+      $('#brandlogo').html("<a href=\"#\" ><img  style='width:150px' src=\"{%  static 'pics/logo.svg'  %}\" /></a>")
+		} else {
+      $('[data-toggle="tooltip"]').tooltip(global.tooltipOptions);
+      $('.logo ').removeClass("l-logo-expanded")
+      $('.logo ').addClass("l-logo-shrink")
+          
+      $('.user-name ').removeClass("user-name_expanded")
+      $('.user-name ').addClass("user-name_shrink")
+          
+         $('#brandlogo').html("<a href=\"#\" ><img  style='width:40px' src=\"{%  static 'pics/justlogo.svg'  %}\" /></a>")
+   
+
+      
+		}
+	};
+
+	return {
+		init: function init() {
+			$(".js-hamburger").on("click", sidebarChangeWidth);
+
+			$(".js-menu li").on("click", function (e) {
+				menuChangeActive(e.currentTarget);
+			});
+
+			$('[data-toggle="tooltip"]').tooltip(global.tooltipOptions);
+		}
+	};
+}();
+
+Dashboard.init();
+
+        
+    </script>
+    <script src="{% static 'js/staffaccordion.js' %}"></script>
+    <!-- <script src="{% static 'js/Interver.js' %}"></script> -->
+    <script src="{% static 'js/userdash.js' %}"></script>
+
+    <!-- <script src="{% static 'path/to/dist/feather.js' %}"></script> -->
+  
+    <script  src="https://unpkg.com/ionicons@5.1.2/dist/ionicons.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
+
+</body>
+</html>
+

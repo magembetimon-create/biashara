@@ -1,0 +1,1101 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+{% block Dashboard %}
+<div  class=" Analytical p-md-4 p-2 whiteBg" id="general-panel" style="margin-top: -23px;min-height:100vh" >
+    <h6 class="weight500 " >
+        {% if useri.langSet == 0 %}  Tafutia Soko bidhaa/Karakana/Aina ya bidhaa au Chapa ya bidhaa kwa watumiaji {% else %} Market Enterprise/Item Brands/Items/Items categories to other users{% endif %}
+    </h6>
+
+    <hr>
+
+    <p class="text-right" >
+        <a href="/ecommerce/allBanners">
+            {% if useri.langSet == 0 %}  Machapisho{% else %} Posts{% endif %}
+
+        </a>
+    </p>
+
+    {% if banned %}
+            <div type="button" class="classic_div  shadow py-md-3 "  style="max-width: 600px" >
+    {% else %}  
+            <div type="button"  class="classic_div  centerItem shadow"  style="max-width: 600px;height:400px" >
+    {% endif %} 
+
+        <label class="text-center d-block" for="banner" style="cursor: pointer;" >
+            
+
+
+            {% if banned %}
+            <div id="withimg"  > 
+                  <img src="{{banner.banner.url}}" alt="" style="width:100%" srcset="">
+            </div>
+               
+            {% else %}    
+                <div id="withoutImg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="55" height="55" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-image">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg> 
+                    
+                    <h6>
+                        {% if useri.langSet == 0 %}Bonyeza kuweka Picha{% else %}Click to add Image{% endif %}
+                    </h6>
+                </div>                        
+            {% endif %}
+
+              
+            </label>
+
+ 
+
+        </div>   
+
+<div class="classic_div py-3"  style="max-width:600px" >
+   <div class="form-group">
+     <h6>{% if useri.langSet == 0 %}Maelekezo{% else %}Caption{% endif %}</h6>
+     <textarea class="form-control" name="ElezeaSoko" id="ElezeaSoko" rows="3">{% if banner.amount > 0 %}{{banner.desc}}{% endif %}</textarea>
+   </div>
+
+
+   <h6>{% if useri.langSet == 0 %}Sehemu Ulipo{% else %}Your Location{% endif %}</h6>
+   <div>
+      <span class="text-capitalize text-primary" >{{duka.jengo}}  </span> <br>
+      <u class="text-primary">{{duka.mtaa.mtaa | title}}, {{duka.mtaa.kata.kata | title}}, {{duka.mtaa.kata.wilaya.wilaya | title}}, {{duka.mtaa.kata.wilaya.mkoa.mkoa | title}}, {{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}} </u>
+   
+</div>
+
+<h6 class="mt-3" >{% if useri.langSet == 0 %}Sehemu ya Soko{% else %}Market Place{% endif %}</h6>
+{% if mktPlace.count > 0  %}
+  
+    <ul class="ml-2 pl-2" style="list-style: decimal;" >
+        {% for p in mktPlace %}
+        <li >
+         <a href="#" >
+           
+                {% if p.wilaya %}
+                {{p.wilaya.wilaya | title}}
+                {% endif %}
+
+                {% if p.mkoa %}
+                {{p.mkoa.mkoa  | title}}
+                {% endif %}
+
+                {% if p.nchi %}
+                {{p.nchi.name | title}}
+                {% endif %}
+           </a>
+
+        </li>
+      {% endfor %}   
+    </ul>
+ 
+
+  {% else %}
+
+<div class="marketPlace">
+    <div class="form-check">
+    <label class="form-check-label">
+        <input type="radio" class="form-check-input" name="marketPlace" id="WholeDistrict" data-amo="1000" data-f="{{wilayaIdadi.F}}" data-m="{{wilayaIdadi.M}}" data-total="{{wilayaIdadi.total}}" data-name="{{duka.mtaa.kata.wilaya.wilaya}}" value="{{duka.mtaa.kata.wilaya.id}}" >
+        {% if useri.langSet == 0 %}Wilaya Nzima {% else %}District Wise{% endif %} <span class="text-primary">({{duka.mtaa.kata.wilaya.wilaya | title}})</span>
+    </label>
+    </div>
+    <div class="form-check">
+    <label class="form-check-label">
+        <input type="radio" class="form-check-input" name="marketPlace" id="WholeRegion" data-amo="2000" data-f="{{mkoaIdadi.F}}" data-m="{{mkoaIdadi.M}}" data-total="{{mkoaIdadi.total}}" data-name="{{duka.mtaa.kata.wilaya.mkoa.mkoa}}" value="{{duka.mtaa.kata.wilaya.mkoa.id}}" >
+        {% if useri.langSet == 0 %}Mkoa Mzima {% else %}Region Wise{% endif %}<span class="text-primary">({{duka.mtaa.kata.wilaya.mkoa.mkoa | title}})</span>
+    </label>    
+    </div>
+
+    <div class="form-check">
+        <label class="form-check-label">
+        <input type="radio" class="form-check-input" name="marketPlace" id="WholeCountry" data-amo="10000" data-f="{{nchiIdadi.F}}" data-m="{{nchiIdadi.M}}" data-total="{{nchiIdadi.total}}" data-name="{{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name}}" value="{{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.id}}" >
+        {% if useri.langSet == 0 %}Nchi Nzima {% else %}Country Wise{% endif %}<span class="text-primary">({{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}})</span>
+    </label>  
+    </div>
+
+    <div class="form-check">
+        <label class="form-check-label">
+        <input type="radio" class="form-check-input"  name="marketPlace" data-amo=0 data-reg=0 data-f=0 data-m=0 id="CustomDistricts" value=0 >
+        {% if useri.langSet == 0 %}Pendekeza Wilaya {% else %}Customize District{% endif %}
+    </label>  
+    </div>
+    <div class="form-check">
+        <label class="form-check-label">
+        <input type="radio" class="form-check-input"  name="marketPlace" data-amo=0 data-reg=1 data-f=0 data-m=0 id="CustomRegions" value=0 >
+        {% if useri.langSet == 0 %}Pendekeza Mikoa {% else %}Customize Regions{% endif %}
+    </label>  
+    </div>
+
+    <div id="Mikoa" style="display:none" >
+
+        <div id="SelectedRegions" class="mt-2" >
+        <ul class="list-unstyled py-0 " id="selectedRegions" >
+
+        </ul>
+        </div>
+
+
+        <div class="d-flex">
+        
+                <div class="form-group">
+                
+
+                    <select class="custom-select smallerFont"
+                    onchange="
+                        const ZoneSelRegVal = $(this).val();
+                                        $('#CustomRegion').html($('#CustomRegion').html())
+                                    
+                                        if(ZoneSelRegVal>0){
+                                            $(`#CustomRegion option`).hide()
+                                            $(`#CustomRegion option[value=0]`).show()
+                                            $(`#CustomRegion option[data-kanda=${ZoneSelRegVal}]`).show()
+
+                                    
+                                        }
+                                        
+                                "
+                    name="CustomRegionState" id="CustomRegionState">
+                        <option value="0" selected> 
+                            {% if useri.langSet == 0 %} --Chagua kanda --{% else %}--Select Zone/state--{% endif %}
+                        </option>
+                        {% for k in kanda %}
+                            <option data-nchi="{{k.nchi.code}}" value="{{k.id}}">{{k.kanda}}</option>
+                        {% endfor %}
+                
+                    </select>
+                </div>            
+        
+
+        
+                <div class="form-group">
+                
+                    <select class="custom-select smallerFont"
+                    
+                    name="CustomRegion" id="CustomRegion">
+                        <option value="0" selected>
+                            {% if useri.langSet == 0 %} --Chagua Mkoa--{% else %}--Select Region--{% endif %}
+                        </option>
+                        {% for k in mikoa %}
+                            <option data-nchi="{{k.kanda.nchi.code}}" data-name="{{k.mkoa}}" data-kanda="{{k.kanda.id}}" value="{{k.id}}">{{k.mkoa}}</option>
+                        {% endfor %} 
+                    </select>
+                </div>            
+    
+
+        <span>
+                <button class="btn btn-default btn-sm text-primary "  id="addRegionBtn"  onclick='appendRegion($("#CustomRegion").find("option:selected"))'>
+                    <span class="spinner-border  spinner-border-sm" hidden    role="status" aria-hidden="true"></span>
+                    <span class="BtnSvg" >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus-circle">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                    </span>
+
+                </button>        
+        </span>
+
+        
+        </div>
+
+    
+
+    </div>
+
+    <div id="KwaWilaya" style="display: none;" >
+        <div id="SelectedDistricts" class="mt-2" >
+            <ul class="list-unstyled py-0 my-0" id="selectedDistricts" >
+            
+            </ul>
+        </div>
+    
+        <div class="row  mt-2">
+            <div class="col-7">
+                    <div class="form-group ">
+            
+
+            <select class="custom-select smallerFont" onchange="
+            const ZoneSelVal = $(this).val();
+                            $('#CustomDistict').html($('#CustomDistict').html())
+                            $('#CustomDistictReg').html($('#CustomDistictReg').html())
+                            if(ZoneSelVal>0){
+                                $(`#CustomDistictReg option`).hide()
+                                $(`#CustomDistictReg option[value=0]`).show()
+                                $(`#CustomDistictReg option[data-kanda=${ZoneSelVal}]`).show()
+
+                                $(`#CustomDistict option`).hide()
+                                $(`#CustomDistict option[value=0]`).show()
+                                $(`#CustomDistict option[data-kanda=${ZoneSelVal}]`).show()
+                            }
+                            
+                    "
+            name="CustomDistictState" id="CustomDistictState">
+                <option value="0" selected> 
+                    {% if useri.langSet == 0 %} --Chagua kanda --{% else %}- Select Zone/state--{% endif %}
+                </option>
+                {% for k in kanda %}
+                    <option data-nchi="{{k.nchi.code}}" value="{{k.id}}">{{k.kanda}}</option>
+                {% endfor %}
+        
+            </select>
+        </div> 
+            </div>
+        </div>
+    
+
+
+        <div class="d-flex">
+            
+                <div class="form-group">
+                    
+    
+                    <select class="custom-select smallerFont" onchange="
+                    const RegSelVal = $(this).val();
+                            $('#CustomDistict').html($('#CustomDistict').html())
+                            if(RegSelVal>0){
+                                $(`#CustomDistict option`).hide()
+                                $(`#CustomDistict option[value=0]`).show()
+                                $(`#CustomDistict option[data-mkoa=${RegSelVal}]`).show()
+                            }
+                            
+                    " name="CustomDistictReg" id="CustomDistictReg">
+                        <option value="0" selected> 
+                            {% if useri.langSet == 0 %} --Chagua Mkoa --{% else %}- Select Zone/state--{% endif %}
+                        </option>
+
+                        {% for k in mikoa %}
+                            <option data-nchi="{{k.kanda.nchi.code}}"  data-kanda="{{k.kanda.id}}" value="{{k.id}}">{{k.mkoa}}</option>
+                        {% endfor %}               
+                    </select>
+                </div>            
+        
+    
+        
+                <div class="form-group">
+                
+                    <select class="custom-select smallerFont" name="CustomDistict" id="CustomDistict">
+                        <option value="0" selected>
+                            {% if useri.langSet == 0 %} --Chagua Wilaya--{% else %}--Select Distric--{% endif %}
+                        </option>
+
+                        {% for k in wilaya %}
+                            <option data-nchi="{{k.mkoa.kanda.nchi.code}}"  data-kanda="{{k.mkoa.kanda.id}}" data-mkoa="{{k.mkoa.id}}" data-name="{{k.wilaya | title }}" value="{{k.id}}">{{k.wilaya | title }}</option>
+                        {% endfor %}
+                    
+                    </select>
+                </div>            
+        
+    
+            <div>
+                <button class="btn btn-default btn-sm text-primary " id="addDistrictBtn" onclick="appendDistrict($('#CustomDistict').find('option:selected'))" >
+                    <span class="spinner-border  spinner-border-sm" hidden    role="status" aria-hidden="true"></span>
+                    <span class="BtnSvg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus-circle">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>                    
+                    </span>
+
+
+                </button>  
+                </div>
+
+            
+        </div>
+    </div>   
+</div>
+
+
+{% endif %}
+
+<div class="marketByGender">
+        <h6 class="mt-3" >{% if useri.langSet == 0 %}Jinsia kwa walengwa{% else %}Market With Gender{% endif %}</h6>
+        <div class="form-check">
+            <label class="form-check-label">
+            <input type="radio" class="form-check-input" name="marketGender" id="JinsiaWote" value="0" checked >
+            {% if useri.langSet == 0 %} Wote{% else %}Both{% endif %}
+        </label>  
+        </div>
+        <div class="form-check">
+            <label class="form-check-label">
+            <input type="radio" class="form-check-input" name="marketGender" id="JinsiaWaume" value="2" >
+            {% if useri.langSet == 0 %}Wanaume {% else %}Mens{% endif %}
+        </label>  
+        </div>
+        <div class="form-check">
+            <label class="form-check-label">
+            <input type="radio" class="form-check-input" name="marketGender" id="JinsiaWanawake" value="1" >
+            {% if useri.langSet == 0 %} Wanawake{% else %}Womens{% endif %}
+        </label>  
+        </div>   
+</div>
+
+{% if banner.amount > 0 %}
+<script>
+     $('.marketGender').each(function(){
+        if($(this).prop('checked'))$(this).prop('checked',false)
+     })
+     let Gen = Number('{% if banner.gender %}1{% else %}0{% endif %}'),
+         theGen = Number('{{banner.gender}}')
+
+         if(!Gen){
+          $('#JinsiaWote').prop('checked',true)
+        }else{
+           if(theGen==0) $('#JinsiaWanawake').prop('checked',true) 
+           if(theGen==1) $('#JinsiaWaume').prop('checked',true) 
+        }
+
+</script>
+{% endif %}
+
+
+<div class="RedirectTo">
+    <h6 class="mt-3" >{% if useri.langSet == 0 %}Ukurasa Kwa Mtumiaji {% else %}Redirection Page{% endif %}</h6>
+    {% if banner.itm or banner.brand or banner.group or banner.aina or itms or brs or cats or grs %}
+       <div class="rederectWhere">
+      
+              {% if itms %} 
+                  <a href="/displaySelItem?value={{duka.id}}&i={{itms.last.id}}" class="darkblue weight600 "><i> <u>{{itms.last.bidhaa.bidhaa_jina | title  }}</u> </i> </a>
+              {% endif %}
+
+              {% if brs %}
+            
+                  <a href="/displayProfItems?value={{duka.id}}&k={{brs.last.id}}" class="darkblue weight600 ">{% if useri.langSet == 0 %} Bidhaa Chapa ya {% endif %} <i><u>{{brs.last.kampuni_jina | title  }}</u> </i> {% if useri.langSet != 0 %}Items Brand  {% endif %} </a>
+              {% endif %}
+
+              {% if cats %}
+                  <a href="/displayProfItems?value={{duka.id}}&a={{cats.last.id}}" class="darkblue weight600 "><i> <u>{{cats.last.aina | title  }}</u> </i> </a>
+              {% endif %}
+
+              {% if grs %}
+                  <a href="/displayProfItems?value={{duka.id}}&m={{grs.last.id}}" class="darkblue weight600 "><i> <u>{{grs.last.mahitaji | title  }}</u> </i> </a>
+              {% endif %}
+       </div>    
+    {% else %}  
+        <div class="ifHome">
+            {% if duka.Interprise %}
+                {% if banner.page == 1 or banner.amount == 0 %}
+                    <div class="form-check">
+                        <label class="form-check-label">
+                        <input type="radio" class="form-check-input" name="redirectTo" id="Home" value=1 checked >
+                        {% if useri.langSet == 0 %}Ukurasa wa Awali wa Biashara{% else %}Profile Home Page{% endif %}
+                    </label>  
+                    </div>
+                {% endif %}
+            {% endif %}
+
+         {% if banner.page == 2 or banner.amount == 0 %}
+         {% if banner.page == 2 %}
+         <a class=" weight600 text-underline btn btn-light " href="/buzinessTerms?s={{duka.id}}">
+            <u> {% if useri.langSet == 0 %} Maelekezo na Taratibu Kutoka{% else %} Terms & Condition From {% endif %} <span class="darkblue ml-2" > {{duka.name |title}}</span> 
+        </a>  
+ 
+         {% else %}
+            <div class="form-check">
+                <label class="form-check-label">
+                 
+                 {% if  duka.desc %}   
+                  <input type="radio" class="form-check-input" name="redirectTo" id="TermsCondition" value=2 >
+                 {% else %}
+                  <input type="radio" disabled class="form-check-input" name="redirectTo" id="TermsCondition" value=2 >
+
+                 {% endif %}
+                {% if useri.langSet == 0 %}Kanuni na Taratibu{% else %}Terms & Conditions{% endif %}
+
+                <a href="/buzinessTerms?s={{duka.id}}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1.4em" height="1.4em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </a>
+            </label>  
+            </div>
+         {% endif %}
+
+         {% endif %} 
+         
+         {% if banner.page == 0 or banner.amount == 0 %}
+         
+         {% if not banner.url %}
+            <div class="form-check">
+                <label class="form-check-label">
+                <input type="radio" class="form-check-input" name="redirectTo" id="AffUrl" value=0 >
+                {% if useri.langSet == 0 %} Weka Tovuti{% else %}Add URL{% endif %}
+            </label>  
+            </div>
+            <div class="form-group" id="kamatovuti" hidden >
+                <input type="url" class="form-control" placeholder="{% if useri.langSet == 0 %}Weka tovuti{% else %}Write URL{% endif %}" name="customUrl" id="customUrl">  
+            </div>
+         {% endif %}   
+        
+         {% if banner.url %}
+            <a href="{{banner.url}}" target="_blank" rel="noopener noreferrer">{{banner.url}}</a>   
+         {% endif %}
+
+         {% endif %}   
+
+        </div>
+    {% endif %}
+  
+</div>
+
+<div class="VistorsNumber">
+    <h6 class="mt-3" >{% if useri.langSet == 0 %}Idadi ya Watembeleaji {% else %}Visitors Number{% endif %}</h6>
+    {% if banner.amount > 0 %}
+      <div class="row">
+          <div class="col-6">{% if useri.langSet == 0 %}Watembeleaji{% else %}Proposed Visitors{% endif %}</div>
+          <div class="col-6 weight600">{{banner.vistors}}</div>
+
+          <div class="col-6">{% if useri.langSet == 0 %}Waliotembelea{% else %}Visted{% endif %}</div>
+          <div class="col-6 weight600">{{banner.visted}}</div>
+      </div>
+      <hr>
+      <label class="brown" for="add">{% if useri.langSet == 0 %}Ongeza Watembeleaji{% else %}Add Visitors{% endif %}</label>
+    {% endif %}
+
+    <div class="form-group">
+    <input type="number"
+        class="form-control" name="vistors" onkeyup="findUserSum()" id="vistors" aria-describedby="helpId" >
+        {% if  banner.vistors > 0 %}
+           <small id="totalUsers"  > {% if useri.langSet == 0 %}Jumla ya watumiaji sehemu zilizopendekezwa{% else %}Totol users from proposed places{% endif %}: <strong class="brown">{{Users}}</strong>  </small>
+        {% else %} 
+             <small id="totalUsers"  >  </small>
+        {% endif %}
+    
+    </div>    
+</div>
+
+
+<hr>
+
+
+  <div class="toPay" id="ToPay" style="display: none;" >
+
+        <div class="totCost "  >
+
+                <h6 class="mt-3" >{% if useri.langSet == 0 %}Gharama {% else %}Cost{% endif %}</h6>
+                <div class="row">
+                    <div class="col-6">{% if useri.langSet == 0 %}Gharama ya Tangazo{% else %}Banner Cost{% endif %}</div>
+                    <div class="col-6">{{duka.currencii}}. <span class="span brown "  id="BannerCost" >0</span> </div>
+                    <div class="col-6">{% if useri.langSet == 0 %}Dau kwa Watembeleaji{% else %}Visitors Cost{% endif %}</div>
+                    <div class="col-6">{{duka.currencii}}. <span class=" brown" id="vistorsCost" >0</span> </div>
+                </div>
+                <div class="row border-top weight600 ">
+                        <div class="col-6">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</div>
+                    <div class="col-6">{{duka.currencii}}. <span class=" brown" id="TotalCost" >0</span> </div>
+                </div>   
+        </div>
+
+
+        <hr>
+        <div class="payments " >
+            <h6>
+                {% if useri.langSet == 0 %}Malipo{% else %}Payments{% endif %}
+            </h6>
+
+            <div class="row mb-2">
+                        <div class="col-md-5 col-6">
+                            <span >
+                                {% if useri.langSet == 0 %}Akaunti{% else %}Account{% endif %}:
+                            </span>
+                        </div>
+                        <div class="col-md-6 col-6">
+                        <span class="weight600 darkblue">{{duka.name | title}}</span>  
+                        </div>   
+
+            </div>
+            
+            <div class="row">
+                        <div class="col-md-5 col-6">
+                            <span >
+                                {% if useri.langSet == 0 %}Salio la Akaunti{% else %}Account Balance{% endif %}
+                            </span>
+                        </div>
+                        <div class="col-md-6 col-6">
+                            {{duka.currencii}}: <span style="font-size: 20px;" id="availableAmo" data-amo="{{duka.Balance}}" class="largerFont brown weight600 ">{{duka.Balance | floatformat:'-2' | intcomma}}</span>
+                            <span class="mx-2 pl-1 border-left">
+                                <button onclick="$('#token_verify').toggle(300)" class="btn btn-sm smallerFont float-right latoFont btn-light">
+                                    {% if useri.langSet == 0 %}Tokeni{% else %}Token{% endif %}
+                                </button>
+                                
+                            </span>
+                        </div>    
+            </div>
+
+            <div id="token_verify" class="form-group" style="display:none" >
+            <label for="TokenVerifier">
+                {% if useri.langSet == 0 %}Weka tokeni za malipo{% else %}Add token Number{% endif %}    
+            </label>
+
+            <div class="input-group">
+                <input type="text" name="TokenVerifier" id="TokenVerifier" class="form-control" placeholder="{% if useri.langSet == 0 %}Andika Tokeni{% else %}Write token{% endif %}" aria-describedby="helpId">
+                <button type="button"
+                onclick = "
+                let token = $('#TokenVerifier').val();
+                        checkToken(token)
+                "
+                class="btn btn-secondary input-group-append smallFont latoFont">
+                    {% if useri.langSet == 0 %}Tuma{% else %}Send{% endif %}
+                </button>
+            </div>
+            
+            </div>
+
+
+        </div>
+
+        <p id="reducedMsg" class="my-3">
+            {{duka.currencii}}. <span class="weight600 brown " id="reduceIt" >0</span>  {% if useri.langSet == 0 %}Itapunguzwa kwenye salio la akaunti{% else %}Will be charged from  account balance{% endif %}
+        </p>
+        <p class="text-right">
+            <button class="btn btn-primary" id="submitBanner" >
+                {% if useri.langSet == 0 %}Kusanya{% else %}Save{% endif %}
+            </button>
+        </p>
+
+</div>
+
+</div>
+
+
+<script>
+    $('input[name="redirectTo"]').change(function(){
+        if(Number($(this).val())==0){
+            $('#kamatovuti').prop('hidden',false)
+        }else{
+            $('#kamatovuti').prop('hidden',true)
+        }
+    })
+    var PlaceCost = 0,TotUsers = 0, userF=0,userM=0,toFind = '',userAlert = ''
+    const place =  $('input[name="marketPlace"]'),
+          theGender = $('input[name="marketGender"]')
+          theGender.change(function(){
+            findUserSum()
+          })
+          place.change(function(){
+             const mark = place.filter(':checked')[0],
+                   regOrDist = Number(mark.getAttribute('data-reg')) || 0,
+                   theAmo = Number(mark.getAttribute('data-amo'))==0
+             $('#Mikoa, #KwaWilaya').hide()
+             if(theAmo){
+ 
+                 if(regOrDist){
+                     $('#Mikoa').fadeIn(300)
+                 }else{
+                     $('#KwaWilaya').fadeIn(300)
+                 }
+                 
+             }
+                 
+                 PlaceCost = $(this).data('amo')
+                 userF = $(this).data('f')
+                 userM = $(this).data('m')
+                // const genderSel = $('input[name="marketGender"]'), gender =  Number(genderSel.filter(':checked')[0].value)
+                 findUserSum()
+
+                 //TotUsers = gender==0?Number(userF) + Number(userM):gender==2?userM:gender==1?userF:0
+                 //$('#BannerCost').text(Number(PlaceCost).toLocaleString())
+                 //userAlert = `{% if useri.langSet == 0 %}Jumla ya watumiaji kwa sehemu iliyochaguliwa {% else %} Total users for selected place {% endif %}: <span class="brown weight500"> ${TotUsers} </span>`
+                 //$('#totalUsers').html(userAlert)
+            
+          })
+ 
+       function   appendRegion(selected){
+         $('#addRegionBtn').prop('disbled',true)
+         $('#addRegionBtn .BtnSvg').prop('hidden',true)
+         $('#addRegionBtn .spinner-border').prop('hidden',false)
+            const num = Number($('#selectedRegions li').length) + 1,
+                  val = selected.val(),
+                  thDt = {
+                     data:{mkoa:val},
+                     url:'/ecommerce/getPlaceusers'
+                  },
+                  sendIt = POSTREQUEST(thDt)
+ 
+                  sendIt.then(resp=>{
+                     if(resp.success){
+
+                         $('#addRegionBtn .BtnSvg').prop('hidden',false)
+                         $('#addRegionBtn .spinner-border').prop('hidden',true)
+                         $('#addRegionBtn').prop('disbled',false)
+
+                         const mikoa= resp.mkoaIdadi,
+                               appendVal = `<li class="row" id="selectedRegions${num}" >
+                                             <div class="col-8 selectedRegions weight600"  data-name="${selected.data('name')}" data-val="${val}" data-amo=2000 data-f="${mikoa.F}" data-m="${mikoa.M}" data-total="${mikoa.total}" >${num}.${selected.data('name')}</div>
+                                             <div class="col-4" >
+                                                 <span>
+                                                 <button class="btn btn-default btn-sm text-danger "  onclick="$('#selectedRegions${num}').remove();reduceAmo(2000)">
+                                                     <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-minus-circle">
+                                                         <circle cx="12" cy="12" r="10"></circle>
+                                                         <line x1="8" y1="12" x2="16" y2="12"></line>
+                                                     </svg>
+                                                 </button>  
+                                             </span>
+                                             </div>
+ 
+                                     
+                                 </li>`
+                                
+ 
+                                 $('#selectedRegions').append(appendVal)
+                                 $('#CustomRegion').val(0) 
+                                 
+                                 PlaceCost = Number($('#selectedRegions li').length) * 2000
+                                // $('#BannerCost').text(Number(PlaceCost).toLocaleString())
+                                 toFind = '.selectedRegions'
+                                 findUserSum()
+ 
+ 
+ 
+                     }else{
+                         toastr.success(lang(msg_swa,msg_eng), lang('Imefanikiwa','Success'), {timeOut: 2000});
+                     }
+                  })
+ 
+ 
+       }
+       function   appendDistrict(selected){
+             $('#addDistrictBtn').prop('disabled',true)
+             $('#addDistrictBtn .BtnSvg').prop('hidden',true)
+             $('#addDistrictBtn .spinner-border').prop('hidden',false)
+         
+            const num = Number($('#selectedDistricts li').length) + 1,
+                 val = selected.val(),
+                 thDt = {
+                     data:{wilaya:val},
+                     url:'/ecommerce/getPlaceusers'
+                 },
+                 sendIt = POSTREQUEST(thDt)
+ 
+                 sendIt.then(resp=>{
+                     if(resp.success){
+                         
+                         $('#addDistrictBtn .BtnSvg').prop('hidden',false)
+                         $('#addDistrictBtn .spinner-border').prop('hidden',true)
+                         $('#addDistrictBtn').prop('disabled',false)
+                         
+                const    appendVal = `<li id="selectedDistricts${num}" class="row">
+                     <div class="col-8 selectedDistricts weight600"  data-val=${val} data-name="${selected.data('name')}" data-amo=1000 data-f=${resp.wilayaIdadi.F} data-m=${resp.wilayaIdadi.M} data-total=${resp.wilayaIdadi.total}  >${num}.${selected.data('name')}</div>
+                     <div class="col-4" >
+                         <span>
+                         <button class="btn btn-default btn-sm text-danger removeIt" onclick="$('#selectedDistricts${num}').remove();reduceAmo(1000)" >
+                             <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-minus-circle">
+                                 <circle cx="12" cy="12" r="10"></circle>
+                                 <line x1="8" y1="12" x2="16" y2="12"></line>
+                             </svg>
+                         </button>  
+                     </span>
+                     </div>
+ 
+                
+            </li>`
+ 
+             $('#selectedDistricts').append(appendVal)
+             $('#CustomDistict').val(0)
+             PlaceCost = Number($('#selectedDistricts li').length) * 1000
+             toFind = '.selectedDistricts'
+             findUserSum()
+         }else{
+                toastr.success(lang(msg_swa,msg_eng), lang('Imefanikiwa','Success'), {timeOut: 2000});
+         }
+     })
+       }
+ 
+       function findUserSum(){
+                               const  userFF = () =>{ 
+                                 let tot=0; 
+                                 $(toFind).each(function(){
+                                 tot += Number($(this).data('f'));
+                                       
+                                 });
+                                 return tot 
+                             },
+                                 userMF = () =>{ 
+                                     let tot=0; $(toFind).each(function(){
+                                        tot += Number($(this).data('m'))
+                                 });
+                                 return tot 
+                             },
+                             genderSel = $('input[name="marketGender"]'), gender =  Number(genderSel.filter(':checked')[0]?.value) || 0
+                                 
+                                if(Number(place.filter(':checked')[0]?.getAttribute('data-amo'))==0){
+                                     userF =   userFF()
+                                     userM =   userMF()
+
+                                     regCount = Number($('#selectedDistricts li').length)
+
+                                     
+
+
+                                }
+                               
+                                let toVisti = Number($('#vistors').val()) || 0,
+                                    bannerAmo = Number('{{banner.amount}}') || 0,
+                                    banned = Number('{% if banner.amount > 0 %}1{% else %}0{% endif %}'),
+                                    totCosting = (toVisti * 10) + PlaceCost
+
+                                    if(toVisti>0 && (bannerAmo > 0 || PlaceCost)) {
+                                        $('#ToPay').fadeIn(300)
+                                    }else{
+                                         $('#ToPay').fadeOut(300)
+                                    }
+
+
+                               // PlaceCost =  * 1000
+                                $('#TotalCost').text(Number(totCosting).toLocaleString()) 
+                                $('#BannerCost').text(Number(PlaceCost).toLocaleString())
+                                $('#reduceIt').text(Number(totCosting).toLocaleString())
+                                $('#vistorsCost').text(Number(toVisti*10).toLocaleString())
+
+                                 TotUsers = gender==0?Number(userF) + Number(userM):gender==2?userM:gender==1?userF:0
+                                 userAlert = `{% if useri.langSet == 0 %}Jumla ya watumiaji kwa sehemu iliyochaguliwa {% else %} Total users for selected place {% endif %}: <span class="brown weight500"> ${TotUsers} </span>`
+                                    
+                                 $('#totalUsers').html(userAlert)
+                                 
+                             
+                                 
+       }
+       
+       function reduceAmo(ramo){
+          PlaceCost -= ramo
+          findUserSum()
+       }
+ 
+ 
+       $('#submitBanner').click(function(){
+         const desc = $('#ElezeaSoko').val() || '',
+               dist = Number($('#WholeDistrict').prop('checked')) || 0,
+               reg = Number($('#WholeRegion').prop('checked')) || 0,
+               cont = Number($('#WholeCountry').prop('checked')) || 0,
+               custDistr = Number($('#CustomDistricts').prop('checked')) || 0,
+               custReg = Number($('#CustomRegions').prop('checked')) || 0,
+               gender = $('input[name="marketGender"]').filter(':checked')[0].value,
+               page = Number($('input[name="redirectTo"]').filter(':checked')[0]?.value) || 0,
+               url = $('#customUrl').val(),
+               idadi = Number($('#vistors').val()),
+               hm = Number('{{hm}}'),
+               edit = Number('{% if banner.vistors > 0 %}1{% else %}0{% endif %}'),
+
+               amount = Number($('#availableAmo').data('amo')),
+               bannerAmo = PlaceCost + idadi
+
+
+               if(((desc.trim()!='' && (dist || reg || cont || custDistr || custReg ) && (url!='' || page != 0 )) || edit ) && (idadi > 0 && amount >=bannerAmo) ){
+                $('#loadMe').modal('show')
+                let sehemu = []
+               
+                    if(dist) sehemu.push(Number($('#WholeDistrict').val()))
+                    if(reg) sehemu.push(Number($('#WholeRegion').val()))
+                    if(cont) sehemu.push(Number($('#WholeCountry').val()))
+                    
+  
+                    if(custDistr){
+                        $('.selectedDistricts').each(function(){
+                            sehemu.push(Number($(this).data('val')))
+                        })
+                    }
+
+                    if(custReg){
+                        $('.selectedRegions').each(function(){
+                            sehemu.push(Number($(this).data('val')))
+                        })
+                    } 
+                
+                   
+
+               const theDt = {
+                data:{
+                    desc,
+                    dist,
+                    reg,
+                    cont,
+                    custDistr,
+                    custReg,
+                    gender,
+                    page,
+                    url,
+                    idadi,
+                    hm,
+                    edit,
+                    banner:Number('{{banner.id}}'),
+                    place:JSON.stringify(sehemu) 
+                },
+                url:'/ecommerce/addBannerDetails'
+               }
+                              ,
+                     SendThen = POSTREQUEST(theDt) 
+
+                     SendThen.then(resp=>{
+                        if(resp.success){
+                            toastr.success(lang(resp.msg_swa,resp.msg_eng), lang('Imefanikiwa','Success'), {timeOut: 2000});
+                            location.reload()   
+                        }else{
+                            toastr.error(lang(resp.msg_swa,resp.msg_eng), lang('Hitilafu','Error'), {timeOut: 2000});
+
+                        }
+
+                        $('#loadMe').modal('hide')
+                     })           
+                                
+                      
+
+               }else{
+                  if(!(dist || reg || cont || custDistr || custReg) ) alert(lang('Tafadhari chagua Mahali pa soko','Please select market place'))
+                  if(!(url!='' || page != 0 )) alert(lang('Tafadhari weka tovuti kwa mtumiaji','Please set redirection page'))
+                  if(desc.trim()=='') redborder('#ElezeaSoko')
+                  if(idadi==0) redborder('#vistors')
+                  if(amount<bannerAmo) toastr.error(lang('Salio la akaunti hii halitoshi kulipia tangazo hili tafadhari ongeza salio','Insufficient account balance for the banner please recharge'), lang('Haitafanikiwa','Error'), {timeOut: 4000});
+
+                  toastr.error(lang('Tafadhari jaza/chagua nafasi zote kwa usahihi','Please select/fill all required fields correctly'), lang('Taarifa','Info'), {timeOut: 4000})
+               
+                }
+
+
+
+
+          
+
+       })
+    </script>
+
+<!-- Modal -->
+<div class="modal fade" id="WekaPichaSoko" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                    <h5 class="modal-title">{% if useri.langSet == 0 %} Weka/Badili Picha ya Biashara  {% else %}Add/Change Profile Picture{% endif %} </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                </div>
+        <div class="modal-body">
+            <div class="container-fluid">
+              <form class="classic_div entpProf_pic " data-input="#prof_image_save" action="/ecommerce/marketingBanner" id="theBannerPic" method="post" style="width: 95%;">
+                  
+                <div id="PreviewBanner" class="row">
+
+                </div>
+                
+                {% csrf_token %}
+
+                <div class="wrappInputs">
+                        <input type="file" accept="image/*" hidden class="custom-file-input" id="banner"  name="banner">
+                    
+                        {% if banned %}
+                            <input type="hidden" id="edit" name="edit" value="{{banner.id}}"  >
+                        {% endif %}
+                        
+                            <input type="hidden" id="hm" name="hm" value="{{hm}}"  >
+                            <input type="hidden" id="itm" name="itm" value="{{itm}}"  >
+                            <input type="hidden" id="gr" name="gr" value="{{gr}}"  >
+                            <input type="hidden" id="br" name="br" value="{{br}}"  >
+                            <input type="hidden" id="cat" name="cat" value="{{cat}}"  >
+
+                 </div>
+               
+                 <p class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
+                                        <path d="M260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H520q-33 0-56.5-23.5T440-240v-206l-64 62-56-56 160-160 160 160-56 56-64-62v206h220q42 0 71-29t29-71q0-42-29-71t-71-29h-60v-80q0-83-58.5-141.5T480-720q-83 0-141.5 58.5T280-520h-20q-58 0-99 41t-41 99q0 58 41 99t99 41h100v80H260Zm220-280Z"/>
+                                </svg>
+                           {% if useri.langSet == 0 %} Tupia Picha{% else %} Upload  Image{% endif %} 
+                       </button> 
+                    </p>
+
+                 <p class="text-center mt-3">
+                       <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+
+                 </p>
+
+
+              </form>
+            </div>
+        </div>
+
+    </div>
+    </div>
+</div>
+
+<script>
+  const bannerInput = document.getElementById('banner'),
+        previewBanner =  $('#PreviewBanner'),
+        b4modal = $('#WekaPichaSoko')
+
+        $('#banner').on('change',function(){
+            ImgPreview(bannerInput,previewBanner,b4modal)
+        })
+
+  $('#theBannerPic').submit(function(e){
+    e.preventDefault()
+
+
+    const val= $('#banner').val()
+    const url = $(this).attr('action')
+    const hm = $('#hm').val()
+    const itm = $('#itm').val()
+    const gr = $('#gr').val()
+    const br = $('#br').val()
+    const cat = $('#cat').val()
+    const edit = $('#edit').val() || 0
+
+    IMGFORM.append('val',val)
+    IMGFORM.append('hm',hm)
+    IMGFORM.append('itm',itm)
+    IMGFORM.append('gr',gr)
+    IMGFORM.append('br',br)
+    IMGFORM.append('cat',cat)
+    IMGFORM.append('edit',edit)
+
+    const img =  bannerInput.files[0]
+      
+     b4modal.modal('hide')
+     REPlACE_BANNER = 1
+      if(Number(img.size/1024) <= 490){
+                    IMGFORM.append('IMG',img)
+                    let theData = {url}
+                      ImageUpload(theData) // This method is from lugha
+          
+      }else{
+        compressImg({img,url})
+      }
+
+        
+        // extension=val.split('.').pop().toLowerCase();
+
+        // if(val==''){
+        //     alert(lang('Tafadhari chagua picha','pleae select the image file'))
+        //     redborder('#banner')
+        // }else{
+        // if(jQuery.inArray(extension, ['jfif','png','jpg','jpeg']) == -1)
+        // {
+        //     alert("Invalid Image File");
+        //     $(this).trigger("reset");
+        //     // $('#userpicsubmit').prop('disabled',true)
+        //     return false;
+        // }else{
+
+        //     $('#WekaPichaSoko').modal('hide')
+        //     $('#loadMe').modal('show')   
+
+        //     const url = $(this).attr('action'),
+                
+        //         formDt = new FormData(this)
+        //         $.ajax({
+        //             type:'POST',
+        //             data:formDt,
+        //             cache: false,
+        //             processData: false,
+        //             contentType: false,
+        //             url,
+        //             success:function(resp){
+        //             if(resp.success){
+        //                 toastr.success(lang(resp.msg_swa,resp.msg_eng), lang('Imefanikiwa','Success '), {timeOut: 2000});
+        //                 location.replace(`/ecommerce/marketing?bn=${resp.bn}&${resp.to}`)
+        //             }else{
+        //                 toastr.error(lang("Kitendo hakikufanikiwa kutokana na hitilafu tafadhari jaribu tena kwa usahihi","The action was not successfully please try again correctly"), lang('Haukufanikiwa','Error '), {timeOut: 2000});
+        
+        //             }
+        //             $('#loadMe').modal('hide')
+        //         }
+        //     })
+
+          
+        //   }}
+  })
+
+
+</script>
+</div>
+
+{% if useri == banner.by or duka.owner == useri and banned  %}
+<div id="chart-cart-btns"  style="position: fixed;top:90vh;right:10px">
+    <!-- MARKET BTN -->
+<button id="RemoveBanner" data-toggle="modal" data-target="#ConfirmRemove" class="btn btn-light text-danger btn-default " title="{% if useri.langSet == 0 %}Futa Chapisho{% else %}Delete Post{% endif %}" >
+    <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        <line x1="10" y1="11" x2="10" y2="17"></line>
+        <line x1="14" y1="11" x2="14" y2="17">
+        </line>
+    </svg>
+</button>
+
+</div> 
+
+<!-- Modal -->
+<div class="modal fade" id="ConfirmRemove" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% if useri.langSet == 0 %}Futa Chapisho {% else %} Delete Post {% endif %} </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <span> 
+
+                        <svg xmlns="http://www.w3.org/2000/svg" width="3.2em" height="3.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17">
+                            </line>
+                        </svg>
+                    </span>
+                </div>
+                 <div class="text-center">
+                    {% if useri.langSet == 0 %}Hakiki kuondoa chapisho {% else %} Confirm removing the post {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button"
+                   onclick="
+                          $('#ConfirmRemove').modal('hide')
+                          $('#loadMe').modal('show')
+                          const toSend = {
+                            data:{
+                                bn:'{{banner.id}}'
+                            },
+                            url:'/ecommerce/DeletePost'
+                          },
+                          removeIt = POSTREQUEST(toSend)
+                          removeIt.then(resp=>{
+                            
+                            if(resp.success){
+                                toastr.success(`{% if useri.langSet == 0 %}${resp.msg_swa}{% else %}${resp.msg_eng} {% endif %}`, '{% if useri.langSet == 0 %}Imefanikiwa {% else %} Success  {% endif %}', {timeOut: 2000});
+                                location.replace('/ecommerce/marketing?hm=1') 
+                            }else{
+                                toastr.error(`{% if useri.langSet == 0 %}${resp.msg_swa}{% else %}${resp.msg_eng} {% endif %}`, '{% if useri.langSet == 0 %}Haikufanikiwa {% else %} Error  {% endif %}', {timeOut: 2000});
+
+                            }
+                            $('#loadMe').modal('hide')
+
+                            
+                          })
+                   "
+                class="btn btn-primary">{% if useri.langSet == 0 %}Ondoa {% else %} Remove {% endif %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block dash-map %}
+   {% if useri.langSet == 0 %}Kutafuta Masoko{% else %}Marketing{% endif %}
+   <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+  </svg>
+  <a href="#">{% if useri.langSet == 0 %}Mpya{% else %}New{% endif %}</a>
+
+{% endblock %}

@@ -1,0 +1,2084 @@
+
+{% extends 'userdash.html' %}
+
+{% block mauzo %}
+    {% load humanize %}
+
+
+
+
+<div  class="whiteBg  pb-5 classic_div pr-3" id="invoice_wrapper"  >
+
+ {% if the_bill.amount < the_bill.ilolipwa %} 
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+ <div class="row">
+  <div class="col-md-1 text-center">
+       <span>
+             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+             <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+             <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+             </svg>
+       </span>   
+  </div>
+  <div class="col-md-11">
+      {% if useri.langSet == 0 %}
+      Pesa ya Oda iliyolipwa imezidi kiasi halisi cha Oda  
+                      
+
+      
+     {% else %}
+       The paid Order Amount has exceeded the actual order amount
+     {% endif %} 
+     
+        <button  data-toggle="modal" data-target="#rudisha_pesa"  class="btn border0  btn-default">
+          <strong class="border-bottom">  {% if useri.langSet == 0 %}Tafadhari Bonyeza Hapa kurudisha Pesa iliyozidi {% else %}Please Click Here to Return Amount{% endif %}</strong>
+       </button>
+  </div>
+ </div>
+</div>
+
+{% endif %}
+
+
+    <div class="row ">
+        <div class="col-md-4  border-right" >
+            <header class="border-bottom  ">
+                <div class="row classic_div py-2">
+
+                    <div class="col-12">
+                      <form action="{% url 'viewOda' %}" method="get">
+                        <div class="input-group"> 
+                          <div class="input-group-prepend  border">
+                            <button type="button" onclick="$('#listin').toggle(400)" class="d-flex d-md-none btn btn-light btn-sm  " >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+    
+                                
+                                </svg>
+                            </button>
+                          </div>
+                           
+                           
+                                  <input type="text" name="code" id="code" placeholder=" {% if useri.langSet == 0 %}  Andika namba ya Oda {% else %} Write Order no.. {% endif %}" class="form-control smallFont">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-secondary smallerFont btn-sm pt-2">
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                       <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                                     </svg>
+                                </button>
+                            </div>  
+                           
+                           
+                        </div>
+                  </form>
+                        
+
+                    </div>
+
+                    
+                </div>
+
+            </header>
+            <div class="listin " id="listin" style="height:100vh;">
+                <div class="row classic_div py-2 pl-4 border-bottom">
+                  <p class="d-flex">
+                                <a type="button" href="{% url 'viewOda' %}?item_valued={{the_bill.id}}" class="border0 btn btn-light btn-sm  smallFont latoFont">
+                                    {% if useri.langSet == 0 %}Zote{% else %}All {% endif %}
+                                  </a>
+                        
+                                    {% if unpaid.count > 0 %}
+                                  <a type="button" href="{% url 'viewOda' %}?item_valued={{the_bill.id}}&lis_t=2" title="{% if useri.langSet == 0 %}Oda Ambazo Hazijalipiwa{% else %}Unpaid Order {% endif %}" class="border0 btn btn-light btn-sm smallFont  latoFont">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-file-earmark " viewBox="0 0 16 16">
+                                      <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
+                                    </svg>
+                                  </a>
+                        
+                                    {% else %}
+                                  <button type="button" title="{% if useri.langSet == 0 %}Oda Ambazo Hazijalipiwa{% else %}Unpaid Order {% endif %}"   disabled class="border0 btn btn-light btn-sm smallFont  latoFont">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-file-earmark " viewBox="0 0 16 16">
+                                      <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
+                                    </svg>
+                                  </button>
+                                    {% endif %}
+                        
+                                  
+                        
+                                  {% if less.count > 0  %}
+                                    <a type="button"   href="{% url 'viewOda' %}?item_valued={{the_bill.id}}&lis_t=3" title="{% if useri.langSet == 0 %}Oda Ambazo zimelipwa Kiasi{% else %}less paid Order {% endif %}" class="border0  btn btn-light btn-sm smallFont latoFont"  >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-calculator " viewBox="0 0 17 17">
+                                          <path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/>
+                                          <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-2zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-4z"/>
+                                        </svg>
+                                      </a> 
+                                    {% else %} 
+                                    <button type="button"  disabled class="border0  btn btn-light btn-sm smallFont latoFont" title="{% if useri.langSet == 0 %}Oda Ambazo zimelipwa Kiasi{% else %}less paid Order {% endif %}" >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-calculator " viewBox="0 0 17 17">
+                                          <path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/>
+                                          <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-2zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-4z"/>
+                                        </svg>
+                                    </button> 
+                                    {% endif %}  
+                        
+                                  {% if muda.count > 0  %}
+                                    <a type="button"   href="{% url 'viewOda' %}?item_valued={{the_bill.id}}&lis_t=5" title="{% if useri.langSet == 0 %}Oda Ambazo Muda wa kulipa umefika au Umepita{% else %}over/on Due date {% endif %}" class="border0  btn btn-light btn-sm smallFont latoFont"  >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-alarm" viewBox="0 0 16 16">
+                                        <path d="M8.5 5.5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 9V5.5z"/>
+                                        <path d="M6.5 0a.5.5 0 0 0 0 1H7v1.07a7.001 7.001 0 0 0-3.273 12.474l-.602.602a.5.5 0 0 0 .707.708l.746-.746A6.97 6.97 0 0 0 8 16a6.97 6.97 0 0 0 3.422-.892l.746.746a.5.5 0 0 0 .707-.708l-.601-.602A7.001 7.001 0 0 0 9 2.07V1h.5a.5.5 0 0 0 0-1h-3zm1.038 3.018a6.093 6.093 0 0 1 .924 0 6 6 0 1 1-.924 0zM0 3.5c0 .753.333 1.429.86 1.887A8.035 8.035 0 0 1 4.387 1.86 2.5 2.5 0 0 0 0 3.5zM13.5 1c-.753 0-1.429.333-1.887.86a8.035 8.035 0 0 1 3.527 3.527A2.5 2.5 0 0 0 13.5 1z"/>
+                                      </svg>
+                                      </a> 
+                                    {% else %} 
+                                    <button type="button"  disabled class="border0  btn btn-light btn-sm smallFont latoFont" title="{% if useri.langSet == 0 %}Oda Ambazo Muda wa kulipa umefika au Umepita{% else %}over/on Due date {% endif %}" >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-alarm" viewBox="0 0 16 16">
+                                        <path d="M8.5 5.5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 9V5.5z"/>
+                                        <path d="M6.5 0a.5.5 0 0 0 0 1H7v1.07a7.001 7.001 0 0 0-3.273 12.474l-.602.602a.5.5 0 0 0 .707.708l.746-.746A6.97 6.97 0 0 0 8 16a6.97 6.97 0 0 0 3.422-.892l.746.746a.5.5 0 0 0 .707-.708l-.601-.602A7.001 7.001 0 0 0 9 2.07V1h.5a.5.5 0 0 0 0-1h-3zm1.038 3.018a6.093 6.093 0 0 1 .924 0 6 6 0 1 1-.924 0zM0 3.5c0 .753.333 1.429.86 1.887A8.035 8.035 0 0 1 4.387 1.86 2.5 2.5 0 0 0 0 3.5zM13.5 1c-.753 0-1.429.333-1.887.86a8.035 8.035 0 0 1 3.527 3.527A2.5 2.5 0 0 0 13.5 1z"/>
+                                      </svg>
+                                    </button> 
+                                    {% endif %}  
+                              
+                              
+                  </p>
+               </div>
+
+          
+                  
+
+              <ul class="list-unstyled " style='overflow-y:auto;height:57vh;overflow-x:hidden' >
+                  {% for invo in bili %}
+
+                  {% if invo.id == the_bill.id %}
+
+                  <li class="p-2  border-bottom" style="border-left:4px solid rgb(0, 106, 228) ;background:rgb(232, 232, 255)" >
+                  {% else %}   
+                  <li class="p-2  border-bottom" >
+                  {% endif %}
+                      
+
+                          <a href="{% url 'viewOda' %}?item_valued={{invo.id}}&back_to='allbill'&lis_t={{lis_t}}&page={{p_num}} " class="text-decoration-none text-secondary row smallerFont classic_div">
+                              <div class="col-6">
+                              <strong> {{invo.mteja_jina | title}}</strong> 
+                              </div>
+                              <div class="col-6 text-right">
+                              <span class="smallerFont">{{duka.currencii}}</span>. <strong> {{invo.amount | floatformat:'-2' | intcomma}}</strong> 
+                              </div>
+
+                              <div class="col-7 latoFont  pt-0">
+                                <span   class="text-primary btn btn-default btn-sm smallFont px-0 latoFont">ORD-{{invo.code}}</span> | {{invo.date}}
+                              </div>
+
+                              <div class="col-5 ">
+                                
+                                  
+
+              
+                                  <div class="chart" style="width: 40px;height:40px;float:right">
+                                    <canvas id="myChart{{invo.id}}" style="width: 20px;height:20px"></canvas>
+                      
+                      <div class="text-center"  style="font-size: 11px;margin-top:-27px" >
+                        <script>
+                            $('#prog{{invo.id}}').css('width',(Number('{{invo.ilolipwa}}')/Number('{{invo.amount}}') * 100) + '%' )
+                      
+                            $(document).ready(function(){
+                                
+                                var data = {
+                                labels: [
+                                  "ilolipwa",
+                                  "Bado"
+                                ],
+                                  datasets: [
+                                    {
+                                      data: [Number('{{invo.ilolipwa}}'),Number('{{invo.amount}}')-Number('{{invo.ilolipwa}}')],
+                                      backgroundColor: [
+                                            "#0086b3",
+                                            "#FF6384"
+
+                                      ],
+                                      hoverBackgroundColor: [
+                                      "#0086b3",
+                                      "#FF6384"
+                                      ],
+                                      hoverBorderColor: [
+                                              "#0086b3",
+                                              "#FF6384"
+                                              
+
+                                      ]
+                                    }]
+                                };
+
+                                var myCharti = new Chart(document.getElementById('myChart{{invo.id}}'), {
+                                  type: 'doughnut',
+                                  data: data,
+                                  options: {
+                                    responsive: true,
+                                    legend: {
+                                  position: 'bottom',
+                                      display: false
+                                    },
+                                    cutoutPercentage: 75,
+                                    tooltips: {
+                                      bodyFontSize: 6 ,
+                                    // callbacks: {
+                                    //   // this callback is used to create the tooltip label
+                                    //   label: function(tooltipItem, data) {
+                                    //     // get the data label and data value to display
+                                    //     // convert the data value to local string so it uses a comma seperated number
+                                    //     var dataLabel = data.labels[tooltipItem.index];
+                                    //    // var value = ': Tsh: ' + parseInt(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]).toLocaleString()+'/=';
+
+                                    //     // make this isn't a multi-line label (e.g. [["label 1 - line 1, "line 2, ], [etc...]])
+                                    //  //  if (Chart.helpers.isArray(dataLabel)) {
+                                    //  //    // show value on first line of multiline label
+                                    //  //    // need to clone because we are changing the value
+                                    //  //    dataLabel = dataLabel.slice();
+                                    //  //    dataLabel[0] += value;
+                                    //  //  } else {
+                                    //  //    dataLabel += value;
+                                    //  //  }
+
+                                    //     // return the text to display on the tooltip
+                                    //     return dataLabel;
+                                    //   }
+                                    // }
+                                    },
+                                  }
+                                });
+
+                                
+                            })
+
+                            document.write((Number('{{invo.ilolipwa}}')/Number('{{invo.amount}}') * 100).toFixed(0) + '%' )
+
+                      
+                          </script>
+                      </div>                               
+                                  </div>
+                                
+                                  
+              
+                      
+                      
+                </div>
+                </a>
+                      
+                  </li>
+
+                  {% endfor %}
+              </ul>
+
+              <p style="-webkit-box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14); 
+              box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14);padding-top:5px">
+            
+                  {% if bili.has_previous %}
+                    <a href="{% url 'viewOda' %}?page=1&item_valued={{the_bill.id}}" type="button"  class="btn btn-default border0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+                      </svg>
+                      </a>
+                
+                      <a href="{% url 'viewOda' %}?page={{bili.previous_page_number}}&item_valued={{the_bill.id}}" type="button"  class="btn btn-default  border0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                          <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                        </svg>
+                      </a>
+                    {% endif %}
+                
+                  {% if bili.has_next %}
+                      <a href="{% url 'viewOda' %}?page={{bili.next_page_number}}&item_valued={{the_bill.id}}" type="button" class="btn btn-default border0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                          <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                      </a>
+                
+                      <a href="{% url 'viewOda' %}?page={{pages}}&item_valued={{the_bill.id}}" type="button"  class="btn btn-default border0" >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+                          <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                        </svg>
+                      </a>
+                {% endif %}
+                      <label for="">
+                      
+                        {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+                
+                      </label>
+              </p>
+            </div>
+            
+
+        </div>
+
+        <div class="col-md-8"  >
+            <header class="border-bottom">
+                <div class="row py-2">
+                  
+                    <div class="col-12 text-right">
+                      
+
+                          {% if the_bill.receved  or not the_bill.online %}
+                          <button data-toggle="modal" data-target="#ConfirmToInvo"  class="btn btn-outline-primary btn-light btn-sm latoFont ">
+                            <span style="margin-top: -4px;">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cart-check" viewBox="0 0 16 16">
+                                <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+                                <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                              </svg>
+                            </span>
+                           
+                              {% if useri.langSet == 0 %}Mauzo  {% else %}Sales {% endif %}
+                         </button>
+                          {% else %}
+                          <div class="dropdown open d-inline">
+                          <button class="btn btn-light  btn-outline-primary btn-sm latoFont smallFont dropdown-toggle" type="button" id="triggerId" data-toggle="dropdown" aria-haspopup="true"
+                              aria-expanded="false">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
+                                <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                              </svg>
+                           </button>
+                          <div class="dropdown-menu px-2" aria-labelledby="triggerId">
+
+                            <span class="dropdown-item px-0" >
+                              {% if useri.langSet == 0 %}Kabidhi kwa {% else %} Give to{% endif %} 
+                            </span>
+
+                            <a type="button" onclick="handOver({ag:Number('{{the_bill.user_customer.by.id}}')})"  class="dropdown-item border-top  my-1 px-0 latoFont" href="#">
+                             
+                              <div class="d-flex">
+                                <div class="img d-flex align-items-center justify-content-center">
+                                  {% if  the_bill.user_customer.by.picha %}
+                                    <img src="{{the_bill.user_customer.by.picha.url}}" class=" border-primary" style="width:30px;height:30px;border-radius:50%" alt="">
+                                   {% else %} 
+                                   <img style="width:30px;height:30px" class="rounded-circle userimage" src="{{baseUrl}}/{{'userlogo.png'}}" alt="image" >
+                                   {% endif %}
+                                </div>
+
+                                <div class="word pl-1">
+                                    <div class="darkblue  latoFont">{{the_bill.user_customer.by.user.first_name | title}} {{the_bill.user_customer.by.user.last_name | title}}</div> 
+                                    <div class="latoFont smallFont " style="margin-top:-6px ;" >{{the_bill.user_customer.by.simu1 }}</div> 
+                                     
+                                </div>
+
+
+                              </div>
+                              
+                                
+                            </a>
+
+
+                            <script>
+                              function handOver(dtA){
+                                $('#loadMe').modal('show')
+                                const theData ={data:{... {
+                                  oda:'{{the_bill.id}}'
+                                },... dtA},
+                                url:'/mauzo/packegeTransfer'},
+                                sendIt = POSTREQUEST(theData)
+                                sendIt.then(data=>{
+
+                                    if(data.success){
+                                            toastr.success(lang(data.msg_swa,data.msg_eng), lang('Imefanikiwa','success'), {timeOut: 2000});
+                                          
+                                            location.reload()
+                                  
+                                          }else{
+                                            toastr.error(lang(data.msg_swa,data.msg_eng), lang('Haijafanikiwa','Error'), {timeOut: 2000});
+                                      
+                                          }
+
+                                          $('#loadMe').modal('hide')
+
+
+                                })
+                              }
+                              
+                            </script>
+
+                            
+                                
+                            {% if the_bill.user_customer.tr is not None and the_bill.user_customer.tr.user.owner.id is not the_bill.user_customer.by.id  %}
+                                <a class="dropdown-item my-1 px-0 latoFont border-top" type="button" onclick="handOver({ag:Number('{{the_bill.user_customer.tr.user.owner.id}}'),agnt:1})"  >
+                                  <div class="d-flex">
+                                    <div class="img d-flex align-items-center justify-content-center">
+                                    {% if the_bill.user_customer.tr.user.owner.picha %}
+                                      <img src="{{the_bill.user_customer.tr.user.owner.picha.url}}" class="border-primary" style="width:37px;height:37px;border-radius:50%" alt="">
+                                   {% else %}
+                                        <img style="width:37px;height:37px" class="rounded-circle userimage" src="{{baseUrl}}/{{'userlogo.png'}}" alt="image">
+                                      {% endif %}
+                                   </div>
+
+                                  <div class="word pl-1">
+                                      <div class="darkblue latoFont">{{the_bill.user_customer.tr.user.owner.user.first_name | title}} {{the_bill.user_customer.tr.user.owner.user.last_name | title}}</div> 
+                                      <div class="smallFont brown" style="margin-top: -6px;" >({{the_bill.user_customer.tr.user.Intp_code}}) </div>
+                                  
+                                    </div>
+                                   
+                                </div>
+
+                          
+                                
+                                </a>
+
+                                
+
+                            {% endif %}
+                             
+                            {% if the_bill.online and not the_bill.user_customer.tr.confirm_receive %}
+                                 <hr>
+                                <button class="dropdown-item my-1 latoFont" data-toggle="modal" onclick="getAget()" data-target="#DeriveryAgent">
+                                  <u class="text-primary"> {% if useri.langSet == 0 %}Mzigo wa Kusafirisha{% else %}Ship Package{% endif %} </u> 
+                                </button>
+                            {% endif %}
+
+                          </div>
+                          </div>
+
+                          {% endif %}
+
+                         
+
+
+                        {% if the_bill.ilolipwa < the_bill.amount %}
+
+                        <button class="btn btn-primary latoFont btn-sm" data-toggle="modal" data-target="#modal_malipo">
+                            {% if useri.langSet == 0 %}Rekodi Malipo  {% else %}Record Payments {% endif %}                        
+                        </button>
+                        {% endif %}
+                       
+                            <a type="button" href="/mauzo/newsaleOda" class="btn btn-secondary btn-sm smallFont latoFont">
+                              + {% if useri.langSet == 0 %}  Mpya  {% else %} New {% endif %}
+                            </a>
+
+                            <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                              <button id="print_invo_btn" data-lang="{% if useri.langSet == 0 %}0{% else %}1{% endif %}"  type="button" data-invo={{the_bill.id}} class="btn btn-light actionbtns btn-sm smallFont">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+                                  <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                                  <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+                                  </svg>
+                                     Print
+                                  
+                              </button>
+                          
+                              <div class="btn-group" role="group">
+                              <button id="btnGroupDrop1" type="button" class="btn btn-light btn-sm smallFont dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              </button>
+                              <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                  <button class="btn btn-default actionbtns dropdown-item" data-invo={{the_bill.id}} data-lang=0 >Swahili</button>
+                                  <button class="btn btn-default actionbtns dropdown-item" data-invo={{the_bill.id}} data-lang=1 >English</button>
+                                  <div class="divider"></div>
+                                  <button class="btn btn-default  dropdown-item" data-toggle="modal" data-target="#IvoSettingModal">
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-settings">
+                                     <circle cx="12" cy="12" r="3"></circle>
+                                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                 </svg>
+                                   {% if useri.langSet == 0 %}Rekebisha{% else %}Setting{% endif %}
+                                  </button>
+     
+                                 </div>
+                              </div>
+                          </div>
+
+
+                    </div>
+                </div>
+                {% if rudi.count > 0 %}
+                  <!-- SHOW IF THERE ARE ITEM RETURNED ON THIS INVOINCE -->
+                  <div class="alert alert-warning mt-2 alert-dismissible fade show" role="alert">
+                    <strong>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
+                      <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5.002 5.002 0 0 1 13 6c0 .88.32 4.2 1.22 6z"/>
+                    </svg>
+                  </strong> 
+                         
+                         {% if useri.langSet == 0 %}Pesa Ilirudi kwa  {% else %} Amount returned via{% endif %}
+                       
+                          {% for r in rudi %}
+                          <a href="/mauzo/viewRef?item_valued={{r.id}}">
+                            REF-{{r.code}},
+                          </a>
+                          {% endfor %}
+      
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+      
+                  {% endif %}
+            </header>
+            
+
+            <div  class="table-responsive pt-3 " id="invo_box" style="font-family: 'Times New Roman', Times, serif;" >
+               
+              {% if the_bill.online %}
+              <div class="row  mb-3  classic_div" style="max-width: 700px;overflow-x:auto" >
+                <div class="col-2  centerItem">
+                  <div >
+                   <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="bi bi-alarm" viewBox="0 0 16 16">
+                    <path d="M8.5 5.5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 9V5.5z"/>
+                    <path d="M6.5 0a.5.5 0 0 0 0 1H7v1.07a7.001 7.001 0 0 0-3.273 12.474l-.602.602a.5.5 0 0 0 .707.708l.746-.746A6.97 6.97 0 0 0 8 16a6.97 6.97 0 0 0 3.422-.892l.746.746a.5.5 0 0 0 .707-.708l-.601-.602A7.001 7.001 0 0 0 9 2.07V1h.5a.5.5 0 0 0 0-1h-3zm1.038 3.018a6.093 6.093 0 0 1 .924 0 6 6 0 1 1-.924 0zM0 3.5c0 .753.333 1.429.86 1.887A8.035 8.035 0 0 1 4.387 1.86 2.5 2.5 0 0 0 0 3.5zM13.5 1c-.753 0-1.429.333-1.887.86a8.035 8.035 0 0 1 3.527 3.527A2.5 2.5 0 0 0 13.5 1z"/>
+                  </svg>
+                  </div>
+                  
+                </div>
+
+                <div class="col-10 latoFont" style="border-left:3px solid #ccc" >
+                  <div class="col-12 " >
+                    <i style="font-weight: 600;font-size:large" > 
+                     
+                    
+
+                    {% if not the_bill.packed  %}
+                     
+                   {% elif the_bill.packed and not the_bill.derivered %}
+                     <span style="color: rgb(0, 66, 3);" > 
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-seam" viewBox="0 0 16 16">
+                        <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                      </svg>
+
+                       {% if useri.langSet == 0 %} Imeshafungwa {% else %}Packed{% endif %}</span>  
+                   {% elif the_bill.derivered  and not the_bill.receved %}
+                      {% if useri.langSet == 0 %}Hali ya Mzigo kwa sasa {% else %}Package  Current Stutus{% endif %}: 
+
+                     <span style="color: rgb(97, 39, 5);" >
+
+                      <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
+                        <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                      </svg> 
+                      {% if useri.langSet == 0 %}  Imeshatumwa  {% else %} Transfered{% endif %}</span>  
+                   {% elif the_bill.receved  %}
+                   {% if useri.langSet == 0 %}Hali ya Mzigo kwa sasa {% else %}Package  Current Stutus{% endif %}: 
+
+                     <span style="color: rgb(7, 90, 7);" > 
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-cart-check" viewBox="0 0 16 16">
+                          <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+                          <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                        </svg>                    
+                       {% if useri.langSet == 0 %}  Imeshapokelewa  {% else %} Received{% endif %}
+                      </span>  
+                   
+                   {% endif %}
+                  
+                  </i> 
+                  </div>
+                  <div class="col-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
+                      <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+                      <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+                    </svg>  {% if useri.langSet == 0 %}  Aliyefungasha  {% else %}Packed  By  {% endif %}  : <span style="color:#2900dd" > {{the_bill.By.user.user.first_name  | title}} {{the_bill.By.user.user.last_name  | title}} </span>
+                    <span class="ml-2 pl-2 border-left">
+                      
+                      <script>
+                        document.write(moment('{{the_bill.Packed_at | date:"r" }}').format('DD/MM/YYYY, HH:mm'))
+                      </script>
+                    </span>
+                  </div>
+
+                  {% if the_bill.derivered %}
+                      <div class="col-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
+                          <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+                          <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+                        </svg> 
+                       
+                        {% if useri.langSet == 0 %}  Imekabidhiwa kwa  {% else %}Given to {% endif %}  : <span style="color: #2900dd;" > {{the_bill.user_customer.tr.user.name | title }}</span>, 
+                        
+                        {% if useri.langSet == 0 %}  Na  {% else %}By {% endif %}  <span style="color: #2900dd;" > {{the_bill.user_customer.tr.aliyekabidhi.user.user.first_name | title }}  {{the_bill.user_customer.tr.aliyekabidhi.user.user.last_name | title }}    </span> <span class="ml-2 pl-2 border-left">
+                      
+                      <script>
+                        document.write(moment('{{the_bill.user_customer.tr.muda | date:"r" }}').format('DD/MM/YYYY, HH:mm'))
+                      </script>
+                    </span>
+                      </div>
+                   {% endif %}   
+                  </div>
+
+              </div>
+              {% endif %}
+
+            <div class="classic_div mt-sm-2 pt-3 pb-2 px-3 the_invo_page latoFont" id="the_invo_page" >
+
+              <div class="row classic_div pt-3" >
+                    <div class="col-md-6 border-right">
+                        <div class="row" >
+                           
+                            <div class="col-12">
+                              {% if duka.logo and duka.invo_logo %}
+                                  <div class="pl-5"  style="height: 50px;">
+                                     <img src="{{duka.logo.url}}" style="height:100%">
+                                   </div> 
+                                {% endif %}
+                                <h5 class="font-weight-bold">
+                                    {{duka.name | title}}
+                                </h5>
+                            </div>
+
+                            <div class="col-12" style="margin-top:-6px">
+                                <h6 class="">
+                                    {{duka.jengo}}
+                                </h6>
+                            </div>  
+
+                            <div class="col-12" style="margin-top:-6px">
+                                <h6 class="">
+                                    {{duka.mtaa.mtaa | title}}, {{duka.mtaa.kata.kata | title}}, {{duka.mtaa.kata.wilaya.wilaya}}, {{duka.mtaa.kata.wilaya.mkoa.mkoa}}, {{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name}}
+                                </h6>
+                            </div>
+
+
+
+                        </div>
+
+                         <div class="row" style="margin-top: -6px;">
+                           <div class="col-12">
+                                <h6 class="">
+                                  code:{{duka.Intp_code}} 
+                                </h6>
+                            </div>
+                            <div class="col-12">
+                                <h6 class="">
+                                    {{duka.owner.email }} 
+                                </h6>
+                            </div>
+
+                            {% if reg.count > 0 %}
+                               {% for r in reg %}
+                                <div class="col-12" style="margin-top: -6px;">
+                                    <h6 >
+                                        {{r.reg_name }}:  {{r.reg_no }}
+                                    </h6>
+                                </div>   
+                               {% endfor %}
+                            {% endif %}
+
+                              
+                           
+                            
+                        </div>
+
+
+                    <br>
+
+
+
+                </div>
+                 <div class="col-md-6">
+                  
+                    {% if the_bill.online %}
+                    <h3 class="text-danger text-right">
+                        {% if useri.langSet == 0 %}ODA ILIYOFUNGASHWA {% else %} PACKED ORDER{% endif %}
+                     </h3>
+                     {% else %} 
+                     <h3 class="text-danger text-right">
+                        {% if useri.langSet == 0 %} ODA YA MAUZO {% else %} SALES ORDER {% endif %}
+                     </h3>
+                     {% endif %}
+                   
+
+
+                      <div class="text-right " style="margin-top:-14px">
+                         <h6>{% if the_bill.online %}PACK{% else %}ORD{% endif %}-{{the_bill.code}}</h6> 
+                      </div>
+                      <hr>
+
+                      <div class="row " style="margin-top: -6px;">
+                        <div class="col-5 text-right">
+                            <p >
+                                {% if useri.langSet == 0 %} Tarehe  {% else %} Invoice Date {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-7 text-right">
+                            <p>
+                                {{the_bill.date}}
+                            </p>
+                        </div>  
+                      </div>
+
+                   <div class="row " style="margin-top: -6px;">
+                    <div class="col-5 text-right">
+                     
+                        <p class="text-danger text-right">
+                             {% if useri.langSet == 0 %} Tarehe Kukamilisha  {% else %} Due date {% endif %}
+                        </p>
+                       
+                    </div>
+                    <div class="col-7 text-right">
+
+
+                      {% now "Ymd" as the_date %}
+                      {% if the_bill.amount > the_bill.ilolipwa and the_bill.kulipa|date:"Ymd"|add:0  <= the_date|add:0  %}
+                        <p  >
+                            <span class="bg-danger p-1 text-light">
+                               {{the_bill.kulipa}} 
+                            </span>
+                             
+                        </p>
+                        {% else %}
+                           <p  >
+                             {{the_bill.kulipa}}
+                        </p>
+                        {% endif %}
+                    </div>
+                    </div>
+
+                    
+                <div class="row text-right">
+                    <div class="col-5">
+                        <h6>
+                            {% if useri.langSet == 0 %} Malipo{% else %} Payments  {% endif %} :
+                        </h6>
+                    </div>
+                  <h5 class="col-7">
+                        <!-- {% if the_bill.ilolipwa == the_bill.amount %}
+                        <strong style="font-family:'Ubuntu',sans serif;color:#205302b4" >
+                           {% if useri.langSet == 0 %}   IMELIPIWA{% else %} PAID  {% endif %}
+                        </strong>
+                        {% elif the_bill.ilolipwa != 0 %}
+                        <strong style="font-family:'Ubuntu',sans serif;color:#2f6a79" >
+                           {% if useri.langSet == 0 %}  IMELIPWA KIASI {% else %} LESS PAID {% endif %}
+                        </strong>
+                        {% elif the_bill.ilolipwa == 0 %}
+                        <strong style="font-family:'Ubuntu',sans serif;color:#9b1010" >
+                            {% if useri.langSet == 0 %}  HAIJALIPIWA {% else %} UNPAID {% endif %}
+                        </strong>
+                        {% endif %} -->
+
+                        <strong>
+                           <script>
+                            if(Math.round(Number('{{the_bill.ilolipwa}}')/Number('{{the_bill.amount}}')) !== Number('{{the_bill.ilolipwa}}')/Number('{{the_bill.amount}}')) {
+                                 document.write((Number('{{the_bill.ilolipwa}}')/Number('{{the_bill.amount}}')*100).toFixed(2) + '%')
+                            }else{
+                                document.write((Number('{{the_bill.ilolipwa}}')/Number('{{the_bill.amount}}')*100) + '%')
+             
+                            }
+
+                         
+                          </script>
+                        </strong>
+
+
+                    </h5>
+
+                    </div>
+
+  
+                    
+
+
+                 </div>
+             </div>
+               <hr>
+               <div class="row px-3">
+                  <div class="col-md-6 latoFont" style="font-weight: 500;">
+                     <span class="text-danger">
+                         {% if useri.langSet == 0 %} Bili kwa  {% else %} Bill To {% endif %}:
+                     </span> 
+                     <br>
+                     <address >
+                        <strong> <a href="{% if the_bill.customer_id %}/mauzo/CustomerSales?cst={{the_bill.customer_id.id}}{% else %}#{% endif %}">{{the_bill.mteja_jina | title }} {% if the_bill.user_customer %} ({{the_bill.user_customer.enteprise.Intp_code}}) {% endif %} </a></strong>
+                     <br>
+                    
+                       {% if the_bill.online %}
+
+                         {% if useri.langSet == 0 %} Simu {% else %} Phone {% endif %}:   {{the_bill.user_customer.enteprise.owner.simu1 }}
+                          <br>
+
+                         {% if useri.langSet == 0 %} Barua Pepe  {% else %} Email {% endif %}:   {{the_bill.user_customer.enteprise.owner.user.email }}
+                          <br>
+                           {% if not the_bill.customer_in %}
+                              {{the_bill.user_customer.jengo }}
+                            <br>
+                           {% endif %}  
+
+                          
+                            {{the_bill.user_customer.enteprise.mtaa.mtaa |title}},  {{the_bill.user_customer.enteprise.mtaa.kata.kata |title}}, {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.wilaya |title}},  {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.mkoa.mkoa |title}}, {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+                      
+
+                              {% if the_bill.customer_in %}
+                                  <div class="classic_div mt-2 p-2 border-top text-left" style="max-width: 450px;">
+                                      <h6 class="weight500" >{% if useri.langSet == 0 %}Mteja  eneo la Biashara  {% else %} Customer around business area{% endif %}</h6> 
+                                      <div class="row mb-2">
+                                        <div class="col-3">
+                                            
+                                            {% if useri.langSet == 0 %}Eneo {% else %} Area{% endif %}:
+                                          </div>
+                                          <div class="col-9 ">
+                                                <strong class="brown" ><u class="pb-2"> {{the_bill.customer_in.area.name}} </u> </strong> 
+                                          </div>
+                                        </div>
+                                        <div class="row">
+                                          <div class="col-3">
+                                              {% if useri.langSet == 0 %}Sehemu {% else %} Position {% endif %}:
+                                          </div>
+                                          <div class="col-9 ">
+                                                <strong class="brown" ><u class="pb-2"> {{the_bill.customer_in.name}} </u> </strong> 
+                                          </div>
+                                        </div>
+                                      </div>   
+                                {% endif %}
+                          
+                          
+                          {% else %}
+                              {% if useri.langSet == 0 %} Simu  {% else %} Phone {% endif %}:   {{the_bill.simu }}
+                            <br>
+                         {{the_bill.address}}
+                       {% endif %}  
+                     </address>
+                 </div> 
+                 <div class="col-md-6">
+                     <h6 class="row  ">
+                         <div class="col-4">
+                           <span class="text-danger">{% if useri.langSet == 0 %} Kiasi  {% else %} Amount {% endif %}</span>:
+                         </div>
+                         <div class="col-8 text-right">
+                           <span class="smallerFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <label class="text-danger">{{the_bill.amount | floatformat:'-2' | intcomma }} </label>
+
+                         </div>
+
+                         <div class="col-4">
+                           <span class="text-danger">{% if useri.langSet == 0 %} Ilolipwa  {% else %} Paid {% endif %}</span>:
+                         </div>
+                         <div class="col-8 text-right">
+                           <span class="smallerFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <label class="text-success">{{the_bill.ilolipwa | floatformat:'-2' | intcomma }} </label>
+
+                         </div>
+
+                         {% if the_bill.ilolipwa != the_bill.amount %}
+                         <div class="col-4 border-top">
+                           <span class="text-danger">{% if useri.langSet == 0 %} Deni  {% else %} Debt {% endif %}</span>:
+                         </div>
+                         <div class="col-8 border-top text-right">
+                           <span class="smallerFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <label class="text-danger">
+                               <script>
+                                 //  $(document).ready(function(){
+                                       let am= Number('{{the_bill.amount}}'),
+                                        pd = Number('{{the_bill.ilolipwa}}')
+                                        amo = am-pd
+                                        amo = amo.toFixed(2)
+                                        document.write(Number(amo).toLocaleString())
+                                  // })
+                                   
+                               </script>
+                           </label>
+
+                         </div>
+
+                         {% endif %}
+                        </h6>
+                 </div>
+               </div>
+               <br>
+
+                <div class="table-responsive">
+                  <table id="prod_table" class=" table-bordered table table-sm" style="min-width: 400px;" data-row=1>
+                    <tr class="bg-light smallFont ">
+                      <th   >#</th>
+                      <th   > {% if useri.langSet == 0 %} Jina la Bidhaa  {% else %} Item Name {% endif %}</th>
+
+                      {% if color.count > 0  %}
+                      <th > {% if useri.langSet == 0 %} Rangi {% else %} Color {% endif %}</th>
+                      {% endif %}
+
+                      {% if size.count > 0  %}
+                      <th > {% if useri.langSet == 0 %} Size {% else %} Size {% endif %}</th>
+                      {% endif %}
+
+                      <th > {% if useri.langSet == 0 %} Vipimo {% else %}  Units {% endif %}</th>
+                      <th > {% if useri.langSet == 0 %} Bei {% else %}  Price {% endif %}</th>
+                      <th > {% if useri.langSet == 0 %} Idadi  {% else %} Quantity {% endif %}</th>
+                      <th >{% if useri.langSet == 0 %}  Jumla  {% else %}  Total {% endif %}</th>
+                      
+                    </tr>
+
+
+
+                            <tbody  id="view-invo_tbody">
+                            </tbody>
+
+                  </table>
+                </div>
+            
+
+
+               <div class="row ">
+                   <div class="col-md-5">
+
+                   </div>
+                   <div class="col-md-7 row border py-2 text-right latoFont invo_sumary" style="margin-top: -9px;">
+                  <!-- ACTUAL TOTAL -->
+                  <div class="row classic_div border-bottom" id="when_discount" style="display: none;">
+                      <div class="py-1 col-5 ">
+                        {% if useri.langSet == 0 %}  Jumla kwa Bei {% else %}  Actual Total {% endif %}: 
+                    </div>
+                   <div class="col-7 ">
+                       <span class=" pl-2" style="color:blue">
+                         {{duka.currencii}}
+                        </span>. 
+                        <span id="bei_halisi"></span>
+                   </div>
+
+                   <!-- DISCOUNT FIELD -->
+                    <div class="py-1 col-5">
+                        {% if useri.langSet == 0 %}  Punguzo {% else %}  Discount {% endif %}: 
+                    </div>
+                   <div class="col-7 ">
+                       <span class=" pl-2" style="color:blue">
+                         {{duka.currencii}}
+                        </span>. 
+                        <span id="punguzo_tu"></span>
+                   </div>
+
+                  </div>
+                    
+
+                   <div class="row  classic_div col-12 m-0 p-0" id="show_vat_if" style="display: none;">
+                   <!-- SUB TOTAL -->
+                    <div class="py-1 col-5">
+                        {% if useri.langSet == 0 %}Jumla kwa Mauzo{% else %}Sub Total{% endif %}: 
+                    </div>
+                   <div class="col-7 ">
+                       <span class=" pl-2" style="color:blue">
+                         {{duka.currencii}}
+                        </span>. 
+                        <span id="bei_bila_vat"></span>
+                   </div>
+
+
+                   <!-- VAT -->
+
+                   <div class="py-1 col-5 bg-light">VAT({{duka.vatper | floatformat:'-2' }}%): 
+                   </div>
+ 
+                   <div class="col-7 bg-light text-right">
+                       <span class=" pl-2" style="color:blue">
+                        {{duka.currencii}}
+                    </span>.  
+                      <span id="the_invo_vat">
+                      </span>
+                   </div>
+                   </div>
+
+
+                <!--TO BE PAID AMOUNT  -->
+                    <div class="col-5 py-1 border-top">
+                      <strong>{% if useri.langSet == 0 %} Inayolipwa  {% else %} Payable {% endif %}</strong> : 
+                    </div>
+                   <div class="col-7 py-1 border-top">
+                       <span class="pl-2" style="color:blue">
+                          {{duka.currencii}}
+                        </span>.
+                         <strong class="text-danger">{{the_bill.amount | floatformat:'-2' | intcomma }}</strong>
+                   </div>
+
+                  
+                   
+
+
+                   </div>
+
+
+                   
+               </div>
+
+               
+                 <hr>
+                 <p>{% if useri.langSet == 0 %} Imehakikiwa Na  {% else %} Comfirmed By {% endif %}: <strong>{{the_bill.By.user.user.first_name | title}}   {{the_bill.By.user.user.last_name | title}}</strong> </p>
+                 <p class=" text-center" style="font-size: 14px;">
+                  {{duka.name | title}},   {% if useri.langSet == 0 %} Simu  {% else %} Phone {% endif %}:
+                   {% for sim in contact %}
+                   {% if sim.owner or sim.SIM1_invoince %}
+                  <label class="pr-2" style="color:blue">
+                     <u>  {{sim.user.simu1}}</u> , 
+                  </label>
+
+                  {%endif%}
+                {% if sim.SIM2_invoince %}
+                  <label class="pr-2" style="color:blue">
+                     <u>  {{sim.user.simu2}}</u> , 
+                  </label>
+                  {% endif %}
+                  
+               {% endfor %}
+    
+               </p>
+         <p class="text-center">
+             {% if the_bill.ilolipwa == 0 %}
+
+             {% if the_bill.online %}
+                <a href="{% url 'unpack_items' %}?oda={{the_bill.id}}" class="btn btn-light text-danger smallFont latoFont" >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                    <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                  </svg>
+                  {% if useri.langSet == 0 %}Rudisha bidhaa {% else %} Unpack Items{% endif %}
+                </a>
+             {% else %}
+                 <button  data-toggle="modal" data-target="#ondoa_ankara_modal" class="btn btn-danger border0 latoFont smallFont btn-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-file-earmark-excel" viewBox="0 0 16 16">
+                    <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                  </svg>
+                  {% if useri.langSet == 0 %} Gairi Oda  {% else %} Cancel Order {% endif %}
+                 </button>
+              {% endif %}
+
+
+
+                 {% else %}
+                 <button  data-toggle="modal" data-target="#rudisha_pesa" style="color:#fff;background:maroon;border:0" class="btn border0 latoFont smallFont btn-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                  </svg>
+                   {% if useri.langSet == 0 %} Rudisha Pesa  {% else %}Return Amount{% endif %}
+                 </button>
+                 {% endif %}
+
+                 
+            </p>
+
+            </div>
+
+            {% if the_bill.user_customer.tr %}
+                    <div class="d-flex mt-3">
+                      <div class="mx-2 px-2 bg-light border-right">
+                          <span class="d-block" >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
+                                  <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                              </svg>                     
+                          </span>
+
+
+                    
+                      </div>
+                      <div class="setPickup">
+                        {% if the_bill.user_customer.tr  %}
+                        <h6>
+                            <span class="darkblue "> PACK-{{the_bill.user_customer.tr.code}}</span>
+                            
+                          {% if not the_bill.user_customer.tr.fromOrdered %}
+                            <a href="/EmployeeDetails?wrk={{the_bill.user_customer.tr.agent.agent.id}}" class="ml-1 pl-1 border-left">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
+                                    <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                                </svg></a>
+                           {% endif %}   
+
+                              <span class="border-left pl-1 ml-1">
+                                <button onclick="getChats('{{the_bill.user_customer.tr.user.id}}')" class="btn p-0 btn-default text-primary" >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-square">
+                                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                </button>   
+                              </span>
+                        </h6>
+                                
+                        {% endif %}
+                            <div class="d-flex">
+                              <div class="img d-flex align-items-center justify-content-center">
+                              {% if the_bill.user_customer.tr.user.owner.picha %}
+                                <img src="{{the_bill.user_customer.tr.user.owner.picha.url}}" class="border-primary" style="width:37px;height:37px;border-radius:50%" alt="">
+                            {% else %}
+                                  <img style="width:37px;height:37px" class="rounded-circle userimage" src="{{baseUrl}}/{{'userlogo.png'}}" alt="image">
+                                {% endif %}
+                            </div>
+
+                            <div class="word pl-1">
+                                <h6 class=" latoFont"> 
+                                  <div class="darkblue" >{{the_bill.user_customer.tr.user.owner.user.first_name | title}} {{the_bill.user_customer.tr.user.owner.user.last_name | title}}</div> 
+                                  <div >
+                                    ({{the_bill.user_customer.tr.user.Intp_code}}) 
+                                    <span class="ml-1 pl-1 border-left" >       
+                                      {{the_bill.user_customer.tr.user.owner.simu1 }} 
+                                    </span>
+                                    <span class="ml-1 pl-1 border-left" > 
+                                      {% if the_bill.user_customer.tr.open_package %} 
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+                                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                              <circle cx="12" cy="12" r="3"></circle>
+                                          </svg>
+                                      {% else %}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye-off">
+                                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                                              </path><line x1="1" y1="1" x2="23" y2="23"></line>
+                                          </svg>
+                                      {% endif %}
+
+
+                                    </span>
+                                  </div>
+                                </h6> 
+                            
+                              </div>
+                            
+                          </div>
+                      
+            
+                      </div>
+
+                </div>
+            {% endif %}
+
+            {% if malipo.count > 0 %}                
+
+            <div class="classic_div ">
+             <h5 class="mt-3">  {% if useri.langSet == 0 %}Malipo {% else %}  Payments {% endif %}
+              :</h5> 
+            <div class="table-responsive">
+                  <div class="d-flex classic_div"  style="width: 700px;">
+                  <div class="px-2">
+                    <div class="text-center " 
+                          style="
+                              height:50px;
+                              width:50px;
+                              font-size:40px;
+                              border:1px solid #f2f2f2;
+                              border-radius:50%;
+                              background:#fffdfd;
+                              -webkit-box-shadow: inset 0px 0px 7px -4px rgba(0,0,0,0.33); 
+                                box-shadow: inset 0px 0px 7px -4px rgba(0,0,0,0.33);
+
+                              "> 
+                        <div style="margin-top:-5px ;" > $</div> 
+                    </div>
+                  </div>
+                  <div  style="border-left:2px solid #f2f2f2 ;">
+                  <ul class="list-unstyled">
+                    {% for m in  malipo %}
+                  <li>
+                    <div class="d-flex latoFont">
+                        <p>
+                        <span class="px-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
+                          <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+                          <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+                        </svg>                          
+                        </span>
+
+                      {{ m.tarehe}}
+                      </p>
+                      <p class="px-4">
+                        {{duka.currencii}}. <strong> {{m.Amount | floatformat:'-2' | intcomma }} </strong>
+                      </p>
+                      <p >
+                      <strong>{{m.Akaunt.Akaunt_name}}</strong>
+
+                      </p>
+
+                      <p>                       
+                        <button class="btn btn-default text-primary btn-sm smallerFont" onclick="$('#show_pay_disp{{m.id}}').toggle(400)" >
+                                                  
+                        {% if useri.langSet == 0 %} Maelezo{% else %} details{% endif %} :
+
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+                          <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                      </button>                        
+                      </p>
+
+                    </div>
+
+                    <div class="row classic_div border-top" id="show_pay_disp{{m.id}}" style="display: none;">
+                      <div class="col-6 text-right">
+                        {% if useri.langSet == 0 %} Kiasi  {% else %}Amount {% endif %} :
+                      </div>
+                      <div class="col-6 ">
+                        <span class="text-primary latoFont smallFont">{{duka.currencii}}</span>. <span class="brown" >{{m.Amount | floatformat:'-2' | intcomma  }}  </span> 
+                      </div>
+                      <div class="col-6 text-right">
+                        {% if useri.langSet == 0 %} Kabla  {% else %}Before {% endif %} :
+                      </div>
+                      <div class="col-6">
+                        <span class="text-primary latoFont smallFont">{{duka.currencii}}</span>. {{m.before | floatformat:'-2' | intcomma  }} 
+                      </div>
+
+                      <div class="col-6 text-right">
+                        {% if useri.langSet == 0 %} Baada  {% else %}After {% endif %} :
+                      </div>
+                      <div class="col-6">
+                        <span class="text-primary latoFont smallFont">{{duka.currencii}}</span>. {{m.After | floatformat:'-2' | intcomma  }} 
+                      </div>
+
+
+                      {% if m.maelezo %}
+                        <div class="col-6 text-right">
+                          {% if useri.langSet == 0 %} Maelezo  {% else %}By {% endif %}:
+                        </div>
+                        <div class="col-6">
+                          <span class="darkblue" >{{m.maelezo }} </span> 
+                        </div>
+                        {% endif %}
+
+                      <div class="col-6 text-right">
+                        {% if useri.langSet == 0 %} Na  {% else %}By {% endif %}:
+                      </div>
+                      <div class="col-6">
+                        <strong>{{m.by.user.user.first_name | title }}  {{m.by.user.user.last_name | title}} </strong> 
+                      </div>
+                    </div>
+
+                      
+                  </li>
+
+                  {% endfor %}
+
+                </ul>
+                  </div>
+                  </div>
+            </div>
+            </div>
+
+
+
+            {% endif %}
+
+            </div>
+
+
+   
+            
+           
+
+
+           {% include 'invoItems.html' %}
+
+        </div>
+
+
+        <!-- MODAL YA MALIPO -->
+
+       
+        
+        
+ 
+        
+
+    </div>
+
+</div>
+
+       
+{% if the_bill.ilolipwa == 0 %}         
+<!--Delete Invo Modal -->
+<div class="modal fade" id="ondoa_ankara_modal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">                    
+          {% if useri.langSet == 0 %} Futa Oda  {% else %} delete Order {% endif %} ?
+        </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+      </div>
+      <div class="modal-body">
+          <div class="text-center">
+            <span class="text-muted">
+              <svg xmlns="http://www.w3.org/2000/svg" width="65" height="65" fill="currentColor" class="bi bi-file-earmark-excel" viewBox="0 0 16 16">
+                <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+              </svg>
+            </span>
+          </div>  
+          <p class="text-center pt-2">
+            {% if useri.langSet == 0 %} Bonyeza ndio Kuondoa Oda   {% else %} Click Ok button to remove the Order{% endif %}
+          </p>      
+          <div class="row p-3">
+            <div class="col-6 text-right"> <button data-dismiss="modal" aria-label="Close" class="btn btn-secondary  ">{% if useri.langSet == 0 %} Ghairi  {% else %} Cancel{% endif %}</button></div>
+            <div class="col-6 ">
+              <a href="{% url 'ondoaInvo' %}?val={{the_bill.id}}" onclick="$('#ondoa_ankara_modal').modal('hide')" class="btn btn-danger ">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+              </svg>{% if useri.langSet == 0 %} Ndio  {% else %} Yes{% endif %}</a></div>
+        </div>
+      </div>
+     
+    </div>
+  </div>
+</div>
+{% else %}
+
+
+<!-- Modal -->
+<div class="modal fade" id="rudisha_pesa" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">{% if useri.langSet == 0 %} Rudisha pesa ilolipwa {% else %} Return Paid Amount {% endif %}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+      <div class="modal-body">
+        <div class="p-3">
+          <form action="oda_refund" id="rudisha_pesa_form" method="POST" >
+            {% csrf_token %}
+            <div class="form-group mb-3">
+              <label for="">{% if useri.langSet == 0 %}Kumbu #{% else %} Reference{% endif %}</label>
+              <input type="text" name="kumbu_namba" placeholder="REF-{{ref}}" class="form-control">
+            </div>
+
+            <div class="form-group mb-3">
+              <label for="">{% if useri.langSet == 0 %}kiasi Kinachorudishwa{% else %} Amount to Return{% endif %}</label>
+            
+              <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+                <label class="mt-1 text-danger" for=""></label> 
+                <div class="box-pointer d-inline "></div>
+              </div>
+              <input type="text" data-amount={{the_bill.ilolipwa}}
+                   onkeyup="
+                   var amu = Number($(this).data('amount')),
+                       katwa = Number($('#rudi_kiasi_kato').val()) || 0,
+                       pyd =  Number($(this).val()) || amu
+
+                   $('#backi_show').fadeOut(300)
+                   $('#rudi_kiasi_kato').val('')
+
+                   if(Number($(this).val())>Number($(this).data('amount')))
+                         {$(this).siblings('small').fadeIn(300)
+                         $('#submit_return').prop('disabled',true)
+
+                       }else{
+                         $(this).siblings('small').fadeOut(300)
+                         if(Number($('#ilolipwa-akaunti').find('option:selected').data('value'))>0){
+                          let ac_amo = Number($('#ilolipwa-akaunti').find('option:selected').data('amount')),
+                               baki = ac_amo - pyd
+                          if(pyd==amu){
+                            baki = ac_amo+katwa - pyd
+                          }
+
+                          $('#rudi_ac_baki').attr('placeholder',baki.toLocaleString())
+                          $('#submit_return').prop('disabled',false)
+
+                         }
+                       }"
+                class="form-control money-fomat" name="rudi_kiasi" id="rudi_kiasi"   aria-describedby="helpId" placeholder="{{the_bill.ilolipwa | floatformat:'-2' | intcomma }}">
+              <small id="helpId" class="form-text text-danger" style="display: none;" >
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                  <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                  <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                </svg>
+                {% if useri.langSet == 0 %}  Kiasi Kimezidi pesa iliyolipwa{% else %}The amount exceeded the actual paid amount {% endif %}
+              </small>
+            </div> 
+            
+            <div class="form-group mb-3">
+              <label for="">{% if useri.langSet == 0 %}Makato{% else %}Charges{% endif %}</label>
+              <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+                <label class="mt-1 text-danger" for=""></label> 
+                <div class="box-pointer d-inline "></div>
+              </div>
+              <input type="text" data-amount={{the_bill.ilolipwa}}
+
+              onkeyup="
+                       var amu = Number($(this).data('amount')),
+                           katwa = Number($(this).val()) || 0,
+                           rmsg = '{% if useri.langSet == 0 %}Kiasi Kinachobaki  {% else %}Remaing Paid Amount{% endif %}'  ,
+                           pyb =   '{% if useri.langSet == 0 %}Kiasi Kinacholipwa{% else %}Payable amount{% endif %}',
+                           pyd =  Number($('#rudi_kiasi').val()) || amu
+
+                       if(katwa>amu)
+                        
+                         {$(this).siblings('small').fadeIn(300)
+                         $('#submit_return').prop('disabled',true)
+                       }else{ 
+                         if(katwa>0){
+                             
+                          if(pyd==amu){
+                            $('#payable_name').text(pyb)
+                            $('#Payable').val((amu-katwa).toLocaleString())
+                          }else{
+                            $('#payable_name').text(rmsg)
+                            $('#Payable').val((amu-(katwa+pyd)).toLocaleString())
+                          }
+
+                           $('#backi_show').fadeIn(300)
+
+                           
+                         }else{
+                           $('#backi_show').fadeOut(300)
+
+                         }
+                         $(this).siblings('small').fadeOut(300)
+                         if(Number($('#ilolipwa-akaunti').find('option:selected').data('value'))>0){
+                           let ac_amo = Number($('#ilolipwa-akaunti').find('option:selected').data('amount')),
+                               baki = ac_amo - pyd
+                               if(pyd==amu){
+                                 baki = ac_amo+katwa - pyd
+                               }
+
+                               $('#rudi_ac_baki').attr('placeholder',baki.toLocaleString())
+
+                         $('#submit_return').prop('disabled',false)
+
+                         }
+                       }"
+
+                class="form-control money-fomat" name="rudi_kiasi_kato" id="rudi_kiasi_kato"   aria-describedby="help_charges" placeholder=0>
+              <small id="help_charges" class="form-text text-danger" hidden >
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                  <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                  <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                </svg>
+                {% if useri.langSet == 0 %}  Kiasi Kimezidi pesa iliyolipwa{% else %}The amount exceeded the actual paid amount {% endif %}
+              </small>
+            </div> 
+
+            <div class="form-group mb-3" id="backi_show" style="display: none;">
+              <label for="" id="payable_name">{% if useri.langSet == 0 %}Inayolipwa{% else %}Payable amount{% endif %}</label>
+           
+              <input type="text" readonly data-amount={{the_bill.ilolipwa}}
+
+                style="font-size: large;color:#fff;background:#2900dd"
+
+                class="form-control largeFont"  name="Payable" id="Payable"   aria-describedby="help_charges" placeholder=0>
+             
+            </div> 
+
+
+
+            <div class="form-groupn mb-3">
+              <label for="malipo-akaunti" class="latoFont text-danger">
+                {% if useri.langSet == 0 %}Chagua Akaunti{% else %}Select Account{% endif %}  
+                *</label>
+              <select name="accaunti"
+              onchange="if($(this).find('option:selected').data('value')!=0){
+                let rud=Number($('#rudi_kiasi').val()) || 0,
+                     act = Number($('#rudi_kiasi').data('amount')) ,
+                     kato = Number($('#rudi_kiasi_kato').val()) || 0,
+                     ac__amo = Number($(this).find('option:selected').data('amount')),
+                     baki = ac__amo-rud
+
+                     if($('#rudi_kiasi').val()==''){
+                        baki = (ac__amo+kato)-act
+                     }
+
+
+                if(rud<=act && kato<=act ){
+                     $('#rudi_ac_baki').attr('placeholder',baki.toLocaleString())
+                   if(baki>0){
+                     $('#submit_return').prop('disabled',false)
+                     $('#help_acc').prop('hidden',true)
+                   }else{
+                     $('#help_acc').prop('hidden',false)
+                     $('#submit_return').prop('disabled',true)
+       
+                   }
+
+                }
+
+                  $('#rtn_ac_id').val($(this).find('option:selected').data('value'))
+                }else{
+                    $('#submit_return').prop('disabled',true)
+                    $('#rtn_ac_id').val(0)
+                    
+                }"
+              id="ilolipwa-akaunti"  class="form-control machaguo-pesa smallFont selectpicker" data-live-search="true">
+              
+              
+              <option value="" data-value=0 >{% if useri.langSet == 0 %}--Chagua Akaunti--{% else %}--Select Account--{% endif %}</option>
+               {% for ac in acs %}
+               <option data-amount={{ac.Amount}} data-value={{ac.id}} >{{ac.Akaunt_name}} <sub class="text-primary">{{ac.aina}}</sub></option>
+               {% endfor %}
+              
+              </select>  
+              <small id="help_acc" class="form-text text-danger" hidden >
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                  <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                  <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                </svg>
+                {% if useri.langSet == 0 %} Akaunti uliyochagua haina kiasi cha kutosha kwa malipo {% else %}insufficient amount from the selected account for  Payment {% endif %}
+              </small>
+
+              <input type="number" name="rac" hidden id="rtn_ac_id">
+              <input type="number" name="act_amount" value={{the_bill.ilolipwa}} hidden>
+              <input type="number" name="the_invo"  value={{the_bill.id}} hidden>
+              <input type="number" name="lis_t" value={{lis_t}} hidden>
+            </div>
+
+            <div class="form-group mb-3">
+              <label for="">{% if useri.langSet == 0 %}Kiasi Kinachobaki{% else %}Account Balance{% endif %}</label>
+              <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+                <label class="mt-1 text-danger" for=""></label> 
+                <div class="box-pointer d-inline "></div>
+              </div>
+              <input type="text" data-amount={{the_bill.ilolipwa}}
+
+              onkeyup="
+                       let amu = Number($(this).data('amount')),
+                           katwa = Number($(this).val()),
+                           rmsg = '{% if useri.langSet == 0 %}Kiasi Kinachobaki  {% else %}Remaing Paid Amount{% endif %}'  ,
+                           pyb =   '{% if useri.langSet == 0 %}Kiasi Kinacholipwa{% else %}Payable amount{% endif %}',
+                           pyd =  Number($('#rudi_kiasi').val()) || amu
+
+                       "
+
+                class="form-control money-fomat" name="rudi_ac_baki" id="rudi_ac_baki"   aria-describedby="help_charges" placeholder=0>
+              <small id="help_charges" class="form-text text-danger" hidden >
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                  <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                  <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                </svg>
+                {% if useri.langSet == 0 %}  Kiasi Kimezidi pesa halisi iliyo kwenye akaunti{% else %}The amount exceeded the actual account amount {% endif %}
+              </small>
+            </div> 
+
+
+            <div class="form-group mb-3" id="backi_show" >
+              <label for="rudisha_maelezo" class="text-danger" id="ret_desc">{% if useri.langSet == 0 %}Sababu{% else %}Reason{% endif %} <sup>*</sup> </label>
+           
+            <textarea name="rudisha_maelezo" id="rudisha_maelezo" cols="30" rows="2" class="form-control">
+
+            </textarea>
+            </div> 
+            
+       <div class="py-3 footer text-right">
+        <button type="button" class="btn btn-secondary border0" data-dismiss="modal">Close</button>
+        <button type="submit" id="submit_return" onclick="$('#rudisha_pesa').modal('hide')" class="btn btn-primary border0" disabled >Save </button>
+      </div>           
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+
+  $('#rudisha_pesa').on('show.bs.modal', event => {
+    var button = $(event.relatedTarget);
+    var modal = $(this);
+    // Use above variables to manipulate the DOM
+  });
+</script>
+{% endif %}
+
+<!-- Modal -->
+        <div class="modal fade" id="modal_malipo" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+            <div class="modal-dialog animate " role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">                             
+                            {% if useri.langSet == 0 %}Malipo ya Oda {% else %}Order Payment{% endif %}  
+                        </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                    </div>
+                    <div class="modal-body ">
+                        <form action="{% url 'lipaInvo'  %}" class="px-2"  id="savepaymentForm" method="POST">
+                            {% csrf_token %}
+
+
+                            <input type="text" hidden name="page" value={{p_num}} >
+
+                         <div class="form-groupn mb-3">
+                          <label for="malipo-akaunti" class="latoFont text-danger">
+                            {% if useri.langSet == 0 %}Chagua Akaunti{% else %}Select Account{% endif %}  
+                            *</label>
+                          <select name="accaunti"
+                          onchange="if($(this).find('option:selected').data('value')!=0){
+                              $('#invo_submited').prop('disabled',false)
+                              $('#invo_ac_id').val($(this).find('option:selected').data('value'))
+                            }else{
+                                $('#invo_submited').prop('disabled',true)
+                                $('#invo_ac_id').val(0)
+                                
+                            }"
+                          id="malipo-akaunti"  class="form-control machaguo-pesa smallFont selectpicker" data-live-search="true">
+                            <option value="" data-value=0 >{% if useri.langSet == 0 %}--Chagua Akaunti--{% else %}--Select Account--{% endif %}</option>
+                            </select>                        
+                        </div>
+
+
+                         <div class="form-groupn mb-3">
+                            <label for="">
+                                {% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}  
+
+                            </label>
+
+                             <div class="input-group">
+                                 <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+                                    <label class="mt-1 text-danger" for=""></label> 
+                                    <div class="box-pointer d-inline "></div>
+                                  </div>
+                            
+                            <input type="number" onkeyup="
+                               if($(this).val()!=''){
+                                   let amo = Number($(this).val()),
+                                    act = Number($(this).data('debt'))  
+
+                             
+                                    
+                               if(amo<=act){
+
+                                   $('#invo_amo').val(amo)
+                                    $('#helpId').hide()
+
+                                   if(Number($('#invo_ac_id').val())!=0){
+                                       $('#invo_submited').prop('disabled',false)
+                                   }
+                                   
+                               }else{
+                                   $('#helpId').show()
+                                   $('#invo_amo').val(act)
+                                   $('#invo_submited').prop('disabled',true)
+
+
+                               }
+                               }
+                                
+                                   "
+                             
+                            data-debt=0 name="lipwa" id="lipa_kiasi" class="form-control money-fomat" placeholder="" aria-describedby="helpId">
+                             
+                            <div class="input-group-prepend">
+                                <button type="button" onclick="$('#kama_change').toggle(400)" class="input-group-text btn btn-light btn-sm latoFont smallFont" id="basic-addon1">{% if useri.langSet == 0 %} Chenji {% else %} Change {% endif %} 
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-caret-down-fill ml-2" viewBox="0 0 16 16">
+                                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                                  </svg>
+                                </button>
+                              </div>
+                              
+                            </div>
+
+                             <small id="helpId" class=" text-danger latoFont" style="display: none;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                                    <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                                  </svg>
+                                {% if useri.langSet == 0 %}
+                                  Kiasi kinacholipwa kimezidi kiasi halisi cha ankara 
+                                {% else %}
+                                  The amount exceed the actual invoince amount
+                                {% endif %}
+                            </small>
+                             
+                             <input type="number" hidden id="invo_ac_id" value=0 name="invo_ac_id"  >
+                             <input type="number" hidden id="invo_amo"  name="invo_amo"   >
+                             <input type="number" hidden name="invo_value" id="invo_value" value={{the_bill.id}} hidden>
+                        
+                        </div>
+
+
+                        <div class="row mb-3 classic_div" id="kama_change" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="form-groupn mb-3">
+                                    <label for="kiasi_lipwa">{% if useri.langSet == 0 %} Kiasi Kilicotolewa {% else %} Payed Cash Amount {% endif %}</label>
+                                    <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+                                        <label class="mt-1 text-danger" for=""></label> 
+                                        <div class="box-pointer d-inline "></div>
+                                      </div>
+                                    <input type="number" 
+                                    onkeyup="let am_=Number($('#lipa_kiasi').data('debt')),
+                                                 paid = Number($(this).val())
+                                              if($('#lipa_kiasi').val()!=''){
+                                                  am_ =Number($('#lipa_kiasi').val())
+                                                     }
+                                                  if(paid>am_){
+                                                      $('#kiasi_Chenji').val((paid-am_).toLocaleString())
+                                                      $('#kiasi_Chenji').css({'background':'blue','color':'#fff','font-weight':'bold'})
+                                                  }else{
+                                                      $('#kiasi_Chenji').val('')
+                                                      $('#kiasi_Chenji').css({'background':'#fff','color':'#777','font-weight':'bold'})
+                                                  }
+                                              
+                                    "
+                                    id="kiasi_lipwa" class="form-control money-fomat">
+                                </div>
+
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-groupn mb-3">
+                                    <label for="kiasi_lipwa">{% if useri.langSet == 0 %} Chenji {% else %} Change {% endif %}</label>
+                                    <input type="text" id="kiasi_Chenji" class="form-control">
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="form-groupn mb-3">
+                            <label class="text-danger" for="date">
+                                {% if useri.langSet == 0 %}Tarehe{% else %}Date
+                                {% endif %}*
+                            </label>
+                            <input type="date" class="form-control" id="pay_d" name="pay_d">
+                            <script>
+                                var date = new Date();
+                              var day = date.getDate();
+                              var month = date.getMonth() + 1;
+                              var year = date.getFullYear();
+                          
+                              if (month < 10) month = "0" + month;
+                              if (day < 10) day = "0" + day;
+                          
+                              var today = year + "-" + month + "-" + day;       
+                              document.getElementById("pay_d").value = today;
+                          
+                              var today = new Date().toISOString().split('T')[0];
+                              document.getElementsByName("pay_d")[0].setAttribute('max', today);
+                             </script>
+
+                        </div>
+
+                        <div class="form-groupn mb-3">
+                            <label class="weight500" for="date">
+                                {% if useri.langSet == 0 %}Maelezo{% else %}Descriptions{% endif %}*
+                            </label>
+                          
+                              <textarea class="form-control" name="lipaElezo" id="lipaElezo" rows="3"></textarea>
+                           
+                         
+
+                        </div>
+
+                        
+
+                            
+                          <script>
+
+                              let amo = Number('{{the_bill.amount}}'),
+                                  paid_ = Number('{{the_bill.ilolipwa}}'),
+                                  debt =amo - paid_
+                                  $('#lipa_kiasi').attr('placeholder',debt.toLocaleString())
+                                  $('#lipa_kiasi').data('debt',debt)
+                                  $('#invo_amo').val(debt)
+
+
+                                  //IF THE BILL IS PAID....................
+                                  
+                          </script>
+                           
+
+                          {% if then.msg.pay %}
+                            
+                            {% if then.msg.success %}
+                                    <script>
+
+                                        $('document').ready(function(){
+                                            let msg = '{{then.msg.eng}}'
+
+                                        '{% if useri.langSet == 0 %}'
+                                              msg = '{{then.msg.swa}}'
+                                          '{% endif %}'
+                                        toastr.success(msg, lang('Imefanikiwa','Success Alert'), {timeOut: 2000});
+                                        })
+                                        
+                                    </script>
+
+                            {% else %}
+                            
+                               
+                                    <script>
+                                        $('document').ready(function(){
+
+                                        let msg = '{{then.msg.eng}}'
+
+                                        '{% if useri.langSet == 0 %}'
+                                              msg = '{{then.msg.swa}}'
+                                          '{% endif %}'
+
+
+                                            
+                                        toastr.error(msg, 'Error Alert', {timeOut: 2000});
+                                        })
+                                    </script>
+
+                            {% endif %}
+
+                         
+                          {% endif %}
+ 
+
+
+
+                         <div class="text-center border-top py-3">
+                     
+
+                        <button type="submit latoFont" disabled id="invo_submited" onclick="$('#modal_malipo').modal('hide')" class="btn btn-primary">
+                         
+                          {% if useri.langSet == 0 %} Save Malipo{% else %}Save Payment{% endif %}
+
+                        </button>
+                    </div>
+
+                    <div class="text-center mb-4">
+                         <button type="button" class="btn btn-light  smallFont latoFont" data-dismiss="modal">
+                            close
+                        </button>
+                    </div>
+                        </form>
+       
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <script>
+              
+          $('body').on("submit", "#savepaymentForm" ,function(e){
+            e.preventDefault();
+            let code = Number($(this).data('user'))
+                
+          
+                $("#modal_malipo").modal('hide');
+                $("#loadMe").modal('show');
+            
+                let post_url = $(this).attr("action"),
+                    formData = new FormData(this);
+
+              $.ajax({
+                  url:post_url,
+                  type: 'POST',
+                  data: formData,
+                  cache: false,
+                  processData: false,
+                  contentType: false,
+                  }).done(function(data) {
+                    if(data.success){
+                      toastr.success(lang(data.msg_swa,data.msg_eng), lang('Imefanikiwa','success'), {timeOut: 2000});
+                    
+                      location.reload()
+            
+                    }else{
+                      toastr.error(lang(data.msg_swa,data.msg_eng), lang('Haijafanikiwa','Error'), {timeOut: 2000});
+                
+                    }
+            
+                  })
+        
+          
+        
+          
+          
+        })
+
+          $('body').on("submit", "#rudisha_pesa_form" ,function(e){
+            e.preventDefault();
+            let code = Number($(this).data('user'))
+                
+          
+                $("#rudisha_pesa").modal('hide');
+                $("#loadMe").modal('show');
+            
+                let post_url = $(this).attr("action"),
+                    formData = new FormData(this);
+
+              $.ajax({
+                  url:post_url,
+                  type: 'POST',
+                  data: formData,
+                  cache: false,
+                  processData: false,
+                  contentType: false,
+                  }).done(function(data) {
+                    if(data.success){
+                      toastr.success(lang(data.msg_swa,data.msg_eng), lang('Imefanikiwa','success'), {timeOut: 2000});
+                    
+                      location.replace(`/mauzo/viewRef?item_valued=${data.rtn}`)
+
+            
+                    }else{
+                      toastr.error(lang(data.msg_swa,data.msg_eng), lang('Haijafanikiwa','Error'), {timeOut: 2000});
+                
+                    }
+            
+                  })
+        
+          
+        
+          
+          
+        })
+
+        </script>
+
+        <!-- CONFIRM CHANGE TO INVOINCE MODAL -->
+        
+        <div class="modal fade" id="ConfirmToInvo" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+            <div class="modal-dialog modal-sm" role="document">
+                <div class="modal-content">
+                        <div class="modal-header">
+                                <h6 class="modal-title">{% if useri.langSet == 0 %}Rekodi Mauzo{% else %}Sales Record{% endif %}</h6>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                            </div>
+                    <div class="modal-body">
+                        <!-- <div class="container-fluid"> -->
+                            <div class="text-center">
+                                <span class="text-muted">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                        <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+                                      </svg>
+                                </span>
+                            </div>
+                            <p class="p-1">
+                                {% if useri.langSet == 0 %}Badili Oda kuwa mauzo{% else %}Change Sales Order to sales record{% endif %} ?
+                            </p>
+                        <!-- </div> -->
+                    </div>
+                    <div class="row py-3 px-0 mx-0 classic_div border-top">
+                       <div class="col-12 text-center mb-3 latoFont">
+                             <a href="{% url 'change_toInvo' %}?item_valued={{the_bill.id}}&page={{p_num}}" onclick="$('#ConfirmToInvo').modal('hide')" class="btn btn-primary ">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-check2-square mr-1" viewBox="0 0 16 16">
+                                    <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+                                    <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+                                  </svg>
+                                {% if useri.langSet == 0 %}Badili{% else %}Change{% endif %}
+                            </a>
+
+                        </div>
+
+                        <div class="text-center col-12">
+                            <button type="button" class="btn btn-light btn-sm latoFont" data-dismiss="modal">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-x mr-1" viewBox="0 0 16 16">
+                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                  </svg>
+                                {% if useri.langSet == 0 %}Ghairi{% else %}Cancel{% endif %}
+                            </button>
+                        </div>
+
+                       
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+
+           <!-- MODAL DELIVERY AGENT -->
+           <div class="modal fade" id="DeriveryAgent" data-agent=1 tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">
+                     {% if useri.langSet == 0 %}Ongeza Msafirishaji wa mzigo{% else %}Add Delivery Agent{% endif %}
+                  </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                  <form action="/mauzo/packegeTransfer" id="addDeliveryAgent" method="POST">
+                    <div class="form-group">
+                      <label class="text-danger" for="Delivery_agenting">{% if useri.langSet == 0 %}Chagua Ajenti{% else %}Select Agent{% endif %} <sup>*</sup> </label>
+                      <select name="ag" id="Delivery_agenting" class="form-control text-capitalize latoFont selectpicker" data-live-search="true" >
+                          <option value=0>-- {% if useri.langSet == 0 %}Chagua Ajenti{% else %}Select Agent{% endif %} --</option>
+                      </select>                      
+                        <div id="adddelivery_agent" class="text-right">
+                          <a href="/Employees" class="latoFont" >
+                              +{% if useri.langSet == 0 %}Ongeza{% else %}Add{% endif %}
+                          </a>
+                        </div>
+                    </div>
+                    <div class="custom-control text-center classic_div custom-checkbox">
+                      <input type="checkbox"  checked class="custom-control-input"  id="show_pack_to_agent">
+                      <label class="custom-control-label " style="cursor: pointer !important;" for="show_pack_to_agent"> {% if useri.langSet == 0  %}Onesha Bidhaa{% else %}Show Items{% endif %} </label>
+                    </div>
+
+
+                    <div class="text-center mt-4 mb-1"  onclick="$('#DeriveryAgent').modal('hide')" >
+                      <button type="submit" class="btn btn-primary latoFont">
+                        {% if useri.langSet == 0 %}
+                          Kabidhi Mzigo
+                        {% else %}
+                          Give package
+                        {% endif %}
+                      </button>
+                    </div>  
+                              
+                  </form>
+               
+                  </div>
+
+                  <script>
+                    $('#addDeliveryAgent').submit(function(e){
+                      e.preventDefault()
+                      const agent = Number($('#Delivery_agenting').find('option:selected').data('agent')),
+                      bill = Number('{{the_bill.id}}') ,
+                      show = Number($('#show_pack_to_agent').prop('checked')),
+                      datar = {
+                       data: {
+                              agent,
+                              bill,
+                              show,
+                              vendor:1
+                            },
+                        url:'/purchase/AddPickup'     
+                      },
+                      sendIt = POSTREQUEST(datar)
+                       console.log(agent)
+                      $('#loadMe').modal('show')
+
+                      sendIt.then(resp=>{
+                        if(resp.success){
+                            toastr.success(`{% if useri.langSet == 0 %}${resp.msg_swa}{%else%} ${resp.msg_eng} {% endif %}`, '{% if useri.langSet == 0 %} Imefanikiwa {% else %} Success {% endif %}', {timeOut: 2000});
+                            location.reload()
+                          }else{
+                            toastr.error(`{% if useri.langSet == 0 %}${resp.msg_swa}{%else%} ${resp.msg_eng} {% endif %}`, '{% if useri.langSet == 0 %} Haikufanikiwa {% else %} Error {% endif %}', {timeOut: 2000});
+
+                        }
+                        hideLoading()
+                        $('#loadMe').modal('hide')
+                      })
+
+                    })
+                  </script>
+
+
+
+                <div class="text-center mb-5">
+                  <button type="button" class="btn btn-light btn-sm latoFont" data-dismiss="modal">Close</button>
+                
+                </div>
+
+
+              </div>
+            </div>
+          </div>
+
+          {%  if the_bill.user_customer %}
+          <span id="chart-cart-btns"  style="position: fixed;top:90vh;right:7px">
+            <!-- CHATTING BTN..................... -->
+         
+              <button class="btn btn-primary py-2  btn-sm" style="border-radius: 50%;" onclick="getChats('{{the_bill.bill_kwa.Interprise.id}}')"  > 
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.8em" height="1.8em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-circle">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                  </path>
+              </svg>
+              </button>
+          </span>
+          {% endif %}
+
+          {%  include "invoSettingModal.html" %}
+
+          <script src="/static/js/deliveryAgent.js"></script>
+
+
+       
+
+{% endblock %}
+
+
+
+{% block dash-mapper %}
+{% if useri.langSet == 0 %}  Mauzo {% else %}Sales {% endif %}
+{% endblock %}   
+{% block nav-mauzo %}
+class="c-menu__item style-none is-active  showingpop2"
+{% endblock %}
+{% block akaunt-map %}{% if useri.langSet == 0 %}Oda ya Mauzo {% else %}View Sales Order {% endif %}{% endblock %}
+{% block active-kuuza %}
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-check-fill text-primary " viewBox="0 0 16 16">
+  <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+</svg>
+{% endblock %}
+{% block active-saleOda-menu %} class="btn-default btn pop2_active_menu btn-sm " {% endblock %}
+
+{% block active-mauzo %} class="bi bi-cart-check text-primary" {% endblock %}
+
+{% block for_oda %}
+  {{the_bill.id}}
+{% endblock %}

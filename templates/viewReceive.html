@@ -1,0 +1,1216 @@
+{% extends 'userdash.html' %}
+
+{% block mauzo %}
+    {% load humanize %}
+
+<div  class="whiteBg  pb-5 classic_div pr-3" id="invoice_wrapper"  >
+    <div class="row ">
+
+        <div class="col-md-4  border-right" >
+            <header class="border-bottom  ">
+                <div class="row classic_div py-2">
+
+                
+
+                <div class="col-12">
+                   <form action="{% url 'viewReceives' %}" method="get">
+                    <div class="input-group"> 
+                      <div class="input-group-prepend border">
+                        <button type="button" onclick="$('.listin').toggle(400)" class="d-flex d-md-none btn btn-light btn-sm  " >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+
+                            
+                            </svg>
+                        </button>
+                       
+                     </div> 
+                       
+                              <input type="text" name="code" id="code" placeholder=" {% if useri.langSet == 0 %}  Andika no ya Uhamisho {% else %} write Tranfer no.. {% endif %}" class="form-control smallFont">
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-secondary smallerFont btn-sm pt-2">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                   <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                                 </svg>
+                            </button>
+                        </div>  
+                       
+                       
+                    </div>
+              </form>
+
+                </div>
+
+
+                </div>
+
+                
+            </header>
+            <!-- <div class="row classic_div py-2 pl-4 border-bottom">
+                 <div class="input-group"> 
+                     <div class="input-group-prepend">
+                        <label for="input" class="pt-1 pr-2">
+                            {% if useri.langSet == 0 %}  Tafuta  {% else %} Search {% endif %}:
+                        </label>
+                     </div> 
+                           <input type="text" id="invo-auto-search" placeholder=" {% if useri.langSet == 0 %}  Andika no ya ankara {% else %} write invoice no.. {% endif %}" class="form-control smallFont">
+                     <div class="input-group-append">
+                         <a href="#" id="href_a" class="btn btn-secondary smallerFont btn-sm pt-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                              </svg>
+                            </a>
+                     </div>  
+                 </div>
+
+               
+            </div> -->
+
+           
+                 
+            <div class="listin" style="height: 100vh;">
+               <ul class="list-unstyled " style='overflow-y:auto;height:67vh;overflow-x:hidden' >
+                {% for invo in bili %}
+
+                {% if invo.id == the_bill.id %}
+
+                <li class="p-2  border-bottom" style="border-left:4px solid rgb(0, 106, 228) ;background:rgb(232, 232, 255)" >
+                 {% else %}   
+                <li class="p-2  border-bottom" >
+                 {% endif %}
+                    
+
+                        <a  class="row smallerFont text-decoration-none" style="color: #414141;" href="{% url 'viewReceives' %}?item_valued={{invo.id}}&back_to='allbill' " >
+                            <div class="col-12">
+                            <strong> {{invo.Interprise.name | title}}</strong> 
+                            </div>
+                           
+
+                            <div class="col-7 latoFont  pt-0">
+                              <span class="text-primary btn btn-default btn-sm smallFont px-0 latoFont">RC-{{invo.transfer.code}}</span> | {{invo.date}}
+                            </div>
+
+                            <div class="col-5 text-right pt-1">
+                               
+                                 
+
+                                {% if invo.transfer.order %}
+                                <span class="text-danger py-1 px-0 btn btn-sm  btn-default  latoFont"  style="color: aliceblue;">
+                                    {% if useri.langSet == 0 %}  Zimeagizwa {% else %}Ordered {% endif %}
+                                </span>
+                                {% else %}
+                                <span class="text-success py-1 px-0 btn btn-sm  btn-default  latoFont" style="color: aliceblue;">
+                                    {% if useri.langSet == 0 %} Zimepokelewa {% else %}Received {% endif %}
+                                </span>
+                                {% endif %}
+
+                            </div>
+                          </a>
+                    
+                </li>
+
+                {% endfor %}
+            </ul>
+
+            <div>
+           
+                {% if bili.has_previous %}
+                  <a href="{% url 'viewReceives' %}?page=1" type="button"  class="btn btn-default border0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+                    </svg>
+                    </a>
+              
+                    <a href="{% url 'viewReceives' %}?page={{bili.previous_page_number}}" type="button"  class="btn btn-default  border0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                      </svg>
+                    </a>
+                  {% endif %}
+              
+                {% if bili.has_next %}
+                    <a href="{% url 'viewReceives' %}?page={{bili.next_page_number}}" type="button" class="btn btn-default border0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                      </svg>
+                    </a>
+              
+                    <a href="{% url 'viewReceives' %}?page={{pages}}" type="button"  class="btn btn-default border0" >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                      </svg>
+                    </a>
+              {% endif %}
+                    <label for="">
+                     
+                      {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+              
+                    </label>
+            </div>
+            </div>
+           
+
+        </div>
+
+        <div class="col-md-8"  >
+            <header class="border-bottom row py-3">
+                
+                <div class="col-md-12 text-right">
+
+
+                {% if the_bill.transfer.order %}
+                  <button  class="btn btn-light latoFont btn-sm smallFont" data-toggle="modal"  data-target="#confirm_transfer" >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-file-earmark-excel" viewBox="0 0 16 16">
+                      <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+                      <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                    </svg> {% if useri.langSet == 0 %} Ahirisha{% else %} Cancel{% endif %}
+                  </button>
+                  {% endif %}
+                  
+                  
+                  {% if not the_bill.transfer.order and not uc.confirmed and uc != None %}
+                  <button class="btn btn-sm btn-danger" id="hakiki_oda" data-transfer={{the_bill.id}} action="\stoku\hakiki_oda">
+                    
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
+                      <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+                      <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+                    </svg>
+                     {% if useri.langSet == 0 %} Hakiki kupokea  {% else %} Confirm receive {% endif %}
+                  </button>
+                  {%endif  %}
+
+                    <a href="/stoku/bidhaaoda" class="btn btn-primary btn-sm latoFont smallFont">
+                      <strong> + </strong> {% if useri.langSet == 0 %}Agiza{% else %}Order{% endif %}
+                    </a>
+
+                </div>
+                
+                
+            </header>
+            
+
+            <div  class="table-responsive pt-3 " id="invo_box" >
+
+                <div class="classic_div mt-sm-2 pt-3 pb-2 px-3 the_invo_page" id="the_invo_page" >
+
+              <div class="row classic_div pt-3" >
+                    <div class="col-md-7   border-right">
+
+                      <h5 class="text-secondary mt-1 pb-3 text-danger border-bottom  font-weight-bold">
+                        {% if useri.langSet == 0 %}NOTISI YA KUPOKEA BIDHAA {% else %}ITEM(S) RECEIVE NOTE{% endif %}
+                       </h5>
+
+                      <div class="row">
+                        <div class="text-danger py-1 col-3">
+                            {% if useri.langSet == 0 %}  Kutoka{% else %}  From{% endif %}:
+                        </div> 
+                        <div class="col-9"  >
+                           <strong>{{the_bill.transfer.Interprise.name| title }} </strong> 
+                        </div>                        
+                      </div>
+
+                      <div class="row">
+                        <div class="text-danger col-3" >
+                            {% if useri.langSet == 0 %} Anwani{% else %} Address{% endif %}:
+                      </div>
+                      <div class="col-9">
+                        {{the_bill.transfer.Interprise.mtaa.mtaa |title}}, {{the_bill.transfer.Interprise.mtaa.kata.kata |title}},
+                        {{the_bill.transfer.Interprise.mtaa.kata.wilaya.wilaya |title}}, {{the_bill.transfer.Interprise.mtaa.kata.wilaya.mkoa.mkoa |title}},
+                         {{the_bill.transfer.Interprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+                      </div>                         
+                      </div>
+
+                      {% if the_bill.transfer.By is not null %}
+                     <div class="row">
+                       <div class="col-3 text-danger ">
+                         {% if useri.langSet == 0 %} Iliizinishwa  {% else %} Issued By {% endif %}:
+                       </div>
+                       <div class="col-9">
+                            <strong>{{the_bill.transfer.By.user.user.first_name | title}}   {{the_bill.transfer.By.user.user.last_name | title}}</strong>  
+                       </div>
+                      </div>
+                      {% endif %}
+                    </div>
+                 <div class="col-md-5">
+                     
+                      <div class="text-md-right " style="margin-top:9px">
+                         <h6> <strong>RC-{{the_bill.transfer.code}}</strong> </h6> 
+                      </div>
+                      <hr>
+
+                      <div class="row smallFont" style="margin-top: -6px;">
+                        <div class="col-5 text-md-right">
+                            <p class="text-danger">
+                                {% if useri.langSet == 0 %}Kurekodiwa{% else %} Recorded on {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-7 text-md-right">
+                            <p> 
+                              <script>
+                                      document.write(moment('{{the_bill.transfer.tarehe | date:"r"  }}').format('DD, MMMM, YYYY HH:mm'))
+                              </script>
+                                
+                            </p>
+                        </div>  
+                      </div>
+
+
+                   <div class="row smallFont" style="margin-top: -6px;">
+                    <div class="col-5 text-md-right">
+                        <p class="text-danger text-md-right">
+                          {% if useri.langSet == 0 %}Tarehe iliyohamishwa {% else %} Transfered date {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-7 text-md-right">
+                        <p>
+                            {{the_bill.transfer.date | date:'d, F, Y' }}
+                        </p>
+                    </div>
+                    </div>
+
+                    
+                <div class="row text-md-right">
+                    <div class="col-5">
+                        <h6>
+                            {% if useri.langSet == 0 %} Statasi{% else %} Status  {% endif %} :
+                        </h6>
+                    </div>
+                  <h6 class="col-7">
+                        {% if the_bill.transfer.order %}
+                        <strong style="font-family:'Ubuntu',sans serif;color:#f81100f6" >
+                           {% if useri.langSet == 0 %} ZIMEAGIZWA {% else %} ORDERED  {% endif %}
+                        </strong>
+                        {% else %}
+                        <strong style="font-family:'Ubuntu',sans serif;color:#13a100" >
+                           {% if useri.langSet == 0 %}  ZIMEPOKELEWA {% else %} RECEIVED {% endif %}
+                        </strong>
+                        
+                        {% endif %}
+                    </h6>
+
+                    </div>
+
+  
+                    
+
+
+                 </div>
+             </div>
+               <hr>
+               <div class="row px-3">
+                  <div class="col-6">
+
+                 </div> 
+              
+               </div>
+               <br>
+
+               <div class="table-responsive">
+                  <table id="prod_table" class=" table-bordered table table-sm" style="min-width: 600px;" data-row=1>
+                <tr class="bg-light smallFont ">
+                  <th   > {% if useri.langSet == 0 %} Jina la Bidhaa  {% else %} Item Name {% endif %}</th>
+
+                  {% if color.count > 0  %}
+                  <th > {% if useri.langSet == 0 %} Rangi {% else %} Color {% endif %}</th>
+                  {% endif %}
+
+                  {% if size.count > 0  %}
+                  <th > {% if useri.langSet == 0 %} Size {% else %} Size {% endif %}</th>
+                  {% endif %}
+
+                  <th > {% if useri.langSet == 0 %} Vipimo {% else %}  Units {% endif %}</th>
+                  <th > {% if useri.langSet == 0 %} Idadi  {% else %} Quantity {% endif %}</th>
+                  
+                </tr>
+
+
+
+                        <tbody  id="view-invo_tbody">
+                           
+
+
+                        </tbody>
+
+               </table>
+               </div>
+
+
+              
+
+
+               <div class="row ">
+
+
+
+                   <div class="col-12 row">
+                     <div class="col-md-7">
+                       {% if the_bill.By is not null %}
+                     <p>
+                       {% if useri.langSet == 0 %} Iliagizwa Na  {% else %} Ordered By {% endif %}: <strong>{{the_bill.By.user.user.first_name | title}}   {{the_bill.By.user.user.last_name | title}}</strong>  
+                      </p>
+                      {% endif %}
+                     </div>
+
+                     <div class="col-md-5">
+                      {% if cm.count > 0 %}
+                      <p class="pl-2 Assitant smallFont">
+                        {% if useri.langSet == 0 %} Uthibitisho wa kupokea na: {% else %} Receive comfirmed By: {% endif %}   
+                      </p>
+                      {% endif %}
+                      <ul class="list-unstyled " style="max-width:190px ;padding-left:18px;margin-top:-7px" >
+                          {% for r in cm %}
+                            <li class="row pt-2 mt-2" style="border-radius:7px ;-webkit-box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.58);
+                            -moz-box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.58);
+                            box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.58);">
+                               <div class="col-3">
+                                 {% if r.user.picha %}
+                                <img style="width:30px;height:30px;" class="rounded-circle userimage"  src="{{ r.user.picha.url }}" alt="">
+                                {% else %}
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                                  </svg>
+                              {% endif %}
+                              </div>
+                               <div class="col-9">
+                                 <p class="latoFont smallerFont " >
+                                      <span class="font-weight-bold" > {{r.user.user.first_name | title}}   {{r.user.user.last_name | title}}</span>
+                                    <br>
+
+                                    <script>
+                                      document.write(moment('{{r.tarehe | date:"r" }}').format('DD/MM/YYYY HH:mm:ss'))
+                                    </script>
+                                 </p>
+                                
+                                
+                               </div>
+                               
+                            </li>
+                          {% endfor %}
+                      </ul>
+                     </div>
+                     
+                       
+                     
+                     
+                       
+
+                     <div class="text-center py-2 col-12 " style="border-left:3px solid yellow;background:#f0f8fc">
+                          
+                               <div class="p-3 d-inline" style="height: 50px;width:50px;border-radius:50%;color:rgb(191, 230, 253)">
+                                    <span class="text-info">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+                                          </svg>
+                                    </span>
+                               </div>|
+                          <span>{{the_bill.reasons}} </span>  
+                           
+                              </div>
+                   </div>
+                   
+               </div>
+
+               
+              
+        
+
+            </div>
+
+ 
+            </div>
+
+            
+           
+
+
+                        <script>
+                            $('document').ready(function(){
+                                let tot_vat=0,vat_include = false,vat_set=false,sub_tot=0
+                                    const vatper = Number('{{duka.vatper}}')/100
+                                    let itms=[],itm_var={},
+                                        colors=[],color_var={},
+                                        sizes=[],sizes_var={},
+                                        tr='',
+                                        
+                                        set_v='',
+                                        includ_v='',
+                                        bei = 0,
+                                        act_bei=0
+                                //create objects for items , color & sizes ...........................//
+
+
+                                //CREATE ITEMS OBJECT...............// 
+
+                                '{% for li in list %}'
+                             
+                                 //make the price equal to sold price if the item sold price is greater than its actul saved price
+                               
+
+                                 
+                           
+ 
+                                itm_var={
+                                    val:'{{li.itm.id}}',
+                                    prod:'{{li.itm.bidhaa.id}}',
+                                    idadi:'{{li.itm.uhamisho.qty}}',
+                                    jum:'{{li.itm.jum}}',
+                                    picha:'{{li.picha}}',
+                                    vat_set:false,
+                                    vat_include:false,
+                                    maelezo:'{{li.itm.bidhaa.maelezo}}',
+                                    vipimo:'{{li.itm.bidhaa.vipimo}}',
+                                    vipimo_jum:'{{li.itm.bidhaa.vipimo_jum}}',
+                                    jina:'{{li.itm.bidhaa.bidhaa_jina}}',
+                                    uwiano:'{{li.itm.bidhaa.idadi_jum}}',
+                                    serial:'{{li.itm.serial}}',
+
+                                }
+
+                                itms.push(itm_var)
+
+                                '{% endfor %}'
+
+                           
+
+                                //COLOR OBJECTS....................//
+                                '{% for col in color %}'
+                                  color_var={
+                                      itm:'{{col.bidhaa.id}}',
+                                      val:'{{col.color.id}}',
+                                      idadi:'{{col.received.qty}}',
+                                      color_name:'{{col.color.color_name}}',
+                                      color_code:'{{col.color.color_code}}'
+                                  }
+                                  colors.push(color_var)
+
+                                 '{% endfor %}'
+
+                                  
+
+                               
+
+                                 //SIZES OBJECT...............//
+                                 '{% for sz in size %}'
+                                    sizes_var={
+                                        color:'{{sz.sized.color.id}}',
+                                        size:'{{sz.sized.size}}',
+                                        idadi:'{{sz.received.qty}}',
+                                    }
+                                    sizes.push(sizes_var)
+                                 '{% endfor %}'
+
+
+
+                                 //USED PRICES.........................//
+                                 let pr=[],pr_var={}
+                                 '{% for p in prices %}'
+                                    pr_var={
+                                        unit:'{{p.unit}}',
+                                        price:Number('{{p.price}}'),
+                                        qty:Number('{{p.qty}}'),
+                                        prod:'{{p.prod}}'
+                                    }
+                                    pr.push(pr_var)
+
+                                 '{% endfor %}'
+                                 
+
+
+                              let sales=0,total_vat=0
+                              itms.forEach(itm=>{
+                                  let col = c =>c.itm === itm.val,prc = p =>p.prod ===itm.prod
+                                  
+                                  const colr = colors.filter(col),prices = pr.filter(prc)
+                                  let beis = 0 ,idadis=0,idad=0,vpmo='',sale=0
+
+                                  let prics = [],
+                                       prc1 = {
+                                        unit:itm.vipimo,
+                                        price:Number(itm.bei),
+                                        qty:1
+                                       } 
+
+                                    prics.push(prc1)   
+
+                                    if(Number(itm.uwiano)>1){
+                                        prc2={
+                                             unit:itm.vipimo_jum,
+                                             price:Number(itm.bei_jum),
+                                             qty:Number(itm.uwiano)
+                                        }
+                                        prics.push(prc2)
+
+                                    }
+
+
+                                    prics = [...prics,...pr]
+
+
+                                   
+                                     
+
+                                
+                                      
+
+
+
+                                  
+
+
+                                 tr+=`
+                              <tr class="text-center   latoFont" style="padding: 10px 3px !important;">`
+
+                             
+                               if(colr.length==0){
+
+                                let prp = b => itm.idadi % b.qty===0,
+                                    prop_price = prics.filter(prp)
+
+                                    if(prop_price.length == 0){
+                                      prop_price = prics.filter(b=>Number(b.qty)===1)
+                                  }  
+
+                                 prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+                                   ?((a.qty > b.qty)? 1 : -1) : -1 )
+                                 let ps = prop_price[prop_price.length-1]  
+                                         
+                                            beis = Number(itm.bei)*Number(ps.qty)
+
+                                       
+
+                                        vpmo = ps.unit
+                                        idad = Number(itm.idadi)/Number(ps.qty)
+
+                              
+
+                           
+                                 
+                                tr+=`
+                                <td class="text-left" > 
+                                  <div class="d-flex">
+                                    <div  style="width:40px;heigth:40px" >`
+                                      if(itm.picha!=''){
+                                        tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+                                       }else{
+                                           tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                                             <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                             <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                                           </svg>`
+                                       }
+                                    tr+=`</div>
+  
+                                    <div class="ml-1" >
+                                      <div><strong class="pl-1" style="color: #3989c6"> ${titleCase(itm.jina)}</strong></div>
+                                      <div class="pl-2 text-muted smallerFont itm_desc" style="color:blue">${itm.maelezo}</div>
+                                      <div class="pl-2  smallerFont itm_desc font-weight-bold" >${itm.serial.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</div>
+                                    </div>
+                                </td>` 
+                                
+                                if(colors.length>0){
+                                    tr+=`<td style="padding: 10px 3px !important;"> --- </td>` 
+                                }
+
+                                if(sizes.length>0){
+                                  tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+                                }
+ 
+                                 //REGULATE PRICE FOR VAT.............................//
+                          
+                            tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+                                 ` 
+
+                                 tr+=` <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}
+                                 </td> 
+                                        
+                                `
+                             
+                            }else{
+                                let span=colr.length+1
+                                     
+                                  
+                                
+                                tr+=`<td class="text-left span1" id="span_${itm.val}" rowspan="${span}">
+                                  <div class="d-flex">
+                                    <div style="width:40px;heigth:40px" >`
+                                      if(itm.picha!=''){
+                                        tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+                                       }else{
+                                           tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                                             <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                             <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                                           </svg>`
+                                       }
+                                    tr+=`</div>
+  
+                                    <div  class="ml-1" >
+                                      <div><strong class="pl-1" style="color: #3989c6"> ${titleCase(itm.jina)} </strong></div>
+                                      <div class="pl-2 itm_desc text-muted smallerFont" style="color:blue">${itm.maelezo}</div>
+                                    </div>   
+                                </td>` 
+                               
+                                colr.forEach(col=>{
+                                    let szi = s=> s.color == col.val
+                                    const sz = sizes.filter(szi)
+
+
+                           tr+=`<tr class=" text-center  latoFont" style="padding: 10px 3px !important;">`
+                                  if(sz.length==0){
+                                    let prp = b => col.idadi % b.qty===0,
+                                      prop_price = prics.filter(prp)
+    
+                                      if(prop_price.length == 0){
+                                        prop_price = prics.filter(b=>Number(b.qty)===1)
+                                    }  
+
+                                     prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+                                       ?((a.qty > b.qty)? 1 : -1) : -1 )
+                                     let ps = prop_price[prop_price.length-1]
+
+                                    vpmo = ps.unit
+                                    idad = Number(col.idadi)/Number(ps.qty)
+
+        
+                               
+
+                                      tr+=`<td style="padding: 10px 3px !important;" class="smallerFont text-left">
+                                        <label 
+                                        style="width:15px;
+                                        height:15px;
+                                        background:${col.color_code};
+                                        border-radius:100%;
+                                        color:rgba(240, 248, 255, 0);
+                                        border:1px solid #ccc"
+                                        >
+                                        ''
+                                    </label> 
+                                    ${titleCase(col.color_name)}
+                                      </td> `
+                                      if(sizes.length>0){
+                                      tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+                                      }
+
+                                       
+                                      
+                                      tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+                                      `
+
+                                    
+                                    tr+=` <td style="padding: 10px 3px !important;" > 
+                                        ${Number(idad).toFixed(2)}
+                                    </td> 
+                                           `
+                        
+                                 }else{
+                                    tr+=`<td style="padding: 10px 3px !important;" `
+                                    if(sz.length>1){
+                                       tr+=` rowspan=${sz.length+1}` 
+                                    }
+                                    
+                                   tr+=` data-itm="${itm.val}" class="span2 smallerFont text-left" >
+
+                                        <label 
+                                        style="width:15px;
+                                        height:15px;
+                                        background:${col.color_code};
+                                        border-radius:100%;
+                                        color:rgba(240, 248, 255, 0);
+                                        border:1px solid #ccc"
+                                        >
+                                        ''
+                                    </label> 
+                                        ${titleCase(col.color_name)}</td>` 
+                                     
+                                     sz.forEach(s=>{
+
+                                        let prp = b => s.idadi % b.qty===0,
+                                            prop_price = prics.filter(prp)
+
+                                            if(prop_price.length == 0){
+                                              prop_price = prics.filter(b=>Number(b.qty)===1)
+                                          }  
+        
+                                         prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+                                           ?((a.qty > b.qty)? 1 : -1) : -1 )
+                                         let ps = prop_price[prop_price.length-1]
+                                            beis = Number(itm.bei)*Number(ps.qty)
+                                        vpmo = ps.unit
+                                        idad = Number(s.idadi)/Number(ps.qty)
+                                        sale=Number(itm.sold)*Number(s.idadi)
+
+                                if( itm.vat_set){
+                                    //REGULATE MEASUARES.............//
+                                        beis= (beis/(1+vatper))
+                                        sales+=Number(itm.sold)/(1+vatper)*Number(s.idadi)
+                                        sale=sale/(1+vatper)               
+
+                                }else{
+                                        sales+=Number(itm.sold)*Number(s.idadi)
+
+                                }
+                                        sub_tot+=(beis*idad)
+                                        if(itm.vat_set){
+                                            total_vat+=sale*vatper
+                                        }
+
+                                      if(sz.length>1){
+                                       tr+=`<tr class="text-center   latoFont" style="padding: 10px 3px !important;"> `
+                                         
+                                      }   
+
+                                       tr+=`<td class="text-center" style="padding: 10px 3px !important;"><span class="text-danger smallFont"> ${s.size}</span></td>` 
+                                      
+                                       tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+                                            `
+
+
+                                           tr+=`  <td class="text-center " style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)} 
+                                           </td> 
+                                            `
+                                       if(sz.length>1){
+                                      tr+=`  </tr>`
+                                    }
+                                       
+                              
+                                         
+                                     })
+                                 }
+                                  
+                               
+                                    tr+=`</tr>
+                                `
+                                })
+                               
+                            }
+
+                            tr+=`</tr>`
+
+
+
+                            
+
+
+                              })  
+
+                            //  console.log('sub',sub_tot)
+                            //  console.log('sales',sales)
+                            //  console.log('diff',Number(sub_tot-sales).toLocaleString())
+                              
+                              $('#view-invo_tbody').html(tr)
+
+                              if(sub_tot-sales>0){
+                                $('#when_discount').show()
+                              }
+
+                              $('#bei_halisi').text(sub_tot.toLocaleString())
+                              $('#punguzo_tu').text((sub_tot-sales).toLocaleString())
+
+                              $('#bei_bila_vat').text(sales.toLocaleString())
+                              
+                              if(total_vat>0){
+                                  $('#show_vat_if').show()
+                              }else{
+                                   $('#show_vat_if').hide()
+                                 
+                              }
+                              $('#the_invo_vat').text(total_vat.toLocaleString())
+
+                              $('.span2').each(function(){
+                                  if(Number($(this).attr('rowspan'))){
+                                  let rowspan=Number($(this).attr('rowspan'))-1,
+                                      parent='#span_'+$(this).data('itm'),
+                                      prow= Number($(parent).attr('rowspan'))
+                                 $(parent).attr('rowspan',prow + rowspan)
+                                 }
+                                //  $(parent).attr('rowspan',Number(parent.attr('rowspan'))+1)
+                                 // console.log(prow)
+                              })
+                             
+                             
+
+
+                          
+                           
+                        
+                        //PRINT BILL
+                       
+                        
+                       })
+                       
+                      
+
+                        </script>
+        
+
+        </div>
+
+
+        <!-- MODAL YA MALIPO -->
+
+       
+        
+        
+ 
+        
+
+    </div>
+
+</div>
+
+<!-- MODAL KULIPIA BILL -->
+
+<!-- Modal -->
+<div class="modal fade" id="lipiaBill" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog animate" role="document">
+      <div class="modal-content ">
+  
+        <form action="/mauzo/payReturn"   method="post">
+          {% csrf_token %}
+          <div hidden class="hidden">
+          <input type="number" value={{the_bill.id}} name="value" class="f_input">
+          <input type="text" value={{back}} name="backto" class="f_input">
+          <input type="date" id="manunuzi-date" name="pay_d" class="form-control f_input smallerFont">
+          <input type="number" id="lis_t" name="lis_t" value="{{lis_t}}" class="form-control f_input smallerFont">
+         
+          </div>
+         
+         
+          <script>
+              var date = new Date();
+            var day = date.getDate();
+            var month = date.getMonth() + 1;
+            var year = date.getFullYear();
+        
+            if (month < 10) month = "0" + month;
+            if (day < 10) day = "0" + day;
+        
+            var today = year + "-" + month + "-" + day;       
+            document.getElementById("manunuzi-date").value = today;
+        
+            //var today = new Date().toISOString().split('T')[0];
+           </script>
+  
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">     
+            {% if useri.langSet == 0 %}  Kurejesha Pesa {% else %}Sales Return Refund {% endif %}
+          </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body px-4">
+        
+   
+          <div class="form-group mb-3" >
+            <label for=""> {% if useri.langSet == 0 %}  Chagua Akaunti{% else %}Select account{% endif %}</label>
+            <select name="" id="malipo-akaunti"
+            onchange="if(Number($(this).find('option:selected').data('value'))>0){
+              $('#ac').val($(this).find('option:selected').data('value'))
+  
+              let ac_am=Number($(this).find('option:selected').data('amount')),
+  
+                  am =Number($('#bill-lipwa-amount').data('amount'));
+              if(ac_am>=am){
+                $('#ac-baki-amount').attr('placeholder',(ac_am-am).toLocaleString())
+                    $('#helpinId').prop('hidden',true)
+  
+  
+                 $('#save_pay_btn').prop('disabled',false)
+              }else{
+                $('#helpinId').prop('hidden',false)
+  
+                $('#save_pay_btn').prop('disabled',true)
+  
+                $('#ac-baki-amount').attr('placeholder',(ac_am-am).toLocaleString())
+  
+              }
+  
+                    $('#helpinId2').prop('hidden',true)
+  
+            }
+            "
+  
+  
+            class="form-control machaguo-pesa smallFont selectpicker" data-live-search="true">
+              <option value="" data-amount=0 data-value=0 >{% if useri.langSet == 0 %}--Chagua Akaunti--{% else %}--Select Account--{% endif %}</option>
+            </select>
+  
+            <input type="number" id="ac" name="ac" class="f_input">
+  
+              <small id="helpinId" hidden class="mt-5 " style="color:rgb(129, 116, 0)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                </svg>
+                {% if useri.langSet == 0 %}Akaunti haina kiasi cha kutosha kulipia bili{% else %}insufficient  Account amount to pay the bill{% endif %}
+              </small>
+  
+              <small id="helpinId2" hidden class="mt-5 text-danger" >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                </svg>
+                {% if useri.langSet == 0 %}Tafadhari Chagua Akaunti kulipia bili{% else %}Please select payment account to pay the bill{% endif %}
+              </small>
+  
+          </div>
+  
+          <div class="form-group mb-3" >
+            <label for=""> {% if useri.langSet == 0 %}  Kiasi kinacholipwa{% else %}Amount{% endif %}</label>
+          
+            <div class="show_curency_block show_curency position-absolute    px-3" style="display: none ;">
+              <label class="mt-1 text-danger" for=""></label> 
+          <div class="box-pointer d-inline "></div>
+          </div>
+  
+            <input type="number"
+            onkeyup="if(Number($(this).val())>0 && $(this).val()!='' ){
+              let ac_am=Number($('#malipo-akaunti').find('option:selected').data('amount')),
+                  am =Number($(this).data('amount')),
+                  paid = Number($(this).val())
+  
+                  if($(this).val()!=''){
+                    $('#paid_set').val(1)
+  
+                  }else{
+                    $('#paid_set').val(0)
+  
+                  }
+              if(ac_am>=paid){
+                $('#ac-baki-amount').attr('placeholder',(ac_am-am).toLocaleString())
+                    $('#helperId').prop('hidden',true)
+                    $('#save_pay_btn').prop('disabled',true)
+  
+                  if(am>=paid){
+                    $('#save_pay_btn').prop('disabled',false)
+  
+                         $('#helperId2').prop('hidden',true)
+  
+                  }else{
+                    $('#save_pay_btn').prop('disabled',true)
+                    $('#helperId2').prop('hidden',false)
+                 }
+  
+                 $('#ac-baki-amount').attr('placeholder',(ac_am-paid).toLocaleString()) 
+  
+              }else{
+                $('#helperId').prop('hidden',false)
+                $('#save_pay_btn').prop('disabled',true)
+  
+  
+              }
+  
+  
+            }
+  
+            "
+            name="paid" data-amount=0 id="bill-lipwa-amount" class="input-data form-control money-fomat" placeholder="" aria-describedby="helpId">
+           <input type="number" value=0 name="paid_set" id="paid_set" class="f_input">
+  
+            <small id="helperId" hidden class=" text-danger">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+              </svg> {% if useri.langSet == 0 %}  Kiasi kinacholipwa kimezidi kiasi kilichopo kwenye akaunti iliyochaguliwa{% else %}the amount to be paid exceed Account Balance of the selected account{% endif %}
+            </small>
+  
+            <small id="helperId2" hidden class="text-danger">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+              </svg> {% if useri.langSet == 0 %}  Kiasi kinacholipwa kimezidi kiasi halisi cha malipo{% else %}the amount to be paid exceed the actual refund amount{% endif %}
+            </small>
+          </div>
+  
+          <div class="form-group mb-3" >
+            <label for=""> {% if useri.langSet == 0 %}  Inayobaki kwenye Akaunt{% else %}Account Balance{% endif %}</label>
+           
+            <div class="show_curency_block show_curency position-absolute    px-3" style="display: none ;">
+              <label class="mt-1 text-danger" for=""></label> 
+          <div class="box-pointer d-inline "></div>
+          </div>
+            <input type="number" name="bal"
+            onkeyup="if(Number($(this).val())>0 && $(this).val()!='' ){
+              let ac_am=Number($('#malipo-akaunti').find('option:selected').data('amount')),
+                  am =Number($('#bill-lipwa-amount').data('amount')),
+                  paid = Number($('#bill-lipwa-amount').val()),
+                  baki = Number($(this).val())
+  
+                  if($(this).val()!=''){
+                    $('#bal_set').val(1)
+                  }else{
+                     $('#bal_set').val(0)
+                  }
+                  if($('#bill-lipwa-amount').val()!=''){
+                    am = paid
+                  }
+              if((ac_am-am) >=baki){
+                     $('#helpedId').prop('hidden',true)
+                     $('#save_pay_btn').prop('disabled',false)
+  
+  
+              }else{
+                $('#helpedId').prop('hidden',false)
+                $('#save_pay_btn').prop('disabled',true)
+  
+              }
+  
+  
+            }
+  
+            "
+            
+            data-amount=0 id="ac-baki-amount" class="money-fomat form-control input-data" placeholder="" aria-describedby="helpId">
+          <input type="number" value=0 name="bal_set" id="bal_set" class="f_input">
+  
+            <small id="helpedId" hidden class=" text-danger">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+              </svg> {% if useri.langSet == 0 %} Kiasi kinachobaki kinazidi kiasi halisi cha akaunti baada ya malipo ya bili{% else %}The account balance exceeds the actual balance after bill payment{% endif %}
+            </small>
+          </div>
+              
+            
+  </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary border0" data-dismiss="modal">Close</button>
+          <button type="submit" id="save_pay_btn" disabled onclick="$('#lipiaBill').modal('hide')" class="btn btn-primary border0">{% if useri.langSet == 0 %}  Lipa {% else %}Pay {% endif %}</button>
+        </div>
+  
+         </form> 
+      </div>
+    </div>
+  </div>
+
+
+  
+<!-- Modal -->
+<div class="modal fade" id="confirm_transfer" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% if useri.langSet == 0 %}Hakiki Kuahirisha{% else %}Comfirm to Cancel{% endif %}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center py-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" fill="currentColor" class="bi bi-file-earmark-excel" viewBox="0 0 16 16">
+            <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+          </svg>
+        </div>
+        <p class="text-center" > 
+          {% if useri.langSet == 0 %} 
+            Kwa kubonyeza ahirisha notisi ya kuagizwa bidhaa itaondolewa
+          {% else %} 
+              Item(s) receive order will be removed
+          {% endif %} </p>
+      </div>
+      <div class=" row classic_div pb-3 ">
+        <div class="col-6 text-right">
+          <button type="button" class="btn btn-light smallFont latoFont " data-dismiss="modal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M13.854 2.146a.5.5 0 0 1 0 .708l-11 11a.5.5 0 0 1-.708-.708l11-11a.5.5 0 0 1 .708 0Z"/>
+              <path fill-rule="evenodd" d="M2.146 2.146a.5.5 0 0 0 0 .708l11 11a.5.5 0 0 0 .708-.708l-11-11a.5.5 0 0 0-.708 0Z"/>
+            </svg>
+            {% if useri.langSet == 0 %} Ghairi{% else %} Close {% endif %}
+          </button>
+        </div>
+
+        <form method="post" data-with_new=1 data-transfer={{the_bill.id}} action="\stoku\ondoa_oda" id="toa_oda1"  class="col-6  ">
+          {% csrf_token %}
+
+          
+           <button type="submit" class="btn btn-primary d-flex smallFont latoFont "  >
+               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-file-earmark-excel" viewBox="0 0 16 16">
+               <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+               <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+            </svg>
+            {% if useri.langSet == 0 %}  Ahirisha{% else %}  Cancel{% endif %}
+          </button>
+          </form>
+
+
+        <form class="text-center col-12 pt-2" data-with_new=1 data-transfer={{the_bill.id}} id="toa_oda_new"  action="\stoku\ondoa_oda">
+
+          {% csrf_token %}
+         
+          <button type="submit" class="btn btn-default btn-sm smallerFont text-primary latoFont" >{% if useri.langSet == 0 %}Ondoa na agiza upya{% else %}  Cancel{% endif %}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <script>
+      $(document).ready(function(){
+          let amo ='{{the_bill.amount}}',
+              paid = '{{the_bill.ilolipwa}}'
+
+              $('#bill-lipwa-amount').attr('placeholder',(amo-paid).toLocaleString())
+              $('#bill-lipwa-amount').data('amount',(amo-paid))
+      })
+  </script>
+
+    <!-- MESSAGE ARERT -->
+    {% if then.msg.success %}
+    <script>
+
+      
+
+        $('document').ready(function(){
+            let msg = '{{then.msg.eng}}'
+
+        '{% if useri.langSet == 0 %}'
+              msg = '{{then.msg.swa}}'
+          '{% endif %}'
+        toastr.success(msg, 'Success Alert', {timeOut: 2000});
+        })
+        
+    </script>
+
+{% elif not then.msg.success  and then.msg.is_added  %}
+
+
+    <script>
+        $('document').ready(function(){
+
+        let msg = '{{then.msg.eng}}'
+
+        '{% if useri.langSet == 0 %}'
+              msg = '{{then.msg.swa}}'
+          '{% endif %}'
+
+
+            
+        toastr.error(msg, 'Error Alert', {timeOut: 2000});
+        })
+    </script>
+
+
+
+
+{% endif %}
+
+<script src="/static/js/item_transfer.js"></script>
+
+{% endblock %}
+{% block dash-mapper %}
+ {% if useri.langSet == 0 %} Bidhaa  {% else %} Items {% endif %}
+{% endblock %}   
+{% block nav-stock %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+{% block active-receive-menu %} class="btn-default btn pop2_active_menu btn-sm " {% endblock %}
+
+{% block stock-item %}
+    <svg xmlns="http://www.w3.org/2000/svg" height="24" class="text-primary" viewBox="0 0 24 24" width="24" fill="currentColor">
+      <path d="M0 0h24v24H0z" fill="none"/><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/>
+    </svg>
+{% endblock %}
+
+{% block active-stock %} class="bi bi-shop text-primary font-weight-bold"{% endblock %}
+
+{% block dash-map %}<a href="#" class="tab_show" data-show="#general-panel">  {% if useri.langSet == 0 %}Kupokea Bidhaa{% else %} Items Receive {% endif %}</a> {% endblock %}

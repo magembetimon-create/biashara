@@ -1,0 +1,1707 @@
+{% extends 'userdash.html' %}
+
+    {% block billcss %}
+        <link rel="stylesheet" href="/static/css/Ratingstars.css">
+    {% endblock %}   
+
+      {% load humanize %}
+
+{% block mauzo %}
+  
+
+
+<svg aria-hidden="true" style="position: absolute; width: 0; height: 0; overflow: hidden;" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <symbol id="icon-starA" viewBox="0 0 24 24">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>                      
+    </symbol>
+
+
+
+  </defs>
+</svg>  
+
+<div  class="whiteBg   pb-5 classic_div pr-3" id="invoice_wrapper"  style="width:100%">
+    <div class="row ">
+        <div class="col-md-4  border-right" >
+            <header class="border-bottom py-3 px-2">
+                <h6 class="d-flex  align-items-center" >
+                  
+                    <button type="button" onclick="$('.listin').toggle(400)" class="d-flex d-md-none btn btn-light btn-sm  " >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+
+                        
+                        </svg>
+                    </button>
+                   
+                  
+                  {% if useri.langSet == 0 %}Ankara za Manunuzi  {% else %}  Purchase Receives {% endif %}
+                </h6> 
+            </header>
+
+
+            <div class="listin " style="height:100vh;">
+
+            
+
+        
+                 
+
+            <ul class="list-unstyled " style='overflow-y:auto;height:59vh;overflow-x:hidden' >
+                {% for invo in bili %}
+
+                {% if invo.id == the_bill.id %}
+
+                <li class="p-2  border-bottom" style="border-left:4px solid rgb(0, 106, 228) ;background:rgb(232, 232, 255)" >
+                 {% else %}   
+                <li class="p-2  border-bottom" >
+                 {% endif %}
+                    
+
+                        <a href="{% url 'viewRecept' %}?item_valued={{invo.bill_kwa.id}}&back_to='allbill'&lis_t={{lis_t}}&page={{p_num}} " style="color: rgb(68, 68, 68);"  class="row text-decoration-none smallerFont">
+                            <div class="col-6">
+                            <strong> {{invo.Interprise.name | title}}</strong> 
+                            </div>
+                            <div class="col-6 text-right">
+                            <span class="smallerFont">{{the_bill.Interprise.currencii}}</span>. <strong> {{invo.amount | floatformat:'-2' | intcomma}}</strong> 
+                            </div>
+
+                            <div class="col-7 latoFont  pt-0">
+                              <span class="text-primary btn btn-default btn-sm smallFont px-0 latoFont">REC-{{invo.bill_kwa.risiti.code}}</span> | 
+                              <script>
+                                document.write(moment('{{invo.bill_kwa.risiti.date | date:"r" }}').format('DD/MM/YYYY, HH:mm'))
+                              </script>
+                              
+                            </div>
+
+                            <div class="col-5 text-right pt-1">
+                               
+                                 
+
+                                {% if invo.ilolipwa == invo.amount %}
+                                <span class="text-success py-1 px-0 btn btn-sm  btn-default smallFont latoFont"  style="color: aliceblue;">
+                                    {% if useri.langSet == 0 %} imelipiwa  {% else %}Paid {% endif %}
+                                </span>
+                                {% elif invo.ilolipwa > 0 and invo.ilolipwa < invo.amount %}
+                                <span class="text-info py-1 px-0 btn btn-sm  btn-default smallFont latoFont" style="color: aliceblue;">
+                                    {% if useri.langSet == 0 %} imelipiwa kiasi  {% else %}less Paid {% endif %}
+                                </span>
+                                {% else %}
+                                <span class="text-danger py-1 px-0 smallFont btn btn-sm  btn-default latoFont" style="color: aliceblue;">
+                                    {% if useri.langSet == 0 %} Haijalipiwa  {% else %}Unpaid {% endif %}
+                                </span>
+                                {% endif %}
+
+                            </div>
+                          </a>
+                    
+                </li>
+
+                {% endfor %}
+            </ul>
+
+            <p class="py-2" style="-webkit-box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14); 
+            box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14);">
+           
+                {% if bili.has_previous %}
+                  <a href="{% url 'viewRecept' %}?page=1&item_valued={{the_bill.bill_kwa.id}}" type="button"  class="btn btn-default border0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+                    </svg>
+                    </a>
+              
+                    <a href="{% url 'viewRecept' %}?page={{bili.previous_page_number}}&item_valued={{the_bill.bill_kwa.id}}" type="button"  class="btn btn-default  border0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                      </svg>
+                    </a>
+                  {% endif %}
+              
+                {% if bili.has_next %}
+                    <a href="{% url 'viewRecept' %}?page={{bili.next_page_number}}&item_valued={{the_bill.bill_kwa.id}}" type="button" class="btn btn-default border0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                      </svg>
+                    </a>
+              
+                    <a href="{% url 'viewRecept' %}?page={{pages}}&item_valued={{the_bill.bill_kwa.id}}" type="button"  class="btn btn-default border0" >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                      </svg>
+                    </a>
+              {% endif %}
+                    <label for="">
+                     
+                      {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+              
+                    </label>
+                </p>
+          </div>
+        </div>
+
+        <div class="col-md-8"  >
+            <header class="border-bottom">
+                <div class="row py-2">
+                    <div class="col-md-6">
+                       
+                      {% if the_bill.confirm_return %}
+                         <button data-toggle="modal" data-target="#Hakiki_kurudisha"  class="btn btn-primary btn-sm latoFont ">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                                <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                              </svg>
+                              {% if useri.langSet == 0 %}  Kurudisha Bidhaa  {% else %} Purchase Return {% endif %}
+                          </button>
+                      {% else %}
+                        <button data-toggle="modal" data-target="#Hakiki_kurudisha" class="btn btn-light btn-sm latoFont ">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                                <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                              </svg>
+                              {% if useri.langSet == 0 %}  Bidhaa zinarudishwa  {% else %} Item(s) returned {% endif %}
+                        </button>
+                      {% endif %}  
+
+
+                    
+                    
+                    </div>
+
+
+        
+                    
+                  
+
+
+
+                    <div class="col-md-6 text-right">
+                        {% if the_bill.bill_kwa.ilolipwa != the_bill.bill_kwa.amount and duka.owner.pro and the_bill.bill_kwa.Inteprise == duka %}
+
+                        <button class="btn btn-primary latoFont btn-sm" data-toggle="modal" data-target="#lipiaBill">
+                            {% if useri.langSet == 0 %}Rekodi Malipo  {% else %}Record Payments {% endif %}                        
+                        </button>
+                        {% endif %}
+                           {% if the_bill.bill_kwa.By == cheo or duka.owner == useri %}
+                                <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                                  <button id="print_invo_btn" data-pu="1" data-lang="{% if useri.langSet == 0 %}0{% else %}1{% endif %}"  type="button" data-invo={{the_bill.id}} class="btn btn-light actionbtns btn-sm smallFont">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+                                      <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                                      <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+                                      </svg>
+                                      {% if useri.langSet == 0 %} Chapa {% else %} Print {% endif %}
+                                      
+                                  </button>
+                              
+                                  <div class="btn-group" role="group">
+                                  <button id="btnGroupDrop1" type="button" class="btn btn-light btn-sm smallFont dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  </button>
+                                  <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                      <button class="btn btn-default actionbtns dropdown-item" data-invo={{the_bill.id}} data-pu="1" data-lang=0 >Swahili</button>
+                                      <button class="btn btn-default actionbtns dropdown-item" data-invo={{the_bill.id}} data-pu="1" data-lang=1 >English</button>
+                                      <!-- <div class="divider"></div> -->
+
+                                      <!-- <button class="btn btn-default  dropdown-item" data-toggle="modal" data-target="#IvoSettingModal">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-settings">
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                    </svg>
+                                      {% if useri.langSet == 0 %}Rekebisha{% else %}Setting{% endif %}
+                                      </button> -->
+
+                                    </div>
+                                  </div>
+                              </div>
+                            {% endif %}
+
+
+                    </div>
+                </div>
+            </header>
+            
+        
+            
+
+             {% if duka.Interprise and not the_bill.bill_kwa.matumizi %}
+             <div class="the_bill mx-md-5 pt-2" >
+                  <h6> <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 24 24"  fill="currentColor">
+                    <path d="M0 0h24v24H0V0z" fill="none"/>
+                    <path d="M15 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V7l-5-5zM6 20V4h8v4h4v12H6zm10-10v5c0 2.21-1.79 4-4 4s-4-1.79-4-4V8.5c0-1.47 1.26-2.64 2.76-2.49 1.3.13 2.24 1.32 2.24 2.63V15h-2V8.5c0-.28-.22-.5-.5-.5s-.5.22-.5.5V15c0 1.1.9 2 2 2s2-.9 2-2v-5h2z"/>
+                    </svg>{% if useri.langSet == 0 %} Rejea kwa {% else %} Reference to  {% endif %} <a href="{% url 'viewbill' %}?item_valued={{the_bill.bill_kwa.id}}">BIL-{{the_bill.bill_kwa.code}}</a></h6>
+             </div>
+             {% endif %}
+
+          
+
+
+
+            <div  class="table-responsive pt-2 latoFont " id="invo_box"  >
+
+              {% if the_bill.user_customer.by == useri or duka.owner == useri %}
+              {% if rate.count == 0  %}
+                 <div class="mx-md-5" > 
+ 
+                   {% if useri.langSet == 0 %}
+                     Wasilisha uzoefu wako katika huduma/Bidhaa zinazotolewa na
+                   {% else %}
+                      Share your experience on goods/services provided by    
+                   {% endif %}
+                    <a href="/buzinessProfile?value={{the_bill.Interprise.id}}">{{the_bill.Interprise.name | title}}</a> 
+                
+ 
+                   <button data-toggle="modal" data-target="#RatingStar"  title="{% if useri.langSet == 0 %}Mapendekezo{% else %}Rate{% endif %}" class="btn-primary smallFont Weight400 float-right btn-sm">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-star">
+                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                     </svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-star">
+                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                     </svg>
+ 
+                     <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-star">
+                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                     </svg>
+ 
+                         
+                  </button>    
+ 
+                 </div>
+              {% else %}   
+                   <div class="mx-md-5">
+                       <div> {% if useri.langSet == 0 %}Kutoka{% else %}From{% endif %} : <a href="/buzinessProfile?value={{the_bill.Interprise.id}}">{{the_bill.Interprise.name | title}}</a></div>  
+                       <div class="d-flex" > {% if useri.langSet == 0 %}Uthaminisho{% else %}Rating{% endif %}: 
+                        <strong id="showrate" class="px-1 "  >{{rateAv|floatformat:'1'}}</strong>
+                       
+                         <svg aria-hidden="true" style="position: absolute; width: 0; height: 0; overflow: hidden;" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                           <defs>
+                             <symbol id="icon-star" viewBox="0 0 26 28">
+                               <path d="M26 10.109c0 0.281-0.203 0.547-0.406 0.75l-5.672 5.531 1.344 7.812c0.016 0.109 0.016 0.203 0.016 0.313 0 0.406-0.187 0.781-0.641 0.781-0.219 0-0.438-0.078-0.625-0.187l-7.016-3.687-7.016 3.687c-0.203 0.109-0.406 0.187-0.625 0.187-0.453 0-0.656-0.375-0.656-0.781 0-0.109 0.016-0.203 0.031-0.313l1.344-7.812-5.688-5.531c-0.187-0.203-0.391-0.469-0.391-0.75 0-0.469 0.484-0.656 0.875-0.719l7.844-1.141 3.516-7.109c0.141-0.297 0.406-0.641 0.766-0.641s0.625 0.344 0.766 0.641l3.516 7.109 7.844 1.141c0.375 0.063 0.875 0.25 0.875 0.719z"></path>
+                             </symbol>
+                   
+                             <symbol id="icon-star-half" viewBox="0 0 13 28">
+                               <path d="M13 0.5v20.922l-7.016 3.687c-0.203 0.109-0.406 0.187-0.625 0.187-0.453 0-0.656-0.375-0.656-0.781 0-0.109 0.016-0.203 0.031-0.313l1.344-7.812-5.688-5.531c-0.187-0.203-0.391-0.469-0.391-0.75 0-0.469 0.484-0.656 0.875-0.719l7.844-1.141 3.516-7.109c0.141-0.297 0.406-0.641 0.766-0.641v0z"></path>
+                             </symbol>
+                   
+                           </defs>
+                   
+                   
+                         </svg>
+                   
+                         
+                         <div style="margin-top:-1px ;" id="forRated" class="comment-stars">
+                         
+                           <input class="comment-stars-input"  disabled type="radio" name="rating" value="5" id="rating-5">
+                           <label class="comment-stars-view"  for="rating-5">
+                             <svg class="afterRate icon-star">
+                               <use xlink:href="#icon-star"></use>
+                             </svg>
+                           </label>
+                   
+                           <input class="comment-stars-input" disabled type="radio" name="rating"  value="4.5" id="rating-15" > 
+                           <label class="comment-stars-view is-half" for="rating-15">
+                             <svg class="afterRate icon-star-half">
+                               <use xlink:href="#icon-star-half"></use>
+                             </svg>
+                           </label>
+                   
+                           <input class="comment-stars-input" disabled type="radio" name="rating" value="4" id="rating-4"> 
+                           <label class="comment-stars-view" for="rating-4">
+                             <svg class="afterRate icon-star">
+                               <use xlink:href="#icon-star"></use>
+                             </svg>
+                           </label>
+                   
+                           <input class="comment-stars-input" disabled type="radio" name="rating" value="3.5" id="rating-14">
+                            <label class="comment-stars-view is-half" for="rating-14">
+                             <svg class="afterRate icon-star-half">
+                               <use xlink:href="#icon-star-half"></use>
+                             </svg>
+                           </label>
+                   
+                           <input class="comment-stars-input" disabled type="radio" name="rating" value="3" id="rating-3"> 
+                           <label class="comment-stars-view" for="rating-3">
+                             <svg class="afterRate icon-star">
+                               <use xlink:href="#icon-star"></use>
+                             </svg>
+                           </label>
+                   
+                   
+                           <input class="comment-stars-input" disabled type="radio" name="rating" value="2.5" id="rating-13"  >
+                            <label class="comment-stars-view is-half" for="rating-13">
+                             <svg class="afterRate icon-star-half">
+                               <use xlink:href="#icon-star-half"></use>
+                             </svg>
+                           </label>
+                   
+                   
+                           <input class="comment-stars-input" disabled type="radio" name="rating" value="2" id="rating-2"  > 
+                           <label class="comment-stars-view" for="rating-2">
+                             <svg class="afterRate icon-star">
+                               <use xlink:href="#icon-star"></use>
+                             </svg>
+                           </label>
+                   
+                           <input class="comment-stars-input" disabled type="radio" name="rating" value="1.5" id="rating-12"  >
+                            <label class="comment-stars-view is-half" for="rating-12">
+                             <svg class="afterRate icon-star-half">
+                               <use xlink:href="#icon-star-half"></use>
+                             </svg></label>
+                   
+                   
+                           <input class="comment-stars-input" disabled type="radio" name="rating" value="1" id="rating-1">
+                            <label class="comment-stars-view" for="rating-1">
+                             <svg class="afterRate icon-star">
+                               <use xlink:href="#icon-star"></use>
+                             </svg></label>
+                   
+                             
+                           <input class="comment-stars-input" disabled type="radio" name="rating" value="0.5" id="rating-11"  >
+                            <label class="comment-stars-view is-half" for="rating-11">
+                             <svg class="afterRate icon-star-half">
+                               <use xlink:href="#icon-star-half"></use>
+                             </svg></label>
+                         </div>
+ 
+                         <button class="btn btn-default float-right ml-3  btn-sm" onclick="$('#ShowAllRatings').toggle(300)" style="padding: 2px !important;">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down">
+                             <polyline points="6 9 12 15 18 9"></polyline>
+                         </svg>
+                     </button>
+ 
+                       </div>  
+ 
+                   
+                   </div>
+ 
+ 
+ 
+                   <div class="mx-md-5" id="ShowAllRatings" style="display: none;" >
+                      <!-- Ratingstars -->
+                     
+                     
+ 
+                           
+                       <ul class="list-unstyled" style="overflow-y:auto ;" >
+                         {% for li in rate %}
+                             <li class="border-bottom my-1 py-2" >
+                                  <div> 
+                                   <span class="mr-1  border-right">
+                                      <script>
+                                          document.write(moment('{{li.date|date:"r"}}').format('DD/MM/YYYY HH:mm'))
+                                      </script>
+                                   </span> 
+ 
+                                    <strong>{{li.rating|floatformat:'1'}}</strong>
+ 
+                                   <span class="mx-1">
+                                      {% if li.rating == 1 %}
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                     {% endif %}
+ 
+                                     {% if li.rating == 2 %}
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                     {% endif %}
+                                     {% if li.rating == 3 %}
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                     {% endif %}
+                                     {% if li.rating == 4 %}
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                     {% endif %}
+                                     {% if li.rating == 5 %}
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3" height="1.3" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                         </svg>
+                                     {% endif %}
+                                   </span>
+ 
+ 
+                                    
+                                  </div>
+ 
+                                  <div>
+                                    {{li.desc}}  
+                                        <a onclick="$('#replyForm{{li.id}}').toggle(200)" type="button" title="{% if useri.langSet == 0 %}Umeshaisoma{% else %}Seen{% endif %}" class="ml-1" >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit">
+                                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                        </svg>
+
+
+                                        </a>
+
+                                        <a href="/purchase/viewRecept?item_valued={{li.invo.bill_kwa.id}}" class="pl-1 ml-1 border-left">
+                                            REC-{{li.invo.bill_kwa.risiti.code}}
+                                        </a>
+
+                                        <form action="/mauzo/ReplyRating" method="POST" id="replyForm{{li.id}}" style="max-width: 300px;display:none" class="ReplyForComment">
+                        
+                                            {% csrf_token %}
+                                            <div class="form-group">
+                                              <label for="replyRate" class="weight700" >{% if useri.langSet == 0 %}Mapendekezo..{% else %}Remarks..{% endif %}</label>
+                                              <textarea class="form-control" name="replyRate" id="replyRate" rows="3"></textarea>
+                                              <input type="hidden" name="valu" value="{{li.id}}"  >
+                                              <input type="hidden" name="rt" value=1  >
+                                              <input type="hidden" name="invo" value='{{the_bill.bill_kwa.id}}'  >
+                                              
+                                            </div>
+            
+                                        
+            
+                                            <div class="text-right">
+                                              <button type="submit" class="btn-primary btn-sm latoFont smallFont">
+                                                  {% if useri.langSet == 0 %}Tuma{% else %}Send{% endif %}..
+                                              </button>
+                                            </div>
+                                          
+                                          </form>
+                                  </div>
+                                 
+
+                                  {% if li.reply %}
+                                    <div><i class="weight600 smallFont"> {% if useri.langSet == 0 %}Jibu{% else %}Reply{% endif %}:-</i> {{li.reply}}</div>
+                                  {% endif %}  
+                             </li>
+                             
+                         {% endfor %}
+ 
+                         {% if Unrated %}
+                         <li>
+                           <p class="text-right"> 
+                             <button data-toggle="modal" data-target="#RatingStar"  title="{% if useri.langSet == 0 %}Mapendekezo{% else %}Rate{% endif %}" class="btn-primary smallFont Weight400 float-right btn-sm">
+                               <svg xmlns="http://www.w3.org/2000/svg" width=".8em" height=".8em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width=".8em" height=".8em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+           
+                               <svg xmlns="http://www.w3.org/2000/svg" width=".8em" height=".8em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+ 
+                             </button>
+                           </p>
+                         </li>
+                         {% endif %}
+                       </ul>
+ 
+                     
+                   </div>
+              {% endif %}
+              
+              {% endif %}
+
+                <div class="classic_div mt-sm-2 pt-3 pb-2 px-3 the_invo_page" id="the_invo_page" >
+
+                  <div class="border-bottom mt-3 text-center">
+                    {% if the_bill.Interprise.logo and the_bill.Interprise.invo_logo %}
+                                 <div  style="height: 50px;">
+                                    <img src="{{the_bill.Interprise.logo.url}}" style="height:100%">
+                                  </div> 
+                               {% endif %}
+                            
+                               <h4 class="font-weight-bold">
+                                   {{the_bill.Interprise.name | title}}
+                               </h4>
+
+                             <h6 style="margin-top:-13px" >
+                                {{the_bill.Interprise.slogan}}
+                             </h6>  
+
+                             <h6 style="margin-top:-5px" >
+                                {{the_bill.Interprise.jengo}}
+                             </h6>  
+
+                               <h6  style="margin-top:-5px" >
+                                  {{the_bill.Interprise.mtaa.mtaa | title }}, {{the_bill.Interprise.mtaa.kata.kata | title }}, {{the_bill.Interprise.mtaa.kata.wilaya.wilaya | title }}, 
+                                  {{the_bill.Interprise.mtaa.kata.wilaya.mkoa.mkoa | title }}, {{the_bill.Interprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title }}
+                                   
+                             </h6>
+                   
+                     
+
+                               
+                             {% if reg.count > 0 %}
+                             
+                              <div class="col-12" style="margin-top: -6px;">
+                                  <h6>
+                                   {% for r in reg %}
+                                      {% if forloop.counter > 1 %}
+                                         ,
+                                      {% endif %}
+                                         {{r.reg_name }}:  {{r.reg_no }}
+                                      {% endfor %}
+                                  </h6>
+                              </div>   
+                             
+                          {% endif %}
+                          <h6 style="margin-top:-5px"  class="weight600">
+                                 <strong>{{the_bill.Interprise.Intp_code}}</strong> 
+                             </h6>
+               </div>
+              <div class="row classic_div pt-3" >
+                    <!-- <div class="col-md-7 border-right">
+                      <address>
+                            <div class="row" >
+                           
+                            <div class="col-12 ">
+                              
+                                {% if the_bill.Interprise.logo and the_bill.Interprise.invo_logo %}
+                                  <div class="pl-5" style="height: 50px;">
+                                     <img src="{{the_bill.Interprise.logo.url}}" style="height:100%">
+                                   </div> 
+                                {% endif %}
+                             
+                                <h5 class="font-weight-bold">
+                                    {{the_bill.Interprise.name | title}}
+                                </h5>
+                            </div>
+                                                         
+                            <div class="col-12" style="margin-top:-6px">
+                                <h6 class="">
+                                    {{the_bill.Interprise.mtaa | title}} , {{the_bill.Interprise.wilaya}} , {{the_bill.Interprise.mkoa}}, {{the_bill.Interprise.country}}
+                                </h6>
+                            </div>
+                            <div class="col-12" style="margin-top:-6px">
+                                <h6 class="">
+                                    {{the_bill.Interprise.jengo}}
+                                </h6>
+                            </div>
+
+                        </div>
+
+                         <div class="row" style="margin-top: -6px;">
+                           <div class="col-12">
+                                <h6 class="">
+                                  code:{{the_bill.Interprise.Intp_code}} 
+                                </h6>
+                            </div>
+                            <div class="col-12">
+                                <h6 class="">
+                                    {{the_bill.Interprise.owner.email }} 
+                                </h6>
+                            </div>
+                            {% if reg.count > 0 %}
+                               {% for r in reg %}
+                                <div class="col-12" style="margin-top: -6px;">
+                                    <h6 >
+                                        {{r.reg_name }}:  {{r.reg_no }}
+                                    </h6>
+                                </div>   
+                               {% endfor %}
+                            {% endif %}
+
+                              
+                           
+                            
+                        </div>
+                      </address>
+  
+                    <br>
+
+                </div> -->
+                 <div class="col-md-12">
+                     <h3 class="text-danger ">
+                       {% if the_bill.service %}
+                          {% if useri.langSet == 0 %} ANKARA YA HUDUMA{% else %}SERVICE INVOICE {% endif %}
+                       {% else %}
+                          {% if useri.langSet == 0 %} ANKARA {% else %} INVOICE {% endif %}
+                       {% endif %}
+
+                      </h3>
+                      <div  style="margin-top:-14px">
+                         <h5>INVO-{{the_bill.code}}</h5> 
+                      </div>
+                      <hr>
+
+                      <div class="row " style="margin-top: -6px;">
+                        <div class="col-5 ">
+                            <p class="text-danger">
+                                {% if useri.langSet == 0 %} Tarehe  {% else %} Invoice Date {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-7 ">
+                            <p>
+                                {{the_bill.date | date:'d/m/Y'}}
+                            </p>
+                        </div>  
+                      </div>
+
+                   <div class="row " style="margin-top: -6px;">
+                    <div class="col-5 ">
+                      
+                        <p class="text-danger ">
+                             {% if useri.langSet == 0 %} Kukamilisha  {% else %} Due date {% endif %}
+                        </p>
+                       
+                    </div>
+                    <div class="col-7 ">
+
+
+                      {% now "Ymd" as the_date %}
+                      {% if the_bill.amount > the_bill.ilolipwa and the_bill.kulipa|date:"Ymd"|add:0  <= the_date|add:0  %}
+                        <p  >
+                            <span class="bg-danger p-1 text-light">
+                               {{the_bill.kulipa | date:'d/m/Y'}} 
+                            </span>
+                             
+                        </p>
+                        {% else %}
+                           <p  >
+                             {{the_bill.kulipa | date:'d/m/Y'}}
+                        </p>
+                        {% endif %}
+                    </div>
+                    </div>
+
+                    
+                <div class="row ">
+                    <div class="col-5">
+                        <h6>
+                            {% if useri.langSet == 0 %} Malipo{% else %} Payments  {% endif %} :
+                        </h6>
+                    </div>
+                  <h6 class="col-7">
+                        <!-- {% if the_bill.ilolipwa == the_bill.amount %}
+                        <strong style="font-family:'Ubuntu',sans serif;color:#205302b4" >
+                           {% if useri.langSet == 0 %}   IMELIPIWA{% else %} PAID  {% endif %}
+                        </strong>
+                        {% elif the_bill.ilolipwa != 0 %}
+                        <strong style="font-family:'Ubuntu',sans serif;color:#2f6a79" >
+                           {% if useri.langSet == 0 %}  IMELIPWA KIASI {% else %} LESS PAID {% endif %}
+                        </strong>
+                        {% elif the_bill.ilolipwa == 0 %}
+                        <strong style="font-family:'Ubuntu',sans serif;color:#9b1010" >
+                            {% if useri.langSet == 0 %}  HAIJALIPIWA {% else %} UNPAID {% endif %}
+                        </strong>
+                        {% endif %} -->
+                        <strong>
+                          <script>
+                           if(Math.round(Number('{{the_bill.ilolipwa}}')/Number('{{the_bill.amount}}')) !== Number('{{the_bill.ilolipwa}}')/Number('{{the_bill.amount}}')) {
+                                document.write((Number('{{the_bill.ilolipwa}}')/Number('{{the_bill.amount}}')*100).toFixed(2) + '%')
+                           }else{
+                               document.write((Number('{{the_bill.ilolipwa}}')/Number('{{the_bill.amount}}')*100) + '%')
+            
+                           }
+                          
+                         </script>
+                        </strong>
+                    </h6>
+
+                    </div>
+
+  
+                    
+
+
+                 </div>
+             </div>
+               <hr>
+               <div class="row px-3">
+                <div class="col-md-6 latoFont" style="font-weight: 500;">
+                  <span class="text-danger">
+                      {% if useri.langSet == 0 %} Bili kwa  {% else %} Bill To {% endif %}:
+                  </span> <br>
+                  <address >
+                     <strong> {{the_bill.mteja_jina | title }}</strong>
+                  <br>
+                   
+                    {% if the_bill.online %}
+                      {% if useri.langSet == 0 %} Simu  {% else %} Phone {% endif %}:   {{the_bill.user_customer.enteprise.owner.simu1 }}
+                      <br>
+                       {{the_bill.user_customer.jengo }}
+                      <br>
+                       {{the_bill.user_customer.enteprise.mtaa.mtaa |title}},  {{the_bill.user_customer.enteprise.mtaa.kata.kata |title}},  
+                       {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.wilaya | title }},  {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.mkoa.mkoa |title}},  
+                       {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}} 
+                   
+                       
+                      
+
+
+                       {% else %}
+                        {% if useri.langSet == 0 %} Simu  {% else %} Phone {% endif %}:   {{the_bill.simu }}
+                           <br>
+                      {{the_bill.address}}
+                    {% endif %}  
+                  </address>
+              </div> 
+
+                 <div class="col-md-6">
+                     <h6 class="row  ">
+                         <div class="col-4">
+                           <span class="text-danger">{% if useri.langSet == 0 %} Kiasi  {% else %} Amount {% endif %}</span>:
+                         </div>
+                         <div class="col-8 text-right">
+                           <span class="smallerFont" style="color: #2900dd;"> {{the_bill.Interprise.currencii}}</span>. <label class="text-danger">{{the_bill.amount | floatformat:'-2' | intcomma }} </label>
+
+                         </div>
+
+                         <div class="col-4">
+                           <span class="text-danger">{% if useri.langSet == 0 %} Ilolipwa  {% else %} Paid {% endif %}</span>:
+                         </div>
+                         <div class="col-8 text-right">
+                           <span class="smallerFont" style="color: #2900dd;"> {{the_bill.Interprise.currencii}}</span>. <label class="text-success">{{the_bill.ilolipwa | floatformat:'-2' | intcomma }} </label>
+
+                         </div>
+
+                         {% if the_bill.ilolipwa != the_bill.amount %}
+                         <div class="col-4 border-top">
+                           <span class="text-danger">{% if useri.langSet == 0 %} Deni  {% else %} Debt {% endif %}</span>:
+                         </div>
+                         <div class="col-8 border-top text-right">
+                           <span class="smallerFont" style="color: #2900dd;"> {{the_bill.Interprise.currencii}}</span>. <label class="text-danger">
+                               <script>
+                                 //  $(document).ready(function(){
+                                       let am= Number('{{the_bill.amount}}'),
+                                        pd = Number('{{the_bill.ilolipwa}}')
+                                        document.write((am-pd).toLocaleString())
+                                  // })
+                                   
+                               </script>
+                           </label>
+
+                         </div>
+
+                         {% endif %}
+                        </h6>
+                 </div>
+               </div>
+               <br>
+
+                 <!-- IF IS SERVICE -->
+     {% if the_bill.service %}
+     <h6 class="latoFont px-3 weight600">
+                   
+        {% if useri.langSet == 0 %} Muda wa Huduma{% else %} Service Duration {% endif %}
+     </h6> 
+   <h6 class="row px-3 mb-3 smallFont latoFont">
+       <div class="col-7 row">
+           <div class="col-3 brown"> {% if useri.langSet == 0 %}Kuanzia   {% else %} From {% endif %}:  </div>
+           <div class="col-8 weight500">
+               <script> document.write(moment('{{the_bill.servFrom | date:"r" }}').format('DD/MM/YYYY, HH:mm')) </script>
+                
+            </div>
+          
+       </div>
+       <div class="col-7 row"> 
+         <div class="col-3 brown"> {% if useri.langSet == 0 %} Hadi {% else %} To {% endif %}:  </div>
+           <div class="col-8 weight500">
+            <script> document.write(moment('{{the_bill.servTo | date:"r" }}').format('DD/MM/YYYY, HH:mm')) </script>
+           </div>
+        </div>
+    </h6>
+
+   
+   {% endif %}
+
+               
+
+               <div class="table-responsive">
+                 <table id="prod_table" class=" table-bordered table table-sm" style="min-width: 400px;" data-row=1>
+                <tr class="bg-light smallFont ">
+                  <th   > #</th>
+                  <th   > {% if useri.langSet == 0 %} Jina la Bidhaa  {% else %} Item Name {% endif %}</th>
+
+                  {% if color.count > 0  %}
+                  <th > {% if useri.langSet == 0 %} Rangi {% else %} Color {% endif %}</th>
+                  {% endif %}
+
+                  {% if size.count > 0  %}
+                  <th > {% if useri.langSet == 0 %} Size {% else %} Size {% endif %}</th>
+                  {% endif %}
+
+                  <th > {% if useri.langSet == 0 %} Vipimo {% else %}  Units {% endif %}</th>
+                  <th > {% if useri.langSet == 0 %} Bei {% else %}  Price {% endif %}</th>
+                  <th > {% if useri.langSet == 0 %} Idadi  {% else %} Quantity {% endif %}</th>
+                  <th >{% if useri.langSet == 0 %}  Jumla  {% else %}  Total {% endif %}</th>
+                  {% if the_bill.service %}
+                  <th colspan="2" > {% if then.langSet == 0 %}Muda  {% else %} Duration {% endif %}</th>
+                 
+                  <th >{% if then.langSet == 0 %}  Jumla{% else %}  Total{% endif %}</th>
+                  {% endif %}
+                </tr>
+
+
+
+                        <tbody  id="view-invo_tbody">
+                           
+
+
+                        </tbody>
+
+               </table>
+               </div>
+
+
+               <div class="row ">
+                   <div class="col-md-5">
+
+                   </div>
+                   <div class="col-md-7 row border py-2 text-right latoFont invo_sumary" style="margin-top: -9px;">
+                  <!-- ACTUAL TOTAL -->
+                  <div class="row classic_div border-bottom" id="when_discount" style="display: none;">
+                      <div class="py-1 col-5 ">
+                        {% if useri.langSet == 0 %}  Jumla kwa Bei {% else %}  Actual Total {% endif %}: 
+                    </div>
+                   <div class="col-7 ">
+                       <span class=" pl-2" style="color:blue">
+                         {{the_bill.Interprise.currencii}}
+                        </span>. 
+                        <span id="bei_halisi"></span>
+                   </div>
+
+                   <!-- DISCOUNT FIELD -->
+                    <div class="py-1 col-5">
+                        {% if useri.langSet == 0 %}  Punguzo {% else %}  Discount {% endif %}: 
+                    </div>
+                   <div class="col-7 ">
+                       <span class=" pl-2" style="color:blue">
+                         {{the_bill.Interprise.currencii}}
+                        </span>. 
+                        <span id="punguzo_tu"></span>
+                   </div>
+
+                  </div>
+                    
+
+                   <div class="row  classic_div col-12 m-0 p-0" id="show_vat_if" style="display: none;">
+                   <!-- SUB TOTAL -->
+                    <div class="py-1 col-5">
+                        {% if useri.langSet == 0 %}Jumla kwa Mauzo{% else %}Sub Total{% endif %}: 
+                    </div>
+                   <div class="col-7 ">
+                       <span class=" pl-2" style="color:blue">
+                         {{the_bill.Interprise.currencii}}
+                        </span>. 
+                        <span id="bei_bila_vat"></span>
+                   </div>
+
+
+                   <!-- VAT -->
+
+                   <div class="py-1 col-5 bg-light">VAT({{the_bill.Interprise.vatper | floatformat:'-2' }}%): 
+                   </div>
+ 
+                   <div class="col-7 bg-light text-right">
+                       <span class=" pl-2" style="color:blue">
+                        {{the_bill.Interprise.currencii}}
+                    </span>.  
+                      <span id="the_invo_vat">
+                      </span>
+                   </div>
+                   </div>
+
+
+                <!--TO BE PAID AMOUNT  -->
+                    <div class="col-5 py-1 border-top">
+                      <strong>{% if useri.langSet == 0 %} Jumla  {% else %} Total {% endif %}</strong> : 
+                    </div>
+                   <div class="col-7 py-1 border-top">
+                       <span class="pl-2" style="color:blue">
+                          {{the_bill.Interprise.currencii}}
+                        </span>.
+                         <strong class="text-danger">{{the_bill.amount | floatformat:'-2' | intcomma }}</strong>
+                   </div>
+
+                  
+                   
+
+
+                   </div>
+
+
+                   
+               </div>
+
+        {% if ulilipa %}
+               <hr>
+               
+               <div class="row classic_div ">
+                   <div class="col-md-12">
+                      <h6>{% if useri.langSet == 0 %} Malipo  {% else %} Payments{% endif %} </h6>
+                       
+                        
+
+                        <div class="table-responsive">
+                              <table class="table table-sm "  >
+                                <thead>
+                                    <tr>
+                                        <th>{% if useri.langSet == 0 %} TareheMuda{% else %} Datetime{% endif %}</th>
+                                        <th>{% if useri.langSet == 0 %} Kiasi {% else %} Amount{% endif %} <span class="text-primary smallerFont">({{the_bill.Interprise.currencii}})</span> </th>
+                                        <th>{% if useri.langSet == 0 %} Njia ya Malipo{% else %} Payments Type{% endif %}</th>
+                                        <th>{% if useri.langSet == 0 %} Maelezo{% else %} Descriptions{% endif %}</th>
+                                        <th>{% if useri.langSet == 0 %} Ilipokelewa Na{% else %}Receved By{% endif %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                  {% for m in ulilipa %}
+                                    <tr class="text-center" >
+                                        <td class="noWordCut" > 
+                                                <script>
+                                                    document.write(moment('{{m.tarehe | date:"r" }}').format('DD/MM/YYYY, HH:mm:'))
+                                                </script>
+                                        </td>
+                                        <td><strong class="brown" > {{m.Amount | floatformat:'-2' | intcomma }} </strong></td>
+                                        <td>{{m.Akaunt.aina | title }} </td>
+                                        <td class="latoFont" >
+                                          {% if m.maelezo %}
+                                            {{m.maelezo}} 
+                                          {% else %}
+                                            -------
+                                          {% endif %}
+                                        </td>
+
+                                        <td class="noWordCut" >{{m.by.user.user.first_name | title }}  {{m.by.user.user.last_name | title}}  </td>
+                                    </tr>
+                                    
+                                    {% endfor %}
+                                </tbody>
+                                  
+                              </table>
+                        </div>
+            
+            
+            
+                         
+                   </div>
+               </div>  
+          {% endif %} 
+               
+                 <hr>
+
+
+
+                
+                 <div class="row classic_div">
+                      <p class="col-md-6" >{% if useri.langSet == 0 %} Imehakikiwa Na  {% else %} Confirmed By {% endif %}: 
+                          <strong style="color:#2900dd" >{{the_bill.By.user.user.first_name | title}}   {{the_bill.By.user.user.last_name | title}}</strong> 
+                      </p>
+      
+                     
+               </div>
+               <hr>
+
+                 <p class=" text-center" style="font-size: 14px;">
+                       {{the_bill.Interprise.name | title}},   {% if useri.langSet == 0 %} Simu  {% else %} Phone {% endif %}:
+                        {% for sim in contact %}
+                        {% if sim.owner or sim.SIM1_invoince %}
+                       <label class="pr-2" style="color:blue">
+                          <u>  {{sim.user.simu1}}</u> , 
+                       </label>
+
+                       {%endif%}
+                     {% if sim.SIM2_invoince %}
+                       <label class="pr-2" style="color:blue">
+                          <u>  {{sim.user.simu2}}</u> , 
+                       </label>
+                       {% endif %}
+                       
+                    {% endfor %}
+         
+                  </p>
+        
+
+                </div>
+
+                {% if malipo.count > 0 %}                
+
+                
+
+                <div class="table-responsive">
+                  <div class="classic_div pb-5" style="width: 700px;">
+                 <h5 class="mt-3">{% if useri.langSet == 0 %} Malipo  {% else %} Payments {% endif %}:</h5> 
+
+                <div class="d-flex classic_div" >
+                  <div class="px-2">
+                    <div class="text-center " 
+                          style="
+                               height:50px;
+                               width:50px;
+                               font-size:40px;
+                               border:1px solid #f2f2f2;
+                               border-radius:50%;
+                               background:#fffdfd;
+                               -webkit-box-shadow: inset 0px 0px 7px -4px rgba(0,0,0,0.33); 
+                                box-shadow: inset 0px 0px 7px -4px rgba(0,0,0,0.33);
+
+                               "> 
+                         <div style="margin-top:-5px ;" > $</div> 
+                    </div>
+                  </div>
+                  <div  style="border-left:2px solid #f2f2f2 ;">
+                  <ul class="list-unstyled">
+                    {% for m in  malipo %}
+                   <li >
+                     <div class="d-flex latoFont">
+                        <p>
+                        <span class="px-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
+                          <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+                          <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+                        </svg>                          
+                        </span>
+                         <script>
+                           document.write(moment('{{m.tarehe | date:"r" }}').format('DD/MM/YYYY, HH:mm'))
+                         </script>
+                     
+                      </p>
+                      <p class="px-4">
+                        <span class="text-primary">{{the_bill.Interprise.currencii }}</span> . <strong class="brown" > {{m.Amount | floatformat:'-2' | intcomma }} </strong>
+                      </p>
+                      <p >
+                       <strong>{{m.Akaunt.Akaunt_name}}</strong>
+
+                      </p>
+
+                      <p>                       
+                        <button class="btn btn-default text-primary btn-sm smallerFont" onclick="$('#show_pay_disp{{m.id}}').toggle(400)" >
+                                                  
+                         {% if useri.langSet == 0 %} Maelezo{% else %} details{% endif %} :
+
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+                          <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                       </button>                        
+                      </p>
+
+                     </div>
+
+                     <div class="row classic_div border-top" id="show_pay_disp{{m.id}}" style="display: none;">
+                       <div class="col-6 text-right">
+                        {% if useri.langSet == 0 %} Kiasi  {% else %}Amount {% endif %} :
+                       </div>
+                       <div class="col-6 ">
+                        <span class="text-primary">{{the_bill.Interprise.currencii  }}</span>. <span class="brown weight600">{{m.Amount | floatformat:'-2' | intcomma  }} </span> 
+                       </div>
+                       <div class="col-6 text-right">
+                        {% if useri.langSet == 0 %} Kabla  {% else %}Before {% endif %} :
+                       </div>
+                       <div class="col-6">
+                         <span class="text-primary">{{the_bill.Interprise.currencii }}</span> . {{m.before | floatformat:'-2' | intcomma  }} 
+                       </div>
+
+                       <div class="col-6 text-right">
+                        {% if useri.langSet == 0 %} Baada  {% else %}After {% endif %} :
+                       </div>
+                       <div class="col-6">
+                        <span class="text-primary">{{the_bill.Interprise.currencii }}</span> . {{m.After | floatformat:'-2' | intcomma  }} 
+                       </div>
+
+                       <div class="col-6 text-right">
+                        {% if useri.langSet == 0 %} Na  {% else %}By {% endif %}:
+                       </div>
+                       <div class="col-6">
+                         <strong>{{m.by.user.user.first_name | title }}  {{m.by.user.user.last_name | title}} </strong> 
+                       </div>
+
+                     </div>
+
+                      
+                   </li>
+
+                   {% endfor %}
+
+                 </ul>
+                  </div>
+                </div>
+                </div>
+                </div>
+
+
+                {% endif %}
+
+
+               </div>
+
+                    {% include 'invoItemsRisiti.html' %}  
+        
+
+        </div>
+
+
+        <!-- MODAL YA MALIPO -->
+
+       
+        
+        
+ 
+        
+
+    </div>
+
+</div>
+
+
+
+<span id="chart-cart-btns"  style="position: fixed;top:90vh;right:7px">
+  <!-- CHATTING BTN..................... -->
+    <button class="btn btn-primary py-2  btn-sm" style="border-radius: 50%;" onclick="getChats('{{the_bill.Interprise.id}}')"  > 
+      <svg xmlns="http://www.w3.org/2000/svg" width="1.8em" height="1.8em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-circle">
+        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+        </path>
+    </svg>
+    </button>
+</span>
+
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="RatingStar" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">
+              
+
+              <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-star">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+
+              {% if useri.langSet == 0 %}Mapendekezo{% else %}Rating{% endif %}  
+            
+            </h5>
+
+              
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+
+          <p>
+              {% if useri.langSet == 0 %}
+                Wasilisha uzoefu wako katika huduma/Bidhaa zinazotolewa na
+              {% else %}
+                Share your experience on goods/services provided by    
+              {% endif %}
+              <a href="/buzinessProfile?value={{the_bill.Interprise.id}}">{{the_bill.Interprise.name | title}}</a> 
+          
+          </p>
+
+               <form action="/purchase/purchaseRate" id="ratingForm" method="post">
+                  <div class="form-group">
+                    <div class="panel">
+                      <label class="brown" for="comment-stars">{% if useri.langSet == 0 %}Weka Alama{% else %}Rate{% endif %} <sup>*</sup> </label>
+                      <a type="button" onclick="event.preventDefault();$('.comment-stars-input:checked').prop('checked',false)" class="float-right" href="#">{% if useri.langSet == 0 %}Futa{% else %}Clear{% endif %}</a>
+                    </div>
+                    
+
+                   <div  class="comment-stars">
+      
+                    <input class="comment-stars-input" type="radio"  name="rating" value="5" id="srating-5">
+                    <label class="comment-stars-view"  for="srating-5">
+                      <svg class="icon icon-star">
+                        <use xlink:href="#icon-starA"></use>
+                      </svg>
+                    </label>
+            
+           
+            
+                    <input class="comment-stars-input" type="radio" name="rating" value="4" id="srating-4"> 
+                    <label class="comment-stars-view" for="srating-4">
+                      <svg class="icon icon-star">
+                        <use xlink:href="#icon-starA"></use>
+                      </svg>
+                    </label>
+            
+                
+            
+                    <input class="comment-stars-input" type="radio" name="rating" value="3" id="srating-3"> 
+                    <label class="comment-stars-view" for="srating-3">
+                      <svg class="icon icon-star">
+                        <use xlink:href="#icon-starA"></use>
+                      </svg>
+                    </label>
+            
+            
+              
+            
+            
+                    <input class="comment-stars-input" type="radio" name="rating" value="2" id="srating-2"  > 
+                    <label class="comment-stars-view" for="srating-2"><svg class="icon icon-star">
+                        <use xlink:href="#icon-starA"></use>
+                      </svg>
+                    </label>
+            
+               
+            
+            
+                    <input class="comment-stars-input" type="radio" name="rating" value="1" id="srating-1">
+                     <label class="comment-stars-view" for="srating-1">
+                      <svg class="icon icon-star">
+                        <use xlink:href="#icon-starA"></use>
+                      </svg></label>
+            
+                      
+                    
+                  </div>
+         
+                     <small class="text-danger" id="NostarAlert" hidden >
+                       
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-triangle">
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                          <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+                      </svg>
+                      {% if useri.langSet == 0 %}Tafadhari weka Alama kwa kubonyeza Nyota{% else %}Please click on the stars to rate{% endif %}
+                    </small>
+
+                  </div>
+
+                  <div class="form-group">
+                    <label class="brown" for="Ratingremarks">{% if useri.langSet == 0 %}Mapendekezo{% else %}Remarks{% endif %} <sup>*</sup> </label>
+                     <textarea name="Ratingremarks" class="form-control" id="Ratingremarks" ></textarea>                  
+                  </div>
+                   
+                  
+                  <div class="py-3 text-right">
+                    <button type="button" class="btn btn-secondary latoFont" data-dismiss="modal">{% if useri.langSet == 0 %}Ghairi{% else %}Close{% endif %}</button>
+                    <button type="submit" class="btn btn-primary latoFont" > {% if useri.langSet == 0 %}Kusanya{% else %}Submit{% endif %} </button>
+                  </div>
+
+               </form>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+<script>
+//SUBMITING RATTING.......................................................//
+$('#ratingForm').submit(function(e){
+   e.preventDefault()
+  const rate = $('.comment-stars-input:checked').last()?.val()||0,
+        Remarks = $('#Ratingremarks').val(),
+        data={
+          data:{rate,
+          Remarks,
+          bil:'{{the_bill.id}}'
+          },
+          url:$(this).attr('action')
+
+        }
+
+        if(Remarks.trim()!=''&&Number(rate)>0){
+          $('#RatingStar').modal('hide')
+          $('#loadMe').modal('show')
+
+           const submitDt = POSTREQUEST(data)
+                 submitDt.then(dt=>{
+                  if(dt.success){
+                    toastr.success(lang('Mapendekezo yako yamepokelewa kikamilifu  Asente.','Your rating and remarks receved successfully Thank you'), lang('Imefanikiwa','Success'), {timeOut: 2000});
+                     location.reload()
+                  }else{
+                    toastr.error(lang('Kitendo hakikufanikiwa tafadhari jaribu tena.','The action was not successfully please try again'), lang('Haikufanikiwa','Error Alert'), {timeOut: 2000});
+
+                  }
+                 })
+                
+
+        }else{
+          if(Remarks.trim()==''){
+            redborder('#Ratingremarks')
+          }
+
+          if(Number(rate==0)){
+               $('#NostarAlert').prop('hidden',false)
+          }
+        }
+
+
+})
+</script>
+
+ <!-- MODAL KULIPIA BILL -->
+
+<!-- Modal -->
+<div class="modal fade" id="lipiaBill" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog animate" role="document">
+    <div class="modal-content ">
+
+      <form action="/purchase/payBill2"   method="post">
+        {% csrf_token %}
+        <div hidden class="hidden">
+        <input type="number" value={{the_bill.bill_kwa.id}} name="value" class="f_input">
+        <input type="text" value={{back}} name="backto" class="f_input">
+        <input type="text" value={{lis_t}} name="lis_t" class="f_input">
+        <input type="date" id="manunuzi-date" name="pay_d" class="form-control f_input smallerFont">
+         <input type="hidden"  value=0 name="to_bill" >
+        </div>
+       
+       
+        <script>
+            var date = new Date();
+          var day = date.getDate();
+          var month = date.getMonth() + 1;
+          var year = date.getFullYear();
+      
+          if (month < 10) month = "0" + month;
+          if (day < 10) day = "0" + day;
+      
+          var today = year + "-" + month + "-" + day;       
+          document.getElementById("manunuzi-date").value = today;
+      
+          //var today = new Date().toISOString().split('T')[0];
+         </script>
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">     
+          {% if useri.langSet == 0 %}  Lipa Bili{% else %}Pay Bill {% endif %}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body px-4">
+        <div class="form-group mb-3" >
+          <label class="text-danger" for=""> {% if useri.langSet == 0 %}  Chagua Akaunti{% else %}Select account{% endif %} <sup>*</sup> </label>
+          <select name="" id="malipo-akaunti"
+          onchange="if(Number($(this).find('option:selected').data('value'))>0){
+            $('#ac').val($(this).find('option:selected').data('value'))
+
+            let ac_am=Number($(this).find('option:selected').data('amount')),
+
+                am =Number($('#bill-lipwa-amount').data('amount'));
+            if(ac_am>=am){
+              $('#ac-baki-amount').attr('placeholder',(ac_am-am).toLocaleString())
+                  $('#helpinId').prop('hidden',true)
+
+
+               $('#save_pay_btn').prop('disabled',false)
+            }else{
+              $('#helpinId').prop('hidden',false)
+
+              $('#save_pay_btn').prop('disabled',true)
+
+              $('#ac-baki-amount').attr('placeholder',(ac_am-am).toLocaleString())
+
+            }
+
+                  $('#helpinId2').prop('hidden',true)
+
+          }
+          "
+
+
+          class="form-control machaguo-pesa smallFont selectpicker" data-live-search="true">
+            <option value="" data-amount=0 data-value=0 >{% if useri.langSet == 0 %}--Chagua Akaunti--{% else %}--Select Account--{% endif %}</option>
+          </select>
+
+          <input type="number" id="ac" name="ac" class="f_input">
+
+            <small id="helpinId" hidden class="mt-5 " style="color:rgb(129, 116, 0)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+              </svg>
+              {% if useri.langSet == 0 %}Akaunti haina kiasi cha kutosha kulipia bili{% else %}insufficient  Account amount to pay the bill{% endif %}
+            </small>
+
+            <small id="helpinId2" hidden class="mt-5 text-danger" >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+              </svg>
+              {% if useri.langSet == 0 %}Tafadhari Chagua Akaunti kulipia bili{% else %}Please select payment account to pay the bill{% endif %}
+            </small>
+
+        </div>
+
+        <div class="form-group mb-3" >
+          <label class="text-danger" for=""> {% if useri.langSet == 0 %}  Kiasi kinacholipwa{% else %}Amount{% endif %}  <sup>*</sup> </label>
+        
+          <div class="show_curency_block show_curency position-absolute    px-3" style="display: none ;">
+            <label class="mt-1 text-danger" for=""></label> 
+        <div class="box-pointer d-inline "></div>
+        </div>
+
+          <input type="number"
+          onkeyup="if(Number($(this).val())>0 && $(this).val()!='' ){
+            let ac_am=Number($('#malipo-akaunti').find('option:selected').data('amount')),
+                am =Number($(this).data('amount')),
+                paid = Number($(this).val())
+
+                if($(this).val()!=''){
+                  $('#paid_set').val(1)
+
+                }else{
+                  $('#paid_set').val(0)
+
+                }
+            if(ac_am>=paid){
+              $('#ac-baki-amount').attr('placeholder',(ac_am-am).toLocaleString())
+                  $('#helperId').prop('hidden',true)
+                  $('#save_pay_btn').prop('disabled',true)
+
+                if(am>=paid){
+                  $('#save_pay_btn').prop('disabled',false)
+
+                       $('#helperId2').prop('hidden',true)
+
+                }else{
+                  $('#save_pay_btn').prop('disabled',true)
+                  $('#helperId2').prop('hidden',false)
+               }
+
+               $('#ac-baki-amount').attr('placeholder',(ac_am-paid).toLocaleString()) 
+
+            }else{
+              $('#helperId').prop('hidden',false)
+              $('#save_pay_btn').prop('disabled',true)
+
+
+            }
+
+
+          }
+
+          "
+          name="paid" data-amount={{bado}}  id="bill-lipwa-amount" class="input-data form-control money-fomat" placeholder="{{bado | floatformat:'-2' | intcomma}}" aria-describedby="helpId">
+         <input type="number" value=0 name="paid_set" id="paid_set" class="f_input">
+
+          <small id="helperId" hidden class=" text-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+            </svg> {% if useri.langSet == 0 %}  Kiasi kinacholipwa kimezidi kiasi kilichopo kwenye akaunti iliyochaguliwa{% else %}the amount to be paid exceed Account Balance of the selected account{% endif %}
+          </small>
+
+          <small id="helperId2" hidden class="text-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+            </svg> {% if useri.langSet == 0 %}  Kiasi kinacholipwa kimezidi kiasi halisi cha bili{% else %}the amount to be paid exceed the actual bill amount{% endif %}
+          </small>
+        </div>
+
+        <div class="form-group mb-3" >
+          <label for=""> {% if useri.langSet == 0 %}  Inayobaki kwenye Akaunt{% else %}Account Balance{% endif %}</label>
+         
+          <div class="show_curency_block show_curency position-absolute    px-3" style="display: none ;">
+            <label class="mt-1 text-danger" for=""></label> 
+        <div class="box-pointer d-inline "></div>
+        </div>
+          <input type="number" name="bal"
+          onkeyup="if(Number($(this).val())>0 && $(this).val()!='' ){
+            let ac_am=Number($('#malipo-akaunti').find('option:selected').data('amount')),
+                am =Number($('#bill-lipwa-amount').data('amount')),
+                paid = Number($('#bill-lipwa-amount').val()),
+                baki = Number($(this).val())
+
+                if($(this).val()!=''){
+                  $('#bal_set').val(1)
+                }else{
+                   $('#bal_set').val(0)
+                }
+                if($('#bill-lipwa-amount').val()!=''){
+                  am = paid
+                }
+            if((ac_am-am) >=baki){
+                   $('#helpedId').prop('hidden',true)
+                   $('#save_pay_btn').prop('disabled',false)
+
+
+            }else{
+              $('#helpedId').prop('hidden',false)
+              $('#save_pay_btn').prop('disabled',true)
+
+            }
+
+
+          }
+
+          "
+          
+          data-amount=0 id="ac-baki-amount" class="money-fomat form-control input-data" placeholder="" aria-describedby="helpId">
+        <input type="number" value=0 name="bal_set" id="bal_set" class="f_input">
+
+          <small id="helpedId" hidden class=" text-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+            </svg> {% if useri.langSet == 0 %} Kiasi kinachobaki kinazidi kiasi halisi cha akaunti baada ya malipo ya bili{% else %}The account balance exceeds the actual balance after bill payment{% endif %}
+          </small>
+        </div>
+            
+          
+     </div>
+
+      <div class="text-center">
+        <button type="submit" id="save_pay_btn" onclick="$('#lipiaBill').modal('hide')" disabled class="btn btn-primary ">{% if useri.langSet == 0 %} Lipa {% else %}Pay {% endif %}</button>
+      </div>
+
+      <div class="text-center my-3">
+                <button type="button" class="btn btn-light btn-sm smallFont" data-dismiss="modal">Close</button>
+      </div>
+
+       </form> 
+    </div>
+  </div>
+
+
+   
+
+
+</div>
+
+ <!-- Modal KUHAKIKI KURUDISHA -->
+    <div class="modal fade" id="Hakiki_kurudisha" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title latoFont">{% if useri.langSet == 0 %}Ruhusu Kurudisha bidhaa {% else %}Allow item(s) return {% endif %}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body">
+            <div>
+               <p class="latoFont weight500" >
+                     {% if the_bill.confirm_return %}
+
+                        {% if useri.langSet == 0 %}
+                          Umeruhusu muuzaji kurudisha  bidhaa  alizokuuzia, unaweza kuzuia mtumiaji kurudisha bidhaa hizi
+                        {% else %} 
+                          You have enabled supplier to return the item(s),you can disable this to customer
+                        {% endif %}
+
+                     {% else %}
+
+                        {% if useri.langSet == 0 %}
+                          Endapo bidhaa zilizonunuliwa zitatakiwa kurudishwa kwa muuzaji, mteja atatakiwa kuruhusu muuzaji kuzirudisha stoku
+                        {% else %} 
+                          When purchased item(s) has to be returned to supplier, customer has to confirm to enable the return to supplier
+                        {% endif %}
+                      {% endif %}  
+                    </p>
+            </div>
+           
+          </div>
+          <div class=" text-center">
+            
+            <button type="button" 
+            onclick="
+                var csrfToken = $('input[name=csrfmiddlewaretoken]').val(),
+                url = '/purchase/allowReturn',
+                invo = '{{the_bill.id}}',
+                allow =' {% if the_bill.confirm_return %}0{% else %}1{% endif %}'
+
+                $('#Hakiki_kurudisha').modal('hide');
+                $('#loadMe').modal('show');
+                  
+            data={
+                data:{
+                    invo:invo,
+                    allow:Number(allow),
+                    csrfmiddlewaretoken:csrfToken, 
+                },
+              
+            }
+
+            $.ajax({
+              type:'POST',
+              url:url,
+              data:data.data
+          }).done(function(dt){
+              if(dt.success) {
+                 toastr.success(`{% if useri.langSet == 0 %}${dt.msg_swa}{% else %}${dt.msg_eng}{% endif %}`, `{% if useri.langSet == 0 %}Imefanikiwa{% else %}Success{% endif %}`, {timeOut: 2000});
+                   location.reload()
+                }else{
+                 toastr.error(`{% if useri.langSet == 0 %}${dt.msg_swa}{% else %}${dt.msg_eng}{% endif %}`, `{% if useri.langSet == 0 %}Haikufanikiwa{% else %}Error {% endif %}`, {timeOut: 2000});
+
+              }
+
+             
+                $('#loadMe').modal('hide');
+            })
+
+
+            " 
+            class="btn btn-primary latoFont btn-sm">
+            {% if the_bill.confirm_return %}
+              {% if useri.langSet == 0 %}Zuia Kurudisha  {% else %}disable return {% endif %}
+            {% else %}
+              {% if useri.langSet == 0 %}Ruhusu Kurudisha  {% else %}Allow  return {% endif %}
+            {% endif %}
+            </button>
+          </div>
+
+          <div class="py-2 mb-4 text-center">
+            <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Close</button>
+          
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+{% endblock %}
+ 
+{% block dash-mapper %}
+ 
+{% if useri.langSet == 0 %}  Bili {% else %}Bills {% endif %}
+
+{% endblock %} 
+
+{% block nav-bills %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+
+{% block active-risiti-menu %}
+class="btn-default btn btn-sm pop2_active_menu"
+{% endblock %}
+
+{% block active-bills %} 
+   <svg xmlns="http://www.w3.org/2000/svg" class="bi bi-receipt text-primary font-weight-bold" height="1.3em" width="1.3em" viewBox="0 0 24 24"  fill="currentColor">
+      <path d="M20,4H4C2.89,4,2.01,4.89,2.01,6L2,18c0,1.11,0.89,2,2,2h10v-2H4v-6h18V6C22,4.89,21.11,4,20,4z M20,8H4V6h16V8z M24,17v2 h-3v3h-2v-3h-3v-2h3v-3h2v3H24z"/>
+  </svg>
+  {% endblock %}
+
+  {% block for_oda %}
+  {{the_bill.id}}
+  {% endblock %}
+
+{% block dash-map %} 
+{% if useri.langSet == 0 %}  Ankara za Manunuzi  {% else %}Purchase Receives{% endif %}
+
+{% endblock %}

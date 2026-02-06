@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fanyabiashara</title>
+
+    <style>
+       #content-wrapper{
+           max-width: 400px;
+           
+           margin: 2em auto;
+        } 
+        #logo{
+           
+            width:200px
+        }
+
+    
+
+        h2, p , h5,h4{
+          text-align: center;
+        }
+    </style>
+</head>
+
+
+<body>
+    <div id="content-wrapper" >
+        <div id="logoWrapper" style="text-align: center;margin-bottom: 33px;">
+            <img style="width:220px" id="logo" src="https://fanyabiashara.blob.core.windows.net/static/pics/logowithtext.png" alt="">
+        </div>
+        
+         <h2 >
+            {% if pack %}
+
+                  {% if service %}
+                    {% if lang == 0 %} Huduma Imeshahakikiwa {% else %} Your Booking has confirmed {% endif %}
+                  {% else %}
+                    {% if lang == 0 %} Mzigo Umeshafungashwa {% else %} Your order has been packed {% endif %}
+                  {% endif %}
+
+             {% else %}
+               {% if lang == 0 %} Mzigo Umeshatumwa {% else %} Your order has been delivered {% endif %}
+
+             {% endif %}
+        </h2>   
+
+         <hr>
+
+         <p>
+
+          {% if service %}
+             {% if lang == 0 %}  Huduma uliyoweka nafasi kutoka {% else %} Your Booking from {% endif %}
+          {% else %}
+             {% if lang == 0 %}  Mzigo ulioagiza kutoka {% else %} Your order from {% endif %}
+          {% endif %} 
+           <a href="#">{{shop | title }} </a> <br>
+             order# 
+            <span style="color:rgb(0, 110, 236);font-weight: 600;" > ORD-{{order}}</span>
+           
+            {% if pack %}
+               {% if service %}
+                  {% if lang == 0 %}  Imehakikiwa, Nafasi ishawekwa kwa muda ulioweka {% else %} Has been confirmed by the time you set{% endif %}
+               {% else %}
+                  {% if lang == 0 %}  tayari Umeshafungashwa {% else %} Has been packed {% endif %}
+               {% endif %}  
+            {% else %}
+              {% if lang == 0 %} Umekabidhiwa kwa {% else %} Has been given to {% endif %}  <a href="#">{{deliverer | title}}({{delivCode}})</a>
+              {% if lang == 0 %}Tayari kwa kusafirishwa  {% else %}  For delivery {% endif %}
+            {% endif %}
+        </p>
+
+         <hr>
+
+          <p>
+            
+            {% if lang == 0 %}Kwa maelezo zaidi fungua aplikesheni ya    {% else %}
+              For more info visit 
+            {% endif %}  <a href="https://fanyabiashara.com/login">fanyabiashara</a>
+          </p>
+    </div>
+      
+</body>
+</html>

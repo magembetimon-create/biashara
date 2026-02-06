@@ -1,0 +1,188 @@
+{% extends 'userdash.html' %}
+
+{% block all-bills %}
+<div class="whiteBg py-2 " style="margin-top: -15px;"> 
+
+
+   <h5 class=" py-3 px-3 {% if bil_num == 0 %} border-bottom {% endif %}">
+    <!--<a type="button" href="/purchase/unpaid" title="{% if useri.langSet == 0 %}Bill ambazo Hazijalipwa  {% else %}Unpaid Bills{% endif %}" class=" btn btn-light  ">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+        <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+        <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+      </svg>
+    </a>
+
+
+    <a type="button" href="/purchase/halfpaid" title="{% if useri.langSet == 0 %}Bili zilizolipwa kiasi  {% else %}less paid bills{% endif %}" class=" btn btn-light ">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-calculator" viewBox="0 0 16 16">
+        <path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/>
+        <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-2zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-4z"/>
+      </svg>
+      
+      </a> -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-receipt-cutoff" viewBox="0 0 16 16">
+        <path d="M3 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zM11.5 4a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1zm0 2a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1zm0 2a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1zm0 2a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1zm0 2a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z"/>
+        <path d="M2.354.646a.5.5 0 0 0-.801.13l-.5 1A.5.5 0 0 0 1 2v13H.5a.5.5 0 0 0 0 1h15a.5.5 0 0 0 0-1H15V2a.5.5 0 0 0-.053-.224l-.5-1a.5.5 0 0 0-.8-.13L13 1.293l-.646-.647a.5.5 0 0 0-.708 0L11 1.293l-.646-.647a.5.5 0 0 0-.708 0L9 1.293 8.354.646a.5.5 0 0 0-.708 0L7 1.293 6.354.646a.5.5 0 0 0-.708 0L5 1.293 4.354.646a.5.5 0 0 0-.708 0L3 1.293 2.354.646zm-.217 1.198.51.51a.5.5 0 0 0 .707 0L4 1.707l.646.647a.5.5 0 0 0 .708 0L6 1.707l.646.647a.5.5 0 0 0 .708 0L8 1.707l.646.647a.5.5 0 0 0 .708 0L10 1.707l.646.647a.5.5 0 0 0 .708 0L12 1.707l.646.647a.5.5 0 0 0 .708 0l.509-.51.137.274V15H2V2.118l.137-.274z"/>
+      </svg>
+      {% if useri.langSet == 0 %}Manunuzi yaliyopokelewa {% else %} Purchase Receives{% endif %}
+</h5> 
+
+
+ {% if bil_num > 0 %}
+          {% load humanize %}
+<div class="table-responsive pb-5">
+ <table class="table table-hover ">
+      <thead>
+        <tr>
+          <th class="latoFont" scope="col">
+            {% if useri.langSet == 0 %}  Kupokea# {% else %} Receives# {% endif %}
+          
+          </th>
+          <th class="latoFont" scope="col">
+            {% if useri.langSet == 0 %} Tarehe Iliyopokewa  {% else %}Received Date {% endif %}
+
+          </th>
+          <th class="latoFont" scope="col">
+            {% if useri.langSet == 0 %} Aliyepokea  {% else %}By {% endif %}
+
+          </th>
+          <th class="latoFont" scope="col">
+            {% if useri.langSet == 0 %} Kutoka  {% else %} From{% endif %}
+          </th>
+          <th class="latoFont" scope="col">          
+            {% if useri.langSet == 0 %} Jumla  {% else %}Total {% endif %}
+            ({{duka.currencii}})</th>
+     
+          <!-- <th class="latoFont" scope="col">      
+             {% if useri.langSet == 0 %} Statasi  {% else %}Stutus {% endif %}
+          </th> -->
+          <th class="latoFont" scope="col"> Action </th>
+        </tr>
+      </thead>
+      <tbody>
+            {% for bil in bili %}
+        <tr>
+          <td class="text-center latoFont">REC-{{bil.bill_kwa.risiti.code}}</td>
+          <td class="text-center latoFont">
+            <script>
+                document.write(moment('{{bil.bill_kwa.risiti.date| date:"r" }}').format('MMM DD YYYY, h:mm:ss a'))
+              </script>
+          </td>
+          <td class="text-center latoFont ">
+              <a class="text-primary" href="#" >{{bil.bill_kwa.By.user.user.first_name|title}} {{bil.bill_kwa.By.user.user.last_name|title}}</a>
+          </td>
+
+          <td class="text-center latoFont ">
+              <a class="text-primary" href="{% url 'buzinessProfile' %}?value={{bil.Interprise.id}}" >{{bil.Interprise.name|title}} </a>
+          </td>
+
+          <td class="text-center latoFont"> {{bil.amount| floatformat:'-2' |intcomma }}</td>
+
+          
+          <td class="text-center">
+                <!-- <div class=" text-center"> -->
+                  <!-- <form class="form-inline" action="/purchase/" method="POST">
+                    {% csrf_token %}
+
+                    <input type="text" name="back_to"  value="AllBills" class="f_input">
+                    <input type="text" name="item_valued"  value="{{bil.id}}" class="f_input">
+   -->
+  
+  
+                  <a href="{% url 'viewRecept' %}?back_to=AllBills&item_valued={{bil.bill_kwa.id}}" type="submit" class="btn btn-default text-primary btn-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                          <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                          <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                        </svg>
+                      </a>
+                  <!-- </form> -->
+                     
+
+                     
+
+                <!-- </div> -->
+          </td>
+
+        </tr>
+       {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class=" p-4 border-top">
+     
+  {% if bili.has_previous %}
+    <a href="{% url 'AllBills' %}?page=1" type="button"  class="btn btn-light border0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-left" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M8.354 1.646a.5.5 0 0 1 0 .708L2.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+          <path fill-rule="evenodd" d="M12.354 1.646a.5.5 0 0 1 0 .708L6.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+        </svg>
+      </a>
+
+      <a href="{% url 'AllBills' %}?page={{bili.previous_page_number}}" type="button"  class="btn btn-light  border0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+        </svg>
+      </a>
+    {% endif %}
+
+  {% if bili.has_next %}
+      <a href="{% url 'AllBills' %}?page={{bili.next_page_number}}" type="button" class="btn btn-light border0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </a>
+
+      <a href="{% url 'AllBills' %}?page={{pages}}" type="button"  class="btn btn-light border0" >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-right" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M3.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L9.293 8 3.646 2.354a.5.5 0 0 1 0-.708z"/>
+          <path fill-rule="evenodd" d="M7.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L13.293 8 7.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </a>
+{% endif %}
+      <label for="">
+       
+        {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+
+      </label>
+  </p>
+ {%else%}
+
+ 
+<p class="pt-3 pb-5 text-center">
+           {% if useri.langSet == 0 %} Hakuna risiti za manunuzi kwa sasa {% else %}No purchase receives available {% endif %}
+</p>
+
+{% endif %}
+
+
+
+
+
+ </div>
+{% endblock %}
+ 
+{% block dash-mapper %}
+ 
+{% if useri.langSet == 0 %}  Bili {% else %}Bills {% endif %}
+
+{% endblock %} 
+
+{% block nav-bills %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+
+{% block active-risiti-menu %}
+class="btn-default btn btn-sm pop2_active_menu"
+{% endblock %}
+
+{% block active-bills %} 
+   <svg xmlns="http://www.w3.org/2000/svg" class="bi bi-receipt text-primary font-weight-bold" height="1.3em" width="1.3em" viewBox="0 0 24 24"  fill="currentColor">
+      <path d="M20,4H4C2.89,4,2.01,4.89,2.01,6L2,18c0,1.11,0.89,2,2,2h10v-2H4v-6h18V6C22,4.89,21.11,4,20,4z M20,8H4V6h16V8z M24,17v2 h-3v3h-2v-3h-3v-2h3v-3h2v3H24z"/>
+  </svg>
+  {% endblock %}
+
+{% block dash-map %} 
+{% if useri.langSet == 0 %}  Ankara za Manunuzi  {% else %}Purchase Receives{% endif %}
+
+{% endblock %}

@@ -1,0 +1,617 @@
+{% extends 'businessProfile.html' %}
+{% load humanize %}
+
+{% block billcss %}
+  <link href="static/sumanote/summernote.css" rel="stylesheet">
+<script src="static/sumanote/summernote.js"></script>
+
+<link rel="stylesheet" href="/static/css/businessprof.css">
+<link rel="stylesheet" href="/static/css/Ratingstars.css">
+{% endblock %}
+
+
+
+{% block bizness %}
+<div class="whiteBg pb-5">
+
+ <div class="border-top  table-responsive py-2 mx-2 border-bottom">
+  <div class="p-2" style="width:360px" >
+      <div class="row classic_div">
+           <div class="col-7 weight600">
+              {% if useri.langSet == 0 %} Chapa{% else %} Brand {% endif %} :
+           </div>
+           <div class="col-5 weight700">
+               <u class="darkblue text-capitalize">{{brand.name | title }} </u>      
+           </div>
+
+           <div class="col-7 weight600">
+              {% if useri.langSet == 0 %} Wateja wa Kimtandao {% else %}User Customers{% endif %} :
+           </div>
+           <div class="col-5 weight700">
+                     {{shop.onlineCustomers}}
+           </div>
+
+
+           <div class="col-7 weight600">
+              {% if useri.langSet == 0 %}Wastani Uthaminishwaji{% else %}Average Rating {% endif %} : 
+           </div>
+           <div class="col-5 weight700">
+                     {{rateAv | floatformat:'1' }}
+           </div>
+      </div>
+         
+   </div>
+ </div>
+   
+    <h6 class="display-6 row mt-3 p-3">
+      <div class="col-8">
+              <strong> {% if useri.langSet == 0 %} Kuhusu {% else %}About {% endif %} <i class="darkblue">{{shop.name | title}}</i> </strong>
+
+      </div>
+     {% if cheo.user == shop.owner %}
+      <div class="col-4 text-right">
+             <span id="theCbtn">
+                   <button id="toggle_about_edit" data-edit=0 class="btn show_about btn-default text-primary btn-sm smallFont"  >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                            Edit
+                    </button>
+
+                    <a href="/profileAbout?value={{shop.id}}" style="display: none;" class="btn btn-sm btn-default text-primary richtext_wrapper">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-left"><polyline points="15 18 9 12 15 6"></polyline></svg>
+
+                           Back
+                    </a>
+             </span>
+
+      </div>
+
+            
+          <script>
+              $('#toggle_about_edit').click(function(){
+
+                            $('.show_about').fadeOut(10)
+                            $('.richtext_wrapper').fadeIn(300)
+                          
+              })
+          </script>
+
+      {% endif %}
+    
+    </h6>
+
+
+  {% if cheo.user == duka.owner %}
+
+       <div class="richtext_wrapper"  style="display: none;"  >
+           {% include 'summanote_rich.html' with desc=shop.poster %}
+       </div>
+              <div class="show_about" class="jumbotron mt-3 py-2 whiteBg">
+                
+                      {{shop.poster | safe }}
+                  
+                  
+              </div>
+
+                <!-- SAVE ABOUT US ..........................  -->
+              
+                <script>
+                 $('#getText').click(function(){
+                        const ab = $('#summernote').summernote('code'),
+                              sz =  ab.length/1024
+                       
+                        if(sz<=10){
+                            const  data={data:{poster_word:ab,},url:'/poster_sound'},
+                                   sentAbout = POSTREQUEST(data)
+                                   $('#loadMe').modal('show')
+
+                                   sentAbout.then(resp=>{
+                                    $('#loadMe').modal('hide')
+                                    hideLoading()
+                                 if(resp.success){
+                                     toastr.success(lang(resp.msg_swa,resp.msg_eng), '{% if useri.langSet == 0 %}Imefanikiwa{% else %}Success Alert{% endif %}', {timeOut: 5000});
+                                 }else{
+                                     toastr.success(lang(resp.msg_swa,resp.msg_eng), '{% if useri.langSet == 0 %}Haikufaniliwa{% else %}Error{% endif %}', {timeOut: 5000});
+
+                                 }
+                            })
+                        }  else{
+                              toastr.warning('{% if useri.langSet == 0 %}Maelekezo hayataweza kuhifadhiwa kutokana na kuwa na size kubwa tafadhari andika upya na upunguze ya picha na mengineyo{% else %}The document size is too large cant be saved please reduce the pictures size associate with the document{% endif %}', '{% if useri.langSet == 0 %}Haikufanikiwa {% else %} Error Alert{% endif %}', {timeOut: 5000});
+
+                        }    
+                       
+
+                  })
+       
+              </script>  
+  {% else %}
+   <div class="jumbotron mt-3 py-2 whiteBg">
+      
+           {{shop.poster | safe }}
+      
+       
+   </div>
+   {% endif %}
+
+
+
+
+    <!-- CONSULTANTS ..................................... -->
+   <h6 class="px-3 whiteBg" > <strong>{% if useri.langSet == 0 %} Wahusika {% else %}Consultants{% endif %}</strong> </h6>
+    <div class=" d-flex p-2 whiteBg mt-3" style="overflow-x:auto">
+      {% for m in members %}
+          <div class="mx-2 py-4 rounded mt-2" 
+          style="
+           -webkit-box-shadow: 0px 6px 22px -6px rgba(0,0,0,0.27);
+            -moz-box-shadow: 0px 6px 22px -6px rgba(0,0,0,0.27);
+            box-shadow: 0px 6px 22px -6px rgba(0,0,0,0.27);
+            min-width:250px;
+            cursor:pointer;
+          " >
+
+            <div class="classic_div" style="height: 60px;width:60px" >
+                {% if m.user.picha %}
+              <img src="{{m.user.picha.url}}" style="width: 100%;height:100%;border-radius:50%" alt="None">
+              {% else %}
+               <img src="/static/pics/userlogo.png" style="width: 100%;height:100%;border-radius:50%" alt="None">
+             {% endif %}
+            </div>
+           <h6 class="text-center mt-2" >{{m.user.user.first_name | title}}  {{m.user.user.last_name | title}}</h6>
+           <div class="text-center">
+              <strong>{{m.cheo}} </strong> 
+              
+           </div>
+           <div class="text-center smallerFont">
+             {% if useri.langSet == 0 %}Simu{% else %}Phone{% endif %} : <strong>{{m.user.simu1}},{{m.user.simu2}} </strong> 
+           </div>
+           {% if m.user.user.email %}
+           <div class="text-center smallerFont">
+              {% if useri.langSet == 0 %}Barua Pepe{% else %}Email{% endif %}: <strong>{{m.user.user.email}}</strong> 
+           </div>
+           {% endif %}
+
+           
+        </div>
+       {% endfor %}
+
+       
+        
+    </div>
+
+
+
+    {% if rateAv > 0 %}
+<!-- RATINGS ........................................ -->
+    <div class="ratings px-3 my-3">
+     <hr>
+
+      <h6 class=" whiteBg" > <strong>{% if useri.langSet == 0 %}Uthamiminishwaji {% else %}Rating {% endif %}</strong> </h6>
+      <h6 class=" d-flex" > 
+        <span class="latoFont ">{% if useri.langSet == 0 %}Wastani {% else %}Average {% endif %}</span> 
+        <span class="mr-1 pr-2 pl-1 border-right">
+            <strong>{{rateAv |floatformat:'1'}}</strong>  
+        </span>
+        <div style="margin-top:-1px ;" id="forRated" class="comment-stars">
+                      
+          <input class="comment-stars-input"  disabled type="radio"   name="ratingA" value="5" id="rating-50">
+          <label class="comment-stars-view"  for="rating-50">
+            <svg class="afterRate icon-star">
+              <use xlink:href="#icon-star"></use>
+            </svg>
+          </label>
+  
+          <input class="comment-stars-input" disabled type="radio" name="ratingA"  value="4.5" id="rating-150" > 
+          <label class="comment-stars-view is-half" for="rating-150">
+            <svg class="afterRate icon-star-half">
+              <use xlink:href="#icon-star-half"></use>
+            </svg>
+          </label>
+  
+          <input class="comment-stars-input" disabled type="radio" name="ratingA" value="4" id="rating-40"> 
+          <label class="comment-stars-view" for="rating-40">
+            <svg class="afterRate icon-star">
+              <use xlink:href="#icon-star"></use>
+            </svg>
+          </label>
+  
+          <input class="comment-stars-input" disabled type="radio" name="ratingA" value="3.5" id="rating-140">
+          <label class="comment-stars-view is-half" for="rating-140">
+            <svg class="afterRate icon-star-half">
+              <use xlink:href="#icon-star-half"></use>
+            </svg>
+          </label>
+  
+          <input class="comment-stars-input" disabled type="radio" name="ratingA" value="3" id="rating-30"> 
+          <label class="comment-stars-view" for="rating-30">
+            <svg class="afterRate icon-star">
+              <use xlink:href="#icon-star"></use>
+            </svg>
+          </label>
+  
+  
+          <input class="comment-stars-input" disabled type="radio" name="ratingA"  value="2.5" id="rating-130"  >
+          <label class="comment-stars-view is-half" for="rating-130">
+            <svg class="afterRate icon-star-half">
+              <use xlink:href="#icon-star-half"></use>
+            </svg>
+          </label>
+  
+  
+          <input class="comment-stars-input" disabled type="radio" name="ratingA"  value="2" id="rating-20"  > 
+          <label class="comment-stars-view" for="rating-20">
+            <svg class="afterRate icon-star">
+              <use xlink:href="#icon-star"></use>
+            </svg>
+          </label>
+  
+          <input class="comment-stars-input" disabled type="radio" name="ratingA" value="1.5" id="rating-120"  >
+          <label class="comment-stars-view is-half" for="rating-120">
+            <svg class="afterRate icon-star-half">
+              <use xlink:href="#icon-star-half"></use>
+            </svg></label>
+  
+  
+          <input class="comment-stars-input" disabled type="radio" name="ratingA" value="1" id="rating-10">
+          <label class="comment-stars-view" for="rating-10">
+            <svg class="afterRate icon-star">
+              <use xlink:href="#icon-star"></use>
+            </svg></label>
+  
+            
+          <input class="comment-stars-input" disabled type="radio" name="ratingA" value="0.5" id="rating-110"  >
+          <label class="comment-stars-view is-half" for="rating-110">
+            <svg class="afterRate icon-star-half">
+              <use xlink:href="#icon-star-half"></use>
+            </svg></label>
+        </div>
+
+        <span class="ml-1 pl-1 latoFont border-left" > {% if useri.langSet == 0 %}Wateja {% else %}Customers {% endif %}. <span class="weight700">{{AllRate}}</span>  </span>
+        
+      </h6>
+
+      <div  style="width:250px">
+    
+
+      <div class="d-flex">
+         <strong class="mx-2" >5</strong>
+            <div class="progress border my-1" style="width:90%;height:11px">
+              <div class="progress-bar "  id="prog5stars" role="progressbar"  aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+
+              </div>
+          </div>
+      </div>
+      <div class="d-flex">
+         <strong class="mx-2" >4</strong>
+            <div class="progress border my-1" style="width:90%;height:11px">
+              <div class="progress-bar "  id="prog4stars" role="progressbar"  aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+
+              </div>
+          </div>
+      </div>
+      <div class="d-flex">
+         <strong class="mx-2" >3</strong>
+            <div class="progress border my-1" style="width:90%;height:11px">
+              <div class="progress-bar "  id="prog3stars" role="progressbar"  aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+
+              </div>
+          </div>
+      </div>
+      <div class="d-flex">
+         <strong class="mx-2" >2</strong>
+            <div class="progress border my-1" style="width:90%;height:11px">
+              <div class="progress-bar "  id="prog2stars" role="progressbar"  aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+
+              </div>
+          </div>
+      </div>
+      <div class="d-flex">
+         <strong class="mx-2" >1</strong>
+            <div class="progress border my-1" style="width:90%;height:11px">
+              <div class="progress-bar "  id="prog1stars" role="progressbar"  aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+
+              </div>
+          </div>
+      </div>
+
+      <script>
+          $('#prog5stars').css('width',Number('{{5Stars}}')*100/Number('{{AllRate}}')+'%')
+          $('#prog4stars').css('width',Number('{{4Stars}}')*100/Number('{{AllRate}}')+'%')
+          $('#prog3stars').css('width',Number('{{3Stars}}')*100/Number('{{AllRate}}')+'%')
+          $('#prog2stars').css('width',Number('{{2Stars}}')*100/Number('{{AllRate}}')+'%')
+          $('#prog1stars').css('width',Number('{{1Stars}}')*100/Number('{{AllRate}}')+'%')
+      </script>
+      
+      </div>
+
+
+      <div class="consultList">
+        <ul class="list-unstyled" id="allRatingsList" style="overflow-y:auto ;" >
+        
+          {% for li in AllRatings %}
+          <li class="d-flex py-3 border-bottom" >
+            <div class="centerItems mx-2">
+                <div class="border centerItems" style="height:40px ;width: 40px;border-radius:50%" >
+                   {% if li.by.picha %}
+                       <img src="{{li.by.picha.url}}" style="width:100%;height:100%;border-radius:50%" >
+                   {% else %}
+                        <img src="/static/pics/userlogo.png" style="width: 100%;height:100%;border-radius:50%" alt="None">
+                   {% endif %}
+                </div>
+                </div>
+
+                <div>
+                    <div class="text-capitalize weight700" >{{li.by.user.first_name}} {{li.by.user.last_name}}</div>
+               
+                    <div>
+                        <span class="mr-1  border-right">
+                            <script>
+                                document.write(moment('{{li.date|date:"r"}}').format('DD/MM/YYYY HH:mm'))
+                            </script>
+                         </span> 
+
+                          <strong>{{li.rating|floatformat:'1'}}</strong>
+
+                         <span class="mx-1">
+                        
+
+                            {% if li.rating == 1 %}
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                           {% endif %}
+
+                           {% if li.rating == 2 %}
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                           {% endif %}
+                           {% if li.rating == 3 %}
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                           {% endif %}
+                           {% if li.rating == 4 %}
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                           {% endif %}
+                           {% if li.rating == 5 %}
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                               </svg>
+                           {% endif %}
+                         </span>
+
+
+                    </div>
+
+                    <div>{{li.desc}} </div>
+                     {% if li.reply %}
+                       <div> <i class="weight700 smallerFont">-{% if useri.langSet == 0 %}Mrejesho {% else %} Reply {% endif %}:</i> {{li.reply}}  </div>
+                     {% endif %}
+
+                    
+                    
+                 
+
+                  
+                    
+                
+                </div>
+            
+
+
+         </li>
+              
+          {% endfor %}
+
+
+         
+
+
+
+
+
+        </ul>
+
+          
+                  
+              <div class="text-right py-2">
+
+                {% if AllRate > 3 %}
+                  <button class="darkblue btn btn-default btn-sm latoFont  " id="loadRateBtn" data-num=5 onclick="loadRate($(this).data('num'))"  href="#">
+                      
+                      {% if useri.langSet == 0 %}Onesha Zaidi.. {% else %} Show More .. {% endif %}
+                  </button >
+
+                   {% endif %}
+                   
+                  {% if duka == shop %}
+                <a type="button" class="border-left ml-1 pl-2" href="/mauzo/AllRatings" >
+                      
+                      {% if useri.langSet == 0 %} Onesha Zote..{% else %} Show All.. {% endif %}
+                  </a>
+                  {% endif  %}
+                </div>
+         
+
+      </div>
+    </div>
+
+
+    {% endif %}
+
+
+
+    <!-- BRANCHES -->
+    {% if branches.count > 0 %}
+
+    <div class="py-3 px-3">
+    <hr>
+   <h6 class=" whiteBg" > <strong>{% if useri.langSet == 0 %} Matawi Mengine {% else %}Other Branches {% endif %}</strong> </h6>
+    <ul class="list-unstyled">
+      {% for br in branches %}
+            
+              <li class="text-capitalize py-2 border-bottom" >
+                <a href="/buzinessProfile?value={{br.id}}">
+                  <div class="weight700">
+                        {{br.name}}   
+                  </div>
+                  <div style="color:rgb(58, 58, 58)" class="smallFont latoFont" >
+                        
+
+                        {{br.mtaa.mtaa | title }}, {{br.mtaa.kata.kata | title }}, {{br.mtaa.kata.wilaya.wilaya | title }}, 
+                        {{br.mtaa.kata.wilaya.mkoa.mkoa | title }}, {{br.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title }}
+
+                  </div>
+                </a>
+            </li>
+          
+      {% endfor %}
+    </ul>
+    </div>
+
+
+   {% endif %}
+</div>
+
+<script>
+  const rateAvA =  Number('{{rateAv}}'),
+    intgA = parseInt(rateAvA),
+    rateValA = intgA + (rateAvA>intgA?11:0)
+   $(`#rating-${rateValA}0`).prop('checked',true)
+
+
+   function loadRate(num){
+    $('#loadMe').modal('show')
+    const  data = {
+        data:{num,shop:Number('{{shop.id}}')},
+        url:'/loadRatings'
+    },
+    allRate = Number('{{AllRate}}')
+
+    num = Number(num)
+    sendIt = GETREQUEST(data)
+
+    sendIt.then(dt=>{
+        $('#loadMe').modal('hide')    
+
+        if(dt.success){
+            $('#loadRateBtn').prop('disabled',(num+5)>=allRate) 
+            $('#loadRateBtn').data('num',(num+5)) 
+
+            let star = ` <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>`,
+                        li = ''
+
+
+                 dt.data.forEach(l=>{
+
+                      li += ` <li class="d-flex py-3 border-bottom" >
+                    <div class="centerItems mx-2">
+                        <div class="border centerItems" style="height:40px ;width: 40px;border-radius:50%" >
+                      
+
+                          ${l.picha!=''?`<img src="/static/${l.picha}" style="width:100%;height:100%;border-radius:50%" >`:`<img src="/static/pics/userlogo.png" style="width: 100%;height:100%;border-radius:50%" alt="None">`}
+                        </div>
+                        </div>
+        
+                        <div>
+                            <div class="text-capitalize weight700" >${l.first_name} ${l.last_name}</div>
+                      
+                            <div>
+                                <span class="mr-1  border-right">
+                                    ${moment(l.date).format('DD/MM/YYYY HH:mm')}
+                                </span> 
+        
+                                  <strong>${Number(l.rating).toFixed(1)}</strong>
+        
+                                <span class="mx-1">`
+                                
+                     li +=  star.repeat(Number(l.rating))
+                     li+=` </span>
+    
+                                </div>
+            
+                                <div>${l.desc} </div>
+                              
+                                  ${l.reply?`<div> <i class="weight700 smallerFont">-{% if useri.langSet == 0 %}Mrejesho {% else %} Reply {% endif %}:</i> ${l.reply}  </div>`:``} 
+                                
+                            </div>
+                      
+                  </li>`
+
+                 })       
+             
+                 $('#allRatingsList').append(li)
+        }
+    })
+    
+
+   }
+
+ 
+</script>
+
+    {% if duka != shop %}
+      <input id="vistors" type="hidden" data-shop="{{shop.id}}" data-about=1 >
+      <script src="/static/js/countVistors.js">  </script>
+    {% endif %}
+
+    
+{% endblock %}
+
+{% block active-about %} 
+  activeProf
+{% endblock %}
+
+
+{% block where %}
+    <span class="text-muted">
+      <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+      </svg>
+    </span> 
+    <a href="{% url 'profileAbout' %}?value={{shop.id}}" class="tab_show" data-show="#general-panel">
+
+    {% if useri.langSet == 0 %}Kuhusu {% else %}About {% endif %} 
+
+    </a>
+
+
+
+{% endblock %} 
+

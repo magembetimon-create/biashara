@@ -1,0 +1,99 @@
+.show_summary{
+    min-width:260px;
+    border-radius:6px;
+    white-space: nowrap !important;
+    padding-right: 8px;
+}
+
+.IconPanel{
+    color:#fff;
+    border-radius:6px;
+    height:30px;
+    width:30px;
+}
+
+.strongC{
+    color: var(--figureColor);
+    font-size: 15px;
+    font-weight: 600;
+}
+h6{
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.searchDropdown button:hover{
+    background-color:rgb(232, 244, 255)
+    
+}
+.searchDropdown button:active{
+    background-color:rgb(216, 236, 253)
+
+}
+
+.noChange:hover{
+    color:#fff !important;
+}
+.riportLink:hover{
+    text-decoration: none;
+}
+.showNumber{
+    font-weight: 700;
+    border-radius: 6px;
+    min-height: 20px;
+    min-width: 20px;
+}
+
+.DetailSummary{
+  
+     -webkit-box-shadow: 0px 0px 23px -7px rgba(0,0,0,0.13);
+     -moz-box-shadow: 0px 0px 23px -7px rgba(0,0,0,0.13);
+     box-shadow: 0px 0px 23px -7px rgba(0,0,0,0.13);
+     border-radius:7px;
+     margin-right: 18px;
+     scroll-snap-align: start;
+
+}
+
+.stockSings{
+    background-color:#7572F220 ;
+    color:#7572F2;
+}
+
+.saleOderSigns{
+    background-color:#20846C20 ;
+    color:#20846C;
+}
+
+.servicesSigns{
+    background-color:#847d2020 ;
+    color:#847d20;
+}
+
+.PuchaseSigns{
+    background-color:#a70b6620 ;
+    color:#69234c;
+}
+
+@media (min-width:540px){ 
+    .DetailSummary{
+        min-width: 270px ;
+    }
+}
+
+@media (min-width:768px){ 
+    .DetailSummary{
+        min-width: 41.66vw ;
+    }
+}
+@media (min-width:992px){ 
+    .DetailSummary{
+        min-width: 270px ;
+    }
+}
+
+@media (max-width:540px){ 
+    .DetailSummary{
+        min-width: 88vw ;
+    }
+}

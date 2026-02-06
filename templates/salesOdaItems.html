@@ -1,0 +1,165 @@
+{% extends 'userdash.html' %}
+{% block mauzo %}
+<div class="whiteBg py-2 pb-5 px-md-3" style="margin-top: -15px;"> 
+
+  <nav class="nav nav-tabs nav-stacked">
+    <a class="nav-link  " href="/mauzo/saleOda">{% if useri.langSet == 0 %}  Ankara {% else %}Services {% endif %}</a>
+    <a class="nav-link active" href="/mauzo/saleOdaItems">{% if useri.langSet == 0 %}  Bidhaa {% else %}Items {% endif %}</a>
+    
+  </nav>
+
+
+  
+  <div class="p-md-3 mx-md-2 p-2" style="-webkit-box-shadow: 0px 3px 5px -2px rgba(0,0,0,0.38);
+        -moz-box-shadow: 0px 3px 5px -2px rgba(0,0,0,0.38);
+        box-shadow: 0px 3px 5px -2px rgba(0,0,0,0.38);margin-top:-7px" >
+         <h6 class="weight500 border-bottom py-3  d-flex align-items-center" >
+             
+             <svg xmlns="http://www.w3.org/2000/svg" width="27" height="27" fill="currentColor" class="bi bi-calendar2 pr-2" viewBox="0 0 16 16">
+                 <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>
+                 <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4z"/>
+             </svg>
+                 
+                 {% if useri.langSet == 0 %} Bidhaa Zilizowekewa Oda{% else %}Ordered Items {% endif %}
+            
+         </h6 >
+
+         <div class="row">
+             <div class="col-md-7 weight400 row">
+
+                <div class="col-6 py-1">
+                     
+                      {% if useri.langSet == 0 %}  Bidhaa {% else %} Items {% endif %}
+                     
+                </div>
+                <div class="col-6 py-1 weight600 brown" id="servNum" data-book=1 >
+                    0  
+                </div>
+
+                <div class="col-6 py-1">
+                    
+                   {% if useri.langSet == 0 %} Kiasi Jumla {% else %}Total  Amount {% endif %}
+                   
+                </div>
+                <div class="col-6 py-1  weight600 " >
+                   <span class="latoFont weight400" style="color:blue" >{{duka.currencii}}. </span> 
+                  <span id="TotalCosted" class="brown" >0</span> 
+                </div>
+            </div>
+
+            
+             <div id="lipwaBaki" class="col-md-7 weight400 row">
+                <div class="col-6 py-1 ">
+                  
+                {% if useri.langSet == 0 %} Ilolipwa Jumla {% else %}Total  Paid {% endif %}
+                
+                </div>
+                <div class="col-6 py-1 weight600  " >
+                    <span class="latoFont weight400" style="color:blue" >{{duka.currencii}}. </span>
+                    <span id="TotalPaid" class="brown" >0 </span>
+                  
+                </div>
+
+                <div class="col-6 py-1 ">
+                    
+                  {% if useri.langSet == 0 %} Ilobaki {% else %}Remaining{% endif %}
+                  
+                </div>
+                <div class="col-6 py-1 weight700  " >
+                    <span class="latoFont weight400" style="color:blue" >{{duka.currencii}}. </span>
+                    <span id="TotalDeni" class="brown" > 0</span>
+                  
+                </div>
+              </div>
+          
+
+             <div class="col-md-7 weight400 row">
+                <div class="col-md-6 py-1 d-none d-md-block ">
+                  {% if useri.langSet == 0 %} Aina {% else %}Category {% endif %}
+                </div>
+                <div class="col-md-6 py-1 mt-2 mt-md-0 brown">
+                    <select name="AinaFilter" onchange="$('#loadMe').modal('show');wekaData()" class="form-control  smallFont btn-sm text-capitalize latoFont" id="AinaFilter">
+                        <option value=0 >{% if useri.langSet == 0 %}Aina Zote {% else %}All Categories {% endif %}</option>
+                    </select>
+                </div>
+
+
+             <div class="col-md-6 py-1 d-none d-md-block ">
+                 {% if useri.langSet == 0 %} Muda {% else %}Time {% endif %}
+             </div>
+             <div class="col-md-6 py-1 mt-2 mt-md-0 brown">
+                 <select name="naMuda"  id="naMuda" onchange="$('#loadMe').modal('show');wekaData();" class="form-control   smallFont btn-sm text-capitalize latoFont">
+                     <option value=0 >{% if useri.langSet == 0 %}Zote {% else %}All  {% endif %}</option>
+                     <option value=1 >{% if useri.langSet == 0 %}Muda Umeisha {% else %} Out of Time  {% endif %}</option>
+                 </select>
+             </div>
+
+             <div class="col-md-6 py-1 d-none d-md-block ">
+                 {% if useri.langSet == 0 %} Njia {% else %}Type {% endif %}
+             </div>
+             <div class="col-md-6 py-1 mt-2 mt-md-0 brown">
+                 <select name="Njia"  id="EcormOrDirect" onchange="$('#loadMe').modal('show');wekaData();" class="form-control smallFont btn-sm text-capitalize latoFont">
+                     <option value=0 >{% if useri.langSet == 0 %}Zote {% else %}All  {% endif %}</option>
+                     <option value=1 >{% if useri.langSet == 0 %}Mtandao {% else %} E-cormarce {% endif %}</option>
+                     <option value=2 >{% if useri.langSet == 0 %}Dukani {% else %} Direct {% endif %}</option>
+                 </select>
+             </div>
+                
+
+
+             </div>
+         </div>
+  </div>
+
+ 
+ 
+ 
+
+        
+             <div class=" mt-3"  id="products_list"  >
+             </div>                
+          
+
+
+    
+</div>
+{% endblock %}
+
+{% block billmpya %}
+<script>    
+    $('#loadMe').modal('show')
+  </script>
+<script src="/static/js/orderedItems.js"></script>  
+
+{% endblock %}
+
+{% block dash-mapper %}
+ 
+{% if useri.langSet == 0 %}  Mauzo {% else %}Sales {% endif %}
+
+{% endblock %}
+
+{% block active-kuuza %}
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-check-fill text-primary " viewBox="0 0 16 16">
+  <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+</svg>
+{% endblock %}
+    
+{% block nav-mauzo %}
+class="c-menu__item style-none is-active  showingpop2"
+{% endblock %}
+{% block akaunt-map %}{% if useri.langSet == 0 %}Oda za Mauzo 
+<span class="text-muted">
+  <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+  </svg>
+</span>Bidhaa {% else %}Sales Orders <span class="text-muted">
+  <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+  </svg>
+
+</span>  Items{% endif %}{% endblock %}
+
+{% block active-saleOda-menu %} class="btn-default btn pop2_active_menu btn-sm " {% endblock %}
+
+{% block active-mauzo %} class="bi bi-cart-check text-primary" {% endblock %}

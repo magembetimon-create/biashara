@@ -1,0 +1,82 @@
+{% extends 'userdash.html' %}
+
+{% block mauzo %}
+<div  class="Analytical tab_div whiteBg p-2  px-md-5 pt-md-3" id="general-panel" style="min-height: 100vh;" >
+    <h5 class="pb-3 border-bottom" >
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
+          <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+        </svg>  
+          {% if useri.langSet == 0 %}Wateja  Muhimu{% else %}Saved Customers{% endif %}
+  
+          <button class="btn btn-sm btn-primary float-right latoFont" 
+             onclick="
+                  $('#mteja-Id').val('')
+                  $('#mteja-jina').val('')
+                  $('#mteja-sehemu').val('')
+                  $('.simuCode').val('+{{duka.countryCode}}')
+                  $('#mteja-simu').val('')
+                  $('#mteja-simu2').val('')
+                  $('#mteja-mail').val('')
+                  $('#form-mteja').data('valued',0)
+                  $('#form-mteja').data('edit',0)
+          
+                   " 
+             
+             data-toggle="modal" data-target="#wateja-modal" onclick="$('#form-mteja').data({valued:0,edit:0});" >
+                  
+                  {% if useri.langSet == 0 %}Ongeza  Mteja{% else %}Add Customer{% endif %}
+          </button>
+  
+      </h5>
+
+      {% if matawi > 0 and duka.owner == useri %}
+      <p class="text-right py-2">
+        <label for="this_entp" class="weight600"> {% if useri.langSet == 0 %}Tawi:{% else %}Branch{% endif %}</label>
+        <select name="this_entp" class="made-input latoFont" id="this_entp" onchange="placedataTotable({wateja:[]})" >
+          <option value="{{duka.id}}" > {% if useri.langSet == 0 %}Tawi hili tu {% else %}Only this Branch{% endif %}</option>
+          <option value=0 > {% if useri.langSet == 0 %}Matawi yote{% else %}All Branches{% endif %}</option>
+        </select>
+      </p>
+      {% endif %}
+
+
+      <div  id="worker_table" class="container-fluid" >
+        
+    </div>
+
+
+</div>
+{% endblock %}
+
+{% block datatable %}
+<script>
+  $('#loadMe').modal('show')
+</script>
+
+<script src="/static/js/lugha.js"></script>
+<script src="/static/js/wateja.js"></script>
+
+{% endblock %}
+    
+{% block dash-mapper %}
+ 
+{% if useri.langSet == 0 %}  Mauzo {% else %}Sales {% endif %}
+
+{% endblock %}
+{% block nav-mauzo %}
+class="c-menu__item style-none is-active  showingpop2"
+{% endblock %}
+{% block akaunt-map %}
+   {% if useri.langSet == 0 %}  Wateja {% else %} Customers {% endif %}
+{% endblock %}
+
+{% block active-wateja-menu %} class="btn-default btn pop2_active_menu btn-sm " {% endblock %}
+
+{% block active-mauzo %} class="bi bi-cart-check text-primary" {% endblock %}
+{% block active-kuuza %}
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-check-fill text-primary " viewBox="0 0 16 16">
+  <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+</svg>
+{% endblock %}
+
+

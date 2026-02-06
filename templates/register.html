@@ -1,0 +1,735 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>fanyaBiashara</title>
+        
+        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
+            
+            
+            
+        <script type="text/javascript" src="{% static 'js/jquery.js' %}" ></script>
+        
+        <!-- <script src="{% static 'js/staffaccordion.js' %}"></script> -->
+        
+        
+        
+        <link rel="stylesheet"  href="{% static 'css/jquery-ui.css' %}" >
+        <link rel="stylesheet"  href="{% static 'css/audioformat.css' %}" >
+        
+        <script src="{% static 'js/jquery-ui.js' %}"></script>
+        
+        <script src="{% static 'js/popper.min.js' %}"></script>
+        <script src="{% static 'js/bootstrap.min.js' %}"></script>
+        
+        <script type="text/javascript" src="{% static 'js/toastr.min.js' %}"></script>
+        <link href="{% static 'css/toastr.min.css' %}" rel="stylesheet">
+        
+        
+        <link rel='stylesheet prefetch' href="{% static 'css/normalize.min.css' %}" >
+        
+        <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet"> -->
+        
+        <link rel='stylesheet prefetch' href="{% static 'css/animate.min.css' %}">
+        
+        
+        
+        
+        <!-- <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
+        
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="{% static 'css/bootstrap-select.min.css' %}">
+        
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="{% static 'js/bootstrap-select.min.js' %}"></script>
+        <link rel="shortcut icon" type="image/x-icon" href="{% static 'pics/logo1.png' %}">
+
+        <style>
+            @media screen and (max-width: 766px){
+                form{
+                    min-width: 95%;
+
+                }
+
+               
+            }
+            @media screen and (min-width: 766px){
+                form{
+                    min-width: 500px;
+                } 
+                #the_phone{
+                    font-size: small;
+                }
+            }
+        </style>
+        
+        <link rel="stylesheet" href="{% static 'css/header.css' %}">
+        <link rel="stylesheet" href="{% static 'css/usedashanimations.css' %}">
+        <script src="{% static 'js/nav.js' %}"></script>
+        
+        </head>
+<body class="whiteBg">
+
+
+
+<div style="min-height: 100vh;" class="whiteBg my-3 py-3 d-flex justify-content-center align-items-center">
+   
+    <div class="shadow p-3" style="max-width: 600px;min-width:300px">
+        <div class="text-center">
+            <a href="/?lang={{lang}}" class="navbar-brand">
+                <img id="brandlogo" style="width:220px" src="{% static 'pics/logowithtext.png'  %}" />
+            </a>
+        </div>
+      
+        <h5 class="py-3 text-center" >{% if lang == 0 %}KUJISAJIRI{% else %}REGISTER{% endif %}</h5>
+
+        <form action="/register" class="p-2 p-md-3  " id="reg1Form"  method="POST" >
+            {% csrf_token %}
+
+            <div class="text-right pb-2">
+                <select class="latoFont ml-2 py-0 border0" style="border-color:#ccc ;" name="lang" id="langSel">
+                    {% if lang == 0 %}
+                    <option value="0">SWA</option>
+                    <option value="1">ENG</option>
+                    {% else %}
+                       <option value="1">ENG</option>
+                         <option value="0">SWA</option>
+                    {% endif %}
+                </select>
+            </div>
+
+
+            
+            <div class="form-group pb-2">
+                <label class="weight500 brown" for="l_name">{% if lang == 0 %}Sajiri kama{% else %}Register As{% endif %} <sup>*</sup> </label>
+
+                <div class="gender">
+                    <div class="form-check form-check-inline">
+                        <label class="form-check-label" style="cursor: pointer !important;" >
+                            <input checked class="form-check-input" style="cursor: pointer !important;"  onchange="
+                            if($(this).prop('checked')){
+                                $('#for_fname').text('{% if lang == 0 %} Jina la Kwanza {% else %}  First Name{% endif %}')
+                                $('#f_name').attr('placeholder','{% if lang == 0 %}Andika Jina la Kwanza {% else %} Write First Name{% endif %}')
+                                $('#lastName').fadeIn(300)
+                                $('#gendered').fadeIn(300)
+                            }" 
+                            
+                            type="radio" name="RegAs" id="PersonalA" value=1>
+                            {% if lang == 0 %}Akaunti Binafsi{% else %}Personal Account{% endif %}</label>
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <label class="form-check-label" style="cursor: pointer !important;" >
+                            <input class="form-check-input" style="cursor: pointer !important;" onchange="
+                                if($(this).prop('checked')){
+                                    $('#for_fname').text('{% if lang == 0 %} Jina la Kampuni/Taasisi/Jumuiya .. {% else %} Company/Organization.., name{% endif %}')
+                                    $('#f_name').attr('placeholder','{% if lang == 0 %}Andika Jina  {% else %} Write Name{% endif %}')
+                                    $('#lastName').fadeOut(300)
+                                    $('#gendered').fadeOut(300)
+                                }
+                            " 
+                            type="radio" name="RegAs" id="CompanyA" value=0 > 
+                            {% if lang == 0 %}Akaunti ya Kampuni/Jumuiya/kikundi/Taasisi n.k{% else %}Company/Organization/Institutions etc., Account{% endif %}</label>
+                        </label>
+                    </div>                    
+                </div>
+
+
+            </div>
+
+            <div class="form-group pb-2">
+              <label class="weight500 brown" id="for_fname" for="f_name">{% if lang == 0 %} Jina la Kwanza {% else %}  First Name{% endif %} <sup>*</sup></label>
+              <input type="text" name="f_name" id="f_name" value="{{regi.user.first_name}}"  class="form-control smallFont darkblue" placeholder="{% if lang == 0 %}Andika Jina la Kwanza {% else %} Write First Name{% endif %}" aria-describedby="helpId">
+             
+            </div>
+
+            <div class="form-group pb-2" id="lastName" >
+                <label class="weight500 brown" for="l_name">{% if lang == 0 %} Jina la Mwisho{% else %}  Last Name{% endif %} <sup>*</sup> </label>
+              <input type="text" name="l_name" value="{{regi.user.last_name}}"  id="l_name"  class="form-control smallFont darkblue" placeholder="{% if lang == 0 %}Jina la Mwisho{% else %} Write last Name{% endif %}" aria-describedby="helpId">
+             
+            </div>
+
+            <div id="gendered" class="form-group pb-2">
+                <label class="weight500 brown" for="l_name">{% if lang == 0 %}Jinsia{% else %}Gender{% endif %} <sup>*</sup> </label>
+
+                <div class="gender">
+                    <div class="form-check form-check-inline">
+                        <label class="form-check-label" style="cursor: pointer !important;" >
+                            <input class="form-check-input" style="cursor: pointer !important;"  onchange="checkValidity()" type="radio" name="Gender" id="Male" value=1>
+                            {% if lang == 0 %}Kiume{% else %}Male{% endif %}</label>
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <label class="form-check-label" style="cursor: pointer !important;" >
+                            <input class="form-check-input" style="cursor: pointer !important;" onchange="checkValidity()" type="radio" name="Gender" id="Female" value=0 > 
+                            {% if lang == 0 %}Kike{% else %}Female{% endif %}</label>
+                        </label>
+                    </div>                    
+                </div>
+
+
+            </div>
+
+             <div class="form-group pb-2 ">
+            
+               
+                <label class="weight500 brown" for="email">{% if lang == 0 %}Barua Pepe{% else %} Email{% endif %} <sup>*</sup> </label>
+               <input type="email" data-valu=0 name="email" id="email" value="{{regi.user.email}}"  class="form-control smallFont darkblue"  placeholder="{% if lang == 0 %}Andika Barua Pepe{% else %} Write Email {% endif %}" aria-describedby="helpId">
+             
+            </div>
+             <div class="form-group pb-2 ">
+            
+               
+                <label class="weight500 brown" for="password">{% if lang == 0 %}Tengeneza Neno la Siri{% else %} Set Password{% endif %} <sup>*</sup> </label>
+               <div class="input-group">
+                    <input type="password" name="password" id="password" class="form-control smallFont darkblue" placeholder="{% if lang == 0 %}Changanya namba herufi kubwa na ndogo na alama, Angalau 6{% else %}At least 6 mixed numbers,symbols, uppercase & lowercase letters{% endif %}" aria-describedby="helpId">
+                    <button type="button" class="btn btn-default py-2 border btn-sm input-group-append  showpwd">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>                  
+               </div>
+
+               <div id="pwdSign"></div>
+
+               <small id="strengthMessage"></small>
+            </div>
+             <div class="form-group pb-2 ">
+            
+               
+                <label class="weight500 brown" for="passwordConfirm">{% if lang == 0 %}Hakiki Neno siri {% else %} Re-enter Password{% endif %} <sup>*</sup> </label>
+               
+               <div class="input-group">
+                        <input type="password" name="passwordConfirm"  id="passwordConfirm" class="form-control smallFont darkblue" placeholder="{% if lang == 0 %}Andika nenosiri tena{% else %} Re-enter password{% endif %}" aria-describedby="helpId">
+
+                        <button type="button" class="btn btn-default showpwd py-2 border btn-sm input-group-append ">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>                               
+               </div>
+
+               <small id="pwdMisMatch" class="brown"></small>
+            </div>
+
+            <script>
+                $('.showpwd').click(function(){
+                    const type = $(this).siblings('input').attr('type'),
+                          on = `<svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>`,
+                          off = `
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye-off">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                                    </path><line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                        `
+
+                    $(this).siblings('input').attr('type',type=="text"?"password":"text")
+                    $(this).html(type=="text"?on:off)
+                    
+                })
+            </script>
+
+
+
+            <div class="form-group pb-2">
+                <select name="countries"  class="form-control  smallFont" id="countries">
+                     <option value="0">---{% if lang == 0 %}Chagua Nchi{% else %}Select Country{% endif %}---</option>
+                     <option value=255 >Tanzania</option>
+                </select>
+            </div>
+
+            {% if regi  %}
+                <script>
+                     $('#countries').val(Number('{{regi.mtaa.kata.wilaya.mkoa.kanda.nchi.code}}'))
+                </script>
+            {% endif %}
+
+
+            <div class="form-group pb-2">
+                <select name="Kanda" class="form-control  smallFont" id="Kanda">
+                     <option value="0">---{% if lang == 0 %}Chagua Kanda/Jimbo{% else %}Select Zone/State{% endif %}---</option>
+                     {% for k in kanda %}
+                        <option data-nchi="{{k.nchi.code}}" value="{{k.id}}">{{k.kanda}}</option>
+                     {% endfor %}
+                    
+                </select>
+            </div>
+            <div class="form-group pb-2">
+                <select name="Mikoa" class="form-control  smallFont" id="Mikoa">
+                     <option value="0" data-kanda="0">---{% if lang == 0 %}Chagua Mkoa{% else %}Select Region{% endif %}---</option>
+                     {% for k in mikoa %}
+                     <option data-nchi="{{k.kanda.nchi.code}}"  data-kanda="{{k.kanda.id}}" value="{{k.id}}">{{k.mkoa}}</option>
+                  {% endfor %}
+                </select>
+            </div>
+            <div class="form-group pb-2">
+                <select name="Wilaya" class="form-control  smallFont" id="Wilaya">
+                     <option value="0">---{% if lang == 0 %}Chagua Wilaya{% else %}Select Distric{% endif %}---</option>
+                     {% for k in wilaya %}
+                     <option data-nchi="{{k.mkoa.kanda.nchi.code}}" data-kanda="{{k.mkoa.kanda.id}}" data-mkoa="{{k.mkoa.id}}" value="{{k.id}}">{{k.wilaya | title }}</option>
+                  {% endfor %}
+                </select>
+            </div>
+            <div class="form-group pb-2">
+                <select name="Kata" class="form-control text-capitalize smallFont" disabled id="Kata">
+                     <option value="0">---{% if lang == 0 %}Chagua Kata{% else %}Select Ward{% endif %}---</option>
+                    
+                </select>
+            </div>
+
+            <div class="form-group pb-2">
+                <select name="Kijiji" class="form-control text-capitalize smallFont" disabled id="Kijiji">
+                     <option value="0">---{% if lang == 0 %}Chagua Mtaa/Kijiji{% else %}Select Street/Vilage{% endif %}---</option>
+                    
+                </select>
+            </div>
+    
+            <script>
+                $(document).ready(function(){
+                    $('#Kanda option ,#Mikoa option ,#Wilaya option').hide()
+                    $('#Kanda option[value=0] ,#Mikoa option[value=0] ,#Wilaya option[value=0]').show()
+                })
+            </script>
+
+          
+            <div class="form-group pb-2 d-flex" >
+                   <div class="form-check">
+                     <label class="form-check-label " style="cursor: pointer;" >
+                       <input type="checkbox"  style="cursor: pointer;" class="form-check-input" name="TermsCondition" id="TermsCondition" value="checkedValue" >
+                          
+                          {% if lang == 0 %}Nimesoma, na Nakubaliana na {% else %}I've read and, I agree with {% endif %}
+
+                          <a class="ml-2" type="button" data-toggle="modal" data-target="#termsConditionsModal" href="#"> 
+                                {% if lang == 0 %}Makubaliano na Utaratibu{% else %}Terms & Conditions{% endif %}
+                                
+                            </a>
+                     </label>
+                   </div>
+
+                   
+            </div>
+
+
+            <div class="py-1">
+                 <button id="submitBtn" type="button" disabled class="btn btn-primary form-control">
+                    {% if lang == 0 %}Kusanya{% else %}Submit{% endif %}
+                 </button>
+            </div>
+
+        </form>
+
+        <div class="mb-4 mx-2 mx-md-3" ><a href="/login?lang={{lang}}" class=" latoFont">{% if lang == 0 %}Kuingia{% else %}Login{% endif %}</a></div>
+
+   
+
+        <script>
+            $('#langSel').change(function(){
+                const sel = $(this).val()
+    
+                location.replace(`/register?lang=${sel}`)
+            })
+        </script>
+    </div>
+
+
+
+
+</div>
+
+
+<script>
+
+$('.form-style-7 li input').focus(function(){
+    $(this).siblings('span').show()
+})
+
+//taarifa binafsi
+$('#fisi').click(function(e){
+$('.div-loader').show()
+});
+
+
+</script>
+
+<script  src="{% static 'js/lugha.js' %}" ></script>
+<script  src="{% static 'js/jisaji.js' %}" ></script>
+
+<input type="hidden" id="luga" value="{{lang}}" name="luga">
+
+
+<!-- Modal terms & conditions -->
+<div class="modal fade" id="termsConditionsModal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content whiteBg">
+                <div class="modal-header">
+                        <h5 class="modal-title">{% if lang == 0 %}Makubaliano na Utaratibu {% else %}Terms & Conditions{% endif %}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                    </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    {% if lang == 0 %}
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            Utangulizi:
+                        </h4>
+                        <p>
+                            Karibu kwenye Utaratibu/kanuni na makubaliano yanayosimamia matumizi ya huduma za fanyabiashara zilizoorodheshwa na timu ya kampuni la fanyabiasha. Ikiwa haukubaliani na masharti haya, basi uko huru kutojiandikisha kutumia programu na ikiwa unakubali basi unaweza kuweka alama ya tiki kwenye kisanduku cha kukubali na uendelee kujiandikisha. Notisi hii pia inaweza kuboreshwa wakati wowote kwani masharti mengine zaidi yanaweza kutokea hapo, jisikie huru kukagua na kufanya maamuzi yako.                        </p>
+                    </div>
+
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            Tafsiri:
+                        </h4>
+                        <p>
+                            “Fanyabiashara” <br>
+                            Neno la Kiswahili linalomaanisha kufanya biashara na limetumika kama jina na program hii                           <br> <br> “Makubariano” ama “Kanuni” <br>
+                           inamaanisha Sheria na Masharti haya ya Fanyabiashara na inajumuisha arifa, sera, miongozo au masharti yoyote yanayotumwa Kwako na Fanyabiashara au kuchapishwa kwenye tovuti.                            
+                            <br> <br> “Akaunti ya kusimamia mahesabu” <br>
+                            Inamaanisha akaunti ambayo mtumiaji/kampuni inamiliki ili data iliyoongezwa iweze kuchakatwa na kudhibitiwa kwa njia ambayo mtumiaji anaweza kuona kile hasa kinachotokea katika mahesabu ya karakana/biashara yake.                            
+                            <br> <br>  “Kiasi cha akaunti” <br>
+                            Inamaanisha kiasi ambacho mtumiaji anacho kwenye akaunti yake baada ya kuongeza malipo kwenye akaunti ya kampuni na kupewa tokeni ambazo ataingiza ili kuchaji upya akaunti yake ya fanyabiashara. Kiasi cha akaunti kinaweza kutumika kulipia usajili wa akaunti ya usimamizi, baada ya malipo ya mpango wa matumizi na utafutaji masoko.                        
+                            <br>  <br>  “Mtumiaji wa kawaida” <br>
+                         Hii inamaanisha watumiaji wote ambao hawana biashara yoyote ya kusimamiwa kwa kutumia programu ya fanyabiara watumiaji hawa wanaweza kuagiza vitu na kuwasiliana na wachuuzi wao.                  
+                           </p>
+                    </div>
+
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            Nini fanyabiashara itafanya kwa ajiri yako:
+                        </h4>
+                        <h5>Makubaliano ya matumizi ya programu</h5>
+                        <p>
+                            Hii inahusisha haki ya kupata huduma ikiwa ni pamoja na kupata taarifa zote zinazoruhusiwa zinazohitajika kwako na kufanya shughuli zote zinazoruhusiwa kwa biashara yako kulingana na mpango wako wa matumizi mahali popote wakati wowote, ikiwa hitilafu yoyote au hitilafu au utendakazi wowote usiofaa utatokea wakati wa operesheni yako tafadhali wasiliana nasi kwa msaada. Endapo kutatokea masasisho/mabadiliko yoyote ya mfumo shirika letu litakujulisha kwa kutuma ujumbe sahihi.                         </p>
+                    
+                    
+                        <h5>Usalama na Usiri</h5>
+                        <p>
+                            Usalama ni sehemu muhimu unapotumia huduma zetu. Fanyabiashara itakuwezesha kulinda data yako dhidi ya kufikiwa na kutumiwa vibaya na watumiaji wengine bila ruhusa yako kama unapozingatia taratibu zote unazofuata ili kulinda akaunti yako na kifaa chako pia. FanyaBiashara itamlazimu mtumiaji kudhibitisha uhali wa natumizi ya kwa kuingiza barua pepe na neno la siri pia haitaruhusu mtumiaji Zaidi ya mmoja katika akaunti moja. Fanyabiashara pia italinda taarifa zako za siri na kutoshirikiwa na mtu yeyote kama vile nenosiri kama mtumiaji.                        </p>               
+                    
+                        <h5>Uthabiti na usahihi</h5>
+                        <p>
+                            Fanyabiashara itakusaidia kupanga data yako jinsi inavyokusudiwa kwa usahihi katika ripoti zote zinazozalishwa na matukio yote ambayo unaweza kuwa unaendesha ambayo yanahusisha hesabu kama vile ankara, bili, maagizo ya wateja, miamala ya uhasibu na kadhalika. Hii pia inahitaji data sahihi zilizoingizwa kiusahihi.                        </p>  
+
+                        <h5>Kama mmiliki wa biashara au karakana ya kusimamia</h5>
+                        <p>
+                            Muuzaji/mtoa huduma ni yule ambaye ana akaunti ya biashara yake ambayo ni kusimamia kwa usaidizi wa programu ya Fanyabiashara. Kama muuzaji/mtoa huduma Fanyabiashara kama programu ya usimamizi wa hesabu mtandaoni hukusaidia kufuatilia uhasibu wa biashara yako (malipo yaliyofanywa na kupokea na usimamizi wa akaunti za malipo), bili, kuagiza, ankara, usimamizi wa hisa (vitu, vipengele vya kutumia na huduma), uzalishaji(vipengee/wafanyikazi wa usimamizi wa nyenzo na kazi zilizofanywa, muda wa uzalishaji hadi bidhaa za mwisho), dhibiti waendeshaji wa biashara kwa ruhusa za watumiaji, wasiliana na wateja wako na wachuuzi wako pia (uwezo wa kuzungumza), utangazaji wa kidijitali wa bidhaa zako, biashara, huduma, kategoria za vitu, chapa za bidhaa, vikundi vya bidhaa pia tovuti nyingine yoyote ambayo unamiliki.                        </p>  
+
+                        <h5>Kama mtumiaji wa kawaida.</h5>
+                        <p>
+                            Mtumiaji wa kawaida ni yule ambaye hamiliki biashara/biashara ya kusimamia kwa usaidizi wa programu hii. Mtumiaji anaweza tu kutazama wasifu/vitu/huduma za biashara kisha anaweza kuongeza kwenye kikapu, bonyeza agizo na kufanya agizo hilo lishughulikiwe na muuzaji wake kwa kuongeza anaweza kuongeza mtu wa kati kama wakala wa kuchukua/uwasilishaji, bidhaa zilizoagizwa na hupokea uthibitisho. na kutengeneza ankara zako za ununuzi wakati wa shughuli hizi zote programu ya fanyabiashara hutoa notisi inayoonyesha bidhaa na kuonyesha bei, kiasi, vipimo, anwani na sheria na masharti kutoka kwa muuzaji wa bidhaa na jumla ya gharama ya huduma/vitu vyote vitakavyonunuliwa. Pia mtumiaji wa kawaida anaweza kuongeza bango na kubainisha mahali ambapo mtumiaji atachukua anapobofya, katika hili anaweza kuongeza kiungo au kuongeza taarifa kueleza anachotaka kutoka kwa watembeleaji.                         </p>   
+
+
+                    </div>
+
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            Mambo ambayo Fanyabiashara haiwezi kufanya kwa ajiri yako:
+                        </h4>
+                        <p>
+                            Kama mtumiaji wa kawaida au mmiliki wa biashara/biashara fanyabiashara huhifadhi tu rekodi za ununuzi wako, ankara, mauzo, uzalishaji, uhasibu na kutoa ripoti kulingana na jinsi unavyotumia programu. Yafuatayo ni mambo ambayo fanyabiashara haiwezi kukufanyia:                        </p>
+
+                        <h5> Malipo baina ya mteja na biashara/ biashara na mteja/mteja na mteja/biashara na biashara</h5>
+                        <p>
+                            Fanyabiashara haina njia za malipo ambazo zinaweza kutumiwa na wachuuzi au wateja kufanya malipo kwa bidhaa zilizonunuliwa au huduma zinazotolewa au kushughulikia malipo ya kurejesha kiasi. Fanyabiashara hutoa notisi tu kama ankara ambazo hurahisisha kukokotoa gharama ya kulipwa, kwa hivyo mifumo mingine ya malipo inayoaminika inaweza kutumika kulingana na muuzaji/mtoa huduma na makubaliano ya mteja kisha fanyabiashara inaweza kuhifadhi maelezo kama marejeleo tu ikiwa yameongezwa kwenye ankara na muuzaji. au mtoa huduma. Kwa kesi hii fanyabiashara inatoa ankara pekee, na risiti za malipo hutolewa kwa njia ya malipo ambayo muuzaji anatumia.
+                            
+                         </p>
+                        <h5>Malipo kwa watumiaji.</h5>
+                        <p>
+                            Hii inahusisha kulipa watumiaji wa fanyabiashara, hii inaweza kuwa kurejesha pesa au aina yoyote ya malipo kwa watumiaji. Malipo yanayofanywa na watumiaji yanapaswa kufanywa kwa uangalifu na kiasi kinapaswa kutathminiwa kwa usahihi kulingana na huduma ambazo mtumiaji anapaswa kulipa ili kuepuka matumizi yasiyofaa ya pesa zako kwa sababu program hii haina uwezo wa kurudisha pesa kwako kwa sasa.                          
+                        </p>               
+                    
+                        
+                    </div>
+
+
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            Vitu ambavyo mtumiaji anatakiwa kufanya:
+                        </h4>
+                        <p>
+                            Hii inajumuisha taratibu na hatua zote ambazo watumiaji wa kawaida na mmiliki wa biashara wanatakiwa kufanya kabla na wakati wa kutumia programu. Yafuatayo ni mambo ya kuzingatiwa na watumiaji kabla na wakati wa kutumia programu ya fanyabiashara.                         </p>
+
+                        <h5> Soma na uelewe utaratibu na makubaliano pamoja na sera zingine kama</h5>
+                        <p>
+                            Kusoma notisi hii na arifa za sera ya faragha na sera ya usalama baada ya kuelewana kisha fanya uamuzi unaofaa ikiwa unakubali na kuendelea na usajili au ikiwa hukubali hakuna haja ya kujisajili au kuendelea kutumia program hii                        
+                        </p>
+                            <h5>kuingiza data sahihi na thabiti.</h5>
+                        <p>
+                            Hii inahusisha data yote muhimu ya ingizo ya mtumiaji ambayo mtumiaji anaombwa kujaza inapaswa kuwa sahihi na thabiti kwa uwezekano wa utendakazi wa programu. Hii inajumuisha jina la mtumiaji, jinsia, mahali na mtaa ulipo. Pia kuweka kiasi wakati wa kuagiza au kuchakata bili au ankara kunapaswa kuwa sahihi na kwa bei za bidhaa za usimamizi wa biashara zinapaswa kutofautiana ili kuepuka ukokotoaji na tathmini ya bidhaa zenye thamani ipasavyo.                       
+                         </p> 
+
+                        <h5>Matumizi mazuri ya lugha.</h5>
+                        <p>
+                            Lugha ya kuudhi isiyokuwa na staha na matusi hayapaswi kutumiwa wakati wa kupiga gumzo na katika majina ya biashara au maneno mengine yoyote ambayo mtumiaji anaombwa kuandika. Watumiaji na waendeshaji wanapaswa kutumia maneno sahihi na yenye staha ambayo yanafaa kwa watumiaji wengine ambayo hayajumuishi matusi au aina yoyote ya maneno ambayo yanaudhi  watumiaji wengine. Kutumia maneno sahihi na yenye staha humfanya mtumiaji kuwa huru dhidi ya uhalifu wa mtandaoni na matatizo mengine.                    
+                        
+                    </div>
+
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            Hitimisho:
+                        </h4>
+                       
+                        <p>
+                            Kwa kuhitimisha, haya ni masharti ambayo mtumiaji anapaswa kusoma kabla ya kujiunga na kutumia au kusoma wakati wa kutumia na kama operesheni yoyote ambayo inabidi ifanye na inaonekana haelewi mtumiaji anaweza pia kurejerea ilani hii ili kufanya uamuzi sahihi kwa kuelewa jinsi inavyofanya. uwezekano wa kufanya kile anachotaka. Kwa habari zaidi, jisikie huru kuwasiliana nasi pia. Asante na karibu.                        
+                        </p>
+                        
+                    </div>
+
+                
+                    <p class="text-right"><a href="/static/docs/utaratibu.docx">Pakua notisi hii kwa kubonyeza hapa</a></p>
+
+
+                    {% else %}
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            Introduction:
+                        </h4>
+                        <p>
+                            Welcome to terms & condition that govern the use of fanyabiashara services listed by fanyabiasha corporation team. If you don’t agree with these condition, then you are free not to register to use the application and if you agree then you can check on I agree check box and continue to register. This notice can also be upgraded at any time as more other terms can emerge there feel free to review and make your decisions.
+                        </p>
+                    </div>
+
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            Definitions:
+                        </h4>
+                        <p>
+                            “Fanyabiashara” <br>
+                            This is a Swahili word meaning “do business” as a name of this inventory management software 
+                           <br> <br> “Agreements” or “Terms”  <br>
+                            means these Fanyabiashara Terms and Conditions and includes any notices, policies, guidelines or conditions sent to You by Fanyabiashara or posted on the Website.
+                           <br> <br> “Enterprise/Account to manage” <br>
+                            Means the account which user/company owns so as the data added to can be manipulated and managed in the way that user can view what exactly is happening to the inventory 
+                           <br> <br>  “Account Amount” <br>
+                            Means the amount that user has to his/her account after adding making payment to the company account and given tokens that he/she enter to recharge his/her fanyabiashara account. Account amount can be used to pay for management account registration, after usage plan payment and marketing.
+                           <br> <br> “Items”  <br>
+                            These are goods which users having enterprises add for their customers and that are managed in terms of use, worth evaluation, sales and purchases.
+                         <br>  <br>  “Normal Users” <br>
+                            This means all users that do not have any enterprise to be managed using fanyabiara application these users only can order items and communicate with their vendors.
+                     </p>
+                    </div>
+
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            What Fanyabiashara can do for you:
+                        </h4>
+                        <h5>Use of software agreement</h5>
+                        <p>
+                            This involve a right to access the service including accessing all allowed information required for you and making all allowed operations for your enterprise according to your usage plan anywhere anytime, if any error or bug or any improper functionality incur during your operation please contact us to for help. In case of any system upgrades/changes our organization will inform you by proper message pop overs.      </p>
+                    
+                    
+                        <h5>security & Privacy</h5>
+                        <p>
+                            Security is vital part when using our service. Fanyabiashara grants you to protect your data from being accessed and misused by other users without your permission as when you consider all the possible procedures that you follow to protect your account and your device too. FanyaBiashara will validate any other login either from defferent device. Fanyabiashara also grants to protect your confidential information and not to share by anyone such as your user password.     
+                        </p>               
+                    
+                        <h5>Consistency & accuracy</h5>
+                        <p>
+                            Fanyabiashara grants you to organize your data as intended with accuracy across all generated reports and all instances that you may be running that involves calculations such as invoices, bills, customer orders, accounting transactions and so on. This also require proper and correct data entered.                          
+                        </p>  
+
+                        <h5>As an Enterprise to manage owner (Vendor/service provider)</h5>
+                        <p>
+                            A vendor/service provider is the one who has an account for his/her enterprise that is to manage with the help of Fanyabiashara software. As vendor/service provider Fanyabiashara as an online inventory management software helps you to keep track of your enterprise accounting (payment made & receives and payment accounts management), billing, ordering, invoicing, stock management (items, components to use and services), production(components/material management workers & tasks performed, production duration to the final products), manage enterprise operator(s) with user permissions, communicate with your customers and your vendors too (chatting capability), digital marketing for your goods, enterprise, services, items categories , items brands, item groups also any other website you may own                        
+                        </p>  
+
+                        <h5>As a normal User.</h5>
+                        <p>
+                            A normal user is the one who do not own a business/enterprise to manage with the help of this software. The user can only view enterprise profiles/items/services then can add to cart, press an order and get that order processed by his/her vendor on addition he/she can add a middle man as pickup/delivery agent, ordered items receives confirmations and generating your purchase invoices during all these operations fanyabiashara app generates a notice showing items and indicating price, quantity, units, item name vendor address & terms and the total cost for all services/items to be purchased. Also a normal user can add a banner and specify where the user will take when clicked,in this he/she can add a link or add notice to explain what he want from the visitors.                        </p>   
+
+
+                    </div>
+
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            What Fanyabiashara can’t do for you:
+                        </h4>
+                        <p>
+                            As normal user or business/enterprise owner fanyabiashara only keep records of your purchases, invoices, sales, production, accounting and generate reports according to how are you using the software. The following are the things that fanyabiashara can’t do for you:
+                        </p>
+
+                        <h5>customer to business/ business to customer/customer to customer/business to business, payments</h5>
+                        <p>
+                            Fanyabiashara do not have a payment means that can be used by both vendors or customers to make payments on the items purchased or services offered or handling amount return payments. Fanyabiashara only generates notices as invoices that make it easy to calculate the cost to be paid, hence Other trusted payment platforms can be used according to vendor/service provider and customer agreements then fanyabiashara can only store the description as reference if added to invoice by vendor or service provider. By this case fanyabiashara only offers invoices and receipts for payments is offered by the payment means that a vendor is using.                    
+                        </p>
+                        <h5>User payments.</h5>
+                        <p>
+                            This involves paying fanyabiashara users, this may be refunding or any kind of payment to the users. Payments made by users should be carefully made and the amount should be correctly evaluated according to the services that user should pay to avoid improper use of your money since the software do not have pay back functionalities.                        
+                          
+                        </p>               
+                    
+                        
+                    </div>
+
+
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            What users should to do:
+                        </h4>
+                        <p>
+                            This includes all the procedures and measures both normal users and enterprise owner are required to do before and when using the software. The following are things to be considered by users before and while using fanyabiashara software.                        </p>
+
+                        <h5> Read and understand the terms & condition and our privacy policy</h5>
+                        <p>
+                            Reading this notice and the <a href="#">privacy policy </a> & <a href="#">Security policy</a>  notice after understanding then make a proper decision whether to agree and continue with registration or if you don’t agree the there is no need to register.                    
+                        
+                        <h5>Correct & consistent user input data.</h5>
+                        <p>
+                            This involves all the necessary user input data that the user is prompted to fill should be correct and consistent for potential functioning of the software. This includes user name, gender, place and the street where you are. Also entering quantity when ordering or processing bills or invoices should be correct and for enterprise management item prices should be inconsistent to avoid miscalculation and evaluation of items worth accordingly.                          
+                        </p> 
+
+                        <h5>Proper use of language.</h5>
+                        <p>
+                            Offensive language and assaults should not be used while chatting and on enterprise titles and names or any other words that user is prompted to enter. Users and operators should use proper words that are convenient to other users that do not include assaults or any kind of words that conflict with the other users. Using proper words keep user free of cybercrimes and trouble.                        </p>               
+                    
+                        
+                    </div>
+
+                    <div class="termPanel mb-3">
+                        <h4 class="mb-2">
+                            Conclusion:
+                        </h4>
+                       
+                        <p>
+                            On concluding these are the terms that user should read before joining and using or read when using and if any operation that has to perform and seems to not understand user also can feel free to revise this notice so as to make proper decision by understanding how it likely to perform what he/she want. For more information, feel free to contact us too. Thank you and welcome.                  
+                        
+                        </p>
+                        
+                    </div>
+
+                
+                    <p class="text-right"><a href="/static/docs/Terms.docx">click here to download word document</a></p>
+
+                    {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+               
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal Profile Loader-->
+<div class="modal fade" id="loadMe"  tabindex="-1" data-backdrop="static" role="dialog" aria-labelledby="loadMeLabel" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered d-flex justify-content-center" role="document" >
+      <div class="modal-content whiteBg" style="width:212px;">
+        <div class="modal-body text-left" style="padding:5px 11px;width:211px">
+      <div  class="row">
+      
+      <div class="lds-ring col-3"><div></div><div></div><div></div><div></div></div>
+      
+          
+            <div class="col-9 pt-2" > 
+              
+              {% if lang == 0 %} Tafadhari Subiri...  {% else %} Please Wait.. {% endif %}
+            
+          </div>
+      </div>
+        </div>
+      </div>
+      </div>
+  </div>
+
+
+  
+  <!-- Modal -->
+  <div class="modal fade" id="ConfirmMailModal" tabindex="-1" data-backdrop="static"  role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content whiteBg">
+                <div class="modal-header">
+                        <h5 class="modal-title">{% if lang == 0 %}Kuhakiki Anuani ya Barua Pepe {% else %} Confirm Email address{% endif %}</h5>
+                          
+                    </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <h5 class="text-center  latoFont "> <span >{% if lang == 0 %}Ndani ya {% else %}Within {% endif %}:</span>    <span class="brown weight600 downCounter" id="downCounter" ></span> <span class="brown weight400">sec</span> </h5>
+                    <div class="form-group">
+                      <label for="emailCheck" class="smallFont" id="mailtoConfirn" ></label>
+                      <input type="number" name="emailCheck" id="emailCheck" class="form-control" placeholder="" aria-describedby="helpId">
+                      
+                    </div>
+                    <p class="text-right">
+                        <button id="tumabtn" class="btn btn-primary btn-sm">
+                            <span class="spinner-border spinner-border-sm" id="confirmMailSpiner" hidden  role="status" aria-hidden="true"></span>
+                            <span class="ml-2">{% if lang == 0 %}Tuma{% else %}Send{% endif %}</span>  
+                        </button>
+                    </p>
+                </div>
+            </div>
+           
+        </div>
+    </div>
+  </div>
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="ConfirmPhoneModal" tabindex="-1" data-backdrop="static"  role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content whiteBg">
+                <div class="modal-header">
+                        <h6 class="modal-title">{% if lang == 0 %}Kuongeza na kuhakiki namba ya simu {% else %}Add and Confirm phone number{% endif %}</h6>
+                          
+                    </div>
+            <div class="modal-body">
+                <div >
+                  <div class="input-group mb-4">
+                    <span class="input-group-prepend border p-1">
+                             +255
+                    </span>
+                    <input type="tel" data-val="{% if regi %}{{regi.id}}{% else %}0{% endif %}" id="the_phone" placeholder="{% if lang == 0 %}Andika namba{% else %}Write Phone Number {% endif %}" class="py-2 form-control">
+                     <button id="sendPhone" class="pt-2 latoFont  btn-primary input-group-append btn-sm">
+                        <span class="spinner-border spinner-border-sm" id="confirmphoneSpiner" hidden  role="status" aria-hidden="true"></span>
+                       <span class="ml-2">{% if lang == 0 %}Tuma{% else %}Send{% endif %}</span>  
+                      
+                     </button>
+                  </div>
+
+                   <div id="confirmPhone" style="display: none ;" >
+                    <hr>
+                        <h5 class="text-center  latoFont "> 
+                            <span >{% if lang == 0 %}Ndani ya {% else %}Within {% endif %}:</span> 
+                            <span class="brown weight600  downCounter" id="downCounter1" ></span> <span class="brown weight400">sec</span> 
+                        </h5>
+                        <div class="form-group">
+                        <label for="PhoneCheck" class="smallFont"  ></label>
+                        <input type="number" name="PhoneCheck" id="PhoneCheck" class="form-control"  aria-describedby="helpId">
+                        
+                        </div>
+                        <p class="text-right">
+                            <button id="tumabtnPhone" class="btn btn-primary btn-sm">
+                                <span class="spinner-border spinner-border-sm" id="PhoneConfirmSpinner" hidden role="status" aria-hidden="true"></span>
+                                {% if lang == 0 %}Tuma{% else %}Send{% endif %}
+                                
+                            </button>
+                        </p>
+                   </div>
+
+                </div>
+            </div>
+           
+        </div>
+    </div>
+  </div>
+  
+ 
+  <!--End of Modal Profile Loader-->
+  
+  {% if regi %}
+      <script>$('#ConfirmPhoneModal').modal('show')</script>
+  {% endif %}
+
+</body>
+</html>

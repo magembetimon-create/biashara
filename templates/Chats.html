@@ -1,0 +1,21 @@
+{% extends 'userdash.html' %}
+
+{% block all-bills %}
+<div class=" py-2 px-3 whiteBg" id="invoice_wrapper"> 
+    <div class="row">
+        <div class="col-md-4">
+          <header class="border-bottom  ">
+            <div class="row classic_div py-2">
+            </div>
+          </header>
+        </div>
+        <div class="col-md-8">
+            
+        </div>
+   </div>
+{% endblock %}
+ 
+
+{% block dash-map %} {% if useri.langSet == 0 %}Notifikesheni{% else %}Notifications{% endif %}
+
+{% endblock %}

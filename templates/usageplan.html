@@ -1,0 +1,392 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+{% block Dashboard %}
+
+<div  class=" Analytical tab_div whiteBg p-md-4 p-2" style="min-height: 80vh;" id="general-panel">
+    <h5 class="weight500 " >
+
+        {% if useri.langSet == 0 %} Mpango wa matumizi {% else %} Usage Plan {% endif %}
+
+         
+   
+    </h5>
+
+    <hr>
+
+    <div class="row">
+        <div class="col-md-6">
+           
+              <img src="/static/pics/{% if ukomo %}Itsheavy.svg{% else %}workAnyWhere.svg{% endif %}" alt="none" width="95%" srcset="">
+            
+
+       
+        </div>
+
+        <div class="col-md-6">
+
+                    
+            <h6 class="pt-2" id="matumiziNamna" > 
+                {% if useri.langSet == 0 %} 
+                  
+                   {% if ukomo or duka.usage == 0 and duka.marketing == 0 %}
+                      Chagua Mpango wa Matumizi  
+                   {% else %}
+                       Mpango wa matumizi uliopendekezwa 
+                   {% endif %}
+
+
+                {% else %}
+                   
+                   {% if ukomo or duka.usage == 0 and duka.marketing == 0 %}
+                       Customize Usage Plan 
+                   {% else %}
+                       Enterprise Usage Plan Selected
+                   {% endif %}                   
+                {% endif %}
+            </h6>
+            <div id="payments">
+
+         
+            <div class="form-check">
+                <label class="form-check-label">
+                <input type="radio" class="form-check-input kulipia" name="malipio" id="bure" value=0 >
+                {% if useri.langSet == 0 %}Bure {% else %} Free {% endif %}: {{duka.currencii}}. <span class="brown weight600">0</span> /{% if useri.langSet == 0 %}Mwezi {% else %} Month {% endif %}
+              </label>
+            </div>
+
+            <div class="form-check mb-2">
+                <label class="form-check-label">
+                <input type="radio" class="form-check-input kulipia" name="malipio" id="lipia" value=5000 >
+                {% if useri.langSet == 0 %} Malipo Baada ya Kutumia{% else %} Post Payment {% endif %}: {{duka.currencii}}. <span class="brown largerFont weight600">5,000</span> /{% if useri.langSet == 0 %}Mwezi (siku 30){% else %} Month (30 days) {% endif %}
+              </label>
+            </div>
+            
+            <h6 class="pt-2" > {% if useri.langSet == 0 %} Kutafutia Masoko Bidhaa na Mapendekezo ya Bidhaa kwa Wateja {% else %}Marketing Plan and Items Search Recommendation to Customers  {% endif %}</h6>
+            <div class="form-check">
+                <label class="form-check-label">
+                    <input type="radio" class="form-check-input" name="masoko" id="Hapana" value=0 checked >
+                    {% if useri.langSet == 0 %} Hapana {% else %} None {% endif %} : {{duka.currencii}}. <span class="brown largerFont weight600">0</span> /{% if useri.langSet == 0 %}Mwezi {% else %} Month {% endif %}                
+                </label>
+            </div>
+
+            <div class="form-check">
+                <label class="form-check-label">
+                    <input type="radio" class="form-check-input" name="masoko" id="wilaya" value=2000 >
+                    {% if useri.langSet == 0 %} Ngazi ya Wilaya  {% else %}District Wise{% endif %} {% if duka.Interprise %} <span class="darkblue">({{duka.mtaa.kata.wilaya.wilaya | title }})</span>  {% endif %}: {{duka.currencii}}. <span class="brown largerFont weight600">2,000</span> /{% if useri.langSet == 0 %}Mwezi (siku 30){% else %} Month (30 days) {% endif %}                
+                </label>
+             </div>
+
+                <div class="form-check ">
+                    <label class="form-check-label">
+                    <input type="radio" class="form-check-input" name="masoko" id="Mkoa" value=5000 >
+                        {% if useri.langSet == 0 %}Ngazi ya Mkoa {% else %}Region Wise{% endif %}{% if duka.Interprise %} <span class="darkblue">({{duka.mtaa.kata.wilaya.mkoa.mkoa | title }})</span>  {% endif %}: {{duka.currencii}}. <span class="brown largerFont weight600">5,000</span> /{% if useri.langSet == 0 %}Mwezi (siku 30){% else %} Month (30 days) {% endif %} 
+                </label>
+                </div>
+
+                <div class="form-check ">
+                    <label class="form-check-label">
+                    <input type="radio" class="form-check-input" name="masoko" id="Nchi" value=10000 >
+                    {% if useri.langSet == 0 %} Nchi Nzima {% else %} Country Wise{% endif %}{% if duka.Interprise %} <span class="darkblue">({{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title }})</span>  {% endif %}: {{duka.currencii}}. <span class="brown largerFont weight600">10,000</span> /{% if useri.langSet == 0 %}Mwezi (siku 30){% else %} Month (30 days){% endif %} 
+                </label>
+                </div>
+             </div>
+                <hr>
+
+                <div class="row">
+                    <div class="col-5"> {% if useri.langSet == 0 %}Jumla ya Ghalama  {% else %}Total Cost{% endif %} </div>
+                    <div class="col-7"> {{duka.currencii}}. <span class="brown largeFont weight700" id="total_amount" >
+                        
+                      {% if ukomo or duka.usage == 0 and duka.marketing == 0 %}
+                            0
+                      {% else %}   
+                            {{deni|intcomma}}
+                      {% endif %}   
+
+                    </span></div>
+                </div>
+                {% if ukomo or duka.usage == 0 and duka.marketing == 0 %}
+                   <div class="row" id="malipoBaada" hidden >
+                 {% else %}   
+                    <div class="row" id="malipoBaada"  >
+                 {% endif %}
+                 
+                    <div class="col-5">{% if useri.langSet == 0 %}Malipo Baada ya {% else %}To be paid after{% endif %} </div>
+                    <div class="col-7 darkblue">
+                        {% if ukomo or duka.usage == 0 and duka.marketing == 0 %}
+                        <script>
+                            date = moment().add(30,'days').format('DD/MM/YYYY')
+                            document.write(date)
+                        </script>
+                        {% else %}
+                          {{duka.bill_tobePaid|date:'d/m/Y'}}
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+
+
+            <hr>
+            <!-- IF THERE ARE PRIVIOUS PAYMENTS -->
+            {% if  ukomo %}
+               <div> 
+            {% else %} 
+            <div hidden >  
+            {% endif %}
+                        <h6 class="weight500 " > 
+                            {% if useri.langSet == 0 %}Lipa Bili kwa matumizi ya Nyuma {% else %} Pay Previous Bill Usage {% endif %}
+                        </h6>
+
+                        <div class="row">
+                            
+                                <h6 class="col-6 mt-3 mb-1"> {% if useri.langSet == 0 %}Muda{% else %}Duration{% endif %} </h6>
+                                <div class="col-6 mt-3 mb-1 weight500"> {% if useri.langSet == 0 %}Siku 30{% else %}30 days{% endif %} </div>
+                            
+                            <div class="col-6">
+                                
+                                {% if useri.langSet == 0 %}Kuanzia{% else %}From{% endif %}
+                            </div>
+                            <div class="col-6">
+                            <span class="darkblue weight600">
+                                <script>
+                                    let dF = new Date('{{duka.bill_tobePaid|date:"Y/m/d"}}')
+                                    
+                                    document.write(moment(dF).subtract(30,'days').format('DD/MM/YYYY'))
+                                </script>
+                            </span> 
+                            </div>
+
+                            <div class="col-6">
+                                {% if useri.langSet == 0 %}Hadi{% else %}To{% endif %}
+                            </div>
+                            <div class="col-6">
+                                <span class="darkblue weight600">
+                                <script>
+                                    let dT = new Date('{{duka.bill_tobePaid|date:"Y/m/d"}}') 
+                                    document.write(moment(dT).format('DD/MM/YYYY'))
+                                </script>
+                                
+                                </span> 
+                            </div>
+
+                            <h6 class="col-12 mt-3 mb-1">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</h6>
+                            <div class="col-6">
+                                
+                                {% if useri.langSet == 0 %}Matumizi kwa uendeshaji{% else %}Usage Plan {% endif %}
+                            </div>
+                            <div class="col-6">
+                                {{duka.currencii}}. <span class=" weight600">{{duka.usage |intcomma }}</span> 
+                            </div>
+
+                            <div class="col-6">
+                                {% if useri.langSet == 0 %}Mapendekezo ya bidhaa/Huduma{% else %}Users Items/services recommendation{% endif %}
+                            </div>
+                            <div class="col-6">
+                                {{duka.currencii}}. <span class=" weight600">{{duka.marketing |intcomma }}</span> 
+                            </div>
+
+                        
+
+                        </div>
+                        <div class="row border-top py-1 mt-1 weight600">
+                        <div class="col-6">
+                                {% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}
+                            </div>
+                            <div class="col-6">
+                                {{duka.currencii}}. <span class="brown weight600">
+                                    
+                                    <script>
+                                        const soko = Number('{{duka.marketing}}'),
+                                            use = Number('{{duka.usage}}'),
+                                            tot = soko + use
+                                            document.write(tot.toLocaleString())
+
+
+                                    </script>
+                                
+                                </span> 
+                            </div>                
+                        </div>
+
+
+                        <hr>
+                        <div>
+                            <h6>
+                                {% if useri.langSet == 0 %}Malipo{% else %}Payments{% endif %}
+                            </h6>
+
+                            <div class="row mb-2">
+                                        <div class="col-md-5 col-6">
+                                            <span >
+                                                {% if useri.langSet == 0 %}Akaunti{% else %}Account{% endif %}:
+                                            </span>
+                                        </div>
+                                        <div class="col-md-6 col-6">
+                                        <span class="weight600 darkblue">{{duka.name | title}}</span>  
+                                        </div>   
+
+                            </div>
+                            
+                            <div class="row">
+                                        <div class="col-md-5 col-6">
+                                            <span >
+                                                {% if useri.langSet == 0 %}Salio la Akaunti{% else %}Account Balance{% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="col-md-6 col-6">
+                                            {{duka.currencii}}: <span style="font-size: 20px;" id="availableAmo" data-amo="{{duka.Balance}}" class="largerFont brown weight600 ">{{duka.Balance | floatformat:'-2' | intcomma}}</span>
+                                            <span class="mx-2 pl-1 border-left">
+                                                <button onclick="$('#token_verify').toggle(300)" class="btn btn-sm smallFont latoFont btn-light">
+                                                    {% if useri.langSet == 0 %}Tokeni{% else %}Token{% endif %}
+                                                </button>
+                                                
+                                            </span>
+                                        </div>    
+                            </div>
+
+                            <div id="token_verify" class="form-group" style="display:none" >
+                            <label for="TokenVerifier">
+                                {% if useri.langSet == 0 %}Weka tokeni za malipo{% else %}Add token Number{% endif %}    
+                            </label>
+
+                            <div class="input-group">
+                                <input type="text" name="TokenVerifier" id="TokenVerifier" class="form-control" placeholder="{% if useri.langSet == 0 %}Andika Tokeni{% else %}Write token{% endif %}" aria-describedby="helpId">
+                                <button type="button"
+                                onclick = "
+                                let token = $('#TokenVerifier').val();
+                                        checkToken(token)
+                                "
+                                class="btn btn-secondary input-group-append smallFont latoFont">
+                                    {% if useri.langSet == 0 %}Tuma{% else %}Send{% endif %}
+                                </button>
+                            </div>
+                            
+                            </div>
+
+
+                        </div>
+
+                        <p id="reducedMsg" class="my-3">
+                            {{duka.currencii}}. <span class="weight600 brown"><script>document.write(tot.toLocaleString()) </script></span>  {% if useri.langSet == 0 %}Itapunguzwa kwenye salio la akaunti{% else %}Will be charged from  account balance{% endif %}
+                        </p>
+               </div>
+
+             
+
+     
+              {% if ukomo or duka.marketing == 0 and duka.usage == 0 %}
+                <p class="text-right mt-3">
+                    <button onclick="submitPlan()" class="btn btn-primary latoFont btm-sm">
+                         {% if useri.langSet == 0 %}Kusanya{% else %}Submit{% endif %}
+                    </button>
+                </p>
+              {% endif %}  
+
+
+        </div>
+
+
+        
+        
+    </div>
+
+
+    
+
+
+</div>
+
+<script>
+    const check = $('#payments').children().find('.form-check-input')
+            check.change(function(){
+            totalCost()
+            })
+
+            function totalCost(){
+            
+                let val = 0,
+                    filtered = check.filter(':checked')
+                    for(n=0;n<filtered.length;n++){
+                        val += Number(filtered[n].value)
+                    }
+
+                    $('#malipoBaada').prop('hidden',!val)
+        
+                    $('#total_amount').text(Number(val).toLocaleString())
+
+
+
+            }
+            
+            function submitPlan(){
+                const  lipwa = $('input[name="malipio"]').filter(':checked')[0]?.value,
+                       masoko = $('input[name="masoko"]').filter(':checked')[0].value,
+                       malipo = $('.kulipia').filter(':checked').length,
+                       amo = Number($('#availableAmo').data('amo'))
+
+                       if(amo>=tot && malipo > 0 ){
+                          $('#loadMe').modal('show')
+                          const theDt = {
+                            data:{
+                                lipwa,
+                                masoko,
+                            },
+                            url:'/stoku/lipiaMatumiziNyuma'
+                          },
+                          sendIt = POSTREQUEST(theDt)
+                          sendIt.then(dt=>{
+                            if(dt.success){
+                                toastr.success(lang(dt.msg_swa,dt.msg_eng), lang('Imefanikiwa','Success'), {timeOut: 2000});
+                                location.reload()  
+                            }else{
+                                toastr.error(lang(dt.msg_swa,dt.msg_eng), lang('Hitilafu','Error'), {timeOut: 2000});
+                            }
+                          })
+
+
+
+
+
+                       }else{
+                          if(amo<tot) toastr.info(lang('Akaunti hii haina kiasi cha kutosha kukamilisha tafadhari hakikisha una kiasi cha kutosha.','Account has insufficient amount, please recharge'), lang('Taarifa','Info'), {timeOut: 2000});
+                          if(malipo==0){
+
+                            $('#matumiziNamna').css({'border-bottom':'3px solid red'})
+                            alert(lang('Tafadhari Chagua namna ya Matumizi','Please Choose usage plan'))
+                        }
+
+                       }
+
+
+
+
+            }
+</script>
+
+ {% if not ukomo and deni > 0 %}
+    <script>
+        $('input[name="malipio"]').each(function(){
+            if(Number($(this).val())==Number('{{duka.usage}}')) $(this).prop('checked',true)
+        })
+        $('input[name="masoko"]').each(function(){
+            if(Number($(this).val())==Number('{{duka.marketing}}')) $(this).prop('checked',true)
+            
+        })
+    </script>
+{% endif %}
+
+
+{% endblock %}
+
+{% block usageAret %}
+{% endblock %}
+
+{% block billmpya %}
+<script src="/static/js/jisaji.js"></script>
+{% endblock %}
+
+
+{% block akaunt-map %}
+  {% if useri.langSet == 0 %} Namna ya matumizi {% else %} Usage Plan {% endif %}
+{% endblock %} 

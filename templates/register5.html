@@ -1,0 +1,146 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+
+      <!-- Compiled and minified CSS -->
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="{% static 'materialize/css/materialize.min.css' %}">
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="{% static 'materialize/js/materialize.min.js' %} "></script>
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+      <link rel="stylesheet" href="{% static 'css/header.css' %}">
+
+</head>
+<body>
+
+    <nav>
+        <div class="nav-wrapper">
+          <a href="#!" class="brand-logo"><img src="{%  static 'pics/logo.png'  %}" /></a>
+          <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+          <ul class="right hide-on-med-and-down">
+            <li><a href="/#">Home</a></li>
+            <li><a href="login">Login</a></li>
+            <li><a href="#">Register</a></li>
+            <li><a href="#">Mobile</a></li>
+          </ul>
+        </div>
+      </nav>
+    
+      <ul class="sidenav" id="mobile-demo">
+        <li><a href="/#">Home</a></li>
+        <li><a href="login">Login</a></li>
+        <li><a href="#">Register</a></li>
+        <li><a href="#">Mobile</a></li>
+      </ul>
+
+
+<script>  document.addEventListener('DOMContentLoaded', function() {
+        var elems = document.querySelectorAll('.sidenav');
+        var instances = M.Sidenav.init(elems, options);
+      });
+    
+      // Or with jQuery
+    
+     
+    </script>
+    
+            
+
+
+
+
+    <div class="row card-panel" style="max-width:500px;margin-left:auto;margin-right:auto;border-radius:8px;margin-top:50px">
+
+        <div style="max-width:400px;margin-left:auto;margin-right:auto">
+  <h4 class="center-align">Tafadhri jaza fomu  kujisajiri</h4>
+        <form class="col s12" action="register" method="post">
+            {% csrf_token %}
+
+          <div class="row">
+            <div class="input-field col s6">
+              <input placeholder="Placeholder" name="first_name" id="first_name" type="text" class="validate">
+              <label for="first_name">First Name</label>
+            </div>
+            <div class="input-field col s6">
+              <input id="last_name" type="text" name="last_name" class="validate">
+              <label for="last_name">Last Name</label>
+            </div>
+
+          </div>
+
+          <div class="row">
+            <div class="input-field col s12">
+              <input id="username" name="username" type="number" class="validate">
+              <label for="username">phone</label>
+            </div>
+          </div>
+         
+          <div class="row">
+            <div class="input-field col s12">
+              <input id="password" name="password" type="password" class="validate">
+              <label for="password">Password</label>
+            </div>
+          </div>
+
+           <div class="row">
+            <div class="input-field col s12">
+              <input id="comfirm" name="comfirm" type="password" class="validate">
+              <label for="comfirm">Confirm</label>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="input-field col s12">
+              <input id="email" name="email" type="email" class="validate">
+              <label for="email">Email</label>
+            </div>
+          </div>
+          <button class="btn waves-effect waves-light" type="submit" name="action">Submit
+            <i class="material-icons right">send</i>
+          </button>
+        </form>
+
+
+  
+      </div>
+  {% for message in messages %}
+ <h4  class="center-align" style="margin-top:21px" >{{message}}</h4>
+  {% endfor %}
+        </div>
+
+
+        <footer class="page-footer">
+            <div class="container">
+              <div class="row">
+                <div class="col l6 s12">
+                  <h5 class="white-text">Footer Content</h5>
+                  <p class="grey-text text-lighten-4">You can use rows and columns here to organize your footer content.</p>
+                </div>
+                <div class="col l4 offset-l2 s12">
+                  <h5 class="white-text">Links</h5>
+                  <ul>
+                    <li><a class="grey-text text-lighten-3" href="#!">Link 1</a></li>
+                    <li><a class="grey-text text-lighten-3" href="#!">Link 2</a></li>
+                    <li><a class="grey-text text-lighten-3" href="#!">Link 3</a></li>
+                    <li><a class="grey-text text-lighten-3" href="#!">Link 4</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+        <div class="footer-copyright">
+            <div class="container">
+            © 2014 Copyright FanyaBiashara.com
+            <a class="grey-text text-lighten-4 right" href="#!">More Links</a>
+            </div>
+          </div>
+        </footer>
+        <script src="https://unpkg.com/ionicons@5.1.2/dist/ionicons.js"></script>
+</body>
+</html>

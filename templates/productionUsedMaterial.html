@@ -1,0 +1,798 @@
+{% extends 'production.html' %}
+{% block billcss %}
+<link rel="stylesheet" href="/static/css/sales.css">
+{% endblock %}
+
+
+{% block whatstep %}
+{% load humanize %}
+
+{% if Uses > 0 %}
+  <h6 class="px-2 my-3" >    
+    {% if useri.langSet == 0 %}Bidhaa/Nyezo zilizotumika{% else %}Item(s)/Material Used{% endif %}
+  </h6>
+
+  {% for usd in usedM %}
+   <div class="weight600 px-2  ">
+    {% if useri.langSet == 0 %}Ziliongezwa tarehe {% else %}Added on{% endif %}
+      <span class="brown" > 
+       <script>
+        document.write(moment('{{usd.the_bill.date | date:"r" }}').format('DD/MM/YYYY HH:mm '))
+       </script>
+      </span>
+      {% if useri.langSet == 0 %}Na{% else %}By{% endif %}
+       <span style="color:blue" > {{usd.the_bill.Na.user.user.first_name | title}}   {{usd.the_bill.Na.user.user.last_name | title}} </span>
+       {% if not prdn.last.complete %}
+       <button class="btn btn-sm smallFont btn-light"
+         onclick="if(confirm('{% if useri.langSet == 0 %}Ondoa orodha hii ya vitu vilivyotumika na uongeze vitu hivi upya, vitu hivi vitarudishwa katika vitu vinavyotumika{% else %} Remove all items from this table and re-add items, the items will be added to production material  {% endif %}'))
+         {
+           let data={
+             data:{
+                adj:Number('{{usd.the_bill.id}}'),
+                csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+             },
+             url:'/production/removeMaterialTable'
+           }
+       
+          saveProd(data)
+         }
+           
+          "
+       >
+       <svg xmlns="http://www.w3.org/2000/svg"  height="17" width="17" viewBox="0 0 24 24" fill="cuurrentColor">
+        <path d="M0,0h24v24H0V0z" fill="none"/>
+        <path d="M6,13c0-1.65,0.67-3.15,1.76-4.24L6.34,7.34C4.9,8.79,4,10.79,4,13c0,4.08,3.05,7.44,7,7.93v-2.02 C8.17,18.43,6,15.97,6,13z M20,13c0-4.42-3.58-8-8-8c-0.06,0-0.12,0.01-0.18,0.01l1.09-1.09L11.5,2.5L8,6l3.5,3.5l1.41-1.41 l-1.08-1.08C11.89,7.01,11.95,7,12,7c3.31,0,6,2.69,6,6c0,2.97-2.17,5.43-5,5.91v2.02C16.95,20.44,20,17.08,20,13z"/>
+        </svg>
+
+         {% if useri.langSet == 0 %}Ingiza Upya{% else %} Re-Add{% endif %}
+       </button>
+       {% endif %}
+
+      </div>
+
+<div class="table-responsive p-2" style="max-width: 800px;">
+    
+  <table id="prod_table" class=" table-bordered table table-sm" style="min-width: 630px;" data-row=1>
+    <tr class="bg-light smallFont ">
+      <th   > {% if useri.langSet == 0 %} Jina la Bidhaa  {% else %} Item Name {% endif %}</th>
+
+      {% if usd.color.count > 0  %}
+      <th > {% if useri.langSet == 0 %} Rangi {% else %} Color {% endif %}</th>
+      {% endif %}
+
+      {% if usd.size.count > 0  %}
+      <th > {% if useri.langSet == 0 %} Size {% else %} Size {% endif %}</th>
+      {% endif %}
+
+      <th > {% if useri.langSet == 0 %} Vipimo {% else %}  Units {% endif %}</th>
+      <th > {% if useri.langSet == 0 %} thamani  {% else %} Worth  {% endif %}( <span class="text-primary">{{duka.currencii}}</span> )</th>
+      <th > {% if useri.langSet == 0 %} Idadi  {% else %} Quantity {% endif %}</th>
+      <th > {% if useri.langSet == 0 %} Jumla  {% else %} Total {% endif %}</th>
+      
+    </tr>
+
+
+
+            <tbody  id="view-invo_tbody{{usd.the_bill.id}}">
+               
+            </tbody>
+
+  </table>
+
+</div>
+
+<div class="row mb-5" style="max-width: 800px;">
+  <div class="col-5 col-md-6">
+
+  </div>
+  <div class="col-7 row col-md-6 px-0">
+     <div class="col-6 text-right weight600">{% if useri.langSet == 0 %} Jumla  {% else %} Total {% endif %}</div>
+     <div class="col-6 text-right weight700 brown px-0">{{usd.total | floatformat:'-2' | intcomma }}</div>
+  </div>
+</div>
+
+
+<script>
+    $('document').ready(function(){
+        let tot_vat=0,vat_include = false,vat_set=false,sub_tot=0
+            const vatper = Number('{{duka.vatper}}')/100
+            let itms=[],itm_var={},
+                colors=[],color_var={},
+                sizes=[],sizes_var={},
+                tr='',
+                
+                set_v='',
+                includ_v='',
+                bei = 0,
+                act_bei=0
+        //create objects for items , color & sizes ...........................//
+
+
+        //CREATE ITEMS OBJECT...............// 
+
+        '{% for li in usd.list %}'
+     
+         //make the price equal to sold price if the item sold price is greater than its actul saved price
+       
+
+         
+   
+
+        itm_var={
+            val:'{{li.itm.id}}',
+            prod:'{{li.itm.prod.id}}',
+            idadi:'{{li.itm.qty}}',
+            picha:'{{li.picha}}',
+            maelezo:'{{li.itm.prod.bidhaa.maelezo}}',
+            vipimo:'{{li.itm.prod.bidhaa.vipimo}}',
+            bei:'{{li.itm.prod.Bei_kununua}}',
+            vipimo_jum:'{{li.itm.prod.bidhaa.vipimo_jum}}',
+            jina:'{{li.itm.prod.bidhaa.bidhaa_jina}}',
+            uwiano:'{{li.itm.prod.bidhaa.idadi_jum}}',
+            serial:`{{li.itm.prod.bidhaa.serial}}`,
+            prCost:`{{li.cost}}`,
+            prdcd:Number(`{{li.produced}}`)
+
+        }
+
+        itms.push(itm_var)
+
+        '{% endfor %}'
+
+   
+
+        //COLOR OBJECTS....................//
+        '{% for col in usd.color %}'
+          color_var={
+              itm:'{{col.change.id}}',
+              val:'{{col.color.color.id}}',
+              idadi:'{{col.qty}}',
+              color_name:'{{col.color.color.color_name}}',
+              color_code:'{{col.color.color.color_code}}'
+          }
+          colors.push(color_var)
+
+         '{% endfor %}'
+
+          
+
+       
+
+         //SIZES OBJECT...............//
+         '{% for sz in usd.size %}'
+            sizes_var={
+                color:'{{sz.size.sized.color.id}}',
+                size:'{{sz.size.sized.size}}',
+                idadi:'{{sz.qty}}',
+            }
+            sizes.push(sizes_var)
+         '{% endfor %}'
+
+
+
+         //USED PRICES.........................//
+         let pr=[],pr_var={}
+         '{% for p in usd.prices %}'
+            pr_var={
+                unit:'{{p.unit}}',
+                price:Number('{{p.price}}'),
+                qty:Number('{{p.qty}}'),
+                prod:'{{p.prod}}'
+            }
+            pr.push(pr_var)
+
+         '{% endfor %}'
+         
+
+
+      let sales=0,total_vat=0
+      itms.forEach(itm=>{
+
+        
+          let col = c =>c.itm === itm.val,prc = p =>p.prod ===itm.prod
+          
+          const colr = colors.filter(col),prices = pr.filter(prc)
+          let beis = 0 ,idadis=0,idad=0,vpmo='',sale=0, thamani = Number(itm.bei)/Number(itm.uwiano)
+              
+          if(itm.prdcd){
+            thamani = Number(itm.prCost)
+          }
+
+          let prics = [],
+               prc1 = {
+                unit:itm.vipimo,
+                price:Number(itm.bei)/Number(itm.uwiano),
+                qty:1
+               } 
+
+            prics.push(prc1)   
+
+            if(Number(itm.uwiano)>1){
+                prc2={
+                     unit:itm.vipimo_jum,
+                     price:Number(itm.bei),
+                     qty:Number(itm.uwiano)
+                }
+                prics.push(prc2)
+
+            }
+
+
+            prics = [...prics,...pr]
+
+
+          
+             
+
+        
+              
+
+
+
+          
+
+
+         tr+=`
+      <tr class="text-center   latoFont" style="padding: 10px 3px !important;">`
+
+     
+       if(colr.length==0){
+
+        let prp = b => itm.idadi % b.qty===0,
+           prop_price = prics.filter(prp)
+
+        if(prop_price.length == 0){
+            prop_price = prics.filter(b=>Number(b.qty)===1)
+        }  
+
+         prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+           ?((a.qty > b.qty)? 1 : -1) : -1 )
+
+         let ps = prop_price[prop_price.length-1]  
+                 
+                    //beis = Number(itm.bei)*Number(ps.qty)
+                   
+               
+
+                vpmo = ps.unit
+                idad = Number(itm.idadi)/Number(ps.qty)
+               
+
+               
+
+      
+
+   
+         
+        tr+=`
+        <td class="text-left " > 
+          <div class="d-flex">
+          <div style="width:40px;height:40px" >`
+            if(itm.picha!=''){
+             tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+            }else{
+                tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                  <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                  <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                </svg>`
+            }
+        
+            
+          tr+=`</div>
+            <div class="ml-1" >
+              <div><strong class="pl-1" style="color: #3989c6"> ${titleCase(itm.jina)}</strong></div>
+              <div class="pl-2 text-muted smallerFont itm_desc" style="color:blue">${itm.maelezo}</div>
+              <div class="pl-2  smallerFont itm_desc font-weight-bold" >${itm.serial.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</div>
+            </div>
+          </div>
+        </td>` 
+        
+        if(colors.length>0){
+            tr+=`<td style="padding: 10px 3px !important;"> --- </td>` 
+        }
+
+        if(sizes.length>0){
+          tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+        }
+
+         //REGULATE PRICE FOR VAT.............................//
+  
+    tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+         ` 
+
+         tr+=` <td style="padding: 10px 3px !important;" > ${Number(thamani*Number(ps.qty)).toLocaleString(2)}</td> 
+                <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}</td> 
+                <td style="padding: 10px 3px !important;" > ${Number(thamani*idad*Number(ps.qty)).toLocaleString(2)}</td> 
+            `
+     
+    }else{
+        let span=colr.length+1
+             
+          
+        
+        tr+=`<td class="text-left  span1" id="span_${itm.val}" rowspan="${span}">
+          <div class="d-flex">
+          <div style="width:40px;heigth:40px" >`
+            if(itm.picha!=''){
+              tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+             }else{
+                 tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                   <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                   <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                 </svg>`
+             }
+          tr+=`</div>
+
+          <div class="ml-1" >
+            <div><strong class="pl-1" style="color: #3989c6"> ${titleCase(itm.jina)} </strong></div>
+            <div class="pl-2 itm_desc text-muted smallerFont" style="color:blue">${itm.maelezo}</div>
+           </div>
+          </div>
+        </td>` 
+       
+        colr.forEach(col=>{
+            let szi = s=> s.color == col.val
+            const sz = sizes.filter(szi)
+
+
+   tr+=`<tr class=" text-center  latoFont" style="padding: 10px 3px !important;">`
+          if(sz.length==0){
+            let prp = b => col.idadi % b.qty===0,
+                prop_price = prics.filter(prp)
+
+                if(prop_price.length == 0){
+                  prop_price = prics.filter(b=>Number(b.qty)===1)
+              }  
+
+             prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+               ?((a.qty > b.qty)? 1 : -1) : -1 )
+             let ps = prop_price[prop_price.length-1]
+
+            vpmo = ps.unit
+            idad = Number(col.idadi)/Number(ps.qty)
+
+
+       
+
+              tr+=`<td style="padding: 10px 3px !important;" class="smallerFont text-left">
+                <label 
+                style="width:15px;
+                height:15px;
+                background:${col.color_code};
+                border-radius:100%;
+                color:rgba(240, 248, 255, 0);
+                border:1px solid #ccc"
+                >
+                ''
+            </label> 
+            ${titleCase(col.color_name)}
+              </td> `
+              if(sizes.length>0){
+              tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+              }
+
+               
+              
+              tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+              `
+
+            
+            tr+=` <td style="padding: 10px 3px !important;" > ${Number(thamani*Number(ps.qty)).toLocaleString(2)}</td> 
+                  <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}</td> 
+                  <td style="padding: 10px 3px !important;" > ${Number(thamani*idad*Number(ps.qty)).toLocaleString(2)}</td> 
+                   `
+
+         }else{
+            tr+=`<td style="padding: 10px 3px !important;" `
+            if(sz.length>1){
+               tr+=` rowspan=${sz.length+1}` 
+            }
+            
+           tr+=` data-itm="${itm.val}" class="span2 smallerFont text-left" >
+
+                <label 
+                style="width:15px;
+                height:15px;
+                background:${col.color_code};
+                border-radius:100%;
+                color:rgba(240, 248, 255, 0);
+                border:1px solid #ccc"
+                >
+                ''
+            </label> 
+                ${titleCase(col.color_name)}</td>` 
+             
+             sz.forEach(s=>{
+
+                let prp = b => s.idadi % b.qty===0,
+                    prop_price = prics.filter(prp)
+
+                    if(prop_price.length == 0){
+                      prop_price = prics.filter(b=>Number(b.qty)===1)
+                  }  
+
+                 prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+                   ?((a.qty > b.qty)? 1 : -1) : -1 )
+                 let ps = prop_price[prop_price.length-1]
+                    beis = Number(itm.bei)*Number(ps.qty)
+                vpmo = ps.unit
+                idad = Number(s.idadi)/Number(ps.qty)
+                sale=Number(itm.sold)*Number(s.idadi)
+
+        if( itm.vat_set){
+            //REGULATE MEASUARES.............//
+                beis= (beis/(1+vatper))
+                sales+=Number(itm.sold)/(1+vatper)*Number(s.idadi)
+                sale=sale/(1+vatper)               
+
+        }else{
+                sales+=Number(itm.sold)*Number(s.idadi)
+
+        }
+                sub_tot+=(beis*idad)
+                if(itm.vat_set){
+                    total_vat+=sale*vatper
+                }
+
+              if(sz.length>1){
+               tr+=`<tr class="text-center   latoFont" style="padding: 10px 3px !important;"> `
+                 
+              }   
+
+               tr+=`<td class="text-center" style="padding: 10px 3px !important;"><span class="text-danger smallFont"> ${s.size}</span></td>` 
+              
+               tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+                    `
+
+
+                   tr+=`  <td style="padding: 10px 3px !important;" > ${Number(thamani*Number(ps.qty)).toLocaleString(2)}</td> 
+                          <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}</td> 
+                          <td style="padding: 10px 3px !important;" > ${Number(thamani*idad*Number(ps.qty)).toLocaleString(2)}</td>  
+                    `
+               if(sz.length>1){
+              tr+=`  </tr>`
+            }
+               
+      
+                 
+             })
+         }
+          
+       
+            tr+=`</tr>
+        `
+        })
+       
+    }
+
+    tr+=`</tr>`
+
+
+
+    
+
+
+      })  
+
+    //  console.log('sub',sub_tot)
+    //  console.log('sales',sales)
+    //  console.log('diff',Number(sub_tot-sales).toLocaleString())
+      
+      $('#view-invo_tbody{{usd.the_bill.id}}').html(tr)
+
+    
+
+      
+   
+
+      $('.span2').each(function(){
+          if(Number($(this).attr('rowspan'))){
+          let rowspan=Number($(this).attr('rowspan'))-1,
+              parent='#span_'+$(this).data('itm'),
+              prow= Number($(parent).attr('rowspan'))
+         $(parent).attr('rowspan',prow + rowspan)
+         }
+        //  $(parent).attr('rowspan',Number(parent.attr('rowspan'))+1)
+         // console.log(prow)
+      })
+     
+     
+
+
+  
+   
+
+//PRINT BILL
+
+
+})
+
+
+
+</script>
+
+  {% endfor %}
+
+{% endif %}
+
+{% if not prdn.last.complete %}
+
+<div class="mt-4 p-2 mb-5" style="max-width: 800px;">
+   <h6 class="latoFont text-danger  weight600" >1.
+    {% if useri.langSet == 0 %}Ongeza Bidhaa/Nyezo zilizotumika{% else %}Add Item(s)/Material Used{% endif %}
+     <sup>*</sup> </h6>
+</div>
+   
+  <div class="row  border-bottom " style="max-width: 750px;">
+    <div class="col-md-12"  >
+      <div class="mx-md-2  bgWhite px-1 py-3 table-responsive" style="padding-bottom:220px;margin-top:-10px;">
+        <table id="prod_table" class=" table-bordered table table-sm" style="min-width: 600px;" data-row=1>
+         
+          <thead>
+              <tr class="smalleFont latoFont">
+                  <th> {% if useri.langSet == 0 %}  Picha{% else %}Image{% endif %}</th>
+                  <th> {% if useri.langSet == 0 %}Bidhaa  {% else %}Item{% endif %}</th>
+                  <th> {% if useri.langSet == 0 %}Idadi  {% else %}Qty{% endif %}</th>
+              </tr>
+          </thead>
+          <tbody id="item_tr_tbody">
+              <tr id="list_tr1" data-pos=1 >
+                  <td   class="p-1 " >
+                    
+                    <!-- IMAGE -->
+                    <div class=" bg-light centerItem" id="imgplace1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
+                            <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                            <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                          </svg>
+                      </div>
+
+                      </td>
+
+                      <td >
+                      <!-- ITEM NAME -->
+                      <div class="suggest-holder  item-attr1 ">
+                        <div class="input-group">
+                        <input
+                        placeholder=" {% if useri.langSet == 0 %} Andika Jina la Bidhaa {% else %} Write Item name {% endif %}"
+                        style="min-width: 210px;"
+                        type="text" 
+                        data-pos=1
+                        id = "search1"
+                        data-itm=0
+                        class="form-control border0 darkblue text-capitalize weight500 muhimu-b-kununua-zilizopo suggest-prompt1 suggest-prompt input-data latoFont" />
+                        <button class="btn btn-secondary btn-sm smallFont latoFont input-grouup-append" data-toggle="modal" data-target="#add-products" >
+                          +{% if useri.langSet == 0 %}Mpya{% else %}New{% endif %}
+                        </button>
+                        </div>
+
+                        <ul class="masaki masaki1" data-hiarch=1 style="min-width: 320px;z-index:999999;max-height:250px;overflow-y:scroll"></ul>
+                       
+                    </div>
+
+                       <div class="smallFont latoFont" id="ItemDesc1"></div>
+                  
+                  </td>
+
+                  <td class="p-1">
+                      <!-- QUANTITY -->
+                      <div class="input-group" style="max-width: 190px;">
+                          <!-- UNITS -->
+                          <select name="qty_unit" style="max-width: 80px;" id="unit_sel1" class="input-group-prepend made-input latoFont smallerFont">
+                              <option value=0 ></option>
+                          </select>
+
+                      <input type="number" id="qty1" data-sm=0 data-onshelf=0 data-pos=1 class="form-control sh_qty border0 smallFont" >
+
+                          <!-- Button trigger color modal -->
+                         <div class=" input-group-append border" id="is_colored_item1" >
+                              <button  id="colored_items1" title="{% if useri.langSet == 0 %}  Rangi  {% else %} Color {% endif %}" class="btn btn-light colored_items btn-sm px-1" data-toggle="modal" data-pos=1  data-target="#modal_color"  data-val=0>
+                                  <img  width="20" src="{{baseUrl}}/{{'colors.svg'}}" />
+                              </button>
+                          </div>
+
+                          <!-- Button to remove item from table -->
+                      <button data-pos=1 class="btn-default remove_bill_item_tr  btn btn-sm text-danger position-absolute" style="right: -62px;top:12px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" fill="currentColor" class="bi bi-dash-circle-dotted" viewBox="0 0 16 16">
+                            <path d="M8 0c-.176 0-.35.006-.523.017l.064.998a7.117 7.117 0 0 1 .918 0l.064-.998A8.113 8.113 0 0 0 8 0zM6.44.152c-.346.069-.684.16-1.012.27l.321.948c.287-.098.582-.177.884-.237L6.44.153zm4.132.271a7.946 7.946 0 0 0-1.011-.27l-.194.98c.302.06.597.14.884.237l.321-.947zm1.873.925a8 8 0 0 0-.906-.524l-.443.896c.275.136.54.29.793.459l.556-.831zM4.46.824c-.314.155-.616.33-.905.524l.556.83a7.07 7.07 0 0 1 .793-.458L4.46.824zM2.725 1.985c-.262.23-.51.478-.74.74l.752.66c.202-.23.418-.446.648-.648l-.66-.752zm11.29.74a8.058 8.058 0 0 0-.74-.74l-.66.752c.23.202.447.418.648.648l.752-.66zm1.161 1.735a7.98 7.98 0 0 0-.524-.905l-.83.556c.169.253.322.518.458.793l.896-.443zM1.348 3.555c-.194.289-.37.591-.524.906l.896.443c.136-.275.29-.54.459-.793l-.831-.556zM.423 5.428a7.945 7.945 0 0 0-.27 1.011l.98.194c.06-.302.14-.597.237-.884l-.947-.321zM15.848 6.44a7.943 7.943 0 0 0-.27-1.012l-.948.321c.098.287.177.582.237.884l.98-.194zM.017 7.477a8.113 8.113 0 0 0 0 1.046l.998-.064a7.117 7.117 0 0 1 0-.918l-.998-.064zM16 8a8.1 8.1 0 0 0-.017-.523l-.998.064a7.11 7.11 0 0 1 0 .918l.998.064A8.1 8.1 0 0 0 16 8zM.152 9.56c.069.346.16.684.27 1.012l.948-.321a6.944 6.944 0 0 1-.237-.884l-.98.194zm15.425 1.012c.112-.328.202-.666.27-1.011l-.98-.194c-.06.302-.14.597-.237.884l.947.321zM.824 11.54a8 8 0 0 0 .524.905l.83-.556a6.999 6.999 0 0 1-.458-.793l-.896.443zm13.828.905c.194-.289.37-.591.524-.906l-.896-.443c-.136.275-.29.54-.459.793l.831.556zm-12.667.83c.23.262.478.51.74.74l.66-.752a7.047 7.047 0 0 1-.648-.648l-.752.66zm11.29.74c.262-.23.51-.478.74-.74l-.752-.66c-.201.23-.418.447-.648.648l.66.752zm-1.735 1.161c.314-.155.616-.33.905-.524l-.556-.83a7.07 7.07 0 0 1-.793.458l.443.896zm-7.985-.524c.289.194.591.37.906.524l.443-.896a6.998 6.998 0 0 1-.793-.459l-.556.831zm1.873.925c.328.112.666.202 1.011.27l.194-.98a6.953 6.953 0 0 1-.884-.237l-.321.947zm4.132.271a7.944 7.944 0 0 0 1.012-.27l-.321-.948a6.954 6.954 0 0 1-.884.237l.194.98zm-2.083.135a8.1 8.1 0 0 0 1.046 0l-.064-.998a7.11 7.11 0 0 1-.918 0l-.064.998zM4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7z"/>
+                          </svg>
+                      </button>
+
+                      </div>
+
+
+                      <div class="idadi_imezidi" id="idadi_imezidi1">
+                     </div>
+
+                      <!-- DISPLAY SHOWED COLOR -->
+                      <div class="color-wrapper mt-1 text-right" style="height: 35px;">
+                        <div  id="popColored1" class="py-1 whiteBg p-1 text-left shrink-palet popColored  rounded  "
+                       
+                         style="
+                            cursor:pointer;display: none;
+                            ">
+     
+                      <div class="row classic_div">
+                         <label for="" style="cursor: pointer;"  class="smallerFont latoFont col-8 latoFont px-2">
+                             {% if useri.langSet == 0 %}Rangi{% else %}Color{% endif %}(<span id="color_qt1" class="text-danger" >0</span>)
+                         </label>
+     
+                           <p class="text-right col-4">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+                                 <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                               </svg>
+                           </p>
+                      </div>
+                      
+                        
+                      
+     
+                     <div id="color_obj1" 
+                     style="-webkit-box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37); 
+                             box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37);" >
+     
+                     </div>
+     
+                     
+                     </div>
+                    </div>
+                      
+                  </td>
+              </tr>
+       
+          </tbody>
+      </table>
+
+      </div>
+  </div>
+
+
+    <div class="col-md-12 mt-2 ">
+          <p class="text-right" >
+         <button class="btn-sm latoFont smallerFont btn btn-secondary" id="add-btn">
+            +  {% if useri.langSet == 0 %}Kuongeza  {% else %}Add{% endif %}
+         </button>
+     </p>
+     {% if useri.company %}
+     <p class="text-center brown" >
+      <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-triangle">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+  
+      <span class="ml-1">
+         {% if useri.langSet == 0 %}Akaunti hii si ya mtu binafsi hivyo kuongeza data za mauzo, manunuzi, matumizi, uzalishaji na huduma inatakiwa awepo msimamizi {% else %} This account is not personal therefore sales, expenses, purchases and serives data can only be added with operator account{% endif %} 
+      </span>
+   </p>
+   {% else %}
+     <form action="/production/addMaterial" class="pb-5" data-value="{% if prdn.count > 0 %}{{pr}}{% else %}0{% endif %}" data-add=0 method="post" id="saveReduceAdj" >
+        {% csrf_token %}
+
+     <p class="text-center">
+         <button class="btn btn-primary  latoFont">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
+                <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+                <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+              </svg>   Save
+         </button>
+     </p>
+   </form>
+   {% endif %}
+   
+    </div>
+</div>
+
+
+ <!-- Modal Color Rangi Rangi-->
+ <div class="modal fade" id="modal_color" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog animate" role="document">
+      <div class="modal-content">
+              <div class="modal-header">
+                      <h6 class="modal-title">
+                           <img  width="25" src="{{baseUrl}}/{{'colors.svg'}}" />
+                         
+                          {% if useri.langSet == 0 %}
+
+                          Rangi za <span style="color:rgb(108, 39, 236)" id="item_jina"></span> {% else %} <span style="color:rgb(108, 39, 236)" id="item_jina"></span> color  {% endif %}
+                      </h6>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                          </button>
+                  </div>
+          <div class="modal-body">
+              <div class="row">
+                  <div class="col-5">
+
+                  </div>
+                  <div class="col-7">
+                      <div class="input-group">
+                          <div class="input-group-prepend">
+                              <label for="input" class="pt-2 px-2 smallFont">{% if useri.langSet == 0 %}Tafuta Rangi{% else %} Filter color {% endif %}:</label>                            </div>
+                          <input type="text" id="filter_itm_color" class="form-control smallerFont">
+                      </div>
+                  </div>
+              </div>
+              <script>
+                  $(document).ready(function(){
+                    $("#filter_itm_color").on("keyup", function() {
+                      var value = $(this).val().toLowerCase();
+                      $("#bill_item_color .the_color_itm").filter(function() {
+                        $(this).toggle($(this).data('rangi_names').toLowerCase().indexOf(value) > -1)
+                      });
+                    });
+                  });
+              </script>
+              <div class="container-fluid pr-5 mt-3" id="bill_item_color">                       
+              </div>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary border0" data-dismiss="modal">Close</button>
+              <!-- <button type="button" class="btn btn-primary">Save</button> -->
+          </div>
+      </div>
+  </div>
+</div>
+
+
+<script>
+   
+  $(document).on('mouseenter', '.popColored', function (e) {
+      $(this).addClass('extend-palet')
+      $(this).removeClass('shrink-palet')
+
+    //   let pos=$(this).parent('div').position()
+    //  // console.log(pos)
+    //   $(this).css('left',pos.left+'px')
+
+
+  })
+
+  $(document).on('mouseleave', '.popColored', function (e) {
+    $(this).removeClass('extend-palet')
+    $(this).addClass('shrink-palet')
+
+})
+
+ 
+
+ 
+</script>
+
+{% endif %}
+
+
+
+
+{% endblock %}
+
+
+
+
+{% block billmpya %}
+<script src="/static/js/production/addmaterial.js"></script>    
+
+  <script>    
+    $('#loadMe').modal('show')
+  </script>
+{% endblock %}
+{% block checked_material %}checked{% endblock %}
+{% block top-nav-material %} active text-primaryi {% endblock %}
+
+{% block active-material-menu %} text-primary weight700 {% endblock %}
+
+{% block map-to %}
+<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+  </svg>
+  {% if not prdn.last.complete %}
+      {% if useri.langSet == 0 %}  Ongeza {% else %} Add {% endif %}
+  {% endif %}
+  
+  {% if useri.langSet == 0 %} Nyezo/vitu {% else %}Used Materials{% endif %}
+{% endblock %}
+
+{% block forItems %}
+<script>
+  getStokuData('/stoku/getItems')
+</script>
+{% endblock %}

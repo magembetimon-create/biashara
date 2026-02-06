@@ -1,0 +1,596 @@
+
+{% extends 'userdash.html' %}
+
+{% block Dashboard %}
+<div  class=" Analytical " id="general-panel" style="min-height: 100vh;" >
+
+    <div class="container-fluid whiteBg p-2 p-md-3 rounded">
+        <h6>
+            {% if useri.langSet == 0 %}Taarifa za mwajiliwa/Mshilika  {% else %}Employee/Patner Details{% endif %}
+            <a href="/Employees"title="{% if useri.langSet == 0 %}Washilika wote  {% else %}All Partners{% endif %}" class="float-right">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
+                    <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                    <path fill-rule="evenodd" d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216z"/>
+                    <path d="M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
+                  </svg>
+            </a>
+
+        </h6>
+       
+        <div class="row" >
+            <div class="img-show col-md-2 p-2 p-md-3  ">
+
+                <div class="d-flex classic_div justify-content-center align-items-center  p-3 btn" data-toggle="modal" style="width: 160px;height:160px;-webkit-box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.4);
+                -moz-box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.4);
+                box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.4);" data-target="#Add-user-img" >
+                    {% if worker.picha %}
+                        <img src="{{worker.picha.url}}" style="max-width: 100%;max-height:100%" alt="">
+                    {% else %}
+                        <span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="7em" height="7em" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
+                                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                            </svg>
+                        </span>
+                    {% endif %}
+                </div>
+                {% if worker.diactive %}
+                <div class="weight600 text-center"  >
+                     <div class="text-capitalize " style="color:rgb(29, 29, 172)" >
+                        {{worker.diactive.where.owner.user.first_name}}  {{worker.diactive.where.owner.user.last_name}} </div>
+                     <div class="smallerFont" >({{worker.diactive.where.Intp_code}})</div> 
+                </div>
+                {% endif %}
+            </div>
+         
+            <div class="p-2 pl-md-3 col-md-10 pl-2 border-left-md" >
+                <div  style="max-width: 380px;"  >
+                    <h6 class="text-capitalize classic_div row" > <span class=" col-4 latoFont weight600  " title="{% if useri.langSet == 0 %}Utambulisho {% else %}Identifications{% endif %}" >ID</span>  <span class="brown col-8" > {{worker.workerId}}</span> </h6>
+                    <h6 class="text-capitalize classic_div row" ><span class=" col-4 latoFont weight600  " >{% if useri.langSet == 0 %}Jina {% else %}Name{% endif %} </span> <span class="col-8" > {{worker.jina}}</span>  </h6>                    
+                    <h6 class="text-capitalize classic_div row " ><span class=" col-4 latoFont weight600  " >{% if useri.langSet == 0 %}Kazi {% else %}Task{% endif %} </span> <span  class="brown col-8" > {{worker.kazi}}</span> </h6>
+                    <h6 class="text-capitalize classic_div smallFont latoFont row" ><span class=" col-4  weight600  ">{% if useri.langSet == 0 %}Anwani {% else %}Address{% endif %} </span> <span  class=" col-8" >{{worker.address}}</span></h6>
+                    <h6 class="text-capitalize classic_div smallFont latoFont row" ><span class=" col-4  weight600  ">{% if useri.langSet == 0 %}SIMU 1 {% else %}PHONE 1{% endif %} </span> <span  class=" col-8" >{{worker.simu1}}</span></h6>
+                    {% if worker.simu2 %}
+                    <h6 class="text-capitalize classic_div smallFont latoFont row" ><span class=" col-4  weight600  ">{% if useri.langSet == 0 %}SIMU 2 {% else %}PHONE 2{% endif %}</span><span  class=" col-8" >{{worker.simu2}}</span></h6>
+                    {% endif %}
+                    {% if worker.diactive and useri == duka.owner or cheo.fullcontrol %}
+                        {% if not theUser and duka.Interprise %}
+                        <button data-toggle="modal" data-target="#addUser" title="{% if useri.langSet == 0 %}Awe mhusika katika akaunti hii ya biashara {% else %}Add User to this business account{% endif %}" class="btn btn-light latoFont smallFont btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
+                                <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                                <path fill-rule="evenodd" d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216z"/>
+                                <path d="M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
+                              </svg>
+                        </button>
+                       {% endif %}
+
+                        {% if not deliver %}
+                        <button data-toggle="modal" title="{% if useri.langSet == 0 %}Kupeleka bidhaa kwa wateja {% else %}Add to delivery Agents{% endif %}" data-target="#addDeliver" class="btn btn-light latoFont smallFont btn-sm">
+                          
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
+                                <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                            </svg>
+                            
+                        </button>
+                       {% endif %}
+
+                  
+                    {% endif %}
+                </div>     
+            </div>
+
+
+        </div>
+
+        <!-- Add User modal -->
+        {% if useri == duka.owner or cheo.fullcontrol %}
+       <div class="modal fade" id="addUser" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+           <div class="modal-dialog modal-sm" role="document">
+               <div class="modal-content">
+                   <div class="modal-header">
+                       <h6 class="modal-title">
+                          {% if useri.langSet == 0 %}Ongeza Mtumiaji{% else %}Add User{% endif %}
+                       </h6>
+                           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                               <span aria-hidden="true">&times;</span>
+                           </button>
+                   </div>
+                   <div class="modal-body">
+                       {% if useri.langSet == 0 %}Muongeze <i class="text-capitalize weight600" style="color: blue;" >{{worker.jina}}</i> awe moja ya wahusika katika akaunti hii ya Biashara {% else %}Add <i class="text-capitalize weight600" style="color: blue;" >{{worker.jina}}</i> as user on this business account{% endif %}
+                   </div>
+                   <form class="text-center py-2 " action="/addStaff_form" id="savestaff_form" data-user="{{worker.id}}" >
+                       <button type="submit" class="btn btn-primary latoFont">
+                        {% if useri.langSet == 0 %}Ongeza Mtumiaji{% else %}Add User{% endif %}
+                       </button>
+                    </form>
+
+                   <div class="text-center pb-4 my-2">
+                       <button type="button" class="btn btn-light btn-sm latoFont" data-dismiss="modal">Close</button>
+                   </div>
+
+
+               </div>
+           </div>
+       </div>
+       {% endif %}
+
+        <!-- Add Delivery man modal SCRIPT TO  deliveryAgent.js -->
+        {% if useri == duka.owner or cheo.fullcontrol %}
+        <div class="modal fade" id="addDeliver" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+           <div class="modal-dialog modal-sm" role="document">
+               <div class="modal-content">
+                   <div class="modal-header">
+                       <h6 class="modal-title">
+                          {% if useri.langSet == 0 %}Ongeza Mtumiaji{% else %}Add User{% endif %}
+                       </h6>
+                           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                               <span aria-hidden="true">&times;</span>
+                           </button>
+                   </div>
+                   <div class="modal-body">
+                       {% if useri.langSet == 0 %}Muongeze <i class="text-capitalize weight600" style="color: blue;" >{{worker.jina}}</i> kama mpelekaji wa bidhaa kwa wateja au mbebaji bidhaa kutoka kwa wauzaji kuleta stoo {% else %}Add <i class="text-capitalize weight600" style="color: blue;" >{{worker.jina}}</i> as goods delivery agent to customers or carrier from vendor {% endif %}
+                   </div>
+                   <form class="text-center py-2 " action="/addDeliveryAgent" id="saveDAgent_form" data-user="{{worker.id}}" >
+                       <button type="submit" class="btn btn-primary latoFont">
+                        {% if useri.langSet == 0 %}Ongeza Mtumiaji{% else %}Add User{% endif %}
+                       </button>
+                    </form>
+
+                   <div class="text-center pb-4 my-2">
+                       <button type="button" class="btn btn-light btn-sm latoFont" data-dismiss="modal">Close</button>
+                   </div>
+
+
+               </div>
+           </div>
+       </div>
+       {% endif %}
+
+
+
+         <!--User Image... Modal..... -->
+         {% if useri == duka.owner or cheo.fullcontrol %}
+                <div class="modal fade" id="Add-user-img" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                                <div class="modal-header">
+                                        <h5 class="modal-title">{% if useri.langSet == 0 %} Weka/Badili Picha ya mtumiaji  {% else %}Add/Change User image{% endif %} </h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                    </div>
+                            <div class="modal-body">
+                                <div class="container-fluid">
+                                <form class="row classic_div entpLogo_pic " data-input="#User_img_save" action="/userImgAdd" id="entpLogo_pic" method="post" style="width: 95%;">
+                                    {% csrf_token %}
+                                    <p>{% if useri.langSet == 0 %}Hakikisha faili la picha halizidi <strong class="text-danger" > kb 200</strong> {% else %} The image file should not exceed <strong class="text-danger" >100kb </strong>  {%endif%}</p>
+                                    <div class="input-group mb-3">
+                                        <!-- <div class="custom-file"> -->
+                                        <input type="file" class="custom-file-input" id="User_img_save" name="User_img_save">
+                                        <label class="custom-file-label" for="User_img_save" >
+                                            {% if useri.langSet == 0 %}Chagua Picha{% else %}Choose file{% endif %}
+                                        </label>
+                                        <!-- </div> -->
+                                    </div>
+
+                                    <input type="hidden" value="{{worker.id}}" name="workerName" >
+
+                                    <div class="pt-3 row classic_div">
+                                        <div class="col-6">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        </div>
+                                        <div class="col-6 text-right">
+                                        <button type="submit" class="btn btn-primary">Save</button> 
+                                        </div>
+                                    </div>
+                                </form>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+    {% endif %}
+
+
+    </div>
+
+    <div class="container-fluid rounded mt-3 mb-5 whiteBg p-2 p-md-3" style="min-height: 50vh;" >
+        <h6 class="p-3" >
+            {% if useri.langSet == 0 %}Viambatanisho  {% else %}Attachments{% endif %}
+            {% if duka.owner == useri %}
+            <button class="btn btn-primary latoFont smallFont float-right"
+            onclick="$('#removeAttach').fadeOut();$('#attachOne').val(0);$('#attachWord').val('')"
+             data-toggle="modal" data-target="#viambatanishi" >
+                     
+                 + {% if useri.langSet == 0 %}Ongeza kiambatanisho  {% else %} Add attachment{% endif %}  
+            </button>
+            {% endif %}
+        </h6>
+
+        {% if attach.count > 0  %}
+         
+        <ul class="list-unstyled">
+            {% for at in attach %}
+            <li class="py-2" > 
+                
+                <div class="input-group">
+                    <a href="{% if useri == duka.owner or cheo.fullcontrol %}{{at.fileAttach.url}}{% else %}{% endif %}" target="blank" class="border px-2 py-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-paperclip" viewBox="0 0 16 16">
+                    <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
+                  </svg>
+                    {{at.desc}}
+                </a>
+
+                {% if useri == duka.owner or cheo.fullcontrol %}
+               <span title=" {% if useri.langSet == 0 %}Kuhariri {% else %}Edit{% endif %}" class="btn btn-light border btn-sm d-flex justify-content-center align-items-center input-group-append latoFont mt-0 smallFont" 
+                    onclick="$('#removeAttach').fadeIn();$('#attachOne').val(Number('{{at.id}}'));$('#attachWord').val('{{at.desc}}')"
+                    data-toggle="modal" data-target="#viambatanishi" >
+                    
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                        <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
+                    </svg>
+                </span>
+                {% endif %}
+                </div>
+                
+             
+            </li>
+            {% endfor %}
+        </ul>
+    
+        {% else %}
+           <p class="mt-3 text-center" >
+               {% if useri.langSet == 0 %}Hakuna Utambulisho wowote kwa sasa  {% else %}No any attachments Found Found{% endif %}
+           </p>
+        {% endif %}
+
+  
+    </div>
+
+
+    {% if useri == duka.owner or cheo.fullcontrol %}
+     <!--Kuongeza Viambatanisho -->
+     <div class="modal fade" id="viambatanishi" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{% if useri.langSet == 0 %}Ongeza viambatanisho vya mfanyakazi{% else %}Add Employee's attachment {% endif %} </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                </div>
+                <div class="modal-body pb-4">
+                     <form action="/AddEmployeeAttachments" class="px-2" id="employeeAttchments" method="post">
+                       {% csrf_token %}
+
+                         <div class="form-group my-3 ">
+                           <label for="attachWord">{% if useri.langSet == 0 %}Maelezo ya kiambatanishi{% else %}Attachment description{% endif %} </label>
+                          <textarea name="attachWord" id="attachWord"  class="form-control" ></textarea>
+                         </div>
+
+                         <div class="form-group my-5 ">
+                           <label for="attachFile">
+                               {% if useri.langSet == 0 %}Kiambatanishi (faili la PDF)  {% else %} Attachment (PDF format) {% endif %}</label> 
+                           <br>
+                             <input type="file" id="attachFile" name="attachFile" >                          
+                                                    
+                           </div>
+
+                           <input type="hidden" id="worker" name="workerd" value="{{worker.id}}"  >   
+
+                           <input type="hidden" id="attachOne" name="attachOne"  value=0  >   
+
+                           <div class="text-center mb-2">
+                               <button type="submit" class="btn btn-primary latoFont">
+                                   {% if useri.langSet == 0 %}Ongeza Kiambatanishi{% else %}Add Attachment{% endif %}
+                               </button>
+                           </div>
+
+                           <div class="text-center mt-2 mt-md-1" id="removeAttach"   style="display: none;" >
+                               <button type="button" class="btn btn-danger  latoFont btn-sm smallFont"
+                               onclick="if(confirm('{% if useri.langSet == 0 %}Ondoa Uamabatanisho{% else %}Remove  Attachment {% endif %}')){sendDidata($('#attachOne').val())}">
+                               {% if useri.langSet == 0 %}Ondoa{% else %}Remove{% endif %}
+                            
+                            </button>
+                           </div>
+
+                           <div class="text-center mt-2 mt-md-1">
+                               <button type="button" class="btn btn-light  latoFont btn-sm smallFont" data-dismiss="modal">Close</button>
+                           </div>
+
+                     </form>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+   
+
+  
+{% if useri == duka.owner or cheo.fullcontrol %}
+<script>
+    // form upload User image
+    $('#entpLogo_pic').submit(function(e){
+        e.preventDefault();
+        
+        var input= $(this).data('input'),
+            val=$(input).val(),
+            extension=val.split('.').pop().toLowerCase();
+
+        if(val==''){
+            alert(lang('Tafadhari chagua picha','pleae select the image file'))
+            redborder(input)
+        }else{
+        if(jQuery.inArray(extension, ['jfif','png','jpg','jpeg']) == -1)
+        {
+            alert("Invalid Image File");
+            $(this).trigger("reset");
+            // $('#userpicsubmit').prop('disabled',true)
+            return false;
+        }
+        else
+        {
+        $("#loadMe").modal('show');
+        $("#Add-user-img").modal('hide');
+
+
+        var form = $(this)
+        var formData = new FormData(this);
+        $.ajax({
+            url: form.attr("action"),
+            type: 'POST',
+            data: formData,
+            cache: false,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+
+                $("#loadMe").modal('hide');
+                hideLoading()
+                if(response.success){
+
+                    toastr.success(lang('Picha Imefanikiwa ','Profile picture added Succefully'), lang('Imefanikiwa','Success'), {timeOut: 2000});
+                    location.reload()
+                }else{
+                    toastr.error(lang(response.msg_swa,response.msg_eng), lang('Haikufanikiwa','Error'), {timeOut: 2000});
+
+                }
+
+            
+            },
+            cache: false,
+            contentType: false,
+            processData: false
+        });
+
+        }}
+
+    });
+        
+    //  Add another staff
+    $('body').on("submit", "#savestaff_form" ,function(e){
+        e.preventDefault();
+        let code = Number($(this).data('user')),
+            cheo = $("#staffcheo").val()
+
+        if(code!=0 ){
+        $("#addUser").modal('hide');
+        $("#loadMe").modal('show');
+
+        var post_url = $(this).attr("action");
+        var data={
+            staff:code,
+            csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+        }
+        
+
+            
+        
+        $.ajax({
+            type: "POST",
+            url: post_url,
+            data: data,
+        }).done(function(data) {
+
+            $("#loadMe").modal('hide');
+            hideLoading()
+            //console.log(data.all.xml)
+
+            if(data.success){
+                
+            toastr.success(lang(data.msg_swa,data.msg_eng), lang('Imefanikiwa','success'), {timeOut: 2000});
+            getstaffobj.allstaff()
+
+
+            }else{
+            toastr.error(lang(data.msg_swa,data.msg_eng), lang('Haijafanikiwa','Error'), {timeOut: 2000});
+        
+            }
+
+        })
+
+        }else{
+        if(cheo==''){
+            redborder('#staffcheo')
+        }
+
+        if(code== 0){
+            redborder('#member_code')
+        }
+        }
+
+    
+    
+    })
+
+
+
+    //  Add As delivery agent
+    $('body').on("submit", "#saveDAgent_form" ,function(e){
+    e.preventDefault();
+    let code = Number($(this).data('user'))
+        
+    if(code!=0){
+     $("#addDeliver").modal('hide');
+    $("#loadMe").modal('show');
+
+    let post_url = $(this).attr("action"),
+
+     data={
+        agent:code,
+        csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+    }
+    
+    $.ajax({
+        type: "POST",
+        url: post_url,
+         data: data,
+      }).done(function(data) {
+        if(data.success){
+           toastr.success(lang(data.msg_swa,data.msg_eng), lang('Imefanikiwa','success'), {timeOut: 2000});
+           getAget()
+
+        }else{
+           toastr.error(lang(data.msg_swa,data.msg_eng), lang('Haijafanikiwa','Error'), {timeOut: 2000});
+     
+        }
+
+        $("#loadMe").modal('hide');
+        hideLoading()
+
+      })
+
+    }else{
+       
+
+       if(code== 0){
+           redborder('#agent_code')
+       }
+    }
+
+   
+   
+})
+
+
+
+//user Attchments 
+$('#employeeAttchments').submit(function(e){
+    e.preventDefault();
+    
+    var input= $('#attachFile'),
+        val=$(input).val(),
+        desc = ($('#attachWord').val()).trim()
+        extension=val.split('.').pop().toLowerCase();
+
+    if(val=='' || desc =='' ){
+        alert(lang('Tafadhari chagua file la kiambatanisho na andika maelezo kuhusu kitambulisho hicho','pleae select the attachment PDF file and write description'))
+        if(desc==''){
+            redborder('#attachWord')
+        }
+        if(val==''){
+            redborder(input)
+        }
+        
+    }else{
+    if(jQuery.inArray(extension, ['pdf']) == -1 && val != '' )
+    {
+        alert(lang("File la kiambatanishi sio sahihi","Invalid  PDF File"));
+        $(this).trigger("reset");
+        // $('#userpicsubmit').prop('disabled',true)
+        return false;
+       }
+       else
+       {
+    $("#loadMe").modal('show');
+    $("#viambatanishi").modal('hide');
+
+
+    var form = $(this)
+    var formData = new FormData(this);
+    $.ajax({
+        url: form.attr("action"),
+        type: 'POST',
+        data: formData,
+        cache: false,
+        processData: false,
+        contentType: false,
+        success: function (response) {
+
+            $("#loadMe").modal('hide');
+             hideLoading()
+             if(response.success){
+
+                toastr.success(lang(response.msg_swa,response.msg_eng), lang('Imefanikiwa','Success'), {timeOut: 2000});
+                 location.reload()
+             }else{
+                toastr.error(lang(response.msg_swa,response.msg_eng), lang('Haikufanikiwa','Error'), {timeOut: 2000});
+
+             }
+
+        
+        },
+        cache: false,
+        contentType: false,
+        processData: false
+    });
+
+       }}
+
+});
+
+
+
+function sendDidata(val){
+    $("#loadMe").modal('show');
+    $("#viambatanishi").modal('hide');
+    let data={data:{att:val,csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()},url:'/RemoveAttach'}
+    $.ajax({
+            type:'POST',
+            url:data.url,
+            data:data.data,
+            success:function(dt){
+                $("#loadMe").modal('hide');
+               if(dt.success){
+                toastr.success(lang(dt.msg_swa,dt.msg_eng), lang('Imefanikiwa','Success'), {timeOut: 2000});
+
+                   location.reload()
+
+                  
+               }else{
+                toastr.error(lang(dt.msg_swa,dt.msg_eng), lang('Haikufanikiwa','Error'), {timeOut: 2000});
+
+               }
+        }
+       })
+}
+
+
+</script>
+ {% endif %}
+
+  
+</div>
+ 
+
+{% endblock %}
+ 
+
+
+
+{% block dash-mapper %}
+{% if useri.langSet == 0 %}Waajiriwa/Washilika  {% else %}Employees/Partners{% endif %}
+{% endblock %}
+
+
+
+
+
+{% block dash-map %}
+   {% if useri.langSet == 0 %}Taarifa za Mwajiliwa/Mshilika  {% else %}Employee's/Partner's Details{% endif %}
+{% endblock %}
+
+
+

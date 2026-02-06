@@ -1,0 +1,205 @@
+{% load static %}
+{% static "pics" as baseUrl %}
+{% load humanize %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>ADJ-{{the_bill.code}}</title>
+    
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
+    
+    
+    
+    <script type="text/javascript" src="{% static 'js/jquery.js' %}" ></script>
+
+    <!-- <script src="{% static 'js/staffaccordion.js' %}"></script> -->
+
+
+
+    <link rel="stylesheet"  href="{% static 'css/jquery-ui.css' %}" >
+    <link rel="stylesheet"  href="{% static 'css/audioformat.css' %}" >
+
+    <link rel="stylesheet" href="{% static 'css/userdash.css' %}">
+
+
+    <script src="{% static 'js/jquery-ui.js' %}"></script>
+
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    
+    <script type="text/javascript" src="{% static 'js/projectntc.js' %}"></script>
+    <script src="{% static 'js/momentlocale.js' %}"></script>
+    
+    
+ <link rel='stylesheet prefetch' href="{% static 'css/normalize.min.css' %}" >
+
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet"> -->
+
+<link rel='stylesheet prefetch' href="{% static 'css/animate.min.css' %}">
+
+
+
+    
+ <!-- <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap-select.min.css' %}">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="{% static 'js/bootstrap-select.min.js' %}"></script>
+
+    <body class="px-2 pb-5" >
+      
+   
+
+    <div  class="table-responsive pt-3 mt-3" id="invo_box"  >
+
+        <h6 class="py-2"  >
+            {% if langSel == 0 %}Uhakiki wa {% if un == 1 %} <u class="brown">Kutengua</u>  {% endif %} Marekebisho stoku kumbu no <span class="brown" >ADJ-{{the_bill.code}} </span> yaliyofanyika <u style="color:blue" >{{duka.name | title}}  </u> na <i style="color:blue" > {{the_bill.Na.user.user.first_name | title}}   {{the_bill.Na.user.user.last_name | title}}</i>  {% else %}
+             
+            Confirmation for stock adjustment {% if un == 1 %} <u class="brown">Undo</u>  {% endif %} <span class="brown" >ADJ-{{the_bill.code}}</span>  in <u style="color:blue" >{{duka.name | title}}  </u>  by <i style="color:blue" > {{the_bill.Na.user.user.first_name | title}}   {{the_bill.Na.user.user.last_name | title}}</i>   {% endif %}
+
+            
+          </h6>
+         
+          <div class="table-responsive" >
+           <table class="table table-bordered" style="min-width: 600px;">
+            <thead>
+              <tr class="smallerFont" >
+                <th>#</th>
+                <th>ID </th>
+                <th>{% if langSel == 0 %} Jina {% else %} Name {% endif %} </th>
+                <th>
+                  {% if langSel == 0 %}Cheo {% else %}  Position{% endif %}
+                </th>
+                 <th>
+                  {% if langSel == 0 %} Tarehe{% else %}Date {% endif %}
+                </th>
+                <th>
+                  {% if langSel == 0 %} Kuhakiki{% else %}Confirmed {% endif %}
+                </th>
+                <th>
+                  {% if langSel == 0 %} sahihi{% else %}Signature {% endif %}
+                </th>
+               
+              </tr>
+            </thead>
+            <tbody>
+              {% for cn in cm %}
+              <tr>
+                 <td class=" text-capitalize" scope="row">
+                  {{forloop.counter}}
+                </td>
+
+                 <td class=" text-capitalize" scope="row">
+                   {% if cn.userP.fanyakazi.workerId %}
+                       {{cn.userP.fanyakazi.workerId}}
+                   {% else %}
+                      {{cn.userP.user_entp.Interprise.Intp_code}}
+                   {% endif %}
+                  
+                </td>
+        
+                 <td class=" text-capitalize">
+                   {% if cn.userP.owner %}
+                   {{cn.userP.user.user.first_name}} {{cn.userP.user.user.last_name}}
+                   {% else %}
+                   {{cn.userP.fanyakazi.jina}} 
+                   {% endif %}
+                </td>
+        
+                 <td >
+                   {{cn.userP.cheo}}
+                </td>
+                <td>
+                  {% if cn.confirmed or cn.dinied %}
+                  <script>
+                    document.write(moment('{{cn.tarehe | date:"r" }}').format('DD MMM YYYY HH:mm'))
+                  </script>
+                  {% else %}
+                     
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                     {% if cn.confirmed %}
+                      <span class="weight700 " style="font-size: larger;" >
+                        &checkmark;
+                     </span>
+                     {% else %}
+                     {% if cn.dinied %}
+                     <span class="weight500 brown" >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                              <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                              <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                            </svg>
+        
+                            {{cn.desc}}
+                           
+                     </span>
+                        
+                     {% else %}
+                      
+                      
+                    {% endif %}
+                          
+                      
+                      {% endif %}
+                   
+                    
+        
+                </td>
+
+                <td>
+
+                </td>
+
+                
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          </div>
+        
+        
+
+
+    </div>
+
+<script>
+     
+    $(document).ready(function(){
+      setTimeout(function(){window.print();}, 200)
+
+      window.onafterprint = function(e){
+                 closeMe()
+
+       }
+
+    function closeMe()
+      {
+          
+          window.opener = self;
+          try{
+              if(window.outerWidth>800){
+                setTimeout(function(){window.close();}, 100)
+                
+            }else{
+                window.open()
+                
+                setTimeout(function(){window.close();}, 5000)
+            }
+            }catch(err){
+              alert(err.message)
+          }
+          
+      }
+
+
+  })      
+
+
+</script>
+
+
+  </body>
+</html>

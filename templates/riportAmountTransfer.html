@@ -1,0 +1,352 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+{% block Dashboard %}
+
+{% block billcss %}
+<link rel="stylesheet" href="/static/css/calender.css">
+{% endblock %}
+
+<div  class=" Analytical whiteBg tab_div p-4" style="min-height: 100vh;" id="general-panel">
+    
+    <h5 >{% if useri.langSet == 0 %}Ripoti ya Kuhamisha Pesa{% else %}Amount Transfer Report{% endif %}</h5>
+    <hr>
+
+
+    <div class=" my-3">
+        <div class="row">
+            <div class="col-md-4 ">
+             
+               <div class="form-group row">
+                <div class="col-2 text-right weight600"  >{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}</div>
+                <div class="col-10"> 
+                    <div class="form-group">
+                        <select class="custom-select latoFont darkblue weight600 smallFont" 
+                        onchange="AddRow();vali=$(this).val();$(this).css('color',`${Number(vali)==Number('{{duka.id}}')?'blue':'brown'}`)"
+                        name="Matawini" id="Matawini">
+                        <option value="{{duka.id}}" data-vat="{% if duka.vat_allow %}1{% else %}0{% endif %}" selected>{{duka.name | title}}</option>
+                         
+                        {% for m in matawi %}
+                            <option value="{{m.Interprise.id}}" data-vatp="{{m.Interprise.vatper}}" data-vat="{% if m.Interprise.vat_allow %}1{% else %}0{% endif %}" >{{m.Interprise.name | title}}</option>
+                        {% endfor %}
+
+                        {% if matawi %}
+                            <option value=0 data-vat="{% if duka.vat_allow %}1{% else %}0{% endif %}" data-vatp=0 >{% if useri.langSet == 0 %}Yote{% else %}All{% endif %}</option>
+                        {% endif %}
+                    </select>
+                    </div>
+                </div>
+                  
+               </div>
+               
+            </div>
+            <div class="col-md-8 my-2 showDt PeriodTableData my-md-1 text-md-right">
+
+            <div class="table-responsive">
+                <div  id="mapSelector" class="d-flex d-md-block"  >
+
+                </div>
+                                    
+            </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="table-responsive showDt  PeriodTableData" id="PeriodTable"  data-urli="TransferData" data-service=0 >
+        <table class="table table-sm" style="min-width: 600px;">
+            <thead>
+                <tr >
+                    <th> {% if useri.langSet == 0 %}Muda{% else %}Time{% endif %}</th>
+                    <th> {% if useri.langSet == 0 %}Miamala{% else %}Transactions{% endif %} </th>
+                    <th>{% if useri.langSet == 0 %}Kiasi {% else %}Amount{% endif %} <span class="text-primary smallFont latoFont">({{duka.currencii}})</span> </th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="riportData">
+            </tbody>
+        </table>
+    </div>
+
+    
+    <div class="showDt RiportDataPanel pb-5 mb-5" style="display: none;">
+
+     
+        <div class="row px-0">
+            <div class="col-md-4 px-0 row">
+                <div class="col-4 text-right weight600">{% if useri.langSet == 0 %} Na{% else %} By{% endif %}</div>
+                <div class="col-8"> 
+                    <div class="form-group">
+                        
+                        <select class="custom-select weight600 latoFont text-capitalize smallFont" onchange="let usr = Number($(this).val());usr==0?$(this).removeClass('darkblue'):$(this).addClass('darkblue');AddRow()" name="Waliotumia" id="Waliotumia">
+                            <option value="0" selected>{% if useri.langSet == 0 %}Wote{% else %}All{% endif %}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+    
+          
+
+          
+        </div>
+
+<hr>
+        <h6 class="py-2 py-md-2  weight500" id="riporttitle"></h6>
+        
+        <!-- SUMARY --> 
+        <div id="summary_wrapper" >
+         
+            <div class="row  summary_row classic_div px-0"  >
+                  
+
+                    <!-- <div class="col-md-5 mx-md-2 py-2 row border">
+                        <div class="col-4">{% if useri.langSet == 0 %}Notisi{% else %}Notice{% endif %}</div>
+                        <div class="col-8 weight600" id="expensesNote" >0</div>
+                        <div class="col-4 py-2">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %} <span class="text-primary latoFont smallFont">({{duka.currencii}})</span> </div>
+                        <div class="col-8 py-2 weight600" id="ExpensesAmount">0</div>
+                       
+                    </div> -->
+
+                    <div class="table-rensponsive px-0 mx-0 col-6">
+                        <table class="table  border table-hover">
+                           
+
+                            <thead id="summaryTable">
+
+                            </thead>
+                        </table>
+                    </div>
+             
+
+
+            </div>
+        </div>
+       
+        
+      
+<!-- DATE ITEMS, CATEGORIES , GROUPS SELECT -->
+        <div class="panel row mt-3">
+            <div class="col-8">
+                    <div class="btn-group riportSwitch" role="group" id="riportSwitch" aria-label="Basic example">
+                        <button type="button" class="btn btn-sm border-secondary riportOn btn-primary " id="firstR" data-r="1" data-riport="1" data-val="0" title="{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                              
+                            </svg>
+                        </button>
+
+                        <!-- <button type="button" class="btn border-secondary btn-sm riportOn btn-light" data-r="2" data-riport="1" data-val="0" title="{% if useri.langSet == 0 %}Matumizi{% else %}Expenses{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg"  height="1.2em" width="1.2em" stroke-width="1.5"  viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6,3l0,6c0,2.97,2.16,5.43,5,5.91V19H8v2h8v-2h-3v-4.09c2.84-0.48,5-2.94,5-5.91V3H6z M12,13c-1.86,0-3.41-1.28-3.86-3h7.72 C15.41,11.72,13.86,13,12,13z M16,8H8l0-3h8L16,8z"/>
+                              </svg>
+                        </button> -->
+
+                        <!-- <button type="button" class="btn border-secondary btn-sm riportOn btn-light" data-r="3" data-riport="1" data-val="0" title="{% if useri.langSet == 0 %}Aina{% else %}Categories{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" fill="currentColor" class="bi bi-layers" viewBox="0 0 16 16">
+                                <path d="M8.235 1.559a.5.5 0 0 0-.47 0l-7.5 4a.5.5 0 0 0 0 .882L3.188 8 .264 9.559a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L12.813 8l2.922-1.559a.5.5 0 0 0 0-.882l-7.5-4zm3.515 7.008L14.438 10 8 13.433 1.562 10 4.25 8.567l3.515 1.874a.5.5 0 0 0 .47 0l3.515-1.874zM8 9.433 1.562 6 8 2.567 14.438 6 8 9.433z"/>
+                            </svg>
+                        </button>
+
+                        <button type="button" class="btn border-secondary btn-sm riportOn btn-light" data-r="4" data-riport="1" data-val="0" title="{% if useri.langSet == 0 %}Makundi{% else %}Groups{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.0em" height="1.0em" fill="currentColor" class="bi bi-collection" viewBox="0 0 16 16">
+                                <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6v7zm1.5.5A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-13z"/>
+                            </svg>
+                        </button>-->
+
+                        <button type="button" class="btn border-secondary btn-sm riportOn btn-light" data-r="5" data-riport="1" data-val="0" title="{% if useri.langSet == 0 %}Akaunti za malipo{% else %}Payments Accounts{% endif %}">
+                            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-credit-card-2-back" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>
+                                <path d="M11 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1zM1 9h14v2H1V9z"/>
+                              </svg>
+                        </button> 
+                    </div>
+            </div>
+            
+            <div class="col-4 text-right">
+                <div class="btn-group riportChatRist" id="riportChatRist">
+                        <button type="button"  class="btn border-secondary btn-sm riportListChatOn btn-secondary" data-r="0" data-riport="0" data-val="0" title="{% if useri.langSet == 0 %}Orodha{% else %}List{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                        </button>
+
+                        <button type="button"  class="btn border-secondary btn-sm riportListChatOn btn-light" data-r="1" data-riport="0" data-val="0" title="{% if useri.langSet == 0 %}Chati{% else %}Chart{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bar-chart-2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                                </svg>
+                        </button>  
+                </div>
+            </div>
+       </div>
+
+
+       <div class="theDataPanel mt-4" id="theDataPanel">
+
+       </div>
+
+       
+
+    </div>
+
+    <div class=" showDt  PeriodTableData" >
+            <!-- CALENDER -->
+            <div class=" tab_div" id="calenda-miamala" data-nowDate="" data-from="{{first.tarehe|date:'r'}}" data-to="{{last.tarehe|date:'r'}}" style="display:none" >
+                <!-- <i class="prev-month fa fa-chevron-left fa-3x"></i>  -->
+                <div class="text-right">
+                    <button class="btn btn-sm largerFont btn-default" onclick="$('#calenda-miamala').hide(400)">
+                        &times;
+                    </button>
+                </div>
+            <div class="row pb-2">
+              <div class="col-2 prev_month-miamala">
+                <button class="btn btn-default prev-month">
+                    <svg width="1.2em"  height="1.2em" viewBox="0 0 16 16" class=" bi bi-caret-left-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3.86 8.753l5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"/>
+                    </svg>
+                  </button>
+                  
+              </div>
+              <div class="col-8">
+                  <div class="month-year nowrap text-center">
+                     <h5></h5>
+                  </div>
+              </div>
+              <div class="col-2 next_month-miamala">
+                <button  class="float-right btn-default btn next-month">
+                   <svg width="1.2em" disabled height="1.2em" viewBox="0 0 16 16" class="bi bi-caret-right-fill  " fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+                   </svg>
+                  </button>
+                  
+              </div>
+            </div>
+             
+            <div id="mothYearPanel" class=" pb-3" style="display: none;" >
+              <div class="table-responsive ">
+                <div class="d-flex " style="min-width: 80vw;">
+                                
+                                <script>
+                                    let beg = Number(moment('{{first.tarehe}}'!=''?'{{first.tarehe|date:"r"}}':'').format('YYYY')),
+                                        lasted =  Number(moment('{{last.tarehe}}'!=''?'{{last.tarehe|date:"r"}}':'').format('YYYY')),
+                                        currentDate = Number(moment($('#calenda-miamala').data('nowDate')).format('YYYY'))
+                                        yeaers = '<div class="btn-group">'
+                                        for(let i=beg;i<=lasted;i++){
+                                            yeaers+=`<button data-start="${i}-01-01" class="btn YearSelect smallFont border-secondary ${i==currentDate?'btn-primary':'btn-light'} btn-sm">${i}</button>`
+                                        }
+
+                                        document.write(`${yeaers}</div>`)
+                                </script>
+                            </div>
+              </div>
+                
+                <div class="table-responsive py-2">
+                    <div class="d-flex btn-group" id="showMonths" style="min-width: 80vw;">
+
+                    </div>
+                </div>
+
+
+            </div>
+
+
+                <!-- <i class="next-month fa fa-chevron-right fa-3x"></i> -->
+            
+              <div class="table-responsive">
+                  <table class="table table-bordered calender-table " id="calender-table">
+                        <tr>
+                          <th>Sun</th>
+                          <th>Mon</th>
+                          <th>Tue</th>
+                          <th>Wed</th>
+                          <th>Thu</th>
+                          <th>Fri</th>
+                          <th>Sat</th>
+                        </tr>
+                </table>
+              </div>
+                
+            
+            
+            
+            </div>
+      
+    </div>
+    
+ 
+
+
+   
+    
+    <div class="text-right mt-3 PeriodTableData border-top p-3">
+        <div class="input-group d-inline " >
+            <span class="input-group-btn">
+                <button type="button" class="btn btn-secondary btn-sm latoFont smallFont dropdown-toggle" aria-label="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                     {% if useri.langSet == 0 %}Ongeza{% else %}Add{% endif %}
+                </button>
+                <div class="dropdown-menu  smallFont">
+                   
+                     <a class="dropdown-item btn btn-default smallFont" type="button" onclick="let rfrom = `{{last.tarehe|date:'r'}}`; myCalendar(rfrom)" >{% if useri.langSet == 0 %}Kalenda{% else %}Calender{% endif %}</a>
+           
+
+                </div>
+          </span>
+        </div>
+    </div>
+
+
+    
+
+    <div class="RiportDataPanel showDt text-right" style="display: none;position: fixed;top:90vh;right:10px">
+        <button class="btn btn-danger btn-sm    showDtBtn" data-show=".PeriodTableData" data-hide=".RiportDataPanel">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+        </button>
+    </div>
+
+</div>
+
+
+
+
+
+
+    <input type="hidden" id="currencii" value="{{duka.currencii}}" data-currencii="{{duka.currencii}}" />
+ 
+{% endblock %}
+
+{% block billmpya %}
+   <script src="/static/js/riports/repots.js">  </script>
+   <script src="/static/js/riports/calender.js">  </script>
+   <script src="/static/js/riports/payments/amounttransfer.js">  </script>
+{% endblock %}
+ 
+{% block dash-mapper %}
+  Dashboard
+{% endblock %}
+
+{% block nav-ripoti %}
+class="c-menu__item style-none is-active"
+{% endblock %}
+
+{% block active-riport %} class="bi bi-graph-up text-primary" {% endblock %}
+
+{% block dash-map %} 
+   <a href="/riport/riportPage">{% if useri.langSet == 0 %}Ripoti {% else %}Reports{% endif %}</a>
+   <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+  </svg>
+  <a href="#">{% if useri.langSet == 0 %}Ripoti ya Kuhamisha Pesa {% else %} Amount Transfer Report{% endif %}</a>
+{% endblock %}

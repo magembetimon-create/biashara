@@ -1,0 +1,230 @@
+
+<!-- PANEL YA MANUNUZI KUTOKA BIDHAA ZILIZOPO...................................................................// -->
+<div class="tab_div pt-3 pb-5 mb-5 whiteBg" id="Manunuzi-Panel-kwa-zilizopo" style="display: none;">
+
+    <div class="row classic_div  pb-3 pt-1 mx-md-4">
+      <div class="col-md-9 col-12 ">
+    
+    <form action="/stoku/ongezaBidhaa"  id="form-manunuzi-kwa-zilizopo" method="post">
+     
+    
+       <div class="suggest-holder">
+          <div class="input-group container  p-2 bg-primary">
+        <input type="text" class="form-control muhimu-b-kununua-zilizopo suggest-prompt input-data latoFont" placeholder="Tafuta Bidhaa...">
+        <span id="item-value-manunuzi-zilizopo" data-manunuzi="" hidden></span>
+        <div class="input-group-append">
+          <span class="btn btn-primary" >
+            <svg width="1.3em" height="1.3em" viewBox="0 0 16 16" class="bi bi-search" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M10.442 10.442a1 1 0 0 1 1.415 0l3.85 3.85a1 1 0 0 1-1.414 1.415l-3.85-3.85a1 1 0 0 1 0-1.415z"/>
+              <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+        <ul class="masaki" style="overflow-x:hidden;max-height:250px;overflow-y:auto;"></ul>
+      </div>
+    
+    
+    
+      <div class="row mt-md-2 pt-3 mt-4 classic_div manunuzi-zilizopo-panel whiteBg">
+        <div class="form-group col-6 col-md-4 classic_div">
+             <label class="font-weight-bold smallerFont" for="sambazaji-for-present">Wasambazaji:</label>
+          
+              <select name="" id="sambazaji-for-present" onchange=" if($(this).find('option:selected').data('value')!='0'){ $(this).selectpicker('setStyle', 'bgAnimation', 'remove'); $(this).selectpicker('setStyle', 'border-danger', 'remove');}" data-live-search="true" class="selectpicker form-control muhimu-b-kununua-zilizopo rega">
+                <option value="">chagua Msambazaji</option>
+            </select> 
+            <span id="msambazaji_value" hidden></span>      
+    
+          </div>
+          <div class="form-group col-6 col-md-4 classic_div">
+           
+                <label class="font-weight-bold smallerFont" for="tarehe-manunuzi-kwa-zilizopo">Tarehe:</label>
+            
+                <input type="date" id="tarehe-manunuzi-kwa-zilizopo" class="made-input px-2 form-control" >
+            <script>
+                  var date = new Date();
+                var day = date.getDate();
+                var month = date.getMonth() + 1;
+                var year = date.getFullYear();
+    
+                if (month < 10) month = "0" + month;
+                if (day < 10) day = "0" + day;
+    
+                var today = year + "-" + month + "-" + day;       
+                document.getElementById("tarehe-manunuzi-kwa-zilizopo").value = today;
+            </script>
+            
+          </div>
+    
+    
+          <div class="form-group col-12 col-md-4 classic_div">
+                <label class="font-weight-bold smallerFont" for="tarehe-manunuzi-kwa-zilizopo">Expire Date:</label>
+                <input type="date" id="tarehe-expire-kwa-zilizopo" class="made-input px-2 form-control input-data" name="tarehe-expire-kwa-zilizopo" >
+            <script>
+              var today = new Date().toISOString().split('T')[0];
+              document.getElementsByName("tarehe-expire-kwa-zilizopo")[0].setAttribute('min', today);
+            </script>
+            
+          </div>
+      </div>
+    
+     
+    <div class="classic_div  pt-4" >
+      
+          <div class="row classic_div whiteBg py-3 mt-3 px-3 manunuzi-zilizopo-panel">
+            <label for="" class="pl-2 py-1 pr-3 robotoFont " style="
+            position:absolute;
+            background:rgb(34, 13, 110);
+            color:#fff;
+            margin-top:-28px;
+            font-size:x-small;
+            margin-left:-14px;
+            border-radius:0 5px 5px 5px
+            ">Manunuzi jumla</label>
+            <div class="form-group  col-6 col-md-4">
+                  <label for="bei_ya-inayonunuliwa" class="font-weight-bold smallFont d-block">Bei <span class="currencii smallerFont">{{duka.currencii | title}}</span></label>
+    
+                <div class="show_curency_inline show_curency position-absolute text-danger   px-3" style="display: none ;z-index:  19999 !important;">
+                  <label class="mt-1 text-danger" for=""></label> 
+                <div class="box-pointer d-inline "></div>
+                </div>
+                <span id="price_value-for-purchase" hidden></span>
+                <input type="number" id="bei-kununua-kwa-zilizopo" placeholder="0" class="made-input clear_placeholder form-control input-data money-fomat py-2">
+              </div>
+                
+              <div class="form-group  col-6 col-md-4">
+                <label for="bei_ya-inayonunuliwa" class="font-weight-bold d-block smallFont">Idadi <sup class="text-danger font-weight-bold"><b>*</b></sup> </label>
+                <input type="number" id="idadi_bidhaa-kununua-zilizopo" class="made-input input-data clear_placeholder form-control py-2">
+            </div>
+              <div class="form-group  col-12 col-md-4">
+                <label for="bidhaa-kuuza-zilizopo" class="font-weight-bold d-block smallFont">Kuuza <span class="currencii smallerFont">{{duka.currencii | title}}</span>  </label>
+                <div class="show_curency_inline show_curency position-absolute text-danger   px-3" style="display: none ;z-index:  19999 !important;">
+                  <label class="mt-1 text-danger" for=""></label> 
+                <div class="box-pointer d-inline "></div>
+                </div>
+                <input type="number" id="bidhaa-kuuza-zilizopo" class="made-input clear_placeholder input-data form-control money-fomat py-2">
+                <span id="kuuza_jumla-zilizopo" data-zilizopo="" hidden ></span>
+            </div>
+           
+             
+        </div>
+    
+          <div id="kwa-rejareja-idadi" class="row whiteBg mt-3 py-3 classic_div px-3 manunuzi-zilizopo-panel" style="display: none;" >
+    
+            <label for="" class="pl-2 py-1 pr-3 robotoFont " style="
+            position:absolute;
+            background:rgb(92, 110, 13);
+            color:#fff;
+            margin-top:-28px;
+            font-size:x-small;
+            margin-left:-14px;
+            border-radius:0 5px 5px 5px
+            ">Manunuzi rejareja</label>
+    
+           
+    
+    
+            <div class="form-group  col-6 col-md-4">
+                  <label for="bei_ya-inayonunuliwa-rejareja" class="font-weight-bold smallFont">Bei ya kununulia </label>
+                  <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;z-index:  19999 !important;">
+                    <label class="mt-1 text-danger" for=""></label> 
+                  <div class="box-pointer d-inline "></div>
+                  </div>
+                <input type="number" id="bei-ya-zilizonunuliwa-rejareja" placeholder="Bei ya kununulia kwa rejareja" class="clear_placeholder made-input input-data money-fomat money-fomat py-2 form-control">
+              </div>
+              <div class="form-group  col-6 col-md-4">
+                <label for="bei_ya-inayonunuliwa" class="font-weight-bold smallFont">Idadi </label>
+                <input type="number" id="idadi-ya-zilizonunuliwa-rejareja" class="made-input input-data  py-2 form-control">
+                </div>
+            <div class="form-group  col-12 col-md-4">
+                  <label for="bei_ya-inayonunuliwa-rejareja" class="font-weight-bold smallFont">Bei ya Kuuza </label>
+                  <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;z-index:  19999 !important;">
+                    <label class="mt-1" for=""></label> 
+                  <div class="box-pointer d-inline "></div>
+                  </div>
+                <input type="number" id="bei-ya-kuuza-zilizonunuliwa-rejareja" placeholder="Bei ya kuuza kwa rejareja" class="made-input clear_placeholder input-data money-fomat money-fomat py-2 form-control">
+             <span id="bei-kuuza-rejareja-kwa-zilizopo" data-zilizopo="" hidden></span>
+              </div>
+                
+       
+        </div>
+       
+    
+    
+    </div>
+      
+     
+      <!-- div stocku nje na duka...............................................................................................................// -->
+      <!-- <div class="row classic_div py-3 mt-4 mb-3 manunuzi-zilizopo-panel" style="background-color:#fff ;">
+          <div class="col-12 ">
+            
+            <div class="custom-control custom-checkbox border-bottom pb-1 mb-2">
+              <input type="checkbox" class="custom-control-input" id="stoku-nje-kununua-zilizopo" >
+              <label class="custom-control-label smallFont latoFont" for="stoku-nje-kununua-zilizopo"> Stoku nje na duka </label>
+            </div>
+          </div>
+        
+          <div class="col-5 col-md-2 pt-5 pt-md-1">
+            <img src="{% static 'pics/storedukani.svg'%}" alt="">
+          </div>
+          <div class="col-7 col-md-10 row">
+            <div class="col-12 col-md-4 mb-3 mb-sm-1">
+              <label for="exampleInputEmail1" class="text-muted font-weight-bold smallerFont">Chagua Stoku <sup class="text-danger font-weight-bold">*</sup></label>
+             
+              <select name="" id="select-stocku-kununua-zilizopo" disabled class="form-control stoku-el-kununua-zilizopo select-data muhimu-st-kununua-zilizopo smallFont robotoFont">
+                <option value="">Chagua Stoku</option>
+              </select>
+            </div>
+            <div class="form-group col-12 col-md-4">
+              <label for="exampleInputEmail1" class="text-muted font-weight-bold smallerFont">zinazowekwa Stoku <sup class="text-danger font-weight-bold">*</sup><span class="text-danger smallerFont vipimo_show pimo-jum-disp-kununua-zilizopo"></span></label>
+            
+    <div class="show_curency_inline show_curency position-absolute    px-3" style="display: none ;">
+      <p class="mt-1 " for=""></p> 
+     <div class="box-pointer d-inline "></div>
+    </div>
+              <input type="number" onkeyup="
+              if(parseInt($(this).val())>0)
+              {
+                $(this).siblings('.show_curency').children('p').html('<span class=\'text-primary\'>zilizobaki dukani </span><span class=\'text-danger font-weight-light\'>'+$('#idadi_bidhaa-kununua-zilizopo').attr('placeholder')+': <span class=\'text-danger font-weight-bold\'>'+ (parseInt($('#idadi_bidhaa-kununua-zilizopo').val())-parseInt($(this).val()))+'</span>')
+    
+              }" disabled class="form-control money-fomat stoku-el-kununua-zilizopo input-data muhimu-st-kununua-zilizopo" id="idadi_stoku-jum-kununua-zilizopo"  placeholder="Andika idadi">
+            </div> 
+           
+            <div class="form-group col-12 col-md-4">
+              <label for="exampleInputEmail1 " class="d-block text-muted font-weight-bold smallerFont">Andikisha stoku</label>
+              <button class="btn btn-outline-primary stoku-el-kununua-zilizopo latoFont smallFont " class="btn btn-primary" data-toggle="modal" data-target="#stoku-nje-modal" type="button" disabled>
+                Stoku Mpya <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-shop" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" d="M2.97 1.35A1 1 0 0 1 3.73 1h8.54a1 1 0 0 1 .76.35l2.609 3.044A1.5 1.5 0 0 1 16 5.37v.255a2.375 2.375 0 0 1-4.25 1.458A2.371 2.371 0 0 1 9.875 8 2.37 2.37 0 0 1 8 7.083 2.37 2.37 0 0 1 6.125 8a2.37 2.37 0 0 1-1.875-.917A2.375 2.375 0 0 1 0 5.625V5.37a1.5 1.5 0 0 1 .361-.976l2.61-3.045zm1.78 4.275a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 1 0 2.75 0V5.37a.5.5 0 0 0-.12-.325L12.27 2H3.73L1.12 5.045A.5.5 0 0 0 1 5.37v.255a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0zM1.5 8.5A.5.5 0 0 1 2 9v6h1v-5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v5h6V9a.5.5 0 0 1 1 0v6h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1V9a.5.5 0 0 1 .5-.5zM4 15h3v-5H4v5zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-3zm3 0h-2v3h2v-3z"/>
+                </svg>
+              </button>                    
+            </div> 
+          </div>
+        </div> -->
+    
+    
+        <div class="row py-3  classic_div">
+          <div class="col-12">
+            <p class="text-right">
+                      <button href="#" class="ongeza-manunuzi"> <b>+</b> Ongeza</button>
+    
+            </p>
+          </div>
+        </div>
+    </form>
+    
+    
+    
+       
+     </div>
+     
+     
+    
+     
+    </div>
+    </div>
+    
+    
+    
+    
+    
+    

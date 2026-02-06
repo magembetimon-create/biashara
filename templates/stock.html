@@ -1,0 +1,368 @@
+{% extends 'userdash.html' %}
+
+{% block bidhaa %}
+
+
+<div  class=" Analytical tab_div" id="general-panel">
+
+<!-- Modal -->
+  <div class="modal fade" id="modal-Interprises" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog animate" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel"> {% if useri.langSet == 0 %} Matawi Mengine  {% else %} Other Branches {% endif %}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <ul class="list-unstyled px-1" id="matawi_mengine">
+
+          </ul>
+        </div>
+        <div class="modal-footer">
+          
+        </div>
+      </div>
+    </div>
+  </div>
+    
+<div class=" whiteBg pt-3">
+    <div class="produ-opt-panel table-responsive" >
+        <ul class="list-unstyled d-none d-md-flex border-bottom " style="min-width: 1000px;" >
+            <li class="py-3 {% block top-nav-all %}  {% endblock %}">
+                <a class="p-3 " href="/stoku/bidhaapanel"> 
+                 {% block top-nav-all-icon %}   
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gem" viewBox="0 0 16 16">
+                  <path d="M3.1.7a.5.5 0 0 1 .4-.2h9a.5.5 0 0 1 .4.2l2.976 3.974c.149.185.156.45.01.644L8.4 15.3a.5.5 0 0 1-.8 0L.1 5.3a.5.5 0 0 1 0-.6l3-4zm11.386 3.785-1.806-2.41-.776 2.413 2.582-.003zm-3.633.004.961-2.989H4.186l.963 2.995 5.704-.006zM5.47 5.495 8 13.366l2.532-7.876-5.062.005zm-1.371-.999-.78-2.422-1.818 2.425 2.598-.003zM1.499 5.5l5.113 6.817-2.192-6.82L1.5 5.5zm7.889 6.817 5.123-6.83-2.928.002-2.195 6.828z"/>
+                </svg>
+                  {% endblock %}  
+              {% if useri.langSet == 0 %} Zilizopo  {% else %} Items on shelf {% endif %}
+             </a></li>
+            <li class="py-3 {% block top-nav-reg %}  {% endblock %}"><a class="p-3 " href="/stoku/bidhaaReg">
+                {% block top-nav-reg-icon %}     
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-list-check" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0z"/>
+              </svg>
+              {% endblock %}
+               {% if useri.langSet == 0 %} Zilizosajiriwa  {% else %} Registered Items {% endif %} 
+              </a></li>
+            <li class="py-3  {% block top-nav-cat %}  {% endblock %}"><a class="p-3 " href="/stoku/aina">
+                {% block top-nav-cat-icon %}   
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-layers" viewBox="0 0 16 16">
+                    <path d="M8.235 1.559a.5.5 0 0 0-.47 0l-7.5 4a.5.5 0 0 0 0 .882L3.188 8 .264 9.559a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L12.813 8l2.922-1.559a.5.5 0 0 0 0-.882l-7.5-4zm3.515 7.008L14.438 10 8 13.433 1.562 10 4.25 8.567l3.515 1.874a.5.5 0 0 0 .47 0l3.515-1.874zM8 9.433 1.562 6 8 2.567 14.438 6 8 9.433z"/>
+                </svg>
+              {% endblock %}
+               {% if useri.langSet == 0 %} Aina  {% else %} Items Categories {% endif %} 
+              </a></li>
+            <li class="py-3  {% block top-nav-group %}  {% endblock %}"><a class="p-3 " href="/stoku/kundi">
+                {% block top-nav-group-icon %}   
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-collection" viewBox="0 0 16 16">
+                    <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6v7zm1.5.5A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-13z"/>
+                </svg>
+              {% endblock %}
+               {% if useri.langSet == 0 %} Makundi  {% else %} Items Groups {% endif %} </a></li>
+
+            <li class="py-3  {% block top-nav-brand %}  {% endblock %}"><a class="p-3 " href="/stoku/chapa"> 
+                {% block top-nav-brand-icon %}   
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-tags" viewBox="0 0 16 16">
+                <path d="M3 2v4.586l7 7L14.586 9l-7-7H3zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2z"/>
+                <path d="M5.5 5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM1 7.086a1 1 0 0 0 .293.707L8.75 15.25l-.043.043a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 0 7.586V3a1 1 0 0 1 1-1v5.086z"/>
+              </svg>
+              {% endblock %}
+              {% if useri.langSet == 0 %} Chapa  {% else %} Brands{% endif %} </a></li>
+
+            <li class="py-3  {% block top-nav-sup %}  {% endblock %}"><a class="p-3 " href="/stoku/sambazajitu"> 
+                {% block top-nav-sup-icon %}   
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-compass" viewBox="0 0 16 16">
+                  <path d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016zm6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+                  <path d="m6.94 7.44 4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"/>
+                </svg>
+              {% endblock %}
+              {% if useri.langSet == 0 %} Wasambazaji {% else %} Suppliers{% endif %} </a></li>
+        </ul>
+     </div>
+    <div class="contained whiteBg table-responsive mt-2 p-2 d-flex ">
+        <div class="show-detail pb-2 pt-3">
+            <div class="round-border pb-4 classic_div">
+                 <div class="classic_div icon_div">
+                <svg width="1.1em" height="1.1em" viewBox="0 0 16 16" class="bi bi-card-checklist" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M14.5 3h-13a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
+                    <path fill-rule="evenodd" d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0zM7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0z"/>
+                  </svg>
+               </div>
+                    <span class="item-detail-holder">
+                                <span for="currencii" id="registered-stock-items" class=" show-item-detail font-weight-bold">0</span>
+                    </span> 
+               <span class="item-title">
+                   {% block Stock-keyWord %}
+                   {% endblock %}
+
+               </span>
+            </div>
+              
+
+
+        </div>
+        <div class="show-detail py-2">
+            <div class="round-border pb-4 classic_div">
+
+               <div class="classic_div icon_div">
+                <svg width="1.1em" height="1.1em" viewBox="0 0 16 16" class="bi bi-shop" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M2.97 1.35A1 1 0 0 1 3.73 1h8.54a1 1 0 0 1 .76.35l2.609 3.044A1.5 1.5 0 0 1 16 5.37v.255a2.375 2.375 0 0 1-4.25 1.458A2.371 2.371 0 0 1 9.875 8 2.37 2.37 0 0 1 8 7.083 2.37 2.37 0 0 1 6.125 8a2.37 2.37 0 0 1-1.875-.917A2.375 2.375 0 0 1 0 5.625V5.37a1.5 1.5 0 0 1 .361-.976l2.61-3.045zm1.78 4.275a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 1 0 2.75 0V5.37a.5.5 0 0 0-.12-.325L12.27 2H3.73L1.12 5.045A.5.5 0 0 0 1 5.37v.255a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0zM1.5 8.5A.5.5 0 0 1 2 9v6h1v-5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v5h6V9a.5.5 0 0 1 1 0v6h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1V9a.5.5 0 0 1 .5-.5zM4 15h3v-5H4v5zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-3zm3 0h-2v3h2v-3z"/>
+                  </svg>
+               </div>
+               <span class="item-detail-holder" >
+                <span for="currencii" class="font-weight-bold show-item-detail " id="jumla-ya-bidhaa">0</span>
+            </span> 
+               <span class="item-title"> {% if useri.langSet == 0 %} Idadi ya Bidhaa {% else %} Items Quantity {% endif %}</span>
+            </div>
+
+        </div>
+        <div class="show-detail py-3">
+            <div class="round-border pb-4 classic_div">
+
+               <div class="classic_div icon_div">
+                <svg width="1.1em" height="1.1em" viewBox="0 0 16 16" class="bi bi-gem" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M3.1.7a.5.5 0 0 1 .4-.2h9a.5.5 0 0 1 .4.2l2.976 3.974c.149.185.156.45.01.644L8.4 15.3a.5.5 0 0 1-.8 0L.1 5.3a.5.5 0 0 1 0-.6l3-4zm11.386 3.785l-1.806-2.41-.776 2.413 2.582-.003zm-3.633.004l.961-2.989H4.186l.963 2.995 5.704-.006zM5.47 5.495l5.062-.005L8 13.366 5.47 5.495zm-1.371-.999l-.78-2.422-1.818 2.425 2.598-.003zM1.499 5.5l2.92-.003 2.193 6.82L1.5 5.5zm7.889 6.817l2.194-6.828 2.929-.003-5.123 6.831z"/>
+                  </svg>
+               </div>
+            <span class="item-detail-holder">
+                <span class="currencii smallerFont">{{duka.currencii}}</span>
+                <span for="currencii" class="show-item-detail font-weight-bold" id="thamani-ya-zote">0</span>
+            </span> 
+               <span class="item-title">
+                {% if useri.langSet == 0 %}Thamani ya bidhaa  {% else %} Items Cost  {% endif %}
+               </span>
+
+            </div>
+        </div>
+        <div class="show-detail py-3">
+            <div class="round-border pb-4 classic_div">
+
+               <div class="classic_div icon_div">
+                <svg width="1.1em" height="1.1em" viewBox="0 0 16 16" class="bi bi-cash-stack" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 3H1a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1h-1z"/>
+                    <path fill-rule="evenodd" d="M15 5H1v8h14V5zM1 4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H1z"/>
+                    <path d="M13 5a2 2 0 0 0 2 2V5h-2zM3 5a2 2 0 0 1-2 2V5h2zm10 8a2 2 0 0 1 2-2v2h-2zM3 13a2 2 0 0 0-2-2v2h2zm7-4a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+                  </svg>
+               </div>
+               <span class="item-detail-holder" >
+                    <span class="currencii smallerFont">{{duka.currencii}}</span>
+                    <span for="currencii" id="tegemeo-la-mauzo" class="show-item-detail font-weight-bold">0</span>
+                </span>  
+               <span class="item-title"> {% if useri.langSet == 0 %} Tegemeo la mauzo  {% else %} Expected Sales {% endif %}</span>
+
+            </div>
+        </div>
+        <div class="show-detail py-3">
+            <div class="round-border pb-4 classic_div">
+
+               <div class="classic_div icon_div">
+                <svg width="1.1em" height="1.1em" viewBox="0 0 16 16" class="bi bi-cash-stack" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 3H1a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1h-1z"/>
+                    <path fill-rule="evenodd" d="M15 5H1v8h14V5zM1 4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H1z"/>
+                    <path d="M13 5a2 2 0 0 0 2 2V5h-2zM3 5a2 2 0 0 1-2 2V5h2zm10 8a2 2 0 0 1 2-2v2h-2zM3 13a2 2 0 0 0-2-2v2h2zm7-4a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+                  </svg>
+               </div>
+               <span class="item-detail-holder" >
+                    <span class="currencii smallerFont">{{duka.currencii}}</span>
+                    <span for="currencii" id="tegemeo-la-faida" class="show-item-detail font-weight-bold">0</span>
+                </span>  
+               <span class="item-title"> {% if useri.langSet == 0 %} Tegemeo la Faida  {% else %} Expected Profit {% endif %}</span>
+
+            </div>
+        </div>
+        
+    </div>
+</div>
+   
+<div class="mt-2 whiteBg p-3 mb-5">
+
+  <div class="text-right mb-4 pb-2 border-bottom">
+   
+    <!-- <button class="px-3 mx-2 btn btn-sm btn-light  smallFont" style="background:rgb(233, 233, 233);border-radius:10px"  
+    data-toggle="modal" data-target="#modal-Interprises">
+         {% if useri.langSet == 0 %} Matawi  {% else %} Branches {% endif %}
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+      </svg>
+    </button> -->
+     
+    <button  data-toggle="modal" data-target="#add-products" class="tab_show btn btn-sm smallFont robotoFont btn-primary  ">
+        <b class="largeFont">+</b> {% if useri.langSet == 0 %}Bidhaa Mpya  {% else %} New Item {% endif %} 
+      </button>
+
+  </div>
+
+  {% block descriptions %}
+  {% endblock %}
+
+         <div class="table-responsive mt-4" id='products_list'>
+
+         </div>
+
+{% block itemEdited %}         
+{% endblock %}
+</div>
+
+<!-- fixed navbar for mobiles -->
+<nav class="mobile-bottom-nav d-md-none" >
+
+    <div class="mobile-bottom-nav__item  ">
+        <a href="/stoku/bidhaapanel" title="{% if useri.langSet == 0 %}Bidhaa Zote {% else %} All Items {% endif %}" class="{% block active-all-menu %} {% endblock %} " >
+          <div class="text-center  " >
+              {% block all-icon %}
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-gem" viewBox="0 0 16 16">
+                    <path d="M3.1.7a.5.5 0 0 1 .4-.2h9a.5.5 0 0 1 .4.2l2.976 3.974c.149.185.156.45.01.644L8.4 15.3a.5.5 0 0 1-.8 0L.1 5.3a.5.5 0 0 1 0-.6l3-4zm11.386 3.785-1.806-2.41-.776 2.413 2.582-.003zm-3.633.004.961-2.989H4.186l.963 2.995 5.704-.006zM5.47 5.495 8 13.366l2.532-7.876-5.062.005zm-1.371-.999-.78-2.422-1.818 2.425 2.598-.003zM1.499 5.5l5.113 6.817-2.192-6.82L1.5 5.5zm7.889 6.817 5.123-6.83-2.928.002-2.195 6.828z"/>
+                </svg>
+              {% endblock %}
+          </div>
+          <div class="text-center nav-text ">
+              
+              {% if useri.langSet == 0 %} Zote {% else %} All {% endif %}
+          </div>
+          
+         
+        </a>
+    </div>
+
+    <div class="mobile-bottom-nav__item ">
+        <a href="/stoku/bidhaaReg" class="{% block active-reg-menu %} {% endblock %} ">
+          <div class="text-center " >
+              {% block reg-icon %}
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-list-check" viewBox="0 0 16 16">
+                 <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0z"/>
+                </svg>
+              {% endblock %}
+          </div>
+          <div class="text-center nav-text ">
+               
+              {% if useri.langSet == 0 %} Zilizosajiliwa {% else %}Registered {% endif %}
+
+          </div>
+          
+         
+        </a>
+    </div>
+	
+    <div class="mobile-bottom-nav__item  ">
+        <a href="/stoku/aina" class="{% block active-cate-menu %} {% endblock %}">
+          <div class="text-center" >
+            {% block cat-icon %}
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-layers" viewBox="0 0 16 16">
+              <path d="M8.235 1.559a.5.5 0 0 0-.47 0l-7.5 4a.5.5 0 0 0 0 .882L3.188 8 .264 9.559a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L12.813 8l2.922-1.559a.5.5 0 0 0 0-.882l-7.5-4zm3.515 7.008L14.438 10 8 13.433 1.562 10 4.25 8.567l3.515 1.874a.5.5 0 0 0 .47 0l3.515-1.874zM8 9.433 1.562 6 8 2.567 14.438 6 8 9.433z"/>
+            </svg>
+            {% endblock %}
+          </div>
+          <div class="text-center nav-text ">
+             
+             {% if useri.langSet == 0 %} Aina  {% else %} Categories{% endif %}
+
+          </div>
+          
+         
+        </a>
+    </div>
+
+    <div class="mobile-bottom-nav__item  ">
+        <a href="/stoku/kundi" class="{% block active-group-menu %} {% endblock %}">
+          <div class="text-center" >
+              {% block group-icon %}
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-collection" viewBox="0 0 16 16">
+              <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6v7zm1.5.5A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-13z"/>
+            </svg>
+            {% endblock %}
+          </div>
+          <div class="text-center nav-text ">
+            
+             {% if useri.langSet == 0 %} Makundi{% else %} Groups{% endif %}
+
+          </div>
+        </a>
+    </div>
+
+    <div class="mobile-bottom-nav__item  ">
+        <a href="/stoku/chapa" class="{% block active-brand-menu %} {% endblock %}">
+          <div class="text-center" >
+              {% block brand-icon %}
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-tags" viewBox="0 0 16 16">
+                <path d="M3 2v4.586l7 7L14.586 9l-7-7H3zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2z"/>
+                <path d="M5.5 5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM1 7.086a1 1 0 0 0 .293.707L8.75 15.25l-.043.043a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 0 7.586V3a1 1 0 0 1 1-1v5.086z"/>
+                </svg>
+               {% endblock %} 
+          </div>
+          <div class="text-center nav-text ">
+            
+             {% if useri.langSet == 0 %} Chapa  {% else %}  Brands{% endif %}
+
+          </div>
+          
+         
+        </a>
+    </div>
+
+    <div class="mobile-bottom-nav__item  ">
+        <a href="/stoku/sambazajitu" class="{% block active-sup-menu %} {% endblock %}">
+          <div class="text-center" >
+              {% block sup-icon %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-compass" viewBox="0 0 16 16">
+                <path d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016zm6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+                <path d="m6.94 7.44 4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"/>
+              </svg>
+               {% endblock %} 
+          </div>
+          <div class="text-center nav-text ">
+            
+             {% if useri.langSet == 0 %} Wasambazaji{% else %}Suppliers{% endif %}
+
+          </div>
+          
+         
+        </a>
+    </div>
+	
+	
+</nav>
+
+<!-- SHOW ALL ITEMS -->
+{% if f or bf or sup %}
+{% if f is not 0 or bf is not 0  or sup is not 0 %}
+<span id="chart-cart-btns"  style="position: fixed;top:88vh;right:7px">
+  <a href="{% block roadMap %}{% endblock %}" title="{% if useri.langSet == 0 %} Onesha zote  {% else %} Show all {% endif %}" id="go_top" class="btn btn-default btn-sm brown"   >
+    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-arrow-left-circle-fill" viewBox="0 0 16 16">
+      <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 7.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
+    </svg>
+  </a>
+</span>
+{% endif %}
+{% endif %}
+
+
+
+   
+</div>
+
+
+
+
+
+
+{% block datatable %}  
+{% endblock %}
+
+{% endblock %}
+
+{% block stock-item %}
+    <svg xmlns="http://www.w3.org/2000/svg" height="24" class="text-primary" viewBox="0 0 24 24" width="24" fill="currentColor">
+      <path d="M0 0h24v24H0z" fill="none"/><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/>
+    </svg>
+{% endblock %}
+
+
+{% block forItems %}
+<!-- LOAD DYNAMIC DATA....................... -->
+<script>
+  getStokuData('/stoku/getItemsAll')
+</script>
+{% endblock %}

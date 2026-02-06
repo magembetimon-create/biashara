@@ -1,0 +1,221 @@
+{% extends 'userdash.html' %}
+
+{% block Dashboard %}
+<div  class=" Analytical whiteBg p-3" id="general-panel" style="min-height: 100vh;" >
+    
+<h5 class="p-2 pb-4 border-bottom" >
+    
+    {% if useri.langSet == 0 %}Shughuli za Uzalishaji{% else %}Production Transactions{% endif %}
+
+    <a href="/production/productionUsedItems" class="btn btn-primary latoFont smallFont float-right">
+         {% if useri.lanSet == 0 %}Mpya{% else %}New{% endif %}
+    </a>
+</h5>
+
+<div class="pt-4 pb-3 row  "  >
+    <div class="col-md-8">
+
+    </div>
+    <form class="col-md-4" action="{% url 'productonReport' %}" method="get">
+        <div class="input-group"> 
+            <div class="input-group-prepend">
+               <label for="input" class="pt-1 pr-2">
+                   {% if useri.langSet == 0 %}  Tafuta  {% else %} Search {% endif %}:
+               </label>
+            </div> 
+           
+            <input type="text" name="code" id="code" placeholder=" {% if useri.langSet == 0 %}  Andika no ya uzalishaji {% else %} write production no.. {% endif %}" class="form-control smallFont">
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-secondary d-flex  smallerFont btn-sm pt-2">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                       <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                     </svg>
+                </button>
+            </div>  
+           
+           
+        </div>
+  </form>
+</div>
+
+{% if prdn_num > 0 %}
+{% load humanize %}
+<div class="table-responsive pb-5">
+<table class="table table-hover " style="color: rgb(92, 92, 92);min-width:700px;">
+<thead>
+<tr>
+<th class="latoFont" scope="col">
+  {% if useri.langSet == 0 %}  Uzalishaji# {% else %} Production# {% endif %}
+
+</th>
+<th class="latoFont" scope="col">
+  {% if useri.langSet == 0 %} Tarehe ya kuanza  {% else %}Starting date{% endif %}
+
+</th>
+
+<th class="latoFont" scope="col">
+  {% if useri.langSet == 0 %} Tarehe ya Kumaliza  {% else %}Completion date{% endif %}
+</th>
+
+<th class="latoFont" scope="col">          
+  {% if useri.langSet == 0 %}Thamani ya Nyenzo{% else %}Input material costs{% endif %}
+  (<span class="text-primary smallFont">{{duka.currencii}}</span>)
+</th>
+
+<th class="latoFont" scope="col">          
+  {% if useri.langSet == 0 %}Ghalama nyingine {% else %}Other costs{% endif %}
+  (<span class="text-primary">{{duka.currencii}}</span>)
+</th>
+
+<th class="latoFont" scope="col">          
+  {% if useri.langSet == 0 %} Jumla ya ghalama{% else %}Total Coast{% endif %}
+  (<span class="text-primary">{{duka.currencii}}</span>)
+</th>
+
+<th class="latoFont" scope="col">          
+  {% if useri.langSet == 0 %} Maelezo  {% else %}Descriptins {% endif %}
+</th>
+
+<th class="latoFont" scope="col">          
+  {% if useri.langSet == 0 %} Na  {% else %}By {% endif %}
+</th>
+
+<th class="latoFont" scope="col"> Action </th>
+</tr>
+</thead>
+<tbody>
+  {% for bil in bili %}
+<tr>
+<td class="text-center latoFont">PROD-{{bil.prd.code}}</td>
+<td class="text-center latoFont">
+ 
+
+   <script>
+    document.write(moment('{{bil.prd.Recodeddate | date:"r" }}').format('DD/MM/YYYY, HH:MM'))
+  </script>
+ 
+</td>
+
+<td class="text-center  brown latoFont ">
+    {% if  bil.prd.complete  %}
+       
+     
+       <script>
+         document.write(moment('{{bil.prd.endDate | date:"r" }}').format('DD/MM/YYYY, HH:MM'))
+      </script>
+      
+    {% else %}
+    {% if useri.langSet == 0 %} Uzalishaji Unaendelea ..  {% else %} Production in progress {% endif %}
+     {% endif %}
+</td>
+
+
+<td class="text-center latoFont weight600">{{bil.mat_tot | floatformat:'-2' | intcomma}} </td>
+<td class="text-center latoFont weight600">{{bil.exptot | floatformat:'-2' | intcomma}} </td>
+<td class="text-center latoFont weight700 brown">{{bil.total | floatformat:'-2' | intcomma}} </td>
+
+<td class=" latoFont" style="max-width: 100px;" >  {{bil.prd.desc|slice:30 }} {% if bil.prd.desc|length > 30 %}....{% endif %} </td>
+<td class="text-center latoFont"> {{bil.prd.Na.user.user.first_name | title }}  {{bil.prd.Na.user.user.last_name | title }}</td>
+
+
+<td class="text-center">
+      <div class=" text-center">
+        
+
+         {% if bil.prd.endDate %} 
+        <a href="{% url 'productonReport' %}?pr={{bil.prd.id}}"  class="btn btn-default text-primary btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+              </svg>
+            </a>
+           {% else %}
+        <a href="{% url 'productionUsedItems' %}?pr={{bil.prd.id}}"  class="btn btn-default text-primary btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+              </svg>
+            </a>
+          {% endif %}  
+        <!-- </form> -->
+           
+
+           
+
+      </div>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<p class=" p-4 border-top">
+    {% if page.has_previous %}
+    <a href="{% url 'allProduction' %}?page=1" type="button"  class="btn btn-light border0">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+    </svg>
+    </a>
+
+    <a href="{% url 'allProduction' %}?page={{page.previous_page_number}}" type="button"  class="btn btn-light  border0">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+    </svg>
+    </a>
+    {% endif %}
+
+    {% if page.has_next %}
+    <a href="{% url 'allProduction' %}?page={{page.next_page_number}}" type="button" class="btn btn-light border0">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+    </svg>
+    </a>
+
+    <a href="{% url 'allProduction' %}?page={{pages}}" type="button"  class="btn btn-light border0" >
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+    </svg>
+    </a>
+    {% endif %}
+    <label for="">
+
+    {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+
+    </label>
+</p>
+{%else%}
+
+
+<p class="pt-3 pb-5 text-center">
+ {% if useri.langSet == 0 %} Hakuna Miamala ya Uzalishaji  kwa sasa{% else %}No Production transanctions Found{% endif %}
+
+</p>
+
+{% endif %}
+ 
+
+</div>
+{% endblock %}
+ 
+{% block dash-mapper %}
+{% if useri.langSet == 0 %}Uzalishaji  {% else %}Production{% endif %}
+{% endblock %}
+
+{% block nav-uzalishaji %}
+class="c-menu__item has-submenu showingpop2  is-active  "
+{% endblock %}
+
+{% block active-uzalishaji %} 
+<svg xmlns="http://www.w3.org/2000/svg" class="text-primary"   viewBox="0 0 24 24" height="25" width="25" fill="currentColor">
+    <path d="M19.93,8.21l-3.6,1.68L14,7.7V6.3l2.33-2.19l3.6,1.68c0.38,0.18,0.82,0.01,1-0.36c0.18-0.38,0.01-0.82-0.36-1L16.65,2.6 c-0.38-0.18-0.83-0.1-1.13,0.2l-1.74,1.6C13.6,4.16,13.32,4,13,4c-0.55,0-1,0.45-1,1v1H8.82C8.34,4.65,6.98,3.73,5.4,4.07 C4.24,4.32,3.25,5.32,3.04,6.5C2.82,7.82,3.5,8.97,4.52,9.58L7.08,18H4v3h13v-3h-3.62L8.41,8.77C8.58,8.53,8.72,8.28,8.82,8H12v1 c0,0.55,0.45,1,1,1c0.32,0,0.6-0.16,0.78-0.4l1.74,1.6c0.3,0.3,0.75,0.38,1.13,0.2l3.92-1.83c0.38-0.18,0.54-0.62,0.36-1 C20.75,8.2,20.31,8.03,19.93,8.21z M6,8C5.45,8,5,7.55,5,7s0.45-1,1-1s1,0.45,1,1S6.55,8,6,8z"/>
+</svg>
+
+{% endblock %}
+
+{% block dash-map %}
+   {% if useri.langSet == 0 %}Uzalishaji  {% else %}Production{% endif %}
+{% endblock %}
+
+
+{% block active-production-menu %} class="btn-default btn btn-sm pop2_active_menu" {% endblock %}

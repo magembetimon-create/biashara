@@ -1,0 +1,405 @@
+
+<!-- PANEL YA MANUNUZI  BIDHAA MPYA...................................................................// -->
+
+<div class="tab_div pt-3 pb-5 mb-5 whiteBg" id="Manunuzi-Panel">
+    <form action="/stoku/ongezaBidhaa" id="form-manunuzi-bidhaa-mpya" class="tab_div">
+    
+    
+      <div class="row mb-3 mx-2 mt-3 border-bottom pb-3">
+        <div class="col-6 col-md-4">
+          <label for="exampleInputPassword1">
+            <svg width="1em" height="1.0625em" viewBox="0 0 16 17" class="bi bi-compass" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016zm6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+              <path d="M6.94 7.44l4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"/>
+            </svg>
+            Wasambazaji </label>
+          <select id="produ_sambazaji-kununua" onchange=" if($(this).find('option:selected').data('value')!='0'){ $(this).selectpicker('setStyle', 'restore-border');$(this).selectpicker('setStyle', 'btn-light');}"  data-width="100%" class="selectpicker btn-sm muhimu-b-kununua rega form-control  robotoFont" data-live-search="true">
+            <option value=0 >Chagua Wasambazaji</option>
+            
+          </select>
+    
+          
+        </div>
+    
+    <div id="date-arrange" class="col-0 col-md-5"></div>
+        <div class="col-6 col-md-3 form-group">
+          <label for="">Tarehe 
+            <!-- <span id="manunuzi-leo">
+            leo: <span id="manunuzi-leo-date" class="text-primary">{% now "j/m/Y " %}</span>
+          </span> -->
+        </label>
+          <input id="manunuzi-date" name="manunuzi-date" 
+         
+          type="date" class="form-control ">
+        </div>
+      </div>
+      <script>
+          var date = new Date();
+        var day = date.getDate();
+        var month = date.getMonth() + 1;
+        var year = date.getFullYear();
+    
+        if (month < 10) month = "0" + month;
+        if (day < 10) day = "0" + day;
+    
+        var today = year + "-" + month + "-" + day;       
+        document.getElementById("manunuzi-date").value = today;
+    
+        var today = new Date().toISOString().split('T')[0];
+        document.getElementsByName("manunuzi-date")[0].setAttribute('max', today);
+       </script>
+    
+    
+      <div class="row m-2">
+    
+        
+         <div class="col-12 col-md-12">
+    
+    <div class="row">
+    <div class="form-group col-12  col-md-6">
+            <label class="text-danger" for="exampleInputEmail1">Jina la Bidhaa <sup class="text-danger font-weight-bold">*</sup></label>
+            <input type="text" class="form-control muhimu-b-kununua input-data" id="jina-la-bidhaa-new"  placeholder="Andika jina la bidhaa">
+            <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+          </div>
+    
+          <div class="col-12 col-md-6 form-group">
+            <label for="exampleInputEmail1">Bar Code</label>
+            <input type="text" class="form-control input-data" id="code-ya-bidhaa-kununua" placeholder="Andika namba ya bidhaa">
+          </div>
+    </div>
+          
+    
+    
+          
+    
+        <div class="row">
+          <div class="form-group sahihisha col-6">
+          <label class="text-danger" for="exampleInputPassword1">Kampuni <sup class="text-danger font-weight-bold">*</sup></label>
+           <select name="" id="produ_campuni-kununua"  data-width="100%" data-style="btn-light" class="form-control rega selectpicker robotoFont  muhimu-b-kununua" data-live-search="true" onchange=" if($(this).find('option:selected').data('value')!='0'){ $(this).selectpicker('setStyle', 'restore-border');$(this).selectpicker('setStyle', 'btn-light');}">
+            <option value=0>Chagua Kampuni</option>
+          </select>
+          
+        </div>
+          <div class="form-group col-6">
+         
+    <label class="text-danger" for="exampleInputPassword1">Aina <sup class="text-danger font-weight-bold">*</sup></label>
+          <select onchange=" if($(this).find('option:selected').data('value')!='0'){ $(this).selectpicker('setStyle', 'restore-border');$(this).selectpicker('setStyle', 'btn-light');}" name="" id="prodAina-kununua" data-width="100%" class="form-control selectpicker rega muhimu-b-kununua smallFont robotoFont " data-live-search="true">
+            <option value="">Chagua Aina</option>
+          </select>
+        </div>
+        </div>
+    
+        <div class="form-group">
+          
+        </div>
+    
+    
+         </div>
+    
+        
+         <div class="col-12 col-md-12">
+    
+         <div class="row">
+          <div class="form-group col-12 col-md-6">
+          <label class="text-danger" for="exampleInputEmail1">Vipimo(Jumla)<sup class="text-danger font-weight-bold">*</sup></label>
+          <input type="text" class="form-control muhimu-b-kununua input-data" id="vipimo-vya-bidhaa-kununua"
+          onkeyup="$('.kila-bei-nunuzi-kununua').text('(@ '+$(this).val()+')')
+          $('.pimo-jum-disp-kununua').text('('+$(this).val()+')')"
+    
+          placeholder="Andika vipimo">
+          <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+        </div>
+        <div class="form-group   col-12 col-md-6">
+          <label class="text-danger" for="exampleInputEmail1">idadi <sup class="text-danger font-weight-bold">*</sup><span class="text-danger smallerFont vipimo_show pimo-jum-disp-kununua" ></span></label>
+          <input type="number" class="form-control muhimu-b-kununua input-data" id="idadi_bidhaa-kununua"  placeholder="bidhaa zilizonunuliwa">
+          <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+        </div> 
+    
+    
+    
+      </div>
+    
+        <script>
+        </script>
+        
+       
+    
+       <div class="row">
+          <div class="form-group col-12 col-md-6">
+    
+              <label class="text-danger" for="exampleInputEmail1">Bei ya kununulia <sup class="text-danger  font-weight-bold">*</sup><span class="text-danger smallerFont kila-bei-nunuzi-kununua vipimo_show" ></span></label>
+              <div class="show_curency_block show_curency position-absolute    px-3" style="display: none ;">
+        
+                  <label class="mt-1 text-danger"  for=""></label> 
+                  <div class="box-pointer d-inline "></div>
+                </div>
+              <input type="number" class="form-control money-fomat input-data muhimu-b-kununua" id="Bei_ya_kunua-kununua"  placeholder="Andika bei ya kununulia jumlajumla">
+              <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+            
+            <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+         </div>
+          <div class="form-group col-12 col-md-6">
+            <label for="exampleInputEmail1">Expire Date</label>
+    
+    
+            <input id="expirdate-kununua" name="expirdate-kununua" type="date"  class="form-control input-data" style="cursor: pointer;" />
+    
+            
+    
+           <script>
+            var today = new Date().toISOString().split('T')[0];
+            document.getElementsByName("expirdate-kununua")[0].setAttribute('min', today);
+           </script>
+        
+          </div>
+       </div>
+    
+     
+    
+        
+    
+    
+    
+    <script>
+      $('#Bei_ya_kunua-kununua, #idadi_bidhaa-kununua').keyup(function(){
+        if($('#idadi_bidhaa-kununua').val()!=''&& $('#Bei_ya_kunua-kununua').val()!=''){
+          var bei=$('#Bei_ya_kunua-kununua').val(), idadi=$('#idadi_bidhaa-kununua').val()
+           
+          $('#kiasi-kilicholipwa-manunuzi').val(parseInt(bei)*parseInt(idadi))
+        }
+      })
+    </script>
+    
+    
+    
+    
+    
+        
+    
+         </div>
+    
+         
+    
+       </div>
+    
+       <div class=" row  rounded mx-3 my-2 pb-2 tab_div" id="reja_jum-kununua" >
+       
+           <div class="row col-12 py-3 rounded classic_div border">
+             <div class="col-12   col-md-6">
+             
+                <div class="form-group   ">
+               <label class="text-danger" for="exampleInputEmail1">Bei ya kuuza <sup class="text-danger font-weight-bold">*</sup><span class="text-danger smallerFont vipimo_show kila-bei-nunuzi-kununua" ></span></label>
+               <div class="show_curency_block show_curency position-absolute   px-3" style="display: none ;">
+         
+                 <label class="mt-1 text-danger " for=""></label> 
+               <div class="box-pointer d-inline "></div>
+                 </div>
+               <input type="number" class="form-control money-fomat input-data muhimu-b-kununua" id="Bei_ya_kuuza-kununua"  placeholder="Andika bei ya kuuzia">
+               <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+             </div> 
+         
+                <div class="form-group   ">
+               <label for="exampleInputEmail1">punguzo </label>
+               <div class="show_curency_block show_curency position-absolute   px-3" style="display: none ;">
+         
+                 <label class="mt-1 text-danger " for=""></label> 
+               <div class="box-pointer d-inline "></div>
+                 </div>
+               <input type="number" class="form-control money-fomat input-data" id="punguza-kununua"  placeholder="Andika Punguzo">
+               <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+             </div> 
+         
+         
+          
+             <div class="form-group border-top rounded  py-1 bg-warning pl-3 border-bottom" >
+              <label for="exampleInputEmail1 ">Namna ya Mauzo <sup class="text-danger font-weight-bold">*</sup></label>
+            <div>
+              <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" id="jum-or-reja-nunua"  checked="checked" name="customRadioInline1" onclick="$('.reja-activate-input').prop('disabled',true);$('.reja-activate-label').addClass('text-muted')" class="custom-control-input " >
+                <label class="custom-control-label" for="jum-or-reja-nunua">Kwa Ujumla</label>
+              </div>
+              <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" id="jum-na-reja-nunua" name="customRadioInline1" onclick="$('.reja-activate-input').prop('disabled',false);$('.reja-activate-label').removeClass('text-muted')"  class="custom-control-input " >
+                <label class="custom-control-label" for="jum-na-reja-nunua">Jumla na Rejareja</label>
+              </div> 
+            </div>  <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+            </div>
+    
+    
+             
+    
+                
+    
+                
+               
+               
+             </div>
+             <div class="col-12 col-md-6"  id="Mauzo-reja-reja">
+    
+    
+              <div class="row" >
+                <div class="form-group col-12 col-md-6" >
+                   <label class="text-danger" for="exampleInputEmail1" class="reja-activate-label text-muted">Vipimo(rejareja) <sup class="text-danger font-weight-bold">*</sup></label>
+                   <input type="text" class="form-control muhimu-br-kununua input-data reja-activate-input" id="pimo-reja-kununua" disabled
+                   onkeyup="$('.kila-bei-reja-kununua').text('(@ '+$(this).val()+')')
+                   $('.pimo-reja-disp-kununua').text($(this).val())
+                   $('.uwiano-reja-disp-kununua').text('('+$(this).val()+'  kwa '+$('#vipimo-vya-bidhaa-kununua').val()+' 1 )')"
+                   placeholder="Andika kipimo">
+                   <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+                 </div> 
+    
+                  <div class="form-group col-12 col-md-6">
+                   <label class="text-danger" for="exampleInputEmail1" class="reja-activate-label text-muted">Uwiano <sup class="text-danger font-weight-bold">*</sup><span class="uwiano-reja-disp-kununua vipimo_show smallerFont text-danger"></span></label>
+                   <input type="number" disabled class="form-control input-data muhimu-br-kununua reja-activate-input" id="uwiano-reja-kununua"  placeholder="idadi kwa kila...">
+                   <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+                 </div> 
+             </div>
+    
+              <div class="form-group row classic_div">
+                 <label class="text-danger" for="exampleInputEmail1" class="reja-activate-label text-muted ">Bei ya kuuza <sup class=" font-weight-bold text-danger">*</sup><span class="kila-bei-reja-kununua text-danger vipimo_show smallerFont"></span></label>
+                 <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+    
+                   <label class="mt-1 text-danger " for=""></label> 
+                  <div class="box-pointer d-inline "></div>
+                   </div>
+                 <input type="number" disabled class="form-control money-fomat input-data muhimu-br-kununua reja-activate-input" id="bei-reja-kununua"  placeholder="Andika bei ya kuuza">
+                 <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+               </div> 
+             <div class="row">
+               <div class="form-group col-12 col-md-6">
+                 <label for="exampleInputEmail1" class="reja-activate-label text-muted"><span class="pimo-reja-disp-kununua text-danger  vipimo_show  smallFont"></span> zilizonunuliwa </label>
+                 <input type="number" class="form-control input-data reja-activate-input" disabled id="idadi_bidhaa-reja-kununua"  placeholder="Andika idadi ya zilizonunuliwa rejareja">
+                 <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+               </div> 
+    
+                <div class="form-group col-12 col-md-6">
+                 <label for="exampleInputEmail1" class="reja-activate-label text-muted ">Bei ya kununulia <span class="kila-bei-reja-kununua text-danger vipimo_show smallerFont"></span></label>
+                 <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+    
+                   <label class="mt-1 text-danger " for=""></label> 
+                  <div class="box-pointer d-inline "></div>
+                   </div>
+                 <input type="number" disabled class="form-control money-fomat input-data  reja-activate-input" id="bei-reja-kununulia"  placeholder="Andika bei ya kununulia rejareja">
+                 <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+               </div> 
+             </div>
+    
+              
+    
+              
+             </div>
+           </div>
+        
+    
+    
+         </div>
+    
+    
+    
+    <!--      
+    
+         <div class="row py-3  manunuzi-zilizopo-panel whiteBg mx-3 my-3" >
+          <div class="col-12 ">
+            
+            <div class="custom-control custom-checkbox border-bottom pb-1 mb-2">
+              <input type="checkbox" class="custom-control-input" id="stoku-nje-kununua" >
+              <label class="custom-control-label smallFont latoFont" for="stoku-nje-kununua"> Stoku nje na duka </label>
+            </div>
+          </div>
+        
+          <div class="col-5 col-md-2 pt-5 pt-md-1">
+            <img src="{% static 'pics/storedukani.svg'%}" alt="">
+          </div>
+          <div class="col-7 col-md-10 row">
+            <div class="col-12 col-md-4 mb-3 mb-sm-1">
+              <label for="exampleInputEmail1" class="text-muted">Chagua Stoku <sup class="text-danger font-weight-bold">*</sup></label>
+             
+              <select name="" id="select-stocku-kununua" disabled class="form-control stoku-el-kununua select-data muhimu-st-kununua smallFont robotoFont">
+                <option value="">Chagua Stoku</option>
+              </select>
+            </div>
+            <div class="form-group col-12 col-md-4">
+              <label for="exampleInputEmail1" class="text-muted">idadi zinazowekwa Stoku <sup class="text-danger font-weight-bold">*</sup><span class="text-danger smallerFont vipimo_show pimo-jum-disp-kununua"></span></label>
+            
+    <div class="show_curency_block show_curency position-absolute    px-3" style="display: none ;">
+      <p class="mt-1 " for=""></p> 
+     <div class="box-pointer d-inline "></div>
+    </div>
+              <input type="number" onkeyup="
+              if(parseInt($(this).val())>0)
+              {
+                $(this).siblings('.show_curency').children('p').html('<span class=\'text-primary\'>zilizobaki dukani </span><span class=\'text-danger font-weight-light\'>'+$('#vipimo-vya-bidhaa-kununua').val()+': <span class=\'text-danger font-weight-bold\'>'+ (parseInt($('#idadi_bidhaa-kununua').val())-parseInt($(this).val()))+'</span>')
+    
+              }" disabled class="form-control money-fomat stoku-el-kununua input-data muhimu-st-kununua" id="idadi_stoku-jum-kununua"  placeholder="Andika idadi">
+             
+            </div> 
+           
+            <div class="form-group col-12 col-md-4">
+              <label for="exampleInputEmail1 " class="d-block text-muted">Andikisha stoku</label>
+              <button class="btn btn-outline-primary stoku-el-kununua latoFont smallFont " class="btn btn-primary" data-toggle="modal" data-target="#stoku-nje-modal" type="button" disabled>
+                Stoku Mpya <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-shop" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" d="M2.97 1.35A1 1 0 0 1 3.73 1h8.54a1 1 0 0 1 .76.35l2.609 3.044A1.5 1.5 0 0 1 16 5.37v.255a2.375 2.375 0 0 1-4.25 1.458A2.371 2.371 0 0 1 9.875 8 2.37 2.37 0 0 1 8 7.083 2.37 2.37 0 0 1 6.125 8a2.37 2.37 0 0 1-1.875-.917A2.375 2.375 0 0 1 0 5.625V5.37a1.5 1.5 0 0 1 .361-.976l2.61-3.045zm1.78 4.275a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 1 0 2.75 0V5.37a.5.5 0 0 0-.12-.325L12.27 2H3.73L1.12 5.045A.5.5 0 0 0 1 5.37v.255a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0zM1.5 8.5A.5.5 0 0 1 2 9v6h1v-5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v5h6V9a.5.5 0 0 1 1 0v6h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1V9a.5.5 0 0 1 .5-.5zM4 15h3v-5H4v5zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-3zm3 0h-2v3h2v-3z"/>
+                </svg>
+              </button>                  
+            </div> 
+          </div>
+        </div> -->
+    
+    
+    
+         <div class="row mx-1 ">
+          <div class="form-group col-12">
+            <label for="exampleInputEmail1">Maelezo ya Bidhaa </label>
+            
+            <textarea name="maelezo_ya_bidhaa" id="maelezo_ya_bidhaa-kununua" cols="10" rows="2" class="form-control"></textarea>                  <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+          </div> 
+        </div>
+    
+    
+    <div class="form-group px-4 pb-4 ">
+    <p class="text-center">
+       <span class="float-left"><button type="button"  onclick="topslider.top()" class="btn btn-light tab_show   "  data-show="#general-panel">
+         <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-left" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+           <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+         </svg> 
+         back
+    
+        </button>
+      </span>
+      <span class="float-right ">
+        
+        <button class="ongeza-manunuzi"  id="hakikisha-unaweka"> 
+          <b class="lagerFont">+</b>
+         Ongeza</button>
+     </span>
+    </p>
+       
+    
+    </div>
+    
+    
+    
+      
+    
+       
+    
+    
+    
+    
+    </form>
+    
+    
+    
+    
+    <script>
+      $('#printInvoice').click(function(){
+        Popup($('.invoice')[0].innerHTML);
+        function Popup(data) 
+        {
+            window.print();
+            return true;
+        }
+    });
+    </script>
+       
+    </div>

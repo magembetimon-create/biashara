@@ -1,0 +1,1561 @@
+{% load static %}
+{% static "pics" as baseUrl %}
+{% load humanize %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>PROD-{{code}}</title>
+    
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
+    
+    
+    
+    <script type="text/javascript" src="{% static 'js/jquery.js' %}" ></script>
+
+    <!-- <script src="{% static 'js/staffaccordion.js' %}"></script> -->
+
+
+
+    <link rel="stylesheet"  href="{% static 'css/jquery-ui.css' %}" >
+    <link rel="stylesheet"  href="{% static 'css/audioformat.css' %}" >
+
+    <link rel="stylesheet" href="{% static 'css/userdash.css' %}">
+
+
+    <script src="{% static 'js/jquery-ui.js' %}"></script>
+
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    
+    <script type="text/javascript" src="{% static 'js/projectntc.js' %}"></script>
+    <script src="{% static 'js/momentlocale.js' %}"></script>
+    
+    
+ <link rel='stylesheet prefetch' href="{% static 'css/normalize.min.css' %}" >
+
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet"> -->
+
+<link rel='stylesheet prefetch' href="{% static 'css/animate.min.css' %}">
+
+
+
+    
+ <!-- <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap-select.min.css' %}">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="{% static 'js/bootstrap-select.min.js' %}"></script>
+
+    <style>
+      body,html{
+        font-size:large ;
+        font-family:'Lato', Calibri, Times, sans-serif;
+      }
+      strong{
+        font-weight: 500;
+        color:#255c86;
+      }
+    </style>
+  </head>
+
+
+    <body class="px-2 pb-5" >
+      
+   
+
+    <div  class="table-responsive pt-3 mt-3" id="invo_box"  >
+
+        <div class="classic_div mt-sm-2 pt-3 pb-2 px-3 "   >
+
+          <h4 class="text-center" >
+            {% if langSel == 0 %} RIPOTI YA UZALISHAJI  {% else %} PRODUCTION REPORT {% endif %}
+           </h4>
+           <h5 class="text-center text-capitalize" >{{prdn.last.Interprise.name}}({{prdn.last.Interprise.Intp_code}})</h5>
+           <div class="text-center text-capitalize smallFont" >
+            {{prdn.last.Interprise.mtaa.mtaa}}, {{prdn.last.Interprise.mtaa.kata.kata}}, 
+            {{prdn.last.Interprise.mtaa.kata.wilaya.wilaya}}, {{prdn.last.Interprise.mtaa.kata.wilaya.mkoa.mkoa}}, 
+            {{prdn.last.Interprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name}},
+            </div>
+        
+
+         <div class="mt-5">
+           <div class="row" style="max-width:400px">
+              <div class="col-5">
+                  {% if langSel == 0 %}UZALISHAJI{% else %}PRODUCTION {% endif %}#
+                 
+              </div>
+              <div class="col-7 weight700">
+                 PROD-{{code}} 
+              </div>
+              <div class="col-5">
+                  {% if langSel == 0 %}KUANZIA{% else %}FROM  {% endif %}
+              </div>
+
+
+              
+              <div class="col-7">
+                <span class="weight600">
+                  
+                  
+                     <script>
+                      document.write(moment('{{ prdn.last.Recodeddate | date:"r" }}').format('DD/MM/YYYY, HH:MM'))
+                   </script>
+                 
+                </span>
+              </div>
+
+              <div class="col-5 ">
+                  {% if langSel == 0 %}HADI{% else %}TO  {% endif %}
+              </div>
+
+              <div class="col-7 weight600 brown">
+                {% if prdn.last.complete %}
+                      
+                       
+                       <script>
+                        document.write(moment('{{prdn.last.endDate | date:"r" }}').format('DD/MM/YYYY, HH:MM'))
+                     </script>
+                {% else %}
+                   {% if langSel == 0 %}Uzalishaji unaendelea {% else %}Production in proggress  {% endif %}
+                {% endif %}
+              </div>
+              <div class="col-5">
+                  
+                 {% if langSel == 0 %}MUDA{% else %}DURATION  {% endif %}
+              </div>
+              <div class="col-7 weight700 brown">
+                       <span  class="bg-light " id="showDatet">
+
+                       </span>
+                      <script>
+                        let dt = `{% if prdn.last.complete %}${moment('{{prdn.last.endDate | date:"r"  }}').format('YYYY-MM-DD HH:mm')}{% else %}${moment().format('YYYY-MM-DD HH:mm')}{% endif %}`
+                            q=moment(dt),
+                            b = moment('{{prdn.last.Recodeddate | date:"r"  }}'),
+                           
+                            min = q.diff(b, 'minutes'),secs = q.diff(b, 'seconds')
+                            if('{{prdn.last.complete}}' == "False"){
+
+                              function countt(){
+                                
+                              let ss = secs
+
+                             function showtt(){
+                               min = ss/60,
+
+                              hr = min/60,
+                              d = hr/24,
+                              w = min/(60*24*7),
+                              nd = (w*7)%7,
+
+                              nh = (nd*24)%24,
+                              nm =(nh*60)%60,
+                              ns = ((nm*60)%60)
+
+                              
+
+                              ss++;
+
+                              m = q.diff(b, 'months'),
+
+                            str = '' 
+                            
+
+                            if(m>0){
+                              str += ` {% if langSel == 0 %}mz${m}{% else %}${m}mths{% endif %}(`
+                            }
+                            
+
+                            if(w>=1){
+                              str += ` {% if langSel == 0 %}wk.${parseInt(w)}{% else %}${parseInt(w)}wk{% endif %},`
+                            }
+
+
+                            if(nd>=1){
+                              str += ` {% if langSel == 0 %}sk.${parseInt(nd)}{% else %}${parseInt(nd)}dy{% endif %},`
+                            }
+                            if(nh>=1){
+                              str += ` {% if langSel == 0 %}sa.${parseInt(nh)}{% else %}${parseInt(nh)}hr{% endif %},`
+                            }
+
+                            if(nm>=1){
+                              str += ` {% if langSel == 0 %}dk.${parseInt(nm)}{% else %}${parseInt(nm)}min{% endif %},`
+                            }
+
+                            if(ns>=0){
+                              str += ` {% if langSel == 0 %}skn.${parseInt(ns)}{% else %}${parseInt(ns)}sec{% endif %}`
+                            }
+
+                            if(m>0){str+=')'}
+
+                            $('#showDatet').text(str)
+                            
+                            timerI = setTimeout(showtt, 1000);
+
+                          }
+                               showtt()
+                          
+                             }
+                              countt()
+
+                            }
+                            else{
+                              hr = min/60,
+                            d = hr/24,
+                            w = min/(60*24*7),
+                            nd = (w*7)%7,
+
+                            nh = (nd*24)%24,
+                            nm =(nh*60)%60,
+                            m = q.diff(b, 'months'),
+
+                           str = '' 
+                          
+
+                           if(m>0){
+                             str += ` {% if langSel == 0 %}mwz.${m}{% else %}${m}mth{% endif %},`
+                           }
+                           
+
+                           if(w>=1){
+                             str += ` {% if langSel == 0 %}wk.${parseInt(w)}{% else %}${parseInt(w)}wk{% endif %},`
+                           }
+
+
+                           if(nd>=1){
+                             str += ` {% if langSel == 0 %}sk.${parseInt(nd)}{% else %}${parseInt(nd)}dy{% endif %},`
+                           }
+                          if(nh>=1){
+                             str += ` {% if langSel == 0 %}sa.${parseInt(nh)}{% else %}${parseInt(nh)}hr{% endif %},`
+                           }
+                          if(nm>=1){
+                             str += ` {% if langSel == 0 %}dk.${parseInt(nm)}{% else %}${parseInt(nm)}min{% endif %}`
+                           }
+                           $('#showDatet').text(str)
+                            }
+                            
+
+                            
+                           
+                           
+                    </script> 
+              </div>
+              <div class="col-5">
+                  
+                 {% if langSel == 0 %}Na{% else %}  By{% endif %}
+              </div>
+              <div class="col-7 text-capitalize weight600">
+                 <a href="#">{{prdn.last.Na.user.user.first_name}} {{prdn.last.Na.user.user.last_name}} </a> 
+              </div>
+           </div>
+         </div>
+
+
+<div class="mt-4">
+<h5> 
+{% if langSel == 0 %}Kuhusu uzalishaji    {% else %} About production {% endif %}
+</h5>
+<p>{{prdn.last.desc}}</p>
+</div>
+
+<!-- KAZI ZILIZOFANYIKA.................................  -->
+{% if vibarua %}
+<div class="mt-4">
+<h5>
+{% if langSel == 0 %}   Kazi zilizofanyika {% else %} Employee & task {% endif %}
+</h5>
+<div class="table-responsive p-2" >
+
+<table id="prod_table" class=" table-bordered table table-sm" style="min-width: 600px;" data-row=1>
+<tr class="bg-light smallFont ">
+  <th   > {% if langSel == 0 %} Mfanyakazi   {% else %} Worker {% endif %}</th>
+  <th   > {% if langSel == 0 %} Simu   {% else %} Phone {% endif %}</th>
+  <th   > {% if langSel == 0 %} Cheo   {% else %} Position {% endif %}</th>
+  <th > {% if langSel == 0 %} Kazi {% else %}  Task {% endif %}</th>
+  <th > {% if langSel == 0 %} Uhakiki {% else %}  Confirmation {% endif %}</th>
+  <th class="px-4" > {% if langSel == 0 %} Sahihi {% else %}  Signature {% endif %}</th>
+  
+</tr>
+
+
+
+        <tbody >
+
+            {% for l in vibarua %}
+            <tr>
+                <td class="p-2">
+                    <div class="d-flex">
+                        <div class="img centerItems mr-2" >
+                            {% if l.worker.where.owner.picha %}
+                              <img src="{{l.worker.where.owner.picha.url}}" style="max-width: 40px;max-height:40px">
+                            {%  else %}
+                            <svg xmlns="http://www.w3.org/2000/svg"  height="40" width="40" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9,15c-2.67,0-8,1.34-8,4v2h16v-2C17,16.34,11.67,15,9,15z"/>
+                                <path d="M22.1,6.84c0.01-0.11,0.02-0.22,0.02-0.34c0-0.12-0.01-0.23-0.03-0.34l0.74-0.58c0.07-0.05,0.08-0.15,0.04-0.22l-0.7-1.21 c-0.04-0.08-0.14-0.1-0.21-0.08L21.1,4.42c-0.18-0.14-0.38-0.25-0.59-0.34l-0.13-0.93C20.36,3.06,20.29,3,20.2,3h-1.4 c-0.09,0-0.16,0.06-0.17,0.15L18.5,4.08c-0.21,0.09-0.41,0.21-0.59,0.34l-0.87-0.35c-0.08-0.03-0.17,0-0.21,0.08l-0.7,1.21 c-0.04,0.08-0.03,0.17,0.04,0.22l0.74,0.58c-0.02,0.11-0.03,0.23-0.03,0.34c0,0.11,0.01,0.23,0.03,0.34l-0.74,0.58 c-0.07,0.05-0.08,0.15-0.04,0.22l0.7,1.21c0.04,0.08,0.14,0.1,0.21,0.08l0.87-0.35c0.18,0.14,0.38,0.25,0.59,0.34l0.13,0.93 C18.64,9.94,18.71,10,18.8,10h1.4c0.09,0,0.16-0.06,0.17-0.15l0.13-0.93c0.21-0.09,0.41-0.21,0.59-0.34l0.87,0.35 c0.08,0.03,0.17,0,0.21-0.08l0.7-1.21c0.04-0.08,0.03-0.17-0.04-0.22L22.1,6.84z M19.5,7.75c-0.69,0-1.25-0.56-1.25-1.25 s0.56-1.25,1.25-1.25s1.25,0.56,1.25,1.25S20.19,7.75,19.5,7.75z"/><path d="M19.92,11.68l-0.5-0.87c-0.03-0.06-0.1-0.08-0.15-0.06l-0.62,0.25c-0.13-0.1-0.27-0.18-0.42-0.24l-0.09-0.66 C18.12,10.04,18.06,10,18,10h-1c-0.06,0-0.11,0.04-0.12,0.11l-0.09,0.66c-0.15,0.06-0.29,0.15-0.42,0.24l-0.62-0.25 c-0.06-0.02-0.12,0-0.15,0.06l-0.5,0.87c-0.03,0.06-0.02,0.12,0.03,0.16l0.53,0.41c-0.01,0.08-0.02,0.16-0.02,0.24 c0,0.08,0.01,0.17,0.02,0.24l-0.53,0.41c-0.05,0.04-0.06,0.11-0.03,0.16l0.5,0.87c0.03,0.06,0.1,0.08,0.15,0.06l0.62-0.25 c0.13,0.1,0.27,0.18,0.42,0.24l0.09,0.66C16.89,14.96,16.94,15,17,15h1c0.06,0,0.12-0.04,0.12-0.11l0.09-0.66 c0.15-0.06,0.29-0.15,0.42-0.24l0.62,0.25c0.06,0.02,0.12,0,0.15-0.06l0.5-0.87c0.03-0.06,0.02-0.12-0.03-0.16l-0.52-0.41 c0.01-0.08,0.02-0.16,0.02-0.24c0-0.08-0.01-0.17-0.02-0.24l0.53-0.41C19.93,11.81,19.94,11.74,19.92,11.68z M17.5,13.33 c-0.46,0-0.83-0.38-0.83-0.83c0-0.46,0.38-0.83,0.83-0.83s0.83,0.38,0.83,0.83C18.33,12.96,17.96,13.33,17.5,13.33z"/><path d="M4.74,9h8.53c0.27,0,0.49-0.22,0.49-0.49V8.49c0-0.27-0.22-0.49-0.49-0.49H13c0-1.48-0.81-2.75-2-3.45V5.5 C11,5.78,10.78,6,10.5,6S10,5.78,10,5.5V4.14C9.68,4.06,9.35,4,9,4S8.32,4.06,8,4.14V5.5C8,5.78,7.78,6,7.5,6S7,5.78,7,5.5V4.55 C5.81,5.25,5,6.52,5,8H4.74C4.47,8,4.25,8.22,4.25,8.49v0.03C4.25,8.78,4.47,9,4.74,9z"/><path d="M9,13c1.86,0,3.41-1.28,3.86-3H5.14C5.59,11.72,7.14,13,9,13z"/>
+                            </svg>
+                            {% endif %}
+
+                        </div>
+                        <div class="border-left pl-2" >
+                            <div class="text-capitalize latoFont brown weight600">
+                              <span class="pr-1 mr-1 border-right">{{l.worker.workerId}}</span> {{l.worker.jina}}
+                            </div>
+
+                         
+                        </div>
+                    </div>
+                </td>
+                <td class="p-2" >
+                   <span class="pl-1 ml-1 border-left">(+{{l.worker.code}}) {{l.worker.simu1}}</span>
+
+                </td>
+                <td class="p-2" >
+                   {{l.worker.kazi}} 
+
+                </td>
+                <td class="p-2" >
+                    {{l.task}}
+                </td>
+
+                <td class="p-2" >
+                  {% if l.comfirmed %}
+                    &checkmark;
+                  
+                  {% else %} 
+                    
+                    
+                  {% endif %}
+                </td>
+
+                <td class="p-2" >
+                  
+                </td>
+
+            </tr>
+            {% endfor %}
+          
+
+
+        </tbody>
+
+</table>
+</div> 
+</div>
+{% endif %}
+
+<!-- NYENZO ZILIZOTUMIKA ................................... -->
+<div class="mt-4">
+<h5>
+{% if langSel == 0 %}Nyenzo zilizotumika    {% else %} Used Material(s) {% endif %}
+</h5>
+           
+{% for usd in usedM %}
+<div class="table-responsive p-2" >
+
+<table id="prod_table" class=" table-bordered table table-sm" style="min-width: 630px;" data-row=1>
+<tr class="bg-light smallFont ">
+<th   > {% if langSel == 0 %} Jina la Bidhaa  {% else %} Item Name {% endif %}</th>
+
+{% if usd.color.count > 0  %}
+<th > {% if langSel == 0 %} Rangi {% else %} Color {% endif %}</th>
+{% endif %}
+
+{% if usd.size.count > 0  %}
+<th > {% if langSel == 0 %} Size {% else %} Size {% endif %}</th>
+{% endif %}
+
+<th > {% if langSel == 0 %} Vipimo {% else %}  Units {% endif %}</th>
+<th > {% if langSel == 0 %} thamani  {% else %} Worth  {% endif %}( <span class="text-primary">{{prdn.last.Interprise.currencii}}.</span> )</th>
+<th > {% if langSel == 0 %} Idadi  {% else %} Quantity {% endif %}</th>
+<th > {% if langSel == 0 %} Jumla  {% else %} Total {% endif %}</th>
+
+</tr>
+
+
+
+      <tbody  id="view-invo_tbody">
+          
+      </tbody>
+
+</table>
+
+</div>
+<div class="row " >
+<div class="col-5 col-md-6">
+</div>
+<div class="col-7 row col-md-6 pr-3">
+  <div class="col-6 text-right weight600">{% if langSel == 0 %} Jumla  {% else %} Total {% endif %}</div>
+  <div class="col-6 text-right weight700 brown px-0"><span class="weight500 text-primary latoFont">{{prdn.last.Interprise.currencii}}.</span>{{usd.total | floatformat:'-2' | intcomma }}</div>
+</div>
+</div>
+
+<script>
+$('document').ready(function(){
+  let tot_vat=0,vat_include = false,vat_set=false,sub_tot=0
+      const vatper = Number('{{prdn.last.Interprise.vatper}}')/100
+      let itms=[],itm_var={},
+          colors=[],color_var={},
+          sizes=[],sizes_var={},
+          tr='',
+          
+          set_v='',
+          includ_v='',
+          bei = 0,
+          act_bei=0
+  //create objects for items , color & sizes ...........................//
+
+
+  //CREATE ITEMS OBJECT...............// 
+
+  '{% for li in usd.list %}'
+
+    //make the price equal to sold price if the item sold price is greater than its actul saved price
+  
+
+    
+
+
+  itm_var={
+      val:'{{li.itm.id}}',
+      prod:'{{li.itm.prod.id}}',
+      idadi:'{{li.itm.qty}}',
+      picha:'{{li.picha}}',
+      maelezo:'{{li.itm.prod.bidhaa.maelezo}}',
+      vipimo:'{{li.itm.prod.bidhaa.vipimo}}',
+      bei:'{{li.itm.prod.Bei_kununua}}',
+      vipimo_jum:'{{li.itm.prod.bidhaa.vipimo_jum}}',
+      jina:'{{li.itm.prod.bidhaa.bidhaa_jina}}',
+      uwiano:'{{li.itm.prod.bidhaa.idadi_jum}}',
+      serial:`{{li.itm.prod.bidhaa.serial}}`,
+      prCost:`{{li.cost}}`,
+      prdcd:Number(`{{li.produced}}`)
+
+  }
+
+  itms.push(itm_var)
+
+  '{% endfor %}'
+
+
+
+  //COLOR OBJECTS....................//
+  '{% for col in usd.color %}'
+    color_var={
+        itm:'{{col.change.id}}',
+        val:'{{col.color.color.id}}',
+        idadi:'{{col.qty}}',
+        color_name:'{{col.color.color.color_name}}',
+        color_code:'{{col.color.color.color_code}}'
+    }
+    colors.push(color_var)
+
+    '{% endfor %}'
+
+    
+
+  
+
+    //SIZES OBJECT...............//
+    '{% for sz in usd.size %}'
+      sizes_var={
+          color:'{{sz.size.sized.color.id}}',
+          size:'{{sz.size.sized.size}}',
+          idadi:'{{sz.qty}}',
+      }
+      sizes.push(sizes_var)
+    '{% endfor %}'
+
+
+
+    //USED PRICES.........................//
+    let pr=[],pr_var={}
+    '{% for p in usd.prices %}'
+      pr_var={
+          unit:'{{p.unit}}',
+          price:Number('{{p.price}}'),
+          qty:Number('{{p.qty}}'),
+          prod:'{{p.prod}}'
+      }
+      pr.push(pr_var)
+
+    '{% endfor %}'
+    
+
+
+let sales=0,total_vat=0
+itms.forEach(itm=>{
+    let col = c =>c.itm === itm.val,prc = p =>p.prod ===itm.prod
+    
+    const colr = colors.filter(col),prices = pr.filter(prc)
+    let beis = 0 ,idadis=0,idad=0,vpmo='',sale=0, thamani = Number(itm.bei)/Number(itm.uwiano)
+        
+    if(itm.prdcd){
+      thamani = Number(itm.prCost)
+    }
+
+    let prics = [],
+          prc1 = {
+          unit:itm.vipimo,
+          price:Number(itm.bei),
+          qty:1
+          } 
+
+      prics.push(prc1)   
+
+      if(Number(itm.uwiano)>1){
+          prc2={
+                unit:itm.vipimo_jum,
+                price:Number(itm.bei_jum),
+                qty:Number(itm.uwiano)
+          }
+          prics.push(prc2)
+
+      }
+
+
+      prics = [...prics,...pr]
+
+
+      
+        
+
+  
+        
+
+
+
+    
+
+
+    tr+=`
+<tr class="text-center   latoFont" style="padding: 10px 3px !important;">`
+
+
+  if(colr.length==0){
+
+  let prp = b => itm.idadi % b.qty===0,
+      prop_price = prics.filter(prp)
+
+      if(prop_price.length == 0){
+        prop_price = prics.filter(b=>Number(b.qty)===1)
+    }  
+
+    prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+      ?((a.qty > b.qty)? 1 : -1) : -1 )
+    let ps = prop_price[prop_price.length-1]  
+            
+              beis = Number(itm.bei)*Number(ps.qty)
+              
+          
+
+          vpmo = ps.unit
+          idad = Number(itm.idadi)/Number(ps.qty)
+          
+
+          
+
+
+
+
+    
+  tr+=`
+  <td class="text-left " > 
+    <div class="d-flex">
+    <div style="width:40px;height:40px" >`
+      if(itm.picha!=''){
+        tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+      }else{
+          tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+            <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+            <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+          </svg>`
+      }
+  
+      
+    tr+=`</div>
+      <div class="ml-1" >
+        <div><strong class="pl-1 text-capitalize" > ${itm.jina}</strong></div>
+        <div class="pl-2 text-muted smallerFont itm_desc" style="color:blue">${itm.maelezo}</div>
+        <div class="pl-2  smallerFont itm_desc font-weight-bold" >${itm.serial.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</div>
+      </div>
+    </div>
+  </td>` 
+  
+  if(colors.length>0){
+      tr+=`<td style="padding: 10px 3px !important;"> --- </td>` 
+  }
+
+  if(sizes.length>0){
+    tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+  }
+
+    //REGULATE PRICE FOR VAT.............................//
+
+tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+    ` 
+
+    tr+=` <td style="padding: 10px 3px !important;" > ${Number(thamani*Number(ps.qty)).toLocaleString(2)}</td> 
+          <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}</td> 
+          <td style="padding: 10px 3px !important;" > ${Number(thamani*idad*Number(ps.qty)).toLocaleString(2)}</td> 
+      `
+
+}else{
+  let span=colr.length+1
+        
+    
+  
+  tr+=`<td class="text-left  span1" id="span_${itm.val}" rowspan="${span}">
+    <div class="d-flex">
+    <div style="width:40px;heigth:40px" >`
+      if(itm.picha!=''){
+        tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+        }else{
+            tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+              <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+              <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+            </svg>`
+        }
+    tr+=`</div>
+
+    <div class="ml-1" >
+      <div><strong class="pl-1 text-capitalize" > ${itm.jina} </strong></div>
+      <div class="pl-2 itm_desc text-muted smallerFont" style="color:blue">${itm.maelezo}</div>
+      </div>
+    </div>
+  </td>` 
+  
+  colr.forEach(col=>{
+      let szi = s=> s.color == col.val
+      const sz = sizes.filter(szi)
+
+
+tr+=`<tr class=" text-center  latoFont" style="padding: 10px 3px !important;">`
+    if(sz.length==0){
+      let prp = b => col.idadi % b.qty===0,
+        prop_price = prics.filter(prp)
+
+        if(prop_price.length == 0){
+          prop_price = prics.filter(b=>Number(b.qty)===1)
+      }  
+
+        prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+          ?((a.qty > b.qty)? 1 : -1) : -1 )
+        let ps = prop_price[prop_price.length-1]
+
+      vpmo = ps.unit
+      idad = Number(col.idadi)/Number(ps.qty)
+
+
+  
+
+        tr+=`<td style="padding: 10px 3px !important;" class="smallerFont text-capitalize text-left">
+          <label 
+          style="width:15px;
+          height:15px;
+          background:${col.color_code};
+          border-radius:100%;
+          color:rgba(240, 248, 255, 0);
+          border:1px solid #ccc"
+          >
+          ''
+      </label> 
+      ${col.color_name}
+        </td> `
+        if(sizes.length>0){
+        tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+        }
+
+          
+        
+        tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+        `
+
+      
+      tr+=` <td style="padding: 10px 3px !important;" > ${Number(thamani*Number(ps.qty)).toLocaleString(2)}</td> 
+            <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}</td> 
+            <td style="padding: 10px 3px !important;" > ${Number(thamani*idad*Number(ps.qty)).toLocaleString(2)}</td> 
+              `
+
+    }else{
+      tr+=`<td style="padding: 10px 3px !important;" `
+      if(sz.length>1){
+          tr+=` rowspan=${sz.length+1}` 
+      }
+      
+      tr+=` data-itm="${itm.val}" class="span2 smallerFont text-left text-capitalize" >
+
+          <label 
+          style="width:15px;
+          height:15px;
+          background:${col.color_code};
+          border-radius:100%;
+          color:rgba(240, 248, 255, 0);
+          border:1px solid #ccc"
+          >
+          ''
+      </label> 
+          ${col.color_name}</td>` 
+        
+        sz.forEach(s=>{
+
+          let prp = b => s.idadi % b.qty===0,
+              prop_price = prics.filter(prp)
+
+              if(prop_price.length == 0){
+                prop_price = prics.filter(b=>Number(b.qty)===1)
+            }  
+
+            prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+              ?((a.qty > b.qty)? 1 : -1) : -1 )
+            let ps = prop_price[prop_price.length-1]
+              beis = Number(itm.bei)*Number(ps.qty)
+          vpmo = ps.unit
+          idad = Number(s.idadi)/Number(ps.qty)
+          sale=Number(itm.sold)*Number(s.idadi)
+
+  if( itm.vat_set){
+      //REGULATE MEASUARES.............//
+          beis= (beis/(1+vatper))
+          sales+=Number(itm.sold)/(1+vatper)*Number(s.idadi)
+          sale=sale/(1+vatper)               
+
+  }else{
+          sales+=Number(itm.sold)*Number(s.idadi)
+
+  }
+          sub_tot+=(beis*idad)
+          if(itm.vat_set){
+              total_vat+=sale*vatper
+          }
+
+        if(sz.length>1){
+          tr+=`<tr class="text-center   latoFont" style="padding: 10px 3px !important;"> `
+            
+        }   
+
+          tr+=`<td class="text-center" style="padding: 10px 3px !important;"><span class="text-danger smallFont"> ${s.size}</span></td>` 
+        
+          tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+              `
+
+
+              tr+=`  <td style="padding: 10px 3px !important;" > ${Number(thamani*Number(ps.qty)).toLocaleString(2)}</td> 
+                    <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}</td> 
+                    <td style="padding: 10px 3px !important;" > ${Number(thamani*idad*Number(ps.qty)).toLocaleString(2)}</td>  
+              `
+          if(sz.length>1){
+        tr+=`  </tr>`
+      }
+          
+
+            
+        })
+    }
+    
+  
+      tr+=`</tr>
+  `
+  })
+  
+}
+
+tr+=`</tr>`
+
+
+
+
+
+
+})  
+
+//  console.log('sub',sub_tot)
+//  console.log('sales',sales)
+//  console.log('diff',Number(sub_tot-sales).toLocaleString())
+
+$('#view-invo_tbody').html(tr)
+
+
+
+
+
+
+$('.span2').each(function(){
+    if(Number($(this).attr('rowspan'))){
+    let rowspan=Number($(this).attr('rowspan'))-1,
+        parent='#span_'+$(this).data('itm'),
+        prow= Number($(parent).attr('rowspan'))
+    $(parent).attr('rowspan',prow + rowspan)
+    }
+  //  $(parent).attr('rowspan',Number(parent.attr('rowspan'))+1)
+    // console.log(prow)
+})
+
+
+
+
+
+
+
+//PRINT BILL
+
+
+})
+
+
+
+</script>
+
+{% endfor %}
+</div>
+
+
+<!-- OTHER EXPENSES -->
+{% if ghalama %}
+<div class="mt-4">
+<h5>
+{% if langSel == 0 %}Ghalama Nyingine    {% else %} Other Expenses {% endif %}
+</h5>
+
+
+
+<div class="table-responsive p-2 " >
+
+<table id="prod_table" class=" table-bordered table table-sm" style="min-width: 400px;" data-row=1>
+<tr class="bg-light smallFont ">
+<th   > #</th>
+<th   > {% if langSel == 0 %} Matumizi   {% else %} Expense {% endif %}</th>
+<th   > {% if langSel == 0 %} Maelezo   {% else %} Description {% endif %}</th>
+<th > {% if langSel == 0 %} Kiasi {% else %}  Amount {% endif %}</th>
+
+</tr>
+
+
+
+     <tbody >
+
+         {% for l in ghalama %}
+         <tr>
+             <td class="p-2 text-capitalize weight600">
+              {{ forloop.counter }}
+             </td>
+
+             <td class="p-2 text-capitalize weight600">
+                {{l.matumizi.matumizi}}
+             </td>
+
+             
+
+             <td class="p-2" >
+                 {{l.maelezo}}
+             </td>
+             <td class="p-2 weight700 brown" >
+                 {{l.kiasi  | floatformat:'-2' | intcomma }}
+             </td>
+         </tr>
+         {% endfor %}
+        
+
+
+     </tbody>
+
+</table>
+
+
+
+</div> 
+
+
+
+<div class="row " >
+<div class="col-5 col-md-6">
+</div>
+<div class="col-7 row col-md-6 pr-3">
+<div class="col-6 text-right weight600">{% if langSel == 0 %} Jumla  {% else %} Total {% endif %}</div>
+<div class="col-6 text-right weight700 brown px-0"><span class="weight600 text-primary latoFont">{{prdn.last.Interprise.currencii}}.</span> {{expTotal | floatformat:'-2' | intcomma }}</div>
+</div>
+</div>
+
+
+
+
+
+</div>
+{% endif %}
+
+<!-- TOTAL EXPENSES & COSTS -->
+<div class="mt-4">
+<h5 class="smallFont" >
+{% if langSel == 0 %}Ufupisho wa Ghalama na thamani ya bidhaa zilizotumika  {% else %}  Summary on Expenses and cost of used material  {% endif %}</th>
+</h5>
+
+<table class="table table-bordered" style="max-width: 600px;">
+<thead>
+<tr class="smallerFont" >
+<th>{% if langSel == 0 %} Thamani ya Nyenzo {% else %} Material Cost {% endif %}  </th>
+<th>
+  {% if langSel == 0 %}Ghalama Nyingine {% else %}  Other Expenses{% endif %}
+</th>
+<th>
+  {% if langSel == 0 %}Jumla  {% else %} Total{% endif %}
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="weight600" scope="row">{{totalUsd | floatformat:'-2' | intcomma }}</td>
+<td class="weight600"> 
+    {% if ghalama %}
+       {{expTotal | floatformat:'-2' | intcomma }}
+    {% else %}
+      ------
+    {% endif %}
+</td>
+<td class="weight700 brown">
+ 
+  <script>
+    let expx = Number('{{expTotal}}') || 0 ,
+        coastsx = Number('{{totalUsd}}') || 0
+        document.write((expx+coastsx).toLocaleString())
+  </script>
+  
+</td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<!-- BIDHAA ZILIZOZARISHWA -->
+
+{% if prodLen > 0 %}
+<div class="mt-4">
+
+<h5>
+{% if langSel == 0 %}Bidhaa zilizozalishwa    {% else %} Produced Item(s) {% endif %}
+</h5>
+
+{% for p in producedItems %}
+
+<div class="table-responsive p-2 " >
+
+<table id="prod_table" class=" table-bordered table table-sm" style="min-width: 600px;" data-row=1>
+<tr class="bg-light smallFont ">
+ <th   > {% if langSel == 0 %} Jina la Bidhaa  {% else %} Item Name {% endif %}</th>
+
+ {% if p.color.count > 0  %}
+ <th > {% if langSel == 0 %} Rangi {% else %} Color {% endif %}</th>
+ {% endif %}
+
+ {% if p.size.count > 0  %}
+ <th > {% if langSel == 0 %} Size {% else %} Size {% endif %}</th>
+ {% endif %}
+
+ <th > {% if langSel == 0 %} Vipimo {% else %}  Units {% endif %}</th>
+ <th > {% if langSel == 0 %} Idadi  {% else %} Quantity {% endif %}</th>
+ <th > {% if langSel == 0 %} <span title="Bei ya Kuuza">Bei</span>    {% else %} <span class="Sales Price" >Price</span>  {% endif %}({{prdn.last.Interprise.currencii}})</th>
+ <th > {% if langSel == 0 %} Tegemeo la Mauzo(Jumla)    {% else %} Sales Expectation(Total) {% endif %}({{prdn.last.Interprise.currencii}})</th>
+ 
+</tr>
+
+
+
+       <tbody  id="allproduced">
+         
+
+
+       </tbody>
+
+</table>
+</div>
+
+
+<script>
+$('document').ready(function(){
+let tot_vat=0,vat_include = false,vat_set=false,sub_tot=0
+   const vatper = Number('{{prdn.last.Interprise.vatper}}')/100
+   let itms=[],itm_var={},
+       colors=[],color_var={},
+       sizes=[],sizes_var={},
+       tr='',
+       
+       set_v='',
+       includ_v='',
+       bei = 0,
+       act_bei=0
+//create objects for items , color & sizes ...........................//
+
+
+//CREATE ITEMS OBJECT...............// 
+
+'{% for li in p.list %}'
+
+//make the price equal to sold price if the item sold price is greater than its actul saved price
+
+
+
+
+
+itm_var={
+   val:'{{li.itm.id}}',
+   prod:'{{li.itm.id}}',
+   idadi:'{{li.itm.produced.qty}}',
+   bei:'{{li.itm.Bei_kuuza}}',
+   picha:'{{li.picha}}',
+   maelezo:'{{li.itm.bidhaa.maelezo}}',
+   vipimo:'{{li.itm.bidhaa.vipimo}}',
+   vipimo_jum:'{{li.itm.bidhaa.vipimo_jum}}',
+   jina:'{{li.itm.bidhaa.bidhaa_jina}}',
+   uwiano:'{{li.itm.bidhaa.idadi_jum}}',
+   serial:`{{li.itm.bidhaa.serial}}`,
+
+}
+
+itms.push(itm_var)
+
+'{% endfor %}'
+
+
+
+//COLOR OBJECTS....................//
+'{% for col in p.color %}'
+ color_var={
+     itm:'{{col.color.bidhaa.id}}',
+     val:'{{col.color.color.id}}',
+     idadi:'{{col.qty}}',
+     color_name:'{{col.color.color.color_name}}',
+     color_code:'{{col.color.color.color_code}}'
+ }
+ colors.push(color_var)
+
+'{% endfor %}'
+
+ 
+
+
+
+//SIZES OBJECT...............//
+'{% for sz in p.size %}'
+   sizes_var={
+       color:'{{sz.size.sized.color.id}}',
+       size:'{{sz.size.sized.size}}',
+       idadi:'{{sz.qty}}',
+   }
+   sizes.push(sizes_var)
+'{% endfor %}'
+
+
+
+//USED PRICES.........................//
+let pr=[],pr_var={}
+'{% for p in p.prices %}'
+   pr_var={
+       unit:'{{p.unit}}',
+       price:Number('{{p.price}}'),
+       qty:Number('{{p.qty}}'),
+       prod:'{{p.prod}}'
+   }
+   pr.push(pr_var)
+
+'{% endfor %}'
+
+
+
+let sales=0,total_vat=0
+itms.forEach(itm=>{
+ let col = c =>c.itm === itm.val,prc = p =>p.prod ===itm.prod
+ 
+ const colr = colors.filter(col),prices = pr.filter(prc)
+ let beis = 0 ,idadis=0,idad=0,vpmo='',sale=0
+
+ let prics = [],
+      prc1 = {
+       unit:itm.vipimo,
+       price:Number(itm.bei),
+       qty:1
+      } 
+
+   prics.push(prc1)   
+
+   if(Number(itm.uwiano)>1){
+       prc2={
+            unit:itm.vipimo_jum,
+            price:Number(itm.bei_jum),
+            qty:Number(itm.uwiano)
+       }
+       prics.push(prc2)
+
+   }
+
+
+   prics = [...prics,...pr]
+
+
+  
+    
+
+
+     
+
+
+
+ 
+
+
+tr+=`
+<tr class="text-center   latoFont" style="padding: 10px 3px !important;">`
+
+
+if(colr.length==0){
+
+let prp = b => itm.idadi % b.qty===0,
+   prop_price = prics.filter(prp)
+
+   if(prop_price.length == 0){
+    prop_price = prics.filter(b=>Number(b.qty)===1)
+}  
+
+prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+  ?((a.qty > b.qty)? 1 : -1) : -1 )
+let ps = prop_price[prop_price.length-1]  
+        
+           beis = Number(itm.bei)*Number(ps.qty)
+
+      
+
+       vpmo = ps.unit
+       idad = Number(itm.idadi)/Number(ps.qty)
+
+      
+
+
+
+
+
+tr+=`
+<td class="text-left " > 
+ <div class="d-flex">
+ <div style="width:40px;height:40px" >`
+   if(itm.picha!=''){
+    tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+   }else{
+       tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+         <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+         <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+       </svg>`
+   }
+
+   
+ tr+=`</div>
+   <div class="ml-1" >
+     <div><strong class="pl-1 text-capitalize" > ${itm.jina}</strong></div>
+     <div class="pl-2 text-muted smallerFont itm_desc" style="color:blue">${itm.maelezo}</div>
+     <div class="pl-2  smallerFont itm_desc font-weight-bold" >${itm.serial.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</div>
+   </div>
+ </div>
+</td>` 
+
+if(colors.length>0){
+   tr+=`<td style="padding: 10px 3px !important;"> --- </td>` 
+}
+
+if(sizes.length>0){
+ tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+}
+
+//REGULATE PRICE FOR VAT.............................//
+
+tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+` 
+
+tr+=` 
+    <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}</td> 
+    <td style="padding: 10px 3px !important;" > ${Number(beis).toLocaleString()}</td> 
+    <td style="padding: 10px 3px !important;" > ${Number(beis*idad).toLocaleString()}</td> 
+       
+`
+
+}else{
+let span=colr.length+1
+    
+ 
+
+tr+=`<td class="text-left  span1" id="span_${itm.val}" rowspan="${span}">
+ <div class="d-flex">
+ <div style="width:40px;heigth:40px" >`
+   if(itm.picha!=''){
+     tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+    }else{
+        tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+          <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+          <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+        </svg>`
+    }
+ tr+=`</div>
+
+ <div class="ml-1" >
+   <div><strong class="pl-1 text-capitalize" > ${itm.jina} </strong></div>
+   <div class="pl-2 itm_desc text-muted smallerFont" style="color:blue">${itm.maelezo}</div>
+  </div>
+ </div>
+</td>` 
+
+colr.forEach(col=>{
+   let szi = s=> s.color == col.val
+   const sz = sizes.filter(szi)
+
+
+tr+=`<tr class=" text-center  latoFont" style="padding: 10px 3px !important;">`
+ if(sz.length==0){
+   let prp = b => col.idadi % b.qty===0,
+    prop_price = prics.filter(prp)
+
+    if(prop_price.length == 0){
+      prop_price = prics.filter(b=>Number(b.qty)===1)
+  }  
+
+    prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+      ?((a.qty > b.qty)? 1 : -1) : -1 )
+    let ps = prop_price[prop_price.length-1]
+
+   vpmo = ps.unit
+   idad = Number(col.idadi)/Number(ps.qty)
+
+
+
+
+     tr+=`<td style="padding: 10px 3px !important;" class="smallerFont text-capitalize text-left">
+       <label 
+       style="width:15px;
+       height:15px;
+       background:${col.color_code};
+       border-radius:100%;
+       color:rgba(240, 248, 255, 0);
+       border:1px solid #ccc"
+       >
+       ''
+   </label> 
+   ${col.color_name}
+     </td> `
+     if(sizes.length>0){
+     tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+     }
+
+      
+     
+     tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+     `
+
+   
+   tr+=` <td style="padding: 10px 3px !important;" > 
+       ${Number(idad).toFixed(2)}
+   </td> 
+   <td style="padding: 10px 3px !important;" > ${Number(beis).toLocaleString()}</td> 
+    <td style="padding: 10px 3px !important;" > ${Number(beis*idad).toLocaleString()}</td> 
+          `
+
+}else{
+   tr+=`<td style="padding: 10px 3px !important;" `
+   if(sz.length>1){
+      tr+=` rowspan=${sz.length+1}` 
+   }
+   
+  tr+=` data-itm="${itm.val}" class="span2 smallerFont text-capitalize text-left" >
+
+       <label 
+       style="width:15px;
+       height:15px;
+       background:${col.color_code};
+       border-radius:100%;
+       color:rgba(240, 248, 255, 0);
+       border:1px solid #ccc"
+       >
+       ''
+   </label> 
+       ${col.color_name}</td>` 
+    
+    sz.forEach(s=>{
+
+       let prp = b => s.idadi % b.qty===0,
+        prop_price = prics.filter(prp)
+
+        if(prop_price.length == 0){
+          prop_price = prics.filter(b=>Number(b.qty)===1)
+      }  
+
+        prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+          ?((a.qty > b.qty)? 1 : -1) : -1 )
+        let ps = prop_price[prop_price.length-1]
+           beis = Number(itm.bei)*Number(ps.qty)
+       vpmo = ps.unit
+       idad = Number(s.idadi)/Number(ps.qty)
+       sale=Number(itm.sold)*Number(s.idadi)
+
+if( itm.vat_set){
+   //REGULATE MEASUARES.............//
+       beis= (beis/(1+vatper))
+       sales+=Number(itm.sold)/(1+vatper)*Number(s.idadi)
+       sale=sale/(1+vatper)               
+
+}else{
+       sales+=Number(itm.sold)*Number(s.idadi)
+
+}
+       sub_tot+=(beis*idad)
+       if(itm.vat_set){
+           total_vat+=sale*vatper
+       }
+
+     if(sz.length>1){
+      tr+=`<tr class="text-center   latoFont" style="padding: 10px 3px !important;"> `
+        
+     }   
+
+      tr+=`<td class="text-center" style="padding: 10px 3px !important;"><span class="text-danger smallFont"> ${s.size}</span></td>` 
+     
+      tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+           `
+
+
+          tr+=`<td class="text-center " style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)} </td> 
+          <td style="padding: 10px 3px !important;" > ${Number(beis).toLocaleString()}</td> 
+          <td style="padding: 10px 3px !important;" > ${Number(beis*idad).toLocaleString()}</td> 
+           `
+      if(sz.length>1){
+     tr+=`  </tr>`
+   }
+      
+
+        
+    })
+}
+ 
+
+   tr+=`</tr>
+`
+})
+
+}
+
+tr+=`</tr>`
+
+
+
+
+
+
+})  
+
+//  console.log('sub',sub_tot)
+//  console.log('sales',sales)
+//  console.log('diff',Number(sub_tot-sales).toLocaleString())
+
+$('#allproduced').html(tr)
+
+
+
+
+
+
+$('.span2').each(function(){
+ if(Number($(this).attr('rowspan'))){
+ let rowspan=Number($(this).attr('rowspan'))-1,
+     parent='#span_'+$(this).data('itm'),
+     prow= Number($(parent).attr('rowspan'))
+$(parent).attr('rowspan',prow + rowspan)
+}
+//  $(parent).attr('rowspan',Number(parent.attr('rowspan'))+1)
+// console.log(prow)
+})
+
+
+
+
+
+
+
+//PRINT BILL
+
+
+})
+
+
+
+</script>
+
+{% endfor %}
+
+</div>
+
+<!-- TOTAL SALES EXPECTETIONS -->
+<div class="mt-2">
+<h5 class="smallFont" >
+{% if langSel == 0 %}Tegemeo la mauzo na faida   {% else %}  Sales Expectation & profit  {% endif %}</th>
+</h5>
+
+<table class="table table-bordered" style="max-width: 600px;">
+<thead>
+<tr class="smallerFont" >
+<th> {% if langSel == 0 %}Tegemeo la mauzo {% else %}  Sales expectaction{% endif %}  </th>
+<th>
+  {% if langSel == 0 %} Ghalama za uzalishaji{% else %}Total expenses {% endif %}
+</th>
+<th>
+  {% if langSel == 0 %}Tegemeo la Faida  {% else %} Profit expectaction{% endif %}
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="weight600 brown" scope="row">{{TotalSale | floatformat:'-2' | intcomma }}</td>
+   <td class="weight700 ">
+  <script>
+    let expxS = Number('{{expTotal}}') || 0,
+        coastsxS = Number('{{totalUsd}}') || 0
+        document.write((expxS+coastsxS).toLocaleString())
+  </script>
+</td>
+<td class="weight600 brown">
+<script>
+    let expxD = Number('{{expTotal}}') || 0,
+        coastsxD = Number('{{totalUsd}}') || 0
+        totExpD = expxS+coastsxS,
+        saleD = Number('{{TotalSale}}') || 0
+
+        document.write((saleD-totExpD).toLocaleString())
+  </script>
+
+</td>
+
+
+</tr>
+
+</tbody>
+</table>
+</div>
+{% endif %}
+
+
+<!-- MEMBER CONFIRMATIONS -->
+{% if prdn.last.complete %}
+<div class="mt-4">
+<h5  >
+{% if langSel == 0 %}Uhakiki{% else %}Confirmations {% endif %}</th>
+</h5>
+
+<div class="table-responsive" style="max-width: 600px;">
+<table class="table table-bordered" style="min-width: 600px;">
+<thead>
+<tr class="smallerFont" >
+<th>#</th>
+<th>{% if langSel == 0 %} Mtumiaji {% else %} Member {% endif %} </th>
+<th>
+  {% if langSel == 0 %}Cheo {% else %}  Position{% endif %}
+</th>
+<th>
+  {% if langSel == 0 %} Kuhakiki{% else %}Confirmed {% endif %}
+</th>
+<th>
+  {% if langSel == 0 %} Sahihi{% else %}Signature {% endif %}
+</th>
+</tr>
+</thead>
+<tbody>
+{% for cn in conf %}
+<tr>
+ <td class=" text-capitalize" scope="row">
+  {{forloop.counter}}
+</td>
+
+ <td class=" text-capitalize">
+  {{cn.user.user.user.first_name}} {{cn.user.user.user.last_name}}
+</td>
+
+ <td >
+   {{cn.user.cheo}}
+</td>
+<td class="text-center">
+     {% if cn.comfirm %}
+      <span class="weight700 " style="font-size: larger;" >
+        &checkmark;
+     </span>
+     {% else %}
+
+     {% if cn.desc %}
+     <span class="weight500 brown" >
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+              <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+              <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+            </svg>
+
+            {{cn.desc}}
+          
+     </span>
+        
+     {% else %}
+       
+            
+          
+    {% endif %}
+    {% endif %}
+   
+</td>
+<td></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+
+
+</div>
+{% endif %}
+    
+    
+    </div>
+
+
+    </div>
+
+    {% if prnt %}
+      <script>
+      
+        $(document).ready(function(){
+          setTimeout(function(){window.print();}, 200)
+
+          window.onafterprint = function(e){
+                    closeMe()
+
+          }
+
+
+
+
+      function closeMe()
+      {
+          
+          window.opener = self;
+          try{
+              if(window.outerWidth>800){
+                setTimeout(function(){window.close();}, 100)
+                
+            }else{
+                window.open()
+                
+                setTimeout(function(){window.close();}, 5000)
+            }
+            }catch(err){
+              alert(err.message)
+          }
+          
+      }
+
+
+      })      
+
+      </script>
+  {% endif %}
+
+  </body>
+</html>

@@ -1,0 +1,70 @@
+{% extends 'businessProfile.html' %}
+{% load humanize %}
+
+{% block bizness %}
+
+
+<div class="row classic_div pt-5  whiteBg">
+    <h6 class="py-2 col-12 px-3" >
+         <strong>{% if useri.langSet == 0 %}Usajiri wa biashara na Anwani {% else %}Business Registrations & Address {% endif %} </strong>
+      </h6>
+    <div class="col-sm-6">
+        <ul class="list-unstyled" style="max-width: 500px;">
+          
+
+            {% if reg.count > 0 %}
+                {% for n in reg %}
+                    <li>
+                        {% if n.reg_pic %}
+                          <img src="{{n.reg_pic.url}}" style="width: 100%;" alt="">
+                        {% endif %}
+                        {{n.reg_name}}: {{n.reg_no}}
+                        
+                    </li>
+                {% endfor %}
+            {% else %}
+               <p>{% if useri.langSet == 0 %} Hakuna Taarifa za usajiri {% else %}No Reistration Info found {% endif %}</p>
+            {% endif %}
+        </ul>
+           
+        </div>
+    <div class="col-sm-6 d-flex" style="justify-content:center;align-items:center">
+     
+    </div>
+    
+
+
+</div>
+
+
+{% if duka != shop %}
+<input id="vistors" type="hidden" data-shop="{{shop.id}}" data-reg=1 >
+<script src="/static/js/countVistors.js">  </script>
+{% endif %}
+
+
+{% block audio %}
+{% endblock %}
+
+{% endblock %}
+
+{% block active-register %} 
+  activeProf
+{% endblock %}
+
+
+{% block where %}
+    <span class="text-muted">
+      <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+      </svg>
+    </span> 
+    <a href="{% url 'profileRegistration' %}?value={{shop.id}}" class="tab_show" data-show="#general-panel">
+
+    {% if useri.langSet == 0 %}Usajiri wa Biashara{% else %}Interprise Registration{% endif %}
+
+    </a>
+
+
+{% endblock %} 
+

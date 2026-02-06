@@ -1,0 +1,207 @@
+
+{% extends 'userdash.html' %}
+{% load humanize %}
+{% block Dashboard %}
+<div  class=" Analytical " id="general-panel" style="min-height: 100vh;" >
+
+    <div class="container-fluid whiteBg p-2 p-md-3 rounded">
+        <h6>
+            {% if useri.langSet == 0 %}Mteja na Mauzo  {% else %}Custome & Sales Invoices{% endif %}
+            <a href="/mauzo/customer"title="{% if useri.langSet == 0 %}Wafanyakazi wote  {% else %}All Workers{% endif %}" class="float-right">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
+                    <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                  </svg>
+            </a>
+
+        </h6>
+        <div class="row" >
+            <div class="img-show col-md-2 p-2 p-md-3 d-flex justify-content-center align-items-center ">
+              {% if mteja.mteja.owner.picha %}
+                  <img src="{{mteja.mteja.owner.picha.url}}" style="max-width: 100%;max-height:100%" alt="">
+              {% else %}
+                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="7em" height="7em" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
+                        <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                      </svg>
+                  </span>
+              {% endif %}
+            </div>
+
+            <div class="p-2 pl-md-3 col-md-10 border-left-md" >
+                <div  style="max-width: 380px;" >
+                    <h6 class="text-capitalize row" ><span class=" col-4 latoFont weight600  " >{% if useri.langSet == 0 %}Jina {% else %}Name{% endif %} </span> <span class="col-6" > {{mteja.jina}}</span>  </h6>
+                    <h6 class="text-capitalize smallFont latoFont row" ><span class=" col-4  weight600  ">{% if useri.langSet == 0 %}Anwani {% else %}Address{% endif %} </span> <span  class=" col-6" >{{mteja.address}}</span></h6>
+                    <h6 class="text-capitalize smallFont latoFont row" ><span class=" col-4  weight600  ">{% if useri.langSet == 0 %}SIMU 1 {% else %}PHONE 1{% endif %} </span> <span  class=" col-6" >(+{{mteja.code}}) {{mteja.simu1}}</span></h6>
+                    {% if mteja.simu2 %}
+                    <h6 class="text-capitalize smallFont latoFont row" ><span class=" col-4  weight600  ">{% if useri.langSet == 0 %}SIMU 2 {% else %}PHONE 2{% endif %}</span><span  class=" col-6" >(+{{mteja.code}}) {{mteja.simu2}}</span></h6>
+                    {% endif %}
+
+                    {% if mteja.mteja %}
+                    <h6 class="text-capitalize smallFont latoFont row" ><span class=" col-4  weight600  ">{% if useri.langSet == 0 %}code{% else %}code{% endif %}</span><span  class=" col-6 brown weight600" >({{mteja.mteja.user.Intp_code}})</span></h6>
+                    {% endif %}
+
+                
+                </div>
+                
+                
+
+
+                
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid rounded mt-4 whiteBg p-2 p-md-3">
+        <h6 class="p-3" >
+            {% if useri.langSet == 0 %}Ankara  {% else %}Invoice(s){% endif %}<span class="smallfont bg-success px-2 text-light rounded">{{num}}</span>
+            
+        </h6>
+
+        {% if num > 0  %}
+        <div class="table-responsive pb-5">
+            <table class="table table-hover " style="color: rgb(92, 92, 92);min-width:700px;">
+            <thead>
+            <tr class="text-center" >
+            <th class="latoFont" scope="col">
+              {% if useri.langSet == 0 %}  Ankara# {% else %} Invoice# {% endif %}
+            
+            </th>
+            <th class="latoFont" scope="col">
+              {% if useri.langSet == 0 %} Tarehe {% else %}Date{% endif %}
+
+            </th>
+            
+            <th class="latoFont" scope="col">
+              {% if useri.langSet == 0 %} Kiasi {% else %}Amount{% endif %}
+              <span class="text-primary weight400">({{duka.currencii}})</span> 
+            </th>
+
+            <th class="latoFont " scope="col">
+              {% if useri.langSet == 0 %} Malipo {% else %}Payment{% endif %}
+              <span class="text-primary weight400">({{duka.currencii}})</span> 
+            </th>
+
+            <th class="latoFont " scope="col">
+              {% if useri.langSet == 0 %} Deni {% else %}Debt{% endif %} 
+              <span class="text-primary weight400">({{duka.currencii}})</span> 
+            </th>
+            
+           
+            
+            <th class="latoFont" scope="col">          
+              {% if useri.langSet == 0 %} Na  {% else %}By {% endif %}
+            </th>
+            
+            </tr>
+            </thead>
+            <tbody>
+              {% for w in page %}
+            <tr>
+            <td class="text-center latoFont"><a href="/mauzo/viewInvo?item_valued={{w.id}}" >INVO-{{w.code}}</a></td>
+            <td class="text-center latoFont">
+               {{w.date}}
+            </td>
+                     
+            <td class="text-center latoFont weight600"> {{w.amount|floatformat:'-2' | intcomma }}  </td>
+            <td class="text-center latoFont weight600 {% if w.amount > w.ilolipwa %}brown{% endif %} "> {{w.ilolipwa|floatformat:'-2'|intcomma }}</td>
+            <td class="text-center latoFont weight600 brown "> 
+              
+              <script>
+                var lipwa = Number('{{w.ilolipwa}}'),amo = Number('{{w.amount}}');
+                    document.write(Number(Number(amo-lipwa).toFixed(2)).toLocaleString())
+              </script>
+            </td>
+         
+            <td class="text-center latoFont">{{w.By.user.user.first_name | title }}  {{w.By.user.user.last_name | title }}</td>
+            
+            
+        
+            </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+                            
+            <p class=" p-4 border-top">
+                {% if page.has_previous %}
+                <a href="{% url 'CustomerSales' %}?page=1&cst={{mteja.id}}" type="button"  class="btn btn-light border0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+                </svg>
+                </a>
+
+                <a href="{% url 'CustomerSales' %}?page={{page.previous_page_number}}&cst={{mteja.id}}" type="button"  class="btn btn-light  border0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                </a>
+                {% endif %}
+
+                {% if page.has_next %}
+                <a href="{% url 'CustomerSales' %}?page={{page.next_page_number}}&cst={{mteja.id}}" type="button" class="btn btn-light border0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+                </a>
+
+                <a href="{% url 'CustomerSales' %}?page={{pages}}&cst={{mteja.id}}" type="button"  class="btn btn-light border0" >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                </svg>
+                </a>
+                {% endif %}
+                <label for="">
+
+                {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+
+                </label>
+            </p>
+
+        {% else %}
+           <p class="mt-3 text-center" >
+               {% if useri.langSet == 0 %}Hakuna Ankara yeyote kwa sasa  {% else %}No any Invoice Found{% endif %}
+           </p>
+        {% endif %}
+
+  
+    </div>
+   
+
+  
+
+ 
+
+  
+</div>
+ 
+
+{% endblock %}
+ 
+
+{% block billmpya %}
+
+  <script src="/static/js/lugha.js"></script>
+
+{% endblock %}
+
+  
+{% block dash-mapper %}
+ 
+{% if useri.langSet == 0 %}  Mauzo {% else %}Sales {% endif %}
+
+{% endblock %}
+{% block nav-mauzo %}
+class="c-menu__item style-none is-active  showingpop2"
+{% endblock %}
+{% block akaunt-map %}
+   {% if useri.langSet == 0 %}  Wateja {% else %} Customers {% endif %}
+{% endblock %}
+
+{% block active-wateja-menu %} class="btn-default btn pop2_active_menu btn-sm " {% endblock %}
+
+{% block active-mauzo %} class="bi bi-cart-check text-primary" {% endblock %}
+{% block active-kuuza %}
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-check-fill text-primary " viewBox="0 0 16 16">
+  <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+</svg>
+{% endblock %}

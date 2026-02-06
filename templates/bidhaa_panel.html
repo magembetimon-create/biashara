@@ -1,0 +1,607 @@
+
+<div  class=" Analytical tab_div " id="produ-editing" style="display: none;">
+  
+    <div class=" affixation" id="affixation"    style="background:#fff;height:700px;right:4px;width:15%">
+        <h5 class="robotoFont p-2 text-center">Sponsor Ads</h5>
+   </div>
+<div class="row">
+    <div class="col-md-10 ">
+         <div class="form-body ">
+       <h6 class="card-title whiteBg p-2"> 
+           <button class="btn btn-default tab_show" data-show="#general-panel" style="color: rgb(104, 54, 240);">
+                <svg width="1.6em" height="1.6em" viewBox="0 0 16 16" class="bi bi-gem" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M3.1.7a.5.5 0 0 1 .4-.2h9a.5.5 0 0 1 .4.2l2.976 3.974c.149.185.156.45.01.644L8.4 15.3a.5.5 0 0 1-.8 0L.1 5.3a.5.5 0 0 1 0-.6l3-4zm11.386 3.785l-1.806-2.41-.776 2.413 2.582-.003zm-3.633.004l.961-2.989H4.186l.963 2.995 5.704-.006zM5.47 5.495l5.062-.005L8 13.366 5.47 5.495zm-1.371-.999l-.78-2.422-1.818 2.425 2.598-.003zM1.499 5.5l2.92-.003 2.193 6.82L1.5 5.5zm7.889 6.817l2.194-6.828 2.929-.003-5.123 6.831z"/>
+                </svg>
+           </button> 
+        Kuhusu Bidhaa
+    
+    </h6>
+       
+       <form data-value=0 id="kuediti-bidhaa-form" class="whiteBg p-3" action="/stoku/editBidhaa">
+        
+        <div class="row classic_div">
+           <div class="col-md-6">
+               <div class="form-group">
+                   <label class="control-label">Jina la bidhaa </label>
+                   <input type="text" id="kuedit_jina_la-bidhaa" data-true="" placeholder="" class="form-control">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="control-label">Aina ya Bidhaa</label>
+
+                    <select  data-placeholder="Choose a Category" id="kuedit-bidhaa-aina" tabindex="1" class="form-control selectpicker" data-live-search="True">
+                       
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="row classic_div">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="control-label">Chapa ya Bidhaa</label>
+                    <select  data-placeholder="Choose a Category" id="kuedit-bidhaa-chapa" tabindex="1" class="form-control selectpicker" data-live-search="True">
+                 
+                    </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Msambazaji</label><br>
+                      <select  data-placeholder="Choose a Category"  id="kuediti-bidbaa-msambazaji" tabindex="1" class="form-control selectpicker" data-live-search="True">
+                        
+                    </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3 classic_div">
+                <div class="col-12">
+                    <p class="py-2 " style="border-bottom:1px dotted rgb(97, 63, 0)">Mauzo ya Jumla</p>
+                </div>
+                <div class="col-md-6 ">
+                <div class="form-group">
+                    <label>Bei ya kuuza</label>
+
+                    
+
+                    <div class="input-group mb-3">
+                        
+                        <div class="show_curency_inline show_curency position-absolute text-danger   px-3" style="display: none ;">
+                        <label class="mt-1 text-danger" for=""></label> 
+                       <div class="box-pointer d-inline "></div>
+                    </div>
+                        <div class="input-group-prepend">
+                            <span id="basic-addon1" class="input-group-text robotoFont smallerFont">
+                                Tzs
+                            </span>
+                        </div>
+                        <input type="number" data-true="" id="kuediti-bidhaa-thamani" placeholder="price"  class="money-fomat form-control">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Punguzo</label>
+                    <div class="input-group mb-3">
+                        <div class="show_curency_inline show_curency position-absolute text-danger   px-3" style="display: none ;">
+                            <label class="mt-1 text-danger" for=""></label> 
+                           <div class="box-pointer d-inline "></div>
+                        </div>
+
+                        <div class="input-group-prepend">
+                            <span id="basic-addon2" class="input-group-text smallerFont robotoFont currencii">
+                                Tzs
+                            </span>
+                        </div>
+
+                        <input type="number" placeholder="Discount" id="kuediti-bidhaa-punguzo"  class="money-fomat form-control">
+                    </div>
+                </div>
+            </div>
+                <div class="col-md-6 ">
+                <div class="form-group">
+                    <label>Vipimo</label>
+                    <div class="input-group mb-3">
+                        <input type="text" data-true="" id="kuediti-bidhaa-vipimo" placeholder="price" aria-label="price" aria-describedby="basic-addon1" class="form-control">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Zilizopo stoku</label>
+                    <div class="input-group mb-3">
+                      
+                        <input type="number" placeholder="Discount" disabled id="kuediti-bidhaa-idadi_jum" aria-label="Discount" aria-describedby="basic-addon2" class="form-control">
+                    </div>
+                </div>
+            </div>
+        </div>
+            <div class="row mt-3 classic_div" id="kuedit-rejareja">
+                <div class="col-12">
+                    <p class="py-2 " style="border-bottom:1px dotted rgb(97, 3, 0)">Mauzo ya Rejareja</p>
+                </div>
+                <div class="col-md-6 ">
+                <div class="form-group">
+                    <label>Bei ya kuuza</label>
+                    <div class="input-group mb-3">
+
+                        <div class="show_curency_inline show_curency position-absolute text-danger   px-3" style="display: none ;">
+                            <label class="mt-1 text-danger" for=""></label> 
+                           <div class="box-pointer d-inline "></div>
+                        </div>
+
+                        <div class="input-group-prepend">
+                            <span id="basic-addon1" class="input-group-text currencii robotoFont smallerFont">
+                                Tzs
+                            </span>
+                        </div>
+                        <input type="number" data-true="" id="kuediti-bidhaa-thamanireja" placeholder="price" aria-label="price" aria-describedby="basic-addon1" class="money-fomat form-control">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Uwiano (<span class="text-danger" id="uwiano-note"></span>)</label>
+                    <div class="input-group mb-3">
+               
+                        <input type="number" placeholder="Discount" id="kuediti-bidhaa-uwiano" aria-label="Discount" aria-describedby="basic-addon2" class="form-control">
+                    </div>
+                </div>
+            </div>
+                <div class="col-md-6 ">
+                <div class="form-group">
+                    <label>Vipimo</label>
+                    <div class="input-group mb-3">
+                        <input type="text" data-true="" id="kuediti-bidhaa-vipimo_reja" placeholder="price" aria-label="price" aria-describedby="basic-addon1" class="form-control">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Zilizopo stoku</label>
+                    <div class="input-group mb-3">
+                      
+                        <input type="number" placeholder="" disabled id="kuediti-bidhaa-idadi_reja" aria-label="Discount" aria-describedby="basic-addon2" class="form-control">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       
+
+        <h6 class="card-title px-3 pt-3 ">Maelezo ya Bidhaa</h6>
+        <div class="row classic_div">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <textarea rows="2" id="kuediti-bidhaa-maelezo" class="form-control latoFont"></textarea>
+                </div>
+            </div>
+        </div>
+
+<div class="classic_div px-3">
+    <button type="button" class="btn btn-light gotop tab_show smallFont robotoFont btn-lg" data-show="#general-panel">
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-left" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+          </svg>
+        Back</button>
+
+    <div class="d-inline float-right">
+        <button  class="bidhaa-edit-savebtn">
+            <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-check2" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+              </svg>
+            Save</button>
+
+    </div>
+</div>
+
+</form>
+       
+
+    
+        
+
+        <div class="row whiteBg mt-2 py-3 pl-2 classic_div">
+          
+   
+        <div class="col-md-4">
+
+        <div class="row"  style="color:#ccc">
+            <div class="container " style="width: 460px;min-height:300px" id="penye-picha" ></div>              
+        </div>
+        
+        <div class="row p-0">
+            <div class="col-md-5 col-5">
+                <label for=""><b>Used Size</b></label>
+            </div>
+          <div class="col-7 col-md-7 p-0 mx-0">
+              <label class="font-weight-bold" for="used" ><span  id="used-memory">0Mb</span>/<span id="Total-memory-assign">10Mb</span></label>
+          </div>
+        </div>
+      <form action="/stoku/kuwekaPicha" id="save-produ-img"  enctype="multipart/form-data" method="POST">
+              {% csrf_token %}
+            <div class="row p-0">
+                <div class="col-md-2 col-5">
+                    <label for="">Picha</label>
+                </div>
+              <div class="col-7 col-md-10 p-0 mx-0">
+    
+            <input type="number" value=0 id="hold-color-id" name="hold-color-id" hidden>
+            <input type="number" value=0 id="hold-produ-id" name="hold-produ-id" hidden>
+    <div class="d-flex">
+         <div class="upload-btn-wrapper d-inline">
+              <button class="btn btn-light smallerFont robotoFont text-primary" style="cursor: pointer !important;" id="chaguo-bidhaa-pich">
+                <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-card-image mx-1" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" d="M14.5 3h-13a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
+                  <path d="M10.648 7.646a.5.5 0 0 1 .577-.093L15.002 9.5V13h-14v-1l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71z"/>
+                  <path fill-rule="evenodd" d="M4.502 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                </svg>
+                <span class="robotoFont" >Chagua picha</span>
+            </button>
+              <input type="file" name="produ-pic" class="form-control" id="produ-pic" onchange=" 
+              if($(this).val()!=''){
+                $(this).siblings('button').addClass('text-primary')
+                $(this).siblings('button').children('span').text($(this).val())
+                $('#produ-picture').prop('disabled',false)}else{ $('#produ-picture').prop('disabled',true)}" 
+                
+                />
+            </div>   
+               <div class="pl-3">
+                  <button style="font-size: smaller;" class="btn-outline-success btn-sm smallerFont btn robotoFont" id="produ-picture" type="submit" disabled >Upload</button>
+              </div>
+    </div>
+           
+            
+              </div>
+              
+            </div>
+    
+            </form>
+
+       
+    </div>
+    <div class="col-md-8">
+        <div class="row">
+            <div class="col-12">
+                
+                  <div class="tab-content mt-4" id="myTabContent">
+                    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                   <h4 class="pb-2 classic_div mt-3 border-bottom" id="produ-naming"> </h4>
+                                  
+       <div class="p-3 row ">
+           <!-- <form action="/stoku/save_color" method="post">
+            {% csrf_token %} -->
+          <div class="col-md-6">
+               <div class="row mb-2">
+               <div class="col-md-4 col-5"><label for="yenye-rangi">Rangi</label></div>
+               <div class="col-md-8 col-7 d-flex">
+                <div class="custom-control mr-3 custom-checkbox" id="et-hakuna-rangi">
+                    <input type="checkbox" 
+                    onclick="if($(this).prop('checked')==true){
+                        $('#kuwekea-rangi-bidhaa').hide()
+
+                    }else{
+                          $('#kuwekea-rangi-bidhaa').show()
+
+                    }" class="custom-control-input" id="no-color">
+                    <label class="custom-control-label" for="no-color">Hakuna Rangi</label>
+                  </div>
+                  
+                <button class="btn-sm btn btn-primary smallerFont p-1" id="kuwekea-rangi-bidhaa" type="button" data-toggle="modal" data-target="#kuweka-rangi-model">
+                    <svg width="1.3em" height="1.3em" viewBox="0 0 16 16" class="bi bi-plus-square-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/>
+                      </svg>
+                </button>
+                   
+               </div>
+           </div>
+            <div class="row mb-2" id="rangi-zipo" id="display:none">
+               <div class="col-md-4 col-5"><label for="yenye-rangi">Chagua Rangi</label></div>
+               <div class="col-md-8 col-7" id="penye-rangi">
+               
+               </div>
+<hr>
+               <div class="col-md-4 col-5 mt-2"><label for="yenye-rangi">Jumla</label></div>
+               <div class="col-md-8 col-7 mt-2" id="penye-rangi-jumla">
+               
+               </div>
+           </div>
+          </div>
+<div class="col-md-6">
+   
+
+
+        <div class="row mt-3">
+            <div class="col-md-2 col-5"><label for="size">Size</label></div>
+            <div class="col-md-10 col-7">
+                <h6 class="text-right">
+                     <button id="kuwekea-size-bidhaa" class="btn btn-info btn-sm  p-1" data-color=0  data-toggle="modal" data-target="#kuweka-size-model">
+                    <svg width="1.4em" height="1.4em" viewBox="0 0 16 16" class="bi bi-node-plus-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M11 13a5 5 0 1 0-4.975-5.5H4A1.5 1.5 0 0 0 2.5 6h-1A1.5 1.5 0 0 0 0 7.5v1A1.5 1.5 0 0 0 1.5 10h1A1.5 1.5 0 0 0 4 8.5h2.025A5 5 0 0 0 11 13zm.5-7.5a.5.5 0 0 0-1 0v2h-2a.5.5 0 0 0 0 1h2v2a.5.5 0 0 0 1 0v-2h2a.5.5 0 0 0 0-1h-2v-2z"/>
+                  </svg>
+                </button>
+            </h6>
+               
+            </div>
+        </div>
+
+        <div class="row mt-1" id="size_display" >
+            <div class="col-12">
+               <table class="size_table">
+                <tr>
+                    <th>size</th>
+                    <th>idadi</th>
+                    <th>control</th>
+                </tr>
+                <tbody id="sizing-table">
+
+                </tbody>
+
+            </table> 
+            </div>
+            
+        </div>
+</div>
+
+           
+         
+  
+
+          
+      
+
+        
+        </div>
+                    </div>
+                    <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+
+                    </div>
+                  </div>
+            </div>
+            
+        </div>
+    </div>
+    </div>
+
+    
+<!-- KUWEKA RANGI.......... -->
+<div class="modal fade" id="kuweka-rangi-model" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog animate" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">
+              <span class="text-danger">
+                    <svg width="1.3em" height="1.3em" viewBox="0 0 16 16" class="bi bi-flower1 " fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M6.174 1.184a2 2 0 0 1 3.652 0A2 2 0 0 1 12.99 3.01a2 2 0 0 1 1.826 3.164 2 2 0 0 1 0 3.652 2 2 0 0 1-1.826 3.164 2 2 0 0 1-3.164 1.826 2 2 0 0 1-3.652 0A2 2 0 0 1 3.01 12.99a2 2 0 0 1-1.826-3.164 2 2 0 0 1 0-3.652A2 2 0 0 1 3.01 3.01a2 2 0 0 1 3.164-1.826zM8 1a1 1 0 0 1 1 1l-.002.03a4.997 4.997 0 0 1-.064.387c-.049.241-.122.542-.213.887a60.59 60.59 0 0 1-.676 2.314L8 5.762l-.045-.144a60.59 60.59 0 0 1-.676-2.314 16.705 16.705 0 0 1-.213-.887 4.99 4.99 0 0 1-.064-.386A1 1 0 0 1 8 1zM2 9a1 1 0 1 1 .03-1.998l.091.01c.077.012.176.029.296.054.241.049.542.122.887.213a60.59 60.59 0 0 1 2.314.676L5.762 8l-.144.045c-.8.248-1.626.494-2.314.676-.345.091-.646.164-.887.213a4.99 4.99 0 0 1-.386.064L2 9zm7 5a1 1 0 0 1-2 0l.002-.03a4.996 4.996 0 0 1 .064-.386c.049-.242.122-.543.213-.888.182-.688.428-1.513.676-2.314L8 10.238l.045.144c.248.8.494 1.626.676 2.314.091.345.164.646.213.887a5.005 5.005 0 0 1 .064.386L9 14zm-5.696-2.134a1 1 0 0 1-1-1.732l.027-.014c.02-.01.048-.021.084-.036a5.09 5.09 0 0 1 .283-.102c.233-.078.53-.165.874-.258a60.598 60.598 0 0 1 2.343-.572l.147-.033-.103.11a58.239 58.239 0 0 1-1.666 1.743c-.253.252-.477.465-.66.629a5.001 5.001 0 0 1-.304.248l-.025.017zM4.5 14.062a1 1 0 0 0 1.366-.366l.014-.027c.01-.02.021-.048.036-.084a5.09 5.09 0 0 0 .102-.283c.078-.233.165-.53.258-.874a60.6 60.6 0 0 0 .572-2.343l.033-.147-.11.102a60.848 60.848 0 0 0-1.743 1.667 17.07 17.07 0 0 0-.629.66 5.06 5.06 0 0 0-.248.304l-.017.025a1 1 0 0 0 .366 1.366zm9.196-8.196a1 1 0 0 0-1-1.732l-.025.017a4.951 4.951 0 0 0-.303.248 16.69 16.69 0 0 0-.661.629A60.72 60.72 0 0 0 10.04 6.77l-.102.111.147-.033a60.6 60.6 0 0 0 2.342-.572c.345-.093.642-.18.875-.258a4.993 4.993 0 0 0 .367-.138.53.53 0 0 0 .027-.014zM11.5 1.938a1 1 0 0 1 .366 1.366l-.017.025a5.001 5.001 0 0 1-.248.303 17.01 17.01 0 0 1-.629.661A60.614 60.614 0 0 1 9.23 5.96l-.111.102.033-.147a60.62 60.62 0 0 1 .572-2.342c.093-.345.18-.642.258-.875a5.066 5.066 0 0 1 .138-.367l.014-.027a1 1 0 0 1 1.366-.366zM14 9a1 1 0 0 0 0-2l-.03.002a4.996 4.996 0 0 0-.386.064c-.242.049-.543.122-.888.213-.688.182-1.513.428-2.314.676L10.238 8l.144.045c.8.248 1.626.494 2.314.676.345.091.646.164.887.213a4.996 4.996 0 0 0 .386.064L14 9zM1.938 4.5a1 1 0 0 0 .393 1.38l.084.035c.072.03.166.064.283.103.233.078.53.165.874.258a60.88 60.88 0 0 0 2.343.572l.147.033-.103-.111a60.584 60.584 0 0 0-1.666-1.742 16.705 16.705 0 0 0-.66-.629 4.996 4.996 0 0 0-.304-.248l-.025-.017a1 1 0 0 0-1.366.366zm2.196-1.196A1 1 0 1 1 5.88 2.33c.01.02.021.048.036.084.029.072.063.166.102.283.078.233.165.53.258.875.186.687.387 1.524.572 2.342l.033.147-.11-.102a60.597 60.597 0 0 1-1.743-1.667 16.713 16.713 0 0 1-.629-.66 4.996 4.996 0 0 1-.248-.304l-.017-.025zm9.928 8.196a1 1 0 0 1-1.366.366l-.025-.017a4.946 4.946 0 0 1-.303-.248 16.71 16.71 0 0 1-.661-.629A60.73 60.73 0 0 1 10.04 9.23l-.102-.111.147.033c.818.185 1.655.386 2.342.572.345.093.642.18.875.258a5 5 0 0 1 .367.138 1 1 0 0 1 .394 1.38zm-3.928 2.196a1 1 0 0 0 1.732-1l-.017-.025a5.065 5.065 0 0 0-.248-.303 16.705 16.705 0 0 0-.629-.661A60.462 60.462 0 0 0 9.23 10.04l-.111-.102.033.147a60.6 60.6 0 0 0 .572 2.342c.093.345.18.642.258.875a4.985 4.985 0 0 0 .138.367.575.575 0 0 0 .014.027zM8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+              </svg>  
+              </span>
+          
+            Rangi za Bidhaa
+        </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+        <div class="classic_div mx-4">
+            <form action="/stoku/save_color" data-new=true data-rangi=0 data-value=0 id="weka-rangi-ya-bidhaa" method="post">
+                {% csrf_token %}
+            <div class="row mb-2">
+                <div class="col-6 ">
+                    <label for="jina-rangi"> Rangi</label>
+                </div>
+                <div class="col-6 form-group">
+                    <input type="text" class="form-control futika-rangi" id="jina-la_rangi" placeholder="Jina la Rangi">
+                    <div class="custom-control mt-1 custom-checkbox" id="rangi_ileile">
+                        <input type="checkbox" class="custom-control-input"
+                         onchange="
+                         if($(this).prop('checked')==true)
+                         {
+                             $('#jina-la_rangi').val($('#jina-la_rangi').attr('placeholder'))}else{ $('#jina-la_rangi').val('')}" id="tumia-rangi-ileile">
+                        <label class="custom-control-label font-weight-medium" for="tumia-rangi-ileile">Weka ileile</label>
+                      </div>
+                </div>
+            </div>    
+            
+            <div class="row mb-2">
+                <div class=" col-6"><label for="yenye-rangi">Weka Rangi</label></div>
+                <div class="col-6 form-group">
+                   <input type="color" class="custom-color " id="chaguo-la-langi"  value="#ffffff">
+              </div>
+            </div>
+            <div class="row mb-2">
+                <div class=" col-6"><label for="yenye-rangi">Idadi Jumla  <sub class="text-primary kipima-jumla" id="kipima-jumla"></sub></label></div>
+                <div class="col-6 form-group">
+                   <input type="number" id="kwa-jumla-rangi" class="form-control futika-rangi">
+               </div>
+            </div>                
+            <div class="row mb-2 kuna-rejareja" id="kuna-rejareja" >
+                <div class=" col-6"><label for="yenye-rangi">Idadi Rejareja <sub class="text-primary kipima-reja" id="kipima-reja"></sub></label></div>
+                <div class="col-6 form-group">
+                   <input type="number" id="kwa-reja-rangi" class="form-control futika-rangi">
+               </div>
+            </div>  
+              <div class="border-top py-3">
+                <button type="button" data-action="/stoku/ondoa_color" id="rangi-ondoa-btn" class="btn btn-outline-danger btn-sm float-left  smallFont" >
+                     
+                    <svg width="1.3em" height="1.3em" viewBox="0 0 16 16" class="bi bi-slash-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path fill-rule="evenodd" d="M11.354 4.646a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                      </svg>
+                   Ondoa
+                </button>
+                <span class="float-right">
+              <button type="button" class="btn btn-light smallFont" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary smallFont">
+                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-check2 mr-1" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                      </svg>
+                    Save</button>
+                </span>
+               
+            </div>
+            </form>             
+        </div>
+           
+
+         </div>
+        
+      </div>
+    </div>
+  </div>
+    
+<!-- KUWEKA SIZE.......... -->
+<div class="modal fade" id="kuweka-size-model" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog animate" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleColor">
+              <span class="text-danger">
+                <svg width="1.3em" height="1.3em" viewBox="0 0 16 16" class="bi bi-sort-numeric-down" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M4 2a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11A.5.5 0 0 1 4 2z"/>
+                    <path fill-rule="evenodd" d="M6.354 11.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L4 12.793l1.646-1.647a.5.5 0 0 1 .708 0z"/>
+                    <path d="M12.438 7V1.668H11.39l-1.262.906v.969l1.21-.86h.052V7h1.046zm-2.84 5.82c.054.621.625 1.278 1.761 1.278 1.422 0 2.145-.98 2.145-2.848 0-2.05-.973-2.688-2.063-2.688-1.125 0-1.972.688-1.972 1.836 0 1.145.808 1.758 1.719 1.758.69 0 1.113-.351 1.261-.742h.059c.031 1.027-.309 1.856-1.133 1.856-.43 0-.715-.227-.773-.45H9.598zm2.757-2.43c0 .637-.43.973-.933.973-.516 0-.934-.34-.934-.98 0-.625.407-1 .926-1 .543 0 .941.375.941 1.008z"/>
+                  </svg>
+              </span>
+          
+           Size  za bidhaa
+        </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+        <div class="classic_div mx-4">
+            <form action="/stoku/save_size" data-new=true data-size=0 data-rangi=0 data-value=0 id="weka-size-ya-bidhaa" method="post">
+                {% csrf_token %}
+            <div class="row mb-2">
+                <div class="col-6 ">
+                    <label for="jina-size"> Size</label>
+                </div>
+                <div class="col-6 form-group">
+                    <input type="text" class="form-control futika-size" id="jina-la_size" placeholder="Andika size">
+
+
+                    <div class="custom-control mt-1 custom-checkbox" id="size_ileile">
+                        <input type="checkbox" class="custom-control-input"
+                         onchange="
+                         if($(this).prop('checked')==true)
+                         {
+                             $('#jina-la_size').val($('#jina-la_size').attr('placeholder'))}else{ $('#jina-la_size').val('')}" id="tumia-size-ileile">
+                        <label class="custom-control-label font-weight-medium" for="tumia-size-ileile">Tumia ileile</label>
+                      </div>
+
+                </div>
+            </div>    
+            
+          
+            <div class="row mb-2">
+                <div class=" col-6"><label for="yenye-size">Idadi Jumla  <sub class="text-primary kipima-jumla" ></sub></label></div>
+                <div class="col-6 form-group">
+                   <input type="number" id="kwa-jumla-size" class="form-control futika-size">
+               </div>
+            </div>                
+            <div class="row mb-2 kuna-rejareja"  >
+                <div class=" col-6"><label for="yenye-size">Idadi Rejareja <sub class="text-primary kipima-reja" ></sub></label></div>
+                <div class="col-6 form-group">
+                   <input type="number" id="kwa-reja-size" class="form-control futika-size">
+               </div>
+            </div>  
+              <div class="border-top py-3">
+                <button type="button" data-action="/stoku/ondoa_size" id="size-ondoa-btn" class="btn btn-outline-danger btn-sm float-left  smallFont" >
+                     
+                    <svg width="1.3em" height="1.3em" viewBox="0 0 16 16" class="bi bi-slash-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path fill-rule="evenodd" d="M11.354 4.646a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                      </svg>
+                   Ondoa
+                </button>
+                <span class="float-right">
+              <button type="button" class="btn btn-light smallFont" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary smallFont">
+                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-check2 mr-1" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                      </svg>
+                    Save</button>
+                </span>
+               
+            </div>
+            </form>             
+        </div>
+           
+
+         </div>
+        
+      </div>
+    </div>
+  </div>
+
+    <hr>
+    <div class="row classic_div">
+
+        <div class="col-md-12">
+                   <h5 class="card-title mt-3">MAELEZO KWA UJUMLA</h5>
+<div class="row classic_div px-0">
+    <div class="col-md-6">
+                <div class="form-group">
+                    <label>Meta Title</label>
+                    <input type="text" class="form-control">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                <label>Meta Keyword</label>
+                <input type="text" class="form-control">
+            </div>
+            </div>
+</div>
+            
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered td-padding">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <input type="text" placeholder="Brand" class="form-control">
+                        </td>
+                        <td>
+                            <input type="text" placeholder="Stellar" class="form-control">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" placeholder="Delivery Condition" class="form-control"></td>
+                        <td><input type="text" placeholder="Knock Down" class="form-control"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" placeholder="Seat Lock Included" class="form-control"></td>
+                        <td><input type="text" placeholder="Yes" class="form-control"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" placeholder="Type" class="form-control"></td>
+                        <td><input type="text" placeholder="Office Chair" class="form-control"></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" placeholder="Style" class="form-control"></td>
+                            <td>
+                                <input type="text" placeholder="Contemporary &amp; Modern" class="form-control"></td>
+                            </tr>
+                            <tr>
+                                <td><input type="text" placeholder="Wheels Included" class="form-control"></td>
+                                <td><input type="text" placeholder="Yes" class="form-control"></td>
+                            </tr>
+                            <tr>
+                                <td><input type="text" placeholder="Upholstery Included" class="form-control"></td>
+                                <td><input type="text" placeholder="Yes" class="form-control"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <hr>
+    </div>
+    </div>
+</div>
+
+
+</div> 

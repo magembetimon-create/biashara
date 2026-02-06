@@ -1,0 +1,7 @@
+.side-nav{
+    -webkit-box-shadow: 4px 1px 7px -8px rgba(0,0,0,1);
+    -moz-box-shadow: 4px 1px 7px -8px rgba(0,0,0,1);
+    box-shadow: 4px 1px 7px -8px rgba(0,0,0,1);
+
+    background: var(--lightBg);
+}

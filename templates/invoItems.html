@@ -1,0 +1,466 @@
+<script>
+    $('document').ready(function(){
+        let tot_vat=0,vat_include = false,vat_set=false,sub_tot=0
+            const vatper = Number('{{duka.vatper}}')/100
+            let itms=[],itm_var={},
+                colors=[],color_var={},
+                sizes=[],sizes_var={},
+                tr='',
+                
+                set_v='',
+                includ_v='',
+                bei = 0,
+                act_bei=0,
+                sold_p
+        //create objects for items , color & sizes ...........................//
+
+
+        //CREATE ITEMS OBJECT...............// 
+
+        '{% for li in list %}'
+         vat_include=false
+         set_v='{{li.itm.vat_set}}'
+         includ_v='{{li.itm.vat_included}}'
+         vat_set=false
+         bei = Number('{{li.itm.produ.Bei_kuuza}}')
+         sale_bei = Number('{{li.itm.bei}}')
+         sold_p = sale_bei/(1+vatper)
+
+         //make the price equal to sold price if the item sold price is greater than its actul saved price
+         if(sold_p>bei){
+             bei = sale_bei
+         }
+
+         
+         if(includ_v =='True' ){
+            vat_include=true
+         }
+
+         if(set_v =='True' ){
+            vat_set=true
+         }
+
+        itm_var={
+            val:'{{li.itm.id}}',
+            prod:'{{li.itm.bidhaa.id}}',
+            bei:bei,
+            bei_jum:'{{li.itm.produ.Bei_kuuza_jum}}',
+            sold:sale_bei,
+            idadi:Number('{{li.itm.idadi}}')-Number('{{li.itm.returned}}'),
+            jum:'{{li.itm.jum}}',
+            vat_set:vat_set,
+            vat_include:vat_include,
+            maelezo:`{{li.itm.produ.bidhaa.maelezo}}`,
+            vipimo:`{{li.itm.produ.bidhaa.vipimo}}`,
+            vipimo_jum:`{{li.itm.produ.bidhaa.vipimo_jum}}`,
+            jina:`{{li.itm.produ.bidhaa.bidhaa_jina}}`,
+            uwiano:'{{li.itm.produ.bidhaa.idadi_jum}}',
+            serial:`{{li.itm.serial}}`,
+            picha:`{{li.picha}}`,
+        }
+
+        itms.push(itm_var)
+
+        '{% endfor %}'
+        //COLOR OBJECTS....................//
+        '{% for col in color %}'
+          color_var={
+              itm:'{{col.mauzo.id}}',
+              val:'{{col.id}}',
+              idadi:Number('{{col.idadi}}')-Number('{{col.returned}}'),
+              color_name:`{{col.color.color.color_name}}`,
+              color_code:'{{col.color.color.color_code}}'
+          }
+          colors.push(color_var)
+         '{% endfor %}'
+
+         //SIZES OBJECT...............//
+         '{% for sz in size %}'
+            sizes_var={
+                color:'{{sz.color.id}}',
+                size:`{{sz.size.sized.size}}`,
+                idadi:Number('{{sz.idadi}}')-Number('{{sz.returned}}'),
+            }
+            sizes.push(sizes_var)
+         '{% endfor %}'
+
+         //USED PRICES.........................//
+         let pr=[],pr_var={}
+         '{% for p in prices %}'
+            pr_var={
+                unit:'{{p.unit}}',
+                price:Number('{{p.price}}'),
+                qty:Number('{{p.qty}}'),
+                prod:'{{p.prod}}'
+            }
+            pr.push(pr_var)
+
+         '{% endfor %}'
+         
+
+
+      let sales=0,total_vat=0,rnum = 0
+      itms.forEach(itm=>{
+          let col = c =>c.itm === itm.val,prc = p =>p.prod ===itm.prod
+          const colr = colors.filter(col),prices = pr.filter(prc)
+          let beis = 0 ,idadis=0,idad=0,vpmo='',sale=0
+
+          let prics = [],
+               prc1 = {
+                unit:itm.vipimo,
+                price:Number(itm.bei),
+                qty:1
+               } 
+
+            prics.push(prc1)   
+
+            rnum+=1
+
+            if(Number(itm.uwiano)>1){
+                prc2={
+                     unit:itm.vipimo_jum,
+                     price:Number(itm.bei_jum),
+                     qty:Number(itm.uwiano)
+                }
+                prics.push(prc2)
+
+            }
+
+
+            prics = [...prics,...pr]
+
+         tr+=`
+      <tr class="text-center   latoFont" style="padding: 10px 3px !important;">`
+
+
+       if(colr.length==0){
+
+        let prp = b => itm.idadi % b.qty===0,
+               prop_price = prics.filter(prp)
+
+               if(prop_price.length == 0){
+                prop_price = prics.filter(b=>Number(b.qty)===1)
+            }  
+
+         prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+           ?((a.qty > b.qty)? 1 : -1) : -1 )
+         let ps = prop_price[prop_price.length-1]  
+                 
+                    beis = Number(itm.bei)*Number(ps.qty)
+
+               
+
+                vpmo = ps.unit
+                idad = Number(itm.idadi)/Number(ps.qty)
+                sale=Number(itm.sold)*Number(itm.idadi)
+
+        if( itm.vat_set){
+            //REGULATE MEASUARES.............//
+                beis= itm.vat_include?(beis/(1+vatper)):beis
+                sales+=Number(itm.sold)/(1+vatper)*Number(itm.idadi)
+                sale=sale/(1+vatper)               
+
+        }else{
+                sales+=Number(itm.sold)*Number(itm.idadi)
+
+        }
+
+        sub_tot+=(beis*idad)
+        if(itm.vat_set){
+            total_vat+=sale*vatper
+        }
+
+         
+        tr+=`
+        <td  >${rnum}</td>
+        <td class="text-left" > 
+          <div class="d-flex"  >
+            <div  style="width:40px;heigth:40px" >`
+              if(itm.picha!=''){
+                tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+               }else{
+                   tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                     <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                     <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                   </svg>`
+               }
+            tr+=`</div>
+
+                <div class="ml-1" >
+                <div><strong class="pl-1  text-capitalize" style="color: #3989c6"> ${itm.jina}</strong></div>
+                <div class="pl-2 text-muted smallerFont itm_desc" style="color:blue">${itm.maelezo}</div>
+                <div class="pl-2  smallerFont itm_desc font-weight-bold" >${itm.serial.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</div>
+                </div>
+        </td>` 
+        
+        if(colors.length>0){
+            tr+=`<td style="padding: 10px 3px !important;"> --- </td>` 
+        }
+
+        if(sizes.length>0){
+          tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+        }
+
+         //REGULATE PRICE FOR VAT.............................//
+  
+    tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+          <td style="padding: 10px 3px !important;" > 
+                    ${Number(beis).toLocaleString()} 
+         </td>` 
+
+         tr+=` <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}
+               </td> 
+               <td style="padding: 10px 3px !important;" >${ (beis * Number(idad)).toLocaleString()} </td> 
+        
+               `
+     
+    }else{
+        var span=colr.length+1
+        if(span==2){
+          span=1
+      }  
+          
+        
+        tr+=`<td class="rnum" rowspan="${span} ">${rnum}</td>
+        <td class="text-left span1" id="span_${itm.val}" rowspan="${span}">
+          <div class="d-flex "  >
+            <div  style="width:40px;heigth:40px" >`
+              if(itm.picha!=''){
+                tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+               }else{
+                   tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                     <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                     <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                   </svg>`
+               }
+            tr+=`</div>
+            <div class="ml-1" >
+               <div><strong class="pl-1 text-capitalize" style="color: #3989c6"> ${itm.jina} </strong></div>
+                <div class="pl-2 itm_desc text-muted smallerFont" style="color:blue">${itm.maelezo}</div>
+                <div class="pl-2  smallerFont itm_desc font-weight-bold" >${itm.serial.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</div>
+            </div>           
+        </td>` 
+       
+        colr.forEach(col=>{
+            let szi = s=> s.color == col.val
+            const sz = sizes.filter(szi)
+
+     
+      if(span>2){
+            tr+=`<tr class=" text-center  latoFont" style="padding: 10px 3px !important;">`
+        }    
+
+    if(sz.length==0){
+            let prp = b => col.idadi % b.qty===0,
+              prop_price = prics.filter(prp)
+
+              if(prop_price.length == 0){
+                prop_price = prics.filter(b=>Number(b.qty)===1)
+            }  
+
+             prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+               ?((a.qty > b.qty)? 1 : -1) : -1 )
+             let ps = prop_price[prop_price.length-1]
+
+                beis = Number(itm.bei)*Number(ps.qty)
+
+            
+            vpmo = ps.unit
+            idad = Number(col.idadi)/Number(ps.qty)
+            sale=Number(itm.sold)*Number(col.idadi)
+
+    if( itm.vat_set){
+        //REGULATE MEASUARES.............//
+            beis= itm.vat_include?(beis/(1+vatper)):beis
+            sales+=Number(itm.sold)/(1+vatper)*Number(col.idadi)
+            sale=sale/(1+vatper)               
+
+    }else{
+            sales+=Number(itm.sold)*Number(col.idadi)
+
+    }
+
+            sub_tot+=(beis*idad)
+            if(itm.vat_set){
+                total_vat+=sale*vatper
+            }
+
+       tr+=`<td style="padding: 10px 3px !important;" class="smallerFont text-left text-capitalize ">
+                  <div class="d-flex">   
+                      <label 
+                          style="width:15px;
+                          height:15px;
+                          background:${col.color_code};
+                          border-radius:100%;
+                          color:rgba(240, 248, 255, 0);
+                          border:1px solid #ccc"
+                          >
+                          ''
+                      </label> 
+                      ${col.color_name}
+                  </div>
+              </td> `
+              if(sizes.length>0){
+              tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+              }
+
+               
+              
+              tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+              <td style="padding: 10px 3px !important;" > 
+                        ${Number(beis).toLocaleString()} 
+             </td>`
+
+            
+            tr+=` <td style="padding: 10px 3px !important;" > 
+                ${Number(idad).toFixed(2)}
+            </td> 
+                  <td style="padding: 10px 3px !important;" >${ (beis * Number(idad)).toLocaleString()} </td> `
+
+         }else{
+            tr+=`<td style="padding: 10px 3px !important;" `
+            if(sz.length>1){
+               tr+=` rowspan=${sz.length+1}` 
+            }
+            
+           tr+=` data-itm="${itm.val}" class="span2 smallerFont text-left text-capitalize" >
+                 
+                  <div class="d-flex">
+
+                      <label 
+                        style="width:15px;
+                        height:15px;
+                        background:${col.color_code};
+                        border-radius:100%;
+                        color:rgba(240, 248, 255, 0);
+                        border:1px solid #ccc"
+                        >
+                        ''
+                    </label> 
+                      ${col.color_name}
+                  </div>
+              </td>` 
+             
+             sz.forEach(s=>{
+
+                let prp = b => s.idadi % b.qty===0,
+                    prop_price = prics.filter(prp)
+
+                    if(prop_price.length == 0){
+                      prop_price = prics.filter(b=>Number(b.qty)===1)
+                  }  
+                  
+                 prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+                   ?((a.qty > b.qty)? 1 : -1) : -1 )
+                 let ps = prop_price[prop_price.length-1]
+                    beis = Number(itm.bei)*Number(ps.qty)
+                vpmo = ps.unit
+                idad = Number(s.idadi)/Number(ps.qty)
+                sale=Number(itm.sold)*Number(s.idadi)
+
+        if( itm.vat_set){
+            //REGULATE MEASUARES.............//
+                beis= itm.vat_include?(beis/(1+vatper)):beis
+                sales+=Number(itm.sold)/(1+vatper)*Number(s.idadi)
+                sale=sale/(1+vatper)               
+
+        }else{
+                sales+=Number(itm.sold)*Number(s.idadi)
+
+        }
+                sub_tot+=(beis*idad)
+                if(itm.vat_set){
+                    total_vat+=sale*vatper
+                }
+
+              if(sz.length>1){
+               tr+=`<tr class="text-center   latoFont" style="padding: 10px 3px !important;"> `
+                 
+              }   
+
+               tr+=`<td class="text-center" style="padding: 10px 3px !important;"><span class="text-danger smallFont"> ${s.size}</span></td>` 
+              
+               tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+                    <td style="padding: 10px 3px !important;" > 
+                                ${Number(beis).toLocaleString()} 
+                    </td>`
+
+
+                   tr+=`  <td class="text-center " style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)} 
+                   </td> 
+                    <td class="text-center " style="padding: 10px 3px !important;" >${ (beis * Number(idad)).toLocaleString()} </td> `
+               if(sz.length>1){
+              tr+=`  </tr>`
+            }
+               
+      
+                 
+             })
+         }
+          
+       
+            tr+=`</tr>
+        `
+        })
+       
+    }
+    if(span>2){
+    tr+=`</tr>`
+    }
+
+
+
+    
+
+
+      })  
+
+
+      
+     $('#view-invo_tbody').html(tr)
+
+      if(sub_tot-sales>0){
+        $('#when_discount').show()
+      }
+
+      $('#bei_halisi').text(sub_tot.toLocaleString())
+      $('#punguzo_tu').text((sub_tot-sales).toLocaleString())
+
+      $('#bei_bila_vat').text(sales.toLocaleString())
+      
+      if(total_vat>0){
+          $('#show_vat_if').show()
+      }else{
+           $('#show_vat_if').hide()
+         
+      }
+      $('#the_invo_vat').text(total_vat.toLocaleString())
+
+  //This will add a rowspan to all items if size is also involved
+
+      $('.span2').each(function(){
+          if(Number($(this).attr('rowspan'))){
+          let rowspan=Number($(this).attr('rowspan'))-1,
+              parent='#span_'+$(this).data('itm'),
+              prow= Number($(parent).attr('rowspan'))
+         $(parent).attr('rowspan',prow + rowspan)
+         $(parent).siblings('.rnum').attr('rowspan',prow + rowspan)
+         }
+        //  $(parent).attr('rowspan',Number(parent.attr('rowspan'))+1)
+         // console.log(prow)
+      })
+     
+     
+
+
+  
+   
+
+//PRINT BILL
+
+
+})
+
+
+
+</script>

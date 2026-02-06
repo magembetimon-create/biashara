@@ -1,0 +1,259 @@
+{% extends 'userdash.html' %}
+
+{% load humanize %}
+
+{% block akaunt %}
+<div  class=" Analytical p-5 whiteBg" id="general-panel" style="margin-top: -23px;height:100vh" >
+ <h6 class="latoFont">
+     {% if useri.langSet == 0 %}
+        Sajiri bidhaa ambayo tayari imeshasajiriwa tawi jingine
+    {% else %}
+         Register an Item(s) which has already registered on other branches 
+    {% endif %}
+ </h6>
+
+ 
+ <div class="the_table p-3" style="max-width: 700px;">
+    <div class="mt-2 table-responsible">
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr class="smalleFont latoFont">
+                <th> {% if useri.langSet == 0 %}Bidhaa  {% else %}Item{% endif %}:</th>
+                <th> {% if useri.langSet == 0 %}Idadi  {% else %}Qty{% endif %}:</th>
+            </tr>
+        </thead>
+        <tbody class="pt-4"  id="item_tr_tbody">
+            <tr id="list_tr1"  data-pos=1 >
+                <td scope="row"  class="row classic_div  p-1 " style="border: 0;">
+                  <!-- IMAGE -->
+                  <div class="col-2 bg-light" id="imgplace1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
+                          <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                          <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                        </svg>
+                    </div>
+
+                    <!-- ITEM NAME -->
+                    <div class="suggest-holder col-10 item-attr1 ">
+                        <div class="input-group">
+                                <input
+                                placeholder=" {% if useri.langSet == 0 %} Andika Jina la Bidhaa {% else %} Write Item name {% endif %}"
+                                style="min-width: 210px;"
+                                type="text" 
+                                data-pos=1
+                                id = "search1"
+                                data-itm=0
+                                class="form-control border0 smallFont muhimu-b-kununua-zilizopo suggest-prompt1 suggest-prompt input-data latoFont" />
+                               
+                        </div>
+                      
+                      <ul class="masaki masaki1" data-hiarch=1 style="min-width: 350px;z-index:999999;max-height:250px;overflow-y:scroll"></ul>
+
+                    </div>
+                </td>
+
+                <td class="p-1">
+                    <!-- QUANTITY -->
+                     <div class="d-flex" style="max-width: 180px;">
+                        <div class="row">
+                           <div class="col-4 text-center input_jum smallerFont text-primary latoFont">
+                              
+                               <label id="pimo_reja1">
+                                  Dozen
+                              </label>
+                           </div>
+                           <div class="col-8">
+                               <input type="number" class="form-control input_jum1 smallerFont">
+                           </div>
+                           <div hidden class="col-4  text-center smallerFont input_rej1 mt-2 text-primary latoFont">
+                              <label id="pimo_jum1">
+                                  pic
+                              </label>
+                           </div>
+                           <div class="col-8 " hidden>
+                               <input type="number" class="form-control mt-2 input_rej1  smallerFont">
+                           </div>
+                        </div>
+
+                        <div class="d-flex justify-content-center">
+                            <button  id="colored_items1" title="{% if useri.langSet == 0 %}  Rangi  {% else %} Color {% endif %}" class="btn btn-light colored_items btn-sm px-1" data-toggle="modal" data-pos=1  data-target="#modal_color"  data-val=0>
+                                <img  width="20" src="{{baseUrl}}/{{'colors.svg'}}" />
+                            </button>
+                        </div>
+                     </div>
+
+
+                    <!-- DISPLAY SHOWED COLOR -->
+                    <div class="color-wrapper mt-1 text-right" style="height: 35px;">
+                      <div  id="popColored1" class="py-1 whiteBg p-1 text-left shrink-palet popColored  rounded  "
+                     
+                       style="
+                          cursor:pointer;display: none;
+                          "
+                          >
+   
+                    <div class="row classic_div">
+                       <label for="" style="cursor: pointer;"  class="smallerFont latoFont col-8 latoFont px-2">
+                           {% if useri.langSet == 0 %}Rangi{% else %}Color{% endif %}(<span id="color_qt1" class="text-danger" >0</span>)
+                       </label>
+   
+                         <p class="text-right col-4">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+                               <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                             </svg>
+                         </p>
+                    </div>
+                    
+                      
+                    
+   
+                   <div id="color_obj1" 
+                   style="-webkit-box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37); 
+                           box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37);" >
+   
+                   </div>
+   
+                   
+                   </div>
+                  </div>
+                    
+                </td>
+            </tr>
+     
+        </tbody>
+    </table>
+
+    </div>
+   <p class="text-right">
+       <button class="btn-sm latoFont smallerFont btn btn-secondary" id="add-btn">
+          +  {% if useri.langSet == 0 %}Kuongeza  {% else %}Add{% endif %}
+       </button>
+   </p>
+
+   <form action="/stoku/addtranfer" data-order=0 method="post" id="savetranfer" >
+      {% csrf_token %}
+
+   <p class="text-center">
+       <button class="btn btn-primary  latoFont">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
+              <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+              <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+            </svg>   Save
+       </button>
+   </p>
+ </form>
+
+</div>
+
+
+<!-- Modal Color Rangi Rangi-->
+<div class="modal fade" id="modal_color" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog animate" role="document">
+        <div class="modal-content">
+                <div class="modal-header">
+                        <h6 class="modal-title">
+                             <img  width="25" src="{{baseUrl}}/{{'colors.svg'}}" />
+                           
+                            {% if useri.langSet == 0 %}
+
+                            Rangi za <span style="color:rgb(108, 39, 236)" id="item_jina"></span> {% else %} <span style="color:rgb(108, 39, 236)" id="item_jina"></span> color  {% endif %}
+                        </h6>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                    </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-5">
+
+                    </div>
+                    <div class="col-7">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <label for="input" class="pt-2 px-2 smallFont">{% if useri.langSet == 0 %}Tafuta Rangi{% else %} Filter color {% endif %}:</label>                            </div>
+                            <input type="text" id="filter_itm_color" class="form-control smallerFont">
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    $(document).ready(function(){
+                      $("#filter_itm_color").on("keyup", function() {
+                        var value = $(this).val().toLowerCase();
+                        $("#bill_item_color .the_color_itm").filter(function() {
+                          $(this).toggle($(this).data('rangi_names').toLowerCase().indexOf(value) > -1)
+                        });
+                      });
+                    });
+                </script>
+                <div class="container-fluid pr-5 mt-3" id="bill_item_color">                       
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary border0" data-dismiss="modal">Close</button>
+                <!-- <button type="button" class="btn btn-primary">Save</button> -->
+            </div>
+        </div>
+    </div>
+</div>
+
+
+ 
+<script>
+   function saveChangeFuct(data){
+       $('#loadMe').modal('show')
+       $.ajax({
+           type:"POST",
+           url:data.url,
+           data:data.data
+
+           }).done(function(dt){
+               $('#loadMe').modal('hide')
+               if(dt.success){
+                toastr.success(lang(dt.msg_swa,dt.msg_eng), 'Success Alert', {timeOut: 2000});
+
+               }else{
+                   
+                toastr.error(lang(dt.msg_swa,dt.msg_eng), 'Error Alert', {timeOut: 2000});
+               }
+           })
+   }
+    
+
+    if(Boolean(Number('{{Change}}'))){
+        if(Boolean(Number('{{success}}'))){
+            toastr.success(' {% if useri.langSet == 0 %} {{msg_swa}}  {% else %} {{msg_eng}} {% endif %}', 'Success Alert', {timeOut: 2000});
+        }else{
+            toastr.error(' {% if useri.langSet == 0 %} {{msg_swa}}  {% else %} {{msg_eng}} {% endif %}', 'error Alert', {timeOut: 2000});
+        }
+    }
+</script>
+ 
+<script src="/static/js/usajiritokaNje.js"></script>
+ 
+
+ 
+  
+
+
+
+
+</div>
+
+{% endblock %}
+{% block dash-mapper %}
+{% if useri.langSet == 0 %} Bidhaa  {% else %} Items {% endif %}
+{% endblock %}      
+
+
+{% block akaunt-map %}  <a href="#" class="tab_show" data-show="#general-panel">
+
+  {% if useri.langSet == 0 %} Usajiri   {% else %}Item register {% endif %}
+</a>   
+{% endblock %}
+
+{% block load_data_script %}
+<!-- <script src="/static/js/getakaunti.js">  </script> -->
+<!-- <script src="/static/js/miamala.js">  </script> -->
+
+{% endblock %}
+

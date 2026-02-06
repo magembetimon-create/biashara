@@ -1,0 +1,190 @@
+{% extends 'userdash.html' %}
+
+{% block all-bills %}
+<div class="whiteBg py-2 " style="margin-top: -15px;"> 
+  <h5 class="text-right py-3 px-2 {% if bil_num == 0 %} border-bottom {% endif %}">
+
+   
+      
+      <a href="/purchase/expenseList" type="button" class=" btn btn-light smallFont latoFont">
+         {% if useri.langSet == 0 %}  Expenses  {% else %}Matumizi  {% endif %}
+      </a>
+      <button type="button" onclick="$('#matumizi_data').data('with_bil',0)" data-toggle="modal" data-target="#recodiMatumizi" class=" btn btn-primary smallFont latoFont"><b class="largeFont">+</b>
+         {% if useri.langSet == 0 %}  Ongeza  {% else %}Add  {% endif %}
+      </button>
+</h5>
+ {% if bil_num > 0 %}
+          {% load humanize %}
+<div class="table-responsive pb-5">
+ <table class="table table-hover smallFont">
+      <thead>
+        <tr>
+          <th class="" scope="col">
+            {% if useri.langSet == 0 %}  # {% else %} # {% endif %}
+          
+          </th>
+          <th class="" scope="col">
+            {% if useri.langSet == 0 %} Tarehe   {% else %} Date {% endif %}
+
+          </th>
+          
+          <th class="" scope="col">          
+            {% if useri.langSet == 0 %} Kiasi  {% else %}Amount {% endif %}
+            <span class="smallerFont text-primary">({{duka.currencii}})</span> 
+          </th>
+          
+          <th class="" scope="col">          
+            {% if useri.langSet == 0 %} Akaunti ya Malipo  {% else %}Payment Account {% endif %}
+           
+          </th>
+
+          <th class="" scope="col">
+            {% if useri.langSet == 0 %} Matumizi  {% else %}Expense name{% endif %}
+          </th>
+          <th class=" " scope="col">
+            {% if useri.langSet == 0 %} Maelezo  {% else %}Discriptions{% endif %}
+          </th>
+
+          <th class=" " scope="col">
+            {% if useri.langSet == 0 %} Na  {% else %}By{% endif %}
+          </th>
+        
+        </tr>
+      </thead>
+      <tbody>
+            {% for bil in bili %}
+        <tr>
+          <td class="text-center ">EXP-{{bil.id}}</td>
+          <td class="text-center "> 
+            <script>
+            document.write(moment('{{bil.tarehe | date:"r" }}').format('MMM DD YYYY, HH:mm'))
+          </script>
+        </td>
+
+          <td class="text-center  " style="color:rgb(122, 55, 28);font-weight:600" > {{bil.kiasi| floatformat:'-2' |intcomma }}</td>
+
+          <td class="text-center ">
+            {% if bil.adjst %}
+               {% if useri.langSet == 0 %} Bidhaa zilitumika {% else %}Goods used{% endif %}
+            {% else %}
+              {{bil.akaunti.Akaunt_name | title }}
+            {% endif %}  
+          </td>
+
+          <td class="text-center  ">
+                 <span class="text-primary">{{bil.matumizi.matumizi | title}} </span> 
+                
+          </td>
+          <td class="  ">
+                 <span >
+                   {{bil.maelezo}}
+                   {% if bil.manunuzil %}
+                       <span  > 
+                         ({% if useri.langSet == 0 %} Kutoka bili  {% else %}From Bill{% endif %}
+                         No <a href="{% url 'viewbill' %}?item_valued={{bil.manunuzi_id.id}}">BI-{{bil.manunuzi_id.code}}</a> 
+                         )
+
+                       </span>
+                   {% elif bil.adjst %}
+                        ({% if useri.langSet == 0 %} Kutoka marekebisho  {% else %}From Adjustment{% endif %}
+                            No <a href="{% url 'viewAdjst' %}?item_valued={{bil.adjst.id}}">ADJ-{{bil.adjst.code}}</a> 
+                         )
+                   {% endif %}
+
+                 </span> 
+                
+          </td>
+
+          <td class="  ">
+                 <a href="#" >{{bil.by.user.user.first_name | title }}  {{bil.by.user.user.last_name | title }}</span> 
+                
+          </td>
+
+
+          
+         
+    
+        </tr>
+       {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class=" p-4 border-top">
+     
+  {% if bili.has_previous %}
+    <a href="{% url 'expenses' %}?page=1" type="button"  class="btn btn-light border0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-left" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M8.354 1.646a.5.5 0 0 1 0 .708L2.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+          <path fill-rule="evenodd" d="M12.354 1.646a.5.5 0 0 1 0 .708L6.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+        </svg>
+      </a>
+
+      <a href="{% url 'expenses' %}?page={{bili.previous_page_number}}" type="button"  class="btn btn-light  border0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+        </svg>
+      </a>
+    {% endif %}
+
+  {% if bili.has_next %}
+      <a href="{% url 'expenses' %}?page={{bili.next_page_number}}" type="button" class="btn btn-light border0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </a>
+
+      <a href="{% url 'expenses' %}?page={{pages}}" type="button"  class="btn btn-light border0" >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-right" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M3.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L9.293 8 3.646 2.354a.5.5 0 0 1 0-.708z"/>
+          <path fill-rule="evenodd" d="M7.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L13.293 8 7.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </a>
+{% endif %}
+      <label for="">
+       
+        {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+
+      </label>
+  </p>
+ {%else%}
+
+ 
+<p class="pt-3 pb-5 text-center">
+           {% if useri.langSet == 0 %} Hakuna Matumizi kwa sasa {% else %}No Expenses available {% endif %}
+ 
+</p>
+
+{% endif %}
+
+
+
+
+
+ </div>
+{% endblock %}
+ 
+{% block dash-mapper %}
+ 
+{% if useri.langSet == 0 %}  Bili {% else %}Bills {% endif %}
+
+{% endblock %} 
+
+{% block nav-bills %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+
+{% block active-matumizi-menu %}
+class="btn-default btn btn-sm pop2_active_menu"
+{% endblock %}
+
+{% block active-bills %} 
+   <svg xmlns="http://www.w3.org/2000/svg" class="bi bi-receipt text-primary font-weight-bold" height="1.3em" width="1.3em" viewBox="0 0 24 24"  fill="currentColor">
+      <path d="M20,4H4C2.89,4,2.01,4.89,2.01,6L2,18c0,1.11,0.89,2,2,2h10v-2H4v-6h18V6C22,4.89,21.11,4,20,4z M20,8H4V6h16V8z M24,17v2 h-3v3h-2v-3h-3v-2h3v-3h2v3H24z"/>
+  </svg>
+  {% endblock %}
+
+{% block dash-map %} 
+{% if useri.langSet == 0 %}  Matumizi yaliyorekodiwa {% else %}Recorded Expenses{% endif %}
+
+{% endblock %}

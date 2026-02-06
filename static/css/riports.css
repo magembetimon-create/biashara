@@ -1,0 +1,104 @@
+.production{
+    background-color: rgba(20, 119, 89, 0.15);
+}
+
+.savedState{
+    background-color: rgba(173, 216, 230, 0.15);
+}
+
+.mauzo{
+    background-color: rgba(38, 128, 15, 0.15);
+}
+
+.wastes{
+    background-color: rgba(255, 17, 0, 0.15);
+}
+
+.usage{
+    background-color: rgba(252, 95, 5, 0.15);
+}
+
+.manunuzi{
+    background-color: rgba(49, 49, 126, 0.15);
+}
+
+.zilizopo{
+    background-color: rgba(0, 0, 253, 0.15);
+}
+.hamishwa{
+    background-color: rgba(0, 137, 179, 0.15);
+}
+
+.activeList{
+    border-left:4px solid rgb(0, 106, 228) ;
+    background:rgba(232, 232, 255, 0.685);
+}
+
+.kupokewa{
+   background-color: rgba(35, 134, 126, 0.15); 
+}
+
+.kuhamishwa{
+   background-color: rgba(112, 20, 77, 0.15); 
+}
+
+.kuongezwa{
+    background-color: rgba(72, 112, 20, 0.15); 
+}
+
+.forMore{
+    display: none;
+}
+
+.expire{
+   background-color: rgba(145, 82, 11, 0.15)
+}
+
+.damage{
+   background-color: rgba(167, 64, 23, 0.15)
+}
+.stockState .row{
+    width:298px !important;
+    
+    
+}
+
+.stockState {
+    margin: 7px;
+    -webkit-box-shadow: 0px 0px 5px -1px rgba(0,0,0,0.32);
+    -moz-box-shadow: 0px 0px 5px -1px rgba(0,0,0,0.32);
+    box-shadow: 0px 0px 5px -1px rgba(0,0,0,0.32);
+    padding: 9px;
+   
+}
+
+
+.progress-bar-vertical {
+    width: 7px;
+    min-height: 100%;
+    /* margin-right: 20px; */
+    background: #d0cece;
+    display: -webkit-box;  
+    display: -ms-flexbox;  
+    display: -webkit-flex; 
+    display: flex;        
+    align-items: flex-end;
+    -webkit-align-items: flex-end;
+  }
+  
+  .progress-bar-vertical .progress-bar {
+    width: 100%;
+    height: 0;
+    -webkit-transition: height 0.6s ease;
+    -o-transition: height 0.6s ease;
+    transition: height 0.6s ease;
+  }
+
+  .activeItem{
+  
+
+    background-color: rgba(165, 42, 42, 0.103);
+  }
+
+  
+

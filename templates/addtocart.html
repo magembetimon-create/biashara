@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        .b-cart {
+            width: 150px;
+            height: 50px - 13px;
+            background: #E74C3C;
+            color: #fff;
+            text-align: center;
+            font-family: "Helvetica Neue";
+            font-size: 21px;
+            padding-top: 13px;
+            border-bottom: 3px solid #d83d2d;
+            border-radius: 4px;
+            margin-left: 13px;
+            
+            
+            &:hover {
+              opacity: 0.8;
+            }
+          }
+          
+          .b-items {
+            margin: 100px 0 0 0;
+            padding: 0;
+          
+            .b-items__item {
+              display: inline-block;
+              border: 1px solid #eee;
+              width: 200px;
+              position: relative;
+              border-radius: 4px;
+              margin: 0 12px 21px 12px;
+              
+              .b-items__item__img {
+                border-radius: 4px 4px 0 0;
+              }
+              
+              a {
+                display: block;
+                text-decoration: none;
+                text-align: center;
+                
+                &:hover {
+                  opacity: 0.8;
+                }
+              }
+            }
+            
+            .b-items__item__title {
+              display: block;
+              font-size: 18px;
+              margin-top: 9px;
+              font-family: "Helvetica Neue";
+              color: #95A5A6;
+            }
+            
+            .b-items__item__add-to-cart {
+              font-family: "Helvetica Neue";
+              display: block;
+              background: #16A085;
+              color: #fff;
+              margin-top: 9px;
+              padding: 12px 0;
+              border-radius: 0 0 4px 4px;
+              border-bottom: 2px solid #0a9479;
+            }
+          }
+          
+          .b-flying-img {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            top: 0;
+            left: 0;
+            z-index: 5;
+            
+            animation:fly 0.8s 1;
+            -webkit-animation:fly 0.8s 1;
+            -webkit-backface-visibility: hidden;
+          }
+          
+          @keyframes fly {
+              0% {
+                  -moz-transform: rotate(0deg); /* Для Firefox */
+                  -ms-transform: rotate(0deg); /* Для IE */
+                  -o-transform: rotate(0deg); /* Для Opera */
+                  -webkit-transform: rotate(0deg);
+                  transform: rotate(0deg);
+              }
+              100% {
+                  -moz-transform: rotate(360deg); /* Для Firefox */
+                  -ms-transform: rotate(360deg); /* Для IE */
+                  -o-transform: rotate(360deg); /* Для Opera */
+                  -webkit-transform: rotate(360deg);
+                  transform: rotate(360deg);
+              }
+          }
+          
+          @-webkit-keyframes fly {
+              0% {
+                  -webkit-transform: rotate(0deg); /* Для Safari, Chrome, iOS */
+              }
+              100% {
+                  -webkit-transform: rotate(360deg); /* Для Safari, Chrome, iOS */
+              }
+          }
+    </style>
+</head>
+<body>
+    <div class="b-cart">Cart (<span class="b-cart__count">0</span>)</div>
+
+<ul class="b-items">
+  <li class="b-items__item">
+    <a href="#">
+      <img class="b-items__item__img" src="http://fakeimg.pl/200x200/?text=World&font=lobster" alt="" />
+      <span class="b-items__item__title">Product 1</span>
+    </a>
+    <a href="#" class="b-items__item__add-to-cart">Add to cart</a>
+  </li>
+  <li class="b-items__item">
+    <a href="#">
+      <img class="b-items__item__img" src="http://fakeimg.pl/200x200/?text=World&font=lobster" alt="" />
+      <span class="b-items__item__title">Product 2</span>
+    </a>
+    <a href="#" class="b-items__item__add-to-cart">Add to cart</a>
+  </li>
+  <li class="b-items__item">
+    <a href="#">
+      <img class="b-items__item__img" src="http://fakeimg.pl/200x200/?text=World&font=lobster" alt="" />
+      <span class="b-items__item__title">Product 3</span>
+    </a>
+    <a href="#" class="b-items__item__add-to-cart">Add to cart</a>
+  </li>
+  <li class="b-items__item">
+    <a href="#">
+      <img class="b-items__item__img" src="http://fakeimg.pl/200x200/?text=World&font=lobster" alt="" />
+      <span class="b-items__item__title">Product 4</span>
+    </a>
+    <a href="#" class="b-items__item__add-to-cart">Add to cart</a>
+  </li>
+  <li class="b-items__item">
+    <a href="#">
+      <img class="b-items__item__img" src="http://fakeimg.pl/200x200/?text=World&font=lobster" alt="" />
+      <span class="b-items__item__title">Product 5</span>
+    </a>
+    <a href="#" class="b-items__item__add-to-cart">Add to cart</a>
+  </li>
+  <li class="b-items__item">
+    <a href="#">
+      <img class="b-items__item__img" src="http://fakeimg.pl/200x200/?text=World&font=lobster" alt="" />
+      <span class="b-items__item__title">Product 6</span>
+    </a>
+    <a href="#" class="b-items__item__add-to-cart">Add to cart</a>
+  </li>
+  <li class="b-items__item">
+    <a href="#">
+      <img class="b-items__item__img" src="http://fakeimg.pl/200x200/?text=World&font=lobster" alt="" />
+      <span class="b-items__item__title">Product 7</span>
+    </a>
+    <a href="#" class="b-items__item__add-to-cart">Add to cart</a>
+  </li>
+  <li class="b-items__item">
+    <a href="#">
+      <img class="b-items__item__img" src="http://fakeimg.pl/200x200/?text=World&font=lobster" alt="" />
+      <span class="b-items__item__title">Product 8</span>
+    </a>
+    <a href="#" class="b-items__item__add-to-cart">Add to cart</a>
+  </li>
+</ul>
+
+<script>
+    var cart = $('.b-cart'),
+    cartCountCont = cart.find('.b-cart__count'),
+    cartCount = parseInt(cartCountCont.text(), 10),
+    addToCart = $('.b-items__item__add-to-cart');
+
+addToCart.on('click', function (evt) {
+  evt.preventDefault();
+  evt.stopPropagation();
+  
+  var el = $(this),
+      item = el.parent(),
+      img = item.find('.b-items__item__img'),
+      cartTopOffset = cart.offset().top - item.offset().top,
+      cartLeftOffset = cart.offset().left - item.offset().left;
+  
+  var flyingImg = $('<img class="b-flying-img">');
+  flyingImg.attr('src', img.attr('src'));
+  flyingImg.css('width', '200').css('height', '200');
+
+  cartCount += 1;
+
+ flyingImg.animate({
+    top: cartTopOffset,
+    left: cartLeftOffset,
+    width: 50,
+    height: 50,
+    opacity: 0.1
+  }, 800, function () {
+    flyingImg.remove();
+    cartCountCont.text(cartCount);
+  });
+  
+  el.parent().append(flyingImg);
+});
+</script>
+</body>
+</html>

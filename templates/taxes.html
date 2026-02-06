@@ -1,0 +1,103 @@
+{% extends 'userdash.html' %}
+
+{% load humanize %}
+
+{% block Dashboard %}
+<div  class=" Analytical p-5 whiteBg" id="general-panel" style="margin-top: -23px;height:100vh" >
+
+<div class="classic_div" style="max-width: 500px;">
+   
+
+   <form action="/tax_settings"  method="post"  >
+                  {% csrf_token %}
+                <p>{% if useri.langSet == 0 %}Malipo ya kodi {% else %} Tax Payments {% endif %} </p>
+
+            <div class="form-group mt-3" style="max-width:100px ;" >
+                <label for="">{% if useri.langSet == 0 %}Asilimia{% else %}Rate{% endif %}</label>
+                <div class="input-group">
+
+                    <input type="number"  name="vat_per" onkeyup="if(Number($(this).val())>0){$('#save_tax').prop('disabled',false)}"  id="vat_per" class="form-control" placeholder="{{duka.vatper | floatformat:'-2' }}" aria-describedby="helpId">
+                    <span class="input-append border  font-weight-bold px-2" style="font-size: large;" > % </span>
+               </div>
+            </div>
+
+            <p class=" p-2">
+                
+                <button  type="submit" id="save_tax"  class="btn btn-primary btn-sm latoFont">
+                    Save 
+                </button>
+            </p>
+    </form>
+
+         <hr>
+
+    <div class="custom-control custom-checkbox">
+        {% if duka.vat_allow %}
+        <input type="checkbox" onchange="var data={data:{val:Number($(this).prop('checked')),csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/saleVatSet'}; saveChangeFuct(data)"  checked name="vat_allow" class="custom-control-input" id="vat_allow">
+        {% else %} 
+        <input type="checkbox" onchange="var data={data:{val:Number($(this).prop('checked')),csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/saleVatSet'}; saveChangeFuct(data)"  name="vat_allow" class="custom-control-input" id="vat_allow">
+        {% endif %}
+
+        <label class="custom-control-label" for="vat_allow">{% if useri.langSet == 0 %}Jumuisha VAT katika mauzo{%else%} VAT inclusion in sales {% endif %}</label>
+    </div>
+
+  
+</div>
+
+
+ 
+<script>
+   function saveChangeFuct(data){
+       $('#loadMe').modal('show')
+       $.ajax({
+           type:"POST",
+           url:data.url,
+           data:data.data
+
+           }).done(function(dt){
+               $('#loadMe').modal('hide')
+               if(dt.success){
+                toastr.success(lang(dt.msg_swa,dt.msg_eng), 'Success Alert', {timeOut: 2000});
+
+               }else{
+                   
+                toastr.error(lang(dt.msg_swa,dt.msg_eng), 'Error Alert', {timeOut: 2000});
+               }
+           })
+   }
+    
+
+    if(Boolean(Number('{{Change}}'))){
+        if(Boolean(Number('{{success}}'))){
+            toastr.success(' {% if useri.langSet == 0 %} {{msg_swa}}  {% else %} {{msg_eng}} {% endif %}', 'Success Alert', {timeOut: 2000});
+        }else{
+            toastr.error(' {% if useri.langSet == 0 %} {{msg_swa}}  {% else %} {{msg_eng}} {% endif %}', 'error Alert', {timeOut: 2000});
+        }
+    }
+</script>
+ 
+
+ 
+
+ 
+  
+
+
+
+
+</div>
+
+{% endblock %}
+{% block dash-mapper %}
+{% if useri.langSet == 0 %} Mpangilio  {% else %} Settings {% endif %}
+{% endblock %}      
+
+
+{% block akaunt-map %}  <a href="#" class="tab_show" data-show="#general-panel">
+
+  {% if useri.langSet == 0 %} Malipo ya kodi  {% else %}Tax Payment{% endif %}
+</a>   
+{% endblock %}
+
+
+

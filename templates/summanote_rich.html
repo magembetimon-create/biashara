@@ -1,0 +1,549 @@
+
+  
+     <div class="ml-md-4 row" id="TheEditor">
+      
+        <div class="col-md-9" id="editorView" >
+          <div id="summernote">
+              {{desc | safe }}
+          </div>  
+          
+                    <p class="text-right pb-4 mt-4 " >
+                       <!-- <a href="/buzinessTerms?pr=1&s={{duka.id}}" target="_blank" class="btn btn-light" id="getText">
+                          prevew
+                    </a> -->
+
+                    {{preview}}
+
+                    <button id="getText" class="btn btn-primary">
+                          Save
+                    </button>
+                </p>          
+        </div>
+
+
+        <div class="col-md-3  border-left" id="editorFiles" >
+          <h5>Images & Files</h5>
+          <!-- <div class="text-right p-2">
+               <button class="btn btn-light btn-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file">
+                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                      <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+               </button>
+               <button class="btn btn-light btn-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-image">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+               </button>
+          </div> -->
+
+          <nav class="nav nav-tabs nav-stacked">
+            <a class="nav-link active theLinks" data-show="#Images" data-hide="#DocFiles" href="#Images"  >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-image">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+            </a>
+            <a class="nav-link theLinks" data-hide="#Images" data-show="#DocFiles"  href="#DocFiles">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file">
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                <polyline points="13 2 13 9 20 9"></polyline>
+              </svg>
+            </a>
+          </nav>
+
+          <!-- FOR IMAGES -->
+          <div style="height: 80vh;"   id="Images" >
+               <div class="p-2 text-right">
+                     <label for="addImgInput" class="btn btn-sm smallFont btn-light text-primary fontColor latoFont">
+                        <b>+</b> {% if useri.langSet == 0 %}Ongeza {% else %}Add {% endif %}
+                     </label>
+               </div>  
+
+               <div class="border"style="min-height: 60vh;overflow-y:auto">
+                   <ul class="list-unstyled" id="savedImgs">
+                     
+                   </ul>
+               </div>
+          </div>
+
+           <!-- FOR FILES -->
+          <div style="height: 80vh;display:none"   id="DocFiles" >
+               <div class="p-2 text-right">
+                     <button data-target="#addDocs" data-toggle="modal" class="btn btn-sm btn-light text-primary smallFont latoFont">
+                        <b>+</b> {% if useri.langSet == 0 %}Ongeza {% else %}Add {% endif %}
+                     </button>
+               </div>  
+
+               <div class="border"style="min-height: 60vh;overflow-y:auto">
+                   <ul class="list-unstyled" id="savedDocs">
+                     
+                   </ul>
+               </div>
+          </div>
+
+
+
+        </div>
+
+
+     </div>
+
+
+     <!-- fixed navbar for mobiles -->
+<nav class="mobile-bottom-nav2 classic_div d-md-none position-fixed whiteBg" style="left:0;overflow-x: auto;bottom:0;width:100%" >
+
+  <div class="d-flex pt-1" >
+
+  <div class="mobile-bottom-nav__item ">
+      <a href="#"  class="switcheditor" data-show="#editorView" data-hide="#editorFiles">
+        <div class="text-center " >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+          </svg>
+        </div>
+        <div class="text-center nav-text ">
+             
+            {% if useri.langSet == 0 %} Kuandika {% else %}Editor{% endif %}
+
+        </div>
+        
+       
+      </a>
+  </div>
+
+  <div class="mobile-bottom-nav__item  ">
+      <a href="#" class="switcheditor" data-show="#editorFiles"  data-hide="#editorView" >
+        <div class="text-center  " >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+          </svg>
+        </div>
+        <div class="text-center nav-text ">
+            
+            {% if useri.langSet == 0 %}Mafaili {% else %} Files {% endif %}
+        </div>
+        
+       
+      </a>
+  </div>
+
+
+
+ 
+  </div>
+
+
+</nav>
+
+    
+     
+     <!-- Modal Add Image-->
+     <div class="modal fade" id="addImgs" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{% if useri.langSet == 0 %}Ongeza Picha {% else %} Add Images {% endif %}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body">
+           <div class="contaier-fluid" id="Onesha_picha">
+
+           </div>
+
+            <form action='/ecommerce/descImg' id="imgFormForDesc" method="post">
+             {% csrf_token %}
+           
+            <input name="addImgInput" hidden id="addImgInput" accept="image/*" class="btn btn-primary" type="file" >
+           
+            <div class="text-right py-2">
+              <button  type="submit"  class="btn btn-sm smallFont latoFont btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
+                        <path d="M260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H520q-33 0-56.5-23.5T440-240v-206l-64 62-56-56 160-160 160 160-56 56-64-62v206h220q42 0 71-29t29-71q0-42-29-71t-71-29h-60v-80q0-83-58.5-141.5T480-720q-83 0-141.5 58.5T280-520h-20q-58 0-99 41t-41 99q0 58 41 99t99 41h100v80H260Zm220-280Z"/>
+              </svg>
+               {% if useri.langSet == 0 %} Tupia {% else %} Upload  {% endif %}    
+               </button>         
+            </div>
+
+
+         </form>
+          </div>
+          
+  
+        </div>
+      </div>
+     </div>
+
+
+     <!-- Modal Add Doc Files-->
+     <div class="modal fade" id="addDocs" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{% if useri.langSet == 0 %}Ongeza Faili la hati {% else %} Add Document file {% endif %}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body">
+            <form action='/ecommerce/descDoc' id="DocFormForDesc" method="post">
+             {% csrf_token %}
+             <p>{% if useri.langSet == 0 %}Faili la hati  lisizidi 5MB  {% else %} Document file must not exceed 5MB {% endif %}
+            (.pdf, .docx, .xlsx, .csv ...)</p> 
+            <input name="addDocInput" id="addDocInput"  class="btn btn-primary" type="file" >
+            <div class="text-right py-2">
+                <button  type="submit"  class="btn btn-sm smallFont latoFont btn-primary">
+                    {% if useri.langSet == 0 %}Ongeza {% else %} Add {% endif %}
+                </button>              
+            </div>
+         </form>
+          </div>
+          
+  
+        </div>
+      </div>
+     </div>
+
+   
+     <script>
+             // Navigations .....................................................................//
+             $('body').on('click','.theLinks',function(e){
+                e.preventDefault()
+
+                $($(this).data('hide')).fadeOut()
+                $($(this).data('show')).fadeIn(10)
+                $('.theLinks').removeClass('active')
+                $(this).addClass('active')
+             })
+
+
+             // For Small Media..............................//
+             $('body').on('click','.switcheditor',function(e){
+                e.preventDefault()
+
+                $($(this).data('hide')).fadeOut()
+                $($(this).data('show')).fadeIn(10)
+               goTo('#TheEditor')
+             })
+
+
+              const fi   = document.getElementById('addImgInput') 
+            //  Image preview
+             $('#addImgInput').on('change',function(){
+
+                 ImgPreview(fi,$('#Onesha_picha'),$('#addImgs'))
+             })
+
+           //KUWEKA PICHA YA MAELEKEZO...............................................................................///
+              $('#imgFormForDesc').submit(function(e){
+                    e.preventDefault();
+                         
+                    GETIMAGEDATA = 1
+         
+                    const img = fi.files[0],
+                      url = $(this).attr('action')
+                      $('#addImgs').modal('hide')
+                      if(Number(img.size/1024) <= 490){
+                        IMGFORM.append('IMG',img)
+                        let theData = {url}
+                                    ImageUpload(theData)
+                        
+                        }else{
+                        compressImg({img,url})
+                        }
+                          
+                //           si = Number(fi.files.item(0).size )    
+                      
+                         
+                //     if(jQuery.inArray(extension, ['jfif','png','jpg','jpeg','svg']) == -1 || si>(1024*1024)) 
+                //     {
+                //         alert("{% if useri.langSet == 0 %} Faili la picha halikubaliki {% else %}Invalid Image File{% endif %} ");
+                //         $(this).trigger("reset");
+                      
+                //         return false;
+                //       }
+                //       else
+                //       {
+                //         var form = $(this)
+                //         var formData = new FormData(this);
+                //         $("#loadMe").modal('show');
+
+                //   $.ajax({
+                //         url: form.attr("action"),
+                //         type: 'POST',
+                //         data: formData,
+                //         cache: false,
+                //         processData: false,
+                //         contentType: false,
+                //         success: function (response) {
+                //         var msg = lang(response.message_swa,response.message_eng)
+                //             $('#loadme').modal('hide')
+                //             hideLoading()
+                //             if(response.success){
+                //                 toastr.success(`{% if useri.langSet == 0 %}${response.msg_swa} {% else %} ${response.msg_eng} {% endif %}`, `{% if useri.langSet == 0 %} Imefanikiwa {% else %} Success {% endif %}` , {timeOut: 2000});
+                //                 getTheImgs()   
+
+                //             }else{
+                //                 toastr.error(`{% if useri.langSet == 0 %}${response.msg_swa} {% else %} ${response.msg_eng} {% endif %}`, `{% if useri.langSet == 0 %} Imefanikiwa {% else %} Success {% endif %}`, {timeOut: 4000});
+
+                //             }
+
+                        
+                //         },
+                //         cache: false,
+                //         contentType: false,
+                //         processData: false
+                //     });
+
+                  
+
+                // }
+
+            });
+
+            // KUWEKA HATI KATIKA MAELEZO.......................................................................//
+              $('#DocFormForDesc').submit(function(e){
+                    e.preventDefault();
+                    const extension = $('#addDocInput').val().split('.').pop().toLowerCase(),
+                          fi   = document.getElementById('addDocInput') ,
+                          si = Number(fi.files.item(0).size )    
+                          
+                         
+                    if( si>(1024*1024*5)) 
+                    {
+                        alert("{% if useri.langSet == 0 %}Saizi ya Faili haikubaliki {% else %}Invalid File size{% endif %} ");
+                        $(this).trigger("reset");
+                      
+                        return false;
+                      }
+                      else
+                      {
+                        var form = $(this)
+                        var formData = new FormData(this);
+                        $("#loadMe").modal('show');
+
+                  $.ajax({
+                        url: form.attr("action"),
+                        type: 'POST',
+                        data: formData,
+                        cache: false,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                        var msg = lang(response.message_swa,response.message_eng)
+                           $('#loadme').modal('hide')
+                            hideLoading()
+                            if(response.success){
+                                toastr.success(`{% if useri.langSet == 0 %}${response.msg_swa} {% else %} ${response.msg_eng} {% endif %}`, `{% if useri.langSet == 0 %} Imefanikiwa {% else %} Success {% endif %}` , {timeOut: 2000});
+                                getTheImgs()   
+
+                            }else{
+                                toastr.error(`{% if useri.langSet == 0 %}${response.msg_swa} {% else %} ${response.msg_eng} {% endif %}`, `{% if useri.langSet == 0 %} Imefanikiwa {% else %} Success {% endif %}`, {timeOut: 4000});
+
+                            }
+
+                        
+                        },
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+
+                  
+
+                }
+
+            });
+
+            $(document).ready(function(){
+              getTheImgs()
+            })
+            
+
+            function getTheImgs(){
+              $('#loadMe').modal('show')
+              $.ajax({
+                type: "POST", 
+                  url: "/ecommerce/getDescImages",
+                data: {csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},
+              }).done(function(data){
+
+                  let li = '', ld = ''
+
+                  //For Images
+                  if(data.imgF.length>0){
+                          data.imgF.forEach(l=>{
+                            li+= `  <li class="smallFont border-bottom py-1 latoFont" >
+                              <div class="row p-1">
+                                  <div class="col-5" style="height:100px" > <img src="${l.img}" style="max-width:100%;max-height:100%" > </div>
+                                  <div class="col-7">
+                                      <div> ${splitTest(l.img)} </div>
+                                      <div> size: <i>${parseFloat((Number(l.size))/1024).toFixed(2)}KB</i>  </div>
+                                      <div >
+                                          <button class="btn btn-light btn-sm btn-light ondoaTu" data-val=${l.id} title="{% if useri.langSet == 0 %}Futa picha{% else %}Remove Image{% endif %}" >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
+                                              <polyline points="3 6 5 6 21 6"></polyline>
+                                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                              <line x1="10" y1="11" x2="10" y2="17"></line>
+                                              <line x1="14" y1="11" x2="14" y2="17"></line>
+                                            </svg>
+                                          </button>
+
+                                          <button class="btn btn-light btn-sm btn-light copytoClipboard" data-url="${l.img}" data-val="${l.id}" title="{% if useri.langSet == 0 %}Nakiri url ya picha{% else %}Copy url{% endif %}" >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+                                                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                </svg>  
+                                          </button>
+                                      </div>
+                                  </div>
+                              </div>
+                        </li>`
+                          }) 
+                                             
+                  }
+
+                  //For Docs
+                  if(data.docF.length>0){
+                          data.docF.forEach(l=>{
+                            ld+= `  <li class="smallFont border-bottom py-1 latoFont" >
+                              <div class="row p-1">
+                                  <div class="col-3" style="height:100px" > 
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text">
+                                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                      <polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line>
+                                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                                      <polyline points="10 9 9 9 8 9"></polyline>
+                                      </svg>
+                                  </div>
+                                  <div class="col-9">
+                                      <div> ${splitTest(l.doc)} </div>
+                                      <div> size: <i>${parseFloat((Number(l.size))/1024).toFixed(2)}KB</i>  </div>
+                                      <div >
+                                          <button class="btn btn-light btn-sm btn-light ondoaTu" data-val=${l.id} title="{% if useri.langSet == 0 %}Futa picha{% else %}Remove Image{% endif %}" >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
+                                              <polyline points="3 6 5 6 21 6"></polyline>
+                                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                              <line x1="10" y1="11" x2="10" y2="17"></line>
+                                              <line x1="14" y1="11" x2="14" y2="17"></line>
+                                            </svg>
+                                          </button>
+
+                                          <button class="btn btn-light btn-sm btn-light copytoClipboard" data-url="${l.doc}" data-val="${l.id}" title="{% if useri.langSet == 0 %}Nakiri url ya picha{% else %}Copy url{% endif %}" >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+                                                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                </svg>  
+                                          </button>
+                                      </div>
+                                  </div>
+                              </div>
+                        </li>`
+                          }) 
+                                             
+                  }
+
+
+                  $('#savedImgs').html(li)   
+                  $('#savedDocs').html(ld)   
+                  $('#loadMe').modal('hide')
+                  hideLoading()
+               }
+
+            )
+              }
+
+            
+            // COPY FILE  URL
+            $('body').on('click','.copytoClipboard',function(){
+                     const val = $(this).data('url')
+
+                    navigator.clipboard.writeText(`${val}`)
+                    toastr.success(lang('Imenakiliwa','Copied'), '{% if useri.langSet == 0 %}Imefanikiwa{% else %}Success Alert{% endif %}', {timeOut: 1000});
+
+                    
+                    // Alert the copied text
+                    
+            })
+
+            // REMOVE FILE   
+            $('body').on('click','.ondoaTu',function(){
+               if(confirm('{% if useri.langSet == 0 %}Ondoa Faili{% else %}Remove File{% endif %}')){
+
+               
+                    $('#loadMe').modal('show')
+                    $.ajax({
+                      type: "POST", 
+                        url: "/ecommerce/removeFiles",
+                      data: {val:$(this).data('val'),csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},
+                    }).done(function(data){
+                      $('#loadMe').modal('hide')
+                      hideLoading()
+                       if(data.success){
+                               getTheImgs()
+                               toastr.success(lang(data.msg_swa,data.msg_eng), '{% if useri.langSet == 0 %}Imefanikiwa{% else %}Success Alert{% endif %}', {timeOut: 2000});
+                       }else{
+                               toastr.error(lang(data.msg_swa,data.msg_eng), '{% if useri.langSet == 0 %}Haikufanikiwa {% else %} Error Alert{% endif %}', {timeOut: 2000});
+                           
+                       }
+                    })
+
+                  }
+            })
+
+             
+
+
+              var splitTest = function (str) {
+                return str.split('\\').pop().split('/').pop();
+            }
+
+     </script>
+
+    
+
+
+  
+  <script>
+    $(document).ready(function() {
+  
+
+        $('#summernote').summernote({
+            toolbar: [
+              // [groupName, [list of button]]
+              ['style', ['bold', 'italic', 'underline', 'clear']],
+              ['font', ['strikethrough', 'superscript', 'subscript']],
+              ['fontsize', ['fontsize']],
+              ['fontname', ['fontname']],
+              ['height', ['height']],
+              ['color', ['color']],
+              ['para', ['ul', 'ol', 'paragraph','style']],
+              ['insert', ['link', 'picture', 'video','hr','table']],
+              
+              ['view', ['undo','redo','fullscreen','codeview']],
+              
+            ],
+            height:500
+          });
+         
+
+    });
+
+
+
+  $(document).ready(function(){
+    $('.note-group-select-from-files').prop('disabled',true)
+    $('.note-group-select-from-files').hide()
+  })
+
+  
+
+
+  </script>

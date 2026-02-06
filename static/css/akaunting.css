@@ -1,0 +1,25 @@
+.cashpresenter{
+    background: var(--whiteBg);
+    -webkit-box-shadow: 0px 0px 19px -4px rgba(147,75,242,0.45);
+-moz-box-shadow: 0px 0px 19px -4px rgba(147,75,242,0.45);
+box-shadow: 0px 0px 19px -4px rgba(147,75,242,0.45);
+}
+#affixation{
+    -webkit-transition: all 0.5s ease-in-out;
+    -moz-transition: all 0.5s ease-in-out;
+    -ms-transition: all 0.5s ease-in-out;
+    -o-transition: all 0.5s ease-in-out;
+    transition: all 0.5s ease-in-out;
+}
+.affixation{
+    position: absolute;
+ 
+    top:140px;
+}
+.fix{
+    position: fixed;
+    top:80px ;
+}
+.table-content{
+    background:var(--whiteBg);
+}

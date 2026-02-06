@@ -1,0 +1,1625 @@
+{% extends 'userdash.html' %}
+
+{% block mauzo %}
+    {% load humanize %}
+
+<div  class="whiteBg  pb-5 classic_div pr-3" id="invoice_wrapper"  >
+    <div class="row ">
+
+        <div class="col-md-4  border-right" >
+            <header class="border-bottom  ">
+                <div class="row classic_div py-2">
+
+                
+                <div class="col-12">
+                   <form action="{% url 'viewAdjst' %}" method="get">
+                    <div class="input-group"> 
+                      <div class="input-group-prepend border">
+                        <button type="button" onclick="$('.listin').toggle(400)" class="d-flex d-md-none btn btn-light btn-sm  " >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+
+                            </svg>
+                        </button>
+                       
+                     </div> 
+                        
+                       
+                              <input type="text" name="code" id="code" placeholder=" {% if useri.langSet == 0 %}  Andika no ya Uhamisho {% else %} write Tranfer no.. {% endif %}" class="form-control smallFont">
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-secondary smallerFont btn-sm pt-2">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                   <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                                 </svg>
+                            </button>
+                        </div>  
+                       
+                       
+                    </div>
+              </form>
+
+                </div>
+                </div>
+
+                
+            </header>
+            <!-- <div class="row classic_div py-2 pl-4 border-bottom">
+                 <div class="input-group"> 
+                     <div class="input-group-prepend">
+                        <label for="input" class="pt-1 pr-2">
+                            {% if useri.langSet == 0 %}  Tafuta  {% else %} Search {% endif %}:
+                        </label>
+                     </div> 
+                           <input type="text" id="invo-auto-search" placeholder=" {% if useri.langSet == 0 %}  Andika no ya ankara {% else %} write invoice no.. {% endif %}" class="form-control smallFont">
+                     <div class="input-group-append">
+                         <a href="#" id="href_a" class="btn btn-secondary smallerFont btn-sm pt-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                              </svg>
+                            </a>
+                     </div>  
+                 </div>
+
+               
+            </div> -->
+
+           
+                 
+<div class="listin" style="height: 100vh;" >
+<ul class="list-unstyled " style='overflow-y:auto;height:67vh;overflow-x:hidden' >
+                {% for invo in bili %}
+
+                {% if invo.ad.id == the_bill.id %}
+
+                <li class="p-2  border-bottom bg-light" style="border-left:4px solid rgb(0, 106, 228) " >
+                 {% else %}   
+                <li class="p-2  border-bottom" >
+                 {% endif %}
+                    
+
+                        <a  class="row smallerFont text-decoration-none fontColor"  href="{% url 'viewAdjst' %}?item_valued={{invo.ad.id}}&back_to='allbill'&un={{un}} " >
+                            <div class="col-12">
+                            <strong> {{invo.ad.Interprise.name | title}}</strong> 
+                            </div>
+                           
+
+                            <div class="col-7 latoFont  pt-0">
+                              <span class="text-primary btn btn-default btn-sm smallFont px-0 latoFont">ADJ-{{invo.ad.code}}</span> | 
+                                <script>
+                                    document.write(moment('{{invo.ad.date | date:"r"  }}').format('DD/MM/YYYY  HH:mm'))
+                                </script> 
+                            </div>
+                            <div class="col-5 text-right pt-1">
+
+                              {% if  invo.ad.Ongezwa %}
+                                  <svg xmlns="http://www.w3.org/2000/svg"  height="18" width="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M15,17h2v-3h1v-2l-1-5H2l-1,5v2h1v6h9v-6h4V17z M9,18H4v-4h5V18z"/><rect height="2" width="15" x="2" y="4"/>
+                                    <polygon points="20,18 20,15 18,15 18,18 15,18 15,20 18,20 18,23 20,23 20,20 23,20 23,18"/>
+                                    </svg>
+                                  {% if useri.langSet == 0 %} Kuongeza  {% else %} Adding {% endif %}
+                                
+                            {% endif %}
+                               
+                              {% if  invo.ad.haribika %}
+                                  <svg xmlns="http://www.w3.org/2000/svg"  height="18" width="18" viewBox="0 0 24 24"  fill="currentColor">
+                                    <circle cx="10.5" cy="8.5" r="1.5"/>
+                                    <circle cx="8.5" cy="13.5" r="1.5"/><circle cx="15" cy="15" r="1"/>
+                                    <path d="M21.95,10.99c-1.79-0.03-3.7-1.95-2.68-4.22c-2.97,1-5.78-1.59-5.19-4.56C7.11,0.74,2,6.41,2,12c0,5.52,4.48,10,10,10 C17.89,22,22.54,16.92,21.95,10.99z M12,20c-4.41,0-8-3.59-8-8c0-3.31,2.73-8.18,8.08-8.02c0.42,2.54,2.44,4.56,4.99,4.94 c0.07,0.36,0.52,2.55,2.92,3.63C19.7,16.86,16.06,20,12,20z"/>
+                                  </svg>
+                                 {% if useri.langSet == 0 %} Kuharibika {% else %} Damage {% endif %}
+                             {% endif %}
+      
+                          {% if  invo.ad.expire %}
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="18"  height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M15,1H9v2h6V1z M11,14h2V8h-2V14z M19.03,7.39l1.42-1.42c-0.43-0.51-0.9-0.99-1.41-1.41l-1.42,1.42 C16.07,4.74,14.12,4,12,4c-4.97,0-9,4.03-9,9s4.02,9,9,9s9-4.03,9-9C21,10.88,20.26,8.93,19.03,7.39z M12,20c-3.87,0-7-3.13-7-7 s3.13-7,7-7s7,3.13,7,7S15.87,20,12,20z"/>
+                                  </svg>
+                                 {% if useri.langSet == 0 %} Kupitwa na Muda{% else %} Expired {% endif %}
+                          {% endif %}
+                          {% if  invo.ad.production %}
+                          <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18" fill="currentColor">
+                            <path d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M21 3.01H3c-1.1 0-2 .9-2 2V9h2V4.99h18v14.03H3V15H1v4.01c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98v-14c0-1.11-.9-2-2-2zM11 16l4-4-4-4v3H1v2h10v3z"/>
+                            </svg>
+
+                           {% if useri.langSet == 0 %} Kuzalishia{% else %} Production  {% endif %}
+                        
+                    {% endif %}
+                          {% if  invo.ad.tumika %}
+                              <svg xmlns="http://www.w3.org/2000/svg" height="18" width="18" viewBox="0 0 24 24"  fill="currentColor">
+                                <path d="M0 0h24v24H0V0z" fill="none"/>
+                                <path d="M14.77 9L12 12.11 9.23 9h5.54M21 3H3v2l8 9v5H6v2h12v-2h-5v-5l8-9V3zM7.43 7L5.66 5h12.69l-1.78 2H7.43z"/>
+                              </svg>
+      
+                                 {% if useri.langSet == 0 %} Matumizi{% else %} Usage {% endif %}
+                          {% endif %}
+                          {% if  invo.ad.potea %}
+                              <svg xmlns="http://www.w3.org/2000/svg" height="18" width="18"  viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M0 0h24v24H0V0z" fill="none"/>
+                                <path d="M3 9h2V7H3v2zm0-4h2V3H3v2zm4 16h2v-2H7v2zm0-8h2v-2H7v2zm-4 0h2v-2H3v2zm0 8h2v-2H3v2zm0-4h2v-2H3v2zM7 5h2V3H7v2zm12 12h2v-2h-2v2zm-8 4h2V3h-2v18zm8 0h2v-2h-2v2zm0-8h2v-2h-2v2zm0-10v2h2V3h-2zm0 6h2V7h-2v2zm-4-4h2V3h-2v2zm0 16h2v-2h-2v2zm0-8h2v-2h-2v2z"/>
+                                </svg>
+                                 {% if useri.langSet == 0 %} Kupotea{% else %} Waste {% endif %}
+                          {% endif %}
+
+                          {% if  invo.ad.others %}
+            
+                                <span class="brown" >{% if useri.langSet == 0 %} Mengineyo{% else %} Others {% endif %} </span> 
+                          {% endif %}
+
+                            </div>
+                          </a>
+                    
+                </li>
+
+                {% endfor %}
+            </ul>
+
+            <div class="pb-3"> 
+              
+           
+                {% if page.has_previous %}
+                  <a href="{% url 'viewAdjst' %}?item_valued={{the_bill.id}}&back_to='allbill'&un={{un}}" type="button"  class="btn btn-default border0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+                    </svg>
+                    </a>
+              
+                    <a href="{% url 'viewAdjst' %}?item_valued={{the_bill.id}}&page={{page.previous_page_number}}&un={{un}}" type="button"  class="btn btn-default  border0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                      </svg>
+                    </a>
+                  {% endif %}
+              
+                {% if page.has_next %}
+                    <a href="{% url 'viewAdjst' %}?item_valued={{the_bill.id}}&page={{page.next_page_number}}&un={{un}}" type="button" class="btn btn-default border0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                      </svg>
+                    </a>
+              
+                    <a href="{% url 'viewAdjst' %}?item_valued={{the_bill.id}}&page={{pages}}&un={{un}}" type="button"  class="btn btn-default border0" >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                      </svg>
+                    </a>
+              {% endif %}
+                    <label for="">
+                     
+                      {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+              
+                    </label>
+            </div>
+</div>
+            
+
+        </div>
+
+        <div class="col-md-8"  >
+            <header class="border-bottom row py-3">
+              <div class="col-md-4 ">
+               {% if the_bill.By == cheo or duka.owner == useri and not the_bill.full_Return %}        
+                  <button data-toggle="modal" title="{% if useri.langSet == 0 %}  Kutengua Marekebisho stoku  {% else %}  Undo Stock adjustment {% endif %}" data-target="#ModalRudisha" class="btn  btn-light btn-sm latoFont ">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                          </svg>
+                          
+                    </button>
+                {% elif the_bill.full_Return %}
+                      <div class="btn-group " id="">
+                        <a href="/stoku/AllAdjs" type="button"  class="btn border-secondary btn-sm {% if not un %}btn-primary{% else %}btn-light{% endif %}" data-r="0" data-riport="0" data-val="0" title="{% if useri.langSet == 0 %}Orodha{% else %}List{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                          </a>
+
+                        <a href="/stoku/AllAdjs?un=1" type="button"  class="btn border-secondary btn-sm  {% if  un %}btn-primary{% else %}btn-light{% endif %} " data-r="1" data-riport="0" data-val="0" title="{% if useri.langSet == 0 %}Marekebisho Yaliyotenguliwa{% else %}Adjustment Undo{% endif %}">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                          </svg>
+                          
+                        </a>  
+                    </div>
+
+                    {% if duka.owner == useri %}
+                    <button class="btn btn-sm btn-light text-danger border-secondary" data-toggle="modal" data-target="#confirmRemove" title="{% if useri.langSet == 0 %}Futa {% else %}Delete{% endif %}" >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
+                    {% endif %}
+                {% endif %}
+            </div>
+                
+                <div class="col-md-8 text-right">
+
+               
+                    <a href="/stoku/reduceItemQuantity" class="btn btn-primary btn-sm latoFont smallFont">
+                      <strong> + </strong> {% if useri.langSet == 0 %}Mpya{% else %}New{% endif %}
+                    </a>
+                    {% if the_bill.By == cheo or duka.owner == useri %}
+                    <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                      <a type="button" href="{% url 'printAdjst' %}?item_valued={{the_bill.id}}&lang={{useri.langSet}}&back='allBill'" target="_blank" class="btn btn-light btn-sm smallFont">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+                          <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                          <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+                        </svg>
+                               Print
+                          
+                      </a>
+                    
+                      <div class="btn-group" role="group">
+                        <button id="btnGroupDrop1" type="button" class="btn btn-light btn-sm smallFont dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                          <a class="dropdown-item" href="{% url 'printAdjst' %}?item_valued={{the_bill.id}}&lang=0&back='allBill'" target="_blank">Swahili</a>
+                          <a class="dropdown-item" href="{% url 'printAdjst' %}?item_valued={{the_bill.id}}&lang=1&back='allBill'" target="_blank">English</a>
+                        </div>
+                      </div>
+                    </div>
+                    {% endif %}
+              
+
+                </div>
+
+            </header>
+
+
+         
+            
+            
+            
+
+            <div  class="table-responsive pt-3 " id="invo_box" >
+
+                <div class="classic_div mt-sm-2 pt-3 pb-2 px-3 the_invo_page" id="the_invo_page" >
+
+              <div class="row classic_div pt-3" >
+                    <div class="col-md-7   border-right">
+                     {% if the_bill.full_Return %}  
+                     
+                          <h4 class="brown mt-1 pb-3  border-bottom weight500">
+                            {% if useri.langSet == 0 %}MAREKEBISHO YA STOKU  YALIYOTENGULIWA{% else %}STOCK ADJUSTMENT UNDO NOTE{% endif %}
+                        </h4>
+                     {% else %}
+                          <h4 class="text-secondary mt-1 pb-3  border-bottom weight600">
+                            {% if useri.langSet == 0 %}MAREKEBISHO STOKU {% else %}STOCK ADJUSTMENT NOTE{% endif %}
+                        </h4>
+
+                      {% endif %}
+
+                     
+
+                      <div class="row">
+                        <div class="text-danger py-1 weight600 col-3">
+                            {% if useri.langSet == 0 %}  Stoku{% else %}  Stock{% endif %}:
+                        </div> 
+                        <div class="col-9"  >
+                           <strong>{{duka.name| title }} </strong> 
+                           <u class="weight600 darkblue d-block">{{duka.Intp_code}}</u> 
+                           <address class="text-capitalize" >
+                             {% if duka.jengo %} {{duka.jengo}},{% endif %} 
+                             {{duka.mtaa.mtaa | title}}, {{duka.mtaa.kata.kata | title}}, {{duka.mtaa.kata.wilaya.wilaya | title}},
+                             {{duka.mtaa.kata.wilaya.mkoa.mkoa | title}}, {{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}}
+                           </address>
+                        </div>                        
+                      </div>
+                     
+
+                      
+                      <div class="row">
+                        <div class="col-3 weight600 text-danger">
+                           {% if useri.langSet == 0 %} Na {% else %}  By {% endif %}: 
+                        </div>
+                        <div class="col-9">
+                          <strong>{{the_bill.Na.user.user.first_name | title}}   {{the_bill.Na.user.user.last_name | title}}</strong>
+                        </div>
+                      </div>
+                   
+                    </div>
+                 <div class="col-md-5">
+                     
+                      <div class="text-md-right " style="margin-top:9px">
+                         <h6> <strong>  ADJ-{{the_bill.code}}</strong></h6> 
+                      </div>
+                      <hr>
+
+                      <div class="row smallFont" style="margin-top: -6px;">
+                        <div class="col-5 text-right">
+                            <p class="text-danger weight600">
+                                {% if useri.langSet == 0 %} Ilirekodiwa  {% else %}  Recorded on {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-7 weight600 text-right">
+                            <p> 
+                              <script>
+                                      document.write(moment('{{the_bill.date | date:"r"  }}').format('DD/MM/YYYY  HH:mm'))
+                              </script>
+                                
+                            </p>
+                        </div>  
+                      </div>
+
+                   <div class="row smallFont" style="margin-top: -6px;">
+                    <div class="col-5 text-right">
+                        <p class="text-danger text-right weight600">
+                             {% if useri.langSet == 0 %} Tarehe  {% else %} Due date {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-7 weight600 text-right">
+                        <p>
+                            {{the_bill.Recodeddate|date:'d/m/Y'}}
+                        </p>
+                    </div>
+                    </div>
+
+                    
+                <div class="row text-right mb-2">
+                    <div class="col-5 weight600 ">
+                        <div>
+                            {% if useri.langSet == 0 %} Aina{% else %} Type  {% endif %} :
+                        </div>
+                    </div>
+                  <div class="col-7 weight600 smallFont">
+                    {% if not the_bill.Ongezwa  %}
+                    <span class="text-danger ">
+                            {% if useri.langSet == 0 %} Kupunguza Bidhaa {% else %}Reducing Item(s) {% endif %}
+                    </span>
+                    {% else %}
+                      {% if useri.langSet == 0 %} Kuongeza Bidhaa {% else %} Adding Item(s){% endif %}
+                    {% endif %}
+                  </div>
+                       
+
+                  </div>
+                <div class="row text-right">
+                    <div class="col-5">
+                        <h6>
+                          {% if not the_bill.Ongezwa %}
+                            {% if useri.langSet == 0 %} Sababu{% else %} Reason  {% endif %} :
+                       {% else %}
+                             {% if useri.langSet == 0 %} Marekebisho{% else %} Adjustments  {% endif %} :
+                       {% endif %}
+                          </h6>
+                    </div>
+                  <h6 class="col-7">
+                    {% if  the_bill.Ongezwa %}
+                        <label for="oda" class="latoFont smallFont px-2 py-1 text-light" style="background-color: rgba(5, 136, 0, 0.925);color:#fff" >
+                          <svg xmlns="http://www.w3.org/2000/svg"  height="18" width="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M15,17h2v-3h1v-2l-1-5H2l-1,5v2h1v6h9v-6h4V17z M9,18H4v-4h5V18z"/><rect height="2" width="15" x="2" y="4"/>
+                            <polygon points="20,18 20,15 18,15 18,18 15,18 15,20 18,20 18,23 20,23 20,20 23,20 23,18"/>
+                            </svg>
+                          {% if useri.langSet == 0 %} Zimeongezwa  {% else %} Added {% endif %}
+                        </label>
+                    {% endif %}
+                        {% if  the_bill.haribika %}
+                            <label for="oda" class="latoFont  px-2 py-1 text-light" style="background-color: rgba(167, 64, 23, 0.815);color:#fff" >
+                                <svg xmlns="http://www.w3.org/2000/svg"  height="18" width="18" viewBox="0 0 24 24"  fill="currentColor">
+                                  <circle cx="10.5" cy="8.5" r="1.5"/>
+                                  <circle cx="8.5" cy="13.5" r="1.5"/><circle cx="15" cy="15" r="1"/>
+                                  <path d="M21.95,10.99c-1.79-0.03-3.7-1.95-2.68-4.22c-2.97,1-5.78-1.59-5.19-4.56C7.11,0.74,2,6.41,2,12c0,5.52,4.48,10,10,10 C17.89,22,22.54,16.92,21.95,10.99z M12,20c-4.41,0-8-3.59-8-8c0-3.31,2.73-8.18,8.08-8.02c0.42,2.54,2.44,4.56,4.99,4.94 c0.07,0.36,0.52,2.55,2.92,3.63C19.7,16.86,16.06,20,12,20z"/>
+                                </svg>
+                              {% if useri.langSet == 0 %} Kuharibika {% else %} Damage {% endif %}
+                            </label>
+                        {% endif %}
+
+                        {% if  the_bill.production %}
+                       <label for="oda" class="latoFont px-2 py-1 text-light" style="color: #fff;background:rgba(11, 65, 145, 0.884)" >
+                        <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18" fill="currentColor">
+                          <path d="M0 0h24v24H0z" fill="none"/>
+                          <path d="M21 3.01H3c-1.1 0-2 .9-2 2V9h2V4.99h18v14.03H3V15H1v4.01c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98v-14c0-1.11-.9-2-2-2zM11 16l4-4-4-4v3H1v2h10v3z"/>
+                          </svg>
+
+                           {% if useri.langSet == 0 %} Kuzalishia{% else %} Production  {% endif %}
+                        </label>
+                    {% endif %}
+
+                        {% if  the_bill.expire %}
+                          <label for="oda" class="latoFont  px-2 py-1 text-light" style="background-color: rgba(126, 82, 1, 0.575);color:#fff" >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18"  height="18" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M15,1H9v2h6V1z M11,14h2V8h-2V14z M19.03,7.39l1.42-1.42c-0.43-0.51-0.9-0.99-1.41-1.41l-1.42,1.42 C16.07,4.74,14.12,4,12,4c-4.97,0-9,4.03-9,9s4.02,9,9,9s9-4.03,9-9C21,10.88,20.26,8.93,19.03,7.39z M12,20c-3.87,0-7-3.13-7-7 s3.13-7,7-7s7,3.13,7,7S15.87,20,12,20z"/>
+                                </svg>
+                              {% if useri.langSet == 0 %} Kupitwa na Muda{% else %} Expired {% endif %}
+                          </label>
+                        {% endif %}
+                        {% if  the_bill.tumika %}
+                          <label for="oda" class="latoFont px-2 py-1 text-light" style="color: #fff;background:rgba(145, 82, 11, 0.884)" >
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18" width="18" viewBox="0 0 24 24"  fill="currentColor">
+                              <path d="M0 0h24v24H0V0z" fill="none"/>
+                              <path d="M14.77 9L12 12.11 9.23 9h5.54M21 3H3v2l8 9v5H6v2h12v-2h-5v-5l8-9V3zM7.43 7L5.66 5h12.69l-1.78 2H7.43z"/>
+                            </svg>
+
+                              {% if useri.langSet == 0 %} Matumizi{% else %} Usage {% endif %}
+                            </label>
+                        {% endif %}
+                        {% if  the_bill.potea %}
+                          <label for="oda" style="background-color: rgb(117, 8, 0);color:#fff" class="latoFont  px-2 py-1 text-light" >
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18" width="18"  viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M0 0h24v24H0V0z" fill="none"/>
+                              <path d="M3 9h2V7H3v2zm0-4h2V3H3v2zm4 16h2v-2H7v2zm0-8h2v-2H7v2zm-4 0h2v-2H3v2zm0 8h2v-2H3v2zm0-4h2v-2H3v2zM7 5h2V3H7v2zm12 12h2v-2h-2v2zm-8 4h2V3h-2v18zm8 0h2v-2h-2v2zm0-8h2v-2h-2v2zm0-10v2h2V3h-2zm0 6h2V7h-2v2zm-4-4h2V3h-2v2zm0 16h2v-2h-2v2zm0-8h2v-2h-2v2z"/>
+                              </svg>
+                              {% if useri.langSet == 0 %} Kupotea{% else %} Waste {% endif %}
+                            </label>
+                        {% endif %}
+                  </h6>
+
+                  </div>
+
+  
+                    
+
+
+                 </div>
+             </div>
+               <hr>
+               <div class="row px-3">
+                  <div class="col-6">
+
+                 </div> 
+              
+               </div>
+               <br>
+
+
+              
+
+               <div class="table-responsive">
+                  <table id="prod_table" class=" table-bordered table table-sm" style="min-width: 650px;" data-row=1>
+                  <tr class="bg-light smallFont ">
+                    <th   > #</th>
+                    <th   > {% if useri.langSet == 0 %} Jina la Bidhaa  {% else %} Item Name {% endif %}</th>
+
+                    {% if color.count > 0  %}
+                    <th > {% if useri.langSet == 0 %} Rangi {% else %} Color {% endif %}</th>
+                    {% endif %}
+
+                    {% if size.count > 0  %}
+                    <th > {% if useri.langSet == 0 %} Size {% else %} Size {% endif %}</th>
+                    {% endif %}
+
+                    <th > {% if useri.langSet == 0 %} Vipimo {% else %}  Units {% endif %}</th>
+                    <th > {% if useri.langSet == 0 %} Thamani {% else %}  Worth {% endif %}</th>
+                    <th > {% if useri.langSet == 0 %} Idadi  {% else %} Qty {% endif %}</th>
+                    <th > {% if useri.langSet == 0 %} Jumla  {% else %} Total {% endif %}</th>
+                    
+                  </tr>
+
+
+
+                          <tbody  id="view-invo_tbody">
+                            
+
+
+                          </tbody>
+
+                </table>
+               </div>
+
+               <div class="row mb-3">
+                 <div class="col-md-8 col-4 text-right weight600">
+                  {% if useri.langSet == 0 %}Thamani Jumla {% else %} Net Worth {% endif %}
+                 </div>
+                 <div class="col-md-4 col-8 text-right pr-4  "> <span class="text-primary latoFont">{{duka.currencii}}.</span> <strong class="brown" >{{total | floatformat:'-2'| intcomma}} </strong> </div>
+               </div>
+
+
+               <div class="row ">
+                   <div class="col-12 py-4">
+                   
+                    
+                      <p class="col-md-6" >
+                          {% if useri.langSet == 0 %} Imeidhinishwa na {% else %} Issued By {% endif %}: <a href="{% if not the_bill.Na.user == duka.owner and not the_bill.Na == cheo %}/EmployeeDetails?wrk={{the_bill.Na.fanyakazi.id}}{% else %}#{% endif %}"><strong>{{the_bill.Na.user.user.first_name | title}}   {{the_bill.Na.user.user.last_name | title}}</strong></a>   
+                      </p>
+                      
+                      
+                       
+                     <div class="text-center py-2" style="border-left:3px solid yellow;background:#f0f8fc">
+                          
+                               <div class="p-3 d-inline" style="height: 50px;width:50px;border-radius:50%;color:rgb(191, 230, 253)">
+                                    <span class="text-info">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+                                          </svg>
+                                    </span>
+                               </div>|
+                          <span> {% if the_bill.production %}
+                            {% if useri.langSet == 0 %} 
+                               Zimetumika Kuzalishia bidhaa 
+                            {% else %} 
+                               Used for Item(s) production  
+                            {% endif %}<a href="/production/productonReport?pr={{the_bill.production.id}}">PROD-{{the_bill.production.code}}</a>
+                            {% else %}
+                             {{the_bill.desc}}
+                             {% endif %} </span>  
+                           
+                              </div>
+                   </div>
+                   
+               </div>
+
+               
+              
+        
+
+            </div>
+             
+            <!-- SHOW IF UNDO ........................................ -->
+            {% if the_bill.full_Return %}
+            <div class="mt-4 mb-3">
+              <h6 class="py-2" style="max-width: 600px;">
+                {% if useri.langSet == 0 %}Uhakiki wa Kutengua Marekebisho{% else %}Adjustment Undo Confirmations {% endif %}
+
+                <div class="btn-group float-right" role="group" aria-label="Button group with nested dropdown">
+                  <a type="button" href="{% url 'printAdjstNames' %}?item_valued={{the_bill.id}}&lang={{useri.langSet}}&back='allBill'&un=1" target="_blank" class="btn btn-light btn-sm smallFont">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+                      <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                      <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+                    </svg>
+                           Print
+                      
+                  </a>
+                
+                  <div class="btn-group" role="group">
+                    <button id="btnGroupDrop1" type="button" class="btn btn-light btn-sm smallFont dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                      <a class="dropdown-item" href="{% url 'printAdjstNames' %}?item_valued={{the_bill.id}}&lang=0&back='allBill'&un=1" target="_blank">Swahili</a>
+                      <a class="dropdown-item" href="{% url 'printAdjstNames' %}?item_valued={{the_bill.id}}&lang=1&back='allBill'&un=1" target="_blank">English</a>
+                    </div>
+                  </div>
+                </div>
+              </h6>
+             
+              <div class="table-responsive" style="max-width: 600px;">
+               <table class="table table-bordered" style="min-width: 600px;">
+                <thead>
+                  <tr class="smallerFont" >
+                    <th>#</th>
+                    <th>{% if useri.langSet == 0 %} Mtumiaji {% else %} Member {% endif %} </th>
+                    <th>
+                      {% if useri.langSet == 0 %}Cheo {% else %}  Position{% endif %}
+                    </th>
+                     <th>
+                      {% if useri.langSet == 0 %} Tarehe{% else %}Date {% endif %}
+                    </th>
+                    <th>
+                      {% if useri.langSet == 0 %} Kuhakiki{% else %}Confirmed {% endif %}
+                    </th>
+                   
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for cn in cmR %}
+                  
+                  <tr>
+                     <td class=" text-capitalize" scope="row">
+                      {{forloop.counter}}
+                    </td>
+            
+                     <td class=" text-capitalize">
+                       {% if cn.userP.admin %}
+                       {{cn.userP.user.user.first_name}} {{cn.userP.user.user.last_name}}
+                       {% else %}
+                       {{cn.userP.fanyakazi.jina}} 
+                       {% endif %}
+                    </td>
+            
+                     <td >
+                       {{cn.userP.cheo}}
+                    </td>
+                    <td>
+                     
+                      {% if cn.confirmed or cn.dinied %}
+                      
+                      <script>
+                        
+                        document.write(moment('{{cn.tarehe | date:"r" }}').format('DD/MM/YYYY HH:mm'))
+                      </script>
+                      {% else %}
+                          ----------
+                      {% endif %}
+                    </td>
+                    <td class="text-center">
+                         {% if cn.confirmed %}
+                          <span class="weight700 " style="font-size: larger;" >
+                            &checkmark;
+                         </span>
+                         {% else %}
+                         {% if cn.dinied %}
+                         <span class="weight500 brown" >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                                  <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                                  <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                                </svg>
+            
+                                {{cn.desc}}
+                                {% if cn.user == cheo %}
+                                <button data-toggle="modal" data-target="#comfirm_adjst" class="btn btn-primary btn-sm latoFont smallFont">
+                                  {% if useri.langSet == 0 %}hakiki{% else %}Confirm{% endif %}
+                               </button>
+                               {% endif %}
+                         </span>
+                            
+                         {% else %}
+                            {% if cn.userP == cheo %}
+                              <button data-toggle="modal" data-target="#comfirm_adjst" class="btn btn-primary btn-sm latoFont smallFont">
+                                  {% if useri.langSet == 0 %}hakiki{% else %}Confirm{% endif %}
+                              </button>
+                              {%else%}
+                                -----
+                              {% endif %}
+                              
+                            {% endif %}
+                          {% endif %}
+                       
+                        
+            
+                    </td>
+
+                    
+                  </tr>
+           
+                  {% endfor %}
+                </tbody>
+              </table>
+              </div>
+            
+            
+          
+            
+            </div>
+            {% endif %}
+
+            <div class="mt-4 mb-3">
+              <h6 class="py-2" style="max-width: 600px;">
+                {% if useri.langSet == 0 %}Uhakiki wa Marekebisho{% else %}Adjustment Confirmations {% endif %}
+
+                <div class="btn-group float-right" role="group" aria-label="Button group with nested dropdown">
+                  <a type="button" href="{% url 'printAdjstNames' %}?item_valued={{the_bill.id}}&lang={{useri.langSet}}&back='allBill'" target="_blank" class="btn btn-light btn-sm smallFont">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+                      <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                      <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+                    </svg>
+                           Print
+                      
+                  </a>
+                
+                  <div class="btn-group" role="group">
+                    <button id="btnGroupDrop1" type="button" class="btn btn-light btn-sm smallFont dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                      <a class="dropdown-item" href="{% url 'printAdjstNames' %}?item_valued={{the_bill.id}}&lang=0&back='allBill'" target="_blank">Swahili</a>
+                      <a class="dropdown-item" href="{% url 'printAdjstNames' %}?item_valued={{the_bill.id}}&lang=1&back='allBill'" target="_blank">English</a>
+                    </div>
+                  </div>
+                </div>
+              </h6>
+             
+              <div class="table-responsive" style="max-width: 600px;">
+               <table class="table table-bordered" style="min-width: 600px;">
+                <thead>
+                  <tr class="smallerFont" >
+                    <th>#</th>
+                    <th>{% if useri.langSet == 0 %} Mtumiaji {% else %} Member {% endif %} </th>
+                    <th>
+                      {% if useri.langSet == 0 %}Cheo {% else %}  Position{% endif %}
+                    </th>
+                     <th>
+                      {% if useri.langSet == 0 %} Tarehe{% else %}Date {% endif %}
+                    </th>
+                    <th>
+                      {% if useri.langSet == 0 %} Kuhakiki{% else %}Confirmed {% endif %}
+                    </th>
+                   
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for cp in cm %}
+                  
+                  <tr>
+                     <td class=" text-capitalize" scope="row">
+                      {{forloop.counter}}
+                    </td>
+            
+                     <td class=" text-capitalize">
+                       {% if cp.userP.admin %}
+                       {{cp.userP.user.user.first_name}} {{cp.userP.user.user.last_name}}
+                       {% else %}
+                       {{cp.userP.fanyakazi.jina}} 
+                       {% endif %}
+                    </td>
+            
+                     <td >
+                       {{cp.userP.cheo}}
+                    </td>
+                    <td>
+                     
+                      {% if cp.confirmed or cp.dinied %}
+                      
+                      <script>
+                        
+                        document.write(moment('{{cp.tarehe | date:"r" }}').format('DD/MM/YYYY HH:mm'))
+                      </script>
+                      {% else %}
+                          ----------
+                      {% endif %}
+                    </td>
+                    <td class="text-center">
+                         {% if cp.confirmed %}
+                          <span class="weight700 " style="font-size: larger;" >
+                            &checkmark;
+                         </span>
+                         {% else %}
+                         {% if cp.dinied %}
+                         <span class="weight500 brown" >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                                  <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                                  <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                                </svg>
+            
+                                {{cp.desc}}
+                                {% if cp.user == cheo %}
+                                <button data-toggle="modal" data-target="#comfirm_adjst" class="btn btn-primary btn-sm latoFont smallFont">
+                                  {% if useri.langSet == 0 %}hakiki{% else %}Confirm{% endif %}
+                               </button>
+                               {% endif %}
+                         </span>
+                            
+                         {% else %}
+                            {% if cp.userP == cheo %}
+                              <button data-toggle="modal" data-target="#comfirm_adjst" class="btn btn-primary btn-sm latoFont smallFont">
+                                  {% if useri.langSet == 0 %}hakiki{% else %}Confirm{% endif %}
+                              </button>
+                              {%else%}
+                                -----
+                              {% endif %}
+                              
+                            {% endif %}
+                          {% endif %}
+                       
+                        
+            
+                    </td>
+
+                    
+                  </tr>
+                  
+                  {% endfor %}
+                </tbody>
+              </table>
+              </div>
+            
+            
+          
+            
+            </div>
+ 
+
+
+            </div>
+
+            
+           
+
+
+                        <script>
+                            $('document').ready(function(){
+                                let tot_vat=0,vat_include = false,vat_set=false,sub_tot=0
+                                    const vatper = Number('{{duka.vatper}}')/100
+                                    let itms=[],itm_var={},
+                                        colors=[],color_var={},
+                                        sizes=[],sizes_var={},
+                                        tr='',
+                                        
+                                        set_v='',
+                                        includ_v='',
+                                        bei = 0,
+                                        act_bei=0
+                                //create objects for items , color & sizes ...........................//
+
+
+                                //CREATE ITEMS OBJECT...............// 
+
+                                '{% for li in list %}'
+                             
+                                 //make the price equal to sold price if the item sold price is greater than its actul saved price
+                               
+
+                                 
+                           
+ 
+                                itm_var={
+                                    val:'{{li.itm.id}}',
+                                    prod:'{{li.itm.prod.id}}',
+                                    idadi:'{{li.itm.qty}}',
+                                    picha:'{{li.picha}}',
+                                    maelezo:'{{li.itm.prod.bidhaa.maelezo}}',
+                                    code:'{% if li.itm.prod.uhamisho  %}RC-{{li.itm.prod.uhamisho.receive.transfer.code}}{% elif li.itm.prod.manunuzi  %} BILL-{{li.itm.prod.manunuzi.manunuzi.code}} {% elif li.itm.prod.produced  %} BATCH-{{li.itm.prod.produced.production.code}} {% elif li.itm.prod.ongezwa %} ADJ-{{li.itm.prod.ongezwa.code}} {% endif %}',
+
+                                    vipimo:'{{li.itm.prod.bidhaa.vipimo}}',
+                                    vipimo_jum:'{{li.itm.prod.bidhaa.vipimo_jum}}',
+                                    jina:'{{li.itm.prod.bidhaa.bidhaa_jina}}',
+                                    uwiano:'{{li.itm.prod.bidhaa.idadi_jum}}',
+                                    bei:'{{li.itm.prod.Bei_kununua}}',
+                                    serial:`{{li.itm.prod.bidhaa.serial}}`,
+                                    prCost:`{{li.cost}}`,
+                                    prdcd:Number(`{{li.produced}}`)
+
+                                }
+
+                                itms.push(itm_var)
+
+                                '{% endfor %}'
+
+                           
+
+                                //COLOR OBJECTS....................//
+                                '{% for col in color %}'
+                                  color_var={
+                                      itm:'{{col.change.id}}',
+                                      val:'{{col.color.color.id}}',
+                                      idadi:'{{col.qty}}',
+                                      color_name:'{{col.color.color.color_name}}',
+                                      color_code:'{{col.color.color.color_code}}'
+                                  }
+                                  colors.push(color_var)
+
+                                 '{% endfor %}'
+
+                                  
+
+                               
+
+                                 //SIZES OBJECT...............//
+                                 '{% for sz in size %}'
+                                    sizes_var={
+                                        color:'{{sz.size.sized.color.id}}',
+                                        size:'{{sz.size.sized.size}}',
+                                        idadi:'{{sz.qty}}',
+                                    }
+                                    sizes.push(sizes_var)
+                                 '{% endfor %}'
+
+
+
+                                 //USED PRICES.........................//
+                                 let pr=[],pr_var={}
+                                 '{% for p in prices %}'
+                                    pr_var={
+                                        unit:'{{p.unit}}',
+                                        price:Number('{{p.price}}'),
+                                        qty:Number('{{p.qty}}'),
+                                        prod:'{{p.prod}}'
+                                    }
+                                    pr.push(pr_var)
+
+                                 '{% endfor %}'
+                                 
+
+
+                              let sales=0,total_vat=0,rnum=0
+                              itms.forEach(itm=>{
+                                  rnum+=1
+                                  let col = c =>c.itm === itm.val,prc = p =>p.prod ===itm.prod
+                                  
+                                  const colr = colors.filter(col),prices = pr.filter(prc)
+                                  let beis = 0 ,idadis=0,idad=0,vpmo='',sale=0,thamani = Number(itm.bei)/Number(itm.uwiano)
+                                  
+                                  if(itm.prdcd){
+                                    thamani = Number(itm.prCost)
+                                  }
+
+                                  let prics = [],
+                                       prc1 = {
+                                        unit:itm.vipimo,
+                                        price:Number(itm.bei),
+                                        qty:1
+                                       } 
+
+                                    prics.push(prc1)   
+
+                                    if(Number(itm.uwiano)>1){
+                                        prc2={
+                                             unit:itm.vipimo_jum,
+                                             price:Number(itm.bei_jum),
+                                             qty:Number(itm.uwiano)
+                                        }
+                                        prics.push(prc2)
+
+                                    }
+
+                                    
+
+
+                                    prics = [...prics,...pr]
+
+
+                                   
+                                     
+
+                                
+                                      
+
+
+
+                                  
+
+
+                                 tr+=`<tr class="text-center   latoFont" style="padding: 10px 3px !important;">`
+
+                             
+                               if(colr.length==0){
+
+                                let prp = b => itm.idadi % b.qty===0,
+                                  prop_price = prics.filter(prp)
+
+                                  if(prop_price.length == 0){
+                                    prop_price = prics.filter(b=>Number(b.qty)===1)
+                                }  
+
+                                 prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+                                   ?((a.qty > b.qty)? 1 : -1) : -1 )
+                                 let ps = prop_price[prop_price.length-1]  
+                                         
+                                            beis = Number(itm.bei)*Number(ps.qty)
+
+                                       
+
+                                        vpmo = ps.unit
+                                        idad = Number(itm.idadi)/Number(ps.qty)
+
+                                       
+
+                              
+
+                           
+                                 
+                                tr+=`
+                                <td>${rnum}</td>
+                                <td class="text-left " > 
+                                  <div class="d-flex">
+                                  <div style="width:40px;height:40px" >`
+                                    if(itm.picha!=''){
+                                     tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+                                    }else{
+                                        tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                                          <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                          <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                                        </svg>`
+                                    }
+                                
+                                    
+                                  tr+=`</div>
+                                    <div class="ml-1" >
+                                      <div><strong class="pl-1" style="color: #3989c6"> ${titleCase(itm.jina)}</strong></div>
+                                      <div class="pl-2 text-muted smallFont latoFont itm_desc" style="color:blue">${itm.maelezo} <u class="ml-1 pl-1 border-left darkblue">${itm.code}</u></div>
+                                      <div class="pl-2  smallerFont itm_desc font-weight-bold" >${itm.serial.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</div>
+                                    </div>
+                                  </div>
+                                </td>` 
+                                
+                                if(colors.length>0){
+                                    tr+=`<td style="padding: 10px 3px !important;"> --- </td>` 
+                                }
+
+                                if(sizes.length>0){
+                                  tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+                                }
+ 
+                                 //REGULATE PRICE FOR VAT.............................//
+                          
+                            tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+                                 ` 
+
+                                 tr+=`
+                                       <td style="padding: 10px 3px !important;" class="weight600" > ${Number(thamani*Number(ps.qty)).toLocaleString()}</td> 
+                                       <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}</td> 
+                                       <td style="padding: 10px 3px !important;" class="weight700 brown" > ${Number(idad*thamani*Number(ps.qty)).toLocaleString()}</td> 
+                                        
+                                `
+                             
+                            }else{
+                                let span=colr.length+1
+                                     
+                                if(span==2){
+                                  span=1
+                                }
+                                
+                                tr+=`
+                                <td class="rnum"  rowspan="${span}">${rnum}</td>
+                                <td class="text-left  span1" id="span_${itm.val}" rowspan="${span}">
+                                  <div class="d-flex">
+                                  <div style="width:40px;heigth:40px" >`
+                                    if(itm.picha!=''){
+                                      tr+=` <img src="${itm.picha}" style="max-width:100%;max-height:100%"  >`
+                                     }else{
+                                         tr+=` <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                                           <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                           <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                                         </svg>`
+                                     }
+                                  tr+=`</div>
+
+                                  <div class="ml-1" >
+                                    <div><strong class="pl-1" style="color: #3989c6"> ${titleCase(itm.jina)} </strong></div>
+                                    <div class="pl-2 itm_desc text-muted smallFont latoFont" style="color:blue">${itm.maelezo}<u class="ml-1 pl-1 border-left darkblue">${itm.code}</u></div>
+                                   </div>
+                                  </div>
+                                </td>` 
+                               
+                                colr.forEach(col=>{
+                                    let szi = s=> s.color == col.val
+                                    const sz = sizes.filter(szi)
+
+                              if(span>2){
+                                   tr+=`<tr class=" text-center  latoFont" style="padding: 10px 3px !important;">`
+                                   }
+
+                                    if(sz.length==0){
+                                    let prp = b => col.idadi % b.qty===0,
+                                      prop_price = prics.filter(prp)
+
+                                      if(prop_price.length == 0){
+                                        prop_price = prics.filter(b=>Number(b.qty)===1)
+                                    }  
+    
+                                     prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+                                       ?((a.qty > b.qty)? 1 : -1) : -1 )
+                                     let ps = prop_price[prop_price.length-1]
+
+                                    vpmo = ps.unit
+                                    idad = Number(col.idadi)/Number(ps.qty)
+
+        
+                               
+
+                                      tr+=`<td style="padding: 10px 3px !important;" class="smallerFont text-left">
+                                        <label 
+                                        style="width:15px;
+                                        height:15px;
+                                        background:${col.color_code};
+                                        border-radius:100%;
+                                        color:rgba(240, 248, 255, 0);
+                                        border:1px solid #ccc"
+                                        >
+                                        ''
+                                    </label> 
+                                    ${titleCase(col.color_name)}
+                                      </td> `
+                                      if(sizes.length>0){
+                                      tr+=`<td style="padding: 10px 3px !important;"> --- </td> `
+                                      }
+
+                                       
+                                      
+                                      tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+                                      `
+
+                                    
+                                    tr+=` <td style="padding: 10px 3px !important;" class="weight600" > ${Number(thamani*Number(ps.qty)).toLocaleString()}</td> 
+                                          <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}</td> 
+                                          <td style="padding: 10px 3px !important;" class="weight700 brown" > ${Number(idad*thamani*Number(ps.qty)).toLocaleString()}</td> 
+                                          
+                                           `
+                        
+                                 }else{
+                                    tr+=`<td style="padding: 10px 3px !important;" `
+                                    if(sz.length>1){
+                                       tr+=` rowspan=${sz.length+1}` 
+                                    }
+                                    
+                                   tr+=` data-itm="${itm.val}" class="span2 smallerFont text-left" >
+
+                                        <label 
+                                        style="width:15px;
+                                        height:15px;
+                                        background:${col.color_code};
+                                        border-radius:100%;
+                                        color:rgba(240, 248, 255, 0);
+                                        border:1px solid #ccc"
+                                        >
+                                        ''
+                                    </label> 
+                                        ${titleCase(col.color_name)}</td>` 
+                                     
+                                     sz.forEach(s=>{
+
+                                        let prp = b => s.idadi % b.qty===0,
+                                         prop_price = prics.filter(prp)
+
+                                         if(prop_price.length == 0){
+                                          prop_price = prics.filter(b=>Number(b.qty)===1)
+                                      }  
+        
+                                         prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+                                           ?((a.qty > b.qty)? 1 : -1) : -1 )
+                                         let ps = prop_price[prop_price.length-1]
+                                            beis = Number(itm.bei)*Number(ps.qty)
+                                        vpmo = ps.unit
+                                        idad = Number(s.idadi)/Number(ps.qty)
+                                        sale=Number(itm.sold)*Number(s.idadi)
+
+                                if( itm.vat_set){
+                                    //REGULATE MEASUARES.............//
+                                        beis= (beis/(1+vatper))
+                                        sales+=Number(itm.sold)/(1+vatper)*Number(s.idadi)
+                                        sale=sale/(1+vatper)               
+
+                                }else{
+                                        sales+=Number(itm.sold)*Number(s.idadi)
+
+                                }
+                                        sub_tot+=(beis*idad)
+                                        if(itm.vat_set){
+                                            total_vat+=sale*vatper
+                                        }
+
+                                      if(sz.length>1){
+                                       tr+=`<tr class="text-center   latoFont" style="padding: 10px 3px !important;"> `
+                                         
+                                      }   
+
+                                       tr+=`<td class="text-center" style="padding: 10px 3px !important;"><span class="text-danger smallFont"> ${s.size}</span></td>` 
+                                      
+                                       tr+=`<td style="padding: 10px 3px !important;" >${vpmo}</td>
+                                            `
+
+
+                                           tr+=`   <td style="padding: 10px 3px !important;" class="weight600" > ${Number(thamani*Number(ps.qty)).toLocaleString()}</td> 
+                                                  <td style="padding: 10px 3px !important;" > ${Number(idad).toFixed(2)}</td> 
+                                                  <td style="padding: 10px 3px !important;" class="weight700 brown" > ${Number(idad*thamani*Number(ps.qty)).toLocaleString()}</td> 
+                                            
+                                            `
+                                       if(sz.length>1){
+                                      tr+=`  </tr>`
+                                    }
+                                       
+                              
+                                         
+                                     })
+                                 }
+                                  
+                                 if(span>2){
+                                    tr+=`</tr>`
+                                 }
+
+                                })
+                               
+                            }
+
+                            tr+=`</tr>`
+
+
+
+                            
+
+
+                              })  
+
+                  
+                              $('#view-invo_tbody').html(tr)
+
+                            
+
+                              
+                           
+
+                              $('.span2').each(function(){
+                                  if(Number($(this).attr('rowspan'))){
+                                  let rowspan=Number($(this).attr('rowspan'))-1,
+                                      parent='#span_'+$(this).data('itm'),
+                                      prow= Number($(parent).attr('rowspan'))
+                                 $(parent).attr('rowspan',prow + rowspan)
+                                 $(parent).siblings('.rnum').attr('rowspan',prow + rowspan)
+                                 }
+                                //  $(parent).attr('rowspan',Number(parent.attr('rowspan'))+1)
+                                 // console.log(prow)
+                              })
+                             
+                             
+
+
+                          
+                           
+                        
+                        //PRINT BILL
+                       
+                        
+                       })
+                       
+                      
+
+                        </script>
+        
+
+        
+                      </div>
+
+
+
+       
+        
+        
+ 
+        
+
+    </div>
+
+</div>
+
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="comfirm_adjst" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title">
+          {% if useri.langSet == 0 %}
+            Hakiki marekebisho stoku
+          {% else %}
+            Confirm Stock adjustment
+          {% endif %}
+        </h6>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+      </div>
+      <div class="modal-body">
+
+        <div class="sio_sahihi_adj tab_div pb-2" style="display: none;"  >
+              <div class="form-group">
+                <label for="">{% if useri.langSet == 0 %}Kwa nini sio sahihi?  {% else %}Why is not correct?{% endif %}</label>
+                   <textarea name="adj_desc_confirm" id="adj_desc_confirm" class="form-control" >
+
+                  </textarea>                
+              </div>
+              <p class="text-right">
+                <button class="btn btn-light btn-sm tab_show latoFont" data-show=".ni_sahihi_adjst" >
+                  
+                  {% if useri.langSet == 0 %} Ghairi {% else %}Cancel  {% endif %}
+                </button>
+                <button class="btn btn-primary btn-sm latoFont"
+                onclick = "
+                        var csrfToken =   $('input[name=csrfmiddlewaretoken]').val(),
+                            url = '/stoku/comfirmAdst',
+                            adj = '{{the_bill.id}}'
+                              
+                        data={
+                            data:{
+                                adj:adj,
+                                comf:0,
+                                deny:1,
+                                desc:$('#adj_desc_confirm').val(),
+                                csrfmiddlewaretoken:csrfToken, 
+                            },
+                            url:url,
+                            comfirm:1
+                        }
+                    
+                        
+                        if(data.data.desc.trim()!=''){
+                            saveDtAdj(data)
+                          $('#comfirm_adjst').modal('hide')
+                        }else{
+                          redborder('#adj_desc_confirm')
+                        }
+                        
+          
+              "
+                >
+                  
+                   {% if useri.langSet == 0 %} Kusanya {% else %} Submit {% endif %}
+                </button>
+              </p>
+        </div>
+        
+        <div   class=" ni_sahihi_adjst tab_div pb-3" >
+           <div>
+                  {% if useri.langSet == 0 %}Umehakiki idadi 
+                                {% if not the_bill.Ongezwa  %}
+                                    <strong class="text-danger ">
+                                      iliyopunguzwa
+                                    </strong>
+                                {% else %}
+                                    <strong>
+                                      iliyoongezwa
+                                    </strong>
+                                {% endif %}   
+                            kwa bidhaa husika ni sahihi ?
+                          {% else %}
+                            You have confirmed that the 
+                              {% if not the_bill.Ongezwa  %}   
+                              <strong class="text-danger ">
+                                reduced
+                              </strong>
+                              {% else %}
+                              <strong>
+                                Added
+                            </strong>  
+                            {% endif %}
+                            Quantities to respective items is correct? 
+                          {% endif %} 
+           </div>
+            
+            <div class="tab_div text-right mt-3">
+              <button type="button" class="btn btn-secondary btn-sm latoFont tab_show" data-show=".sio_sahihi_adj" >
+                {% if useri.langSet == 0 %} Hapana {% else %} No isnt {% endif %}
+              </button>
+              <button 
+              type="button" id="uhakiki_adj" class="btn btn-sm latoFont btn-primary"
+              onclick = "
+                        var csrfToken =   $('input[name=csrfmiddlewaretoken]').val(),
+                            url = '/stoku/comfirmAdst',
+                            adj = '{{the_bill.id}}'
+                              
+                        data={
+                            data:{
+                                adj:adj,
+                                comf:1,
+                                deny:0,
+                                desc:$('#adj_desc_confirm').val(),
+                                csrfmiddlewaretoken:csrfToken, 
+                            },
+                            url:url,
+                            comfirm:1
+                        }
+                    
+                        saveDtAdj(data)
+                        $('#comfirm_adjst').modal('hide')
+          
+              " >
+                  {% if useri.langSet == 0 %} Ndio ni sahihi {% else %} Yes it's correct {% endif %}
+              </button>
+            </div>
+        </div>
+        
+
+      </div>
+    
+    </div>
+  </div>
+</div>
+
+{% if not the_bill.full_Return %}
+    <!-- Modal CONFIRM RETURN  -->
+    <div class="modal fade" id="ModalRudisha" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+          <h6 class="modal-title">{% if useri.langSet == 0 %}Tengua Marekebisho  Stoku  {% else %} Undo Stoku Adustment {% endif %}</h6>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body">
+              {% if useri.langSet == 0 %}
+                Bidhaa zote zilizoongezwa/kupunguzwa stoku zitapunguzwa/Kuongezwa na kufanya stoku iwe kama awali kabla ya marekebisho kufanyika
+              {% else %}
+                All items added/reduced will be reduced/added accordingly and stock will be as before adding/reducing
+              {% endif %}
+          </div>
+          <div class="pt-3 text-center">
+            <form action="/stoku/Ziruditena" id="undoAdjst" method="post">
+              {% csrf_token %}
+              <input type="hidden" name="adj" value="{{the_bill.id}}">
+                <button type="submit" class="btn btn-primary latoFont">
+                   {% if useri.langSet == 0 %}Tengua {% else %} Undo{% endif %}
+                </button>
+            </form>
+          </div>
+          <div class="text-center mb-4 py-3">
+            <button type="button" class="btn btn-light btn-sm latoFonto" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+ {% endif %}   
+    
+
+    {% if  the_bill.full_Return %}
+    <!-- CONFIRM UNDO DELETE -->
+    <div class="modal fade" id="confirmRemove" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{% if useri.langSet == 0 %}Uhakiki wa kufuta {% else %} Confirm to delete{% endif %}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body">
+            {% if useri.langSet == 0 %}Futa notisi ya kutengua marekebisho {% else %}Delete Adjustment Undo note {% endif %}?
+          </div>
+            <form action="/stoku/futaKabisa" id="undoAdjst" method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="adj" value="{{the_bill.id}}">
+              <p class="text-center">
+                <button type="submit" class="btn btn-primary latoFont">{% if useri.langSet == 0 %}Futa Notisi{% else %}Delete Notice{% endif %}</button>
+              </p>
+              
+            </form>
+          <div class="text-center mb-4">
+            <button type="button" class="btn btn-light latoFont btn-sm " data-dismiss="modal">Close</button>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+     <script>
+         $('body').on("submit", "#undoAdjst" ,function(e){
+                    e.preventDefault();
+                    let code = Number($(this).data('user'))
+                        
+                  
+                        $("#ModalRudisha,#confirmRemove").modal('hide');
+                        $("#loadMe").modal('show');
+                    
+                        let post_url = $(this).attr("action"),
+                            formData = new FormData(this);
+                            
+
+                      $.ajax({
+                          url:post_url,
+                          type: 'POST',
+                          data: formData,
+                          cache: false,
+                          processData: false,
+                          contentType: false,
+                          }).done(function(data) {
+                            if(data.success){
+                              toastr.success(lang(data.msg_swa,data.msg_eng), lang('Imefanikiwa','success'), {timeOut: 2000});
+                             if(data?.dl){
+                                 location.replace('/stoku/AllAdjs?un=1')
+                             }else{
+                               location.replace('/stoku/viewAdjst?item_valued={{the_bill.id}}&un=1')
+                             }
+                             
+                    
+                            }else{
+                              toastr.error(lang(data.msg_swa,data.msg_eng), lang('Haijafanikiwa','Error'), {timeOut: 2000});
+                        
+                            }
+                    
+                          })
+                
+                  
+                
+                  
+                  
+                })
+  
+    </script>
+
+
+
+
+    <!-- MESSAGE ARERT -->
+    {% if then.msg.success %}
+    <script>
+
+      
+
+        $('document').ready(function(){
+            let msg = '{{then.msg.eng}}'
+
+        '{% if useri.langSet == 0 %}'
+              msg = '{{then.msg.swa}}'
+          '{% endif %}'
+        toastr.success(msg, 'Success Alert', {timeOut: 2000});
+        })
+        
+    </script>
+
+{% elif not then.msg.success  and then.msg.is_added  %}
+    <script>
+        $('document').ready(function(){
+
+        let msg = '{{then.msg.eng}}'
+
+        '{% if useri.langSet == 0 %}'
+              msg = '{{then.msg.swa}}'
+          '{% endif %}'
+
+
+            
+        toastr.error(msg, 'Error Alert', {timeOut: 2000});
+        })
+    </script>
+
+
+{% endif %}
+
+
+
+
+    <script src="/static/js/stokuAdjust.js"></script>
+
+{% endblock %}
+
+
+  {% block show_adjP %}
+  {% if uc.count > 0 %}
+  <div id="adjst_notify" class="p-0 rounded" style="max-width: 300px;height:auto;
+      -webkit-box-shadow: 0px 0px 5px -2px rgba(143,113,132,1);
+      -moz-box-shadow: 0px 0px 5px -2px rgba(143,113,132,1);
+      box-shadow: 0px 0px 5px -2px rgba(143,113,132,1);z-index:9;top:95px;right:10px;position:fixed;background-color:rgb(250, 226, 226)" >
+    {% else %}   
+ <div id="adjst_notify" class="p-0 rounded" style="max-width: 300px;height:auto;
+      -webkit-box-shadow: 0px 0px 5px -2px rgba(143,113,132,1);display:none;
+      -moz-box-shadow: 0px 0px 5px -2px rgba(143,113,132,1);
+      box-shadow: 0px 0px 5px -2px rgba(143,113,132,1);z-index:9;top:95px;right:10px;position:fixed;background-color:rgb(250, 226, 226)" >
+ 
+    {% endif %}
+
+ 
+  {% endblock %}
+
+
+
+
+ {% block adjstBtn %}{% if uc.count > 0 %} type="button" style="color:#fff" data-toggle="modal" data-target="#comfirm_adjst" {% else %} href="#" id="adjs_href" {% endif %} {% endblock %}
+ 
+
+
+{% block adjDesc %}
+    {% if useri.langSet == 0 %} Hakiki marekebisho ya
+    {% if not the_bill.Ongezwa  %}
+    <strong class="text-danger ">
+      {% if the_bill.full_Return %} Kutengua {% endif %}  Kupunguza idadi 
+    </strong>
+    {% else %}
+    <strong>
+      {% if the_bill.full_Return %} Kutengua {% endif %}  Kuongeza idadi 
+    </strong>
+     
+    {% endif %}
+       yaliyorekodiwa na
+    {% else %} Confirm stock adjustment by
+            {% if not the_bill.Ongezwa  %}
+        <strong class="text-danger ">
+           Reducing Qty {% if the_bill.full_Return %} Undo {% endif %}
+        </strong>
+        {% else %}
+        <strong>
+           Adding Qty {% if the_bill.full_Return %} Undo {% endif %}
+        </strong>
+       
+        {% endif %}
+         recorded by
+    {% endif %}
+  {% endblock %}
+
+{% block dash-mapper %}
+ {% if useri.langSet == 0 %} Bidhaa  {% else %} Items {% endif %}
+{% endblock %}   
+{% block nav-stock %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+{% block active-stadjust-menu %} class="btn-default btn pop2_active_menu btn-sm " {% endblock %}
+
+{% block active-stock %} class="bi bi-shop text-primary font-weight-bold"{% endblock %}
+
+{% block stock-item %}
+    <svg xmlns="http://www.w3.org/2000/svg" height="24" class="text-primary" viewBox="0 0 24 24" width="24" fill="currentColor">
+      <path d="M0 0h24v24H0z" fill="none"/><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/>
+    </svg>
+{% endblock %}
+
+{% block dash-map %}<a href="#" class="tab_show" data-show="#general-panel">  {% if useri.langSet == 0 %}Kuhamisha Bidhaa{% else %} Items Transfer {% endif %}</a> {% endblock %}

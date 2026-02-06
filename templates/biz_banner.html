@@ -1,0 +1,277 @@
+
+{% load humanize %}
+
+{% load static %}
+{% static "pics" as baseUrl %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>
+        {{duka.name}}
+    </title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
+    <script type="text/javascript" src="{% static 'js/jquery.js' %}" ></script>
+
+    <!-- <script src="{% static 'js/staffaccordion.js' %}"></script> -->
+
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/momentlocale.js' %}"></script>
+    <script src="{% static 'js/qrcode.min.js' %}"></script>
+
+
+<style>
+
+
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+  
+    .classic_div{
+        margin-right: auto;
+        margin-left: auto;
+    }
+
+   .classic_div img{
+        margin-right: auto;
+        margin-left: auto;
+    }
+
+    .app_play img{
+
+        width:46%;
+    }
+    .app_play{
+        width:70%;
+         margin-right: auto;
+         margin-left: auto;
+         justify-content: space-around;
+
+         
+    }
+
+    .action-Btn{
+        position:fixed;
+        right:10px;
+        top:55vh;
+    }
+</style>
+<link rel="shortcut icon" type="image/x-icon" href="{% static 'pics/logo1.png' %}">
+
+</head>
+  <body>
+
+   
+            <div class="row ">
+                <div class="col-8 text-right">
+                     <img class="classic_div" src="/static/pics/logowithtext.png" alt="" srcset="">
+                </div>
+
+                <div class="col-4" style="height:150px" >
+                       <img src="/static/pics/phoneTabPc.svg" style="max-height: 100%;" alt="">
+
+                </div>
+              
+            </div> 
+
+             <h1 class="text-center" style="font-size: 60px;font-weight:bolder" >
+                    {% if useri.langSet == 0 %}Biashara yangu Kiganjani Kwako {% else %} My Business on your Palm{% endif %}  
+                </h1>
+   
+
+
+
+<div style="font-size:60px;font-weight:bolder;color:#FFF;width:80%;border-radius:15px" class="text-center classic_div p-3 bg-primary  mt-4">
+    
+     
+          <h1>{{duka.name | title}}</h1>  
+          <h6>{{duka.slogan}}</h6>
+           
+  
+</div>
+<h3 style="font-weight: 200;" class="text-center my-4">
+    {% if useri.langSet == 0 %}Natumia application ya fanyabiashara, unganishwa na biashara yangu kwa kuscan qr-code {% else %} Im using fanyabiashara Application, to connect to my Business scan the qr-code{% endif %}   
+</h3>
+
+<div  >
+    <div class="classic_div text-center" style="width: 70%;" >
+        <div id="imgBox" class="text-center" >
+            <!-- <img  src="" alt="" id="qrImage"> -->
+        </div>
+      </div>
+
+
+      <script>
+         $(document).ready(function(){
+            const url = 'https://'+window.location.host;
+            const imgBox= document.getElementById("imgBox")
+
+              qrcode = new QRCode('imgBox',{
+                text:`${url}/buzinessProfile?value={{duka.id}}`,
+                height:480,
+                width:480,
+              
+            })
+         })
+      </script>
+</div>
+
+<h3 style="font-weight: 200;width: 80%;"  class="classic_div mt-4" >
+    {% if useri.langSet == 0 %}
+      Unganishwa moja kwa moja na wauzaji/watoa huduma wakuaminika kuangalia na kuagiza bidhaa/huduma  vile vile kusimamia biashara yako kwa umakini wa hali ya juu na fanyabiashara
+     {% else %} 
+     Connect directly with trusted merchants/service provider view and order items/services  and manage your business accurately.
+     {% endif %}   
+</h3>
+
+<div class="mt-5 d-flex app_play">
+     <img src="/static/pics/plyastorelogo.png" alt="" srcset="">
+     <img src="/static/pics/appStore.png" alt="" srcset="">
+</div>
+
+<div class="row mt-4 p-3 classic_div" style="width: 80%;">
+    <div class="col-7">
+        <h3>
+                {% if useri.langSet == 0 %}
+                Unaweza kupakua applikesheni ya fanyaBiashara playstore na AppStore ili uweze kuunganishwa na 
+                wanaofanya biashara kwa njia ya mtandao kwa maelezo zaidi tembelea tovuti yetu 
+                {% else %} 
+                You can download our application on playstore and AppStore to connect to business, get connected to trusted merchants,
+                you can visit our website for more info.
+                {% endif %}  
+        </h3>
+
+    </div>
+
+    <div class="col-5">
+        <div class="classic_div text-center"  >
+            <div id="imgBox2" class="text-center" >
+            </div>
+
+            <h3> <a href="#" target="_blank" rel="noopener noreferrer">fanyabiashara.com</a></h3> 
+          </div>
+    
+    
+          <script>
+             $(document).ready(function(){
+                const url2 = 'https://'+window.location.host;
+                const imgBox2= document.getElementById("imgBox2")
+    
+                  qrcode = new QRCode('imgBox2',{
+                    text:url2,
+                    height:150,
+                    width:150,
+                  
+                })
+             })
+          </script>
+    </div>
+</div>
+
+<h3 class="text-center text-right">
+    copyright &copy; uppertech  company LTD
+</h3>
+
+
+
+
+
+<div id="action-Btn" class="btn-group-vertical round shadow action-Btn">
+   
+
+    <button id="print_btn" class="btn btn-default my-2" title="{% if useri.langSet == 0 %}Kuprint{% else %}Print{% endif %}" >
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-printer">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+    </button>
+    <a class="btn btn-default my-2" id="download_qr" download href="#" disabled title="{% if useri.langSet == 0 %}Pakua {% else %}Save {% endif %} QR-CODE" >
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+    </a>
+    <button class="btn btn-default my-2" onclick="closeMe()" title="{% if useri.langSet == 0 %}Sitisha {% else %}Cancel {% endif %} QR-CODE" >
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+    </button>
+</div>
+
+<script>
+     $('#print_btn').click(function(){
+         $('#action-Btn').hide()
+        window.print()
+       
+
+    })    
+    
+    
+   window.onafterprint = function(e){
+               
+                $('#action-Btn').fadeIn(100)
+
+        }
+
+
+         function closeMe()
+             {
+                 
+                 window.opener = self;
+                 try{
+                     if(window.outerWidth>800){
+                       setTimeout(function(){window.close();}, 100)
+                       
+                    }else{
+                        window.open()
+                        
+                        setTimeout(function(){window.close();}, 5000)
+                    }
+                    }catch(err){
+                     alert(err.message)
+                 }
+                  
+             }
+
+
+             $(document).ready(function(){
+                
+                setTimeout(function(){
+                    const sv_url = $('#imgBox').children('img').attr('src')
+                          $('#download_qr').attr('href',sv_url) 
+
+                          
+
+                          $('#download_qr').prop('disabled',false) 
+                }, 3000)
+             })
+
+   
+</script>
+
+
+
+
+
+
+  <span id="luga" hidden >{{useri.langSet}}</span>
+  <script src="/static/js/lugha.js"></script>
+
+      
+    </body>
+</html>
+
+
+
+
+
+

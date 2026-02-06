@@ -1,0 +1,214 @@
+{% extends 'userdash.html' %}
+
+{% block Dashboard %}
+<div  class=" Analytical whiteBg p-md-3" id="general-panel" style="min-height: 100vh;" >
+    
+<h5 class="p-2 pb-4 border-bottom" >
+    {% if useri.langSet == 0 %}Bidhaa zilizotolewa kuuzwa{% else %}Offered Goods for Sales{% endif %}
+    <a href="/mauzo/newGiveForSale" class="btn btn-primary latoFont smallFont float-right">
+         {% if useri.langSet == 0 %}Mpya{% else %}New{% endif %}
+    </a>
+</h5>
+
+<div class="pt-md-4 pb-3 row  classic_div"  >
+    <div class="col-md-8 my-2 ">
+     <span class="brown weight600" > {% if useri.langSet == 0 %}Kwa{% else %}To{% endif %}:</span>
+         <select name="wafanyakazi"  onchange="location.replace($(this).val())" class=" selectpicker" data-live-search="true"  id="WorkersSelect">
+           <option  value="/mauzo/giveForSales?emp=0" > {% if useri.langSet == 0 %} Wafanyakazi Wote{% else %}All Employees{% endif %} </option>
+           {% for wk in wakazi %}
+             <option value="/mauzo/giveForSales?emp={{wk.labour.id}}" >{{wk.labour.jina | title }} </option>
+           {% endfor %}
+         </select>
+        
+    </div>
+    
+    <script>
+      $(document).ready(function(){
+        $('#WorkersSelect').selectpicker('val','/mauzo/giveForSales?emp={{emp}}')
+        $('#WorkersSelect').selectpicker('refresh');
+      })
+    </script>
+    <form class="col-md-4" action="{% url 'productonReport' %}" method="get">
+        <div class="input-group"> 
+            <div class="input-group-prepend">
+               <label for="input" class="pt-1 pr-2">
+                   {% if useri.langSet == 0 %}  Tafuta  {% else %} Search {% endif %}:
+               </label>
+            </div> 
+           
+            <input type="text" name="code" id="code" placeholder=" {% if useri.langSet == 0 %}  Andika no ya makabidiano {% else %} write offering no {% endif %}" class="form-control smallFont">
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-secondary smallerFont btn-sm pt-2">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                       <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                     </svg>
+                </button>
+            </div>  
+           
+           
+        </div>
+  </form>
+</div>
+
+{% if bil_num > 0 %}
+{% load humanize %}
+<div class="table-responsive pb-5">
+  <table class="table table-hover " style="color: rgb(92, 92, 92);">
+    <thead>
+      <tr>
+        <th class="latoFont" scope="col">
+          {% if useri.langSet == 0 %}  Ankara# {% else %} Invoice# {% endif %}
+        
+        </th>
+        <th class="latoFont" scope="col">
+          {% if useri.langSet == 0 %} Tarehe ya Ankara  {% else %}Invoice Date {% endif %}
+
+        </th>
+        <th class="latoFont" scope="col">
+          {% if useri.langSet == 0 %} Mteja  {% else %}Customer {% endif %}
+
+        </th>
+        <th class="latoFont" scope="col">          
+          {% if useri.langSet == 0 %} Jumla  {% else %}Total {% endif %}
+          ({{duka.currencii}})</th>
+        <th class="latoFont" scope="col">          
+          {% if useri.langSet == 0 %} Ilolipwa  {% else %}Paid {% endif %}
+          ({{duka.currencii}})</th>
+        <th class="latoFont" scope="col">      
+           {% if useri.langSet == 0 %} Statasi  {% else %}Stutus {% endif %}
+        </th>
+        <th class="latoFont" scope="col"> Action </th>
+      </tr>
+    </thead>
+    <tbody>
+          {% for bil in bili %}
+      <tr>
+        <td class="text-center latoFont">INVO-{{bil.code}}</td>
+        <td class="text-center latoFont">{{bil.date}}</td>
+
+        <td class="text-center text-primary latoFont ">
+            {% if bil.saved_custom   %}
+             <a class="text-primary" href='#'>{{bil.customer_id.jina|title}} </a> 
+            {% else %}
+               {{bil.mteja_jina|title}}
+            {% endif %}
+        </td>
+
+        <td class="text-center latoFont"> {{bil.amount | floatformat:'-2' | intcomma}}</td>
+
+        <td class="text-center latoFont">{{bil.ilolipwa | floatformat:'-2' | intcomma}}</td>
+        <td class="text-center">
+              {% if bil.amount == bil.ilolipwa %}
+              <label for="paid" class="bg-success py-1 px-2 smallerFont latoFont"  style="color: aliceblue;">
+                {% if useri.langSet == 0 %} imelipiwa  {% else %}Paid {% endif %}
+              </label>
+              {% elif bil.amount > bil.ilolipwa and bil.ilolipwa > 0 %}
+            <label for="paid" class="bg-info py-1 px-2 smallerFont latoFont" style="color: aliceblue;">
+                {% if useri.langSet == 0 %} imelipiwa kiasi  {% else %}less Paid {% endif %}
+              </label>
+              {% else %}
+
+              <label for="paid" class="bg-danger py-1 px-2 smallerFont latoFont" style="color: aliceblue;">
+                {% if useri.langSet == 0 %} Haijalipiwa  {% else %}Unpaid {% endif %}
+              </label>
+              {% endif %}
+        </td>
+        <td class="text-center">
+              <div class=" text-center">
+                <!-- <form class="form-inline" action="/mauzo/viewInvo" method="POST">
+                  {% csrf_token %}
+
+                  <input type="text" name="back_to"  value="AllBills" class="f_input">
+                  <input type="text" name="item_valued"  value="{{bil.id}}" class="f_input"> -->
+
+
+
+                <a href="{% url 'viewInvo' %}?item_valued={{bil.id}}&lb=1 "  class="btn btn-default text-primary btn-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                      </svg>
+                    </a>
+                <!-- </form> -->
+                   
+
+                   
+
+              </div>
+        </td>
+      </tr>
+     {% endfor %}
+    </tbody>
+</table>
+
+</div>
+
+<p class=" p-4 border-top">
+    {% if page.has_previous %}
+    <a href="{% url 'giveForSales' %}?page=1&emp={{emp}}" type="button"  class="btn btn-light border0">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+    </svg>
+    </a>
+
+    <a href="{% url 'giveForSales' %}?page={{page.previous_page_number}}&emp={{emp}}" type="button"  class="btn btn-light  border0">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+    </svg>
+    </a>
+    {% endif %}
+
+    {% if page.has_next %}
+    <a href="{% url 'giveForSales' %}?page={{page.next_page_number}}&emp={{emp}}" type="button" class="btn btn-light border0">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+    </svg>
+    </a>
+
+    <a href="{% url 'giveForSales' %}?page={{pages}}&emp={{emp}}" type="button"  class="btn btn-light border0" >
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+    </svg>
+    </a>
+    {% endif %}
+    <label for="">
+
+    {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+
+    </label>
+</p>
+{%else%}
+
+
+<p class="pt-3 pb-5 text-center">
+ {% if useri.langSet == 0 %} Hakuna bidhaa zilizotolewa kwa sasa{% else %}No Offered Goods Found{% endif %}
+
+</p>
+
+{% endif %}
+ 
+
+</div>
+{% endblock %}
+ 
+{% block dash-mapper %}
+{% if useri.langSet == 0 %}  Mauzo{% else %}Sales{% endif %}
+{% endblock %}
+
+{% block nav-mauzo %}
+class="c-menu__item has-submenu showingpop2  is-active  "
+{% endblock %}
+
+{% block active-kuuza %}
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-check-fill text-primary " viewBox="0 0 16 16">
+  <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+</svg>
+{% endblock %}
+
+
+{% block dash-map %}
+   {% if useri.langSet == 0 %} Toa Bidhaa {% else %}Offer Goods{% endif %}
+{% endblock %}
+
+
+{% block active-forSale-menu %} class="btn-default btn btn-sm pop2_active_menu" {% endblock %}

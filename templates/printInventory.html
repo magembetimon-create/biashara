@@ -1,0 +1,131 @@
+
+{% load static %}
+{% static "pics" as baseUrl %}
+{% load humanize %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>{% if langSel == 0 %}Hali ya Hesabu {% else %} Inventory State {% endif %}</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
+    
+    
+    
+    <script type="text/javascript" src="{% static 'js/jquery.js' %}" ></script>
+
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    
+    <link rel="stylesheet" href="{% static 'css/userdashslider.css' %}">
+    <link rel="stylesheet" href="{% static 'css/mediascreen.css' %}">
+    <link rel="stylesheet" href="{% static 'css/usedashanimations.css' %}">
+    
+    
+ <link rel='stylesheet prefetch' href="{% static 'css/normalize.min.css' %}" >
+
+ <script type="text/javascript" src="{% static 'js/projectntc.js' %}"></script>
+ <script src="{% static 'js/momentlocale.js' %}"></script>
+
+ <script type="text/javascript" src="{% static 'js/toastr.min.js' %}"></script>
+<link href="{% static 'css/toastr.min.css' %}" rel="stylesheet">
+
+ <style>
+    body{
+        font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-width: 1000px;
+    }
+ </style>
+</head>
+
+  <body>
+    <div class="Analytical whiteBg tab_div p-md-4 p-2" style="background-color:#fff;min-height:100vh">
+        <h5 class="text-center">{{duka.name | title}}({{duka.Intp_code}})</h5>
+        <h5 class="text-center">{{duka.mtaa.mtaa | title}}, {{duka.mtaa.kata.kata | title}},{{duka.mtaa.kata.wilaya.wilaya | title}}, {{duka.mtaa.kata.wilaya.mkoa.mkoa | title}}, {{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}}</h5>
+        <h5 id="stateTitle"  class="text-center"> </h5>
+
+     <h6 class="pt-2" >{% if langSel == 0 %}Na{% else %}By {% endif %} : <i> {{useri.user.first_name | title }}   {{useri.user.last_name | title }} </i> </h6>
+
+      <div class="classic_div py-2" id="Maelekezo">
+      </div>
+
+        <div class="classic_div py-2 " >
+          <h6>
+              
+              {% if langSel == 0 %}Hali ya Hesabu Kwa Ujumla{% else %}General Inventory State  {% endif %}
+  
+          </h6>
+         
+  
+  
+          <div class="row">
+              <div class="col-md-6" id="InventoryWorth">
+
+                    
+                     
+              </div>
+          
+          </div>
+      </div>
+
+
+
+      <div class="classic_div py-2">
+        <h6>
+            {% if langSel == 0 %}Akaunti za Malipo{% else %}Payment Accounts  {% endif %}
+
+        </h6>
+
+        <div id="payAccounts">
+           
+        </div>
+      </div>
+
+
+      <div id="AllItems">
+        
+      </div>
+
+   
+
+
+    </div>
+     
+
+
+
+    <!-- Modal Profile Loader-->
+<div class="modal fade" id="loadMe"  tabindex="-1" data-backdrop="static" role="dialog" aria-labelledby="loadMeLabel" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered d-flex justify-content-center" role="document" >
+      <div class="modal-content" style="width:212px;">
+        <div class="modal-body text-left" style="padding:5px 11px;width:211px">
+      <div  class="row">
+      
+      <div class="lds-ring col-3"><div></div><div></div><div></div><div></div></div>
+      
+          
+            <div class="col-9 pt-2" > 
+              
+              {% if langSel == 0 %} Tafadhari Subiri...  {% else %} Please Wait.. {% endif %}
+            
+          </div>
+      </div>
+        </div>
+      </div>
+      </div>
+</div>
+     <input type="hidden" name="SavedState" id="SavedState" value="{{svd}}">
+     <input type="hidden" name="shopReg" id="shopReg" value="{{shop}}">
+     <input type="hidden" name="isMobile" id="isMobile" value="{{rct}}">
+     <input type="hidden" name="entpCurrencii" id="entpCurrencii" value="{{duka.currencii}}">
+     <div class="classic_div" id="luga" hidden >{{langSel}}</div>
+
+     </body>
+
+    <script src="{% static 'js/lugha.js' %}"></script>
+
+   <script type="text/javascript" src="{% static 'js/printStock.js' %}" ></script>     
+</html>

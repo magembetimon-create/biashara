@@ -1,0 +1,362 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+{% block Dashboard %}
+<link rel="stylesheet" href="/static/css/riports.css">
+
+<div  class=" Analytical whiteBg tab_div p-md-4 p-2" style="min-height: 100vh;" id="general-panel">
+    
+    <h5 >{% if useri.langSet == 0 %}Riport ya Hali ya Hesabu na Mwenendo kwa Ujumla {% else %}Inventory General State & Trends Report{% endif %}</h5>
+    <hr>
+    <div class=" my-2">
+        <div class="row">
+            <div class="col-md-4 ">
+             
+               <div class="form-group row">
+                <div class="col-2 text-right weight600"  >{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}</div>
+                <div class="col-10"> 
+                    <div class="form-group">
+                        <select class="custom-select latoFont darkblue weight600 smallerFont" 
+                        onchange="loadStockDate();vali=$(this).val();$(this).css('color',`${Number(vali)==Number('{{duka.id}}')?'blue':'brown'}`)"
+                        name="Matawini" id="Matawini">
+                        <option value="{{duka.id}}" data-vat="{% if duka.vat_allow %}1{% else %}0{% endif %}" data-service="{% if duka.service %}1{% else %}0{% endif %}" data-production="{% if duka.produxn %}1{% else %}0{% endif %}" data-sales="{% if duka.sales %}1{% else %}0{% endif %}" selected>{{duka.name | title}}</option>
+                         
+                        {% for m in matawi %}
+                            <option value="{{m.Interprise.id}}" data-vatp="{{m.Interprise.vatper}}" data-service="{% if m.Interprise.service %}1{% else %}0{% endif %}" data-production="{% if m.Interprise.produxn %}1{% else %}0{% endif %}" data-sales="{% if m.Interprise.sales %}1{% else %}0{% endif %}" data-vat="{% if m.Interprise.vat_allow %}1{% else %}0{% endif %}" >{{m.Interprise.name | title}}</option>
+                        {% endfor %}
+
+                    
+                    </select>
+                    </div>
+                </div>
+                  
+               </div>
+               
+            </div>
+            <!-- <div class="col-md-8 my-2 showDt PeriodTableData my-md-1 text-md-right">
+
+            <div class="table-responsive">
+                <div  id="mapSelector" class="d-flex d-md-block"  >
+
+                </div>
+                                    
+            </div>
+            </div> -->
+        </div>
+
+        <ul class="list-unstyled d-flex border smallerFont"  >
+            <li class="stateSel actively border-right">
+              <a class="px-3 py-1  currentOrSaved"  data-sv=0  type="button" data-svd=0 > 
+                  {% if useri.langSet == 0 %} Hali ya Sasa  {% else %} Current State {% endif %}
+             </a>
+            </li>
+            <li class="stateSel border-right">
+         
+                <a class="px-3 py-1  currentOrSaved" id="toSave" data-sv=1 data-svd=0 type="button" >
+                    {% if useri.langSet == 0 %} Zilizohifadhiwa  {% else %} Saved State {% endif %} 
+                </a>
+            </li>
+        </ul>
+
+    </div>
+
+    <!--SHOW LIST FOR SAVED STATES  -->
+
+        
+
+   
+
+     <div class="classic_div pt-2 ">
+        <h6  id="stateTitle">
+        </h6>
+
+
+       
+        <ul class="list list-unstyled" style="display:none ;" id="forSaved">
+           
+        </ul>
+
+
+        <h6 class=" classic_div latoFont py-2 my-2" id="SaveDesc">
+
+        </h6>
+
+        <div class="row">
+            <div class="col-md-6"  id="InventoryWorth" >
+
+            </div>
+        
+        </div>
+
+
+
+    </div>
+
+   
+        <nav id="invState" class="nav smallerFont my-3 nav-tabs nav-stacked">
+            <a class="nav-link active text-primaryi" data-val=1 role="button" >{% if useri.langSet == 0 %}Bidhaa{% else %}Items{% endif %}</a>
+          
+            {% if duka.produxn %}
+               <a class="nav-link " data-val=2  role="button" >{% if useri.langSet == 0 %}Nyezo{% else %}Material{% endif %}</a>
+            {% endif %}
+
+            {% if duka.service %}
+            <a class="nav-link" data-val=3 role="button" >{% if useri.langSet == 0 %}Aseti{% else %}Assets{% endif %}</a>
+           {% endif %}
+        </nav>  
+
+    <div class="row">
+        <div class="col-md-1 col-3">
+            
+            {% if useri.langSet == 0 %}Kutokana {% else %}From{% endif %}
+        </div>
+        <div class="col-md-11 col-9 table-responsive py-1" >
+            <div class="form-check form-check-inline noWordCut" id="showCheckState">
+                <label class="form-check-label" id="RegisterInLabel" hidden >
+                    <input class="form-check-input" type="checkbox" name="RegisterIn" id="RegisterIn" checked value="checkedValue">
+                    {% if useri.langSet == 0 %}Kuongeza/Usajiri {% else %}Adding/Register{% endif %}
+                </label>
+                <label class="form-check-label ml-3" id="PurchaseInLabel" hidden>
+                    <input class="form-check-input" type="checkbox" name="PurchaseIn" id="PurchaseIn" checked value="checkedValue">
+                    {% if useri.langSet == 0 %}Manunuzi {% else %}Purchase{% endif %}
+                </label>
+                <label class="form-check-label ml-3" id="ReceiveInLabel" hidden>
+                    <input class="form-check-input" type="checkbox" name="ReceiveIn" id="ReceiveIn"  checked value="checkedValue">
+                    {% if useri.langSet == 0 %}Kupokea {% else %}Receive{% endif %}
+                </label>
+                <label class="form-check-label ml-3" id="ProducedInLabel" hidden >
+                    <input class="form-check-input bg-primary " type="checkbox" name="ProducedIn" id="ProducedIn"  checked value="checkedValue">
+                    {% if useri.langSet == 0 %}Uzalishaji {% else %}Production{% endif %}
+                </label>
+            </div>
+        </div>
+    </div>                                                                           
+    <hr>
+    
+
+            <div class="d-flex  stockStated table-responsive" id="stockStated" >
+
+    
+           </div>
+
+          
+
+            <div class="panel row   mt-3" style="min-width: 290px;" >
+             <div class="col-6">
+                     <div class="btn-group riportSwitch" role="group" id="riportSwitch" aria-label="Basic example">
+
+                         <button type="button" class="btn border-secondary btn-sm riportOn btn-primary " data-r="2" data-riport="2" data-val="0" title="{% if useri.langSet == 0 %}Bidhaa{% else %}Items{% endif %}">
+                             <svg width=".95em" height=".95em" viewBox="0 0 16 16" class="bi bi-gem" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                 <path fill-rule="evenodd" d="M3.1.7a.5.5 0 0 1 .4-.2h9a.5.5 0 0 1 .4.2l2.976 3.974c.149.185.156.45.01.644L8.4 15.3a.5.5 0 0 1-.8 0L.1 5.3a.5.5 0 0 1 0-.6l3-4zm11.386 3.785l-1.806-2.41-.776 2.413 2.582-.003zm-3.633.004l.961-2.989H4.186l.963 2.995 5.704-.006zM5.47 5.495l5.062-.005L8 13.366 5.47 5.495zm-1.371-.999l-.78-2.422-1.818 2.425 2.598-.003zM1.499 5.5l2.92-.003 2.193 6.82L1.5 5.5zm7.889 6.817l2.194-6.828 2.929-.003-5.123 6.831z"/>
+                             </svg>
+                         </button>
+ 
+                         <button type="button" class="btn border-secondary btn-sm riportOn btn-light" data-r="3" data-riport="2" data-val="0" title="{% if useri.langSet == 0 %}Aina{% else %}Categories{% endif %}">
+                             <svg xmlns="http://www.w3.org/2000/svg" width=".95em" height=".95em" fill="currentColor" class="bi bi-layers" viewBox="0 0 16 16">
+                                 <path d="M8.235 1.559a.5.5 0 0 0-.47 0l-7.5 4a.5.5 0 0 0 0 .882L3.188 8 .264 9.559a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L12.813 8l2.922-1.559a.5.5 0 0 0 0-.882l-7.5-4zm3.515 7.008L14.438 10 8 13.433 1.562 10 4.25 8.567l3.515 1.874a.5.5 0 0 0 .47 0l3.515-1.874zM8 9.433 1.562 6 8 2.567 14.438 6 8 9.433z"/>
+                             </svg>
+                         </button>
+ 
+                         <button type="button" class="btn border-secondary btn-sm riportOn btn-light" data-r="4" data-riport="2" data-val="0" title="{% if useri.langSet == 0 %}Makundi{% else %}Groups{% endif %}">
+                             <svg xmlns="http://www.w3.org/2000/svg" width=".95em" height=".95em" fill="currentColor" class="bi bi-collection" viewBox="0 0 16 16">
+                                 <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6v7zm1.5.5A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-13z"/>
+                             </svg>
+                         </button>
+ 
+                         <button type="button" class="btn border-secondary btn-sm riportOn btn-light" data-r="5" data-riport="1" data-val="0" title="{% if useri.langSet == 0 %}Akaunti za malipo{% else %}Payments Accounts{% endif %}">
+                             <svg width=".95em" height=".95em" viewBox="0 0 16 16" class="bi bi-credit-card-2-back" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                 <path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>
+                                 <path d="M11 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1zM1 9h14v2H1V9z"/>
+                               </svg>
+                         </button>
+
+                         <button type="button" class="btn btn-sm border-secondary riportOn btn-light" id="firstR" data-r="1" data-riport="2" data-val="0" title="{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}">
+                             <svg xmlns="http://www.w3.org/2000/svg" width=".95em" height=".95em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                                 <line x1="8" y1="6" x2="21" y2="6"></line>
+                                 <line x1="8" y1="12" x2="21" y2="12"></line>
+                                 <line x1="8" y1="18" x2="21" y2="18"></line>
+                               
+                             </svg>
+                         </button>
+
+ 
+                         <!--<button type="button" class="btn border-secondary btn-sm riportOn btn-light" data-r="6" data-riport="1" data-val="0" title="{% if useri.langSet == 0 %}Wauzaji{% else %}Sales Person{% endif %}">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-users">
+                                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                 <circle cx="9" cy="7" r="4"></circle>
+                                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                             </svg>
+                            </button>
+                        -->
+
+                     </div> 
+                </div>
+             
+
+             <div class="col-6  text-right">
+                 <div class="btn-group riportChatRist" style="display: none;" id="riportChatRist">
+                         <button type="button"  class="btn border-secondary btn-sm riportListChatOn btn-secondary" data-r="0" data-riport="0" data-val="0" title="{% if useri.langSet == 0 %}Orodha{% else %}List{% endif %}">
+                             <svg xmlns="http://www.w3.org/2000/svg" width=".87em" height=".87em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                                 <line x1="8" y1="6" x2="21" y2="6"></line>
+                                 <line x1="8" y1="12" x2="21" y2="12"></line>
+                                 <line x1="8" y1="18" x2="21" y2="18"></line>
+                                 <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                 <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                 <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                             </svg>
+                         </button>
+ 
+                         <button type="button"  class="btn border-secondary btn-sm riportListChatOn btn-light" data-r="1" data-riport="0" data-val="0" title="{% if useri.langSet == 0 %}Chati{% else %}Chart{% endif %}">
+                             <svg xmlns="http://www.w3.org/2000/svg" width=".87em" height=".87em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bar-chart-2">
+                                 <line x1="18" y1="20" x2="18" y2="10"></line>
+                                 <line x1="12" y1="20" x2="12" y2="4"></line>
+                                 <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                         </button>  
+                 </div>
+                 <div class="btn-group">
+
+ 
+                         <!-- <button type="button"  class="btn border-secondary btn-sm  btn-light" data-r="1" data-riport="0" data-val="0" title="{% if useri.langSet == 0 %}Kuprinti Ripoti{% else %}Print Report {% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-printer">
+                                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                <rect x="6" y="14" width="12" height="8"></rect>
+                            </svg>
+                         </button> -->
+
+                         <div class="btn-group" id="printURLS" role="group" aria-label="Button group border-secondary with nested dropdown">
+                           
+                        </div>
+                 </div>
+             </div>
+        </div>
+ 
+ 
+        <div class="theDataPanel mt-4" id="theDataPanel" style="min-height: 80vh;" >
+ 
+        </div>
+
+        <div id="showItemState" style="display: none;min-height:80vh">
+            <div id="showInitial" >
+
+            </div>
+           
+        </div>
+   
+<!-- Modal SaveRiport-->
+<div class="modal fade" id="SaveInventoryState" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+                <div class="modal-header" id="saveRiporti">
+                        <h5 class="modal-title" id="saveRiporti">{% if useri.langSet == 0 %}Hifadhi Hali ya Hesabu Kwa Sasa{% else %}Save Current Inventory State{% endif %}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                </div>
+             <div class="modal-body" id="markBody">
+                <div class="container-fluid">
+                    <form action="/riport/SaveInventory" id="saveInventory" method="post" >
+                        {% csrf_token %}
+                            <div class="form-group  " id="markDesk" >
+                                <label for="stateDesc" class="brown" >{% if useri.langSet == 0 %}Maelezo{% else %}Descriptions{% endif %} <sup>*</sup> </label>
+                                <textarea class="form-control" name="stateDesc" id="stateDesc" rows="3"></textarea>
+                                <input type="hidden" name="bilMark" data-to="" data-from="" value=0 id="bilMark" >
+                                <input type="hidden" name="bilMarked" value=0 id="bilMarked" >
+                               
+                            </div>   
+  
+  
+                            
+                            <p class="text-center">
+                                <button type="submit" class="btn btn-primary latoFont" id="SubmitMark">
+                                    Save
+                                </button>
+                            </p>
+                    </form>
+  
+                    <p class="text-center">
+                          
+                                <button type="button" class="btn btn-light btn-sm latoFont" data-dismiss="modal">Close</button>
+                    </p>
+  
+  
+  
+                </div>
+             </div>
+  
+        </div>
+    </div>
+</div>
+  
+  <script>
+    
+  $('body').on("submit", "#saveInventory" ,function(e){
+        e.preventDefault()
+  
+        const post_url = $(this).attr("action"),
+            formData = new FormData(this),
+            desc = $('#stateDesc').val()
+            formData.append('duka',branch())
+          
+            if(desc.trim()!=''){
+                $("#SaveInventoryState").modal('hide');
+                $("#loadMe").modal('show');
+                $.ajax({
+                    url:post_url,
+                    type: 'POST',
+                    data: formData,
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    }).done(function(data) {
+                        if(data.success){
+                        toastr.success(lang(data.msg_swa,data.msg_eng), lang('Imefanikiwa','success'), {timeOut: 2000});
+                        
+                        $('#stateDesc').val('')
+                        $('#toSave').data('svd',data.svd[0].id)
+                        ALLSAVED = [...data.svd,...ALLSAVED]
+                        }else{
+                        toastr.error(lang(data.msg_swa,data.msg_eng), lang('Haijafanikiwa','Error'), {timeOut: 2000});
+                       
+                        }
+                
+                    })                
+            }else{
+                redborder('#MarkBillDesc')      
+            }
+  
+            })
+  
+  </script>
+
+</div>
+       
+
+   <input type="hidden" id="shughuli" data-service="{% if duka.service %}1{% else %}0{% endif %}" data-production="{% if duka.produxn %}1{% else %}0{% endif %}" data-sales="{% if duka.sales %}1{% else %}0{% endif %}" >
+   <input type="hidden" id="currencii" value="{{duka.currencii}}" data-currencii="{{duka.currencii}}" />
+   <input type="hidden" value="{% if cheo.user == duka.owner %}1{% else %}0{% endif %}" id="HIMOWNER">
+{% endblock %}
+
+{% block billmpya %}
+   <script src="/static/js/riports/repots.js">  </script>
+   <script src="/static/js/riports/InventoryRiport/InventoryState.js">  </script>
+{% endblock %}
+ 
+{% block dash-mapper %}
+  Dashboard
+{% endblock %}
+
+{% block nav-ripoti %}
+class="c-menu__item style-none is-active"
+{% endblock %}
+
+{% block active-riport %} class="bi bi-graph-up text-primary" {% endblock %}
+
+{% block dash-map %} 
+   <a href="/riport/riportPage">{% if useri.langSet == 0 %}Ripoti {% else %}Reports{% endif %}</a>
+   <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+  </svg>
+  <a href="#">{% if useri.langSet == 0 %}Ripoti ya Hali ya Hesabu na Mwenendo {% else %}Inventory State & Trends Report{% endif %}</a>
+{% endblock %}

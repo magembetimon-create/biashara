@@ -1,0 +1,36 @@
+{% extends 'userdash.html' %}
+
+
+{% block akaunt %}
+<div  class=" Analytical p-5 whiteBg" id="general-panel" style="margin-top: -23px;height:60vh" >
+
+   <div class="d-flex classic_div" style="justify-content: center;align-items:center;height:100%">
+     
+    
+    <h4 class="text-center" >
+        <strong style="font-size:70px" >404</strong><br>
+            {% if useri.langSet == 0 %} Ukurasa Haupatikani {% else %} Page Not Found{% endif %}
+        </h4>
+   </div>
+
+
+</div>
+
+{% endblock %}
+{% block dash-mapper %}
+{% if useri.langSet == 0 %} Ukurasa  {% else %} Page {% endif %}
+{% endblock %}      
+
+
+{% block akaunt-map %}  <a href="#" class="tab_show" data-show="#general-panel">
+
+  {% if useri.langSet == 0 %}Ukurasa Haupatikani {% else %}Page Not Found{% endif %}
+</a>   
+{% endblock %}
+
+{% block load_data_script %}
+<!-- <script src="/static/js/getakaunti.js">  </script> -->
+<!-- <script src="/static/js/miamala.js">  </script> -->
+
+{% endblock %}
+

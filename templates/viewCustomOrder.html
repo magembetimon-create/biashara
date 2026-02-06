@@ -1,0 +1,1070 @@
+{% extends 'userdash.html' %}
+
+{% load humanize %}
+
+{% block Dashboard %}
+
+<link rel="stylesheet" href="/static/css/viewItem.css">
+<link rel="stylesheet" href="/static/css/viewCustItem.css">
+
+
+<div  class="Analytical py-3 py-md-1 whiteBg" id="general-panel"   style="margin-top: -23px;min-height:100vh;overflow-x:auto" >
+    {% if itl > 0 %} 
+    <div class="classic_div text-center border-bottom py-3" >
+      
+       <h5 >
+        {% if total.service %}
+          {% if useri.langSet == 0 %} ODA YA HUDUMA INAYOSUBIRI MCHAKATO{% else %}PENDING SERVICE BOOKING{% endif %}
+        {% else %}
+         {% if useri.langSet == 0 %} ODA YA MAUZO INAYOSUBIRI MCHAKATO{% else %}  PENDING SALES ORDER{% endif %}
+        {% endif %}
+        </h5> 
+
+      {% if shop.logo %}<div class="img classic_div" style="width: 50px;">  <a href="#"><img style="width: 100%;" src="{{shop.logo.url}}" alt=""></a>   </div>{% endif %}
+       <h6 >{% if useri.langSet == 0 %} Kutoka{% else %}  From{% endif %}: <a href="#">{{total.user_customer.enteprise.name| title }}</a> </h6> 
+      
+       <h6 style="font-weight: 600;">{{total.user_customer.enteprise.mtaa.mtaa | title }}, {{total.user_customer.enteprise.mtaa.kata.kata | title }}, {{total.user_customer.enteprise.mtaa.kata.wilaya.wilaya | title }}, {{total.user_customer.enteprise.mtaa.kata.wilaya.mkoa.mkoa | title }}, {{total.user_customer.enteprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title }}</h6> 
+       
+ 
+        
+           <h6 class="font-weight-medium">{% if useri.langSet == 0 %} Oda{% else %} Order{% endif %} No:<span class="text-danger font-weight-bold mr-2 border-right" > {{total.code}} </span>  {% if useri.langSet == 0 %}Inasubiri Mchakato..{% else %} Pending..{% endif %}</h6> 
+       
+         
+            
+
+          <h6 class="font-weight-medium smallFont classic_div row"  >
+            <div class="col-md-6 pr-md-0 text-md-right border-right">
+            {% if useri.langSet == 0 %}  Imeagizwa{% else %} Ordered at{% endif %}: <span class="text-primary  mr-2 " > 
+             <script>
+               document.write(moment('{{total.tarehe | date:"r" }}').format('MMMM DD, YYYY, HH:mm'))
+             </script>
+           </span>  
+           </div>
+           <div class="col-md-6 text-md-left">
+            {% if useri.langSet == 0 %} Inategemewa{% else %}Expected at{% endif %}:<span class="text-primary   " > 
+              
+              <script>
+                document.write(moment('{{total.expected_date | date:"r" }}').format('MMMM DD, YYYY, HH:mm'))
+              </script>
+             
+             </span> 
+           </div>
+   </h6> 
+
+ 
+
+   {% if total.customer_in %}
+      <div class="classic_div mt-2 p-2 border-top text-left" style="max-width: 450px;">
+          <h6 class="weight500" >{% if useri.langSet == 0 %}Mteja  eneo la Biashara  {% else %} Customer around business area{% endif %}</h6> 
+           <div class="row mb-2">
+             <div class="col-3">
+                 
+                 {% if useri.langSet == 0 %}Eneo {% else %} Area{% endif %}:
+             </div>
+             <div class="col-9 ">
+                  <strong class="brown" ><u class="pb-2"> {{total.customer_in.area.name}} </u> </strong> 
+             </div>
+           </div>
+           <div class="row">
+             <div class="col-3">
+                {% if useri.langSet == 0 %}Sehemu {% else %} Position {% endif %}:
+             </div>
+             <div class="col-9 ">
+                  <strong class="brown" ><u class="pb-2"> {{total.customer_in.name}} </u> </strong> 
+             </div>
+           </div>
+        </div>   
+   {% endif %}
+
+
+   {% if total.service %}
+          
+          <div class="classic_div mt-2 p-2 border-top text-left" style="max-width: 300px;">
+                
+               <h6 class="weight500" >{% if useri.langSet == 0 %}Muda wa Huduma  {% else %} Service Duration{% endif %}</h6> 
+                <div class="row">
+                  <div class="col-3">
+                    {% if useri.langSet == 0 %}Kuanzia  {% else %} From{% endif %}
+                  </div>
+                  <div class="col-9 brown">
+                    <script>
+                      document.write(moment('{{total.servFrom | date:"r" }}').format('MMM DD, YYYY, HH:mm'))
+                    </script>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-3">
+                    {% if useri.langSet == 0 %}Hadi  {% else %} To{% endif %}
+                  </div>
+                  <div class="col-9 brown">
+                    <script>
+                      document.write(moment('{{total.servTo | date:"r" }}').format('MMM DD, YYYY, HH:mm'))
+                    </script>
+                  </div>
+                </div>
+          </div>
+
+          {% endif %}
+
+   <div class="text-right" >
+    <a href="{% url 'editOda' %}?item_valued={{total.id}}" class="btn btn-light text-primary smallFont border0 latoFont btn-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24"  fill="currentColor">
+        <path d="M0 0h24v24H0zm0 0h24v24H0z" fill="none"/>
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM5.5 7.5h2v-2H9v2h2V9H9v2H7.5V9h-2V7.5zM19 19H5L19 5v14zm-2-2v-1.5h-5V17h5z"/>
+      </svg>
+      {% if useri.langSet == 0 %} Marekebisho{% else %}Adjustments{% endif %}
+    </a>
+  </div>
+         
+        </div>
+          
+    
+      
+    <div class="row classic_div pt-3 whiteBg" style="max-width: 1000px;" >
+     
+     
+      <div class="col-12 row">
+
+        <h6 class="col-3 text-center ">{% if useri.langSet == 0 %} Picha {% else %} Image {% endif %}</h6>
+        <h6 class="col-6  ">
+          {% if total.sevice %}
+            {% if useri.langSet == 0 %} Bidhaa {% else %} Item {% endif %}
+          {% else %}
+             {% if useri.langSet == 0 %} Huduma {% else %} Service {% endif %}
+          {% endif %}
+        </h6>
+        <h6 class="col-3 mx-0 px-0 d-none d-md-block text-right">{% if useri.langSet == 0 %}Bei Jumla {% else %} Total Price{% endif %}</h6>
+
+        <hr class="col-12">
+      </div>
+
+      {% for b in itms %}
+      
+      <!-- if color and size involved -->
+      {% if b.csl > 0 %}
+      <!-- if color has size -->
+      {% for cs in b.color_size %}
+      {% if cs.sizl > 0 %}
+      
+      {% for sz in cs.size %}
+      <!-- THIS IS  IF ITEM INVOLVES SIZE ................................................................ -->
+      <!-- The image -->
+      <div class="col-4 col-md-3" style="display: flex;justify-content:center">
+        
+          {% if cs.img.count > 0 %}
+
+            <div class="classic_div item_order_img" >
+                 <img src="{{cs.img.first.picha.picha.url}}" style="max-width: 100%;">
+            </div>
+            
+
+         {% else %}
+         <span class="text-muted" >
+            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="currentColor" class="bi bi-cart-check-fill" viewBox="0 0 16 16">
+              <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+            </svg>
+         </span>
+            
+         {% endif %}
+      </div>
+      <!-- ITEM DETAILS -->
+      <div class="col-8 col-md-6">
+         <h5   >
+           {{b.itm.produ.bidhaa.bidhaa_jina | title}}
+         </h5> 
+         <div>{{b.itm.produ.bidhaa.maelezo}}    
+            <u class="ml-1 pl-1 border-left smallFont darkblue">
+                {% if b.itm.produ.uhamisho %}
+                      RC-{{b.itm.produ.uhamisho.receive.transfer.code}}
+                {% endif %}
+
+                {% if b.itm.produ.manunuzi and not b.itm.produ.uhamisho %}
+                      BIL-{{b.itm.produ.manunuzi.manunuzi.code}}
+                {% endif %}
+
+                {% if b.itm.produ.produced and not b.itm.produ.uhamisho %}
+                      BATCH-{{b.itm.produ.produced.production.code}}
+                {% endif %}
+
+                {% if b.itm.produ.ongezwa and not b.itm.produ.uhamisho %}
+                      ADJ-{{b.itm.produ.ongezwa.code}}
+                {% endif %}
+
+            </u>  
+        
+        </div>
+        
+
+         <div class="py-2 smallerFont" ><strong>
+          {% if b.itm.produ.bidhaa.colorAttr %}
+              {{b.itm.produ.bidhaa.colorAttr}}
+          {% else %}
+            {% if useri.langSet == 0 %} Rangi{% else %}Color {% endif %} 
+          {% endif %}
+
+          
+          :</strong> {{cs.color.color.color.color_name | title}}</div>
+
+         <div class="smallerFont" ><strong>Size:</strong> {{sz.size.size.sized.size | title}}</div>
+
+         <div class="py-2 smallFont" ><strong>{% if useri.langSet == 0 %}Vipimo {% else %} Units{% endif %}:</strong> <span class="text-primary">  {{sz.price.vipimo}}</span> </div>
+
+         <div ><strong>{% if useri.langSet == 0 %}Idadi {% else %} Qty{% endif %}:</strong> 
+          <strong style="color: brown;">  
+              <script>document.write((Number('{{sz.size.idadi}}')/Number('{{sz.price.idadi}}')).toLocaleString())</script>
+          </strong>
+        </div>
+
+         <div class="py-2" ><strong class="smallerFont" >{% if useri.langSet == 0 %}Bei {% else %}Price {% endif %}/<span class="text-primary">{{sz.price.vipimo}}</span> 
+          {%if b.itm.produ.timely > 0  %}
+              / <span class="text-primary" >
+              {%if b.itm.produ.timely == 1  %}
+              {% if useri.langSet == 0 %} Dakika{% else %}Minute {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 2  %}
+              {% if useri.langSet == 0 %} Saa{% else %}Hour {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 3  %}
+              {% if useri.langSet == 0 %} Siku{% else %}Day {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 4  %}
+              {% if useri.langSet == 0 %} Wiki{% else %}Week {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 5  %}
+              {% if useri.langSet == 0 %} Mwezi{% else %}Month {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 6  %}
+              {% if useri.langSet == 0 %} Mwaka{% else %}Year {% endif %}
+              {% endif %}
+                </span>
+              {%endif%} 
+          :</strong> <span class="smallerFont" >{{shop.currencii}}</span>. 
+          <strong style="color: brown;" >{{sz.price.bei | floatformat:'-2' |intcomma }}</strong>
+          {%if b.itm.produ.timely > 0  %}
+            <br>
+            <strong class="smallerFont" >{% if useri.langSet == 0 %}Muda {% else %}Duration {% endif %}
+              <span class="text-primary" >
+                {%if b.itm.produ.timely == 1  %}
+                ({% if useri.langSet == 0 %} Dakika{% else %}Minute {% endif %})
+                {% endif %}
+                {%if b.itm.produ.timely == 2  %}
+                ({% if useri.langSet == 0 %} Saa{% else %}Hour {% endif %})
+                {% endif %}
+                {%if b.itm.produ.timely == 3  %}
+                ({% if useri.langSet == 0 %} Siku{% else %}Day {% endif %})
+                {% endif %}
+                {%if b.itm.produ.timely == 4  %}
+                ({% if useri.langSet == 0 %} Wiki{% else %}Week {% endif %})
+                {% endif %}
+                {%if b.itm.produ.timely == 5  %}
+                ({% if useri.langSet == 0 %} Mwezi{% else %}Month {% endif %})
+                {% endif %}
+                {%if b.itm.produ.timely == 6  %}
+                ({% if useri.langSet == 0 %} Mwaka{% else %}Year {% endif %})
+                {% endif %}
+                  </span>
+              : 
+
+                   
+                   <span class="brown">
+                     {{b.itm.saveT}}
+                   </span>
+            </strong>
+            {% endif %}
+        </div>
+
+
+      </div>
+
+      <!-- ITEM TOTAL PRICE -->
+      <div class="col-md-3 row">
+        <h6 class="col-5 d-md-none" >{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</h6>
+
+          <h6 class="text-right col-md-12 col-7" >
+            <span class="latoFont" >{{duka.currencii }}.</span>
+            <span  style="color:brown;font-weight:700;text-shadow:0 1 1px #000"> 
+              <script>document.write(((Number('{{sz.size.idadi}}')*Number('{{sz.price.bei}}'))/Number('{{sz.price.idadi}}')).toLocaleString())</script>
+            </span> 
+          </h6>
+
+          
+                      <!-- PACK OR UNPACK BUTTON -->
+                  <p class="text-right mt-3 col-12" >
+                        {% if  total.service %}
+                  {% if sz.size.idadi <= sz.rSpace or sz.size.packed %}
+                        {% if sz.size.packed %}
+                        <button class="btn btn-sm d-none btn-light btn-outline-primary  latoFont smallFont" id="packsz{{sz.size.id}}" onclick="data={data:{p:1,hide:'#packsz{{sz.size.id}}',show:'#unpacksz{{sz.size.id}}',s:'{{sz.size.id}}',c:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)">
+                         {% else %}
+                        <button class="btn btn-sm  btn-light btn-outline-primary  latoFont smallFont" id="packsz{{sz.size.id}}" onclick="data={data:{p:1,show:'#unpacksz{{sz.size.id}}',hide:'#packsz{{sz.size.id}}',s:'{{sz.size.id}}',c:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" >
+                         {% endif %}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box2" viewBox="0 0 16 16">
+                            <path stroke="#000" stroke-linejoin="round" d="M.5 4.5V15a.5.5 0 0 0 .5.5h14a.5.5 0 0 0 .5-.5V4.5m-15 0L3.35.7a.5.5 0 0 1 .4-.2H8m-7.5 4H8m7.5 0L12.65.7a.5.5 0 0 0-.4-.2H8m7.5 4H8m0-4v4"/>
+                          </svg>
+                             {% if useri.langSet == 0 %}Chukua Nafasi{% else %}Take Space{% endif %}
+                        </button>
+            
+            
+            
+                        {% if sz.size.packed %}
+                            <button class="btn btn-sm btn-success  latoFont smallFont" id="unpacksz{{sz.size.id}}" onclick="data={data:{p:0,hide:'#unpacksz{{sz.size.id}}',show:'#packsz{{sz.size.id}}',c:0,s:'{{sz.size.id}}','i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" title="{% if useri.langSet == 0 %}Fungua{% else %}Unpack{% endif %}">
+                         {% else %} 
+                        <button class="btn btn-sm d-none btn-success  latoFont smallFont" id="unpacksz{{sz.size.id}}" onclick="data={data:{p:0,show:'#packsz{{sz.size.id}}',hide:'#unpacksz{{sz.size.id}}',c:0,s:'{{sz.size.id}}','i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)"   >
+                         {% endif %}
+                         <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="20" viewBox="0 0 24 24" width="20" fill="currentColor">
+                          <path d="M16.48,10.41c-0.39,0.39-1.04,0.39-1.43,0l-4.47-4.46l-7.05,7.04l-0.66-0.63c-1.17-1.17-1.17-3.07,0-4.24l4.24-4.24 c1.17-1.17,3.07-1.17,4.24,0L16.48,9C16.87,9.39,16.87,10.02,16.48,10.41z M17.18,8.29c0.78,0.78,0.78,2.05,0,2.83 c-1.27,1.27-2.61,0.22-2.83,0l-3.76-3.76l-5.57,5.57c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71 l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41 c0.39,0.39,1.02,0.39,1.41,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.41,0l8.32-8.34 c1.17-1.17,1.17-3.07,0-4.24l-4.24-4.24c-1.15-1.15-3.01-1.17-4.18-0.06L17.18,8.29z"/>
+                          </svg>
+                          {% if useri.langSet == 0 %}Nafasi Imechukuliwa{% else %}Occupied{% endif %}
+                        </button>
+            
+                        {% elif sz.size.size.idadi > 0 and sz.size.idadi > sz.size.size.idadi   %}
+                          <span style="color:rgb(77, 56, 1)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                            </svg>
+                             {% if useri.langSet == 0 %}Nafasi zilizopo{% else %}Free Space{% endif %} {{b.itm.produ.bidhaa.vipimo}}</span> . <strong>{{sz.size.size.idadi | floatformat:'-2' }}</strong> 
+                          </span>
+            
+                        {% elif rSpace == 0 and not sz.size.packed  %}  
+                          <span class="text-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                            </svg>
+                             {% if useri.langSet == 0 %} Nafasi zimeisha{% else %} No Free Space{% endif %} 
+                             
+                          </span>
+                         
+                        {% endif %}
+
+                        {% else %}
+
+                        {% if sz.size.idadi <= sz.size.size.idadi or sz.size.packed %}
+                        {% if sz.size.packed %}
+                        <button class="btn btn-sm d-none btn-light btn-outline-primary  latoFont smallFont" id="packsz{{sz.size.id}}" onclick="data={data:{p:1,hide:'#packsz{{sz.size.id}}',show:'#unpacksz{{sz.size.id}}',s:'{{sz.size.id}}',c:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)">
+                         {% else %}
+                        <button class="btn btn-sm  btn-light btn-outline-primary  latoFont smallFont" id="packsz{{sz.size.id}}" onclick="data={data:{p:1,show:'#unpacksz{{sz.size.id}}',hide:'#packsz{{sz.size.id}}',s:'{{sz.size.id}}',c:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" >
+                         {% endif %}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box2" viewBox="0 0 16 16">
+                            <path stroke="#000" stroke-linejoin="round" d="M.5 4.5V15a.5.5 0 0 0 .5.5h14a.5.5 0 0 0 .5-.5V4.5m-15 0L3.35.7a.5.5 0 0 1 .4-.2H8m-7.5 4H8m7.5 0L12.65.7a.5.5 0 0 0-.4-.2H8m7.5 4H8m0-4v4"/>
+                          </svg>
+                             {% if useri.langSet == 0 %}Fungasha{% else %}Pack{% endif %}
+                        </button>
+            
+            
+            
+                        {% if sz.size.packed %}
+                            <button class="btn btn-sm btn-success  latoFont smallFont" id="unpacksz{{sz.size.id}}" onclick="data={data:{p:0,hide:'#unpacksz{{sz.size.id}}',show:'#packsz{{sz.size.id}}',c:0,s:'{{sz.size.id}}','i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" title="{% if useri.langSet == 0 %}Fungua{% else %}Unpack{% endif %}">
+                         {% else %} 
+                        <button class="btn btn-sm d-none btn-success  latoFont smallFont" id="unpacksz{{sz.size.id}}" onclick="data={data:{p:0,show:'#packsz{{sz.size.id}}',hide:'#unpacksz{{sz.size.id}}',c:0,s:'{{sz.size.id}}','i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)"   >
+                         {% endif %}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-bag-check-fill" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M10.5 3.5a2.5 2.5 0 0 0-5 0V4h5v-.5zm1 0V4H15v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4h3.5v-.5a3.5 3.5 0 1 1 7 0zm-.646 5.354a.5.5 0 0 0-.708-.708L7.5 10.793 6.354 9.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+                          </svg>
+                          {% if useri.langSet == 0 %}Imefungashwa{% else %}Packed{% endif %}
+                        </button>
+            
+                        {% elif sz.size.size.idadi > 0 and sz.size.idadi > sz.size.size.idadi   %}
+                          <span style="color:rgb(77, 56, 1)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                            </svg>
+                             {% if useri.langSet == 0 %}zimebaki{% else %}Remaining{% endif %} {{b.itm.produ.bidhaa.vipimo}}</span> . <strong>{{sz.size.size.idadi | floatformat:'-2' }}</strong> 
+                          </span>
+            
+                        {% elif sz.size.size.idadi == 0 and not sz.size.packed  %}  
+                          <span class="text-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                            </svg>
+                             {% if useri.langSet == 0 %} Zimeisha{% else %} Out of stock{% endif %} 
+                             
+                          </span>
+                         
+                        {% endif %}
+            
+                        
+                           {% endif %}
+                      
+                  </p>
+
+      </div>
+      <hr class="col-12 " >
+      {% endfor %}
+
+      {% else %}
+<!-- THIS IS  IF ITEM INVOLVES COLOR ONLY................................................................ -->
+ <!-- The image -->
+     <div class="col-md-3 col-4" style="display: flex;justify-content:center">
+        
+          {% if cs.img.count > 0 %}
+
+            <div class="classic_div item_order_img" >
+                 <img src="{{cs.img.first.picha.picha.url}}" style="max-width: 100%;">
+            </div>
+            
+
+         {% else %}
+         <span class="text-muted " >
+          <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="currentColor" class="bi bi-cart-check-fill" viewBox="0 0 16 16">
+            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+          </svg>
+       </span>
+         {% endif %}
+      </div>
+      <!-- ITEM DETAILS -->
+      <div class="col-md-6 col-8">
+         <h5   >
+           {{b.itm.produ.bidhaa.bidhaa_jina | title}}
+         </h5> 
+         <div>{{b.itm.produ.bidhaa.maelezo }}
+
+          <u class="ml-1 border-left smallFont pl-1 darkblue">
+            {% if b.itm.produ.uhamisho %}
+                  RC-{{b.itm.produ.uhamisho.receive.transfer.code}}
+            {% endif %}
+
+            {% if b.itm.produ.manunuzi and not b.itm.produ.uhamisho %}
+                  BIL-{{b.itm.produ.manunuzi.manunuzi.code}}
+            {% endif %}
+
+            {% if b.itm.produ.produced and not b.itm.produ.uhamisho %}
+                  BATCH-{{b.itm.produ.produced.production.code}}
+            {% endif %}
+
+            {% if b.itm.produ.ongezwa and not b.itm.produ.uhamisho %}
+                  ADJ-{{b.itm.produ.ongezwa.code}}
+            {% endif %}
+
+          </u>  
+         </div>
+
+         <!-- BATCH/LOT TRACKING -->
+  
+
+
+         <div class="py-2 smallerFont" ><strong>
+          {% if b.itm.produ.bidhaa.colorAttr %}
+              {{b.itm.produ.bidhaa.colorAttr}}
+          {% else %}
+            {% if useri.langSet == 0 %} Rangi{% else %}Color {% endif %} 
+          {% endif %}
+          
+          :</strong> {{cs.color.color.color.color_name | title}}</div>
+
+
+         <div class="py-2 smallFont" ><strong>{% if useri.langSet == 0 %}Vipimo {% else %}Units {% endif %}:</strong> <span class="text-primary">  {{cs.price.vipimo}}</span> </div>
+
+         <div  ><strong>{% if useri.langSet == 0 %}Idadi {% else %}Qty {% endif %}:</strong> 
+          <strong style="color: brown;">                
+            
+            <script>document.write((Number('{{cs.color.idadi}}')/Number('{{cs.price.idadi}}')).toLocaleString())</script>
+          </strong> </div>
+
+         <div class="py-2" ><strong class="smallerFont" >{% if useri.langSet == 0 %}Bei {% else %}Price {% endif %}/<span class="text-primary">{{cs.price.vipimo}}</span> 
+          {%if b.itm.produ.timely > 0  %}
+              / <span class="text-primary" >
+              {%if b.itm.produ.timely == 1  %}
+              {% if useri.langSet == 0 %} Dakika{% else %}Minute {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 2  %}
+              {% if useri.langSet == 0 %} Saa{% else %}Hour {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 3  %}
+              {% if useri.langSet == 0 %} Siku{% else %}Day {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 4  %}
+              {% if useri.langSet == 0 %} Wiki{% else %}Week {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 5  %}
+              {% if useri.langSet == 0 %} Mwezi{% else %}Month {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 6  %}
+              {% if useri.langSet == 0 %} Mwaka{% else %}Year {% endif %}
+              {% endif %}
+                </span>
+            {%endif%} 
+          :</strong> <span class="smallerFont" >{{duka.currencii}}</span>. <strong style="color: brown;" >{{cs.price.bei | floatformat:'-2' |intcomma }}</strong>
+          {%if b.itm.produ.timely > 0  %}
+          <br>
+          <strong class="smallerFont" >{% if useri.langSet == 0 %}Muda {% else %}Duration {% endif %}
+            <span class="text-primary" >
+              {%if b.itm.produ.timely == 1  %}
+              ({% if useri.langSet == 0 %} Dakika{% else %}Minute {% endif %})
+              {% endif %}
+              {%if b.itm.produ.timely == 2  %}
+              ({% if useri.langSet == 0 %} Saa{% else %}Hour {% endif %})
+              {% endif %}
+              {%if b.itm.produ.timely == 3  %}
+              ({% if useri.langSet == 0 %} Siku{% else %}Day {% endif %})
+              {% endif %}
+              {%if b.itm.produ.timely == 4  %}
+              ({% if useri.langSet == 0 %} Wiki{% else %}Week {% endif %})
+              {% endif %}
+              {%if b.itm.produ.timely == 5  %}
+              ({% if useri.langSet == 0 %} Mwezi{% else %}Month {% endif %})
+              {% endif %}
+              {%if b.itm.produ.timely == 6  %}
+              ({% if useri.langSet == 0 %} Mwaka{% else %}Year {% endif %})
+              {% endif %}
+                </span>
+            : 
+
+                 
+                 <span class="brown">
+                   {{b.itm.saveT}}
+                 </span>
+          </strong>
+          {% endif %}
+         
+        </div>
+
+
+      </div>
+ <!-- ITEM TOTAL PRICE -->
+      <div class="col-md-3 row">
+        <h6 class="col-5 d-md-none " >{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</h6>
+
+          <h6 class="text-right col-md-12 col-7" >
+            <span class="latoFont" >{{duka.currencii }}.</span>
+            <span  style="color:brown;font-weight:700;text-shadow:0 1 1px #000"> 
+              <script>document.write(((Number('{{cs.color.idadi}}')*Number('{{b.itm.saveT}}')*Number('{{cs.price.bei}}'))/Number('{{cs.price.idadi}}')).toLocaleString())</script>
+            </span> 
+          </h6>
+
+          <!-- <div class="change-price text-right  ">
+            <div class="input-group">
+
+            <div class=" show_curency_inline show_curency position-absolute    px-3" style="display: none ;">
+            
+              <label class="mt-1 text-danger" style="font-weight: 700;"  for=""></label> 
+              <div class="box-pointer d-inline "></div>
+            </div>
+
+             <span class="latoFont input-group-prepend px-2 d-flex" style="display: flex;justify-content:center;align-items:center" >{{duka.currencii }}.</span>
+            <input type="number"  data-idadi={{b.itm.idadi}}  data-bei={{b.price.bei}}  data-uwiano={{b.price.idadi}}   class="form-control sut_t d-inline money-fomat text-primary font-weight-bold"  placeholder="Total"  >
+          </div>
+          </div>   -->
+
+          <p class="text-right mt-3 col-12" >
+            {% if total.service %}
+             {% if cs.color.idadi <= cs.rSpace or cs.color.packed %}
+                {% if cs.color.packed %}
+                <button class="btn btn-sm d-none btn-light btn-outline-primary  latoFont smallFont" id="packcs{{cs.color.id}}" onclick="data={data:{p:1,hide:'#packcs{{cs.color.id}}',show:'#unpackcs{{cs.color.id}}',c:'{{cs.color.id}}',s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)">
+                {% else %}
+                <button class="btn btn-sm  btn-light btn-outline-primary  latoFont smallFont" id="packcs{{cs.color.id}}" onclick="data={data:{p:1,hide:'#packcs{{cs.color.id}}',show:'#unpackcs{{cs.color.id}}',c:'{{cs.color.id}}',s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" >
+                {% endif %}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box2" viewBox="0 0 16 16">
+                    <path stroke="#000" stroke-linejoin="round" d="M.5 4.5V15a.5.5 0 0 0 .5.5h14a.5.5 0 0 0 .5-.5V4.5m-15 0L3.35.7a.5.5 0 0 1 .4-.2H8m-7.5 4H8m7.5 0L12.65.7a.5.5 0 0 0-.4-.2H8m7.5 4H8m0-4v4"/>
+                  </svg>
+                    {% if useri.langSet == 0 %}Chukua Nafasi{% else %}Take Space{% endif %}
+                </button>
+
+                {% if cs.color.packed %}
+                    <button class="btn btn-sm btn-success  latoFont smallFont" id="unpackcs{{cs.color.id}}" onclick="data={data:{p:0,hide:'#unpackcs{{cs.color.id}}',show:'#packcs{{cs.color.id}}',c:'{{cs.color.id}}',s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" title="{% if useri.langSet == 0 %}Fungua{% else %}Unpack{% endif %}">
+                {% else %} 
+                  <button class="btn btn-sm d-none btn-success  latoFont smallFont" id="unpackcs{{cs.color.id}}" onclick="data={data:{p:0,hide:'#unpackcs{{cs.color.id}}',show:'#packcs{{cs.color.id}}',c:'{{cs.color.id}}',s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)"  >
+                {% endif %}
+                <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="20" viewBox="0 0 24 24" width="20" fill="currentColor">
+                  <path d="M16.48,10.41c-0.39,0.39-1.04,0.39-1.43,0l-4.47-4.46l-7.05,7.04l-0.66-0.63c-1.17-1.17-1.17-3.07,0-4.24l4.24-4.24 c1.17-1.17,3.07-1.17,4.24,0L16.48,9C16.87,9.39,16.87,10.02,16.48,10.41z M17.18,8.29c0.78,0.78,0.78,2.05,0,2.83 c-1.27,1.27-2.61,0.22-2.83,0l-3.76-3.76l-5.57,5.57c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71 l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41 c0.39,0.39,1.02,0.39,1.41,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.41,0l8.32-8.34 c1.17-1.17,1.17-3.07,0-4.24l-4.24-4.24c-1.15-1.15-3.01-1.17-4.18-0.06L17.18,8.29z"/>
+                  </svg>
+                  {% if useri.langSet == 0 %}Nafasi Imechukuliwa{% else %}Occupied{% endif %}
+                </button>
+
+                {% elif cs.rSpace > 0 and cs.color.idadi > cs.rSpace  %}
+                  <span style="color:rgb(77, 56, 1)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                    {% if useri.langSet == 0 %}Nafasi zilizopo{% else %}Free Space{% endif %} <span class="text-primary">{{b.itm.produ.bidhaa.vipimo}}</span> . <strong>{{cs.color.color.idadi | floatformat:'-2' }}</strong> 
+                  </span>
+
+                {% elif cs.rSpace == 0 %}  
+                  <span class="text-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                    {% if useri.langSet == 0 %}Nafasi Zimeisha{% else %} No Free Space{% endif %} 
+                    
+                  </span>
+                
+                {% endif %}
+            {% else %}
+                {% if cs.color.idadi <= cs.color.color.idadi or cs.color.packed %}
+                {% if cs.color.packed %}
+                <button class="btn btn-sm d-none btn-light btn-outline-primary  latoFont smallFont" id="packcs{{cs.color.id}}" onclick="data={data:{p:1,hide:'#packcs{{cs.color.id}}',show:'#unpackcs{{cs.color.id}}',c:'{{cs.color.id}}',s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)">
+                {% else %}
+                <button class="btn btn-sm  btn-light btn-outline-primary  latoFont smallFont" id="packcs{{cs.color.id}}" onclick="data={data:{p:1,hide:'#packcs{{cs.color.id}}',show:'#unpackcs{{cs.color.id}}',c:'{{cs.color.id}}',s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" >
+                {% endif %}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box2" viewBox="0 0 16 16">
+                    <path stroke="#000" stroke-linejoin="round" d="M.5 4.5V15a.5.5 0 0 0 .5.5h14a.5.5 0 0 0 .5-.5V4.5m-15 0L3.35.7a.5.5 0 0 1 .4-.2H8m-7.5 4H8m7.5 0L12.65.7a.5.5 0 0 0-.4-.2H8m7.5 4H8m0-4v4"/>
+                  </svg>
+                    {% if useri.langSet == 0 %}Fungasha{% else %}Pack{% endif %}
+                </button>
+
+                {% if cs.color.packed %}
+                    <button class="btn btn-sm btn-success  latoFont smallFont" id="unpackcs{{cs.color.id}}" onclick="data={data:{p:0,hide:'#unpackcs{{cs.color.id}}',show:'#packcs{{cs.color.id}}',c:'{{cs.color.id}}',s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" title="{% if useri.langSet == 0 %}Fungua{% else %}Unpack{% endif %}">
+                {% else %} 
+                  <button class="btn btn-sm d-none btn-success  latoFont smallFont" id="unpackcs{{cs.color.id}}" onclick="data={data:{p:0,hide:'#unpackcs{{cs.color.id}}',show:'#packcs{{cs.color.id}}',c:'{{cs.color.id}}',s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)"  >
+                {% endif %}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-bag-check-fill" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M10.5 3.5a2.5 2.5 0 0 0-5 0V4h5v-.5zm1 0V4H15v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4h3.5v-.5a3.5 3.5 0 1 1 7 0zm-.646 5.354a.5.5 0 0 0-.708-.708L7.5 10.793 6.354 9.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+                  </svg>
+                  {% if useri.langSet == 0 %}Imefungashwa{% else %}Packed{% endif %}
+                </button>
+
+                {% elif cs.color.color.idadi > 0 and cs.color.idadi > cs.color.color.idadi  %}
+                  <span style="color:rgb(77, 56, 1)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                    {% if useri.langSet == 0 %}zimebaki{% else %}Remaining{% endif %} <span class="text-primary">{{b.itm.produ.bidhaa.vipimo}}</span> . <strong>{{cs.color.color.idadi | floatformat:'-2' }}</strong> 
+                  </span>
+
+                {% elif cs.color.color.idadi == 0 and not cs.color.packed %}  
+                  <span class="text-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                    {% if useri.langSet == 0 %} Zimeisha{% else %} Out of stock{% endif %} 
+                    
+                  </span>
+                
+                {% endif %}
+
+             {% endif %}
+
+          </p>
+
+      </div>
+      <hr class="col-12" />
+      
+      {% endif %}
+
+      {% endfor %}
+
+      {% else %}
+
+  <!-- THIS IS  IF ITEM HAS NEITHER COLOR NO SIZE................................................................ -->
+<!-- The image -->
+     <div class="col-md-3 col-4" style="display: flex;justify-content:center">
+        
+          {% if b.img.count > 0 %}
+
+            <div class="classic_div item_order_img" >
+                 <img src="{{b.img.first.picha.picha.url}}" style="max-width: 100%;">
+            </div>
+            
+
+         {% else %}
+         <span class="text-muted" >
+          <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="currentColor" class="bi bi-cart-check-fill" viewBox="0 0 16 16">
+            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+          </svg>
+       </span>
+         {% endif %}
+      </div>
+      <!-- ITEM DETAILS -->
+      <div class="col-md-6 col-8">
+         <h5   >
+           {{b.itm.produ.bidhaa.bidhaa_jina | title}}
+         </h5> 
+         <div>{{b.itm.produ.bidhaa.maelezo}}     
+          
+          <u class="ml-1 border-left smallFont pl darkblue">
+          {% if b.itm.produ.uhamisho %}
+                RC-{{b.itm.produ.uhamisho.receive.transfer.code}}
+          {% endif %}
+
+          {% if b.itm.produ.manunuzi and not b.itm.produ.uhamisho %}
+                BIL-{{b.itm.produ.manunuzi.manunuzi.code}}
+          {% endif %}
+
+          {% if b.itm.produ.produced and not b.itm.produ.uhamisho %}
+                BATCH-{{b.itm.produ.produced.production.code}}
+          {% endif %}
+
+          {% if b.itm.produ.ongezwa and not b.itm.produ.uhamisho %}
+                ADJ-{{b.itm.produ.ongezwa.code}}
+          {% endif %}
+
+          </u>  
+
+
+      </div>
+
+         <div class="py-2 smallFont" ><strong>{% if useri.langSet == 0 %}Vipimo {% else %}Units {% endif %}:</strong> <span class="text-primary">  {{b.price.vipimo}}</span> </div>
+
+         <div  ><strong>{% if useri.langSet == 0 %}Idadi {% else %}Qty {% endif %}:</strong> 
+          <strong style="color: brown;">                
+            
+            <script>document.write((Number('{{b.itm.idadi}}')/Number('{{b.price.idadi}}')).toLocaleString())</script>
+          </strong> </div>
+
+         <div class="py-2" ><strong class="smallerFont" >{% if useri.langSet == 0 %}Bei {% else %}Price {% endif %}/<span class="text-primary">{{b.price.vipimo}}</span>
+          {%if b.itm.produ.timely > 0  %}
+              / <span class="text-primary" >
+              {%if b.itm.produ.timely == 1  %}
+              {% if useri.langSet == 0 %} Dakika{% else %}Minute {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 2  %}
+              {% if useri.langSet == 0 %} Saa{% else %}Hour {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 3  %}
+              {% if useri.langSet == 0 %} Siku{% else %}Day {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 4  %}
+              {% if useri.langSet == 0 %} Wiki{% else %}Week {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 5  %}
+              {% if useri.langSet == 0 %} Mwezi{% else %}Month {% endif %}
+              {% endif %}
+              {%if b.itm.produ.timely == 6  %}
+              {% if useri.langSet == 0 %} Mwaka{% else %}Year {% endif %}
+              {% endif %}
+                </span>
+            {%endif%} 
+          :</strong> <span class="smallerFont" >{{duka.currencii}}</span>. <strong style="color: brown;" >{{b.price.bei | floatformat:'-2' |intcomma }}</strong>
+          {%if b.itm.produ.timely > 0  %}
+          <br>
+          <strong class="smallerFont" >{% if useri.langSet == 0 %}Muda {% else %}Duration {% endif %}
+            <span class="text-primary" >
+              {%if b.itm.produ.timely == 1  %}
+              ({% if useri.langSet == 0 %} Dakika{% else %}Minute {% endif %})
+              {% endif %}
+              {%if b.itm.produ.timely == 2  %}
+              ({% if useri.langSet == 0 %} Saa{% else %}Hour {% endif %})
+              {% endif %}
+              {%if b.itm.produ.timely == 3  %}
+              ({% if useri.langSet == 0 %} Siku{% else %}Day {% endif %})
+              {% endif %}
+              {%if b.itm.produ.timely == 4  %}
+              ({% if useri.langSet == 0 %} Wiki{% else %}Week {% endif %})
+              {% endif %}
+              {%if b.itm.produ.timely == 5  %}
+              ({% if useri.langSet == 0 %} Mwezi{% else %}Month {% endif %})
+              {% endif %}
+              {%if b.itm.produ.timely == 6  %}
+              ({% if useri.langSet == 0 %} Mwaka{% else %}Year {% endif %})
+              {% endif %}
+                </span>
+            : 
+
+                 
+                 <span class="brown">
+                   {{b.itm.saveT}}
+                 </span>
+          </strong>
+          {% endif %}
+          
+        </div>
+
+
+      </div>
+ <!-- ITEM TOTAL PRICE -->
+      <div class="col-md-3 row">
+        <h6 class="col-5 d-md-none" >{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</h6>
+
+          <h6 class="text-right col-md-12 col-7" >
+            <span class="latoFont" >{{duka.currencii }}.</span>
+            <span  style="color:brown;font-weight:700;text-shadow:0 1 1px #000">
+              <script>document.write(((Number('{{b.itm.idadi}}')*Number('{{b.itm.saveT}}')*Number('{{b.price.bei}}'))/Number('{{b.price.idadi}}')).toLocaleString())</script>
+
+            </span> 
+
+          
+
+          </h6>
+
+            <!-- <div class="change-price text-right  ">
+              <div class="input-group">
+
+              <div class=" show_curency_inline show_curency position-absolute    px-3" style="display: none ;">
+              
+                <label class="mt-1 text-danger" style="font-weight: 700;"  for=""></label> 
+                <div class="box-pointer d-inline "></div>
+              </div>
+
+               <span class="latoFont input-group-prepend px-2 d-flex" style="display: flex;justify-content:center;align-items:center" >{{duka.currencii }}.</span>
+              <input type="number"  data-idadi={{b.itm.idadi}}  data-bei={{b.price.bei}}  data-uwiano={{b.price.idadi}}   class="form-control sut_t d-inline money-fomat text-primary font-weight-bold"  placeholder="Total"  >
+            </div>
+            </div>     -->
+
+
+            <!-- PACK OR UNPACK BUTTON -->
+            <p class="text-right mt-3 col-12" >
+
+              <!-- CONFIRM IF IS SERVICE -->
+               {% if total.service %}
+
+               
+           
+               {% if  b.itm.packed or b.itm.idadi <= b.rSpace %}
+           
+
+              {% if b.itm.packed %}
+              <button class="btn btn-sm d-none btn-light btn-outline-primary  latoFont smallFont" id="pack{{b.itm.id}}" onclick="let data={data:{p:1,hide:'#pack{{b.itm.id}}',show:'#unpack{{b.itm.id}}',c:0,s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data);">
+               {% else %}
+              <button class="btn btn-sm  btn-light btn-outline-primary  latoFont smallFont" id="pack{{b.itm.id}}" onclick="var data={data:{p:1,hide:'#pack{{b.itm.id}}',show:'#unpack{{b.itm.id}}',c:0,s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" >
+               {% endif %}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box2" viewBox="0 0 16 16">
+                  <path stroke="#000" stroke-linejoin="round" d="M.5 4.5V15a.5.5 0 0 0 .5.5h14a.5.5 0 0 0 .5-.5V4.5m-15 0L3.35.7a.5.5 0 0 1 .4-.2H8m-7.5 4H8m7.5 0L12.65.7a.5.5 0 0 0-.4-.2H8m7.5 4H8m0-4v4"/>
+                </svg>
+                   {% if useri.langSet == 0 %}Chukua Nafasi{% else %}Take Space{% endif %}
+              </button>
+  
+              {% if b.itm.packed %}
+                  <button class="btn btn-sm btn-success  latoFont smallFont" id="unpack{{b.itm.id}}" onclick="var data={data:{p:0,hide:'#unpack{{b.itm.id}}',show:'#pack{{b.itm.id}}',c:0,s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" title="{% if useri.langSet == 0 %}Fungua{% else %}Unpack{% endif %}">
+               {% else %} 
+                 <button class="btn btn-sm d-none btn-success  latoFont smallFont" id="unpack{{b.itm.id}}" onclick="var data={data:{p:0,hide:'#unpack{{b.itm.id}}',show:'#pack{{b.itm.id}}',c:0,s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)"  >
+               {% endif %}
+               <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="20" viewBox="0 0 24 24" width="20" fill="currentColor">
+                <path d="M16.48,10.41c-0.39,0.39-1.04,0.39-1.43,0l-4.47-4.46l-7.05,7.04l-0.66-0.63c-1.17-1.17-1.17-3.07,0-4.24l4.24-4.24 c1.17-1.17,3.07-1.17,4.24,0L16.48,9C16.87,9.39,16.87,10.02,16.48,10.41z M17.18,8.29c0.78,0.78,0.78,2.05,0,2.83 c-1.27,1.27-2.61,0.22-2.83,0l-3.76-3.76l-5.57,5.57c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71 l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41 c0.39,0.39,1.02,0.39,1.41,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.41,0l8.32-8.34 c1.17-1.17,1.17-3.07,0-4.24l-4.24-4.24c-1.15-1.15-3.01-1.17-4.18-0.06L17.18,8.29z"/>
+                </svg>
+                {% if useri.langSet == 0 %}Nafasi Imechukuliwa{% else %}Occupied{% endif %}
+              </button>
+  
+              {% elif b.rSpace > 0 and b.itm.idadi > b.rSpace   %}
+                <span style="color:rgb(77, 56, 1)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                  </svg>
+                   {% if useri.langSet == 0 %}Nafasi Zilizopo{% else %}Free Space {% endif %} {{b.itm.produ.bidhaa.vipimo}}</span> . <strong>{{b.itm.produ.idadi | floatformat:'-2' }}</strong> 
+                </span>
+  
+              {% elif b.rSpace == 0  %}  
+                <span class="text-danger">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                  </svg>
+                   {% if useri.langSet == 0 %} Nafasi Zimeisha{% else %}No Free Space{% endif %} 
+                   
+                </span>
+               
+              {% endif %}
+
+
+               {% else %}
+
+               <!-- PACK IF IS ITEMS -->
+           
+              {% if b.itm.packed or b.itm.idadi <= b.itm.produ.idadi or b.itm.produ.produced.notsure %}
+              
+              {% if b.itm.packed %}
+              <button class="btn btn-sm d-none btn-light btn-outline-primary  latoFont smallFont" id="pack{{b.itm.id}}" onclick="let data={data:{p:1,hide:'#pack{{b.itm.id}}',show:'#unpack{{b.itm.id}}',c:0,s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data);">
+               {% else %}
+              <button class="btn btn-sm  btn-light btn-outline-primary  latoFont smallFont" id="pack{{b.itm.id}}" onclick="let data={data:{p:1,hide:'#pack{{b.itm.id}}',show:'#unpack{{b.itm.id}}',c:0,s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" >
+               {% endif %}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box2" viewBox="0 0 16 16">
+                  <path stroke="#000" stroke-linejoin="round" d="M.5 4.5V15a.5.5 0 0 0 .5.5h14a.5.5 0 0 0 .5-.5V4.5m-15 0L3.35.7a.5.5 0 0 1 .4-.2H8m-7.5 4H8m7.5 0L12.65.7a.5.5 0 0 0-.4-.2H8m7.5 4H8m0-4v4"/>
+                </svg>
+                   {% if useri.langSet == 0 %}Fungasha{% else %}Pack{% endif %}
+              </button>
+  
+  
+  
+              {% if b.itm.packed %}
+                  <button class="btn btn-sm btn-success  latoFont smallFont" id="unpack{{b.itm.id}}" onclick="var data={data:{p:0,hide:'#unpack{{b.itm.id}}',show:'#pack{{b.itm.id}}',c:0,s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)" title="{% if useri.langSet == 0 %}Fungua{% else %}Unpack{% endif %}">
+               {% else %} 
+                 <button class="btn btn-sm d-none btn-success  latoFont smallFont" id="unpack{{b.itm.id}}" onclick="var data={data:{p:0,hide:'#unpack{{b.itm.id}}',show:'#pack{{b.itm.id}}',c:0,s:0,'i':'{{b.itm.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/setPack'};setPack(data)"  >
+               {% endif %}
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-bag-check-fill" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M10.5 3.5a2.5 2.5 0 0 0-5 0V4h5v-.5zm1 0V4H15v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4h3.5v-.5a3.5 3.5 0 1 1 7 0zm-.646 5.354a.5.5 0 0 0-.708-.708L7.5 10.793 6.354 9.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+                </svg>
+                {% if useri.langSet == 0 %}Imefungashwa{% else %}Packed{% endif %}
+              </button>
+  
+              {% elif b.itm.produ.idadi > 0 and b.itm.idadi > b.itm.produ.idadi %}
+                <span style="color:rgb(77, 56, 1)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                  </svg>
+                   {% if useri.langSet == 0 %}zimebaki{% else %}Remaining{% endif %} {{b.itm.produ.bidhaa.vipimo}}</span> . <strong>{{b.itm.produ.idadi | floatformat:'-2' }}</strong> 
+                </span>
+  
+              {% elif b.itm.produ.idadi == 0 and not b.itm.packed  %}  
+                <span class="text-danger">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                  </svg>
+                   {% if useri.langSet == 0 %} Zimeisha{% else %} Out of stock{% endif %} 
+                   
+                </span>
+               
+              {% endif %}
+              
+  
+              {% endif %}
+  
+            </p>
+      </div>
+      <hr class="col-12 " />
+      
+      {% endif %}
+      {% endfor %}
+
+     
+      <h5 class="col-6 pl-4" style="font-weight: 600;"> {% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %} </h5>
+       <h5 class="col-6 text-right">
+          <span class="latoFont" >{{duka.currencii }}.</span>
+            <span  style="color:brown;font-weight:700;text-shadow:0 1 1px #000"> 
+              {{total.amount | floatformat:'-2' | intcomma }}
+          </span> 
+        </h5>
+
+        <hr class="col-12" >
+        {% if useri.company %}
+          <p class="text-center brown" >
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-triangle">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+        
+            <span class="ml-1">
+              {% if useri.langSet == 0 %}Akaunti hii si ya mtu binafsi hivyo kuongeza data za mauzo, manunuzi, matumizi, uzalishaji na huduma inatakiwa awepo msimamizi {% else %} This account is not personal therefore sales, expenses, purchases and serives data can only be added with operator account{% endif %} 
+            </span>
+        </p>
+        {% else %}   
+
+         <p class="text-right col-12 my-3">
+
+            <button onclick="if(confirm('{% if useri.langSet == 0 %}Oda itaondolewa kwenye notifikesheni za oda{% else %}Order will be removed from cart order notifications{% endif %}')){let data={data:{value:'{{total.user_customer.enteprise.id}}',b:'{{total.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/mauzo/not_important'};setPack(data)}" class="btn btn-light smallFont  mr-md-5"  >
+              <svg xmlns="http://www.w3.org/2000/svg" height="17px" viewBox="0 -960 960 960" width="17px" fill="currentColor">
+                <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
+                </svg>
+              {% if useri.langSet == 0 %}Nimeshaiona{% else %}Mark as Seen{% endif %}
+            </button>
+
+            
+            <a href="{% url 'create_package' %}?value={{total.user_customer.enteprise.id}}&b={{total.id}}" class="btn latofont smallFont ml-3" style="color: #fff;background-color: rgb(30, 39, 158);" >
+               
+              {% if total.service %}
+                  <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="20" viewBox="0 0 24 24" width="20" fill="currentColor">
+                  <path d="M16.48,10.41c-0.39,0.39-1.04,0.39-1.43,0l-4.47-4.46l-7.05,7.04l-0.66-0.63c-1.17-1.17-1.17-3.07,0-4.24l4.24-4.24 c1.17-1.17,3.07-1.17,4.24,0L16.48,9C16.87,9.39,16.87,10.02,16.48,10.41z M17.18,8.29c0.78,0.78,0.78,2.05,0,2.83 c-1.27,1.27-2.61,0.22-2.83,0l-3.76-3.76l-5.57,5.57c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71 l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41 c0.39,0.39,1.02,0.39,1.41,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.41,0l8.32-8.34 c1.17-1.17,1.17-3.07,0-4.24l-4.24-4.24c-1.15-1.15-3.01-1.17-4.18-0.06L17.18,8.29z"/>
+                  </svg>
+
+                   {% if useri.langSet == 0 %}Weka Nafasi{% else %}Add Booking{% endif %}
+              {% else %}  
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-box-seam" viewBox="0 0 16 16">
+                  <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                </svg>
+                  {% if useri.langSet == 0 %}funga mzigo{% else %}Create Packege{% endif %}
+              {% endif %}
+            </a>
+
+          </p>
+   
+          {% endif %}
+
+    <div class="col-md-3 mt-4 mt-md-0 px-2"  >
+      
+    </div>
+
+
+  </div>
+
+
+  <span id="chart-cart-btns"  style="position: fixed;top:80vh;right:7px">
+    <!-- CHATTING BTN..................... -->
+      <button class="btn btn-primary py-2  btn-sm" style="border-radius: 50%;"  onclick="getChats('{{total.user_customer.enteprise.id}}')"  > 
+        <svg xmlns="http://www.w3.org/2000/svg" width="1.8em" height="1.8em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-circle">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+          </path>
+      </svg>
+      
+      </button>
+  </span>
+
+ 
+
+  <script>
+    function setPack(data){
+      $("#loadMe").modal('show');
+     
+      $.ajax({
+        type: "POST",
+        url: data.url,
+        data: data.data,
+        success: function (rs) {
+            if(rs.success){
+              if('hide' in data.data || 'show' in data.data ){
+                $(data.data.hide).hide()
+                $(data.data.show).removeClass('d-none')
+                $(data.data.show).fadeIn(110)                
+              }else{
+              toastr.success(`{% if useri.langSet == 0 %}${rs.msg_swa}{% else %}${rs.msg_eng}{% endif %}','{% if useri.langSet == 0 %}Imefanikiwa{% else %}Success{% endif %}`)
+                
+              }
+
+            }else{
+              toastr.error('{% if useri.langSet == 0 %}Oparesheni haikufanikiwa kutokana na hitilafu{% else %}The Operation was not successfull please try again{% endif %}','{% if useri.langSet == 0 %}Haikfanikiwa{% else %}Error{% endif %}')
+            }
+
+          $("#loadMe").modal('hide');  
+
+          }
+          })
+
+    }
+  </script>
+
+  {% else %}
+       <div class="container d-flex justify-content-center" style="align-items: center;height:70%">
+          
+           <div class="text-center" >
+             <span class="text-mited" style="color:rgb(110, 110, 110)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" fill="currentColor" class="bi bi-cart-x-fill" viewBox="0 0 16 16">
+                  <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7.354 5.646 8.5 6.793l1.146-1.147a.5.5 0 0 1 .708.708L9.207 7.5l1.147 1.146a.5.5 0 0 1-.708.708L8.5 8.207 7.354 9.354a.5.5 0 1 1-.708-.708L7.793 7.5 6.646 6.354a.5.5 0 1 1 .708-.708z"/>
+                </svg>
+             </span>
+             <p class="pt-3" >
+               {% if total.service %}
+                  {% if useri.langSet == 0 %}Hakuna Huuduma Iliyoagizwa {% else %}The Cart to  is empty {% endif %}
+               {%else%}
+               {% if useri.langSet == 0 %}
+                   Hakuna Bidhaa Iliyoagizwa 
+            
+                  {% else %}
+                        The Cart to  is empty 
+                  {% endif %}
+                {% endif %}  
+             </p>
+            
+        </div>
+       </div>
+
+{% endif %}
+  </div> 
+{% endblock %}  
+
+
+
+
+{% block active-saleOda-menu %} class="btn-default btn pop2_active_menu btn-sm " {% endblock %}
+
+{% block active-mauzo %} class="bi bi-cart-check text-primary" {% endblock %}
+{% block active-kuuza %}
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-check-fill text-primary " viewBox="0 0 16 16">
+  <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+</svg>
+{% endblock %}
+   
+{% block nav-mauzo %}
+class="c-menu__item style-none is-active  showingpop2"
+{% endblock %}
+
+{% block dash-map %}
+   <a href="{% url 'saleOda' %}">{% if useri.langSet == 0 %}Oda za Mauzo {% else %}Sales Order{% endif %}</a> 
+
+
+   <span class="text-muted">
+    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+    </svg>
+  </span> 
+
+ <a href="#" class="tab_show" data-show="#general-panel"> 
+    {% if useri.langSet == 0 %} Onesha Oda  {% else %}View Order{% endif %}
+  </a> 
+   {% endblock %} 
+   {% block for_oda %}
+   {{total.id}}
+   {% endblock %}

@@ -1,0 +1,220 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+{% block Dashboard %}
+<div  class="whiteBg py-2 px-2 pb-5" style="min-height: 80vh;margin-top:-19px" >
+
+    <h6 class="p-2" >{% if useri.langSet == 0 %} Matokeo ya kutafuta {% else %} Search Results for {% endif %} {% if bc == '' %}{% else %} Bar Code {% endif %} <i class="text-primary text-italic">{{valu}}</i> </h6>
+
+    <hr>
+
+    <h6 class="px-2" >
+      {% if sehemu %}
+
+         <a  class="noprimary" href="#">
+          {% if nameS %}
+            {{nameS.mtaa | title }}
+          {% else %}
+          {{useri.mtaa.mtaa | title }}  
+          {% endif %}
+        </a>
+         <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+         </span>
+      {% endif %}
+
+      {% if mitaa or sehemu %}
+         <a  class="noprimary" href="{% if sehemu %}/ecommerce/searchpanel?{% if bc %}bc={{bc}}{% elif valued %}valued={{valued}}{% endif %}&w={% if nameW %}{{nameW.id}}{% else %}{{useri.mtaa.kata.id}}{% endif %}{% else %}#{% endif %}">
+          {% if nameW %}
+            {{nameW.kata | title }}
+          {% else %}
+          {{useri.mtaa.kata.kata | title }}  
+          {% endif %}
+        </a>
+         <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+         </span>
+      {% endif %}
+      
+      {% if kata or mitaa or sehemu %}
+         <a  class="noprimary" href="{% if mitaa or sehemu %}/ecommerce/searchpanel?{% if bc %}bc={{bc}}{% elif valued %}valued={{valued}}{% endif %}&d={% if nameD %}{{nameD.id}}{% else %}{{useri.mtaa.kata.wilaya.id}}{% endif %}{% else %}#{% endif %}">
+          {% if nameD %}
+            {{nameD.wilaya | title }}
+          {% else %}
+          {{useri.mtaa.kata.wilaya.wilaya | title }}  
+          {% endif %}
+        </a>
+         <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+         </span>
+      {% endif %}   
+
+      {% if wilaya or kata or mitaa or sehemu %}
+      <a class="noprimary" href="{% if kata or mitaa or sehemu %}/ecommerce/searchpanel?{% if bc %}bc={{bc}}{% elif valued %}valued={{valued}}{% endif %}&r={% if nameR %}{{nameR.id}}{% else %}{{useri.mtaa.kata.wilaya.mkoa.id}}{% endif %}{% else %}#{% endif %}">
+        {% if nameR %}
+           {{nameR.mkoa | title }}
+        {% else %}
+          {{useri.mtaa.kata.wilaya.mkoa.mkoa | title }}  
+        {% endif %}  
+      </a>
+         <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+         </span>
+      {% endif %}   
+      <a class="noprimary" href="{% if wilaya or kata or mitaa or sehemu %}/ecommerce/searchpanel?{% if bc %}bc={{bc}}{% elif valued %}valued={{valued}}{% endif %}&c={{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.id}}{% else %}#{% endif %}">{{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title }}  </a>         
+    </h6>
+
+    <div class="table-responsive">
+        <div class="d-block" style="min-width: 100%;" >
+          
+            {% if  mitaa %}
+                {% for r in mitaa %}
+                      <a href="{% if mitaa.count > 1 %}/ecommerce/searchpanel?{% if bc %}bc={{bc}}{% elif valued %}valued={{valued}}{% endif %}&s={{r.Interprise.mtaa.id}}{% else %}#{% endif %}" class="btn btn-light btn-sm latoFont smallerFont text-primary">{{r.Interprise.mtaa.mtaa | title}}</a>
+                {% endfor %}
+            {% elif kata %}
+                {% for r in kata %}
+                      <a href="/ecommerce/searchpanel?{% if bc %}bc={{bc}}{% elif valued %}valued={{valued}}{% endif %}&w={{r.Interprise.mtaa.kata.id}}" class="btn btn-light btn-sm latoFont smallerFont text-primary">{{r.Interprise.mtaa.kata.kata | title}}</a>
+                {% endfor %} 
+
+            {% elif wilaya %}
+                  {% for r in wilaya %}
+                      <a href="/ecommerce/searchpanel?{% if bc %}bc={{bc}}{% elif valued %}valued={{valued}}{% endif %}&d={{r.Interprise.mtaa.kata.wilaya.id}}" class="btn btn-light btn-sm latoFont smallerFont text-primary">{{r.Interprise.mtaa.kata.wilaya.wilaya | title}}</a>
+                  {% endfor %}   
+
+            {% elif mikoa %}
+                  {% for r in mikoa %}
+                      <a href="/ecommerce/searchpanel?{% if bc %}bc={{bc}}{% elif valued %}valued={{valued}}{% endif %}&r={{r.Interprise.mtaa.kata.wilaya.mkoa.id}}" class="btn btn-light btn-sm latoFont smallerFont text-primary">{{r.Interprise.mtaa.kata.wilaya.mkoa.mkoa | title}}</a>
+                  {% endfor %}                
+            {% endif %}
+
+       
+
+        </div>      
+    </div>
+
+
+    {% if zipo %}
+   <ul class="list-unstyled p-2">
+   
+    {% for it in itmsImg %}
+      <li class="py-2 border-bottom" >
+              <a href="/displaySelItem?value={{it.itm.Interprise.id}}&i={{it.itm.id}}" class="d-flex ">
+                   <div class="border-right p-2">
+                        {% if it.img %}
+                           <img src="{{it.img}}"  style="max-width:90px;max-height:90px">
+                        {% else %}
+                            <span class="fontColor" >
+                                {% if  it.itm.service %}
+                                <svg xmlns="http://www.w3.org/2000/svg"  height="2.2em" width="2.2em" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12.22,19.85c-0.18,0.18-0.5,0.21-0.71,0c-0.18-0.18-0.21-0.5,0-0.71l3.39-3.39l-1.41-1.41l-3.39,3.39 c-0.19,0.2-0.51,0.19-0.71,0c-0.21-0.21-0.18-0.53,0-0.71l3.39-3.39l-1.41-1.41l-3.39,3.39c-0.18,0.18-0.5,0.21-0.71,0 c-0.19-0.19-0.19-0.51,0-0.71l3.39-3.39L9.24,10.1l-3.39,3.39c-0.18,0.18-0.5,0.21-0.71,0c-0.19-0.2-0.19-0.51,0-0.71L9.52,8.4 l1.87,1.86c0.95,0.95,2.59,0.94,3.54,0c0.98-0.98,0.98-2.56,0-3.54l-1.86-1.86l0.28-0.28c0.78-0.78,2.05-0.78,2.83,0l4.24,4.24 c0.78,0.78,0.78,2.05,0,2.83L12.22,19.85z M21.83,13.07c1.56-1.56,1.56-4.09,0-5.66l-4.24-4.24c-1.56-1.56-4.09-1.56-5.66,0 l-0.28,0.28l-0.28-0.28c-1.56-1.56-4.09-1.56-5.66,0L2.17,6.71c-1.42,1.42-1.55,3.63-0.4,5.19l1.45-1.45 C2.83,9.7,2.96,8.75,3.59,8.12l3.54-3.54c0.78-0.78,2.05-0.78,2.83,0l3.56,3.56c0.18,0.18,0.21,0.5,0,0.71 c-0.21,0.21-0.53,0.18-0.71,0L9.52,5.57l-5.8,5.79c-0.98,0.97-0.98,2.56,0,3.54c0.39,0.39,0.89,0.63,1.42,0.7 c0.07,0.52,0.3,1.02,0.7,1.42c0.4,0.4,0.9,0.63,1.42,0.7c0.07,0.52,0.3,1.02,0.7,1.42c0.4,0.4,0.9,0.63,1.42,0.7 c0.07,0.54,0.31,1.03,0.7,1.42c0.47,0.47,1.1,0.73,1.77,0.73c0.67,0,1.3-0.26,1.77-0.73L21.83,13.07z"/>
+                                  </svg>
+                                {% else %}
+                                  <svg width="2.2em" height="2.2em" viewBox="0 0 16 16" stroke-width="1" class="bi bi-gem" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M3.1.7a.5.5 0 0 1 .4-.2h9a.5.5 0 0 1 .4.2l2.976 3.974c.149.185.156.45.01.644L8.4 15.3a.5.5 0 0 1-.8 0L.1 5.3a.5.5 0 0 1 0-.6l3-4zm11.386 3.785l-1.806-2.41-.776 2.413 2.582-.003zm-3.633.004l.961-2.989H4.186l.963 2.995 5.704-.006zM5.47 5.495l5.062-.005L8 13.366 5.47 5.495zm-1.371-.999l-.78-2.422-1.818 2.425 2.598-.003zM1.499 5.5l2.92-.003 2.193 6.82L1.5 5.5zm7.889 6.817l2.194-6.828 2.929-.003-5.123 6.831z"/>
+                                  </svg>
+                                {% endif %}    
+                                </span>
+                        {% endif %}
+                   </div>
+
+                   <div class="pl-2">
+                       <h6 style="font-size:14px ;" class="text-capitalize py-0 mb-0" >{{it.itm.bidhaa.bidhaa_jina}}</h6>
+                        <div  class="smallerFont" >
+                              <span  class="ml-1 fontColor" > {{it.itm.bidhaa.maelezo}} </span> 
+                              <span class=" border-left px-1" > #{{it.itm.bidhaa.kampuni.kampuni_jina}} </span> 
+                              <span class=" border-left px-1" > #{{it.itm.bidhaa.bidhaa_aina.aina}} </span> 
+                              <span class=" border-left px-1" > #{{it.itm.bidhaa.bidhaa_aina.mahi.mahitaji}} </span> 
+                        </div>
+                       <div class="smallFont text-capitalize fontColor" > 
+                        <span class="mr-1 border-right pr-1"> <span class="darkblue smallFont latoFont">{{it.itm.Interprise.currencii}}.</span>
+                        <span class="brown weight600">{{it.itm.Bei_kuuza | floatformat:'-2' | intcomma  }}</span> 
+                        </span>  
+                         
+                        {{it.itm.Interprise.name}}  <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                                    </svg>
+
+                                                    
+                        {{it.itm.Interprise.jengo | title}} ,    
+                        {{it.itm.Interprise.mtaa.mtaa | title}} ,    
+                        {{it.itm.Interprise.mtaa.kata.kata | title}} ,    
+                        {{it.itm.Interprise.mtaa.kata.wilaya.wilaya | title}},
+                        {{it.itm.Interprise.mtaa.kata.wilaya.mkoa.mkoa | title}},
+                        {{it.itm.Interprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}},
+
+
+                        </div> 
+                   </div>
+              </a>
+      </li>
+      {% endfor %}
+   </ul>
+
+    <div class="py-1" style="-webkit-box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14); 
+         box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14);">
+    
+        {% if itms.has_previous %}
+        
+          <a href="{% url 'searchpanel' %}?page=1&valued={{valued}}{% if bc %}&bc={{bc}}{% endif %}" type="button"  class="btn btn-default border0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+            </svg>
+            </a>
+      
+            <a href="{% url 'searchpanel' %}?page={{itms.previous_page_number}}&valued={{valued}}{% if bc %}&bc={{bc}}{% endif %}"  type="button"  class="btn btn-default  border0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+              </svg>
+            </a>
+          {% endif %}
+      
+        {% if itms.has_next %}
+            <a href="{% url 'searchpanel' %}?page={{itms.next_page_number}}&valued={{valued}}{% if bc %}&bc={{bc}}{% endif %}"  type="button" class="btn btn-default border0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </a>
+      
+            <a href="{% url 'searchpanel' %}?page={{pages}}&valued={{valued}}{% if bc %}&bc={{bc}}{% endif %}"  type="button"  class="btn btn-default border0" >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+              </svg>
+            </a>
+      {% endif %}
+            <p >
+             
+              {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+      
+            </p>
+    </div>
+
+    {% else %}
+       <div class="centerItem" style="height:40vh" >
+          <h6>{% if useri.langSet == 0 %}Hakuna Bidhaa/Huduma iliyopatika ..{% else %}No Item/Service was found...{% endif %} 
+
+            {% if wilaya %}
+               ,<u class="darkblue">{% if useri.langSet == 0 %}Tafadhari bonyeza moja ya kitufe cha wilaya hapo juu {% else %}Please click one of the districts button on top {% endif %}</u>
+            {% endif %}
+
+            {% if mikoa and not kata and not wilaya %}
+               ,<u class="darkblue">{% if useri.langSet == 0 %}Tafadhari bonyeza moja ya kitufe cha mikoa hapo juu{% else %}Please click one of the regions button on top {% endif %}</u>
+            {% endif %}
+
+
+          </h6> 
+       </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block dash-map %}
+   {% if useri.langSet == 0 %}Kutafuta{% else %}Search{% endif %}
+{% endblock %}

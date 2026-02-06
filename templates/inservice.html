@@ -1,0 +1,153 @@
+{% extends 'userdash.html' %}
+
+
+
+{% block Dashboard %}
+<div  class=" Analytical whiteBg p-md-3 p-2" id="general-panel" style="min-height: 100vh;" >
+   
+   
+     <ul class="nav nav-tabs nav-stacked ">
+         <li class="nav-item">
+             <a href="/mauzo/inservice" class="nav-link {% block invoservActive %}text-primaryi active{% endblock %}"> 
+                {% if useri.langSet == 0 %}Ankara{% else %}Invoices{% endif %}
+                </a>
+         </li>
+         <li class="nav-item">
+             <a href="/mauzo/HudumiaHuduma" class="nav-link {% block servActive %}{% endblock %} ">
+                {% if useri.langSet == 0 %}Huduma {% else %}Services{% endif %}
+                </a>
+         </li>
+       
+     </ul>
+
+     <div class="p-md-3 mb-4 p-2" style="-webkit-box-shadow: 0px 3px 5px -2px rgba(0,0,0,0.38);
+     -moz-box-shadow: 0px 3px 5px -2px rgba(0,0,0,0.38);
+     box-shadow: 0px 3px 5px -2px rgba(0,0,0,0.38);margin-top:-4px" >
+            <h6 class="weight500 border-bottom py-2  d-flex align-items-center" >
+                {% block servingsTag %}
+                <svg xmlns="http://www.w3.org/2000/svg" width="27" height="27" fill="currentColor" class="bi bi-calendar2 pr-2" viewBox="0 0 16 16">
+                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>
+                    <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4z"/>
+                </svg>
+                    
+                    {% if useri.langSet == 0 %}  Ankara za Huduma Zinazohudumia{% else %}Serving  Invoices{% endif %}
+                {% endblock %}
+            </h6 >
+
+            <div class="row">
+                <div class="col-md-7 weight400 row">
+                   <div class="col-6 py-1">
+                        {% block titleNum %} 
+                         {% if useri.langSet == 0 %}  Ankara {% else %} Invoices {% endif %}
+                        {% endblock %}
+                   </div>
+                   <div class="col-6 py-1 weight700 brown" id="servNum">
+                       0  
+                   </div>
+                   <div class="col-6 py-1">
+                       
+                      {% if useri.langSet == 0 %} Ghalama Jumla {% else %}Total  Cost {% endif %}
+                      
+                   </div>
+                   <div class="col-6 py-1  weight700 " >
+                      <span class="latoFont weight400" style="color:blue" >{{duka.currencii}}. </span> 
+                     <span id="TotalCosted" class="brown" >0</span> 
+                   </div>
+                   <div class="col-6 py-1">
+                       
+                      {% if useri.langSet == 0 %} Ilolipwa Jumla {% else %}Total  Paid {% endif %}
+                      
+                   </div>
+                   <div class="col-6 py-1 weight700  " >
+                       <span class="latoFont weight400" style="color:blue" >{{duka.currencii}}. </span>
+                       <span id="TotalPaid" class="brown" >0 </span>
+                      
+                   </div>
+
+                   <div class="col-6 py-1">
+                       
+                      {% if useri.langSet == 0 %} Deni Jumla {% else %}Total  Debt {% endif %}
+                      
+                   </div>
+                   <div class="col-6 py-1 weight700  " >
+                       <span class="latoFont weight400" style="color:blue" >{{duka.currencii}}. </span>
+                       <span id="TotalDeni" class="brown" > 0</span>
+                     
+                   </div>
+
+
+                   {% block filterAina %}
+                   <div class="col-md-6 py-1 d-none d-md-block ">
+                    {% if useri.langSet == 0 %} Malipo {% else %}Payment {% endif %}
+                    </div>
+                    <div class="col-md-6 py-1 mt-2 mt-md-0 brown">
+                        <select name="AinaFilter" onchange="$('#loadMe').modal('show');wekaData()" class="form-control darkblue smallFont btn-sm text-capitalize latoFont" id="PayFilter">
+                            <option value=0 >{% if useri.langSet == 0 %}Zote {% else %}All  {% endif %}</option>
+                            <option value=1 >{% if useri.langSet == 0 %}Zilizokamilishiwa Malipo{% else %}Full Paid  {% endif %}</option>
+                            <option value=2 >{% if useri.langSet == 0 %}Zilizolipwa Kiasi {% else %}Less Paid  {% endif %}</option>
+                            <option value=3 >{% if useri.langSet == 0 %}Ambazo Hazijalipwa {% else %}Unpaid  {% endif %}</option>
+                        </select>
+                    </div>
+                   {% endblock %}
+
+                <div class="col-md-6 py-1 d-none d-md-block ">
+                    {% if useri.langSet == 0 %} Muda {% else %}Time {% endif %}
+                </div>
+                <div class="col-md-6 py-1 mt-2 mt-md-0 brown">
+                    <select name="naMuda"  id="naMuda" onchange="$('#loadMe').modal('show');wekaData()" class="form-control brown weight600 smallFont btn-sm text-capitalize latoFont">
+                        <option value=0 >{% if useri.langSet == 0 %}Zote {% else %}All  {% endif %}</option>
+                        <option value=1 >{% if useri.langSet == 0 %}Muda Umeisha {% else %} Out of Time  {% endif %}</option>
+                    </select>
+                </div>
+                   
+
+
+                </div>
+            </div>
+     </div>
+
+    
+    
+    
+
+            <div class="table-responsive">
+                <div class=" mt-3"  id="products_list"  >
+                </div>                
+            </div>  
+
+                      
+         
+    
+
+    
+
+
+
+      
+
+</div>
+
+{% endblock %}
+ 
+{% block dash-mapper %}
+{% if useri.langSet == 0 %}Huduma  {% else %}Services{% endif %}
+{% endblock %}
+
+{% block nav-huduma %}
+    class="c-menu__item has-submenu showingpop2  is-active  "
+{% endblock %}
+
+
+{% block active-service %}
+<svg xmlns="http://www.w3.org/2000/svg" class="text-primary"  height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+    <path d="M16.48,10.41c-0.39,0.39-1.04,0.39-1.43,0l-4.47-4.46l-7.05,7.04l-0.66-0.63c-1.17-1.17-1.17-3.07,0-4.24l4.24-4.24 c1.17-1.17,3.07-1.17,4.24,0L16.48,9C16.87,9.39,16.87,10.02,16.48,10.41z M17.18,8.29c0.78,0.78,0.78,2.05,0,2.83 c-1.27,1.27-2.61,0.22-2.83,0l-3.76-3.76l-5.57,5.57c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71 l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41 c0.39,0.39,1.02,0.39,1.41,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.41,0l8.32-8.34 c1.17-1.17,1.17-3.07,0-4.24l-4.24-4.24c-1.15-1.15-3.01-1.17-4.18-0.06L17.18,8.29z"/>
+</svg>
+{% endblock %}
+
+{% block dash-map %}
+   {% if useri.langSet == 0 %}Ankara Zinazohudumia   {% else %}Inservice Invoices {% endif %}
+{% endblock %}
+
+{% block active-Inservice-menu %} class="btn-default btn btn-sm pop2_active_menu" {% endblock %}
+
+

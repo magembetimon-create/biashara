@@ -1,0 +1,252 @@
+.below_prof_image{
+    background-color: var(--whiteBg);
+}
+
+.item-panel{
+    width:80.2vw;
+    height:53vh
+}
+
+  
+@media (min-width: 355px) {
+    .item-panel{
+        width:41.2vw;
+        height:25vh
+    }
+}
+
+@media (min-width: 450px) {
+
+    /**
+     * REUSED STYLE
+     */
+
+
+    .item-panel{
+        width:41.66vw;
+        height:30vh
+    }
+  
+
+  
+  }
+  
+  
+  
+  
+  
+  /**
+   * responsive for larger than 768px screen
+   */
+  
+  @media (min-width: 768px) {
+    /**
+     * CUSTOM PROPERTY
+     */
+  
+
+  
+    /**
+     * REUSED STYLE
+     */
+
+     .item-panel{
+        width:29.5vw;
+        height:35vh
+    }
+  
+  
+  }
+  
+  
+  
+  
+  
+  /**
+   * responsive for larger than 992px screen
+   */
+  
+  @media (min-width: 992px) {
+    /**
+     * CUSTOM PROPERTY
+
+    /**
+     * REUSED STYLE
+     */
+  
+    .item-panel{
+        width:18vw;
+        height:30vh
+    }
+  
+    /**
+     * COLLECTION
+     */
+
+  }
+  
+
+
+  @media (min-width: 355px) {
+    .item-panel1{
+        width:85.2vw;
+        height:30vh
+    }
+}
+
+@media (min-width: 450px) {
+
+    /**
+     * REUSED STYLE
+     */
+
+
+    .item-panel1{
+        width:41.66vw;
+        height:35vh
+    }
+  
+
+  
+  }
+  
+  
+  
+  
+  
+  /**
+   * responsive for larger than 768px screen
+   */
+  
+  @media (min-width: 768px) {
+    /**
+     * CUSTOM PROPERTY
+     */
+  
+
+  
+    /**
+     * REUSED STYLE
+     */
+
+     .item-panel1{
+        width:26.5vw;
+        height:38vh
+    }
+  
+  
+  }
+  
+  
+  
+  /**
+   * responsive for larger than 992px screen
+   */
+  
+  @media (min-width: 992px) {
+    /**
+     * CUSTOM PROPERTY
+
+  
+  
+  
+    /**
+     * REUSED STYLE
+     */
+  
+  
+  
+  
+  
+    .item-panel1{
+        width:21vw;
+        height:40vh
+    }
+  
+    /**
+     * COLLECTION
+     */
+
+  
+  }
+
+  
+
+
+
+#buzi_nav li{
+  display: inline-block;
+}
+
+#buzi_nav li a{
+    padding: 12px 15px;
+    font-weight: 600;
+   
+}
+.activeProf{
+    background: #ccc;
+    color:rgb(6, 81, 167)
+}
+#buzi_nav li a:hover{
+    text-decoration: none;
+}
+
+.audio_end {
+    position: fixed;
+    top:90vh;
+    border:0;
+    height: 40px;
+    width: 40px;
+
+}
+
+
+#audio_end {
+    color:green;
+    border-radius: 50%;
+}
+
+#audio_start {
+    color:rgb(160, 63, 63);
+    border-radius: 50%;
+}
+
+
+#go_top,#edit_prof_page{
+    
+    border:0;
+}
+
+@media screen and (min-width:766px) {
+    /* .Analytical{
+        margin-top: -23px;
+    } */
+
+    @media screen and (max-height:900px) {
+            .below_prof_image{
+                margin-top: 85vh;
+            }
+    }
+
+    @media screen and (min-height:900px) {
+            .below_prof_image{
+                margin-top: 50vh;
+            }
+    }
+
+  
+}
+
+@media screen and (max-width:766px) {
+    .Analytical{
+        margin-top: -15px;
+    }
+
+    .below_prof_image{
+        margin-top: 24vh;
+    }
+
+    .items_nav_btn{
+        display: none;
+    }
+}

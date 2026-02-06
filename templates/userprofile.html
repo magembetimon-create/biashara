@@ -1,0 +1,567 @@
+{% extends "userdash.html" %}
+{% block Dashboard %}
+      
+
+<div  class=" Analytical p-md-5 p-3 whiteBg" id="general-panel" style="margin-top: -23px;min-height:100vh" >
+          
+          <h5 class="mt-0  mb-4 ">{% if useri.langSet == 0 %}Wasifu wa mtumiaji{% else %}User profile{% endif %} </h5>
+          <div class="row">
+            <div class="col-12 col-md-4 col-lg-3 col-xl-3 pt-0">
+
+                <label id="drop-area" for="userpic"  class="userphoto pb-2 px-1 d-flex justify-content-center" style="overflow:hidden;max-height: 250px;">
+
+                      {% if useri.picha.url  %}
+                         <img  id="img-view" class="userimage" style="max-width: 250px;max-height: 250px;" src="{{useri.picha.url}}" alt="Weka picha">
+
+                      {% else %}  
+                       <div class="no_img">
+                          <img id="img-view" class="userimage" style="max-width: 250px;max-height:250px" src="{{baseUrl}}/{{'userlogo.png'}}" alt="Weka picha">
+                          <p class="py-2 text-center" >{% if useri.langSet == 0 %}Bonyeza Kuweka Picha{% else %}Click to add image{% endif %}</p>
+                       </div>
+                        
+                  {% endif %}  
+
+                </label>
+
+      <div class="p-1  d-flex justify-content-center">
+          <form action="/saveuserimg" id="saveuserimg"  enctype="multipart/form-data" method="POST">
+            {% csrf_token %}
+          <div class="row p-0">
+            <div class="col-7 p-0 mx-0">
+
+          <div class="upload-btn-wrapper" hidden >
+            <button class="btn btn-light btn-sm text-primary" style="font-size: smaller;" id="chaguo">
+              <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-card-image" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M14.5 3h-13a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
+                <path d="M10.648 7.646a.5.5 0 0 1 .577-.093L15.002 9.5V13h-14v-1l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71z"/>
+                <path fill-rule="evenodd" d="M4.502 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+              </svg>
+              <span class="robotoFont"> {% if useri.langSet == 0 %} Chagua picha  {% else %} Image {% endif %}</span>
+              </button>
+            <input type="file" name="userpic" accept="image/*" hidden id="userpic" onchange="
+            if($(this).val()!=''){
+              $(this).siblings('button').addClass('text-primary')
+              $(this).siblings('button').children('span').text($(this).val())
+              $('#userpicsubmit').prop('disabled',false)
+              }else{ 
+                $('#userpicsubmit').prop('disabled',true)
+                }" 
+              
+              />
+
+
+          </div>            
+            </div>
+            <div class="col-12">
+                        <button style="font-size: smaller;" class="btn-primary btn-sm btn robotoFont" id="userpicsubmit" type="submit" disabled>
+                          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
+                            <path d="M260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H520q-33 0-56.5-23.5T440-240v-206l-64 62-56-56 160-160 160 160-56 56-64-62v206h220q42 0 71-29t29-71q0-42-29-71t-71-29h-60v-80q0-83-58.5-141.5T480-720q-83 0-141.5 58.5T280-520h-20q-58 0-99 41t-41 99q0 58 41 99t99 41h100v80H260Zm220-280Z"/>
+                            </svg>
+                           {% if useri.langSet == 0 %} Weka Picha {% else %} Upload Image {% endif %} 
+                          </button>
+            </div>
+          </div>
+
+          </form>
+        </div>
+      
+
+
+<!-- Add Image oparation -->
+
+  <script>
+ 
+        const dropAreaP = document.getElementById("drop-area");
+        const inputFileP = document.getElementById("userpic");
+        const imageView = document.getElementById("img-view");
+
+        inputFileP.addEventListener("change", uploadImage)
+
+        function uploadImage(){
+          
+            let imgLink = URL.createObjectURL(inputFileP.files[0]);
+            imageView.src = `${imgLink}`;
+            imageView.textContent = "";
+            imageView.style.border = 0
+
+        }
+
+        dropAreaP.addEventListener("dragover", function(e){
+          e.preventDefault()
+        })
+
+        dropAreaP.addEventListener("drop", function(e){
+          e.preventDefault()
+          inputFileP.files = e.dataTransfer.files;
+          uploadImage()
+        })
+   
+  </script>
+      
+
+
+
+
+
+        </div>
+        <div class="col-12 col-md-8 col-lg-9 col-xl-9">
+
+            <div class=" py-2 px-md-3 ">
+          
+          
+        
+          <ul class="list-group whiteBg">
+            
+            {% if duka.Interprise %}
+              <li class="list-group-item">
+                <h6 class="latoFont">
+                  <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-shop-window" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M2.97 1.35A1 1 0 0 1 3.73 1h8.54a1 1 0 0 1 .76.35l2.609 3.044A1.5 1.5 0 0 1 16 5.37v.255a2.375 2.375 0 0 1-4.25 1.458A2.371 2.371 0 0 1 9.875 8 2.37 2.37 0 0 1 8 7.083 2.37 2.37 0 0 1 6.125 8a2.37 2.37 0 0 1-1.875-.917A2.375 2.375 0 0 1 0 5.625V5.37a1.5 1.5 0 0 1 .361-.976l2.61-3.045zm1.78 4.275a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 1 0 2.75 0V5.37a.5.5 0 0 0-.12-.325L12.27 2H3.73L1.12 5.045A.5.5 0 0 0 1 5.37v.255a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0zM1.5 8.5A.5.5 0 0 1 2 9v6h12V9a.5.5 0 0 1 1 0v6h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1V9a.5.5 0 0 1 .5-.5zm2 .5a.5.5 0 0 1 .5.5V13h8V9.5a.5.5 0 0 1 1 0V13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a.5.5 0 0 1 .5-.5z"/>
+                  </svg> | {{duka | title}}
+                </h6>
+              </li>
+              {% endif %}
+        
+        
+              <li class="list-group-item latoFont">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-user">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2">
+                  </path><circle cx="12" cy="7" r="4"></circle>
+              </svg> | {{user.first_name | title }}  {{user.last_name | title }}
+              </li>
+              <li class="list-group-item latoFont">
+                <div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-phone">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                 </svg> | {{useri.simu1}}  
+                      {% if useri.simu2  %}
+            
+                    , {{useri.simu2}}
+            
+                     {%endif %}
+                </div> 
+
+
+                  <div class="custom-control custom-checkbox">
+                    {% if useri.showNum1 %}
+                       <input type="checkbox" checked class="custom-control-input" id="showContactNo">
+                    {% else %}
+                       <input type="checkbox"  class="custom-control-input" id="showContactNo">
+                    {% endif %}
+                    <label class="custom-control-label latoFont  cursor-pointer" style="cursor: pointer !important;" for="showContactNo">
+                      {% if useri.langSet == 0 %}Onesha Namba kwa Mawasiliano{% else %}Show Number for contact{% endif %}
+                    </label>
+                  </div>
+              </li>
+
+              <script>
+                  $('#showContactNo').change(function(){
+                    $('#loadMe').modal('show')
+                    const alw = Number($(this).prop('checked')),
+                          data = {data:{alw},url:'/showPersonalNo'},
+                          sendIt = POSTREQUEST(data)
+                          sendIt.then(resp=>{
+                            $('#loadMe').modal('hide')
+                            hideLoading()
+                            const msg = lang(resp.swa,resp.eng)
+                            if(resp.success){
+                              toastr.success(msg, 'Success Alert', {timeOut: 2000});
+
+                            }else{
+                              toastr.error(msg, lang('Haikufanikiwa','Error Alert'), {timeOut: 2000});
+
+                            }
+                          })
+                        
+                  })
+              </script>
+
+              {% if user.email  %}
+                  <li class="list-group-item latoFont">
+                    
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mail">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg> | {{user.email}}  
+                    
+                  </li>
+              {% endif %}
+                
+              {% if duka.Interprise %}
+                <li class="list-group-item latoFont">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-users">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg> |  {{cheo.cheo}}
+                </li>
+              {% endif %}  
+
+                <li class="list-group-item latoFont">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-map-pin">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg> | {{useri.mtaa.mtaa |title}}, {{useri.mtaa.kata.kata |title}}, 
+                {{useri.mtaa.kata.wilaya.wilaya |title}}, {{useri.mtaa.kata.wilaya.mkoa.mkoa |title}}, 
+                {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+
+                <button class="btn btn-default btn-sm text-primary" data-toggle="modal" data-target="#ChangeLocations" >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="feather feather-settings">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                </button>
+                </li>
+
+            </ul>
+        
+        
+            </div>
+        
+          </div>
+
+
+    
+
+       </div>
+
+<hr>
+    
+<div class="row mb-5 pl-md-3">
+
+  <h6 class="col-12 px-0">
+    {% if useri.langSet == 0 %} Marekebisho {% else %}  Editing {% endif %} |
+
+    <button class="btn btn-light btn-sm latoFont" onclick="$('#userdetails').toggle(300)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+    </svg>
+    </button>
+
+  </h6>
+    <form action="/userdetails" style="display: none;" method="POST" id="userdetails">
+              {% csrf_token  %}
+          <div class="row mx-0 px-0 pt-2">
+
+
+            <div class="col-12 col-md-6  pl-0">
+              <div class="row m-0 p-0">
+                <div class="col-12  {% if not useri.company %} col-md-6  col-lg-6{% endif %}  pl-0 pr-md-0">
+                      <div class="form-group">
+                          <label for="exampleInputEmail1">
+                            {% if useri.company %}
+                              {% if useri.langSet == 0 %} Jina {% else %}  Name {% endif %}
+                            {% else %}
+                             {% if useri.langSet == 0 %} Jina la kwanza  {% else %} First Name {% endif %}
+                            {% endif %}
+                            </label>
+                          <input type="text" ya="Jina la kwanza"  class="form-control userdetail" id="name1" aria-describedby="emailHelp" value="{{ user.first_name }}">
+                      </div>
+                </div>
+                
+                {% if not useri.company %}
+                <div class="col-12 col-md-6  m-0 pr-0 pl-md-1 col-lg-6" >
+                        <div class="form-group">
+                          <label for="exampleInputEmail1"> {% if useri.langSet == 0 %} Jina la mwisho  {% else %} Last Name {% endif %}</label>
+                          <input type="text" ya="Jina la mwisho" class="form-control userdetail" id="name2" aria-describedby="emailHelp" value="{{ user.last_name }}">
+                      </div>            
+                </div>
+                {% endif %}
+
+
+              </div>
+
+
+              <div class="form-group">
+                <label for="exampleInputEmail1">
+                  {% if useri.langSet == 0 %} Barua Pepe {% else %}Email address{% endif %}
+                </label>
+                <input type="email" ya="Email address" class="form-control userdetail" id="exampleInputEmail1" value="{{ user.email }}" aria-describedby="emailHelp" placeholder="Andika email">
+              </div>
+
+              <div class="form-group">
+                <label for="exampleInputPassword1"> {% if useri.langSet == 0 %} Kama  {% else %} As {% endif %}</label>
+                <input type="text" ya="Cheo" class="form-control userdetail" id="cheoUser" value="{{ cheo.cheo }}">
+              </div>
+
+
+
+
+
+
+
+          </div>
+          <div class="col-12 col-md-6 mt-4 pl-0">
+        
+
+        
+    
+            <div class="row p-0 mx-0 ">
+              <div class="col-5 col-md-4 form-group">
+                  <label for="exampleInputPassword1"><b>SIM 1</b></label>
+
+              </div>
+
+              <div class="col-7 col-md-8 px-0 form-group">
+                <input type="text" ya="Simu 1" id="simu1" name="simu1" value="{{ useri.simu1 }}" class="form-control userdetail">
+
+              </div>
+            
+            </div>
+
+            <div class="row p-0 mx-0 ">
+              <div class="col-5 col-md-4 form-group">
+                  <label for="exampleInputPassword1"><b>SIM 2</b></label>
+
+              </div>
+
+              <div class="col-7 col-md-8 px-0 form-group">
+                <input type="number" ya="Simu 2" name="simu2" id="simu2" class="form-control userdetail" placeholder=" {% if useri.langSet == 0 %} Ongeza namba ya simu  {% else %} Add phone number {% endif %}" value="{% if  useri.simu2 %}{{useri.simu2}}{% else %}{{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.code}}{%endif%}"  >
+
+              </div>
+            
+            </div>
+            <div class="row p-0 mx-0 ">
+              <div class="col-5 col-md-4 form-group">
+                  <label for="exampleInputPassword1"><b> {% if useri.langSet == 0 %} Neno la siri  {% else %} password {% endif %}</b></label>
+
+              </div>
+
+              <div class="col-7 col-md-8 px-0 form-group" >
+                  <button type="button" data-toggle="modal" style="font-size: smaller;" data-target="#userpw" 
+                  class="btn btn-outline-primary btn-sm robotoFont"> {% if useri.langSet == 0 %} Badili neno la siri  {% else %} Change Password {% endif %}</button>
+          
+              </div>
+            
+            </div>
+
+            </div>
+
+  <div class="container justify-content-right mb-4">
+
+
+          <button disabled type="submit" id="savechanges" class="btn btn-success float-right robotoFont smallFont">
+              {% if useri.langSet == 0 %} Badilisha  {% else %} Save Changes{% endif %}
+          </button> 
+          
+   
+        </div>
+
+        </div>
+
+      
+      </form>
+
+</div>
+
+
+
+
+<!-- moda password settings -->
+
+<div class="modal fade" id="userpw" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="-webkit-box-shadow: 0px 0px 38px 11px rgba(0,0,0,0.57); 
+box-shadow: 0px 0px 38px 11px rgba(0,0,0,0.57);">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel"> {% if useri.langSet == 0 %} Badili neno la siri  {% else %} Change Password {% endif %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <form action="/userpwd" id="change_pwd" method="post">
+            {% csrf_token %}
+            <div class="row">
+            <div class="col-4 form-group">
+              <label for="passw1"> {% if useri.langSet == 0 %} Nenosiri la awali  {% else %} Current Password {% endif %}</label>
+
+            </div>
+            <div class="col-8 form-group">
+              <input type="password" id="ogpassword" name="ogpassword" class="form-control">
+
+            </div>  
+            
+            </div>
+            <div class="row">
+            <div class="col-4 form-group">
+              <label for="passw1"> {% if useri.langSet == 0 %} Nenosiri  jipya  {% else %} New password {% endif %}</label>
+
+            </div>
+            <div class="col-8 form-group">
+              <input type="password" id="password" name="password" class="form-control">
+              <div id="strengthMessage" class="mt-0"></div> 
+            </div>  
+            
+            </div>
+            <div class="row">
+            <div class="col-4 form-group">
+              <label for="passw1"> {% if useri.langSet == 0 %} Hakiki  {% else %} Re-type {% endif %} </label>
+
+            </div>
+            <div class="col-8 form-group">
+              <input type="password" id="confirmpassword" name="confirmpassword" class="form-control">
+
+
+              <p id="passerror" class="pt-3"></p>
+            </div>  
+            
+            </div>
+
+
+<div class="modal-footer">
+        <button id="changepwd" type="submit" disabled class="btn btn-primary smallFont robotoFont">Save changes</button>
+      </div>
+
+          </form>
+
+
+      </div>
+     
+    </div>
+  </div>
+</div>
+</div> 
+
+
+
+
+<!-- Modal Change Locations -->
+<div class="modal fade" id="ChangeLocations" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">{% if useri.langSet == 0 %}Badili Sehemu{% else %}Change Place{% endif %}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+          <div class="form-group pb-2">
+            <label class="weight500 brown" id="for_fname" for="f_name">{% if useri.langSet == 0 %}Mahali Ulipo{% else %} Place you are{% endif %} <sup>*</sup></label>
+            
+            <select name="countries"  class="form-control  smallFont" id="countries">
+                 <option value="0">---{% if useri.langSet == 0 %}Chagua Nchi{% else %}Select Country{% endif %}---</option>
+                 <option value="255">Tanzania</option>
+            </select>
+        </div>
+
+        <div class="form-group pb-2">
+            <select name="Kanda" class="form-control  smallFont" id="Kanda">
+                 <option value="0">---{% if useri.langSet == 0 %}Chagua Kanda/Jimbo{% else %}Select Zone/State{% endif %}---</option>
+                 {% for k in kanda %}
+                    <option data-nchi="{{k.nchi.code}}" value="{{k.id}}">{{k.kanda}}</option>
+                 {% endfor %}
+                
+            </select>
+        </div>
+        <div class="form-group pb-2">
+            <select name="Mikoa" class="form-control  smallFont" id="Mikoa">
+                 <option value="0" data-kanda="0">---{% if useri.langSet == 0 %}Chagua Mkoa{% else %}Select Region{% endif %}---</option>
+                 {% for k in mikoa %}
+                 <option data-nchi="{{k.kanda.nchi.code}}"  data-kanda="{{k.kanda.id}}" value="{{k.id}}">{{k.mkoa}}</option>
+              {% endfor %}
+            </select>
+        </div>
+        <div class="form-group pb-2">
+            <select name="Wilaya" class="form-control  smallFont" id="Wilaya">
+                 <option value="0">---{% if useri.langSet == 0 %}Chagua Wilaya{% else %}Select District{% endif %}---</option>
+                 {% for k in wilaya %}
+                 <option data-nchi="{{k.mkoa.kanda.nchi.code}}" data-kanda="{{k.mkoa.kanda.id}}" data-mkoa="{{k.mkoa.id}}" value="{{k.id}}">{{k.wilaya | title }}</option>
+              {% endfor %}
+            </select>
+        </div>
+        <div class="form-group pb-2">
+            <select name="Kata" class="form-control text-capitalize smallFont"  id="Kata">
+                 <option value="0">---{% if useri.langSet == 0 %}Chagua Kata{% else %}Select Ward{% endif %}---</option>
+                
+                      {% for m in kata %}
+                         <option value={{m.id}} >{{m.kata | title}}</option>
+                      {% endfor %}
+                                    
+            </select>
+        </div>
+
+        <div class="form-group pb-2">
+            <select name="Kijiji" class="form-control text-capitalize smallFont"  id="Kijiji">
+                 <option value="0">---{% if useri.langSet == 0 %}Chagua Mtaa/Kijiji{% else %}Select Street/Vilage{% endif %}---</option>
+                  
+                      {% for m in mitaa %}
+                         <option value={{m.id}} >{{m.mtaa | title}}</option>
+                      {% endfor %}
+                 
+            </select>
+        </div>
+        </div>
+      </div>
+      <div class="modal-footer text-center">
+          <button type="button" class="btn btn-light latoFont" data-dismiss="modal">Close</button>
+          <button type="button" onclick="changeUserPlace()" class="btn btn-primary latoFont">{% if useri.langSet == 0 %}Badili Sehemu{% else %}Change Place{% endif %}</button> 
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function(){
+  
+        $('#countries').val(Number('{{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.code}}'))    
+        $('#Kanda').val(Number('{{useri.mtaa.kata.wilaya.mkoa.kanda.id}}'))    
+        $('#Mikoa').val(Number('{{useri.mtaa.kata.wilaya.mkoa.id}}'))    
+        $('#Wilaya').val(Number('{{useri.mtaa.kata.wilaya.id}}'))    
+        $('#Kata').val(Number('{{useri.mtaa.kata.id}}'))    
+        $('#Kijiji').val(Number('{{useri.mtaa.id}}'))    
+
+
+})
+
+
+        function changeUserPlace(){
+          const mtaa = Number($('#Kijiji').find('option:selected').val())
+                if(mtaa>0){
+                  $("#ChangeLocations").modal('hide');
+                  $("#loadMe").modal('show');
+                 const dt = {
+                  data:{
+                    mtaa
+                  },
+                  url:'/ChangeUserPlace'
+                 },
+                sendIt = POSTREQUEST(dt)
+                sendIt.then(resp=>{
+                  if(resp.success){
+                    toastr.success(`{% if useri.langSet == 0 %}${resp.msg_swa}{% else %}${resp.msg_eng}{% endif %}`, lang('Imefanikiwa','Success '), {timeOut: 2000});
+                    location.reload()
+                  }else{
+                    toastr.error(`{% if useri.langSet == 0 %}${resp.msg_swa}{% else %}${resp.msg_eng}{% endif %}`, lang('Haikufanikiwa','Error '), {timeOut: 2000});
+
+                  }
+                  $("#loadMe").modal('hide');
+                  hideLoading()
+                })
+        }
+      }
+       
+
+</script>
+
+
+  {% endblock %}
+
+{% block billmpya %}
+   <script src="/static/js/jisaji.js"></script>
+{% endblock %}
+
+{% block dash-mapper %}
+{% if useri.langSet == 0 %} User  {% else %} User {% endif %}
+{% endblock %}      
+
+
+{% block akaunt-map %}  <a href="#" class="tab_show" data-show="#general-panel">
+
+  {% if useri.langSet == 0 %} Wasifu wa mtumiaji  {% else %}User Profile{% endif %}
+</a>   
+{% endblock %}

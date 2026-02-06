@@ -1,0 +1,298 @@
+{% extends 'userdash.html' %}
+
+{% block Dashboard %}
+
+<div  class=" Analytical tab_div whiteBg p-md-5 p-2" style="min-height: 80vh;" id="general-panel">
+    <h5 class="weight500 " >
+
+        {% if useri.langSet == 0 %}
+         {% if edit %} Marekebisho ya {% else %}Ongeza {% endif %}
+         Akaunti ya kusimamia mahesabu/biashara {% else %}  {% if edit %} Edit {% else %}Add {% endif %} business/Enterprise/Wharehouse to Manage {% endif %}
+
+   
+    </h5>
+
+    <div class="row mt-4 classic_div">
+        <div class="col-md-6">
+            <img src="/static/pics/enterprise.svg" alt="none" width="95%" srcset="">
+        </div>
+
+        <div class="col-md-6">
+            <h6 class="py-2" >{% if useri.langSet == 0 %} Taarifa za karakana {% else %}  Enterprise Details{% endif %}</h6>
+            <form action="/stoku/OngezaStoku" id="SaveTheForm" method="post">
+                {%  csrf_token %}
+            <div class="form-group pb-2">
+                <label class="weight500 brown" id="for_fname" for="f_name">{% if useri.langSet == 0 %} Jina la Karakana {% else %}  Enterprise Name{% endif %} <sup>*</sup></label>
+                <input type="text" name="entp_name" id="entp_name"  value="{% if edit %}{{duka.name}}{% endif %}"  class="form-control smallFont darkblue" placeholder="{% if useri.langSet == 0 %}Andika Jina {% else %} Write Name{% endif %}" aria-describedby="helpId">
+                
+            </div>
+
+            <div class="form-group pb-2">
+                <label class="weight500 brown"  for="entp_slog">{% if useri.langSet == 0 %} Kauli Mbiu {% else %}  Enterprise Slogan{% endif %} <sup>*</sup></label>
+                <textarea class="form-control"  name="entp_slog" id="entp_slog"   rows="3">{% if edit %}{{duka.slogan}}{% endif %}</textarea>
+                
+            </div>
+                
+            <div class="form-group pb-2">
+                <label class="weight500 brown" id="for_fname" for="f_name">{% if useri.langSet == 0 %}Mahali Ilipo{% else %} Place{% endif %} <sup>*</sup></label>
+                
+                <select name="countries"  class="form-control  smallFont" id="countries">
+                     <option value="0">---{% if useri.langSet == 0 %}Chagua Nchi{% else %}Select Country{% endif %}---</option>
+                     <option value="255">Tanzania</option>
+                </select>
+            </div>
+
+            <div class="form-group pb-2">
+                <select name="Kanda" class="form-control  smallFont" id="Kanda">
+                     <option value="0">---{% if useri.langSet == 0 %}Chagua Kanda/Jimbo{% else %}Select Zone/State{% endif %}---</option>
+                     {% for k in kanda %}
+                        <option data-nchi="{{k.nchi.code}}" value="{{k.id}}">{{k.kanda}}</option>
+                     {% endfor %}
+                    
+                </select>
+            </div>
+            <div class="form-group pb-2">
+                <select name="Mikoa" class="form-control  smallFont" id="Mikoa">
+                     <option value="0" data-kanda="0">---{% if useri.langSet == 0 %}Chagua Mkoa{% else %}Select Region{% endif %}---</option>
+                     {% for k in mikoa %}
+                     <option data-nchi="{{k.kanda.nchi.code}}"  data-kanda="{{k.kanda.id}}" value="{{k.id}}">{{k.mkoa}}</option>
+                  {% endfor %}
+                </select>
+            </div>
+            <div class="form-group pb-2">
+                <select name="Wilaya" class="form-control  smallFont" id="Wilaya">
+                     <option value="0">---{% if useri.langSet == 0 %}Chagua Wilaya{% else %}Select District{% endif %}---</option>
+                     {% for k in wilaya %}
+                     <option data-nchi="{{k.mkoa.kanda.nchi.code}}" data-kanda="{{k.mkoa.kanda.id}}" data-mkoa="{{k.mkoa.id}}" value="{{k.id}}">{{k.wilaya | title }}</option>
+                  {% endfor %}
+                </select>
+            </div>
+            <div class="form-group pb-2">
+                <select name="Kata" class="form-control text-capitalize smallFont"  id="Kata">
+                     <option value="0">---{% if useri.langSet == 0 %}Chagua Kata{% else %}Select Ward{% endif %}---</option>
+                      {% if edit %}
+                          {% for m in kata %}
+                             <option value={{m.id}} >{{m.kata | title}}</option>
+                          {% endfor %}
+                      {% endif %}                    
+                </select>
+            </div>
+
+            <div class="form-group pb-2">
+                <select name="Kijiji" class="form-control text-capitalize smallFont"  id="Kijiji">
+                     <option value="0">---{% if useri.langSet == 0 %}Chagua Mtaa/Kijiji{% else %}Select Street/Vilage{% endif %}---</option>
+                      {% if edit %}
+                          {% for m in mitaa %}
+                             <option value={{m.id}} >{{m.mtaa | title}}</option>
+                          {% endfor %}
+                      {% endif %}
+                </select>
+            </div>
+    
+            <div class="form-group pb-2">
+                <label class="weight500 brown" id="for_fname" for="f_name">{% if useri.langSet == 0 %} Anwani ya makazi{% else %}  Street address {% endif %} <sup>*</sup></label>
+                <input type="text" name="street" id="street" value="{% if edit %}{{duka.jengo}}{% endif %}"   class="form-control smallFont darkblue" placeholder="{% if useri.langSet == 0 %}Andika Anwani {% else %} Write Address{% endif %}" aria-describedby="helpId">
+                
+            </div>
+
+
+
+            <script>
+                $(document).ready(function(){
+                    '{% if not edit %}'
+                        $('#Kanda option ,#Mikoa option ,#Wilaya option').hide()
+                        $('#Kanda option[value=0] ,#Mikoa option[value=0] ,#Wilaya option[value=0]').show()
+                        $('#Kata , #Kijiji').prop('disabled',true)
+                    '{% else %}'
+                        $('#countries').val(Number('{{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.code}}'))    
+                        $('#Kanda').val(Number('{{duka.mtaa.kata.wilaya.mkoa.kanda.id}}'))    
+                        $('#Mikoa').val(Number('{{duka.mtaa.kata.wilaya.mkoa.id}}'))    
+                        $('#Wilaya').val(Number('{{duka.mtaa.kata.wilaya.id}}'))    
+                        $('#Kata').val(Number('{{duka.mtaa.kata.id}}'))    
+                        $('#Kijiji').val(Number('{{duka.mtaa.id}}'))    
+                       
+                        
+                    '{% endif %}'
+                })
+            </script>
+
+            {% if not edit %}
+            <h6 class="pt-2" id="matumiziNamna" > {% if useri.langSet == 0 %} Namna ya Matumizi {% else %}  Usage Plan{% endif %}</h6>
+            <div id="payments">
+
+         
+            <div class="form-check">
+                <label class="form-check-label">
+                <input type="radio" class="form-check-input kulipia" name="malipio" id="bure" value=0 >
+                {% if useri.langSet == 0 %}Bure {% else %} Free {% endif %}: {{duka.currencii}}. <span class="brown weight600">0</span> /{% if useri.langSet == 0 %}Mwezi {% else %} Month {% endif %}
+              </label>
+            </div>
+
+            <div class="form-check mb-2">
+                <label class="form-check-label">
+                <input type="radio" class="form-check-input kulipia" name="malipio" id="lipia" value=5000 >
+                {% if useri.langSet == 0 %} Malipo Baada ya Kutumia{% else %} Post Payment {% endif %}: {{duka.currencii}}. <span class="brown largerFont weight600">5,000</span> /{% if useri.langSet == 0 %}Mwezi (siku 30){% else %} Month (30 days) {% endif %}
+              </label>
+            </div>
+            
+            <h6 class="pt-2" > {% if useri.langSet == 0 %} Kutafutia Masoko Bidhaa na Mapendekezo ya Bidhaa kwa Wateja {% else %}Marketing Plan and Items Search Recommendation to Customers  {% endif %}</h6>
+            <div class="form-check">
+                <label class="form-check-label">
+                    <input type="radio" class="form-check-input" name="masoko" id="Hapana" value=0 checked >
+                    {% if useri.langSet == 0 %} Hapana {% else %} None {% endif %} : {{duka.currencii}}. <span class="brown largerFont weight600">0</span> /{% if useri.langSet == 0 %}Mwezi {% else %} Month {% endif %}                
+                </label>
+            </div>
+
+            <div class="form-check">
+                <label class="form-check-label">
+                    <input type="radio" class="form-check-input" name="masoko" id="wilaya" value=2000 >
+                    {% if useri.langSet == 0 %} Ngazi ya Wilaya  {% else %}District Wise{% endif %} : {{duka.currencii}}. <span class="brown largerFont weight600">2,000</span> /{% if useri.langSet == 0 %}Mwezi (siku 30){% else %} Month (30 days) {% endif %}                
+                </label>
+             </div>
+
+                <div class="form-check ">
+                    <label class="form-check-label">
+                    <input type="radio" class="form-check-input" name="masoko" id="Mkoa" value=5000 >
+                        {% if useri.langSet == 0 %}Ngazi ya Mkoa {% else %}Region Wise{% endif %}: {{duka.currencii}}. <span class="brown largerFont weight600">5,000</span> /{% if useri.langSet == 0 %}Mwezi (siku 30){% else %} Month (30 days) {% endif %} 
+                </label>
+                </div>
+
+                <div class="form-check ">
+                    <label class="form-check-label">
+                    <input type="radio" class="form-check-input" name="masoko" id="Nchi" value=10000 >
+                    {% if useri.langSet == 0 %} Nchi Nzima {% else %} Country Wise{% endif %}: {{duka.currencii}}. <span class="brown largerFont weight600">10,000</span> /{% if useri.langSet == 0 %}Mwezi (siku 30){% else %} Month (30 days){% endif %} 
+                </label>
+                </div>
+             </div>
+                <hr>
+
+                <div class="row">
+                    <div class="col-5"> {% if useri.langSet == 0 %}Jumla ya Ghalama  {% else %}Total Cost{% endif %} </div>
+                    <div class="col-7"> {{duka.currencii}}. <span class="brown largeFont weight700" id="total_amount" >0</span></div>
+                </div>
+                <div class="row" id="malipoBaada" hidden >
+                    <div class="col-5">{% if useri.langSet == 0 %}Malipo Baada ya {% else %}To be paid after{% endif %} </div>
+                    <div class="col-7 darkblue">
+                        <script>
+                            date = moment().add(60,'days').format('DD/MM/YYYY')
+                            document.write(date)
+                        </script>
+                    </div>
+
+                </div>
+             {% endif %}   
+
+                <p class="text-right mt-3">
+                    <button class="btn btn-primary latoFont btm-sm">
+                        {% if edit %}
+                            {% if useri.langSet == 0 %}Kusanya{% else %}Submit{% endif %}
+                        {% else %}
+                          {% if useri.langSet == 0 %}Ongeza Karakana{% else %}Add Enterprise{% endif %}
+                        {% endif %}  
+                    </button>
+                </p>
+
+            </form>     
+        </div>
+        
+    </div>
+    
+    <script>
+
+        const check = $('#payments').children().find('.form-check-input')
+        check.change(function(){
+           totalCost()
+        })
+
+        
+        function totalCost(){
+           
+            let val = 0,
+                filtered = check.filter(':checked')
+                for(n=0;n<filtered.length;n++){
+                    val += Number(filtered[n].value)
+                }
+
+                $('#malipoBaada').prop('hidden',!val)
+      
+                 $('#total_amount').text(Number(val).toLocaleString())
+
+
+
+        }
+        
+
+        $('#SaveTheForm').submit(function(e){
+            e.preventDefault()
+           const name = $('#entp_name').val(),
+                   slogan = $('#entp_slog').val(),
+                    mtaa = $('#Kijiji').find('option:selected').val(),
+                    makazi = $('#street').val(),
+                    malipo = $('.kulipia').filter(':checked')?.length || 0,
+                    lipwa = $('input[name="malipio"]').filter(':checked')[0]?.value || 0,
+                    masoko = $('input[name="masoko"]').filter(':checked')[0]?.value || 0,
+                    edit = Number('{{edit}}')
+
+            if(name!=''&&mtaa!=0 &&makazi!='' && (malipo > 0 || edit ) ){
+                $('#loadMe').modal('show')
+                const url = $(this).attr('action'),
+                dt = {
+                    data:{
+                        name,
+                        mtaa,
+                        malipo:lipwa,
+                        masoko,
+                        makazi,
+                        slogan,
+                        edit
+                    },
+                    url,
+                  
+                }
+
+
+                  ,
+               sendit = POSTREQUEST(dt)
+              
+               sendit.then(val=>{
+                  if(val.success){
+                      toastr.success(lang(val.msg_swa,val.msg_eng), lang('Imefanikiwa','Success'), {timeOut: 2000});
+                      if(!edit)location.replace('/busines_ac')
+                     }else{
+                      toastr.error(lang('Haikufanikiwa kutokana na hitilafu tafadhari jaribu tena.','The operation was not successfully please try again'), lang('Haikufanikiwa','Error Alert'), {timeOut: 2000});
+
+                  }
+
+                  $('#loadMe').modal('hide')
+                  hideLoading()
+              })
+
+
+
+
+                
+
+            }else{
+                if(name=='')redborder('#entp_name')
+                if(mtaa==0)redborder('#Kijiji')
+                if(makazi=='')redborder('#street')
+                if(malipo==0)$('#matumiziNamna').css({'border-bottom':'3px solid red'})
+            }
+            
+        })
+
+       
+    </script>
+    
+</div>
+
+{% endblock %}
+
+{% block billmpya %}
+<script src="/static/js/jisaji.js"></script>
+{% endblock %}
+
+
+{% block akaunt-map %}
+  {% if useri.langSet == 0 %} Ongeza karakana  {% else %} Add Enterprise {% endif %}
+{% endblock %} 

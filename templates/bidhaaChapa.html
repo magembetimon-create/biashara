@@ -1,0 +1,60 @@
+{% extends 'stock.html' %}
+
+
+    
+{% block nav-stock %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+{% block dash-mapper %}
+{% if useri.langSet == 0 %}Stoku{% else %} Stock{% endif %}
+{% endblock %} 
+
+{% block descriptions %}
+{% if aina.count > 0 %}
+<h5 class="pb-2" ><i class="text-primary text-capitalize" >{{aina.last.aina}} </i> {% if useri.langSet == 0 %} Chapa{% else %} Brands{% endif %}</h5> 
+{% endif %}
+<input type="hidden" id="itemsKey" value="{{f}}"  >
+{% endblock %}
+
+{% block datatable %}
+<script>    
+    $('#loadMe').modal('show')
+  </script>
+  <script src="/static/js/stokutable/datatableBrands.js"></script> 
+{% endblock %}
+
+
+<!-- lOAD ALL ITEMs -->
+{% block roadMap %}/stoku/chapa{% endblock %}
+
+<!-- TOP NAVIATIONS <MENU -->
+    {% block top-nav-brand %} actively {% endblock %}
+    {% block top-nav-brand-icon %}
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-tags-fill" viewBox="0 0 16 16">
+        <path d="M2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2zm3.5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+        <path d="M1.293 7.793A1 1 0 0 1 1 7.086V2a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l.043-.043-7.457-7.457z"/>
+      </svg>
+    {% endblock %}
+    
+<!-- NAVIGATIONS FOR MOBILE -->
+{% block active-brand-menu %}
+ text-primary weight700
+{% endblock %}
+{% block brand-icon %}
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-tags-fill" viewBox="0 0 16 16">
+    <path d="M2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2zm3.5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+    <path d="M1.293 7.793A1 1 0 0 1 1 7.086V2a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l.043-.043-7.457-7.457z"/>
+  </svg>
+{% endblock %}
+{% block active-chapa-menu %}
+class="btn-default btn btn-sm pop2_active_menu"
+{% endblock %}
+{% block Stock-keyWord %}
+{% if useri.langSet == 0 %} Chapa Zote{% else %}All Brands{% endif %}
+{% endblock %}
+
+{% block active-stock %} class="bi bi-shop text-primary font-weight-bold"{% endblock %}
+
+{% block dash-map %}
+{% if useri.langSet == 0 %}Chapa za abidhaa {% else %}  Items Brands{% endif %}
+{% endblock %}

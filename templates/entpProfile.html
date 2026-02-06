@@ -1,0 +1,922 @@
+{% extends 'userdash.html' %}
+
+{% load humanize %}
+
+{% block Dashboard %}
+<div  class=" Analytical pt-1 whiteBg" id="general-panel" style="margin-top: -23px;min-height:100vh" >
+   
+    <div class="profimg-wrapper whiteBg classic_div d-flex" style="  justify-content: center;
+         align-items: center;height: 55vh;width:100%;background:rgb(192, 192, 192);overflow:hidden" >
+     {% if not duka.prof_pic  %}      
+    <div class="text-center " id="no_prof_pic" >
+              <span style="color:rgb(163, 163, 163)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="206" height="206" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                    <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                    <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                  </svg>
+              </span>
+           </div>
+       {% else %}
+           <!-- <div class="container-fluid" > -->
+               <img src="{{duka.prof_pic.url}}" alt="none" style="width:100%;margin-top:0" >
+           <!-- </div> -->
+
+         {% endif %}  
+    </div>
+    
+    <p class="text-right px-4 " style="margin-top:-52px">
+        <label for="prof_image_save" type="button" class="btn btn-light latoFont btn-outline-secondary" >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+              </svg>
+            {% if not duka.prof_pic %} 
+            {% if useri.langSet == 0 %} Weka Picha {% else %}Add Image {%endif %} 
+            {% else %}
+            {% if useri.langSet == 0 %} Badili Picha {% else %}Change Image {% endif %} 
+            {% endif %}
+        </label>
+
+        <input type="file" accept="image/*" data-preview="1" onchange="ImgPreview(this,$('#preview_profile'),$('#Add-prof-image'))" hidden class="custom-file-input uploadImg" id="prof_image_save" name="prof_image_save">
+
+    </p>
+
+
+   
+   
+    
+   
+
+<div class="row classic_div pt-3">
+   <div class="logo-wrapper col-md-2 px-3 ">
+        <label class="btn btn-default" for="prof_logo_save" style="height: 120px;width:160px;border:2px solid #fff;-webkit-box-shadow: 0px -1px 5px 3px rgba(0,0,0,0.11);
+        -moz-box-shadow: 0px -1px 5px 3px rgba(0,0,0,0.11);
+        box-shadow: 0px -1px 5px 3px rgba(0,0,0,0.11);background-color:aliceblue;
+        display:flex;
+        justify-content:center;
+        align-items:center
+        " >
+        {% if not duka.logo  %}
+            <p class="font-weight-bold largeFont" >  {% if useri.lagSet == 0 %}Nembo{%else%}logo{% endif %} <br>
+             <span style="color:rgb(163, 163, 163)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                        <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                      </svg>
+                  </span>
+            </p>
+
+            {% else %}
+            <img src="{{duka.logo.url}}" alt="none" style="max-width:100%;max-height:100%" >
+            {% endif %}
+           
+        </label>
+
+         
+    </div>
+    <div class="pt-2  col-md-10" >
+        <h4>{{duka.name | title }}</h4>
+       <div class="d-flex">
+           <div class="location-img">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-geo-alt" viewBox="0 0 16 16">
+                <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A31.493 31.493 0 0 1 8 14.58a31.481 31.481 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94zM8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10z"/>
+                <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+              </svg>
+           </div>
+           <div class="pl-3" >
+               <h6 >{{duka.mtaa.mtaa | title}}, {{duka.mtaa.kata.kata | title}}, {{duka.mtaa.kata.wilaya.wilaya | title}}, {{duka.mtaa.kata.wilaya.mkoa.mkoa | title}}, {{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}}</h6>
+               <h6>{{duka.Intp_code}}</h6>
+
+            <div class="edit-btn ">
+                <a href="/stoku/AddStoku?edit=1" class="btn-outline-secondary btn btn-sm smallerFont latoFont" >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                    </svg>   Edit
+                </a>
+            </div>
+
+           </div>
+       </div>
+
+
+    </div>
+    
+    </div>
+
+
+    
+     <!--Profile picture.... Modal..... -->
+        <div class="modal fade bd-example-modal-xl" id="Add-prof-image" tabindex="-1" role="dialog" aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg md-user-dialog" style="margin-left:auto;margin-right:auto;width:100%" role="document">
+                    <div class="modal-content modal-content-one"  >    
+
+
+                    <div class="modal-header">
+                            <h5 class="modal-title">{% if useri.langSet == 0 %} Weka/Badili Picha ya Biashara  {% else %}Add/Change Profile Picture{% endif %} </h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                        </div>
+                <div class="modal-body">
+                    <div class="container-fluid" id="preview_profile" >
+                     
+                    </div>
+
+                    
+                </div>
+
+                    <div class="modal-footer"  >
+                        <button  class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button  onclick="uploadImg(document.getElementById('prof_image_save'),'\entprof_pic',$('#Add-prof-image'))" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
+                                   <path d="M260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H520q-33 0-56.5-23.5T440-240v-206l-64 62-56-56 160-160 160 160-56 56-64-62v206h220q42 0 71-29t29-71q0-42-29-71t-71-29h-60v-80q0-83-58.5-141.5T480-720q-83 0-141.5 58.5T280-520h-20q-58 0-99 41t-41 99q0 58 41 99t99 41h100v80H260Zm220-280Z"/>
+                                </svg>
+                           {% if useri.langSet == 0 %}Tuma {% else %}upload{% endif %}
+                        </button>
+                    </div>
+
+            </div>
+        </div>
+    </div>
+
+
+  
+
+
+     
+
+
+     <!--Profile logo.... Modal..... -->
+     <div class="modal fade" id="Add-prof-logo" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+            
+                    <div class="modal-header">
+                            <h6 class="modal-title">{% if useri.langSet == 0 %} Weka/Badili Nembo ya Biashara  {% else %}Add/Change Enterprise logo{% endif %} </h6>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                        </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                    
+                           
+                      <p>
+                        <input type="file" hidden accept="image/*" onchange="ImgPreview(this,$('#previewLogo'),$('#Add-prof-logo'))" class="custom-file-input" id="prof_logo_save" name="prof_logo_save" />
+                     </p>
+                        
+                              <div id="previewLogo">
+
+                              </div>
+
+                          <div class="pt-3 row classic_div">
+                            <div class="col-6">
+                                <button type="button"  class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                            <div class="col-6 text-right">
+                               <button onclick="uploadImg(document.getElementById('prof_logo_save'),'/entlogo_pic',$('#Add-prof-logo'))" class="btn btn-sm btn-primary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#e8eaed">
+                                            <path d="M260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H520q-33 0-56.5-23.5T440-240v-206l-64 62-56-56 160-160 160 160-56 56-64-62v206h220q42 0 71-29t29-71q0-42-29-71t-71-29h-60v-80q0-83-58.5-141.5T480-720q-83 0-141.5 58.5T280-520h-20q-58 0-99 41t-41 99q0 58 41 99t99 41h100v80H260Zm220-280Z"/>
+                                        </svg>
+                                    {% if useri.langSet == 0 %}Tuma {% else %}upload{% endif %}
+                               </button> 
+                            </div>
+                         </div>
+                     
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+
+    
+   
+
+
+    <hr>
+
+    <div class="row classic_div">
+        <h6 class="py-2 col-12 px-3" >
+             <strong>{% if useri.langSet == 0 %}Usajiri wa biashara na Anwani {% else %}Business Registrations & Address {% endif %} </strong>
+          </h6>
+        <div class="col-sm-6">
+            <ul class="list-unstyled" style="max-width: 500px;">
+              
+
+                {% if reg.count > 0 %}
+                    {% for n in reg %}
+                        <li>
+                            {% if n.reg_pic %}
+                              <img src="{{n.reg_pic.url}}" style="width: 100%;" alt="">
+                            {% endif %}
+                            {{n.reg_name}}: {{n.reg_no}}
+                            <button class="btn btn-default text-primary" onclick="$('#reg_image').val('{{n.id}}')" data-toggle="modal" data-target="#addregPic" title="{% if useri.langSet == 0 %}Ambatanisha Picha ya hati ya usajiri {% else %}Add registration certificate {% endif %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-paperclip" viewBox="0 0 16 16">
+                                    <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
+                                  </svg>
+                            </button> 
+                        </li>
+                    {% endfor %}
+                {% endif %}
+            </ul>
+                <p >
+                <button class="btn btn-outline-secondary btn-light latoFont btn-sm" data-toggle="modal" data-target="#buz_regModal"  >
+                    +{% if useri.langSet == 0 %} Ongeza {% else %}Add {% endif %}
+                </button>
+            </p>
+            </div>
+        <div class="col-sm-6 d-flex" style="justify-content:center;align-items:center">
+         
+        </div>
+        
+
+
+    </div>
+
+
+
+<!-- BUSINESS REGISTRATION MODAL -->
+<div class="modal fade" id="buz_regModal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% if useri.langSet == 0 %}Usajiri wa biashara{% else %}Business Registrations {% endif %}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+            </div>
+            <div class="modal-body">
+            
+              <div id="attries"   >
+                  {% if reg.count > 0 %}
+                  {% for r in reg %}
+                    <div class="row classic_div my-2 reg_attr" data-edit=1 data-value={{r.id}} style="width:98%">
+                        <div class="col-6 text-right ">
+                            <input type="text" class="made-input attr_name"  placeholder="{{r.reg_name}}" > 
+                        </div>
+                        <div class="col-6 d-flex ">
+                            <input type="text" class="made-input attr_valu" placeholder="{{r.reg_no}}" >
+                            <button class="btn btn-default text-danger remove_reg" data-edit=1 data-id={{r.id}} >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-circle" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z"/>
+                                  </svg>
+                            </button>
+                        </div>
+                    </div>  
+                 {% endfor %}    
+
+                  {% else %}
+                <div class="row classic_div my-2 reg_attr" data-edit=0 data-value=0 >
+                      <div class="col-6 px-0 ">
+                         <input type="text" class="form-control smallFont attr_name"  placeholder="{% if useri.langSet == 0 %} Usajiri {% else %}  Registration {% endif %}" > 
+                      </div>
+                      <div class="col-6 px-0 d-flex ">
+                               
+                          <input type="text" class="form-control smallFont attr_valu" placeholder="{% if useri.langSet == 0 %} Namba ya Usajiri  {% else %}  Restration ID {% endif %}" >
+                          <button class="btn btn-default btn-sm px-1 text-danger remove_reg " data-edit=0  >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z"/>
+                              </svg>
+                        </button>
+                        </div>
+                 </div>  
+                 {% endif %}                
+              </div>
+
+                
+                <div class="text-right classic_div" style="width: 98%;">
+                <button class="btn-light btn-sm btn text-primary smallFont" onclick="addReg()" title="{% if useri.langSet == 0 %} Ongeza Taarifa za Usajiri  {% else %}Add Registration Info{% endif %}" >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-node-plus" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M11 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM6.025 7.5a5 5 0 1 1 0 1H4A1.5 1.5 0 0 1 2.5 10h-1A1.5 1.5 0 0 1 0 8.5v-1A1.5 1.5 0 0 1 1.5 6h1A1.5 1.5 0 0 1 4 7.5h2.025zM11 5a.5.5 0 0 1 .5.5v2h2a.5.5 0 0 1 0 1h-2v2a.5.5 0 0 1-1 0v-2h-2a.5.5 0 0 1 0-1h2v-2A.5.5 0 0 1 11 5zM1.5 7a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"/>
+                    </svg>
+                </button>
+                </div>
+            </div>
+            
+            <div class="text-center classic_div pb-4">
+                
+                  <button type="button" class="btn btn-secondary mx-3 latoFont" data-dismiss="modal">Close</button>
+                
+             
+                   <button type="button" class="btn btn-primary mx-3 latoFont " id="save_Buz_reg" >Save</button>
+               
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ADD REGISTRATION IMAGES -->
+     <div class="modal fade" id="addregPic" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                    <div class="modal-header">
+                            <h5 class="modal-title">{% if useri.langSet == 0 %} Weka Picha ya hati ya usajiri  {% else %}Set Registration certificate{% endif %} </h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                        </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                      <form class="row classic_div entpLogo_pic " data-input="#regPic" action="/regPic" id="entreg_pic" method="post" style="width: 95%;">
+                          {% csrf_token %}
+                           <p>{% if useri.langSet == 0 %}Hakikisha faili la picha halizidi <strong class="text-danger" > kb 200</strong> {% else %} The image file should not exceed <strong class="text-danger" >500kb </strong>  {%endif%}</p>
+                        <div class="input-group mb-3">
+                            <!-- <div class="custom-file"> -->
+                              <input type="file" class="custom-file-input" id="regPic" name="regPic">
+                              <label class="custom-file-label" for="regPic" >
+                                {% if useri.langSet == 0 %}Chagua Picha{% else %}Choose file{% endif %}
+                              </label>
+
+                              <input type="hidden" name="reg" id="reg_image" value=0 >
+                            <!-- </div> -->
+                          </div>
+
+                          <div class="pt-3 row classic_div">
+                            <div class="col-6">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                            <div class="col-6 text-right">
+                               <button type="submit" class="btn btn-primary">Save</button> 
+                            </div>
+                         </div>
+                      </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+
+
+<script>
+    function addReg(){
+        reg=`
+            <div class="row classic_div my-2 reg_attr" data-edit=0 data-value=0 style="width:98%">
+                <div class="col-6 text-right ">
+                <input type="text" class="made-input attr_name"  placeholder="${lang('Jina la Usajiri','Registration name')}" > 
+                </div>
+                <div class="col-6 d-flex">
+                    <input type="text" class="made-input attr_valu" placeholder="${lang('Namba ya Usajiri','Registration ID')}" >
+                    <button class="btn btn-default remove_reg text-danger" data-edit=0 >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-circle" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                            <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z"/>
+                          </svg>
+                    </button>
+                </div>
+        </div>  
+        `
+
+        $('#attries').append(reg)
+    }
+</script>
+   <hr>
+    <h6 class="px-3" > <strong>{% if useri.langSet == 0 %}Shughuli{% else %}Enterprise Activities{% endif %}</strong> </h6>
+    <div class="overflow-x-auto d-flex" style="overflow-x:auto">
+        <div class="d-flex px-3 border-right" style="justify-content: center;align-items:center " >
+            <svg width="4em" height="4em" viewBox="0 0 16 16" class="bi bi-shop" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M2.97 1.35A1 1 0 0 1 3.73 1h8.54a1 1 0 0 1 .76.35l2.609 3.044A1.5 1.5 0 0 1 16 5.37v.255a2.375 2.375 0 0 1-4.25 1.458A2.371 2.371 0 0 1 9.875 8 2.37 2.37 0 0 1 8 7.083 2.37 2.37 0 0 1 6.125 8a2.37 2.37 0 0 1-1.875-.917A2.375 2.375 0 0 1 0 5.625V5.37a1.5 1.5 0 0 1 .361-.976l2.61-3.045zm1.78 4.275a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 1 0 2.75 0V5.37a.5.5 0 0 0-.12-.325L12.27 2H3.73L1.12 5.045A.5.5 0 0 0 1 5.37v.255a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0zM1.5 8.5A.5.5 0 0 1 2 9v6h1v-5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v5h6V9a.5.5 0 0 1 1 0v6h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1V9a.5.5 0 0 1 .5-.5zM4 15h3v-5H4v5zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-3zm3 0h-2v3h2v-3z"/>
+              </svg>
+        </div>
+
+            
+            <ul class="list-unstyled ml-2"  >
+               
+                <li>
+                    <div class="custom-control custom-checkbox"  >
+                        {% if duka.sales %}
+                          <input type="checkbox" checked  class="custom-control-input setactivity" data-set="sales"  id="SetMauzo"  >
+                        {% else %}
+                           <input type="checkbox"   class="custom-control-input setactivity" data-set="sales"  id="SetMauzo"  >
+                        {%endif%}
+                        <label class="custom-control-label" style="cursor: pointer;" for="SetMauzo">{% if useri.langSet == 0 %}Kuuza Bidhaa{% else %}Goods Sales{% endif %} </label>
+                    </div> 
+                    
+                </li>
+
+                <li>
+
+                    <div class="custom-control custom-checkbox">
+                           {% if duka.service %}
+                             <input type="checkbox" checked  class="custom-control-input setactivity" data-set="service"  id="SetService"  >
+                           {% else %}
+                               <input type="checkbox"   class="custom-control-input setactivity" data-set="service"  id="SetService"  >
+                           {% endif %}
+
+                        <label class="custom-control-label" style="cursor: pointer;" for="SetService">{% if useri.langSet == 0 %}Kutoa Huduma{% else %}Servicing{% endif %} </label>
+                    </div>
+                </li>
+
+                <li>
+                    <div class="custom-control custom-checkbox">
+                      {% if duka.produxn %}
+                          <input type="checkbox" checked  class="custom-control-input setactivity" data-set="produxn"  id="SetProduction"  >
+                       {% else %} 
+                          <input type="checkbox"   class="custom-control-input setactivity" data-set="produxn"  id="SetProduction"  >
+                       {% endif %}
+                       
+                        <label class="custom-control-label" style="cursor: pointer;" for="SetProduction">{% if useri.langSet == 0 %}Uzalishaji/Uchakataji Bidhaa{% else %}Items Production/Processing{% endif %} </label>
+                    </div>
+                </li>
+               
+                    
+            </ul>
+ 
+     
+
+
+    </div>
+
+
+    <script>
+        //SET INTERPRISE ACTIVITIES..........................................................//
+        $('.setactivity').click(function(){
+            setIntp({set:$(this).data('set'),prop:$(this).prop('checked')})
+        })
+        function setIntp(sat){
+            const {set,prop} = sat
+             var dt={
+                    data:{
+                    set:set,           
+                    change:Number(prop),    
+                
+                       
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+                },
+                url:'/SetActivity'
+            }
+
+              // console.log(dt)
+               saveDT(dt)
+        }
+       
+  
+
+    </script>
+
+    <!-- <hr>
+    <h6 class="px-3" > <strong>{% if useri.langSet == 0 %} Huduma Nyingine{% else %}Other services{% endif %}</strong> </h6>
+    <div class="overflow-x-auto d-flex" style="overflow-x:auto">
+        <div class="d-flex px-3 border-right" style="justify-content: center;align-items:center " >
+           <img src="/static/pics/handshake.svg" alt="" width="100" >
+        </div>
+
+        <div class="px-4 huduma-nyingine ">
+            <p class="noWordCut"> <strong> {% if useri.langSet == 0 %}Huduma za Kifedha{% else %}Money Transaction services{% endif %}</strong> </p>
+            <ul class="list-unstyled " >
+                {% for f in kifedha %}
+                <li>
+                    <div class="custom-control custom-checkbox"  >
+                      {% if  f.selected %}
+                        <input type="checkbox" checked  class="custom-control-input" 
+                        onclick="
+                        var dt={
+                            data:{
+                              val:$(this).data('val'),
+                              kifedha:1,
+                              change:Number($(this).prop('checked')),
+                              hdm:'None',                              
+                              remove:0,
+                              edit:0,
+                              csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+                        },
+                        url:'/addHuduma'
+                    }
+
+                     saveDT(dt)
+                        "
+                        id="hdm{{f.id}}" data-val={{f.id}}
+                        >
+                        {% else %}
+                       <input type="checkbox"  class="custom-control-input" 
+                        onclick="
+                        let dt={
+                            data:{
+                              val:$(this).data('val'),
+                              kifedha:1,
+                              change:Number($(this).prop('checked')),
+                              hdm:'None',
+                              remove:0,
+                              edit:0,
+                              csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+                        },
+                        url:'/addHuduma'
+                    }
+
+                     saveDT(dt)
+                        "
+                        id="hdm{{f.id}}" data-val={{f.id}}
+                        >
+                        {% endif %}
+
+
+                         <label class="custom-control-label" style="cursor: pointer;" for="hdm{{f.id}}"> {{f.huduma}}</label>
+                    </div> 
+                    
+                </li>
+                {% endfor %}
+                    
+            </ul>
+        </div>
+      
+
+
+    </div> -->
+
+ 
+    
+    <!-- Modal -->
+    <!-- <div class="modal fade" id="Add_Huduma" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ongeza Huduma Nyingine</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                      <label for="">Andika Huduma</label>
+                         <textarea  id="huduma_jina" class="form-control"  rows="3">
+                        </textarea>
+                    <div class="text-right pt-2">
+                        <button class="btn btn-light  text-danger" hidden
+                        
+                        onclick="
+                    let dt={
+                        data:{
+                          val:$('#save_huduma_nyingine').data('val'),
+                          kifedha:0,
+                          change:0,
+                          remove:1, 
+                          edit:0,
+                          hdm:'None',
+                          csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+                    },
+                    url:'/addHuduma'
+                }
+                 if(dt.data.hdm!=''){
+                        if(confirm('{% if langSet == 0 %}Odoa Huduma Nyinine {% else %} Remove Other Service {% endif %} ?')){
+                        $('#Add_Huduma').modal('hide')
+                           saveDT(dt)
+                        }else{
+                            redborder('#huduma_jina')
+                        }
+                     }
+
+                  
+                    "  
+                        id="Ondoa_hdma" >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="currentColor" class="bi bi-dash-circle-dotted" viewBox="0 0 16 16">
+                                <path d="M8 0c-.176 0-.35.006-.523.017l.064.998a7.117 7.117 0 0 1 .918 0l.064-.998A8.113 8.113 0 0 0 8 0zM6.44.152c-.346.069-.684.16-1.012.27l.321.948c.287-.098.582-.177.884-.237L6.44.153zm4.132.271a7.946 7.946 0 0 0-1.011-.27l-.194.98c.302.06.597.14.884.237l.321-.947zm1.873.925a8 8 0 0 0-.906-.524l-.443.896c.275.136.54.29.793.459l.556-.831zM4.46.824c-.314.155-.616.33-.905.524l.556.83a7.07 7.07 0 0 1 .793-.458L4.46.824zM2.725 1.985c-.262.23-.51.478-.74.74l.752.66c.202-.23.418-.446.648-.648l-.66-.752zm11.29.74a8.058 8.058 0 0 0-.74-.74l-.66.752c.23.202.447.418.648.648l.752-.66zm1.161 1.735a7.98 7.98 0 0 0-.524-.905l-.83.556c.169.253.322.518.458.793l.896-.443zM1.348 3.555c-.194.289-.37.591-.524.906l.896.443c.136-.275.29-.54.459-.793l-.831-.556zM.423 5.428a7.945 7.945 0 0 0-.27 1.011l.98.194c.06-.302.14-.597.237-.884l-.947-.321zM15.848 6.44a7.943 7.943 0 0 0-.27-1.012l-.948.321c.098.287.177.582.237.884l.98-.194zM.017 7.477a8.113 8.113 0 0 0 0 1.046l.998-.064a7.117 7.117 0 0 1 0-.918l-.998-.064zM16 8a8.1 8.1 0 0 0-.017-.523l-.998.064a7.11 7.11 0 0 1 0 .918l.998.064A8.1 8.1 0 0 0 16 8zM.152 9.56c.069.346.16.684.27 1.012l.948-.321a6.944 6.944 0 0 1-.237-.884l-.98.194zm15.425 1.012c.112-.328.202-.666.27-1.011l-.98-.194c-.06.302-.14.597-.237.884l.947.321zM.824 11.54a8 8 0 0 0 .524.905l.83-.556a6.999 6.999 0 0 1-.458-.793l-.896.443zm13.828.905c.194-.289.37-.591.524-.906l-.896-.443c-.136.275-.29.54-.459.793l.831.556zm-12.667.83c.23.262.478.51.74.74l.66-.752a7.047 7.047 0 0 1-.648-.648l-.752.66zm11.29.74c.262-.23.51-.478.74-.74l-.752-.66c-.201.23-.418.447-.648.648l.66.752zm-1.735 1.161c.314-.155.616-.33.905-.524l-.556-.83a7.07 7.07 0 0 1-.793.458l.443.896zm-7.985-.524c.289.194.591.37.906.524l.443-.896a6.998 6.998 0 0 1-.793-.459l-.556.831zm1.873.925c.328.112.666.202 1.011.27l.194-.98a6.953 6.953 0 0 1-.884-.237l-.321.947zm4.132.271a7.944 7.944 0 0 0 1.012-.27l-.321-.948a6.954 6.954 0 0 1-.884.237l.194.98zm-2.083.135a8.1 8.1 0 0 0 1.046 0l-.064-.998a7.11 7.11 0 0 1-.918 0l-.064.998zM4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7z"/>
+                              </svg>
+                        </button>
+                    </div>
+                    </div>
+                </div>
+                <div class="text-center pb-3">
+                    <button type="button" class="btn btn-secondary latoFont mr-3"  data-dismiss="modal">Close</button>
+                    <button type="button" id="save_huduma_nyingine"
+                    onclick="
+                    let dt={
+                        data:{
+                          val:$(this).data('val'),
+                          kifedha:0,
+                          change:1,
+                          remove:0, 
+                          edit:$(this).data('edit'),
+                          hdm:$('#huduma_jina').val(),
+                          csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+                    },
+                    url:'/addHuduma'
+                }
+                 if(dt.data.hdm!=''){
+                   $('#Add_Huduma').modal('hide')
+                     saveDT(dt)
+                 }else{
+                     redborder('#huduma_jina')
+                 }
+                  
+                    "  
+                    class="btn btn-primary latoFont" data-val=0 data-edit=0 data-futa=0 >Save</button>
+                </div>
+            </div>
+        </div>
+    </div> -->
+
+
+    <hr>
+
+    <div class="px-2">
+            <h6  class="px-2 row" >
+                <div class="col-8">
+                       {% if useri.langSet == 0 %} Wateja Sehemu ya biashara {% else %} Customers around the compound {% endif %}
+                </div>
+                <div class="col-4">
+                        <button data-target="#servPlace"  data-toggle="modal" class="btn weight600 btn-sm smallFont text-primary btn-light">
+                            + {% if useri.langSet == 0 %}Ongeza {% else %}Add {% endif %}
+                        </button>
+                </div>
+               
+            </h6>
+            <div id="shopPlaces" class="d-flex px-2">
+                 
+            </div>       
+
+            <div class="px-2" id="shopcells" style="max-width: 600px;" hidden >
+                <div class="latoFont mt-3 mb-2 weight600" > {% if useri.langSet == 0 %}Sehemu alipo mteja {% else %}Customer Position {% endif %}</div>
+                <ul id="shopcells_list" class="list-unstyled border p-2" >
+
+                </ul>
+
+                <p class="text-right">
+                    <button data-toggle="modal" data-target="#servCells" class="btn btn-right text-primary btn-sm weight600 latoFont">
+                        + {% if useri.langSet == 0 %}Ongeza {% else %}Add {% endif %}
+                    </button>
+                </p>
+            </div>
+    </div>
+
+
+    
+    <!-- Modal CUSTOMER PLACE -->
+    <div class="modal fade" id="servPlace" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        {% if useri.langSet == 0 %}Eneo la wateja {% else %}Customers Place {% endif %}
+                    </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                      <input type="text" name="Area_name" data-edit="0"  id="Area_name" class="form-control" placeholder="{% if useri.langSet == 0 %} Andika jina la eneo {% else %}Write Customers place name {% endif %}" aria-describedby="helpId">
+                      
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary"  id="savetheplace"  >Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal CUSTOMER CELLS -->
+    <div class="modal fade" id="servCells" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        {% if useri.langSet == 0 %} Sehemu anapokaa mteja{% else %} Customer Position {% endif %}
+                    </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                      <input type="text" name="cell_name" data-edit="0"  id="cell_name" class="form-control" placeholder="{% if useri.langSet == 0 %} Andika jina la sehemu {% else %}Write Customer position name {% endif %}" aria-describedby="helpId">
+                      
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary"  id="savetheCell"  >Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+ 
+ 
+ <!-- CUSTOMER CELLS QR-CODE........................ -->
+ <div class="modal fade" id="cellqr_code_dwn" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+                <div class="modal-header">
+                        <h5 class="modal-title">
+                            {% if useri.langSet == 0 %}QR-code Sehemu anapokaa mteja{% else %} Customer Position  QR-code{% endif %}
+                        </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                    </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <h5 id="cell_name_heading" class="text-center  py-2">
+
+                    </h5>
+                    <div id="imgBox" class="d-flex justify-content-center" >
+                    </div>
+                    <p class="text-center mt-3">
+                        <a id="download_qr_btn" href="#" download class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                               {% if useri.langSet == 0 %}Pakua QR-code{% else %} Dowload  QR-code{% endif %}
+                            </a>
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+ </div>
+ 
+ <script>
+    $('#exampleModal').on('show.bs.modal', event => {
+        var button = $(event.relatedTarget);
+        var modal = $(this);
+        // Use above variables to manipulate the DOM
+        
+    });
+ </script>
+
+
+
+
+    <hr>
+
+    <h6 class="p-3" > <strong>
+        {% if useri.langSet == 0 %} Wahusika na Mawasiliano{% else %} Members & Contacts {% endif %}</strong> </h6>
+    
+
+    <div class="row classic_div p-3">
+        <form class="col-md-4" action="/addOfficeNo" id="savePhoneNo" >
+              <label for="phoneNum">
+                  {% if useri.langSet == 0 %} Namba ya Simu ya Ofisi{% else %} Office Phone Number {% endif %}
+              </label> 
+              <div class="input-group">
+                 <input type="tel" class="form-control largeFont " value="{% if duka.officeNo %}{{duka.officeNo}}{%else%}+255{%endif%}" id="phoneNum" name="phoneNum" pattern="[+]{1}[0-9]{11,14}" required  >
+                 <button class="btn btn-secondary input-group-append btn-sm ">
+                    Save
+                 </button>     
+              </div>
+
+
+            </form>
+    </div>
+
+    <script>
+        $('#savePhoneNo').submit(function(e){
+            e.preventDefault()
+            $('#loadMe').modal('show')
+            const phone = $('#phoneNum').val(),
+                  url = $(this).attr('action'),
+                  data  = {
+                     data:{phone},
+                     url
+                  },
+                  sendit = POSTREQUEST(data)
+                  sendit.then(resp=>{
+                    $('#loadMe').modal('hide')
+                    hideLoading()
+
+                     const msg = lang(resp.swa,resp.eng)
+                     if(resp.success){
+                        toastr.success(msg, lang('Imefanikiwa','Success Alert'), {timeOut: 2000});
+                         
+                     }else{
+                         toastr.error(msg,lang('Haikufanikiwa','Error') , {timeOut: 2000});
+                     }
+                  })
+            
+
+
+        })
+    </script>
+    
+    <div class=" d-flex p-3  mt-3" style="overflow-x:auto">
+      {% for m in members %}
+          <div class="mx-3 py-3 rounded mt-2" 
+          style="
+           -webkit-box-shadow: 0px 6px 22px -6px rgba(0,0,0,0.27);
+            -moz-box-shadow: 0px 6px 22px -6px rgba(0,0,0,0.27);
+            box-shadow: 0px 6px 22px -6px rgba(0,0,0,0.27);
+            min-width:250px;
+            cursor:pointer;
+          " >
+
+            <div class="classic_div" style="height: 60px;width:60px" >
+                {% if m.user.picha %}
+              <img src="{{m.user.picha.url}}" style="width: 100%;height:100%;border-radius:50%" alt="None">
+              {% else %}
+               <img src="/static/pics/userlogo.png" style="width: 100%;height:100%;border-radius:50%" alt="None">
+             {% endif %}
+            </div>
+           <h6 class="text-center mt-2" >{{m.user.user.first_name | title}}  {{m.user.user.last_name | title}}</h6>
+           <div class="text-center">
+              <strong>{{m.cheo}} </strong> 
+              
+           </div>
+           <div class="text-center smallerFont">
+               {% if useri.langSet == 0 %} Simu {% else %} Phone {% endif %}: <strong>{{m.user.simu1}},{{m.user.simu2}} </strong> 
+           </div>
+           <div class="text-center smallerFont">
+               {% if useri.langSet == 0 %} Imeli{% else %} Email {% endif %}: <strong>{{m.user.user.email}}</strong> 
+           </div>
+
+           <div class="text-center mt-2 ">
+              <div class="btn-group" data-toggle="buttons">
+
+                    {% if m.owner %}                        
+                       
+                      <label class="btn btn-primary  btn-sm active latoFont"  data-edit="showAdmin_to_profile" data-id={{m.id}} title="{% if useri.langSet == 0 %} Onesha kwenye profile ya biashara {% else %} show to business profile{% endif %} " >
+
+                        {% if m.showAdmin_to_profile %}
+                             <input type="checkbox" class="change_permit_profile" checked autocomplete="off">
+                       {% else %}
+                          <input type="checkbox" class="change_permit_profile" 
+                          
+                          autocomplete="off">
+                       {% endif %}
+                       {% if useri.langSet == 0 %} Onesha {% else %} Show {% endif %}
+
+                      </label>
+                    {% else %}
+                        <label class="btn btn-primary  btn-sm active latoFont" data-edit="showUser_to_profile" data-id={{m.id}} title="{% if useri.langSet == 0 %} Onesha kwenye profile ya biashara {% else %} show to business profile{% endif %} " >
+
+                        {% if m.showUser_to_profile %}
+                           <input type="checkbox" class="change_permit_profile" checked autocomplete="off">
+                        {% else %}
+                          <input type="checkbox" class="change_permit_profile"  autocomplete="off">
+                        {% endif %}  
+                        {% if useri.langSet == 0 %} Onesha {% else %} Show {% endif %}
+                      </label>
+                    {% endif %}                  
+                      
+                 
+                  
+              </div>
+           </div>
+        </div>
+       {% endfor %}
+
+       
+        
+    </div>
+
+    <hr>
+
+    <!-- <h5 class="mt-4 px-3" >Maps & Navigations</h5>
+
+    <div class="classic_div" style="border:1px solid rgb(34, 34, 34);width:98%;height:200px" >
+
+    </div> -->
+
+    <p class="text-center my-4">
+
+        <a href="{% url 'buzinessProfile' %}?value={{duka.id}}" class="btn btn-primary btn-lg latoFont">
+             {% if useri.langSet == 0 %}Profile ya Biashara{% else %}Go to Profile{% endif %}
+        </a>
+    </p>
+
+    <p class="text-center py-3 smallerFont">
+        fanyaBiashara.com
+    </p>
+
+
+
+    
+
+ 
+
+
+</div>
+
+{% endblock %}
+{% block dash-mapper %}
+{% if useri.langSet == 0 %} Mpangilio  {% else %} Settings {% endif %}
+{% endblock %}      
+
+
+{% block akaunt-map %}  
+<a href="#" class="tab_show" data-show="#general-panel">
+
+  {% if useri.langSet == 0 %} Wasifu wa Kampuni {% else %}Enterprise Profile{% endif %}
+</a>   
+{% endblock %}
+
+{% block billmpya %}
+<script src="/static/js/profile_settings.js">  </script>
+<!-- <script src="/static/js/miamala.js">  </script> -->
+
+{% endblock %}
+

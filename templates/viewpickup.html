@@ -1,0 +1,712 @@
+{% extends 'userdash.html' %}
+
+{% load humanize %}
+
+{% block Dashboard %}
+
+<link rel="stylesheet" href="/static/css/viewItem.css">
+
+
+<div  class="whiteBg  pb-5 classic_div pr-3" id="invoice_wrapper"  >
+    <div class="row classic_div">
+        <div class="col-md-4  border-right" >
+            <header class="border-bottom  ">
+                <div class="row classic_div py-2">
+
+                    <div class="col-12">
+                      <form action="{% url 'ViewPickup' %}" method="get">
+                        <div class="input-group"> 
+                          <div class="input-group-prepend  border">
+                            <button type="button" onclick="$('#listin').toggle(400)" class="d-flex d-md-none btn btn-light btn-sm  " >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+    
+                                
+                                </svg>
+                            </button>
+                          </div>
+                           
+                           
+                                  <input type="text" name="code" id="code" placeholder=" {% if useri.langSet == 0 %}  Andika namba ya mzigo {% else %} Write package no.. {% endif %}" class="form-control smallFont">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-secondary smallerFont btn-sm pt-2">
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                       <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                                     </svg>
+                                </button>
+                            </div>  
+                           
+                           
+                        </div>
+                  </form>
+                        
+
+                    </div>
+
+                    
+                </div>
+
+            </header>
+
+            <div class="listin " id="listin" style="height:100vh;">
+
+                <ul class="list-unstyled " style='overflow-y:auto;height:57vh;overflow-x:hidden' >
+                    {% for invo in bili %}
+
+                    {% if invo.id == the_bill.id %}
+
+                    <li class="p-2  border-bottom" style="border-left:4px solid rgb(0, 106, 228) ;background:rgb(232, 232, 255)" >
+                    {% else %}   
+                    <li class="p-2  border-bottom" >
+                    {% endif %}
+                        
+
+                            <a href="{% url 'ViewPickup' %}?p={{invo.id}}&page={{p_num}} " class="text-decoration-none text-secondary row smallerFont classic_div">
+                                <div class="col-8">
+                                    <div> {% if useri.langSet == 0 %}Kutoka {% else %}From {% endif %} : <u class="weight700">{{invo.Interprise.name | title}}</u> </div> 
+                                    <div>{% if useri.langSet == 0 %}Kwenda {% else %}To {% endif %}: <u class="weight700">{{invo.mteja_jina | title}}</u> </div> 
+                                </div>
+                                <div class="col-4 weight600 darkblue text-right">
+                                    {% if not invo.packed  %}
+                                                    {% if useri.langSet == 0 %} Unasubiri Mchakato {% else %}Pending{% endif %}
+                                                    {% elif invo.packed and not invo.tr.confirm_receive %}
+                                                    <span  > 
+                                                
+                                
+                                                        {% if useri.langSet == 0 %} Imeshafungashwa {% else %}Packed{% endif %}</span>  
+                                                    {% elif invo.user_costomer.tr.confirm_receive  and not invo.receved %}
+                                                    
+                                
+                                                    <span  >
+                                
+                                                
+                                                    {% if useri.langSet == 0 %}  Unasafirishwa  {% else %} In delivery{% endif %}</span>  
+                                                    {% elif invo.receved  %}
+                                                    
+                                
+                                                    <span > 
+                                                                        
+                                                        {% if useri.langSet == 0 %}  Imeshapokelewa  {% else %} Received{% endif %}
+                                                    </span>  
+                                                    
+                                                    {% endif %}
+                                </div>
+
+                                <div class="col-12 latoFont  pt-0">
+                                <span   class="text-primary  smallFont px-0 latoFont">PACK-{{invo.user_customer.tr.code}}</span> | <span   class="text-primary smallFont  latoFont">ORD-{{invo.code}}</span> | {{invo.date}}
+                                </div>
+                                
+                                </a>
+                        
+                    </li>
+
+                    {% endfor %}
+                </ul>
+
+                <p style="-webkit-box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14);box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14);padding-top:5px">
+            
+                    {% if bili.has_previous %}
+                    <a href="{% url 'ViewPickup' %}?page=1&p={{the_bill.id}}" type="button"  class="btn btn-default border0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+                        </svg>
+                        </a>
+                
+                        <a href="{% url 'ViewPickup' %}?page={{bili.previous_page_number}}&p={{the_bill.id}}" type="button"  class="btn btn-default  border0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                        </svg>
+                        </a>
+                    {% endif %}
+                
+                    {% if bili.has_next %}
+                        <a href="{% url 'ViewPickup' %}?page={{bili.next_page_number}}&p={{the_bill.id}}" type="button" class="btn btn-default border0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                        </a>
+                
+                        <a href="{% url 'ViewPickup' %}?page={{pages}}&p={{the_bill.id}}" type="button"  class="btn btn-default border0" >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                        </svg>
+                        </a>
+                {% endif %}
+                        <label for="">
+                        
+                        {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+                
+                        </label>
+                </p>
+
+            </div>
+
+        </div>
+        <div class="col-md-8">
+             <header class="border-bottom py-2 text-right">
+                 {% if the_bill.derivered and not the_bill.user_customer.tr.amehakiki %}
+                    <button data-toggle="modal" data-target="#confirmReceive" class="btn btn-primary latoFont smallFont btn-sm">
+                        {% if useri.langSet == 0 %} Hakiki Kupokea {% else %} Confirm Receive {% endif %}
+                    </button>
+                  {% endif %}
+             </header>
+             <div  class="table-responsive pt-3 " id="invo_box"  >
+                <div class="classic_div mt-sm-2 pt-3 pb-2 px-3 the_invo_page latoFont" id="the_invo_page" >
+                
+                
+                    
+                            <h3>{% if useri.langSet == 0 %}NOTISI MZIGO WA KUSAFIRISHA {% else %} PACKAGE DELIVERY NOTE {% endif %} </h3>
+                            <h4 style="margin-top:-12px" >PACK-{{the_bill.user_customer.tr.code}}</h4>       
+                            <h4 style="margin-top:-12px" >{% if the_bill.order %}ORD{% else %}INVO{% endif %}-{{the_bill.code}}</h4>       
+                            
+                            <hr>
+
+                            <h6 class="brown" >{% if useri.langSet == 0 %}Kutoka {% else %} From {% endif %}:</h6>
+                            <h5 class="weight600" style="margin-top:-8px">{{the_bill.Interprise.name | title}} ({{the_bill.Interprise.Intp_code}}) <span class="ml-1 pl-1 border-left">
+                                <button onclick="getChats('{{the_bill.Interprise.id}}')" class="btn p-0 btn-default text-primary" >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-square">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                </button>  
+                            </span> </h5>
+                            <div style="margin-top:-10px">{{the_bill.Interprise.slogan }}</div>
+                            <div >{{the_bill.Interprise.jengo | title}},
+                                {{the_bill.Interprise.mtaa.mtaa | title}}, {{the_bill.Interprise.mtaa.kata.kata | title}}, {{the_bill.Interprise.mtaa.kata.wilaya.wilaya | title}}, {{the_bill.Interprise.mtaa.kata.wilaya.mkoa.mkoa}}, {{the_bill.Interprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name}}
+
+                            </div>
+                            <div >
+                                {{the_bill.Interprise.owner.simu1}},{{the_bill.Interprise.owner.simu2}}
+                            </div>
+    
+                            <hr>
+
+                            <h6 class="brown" >{% if useri.langSet == 0 %}Kwenda {% else %} To {% endif %}:</h6>
+                            <h5 class="weight600" style="margin-top:-8px">{{the_bill.user_customer.enteprise.name | title}} ({{the_bill.user_customer.enteprise.Intp_code}}) <span class="ml-1 pl-1 border-left">
+                                <button onclick="getChats('{{the_bill.user_customer.enteprise.id}}')" class="btn p-0 btn-default text-primary" >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-square">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                </button>  
+                            </span> 
+                            </h5>
+
+                            {% if the_bill.user_customer.enteprise.Interprise %}
+                            <div style="margin-top:-10px">{{the_bill.user_customer.enteprise.slogan }}</div>
+                            {% endif %}
+                            <div >{{the_bill.user_customer.jengo | title}},
+                                {{the_bill.user_customer.enteprise.mtaa.mtaa | title}}, {{the_bill.user_customer.enteprise.mtaa.kata.kata | title}}, {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.wilaya| title}}, {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.mkoa.mkoa}}, {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name}}
+
+                            </div>
+                            <div >
+                                {{the_bill.user_customer.enteprise.owner.simu1}},{{the_bill.user_customer.enteprise.owner.simu2}}
+                            </div>
+
+
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-7 row">
+                                    <h6 class="col-5" >{% if useri.langSet == 0 %}Usafirishwaji na{% else %}Delivery By {% endif %}: </h6>   
+                                    <h6 class="col-7"><span class="weight600 text-capitalize">{{the_bill.user_customer.tr.user.name}} ({{the_bill.user_customer.tr.user.Intp_code}})</span></h6> 
+                                    
+                                    <h6 class="col-5" >{% if useri.langSet == 0 %}Hali ya Mzigo{% else %}Package State{% endif %}: </h6>   
+                                    <h6 class="col-7">
+                                        
+                                                {% if not the_bill.packed  %}
+                                                {% if useri.langSet == 0 %} Unasubiri Mchakato {% else %}Pending{% endif %}
+                                                {% elif the_bill.packed and not the_bill.tr.confirm_receive %}
+                                                <span  > 
+                                            
+                            
+                                                    {% if useri.langSet == 0 %} Imeshafungwa {% else %}Packed{% endif %}</span>  
+                                                {% elif the_bill.user_costomer.tr.confirm_receive  and not the_bill.receved %}
+                                                
+                            
+                                                <span  >
+                            
+                                            
+                                                {% if useri.langSet == 0 %}  Unasafirishwa  {% else %} In delivery{% endif %}</span>  
+                                                {% elif the_bill.receved  %}
+                                                
+                            
+                                                <span > 
+                                                                    
+                                                    {% if useri.langSet == 0 %}  Imeshapokelewa  {% else %} Received{% endif %}
+                                                </span>  
+                                                
+                                                {% endif %}
+                                    </h6> 
+
+                                    <h6 class="col-5" >{% if useri.langSet == 0 %}Aliyeagiza{% else %}Requested By {% endif %}: </h6>   
+                                    <h6 class="col-7">
+                                        <a href="#">
+                                            {% if the_bill.user_customer.tr.fromOrdered %}
+                                               {{the_bill.user_customer.enteprise.name | title}}
+                                            {% else %}
+                                                  {{the_bill.Interprise.name | title}}
+                                            {% endif %}
+                                        </a>
+                                    </h6> 
+                                    <h6 class="col-5" >{% if useri.langSet == 0 %}Inategemewa{% else %}Expected {% endif %}: </h6>   
+                                    <h6 class="col-7 brown weight600">
+
+                                        <script>
+                                            document.write(moment('{{the_bill.expected_date|date:"r"}}').format('DD/MM/YYYY HH:mm'))
+                                        </script>
+                                    </h6> 
+                                                                        
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            {% if the_bill.user_customer.tr.open_package %}
+                            <h5 class="weight500" > {% if useri.langSet == 0 %}Bidhaa zilizoagizwa {% else %} Ordered Items {% endif %} </h5>
+
+                            <div class="row classic_div pt-3 whiteBg" style="max-width: 1000px;" >
+     
+     
+                                <div class="col-12 row">
+                          
+                                  <h6 class="col-4 text-center ">{% if useri.langSet == 0 %} Picha {% else %} Image {% endif %}</h6>
+                                  <h6 class="col-5  ">{% if useri.langSet == 0 %} Bidhaa {% else %} Item {% endif %}</h6>
+                                  <h6 class="col-3 mx-0 px-0 d-none d-md-block text-right">{% if useri.langSet == 0 %}Bei Jumla {% else %} Total Price{% endif %}</h6>
+                          
+                                  <hr class="col-12">
+                                </div>
+                          
+                                {% for b in itms %}
+                                
+                                <!-- if color and size involved -->
+                                {% if b.csl > 0 %}
+                                <!-- if color has size -->
+                                {% for cs in b.color_size %}
+                                {% if cs.sizl > 0 %}
+                                
+                                {% for sz in cs.size %}
+                                <!-- THIS IS  IF ITEM INVOLVES SIZE ................................................................ -->
+                                <!-- The image -->
+                                <div class="col-4 col-md-4" style="display: flex;justify-content:center">
+                                  
+                                    {% if cs.img.count > 0 %}
+                          
+                                      <div class="classic_div item_order_img" >
+                                           <img src="{{cs.img.first.picha.picha.url}}" style="max-width: 100%;">
+                                      </div>
+                                      
+                          
+                                   {% else %}
+                                   <span class="text-muted" >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="currentColor" class="bi bi-cart-check-fill" viewBox="0 0 16 16">
+                                        <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+                                      </svg>
+                                   </span>
+                                      
+                                   {% endif %}
+                                </div>
+                                <!-- ITEM DETAILS -->
+                                <div class="col-8 col-md-5">
+                                   <h5   >
+                                     {{b.itm.produ.bidhaa.bidhaa_jina | title}}
+                                   </h5> 
+                                   <div>{{b.itm.produ.bidhaa.maelezo | title}}</div>
+                          
+                                   <div class="py-2 smallerFont" ><strong>
+                                    {% if b.itm.produ.bidhaa.colorAttr %}
+                                        {{b.itm.produ.bidhaa.colorAttr}}
+                                    {% else %}
+                                      {% if useri.langSet == 0 %} Rangi{% else %}Color {% endif %} 
+                                    {% endif %}  
+                                    
+                                    :</strong> {{cs.color.color.color.color_name | title}}</div>
+                          
+                                   <div class="smallerFont" ><strong>Size:</strong> {{sz.size.size.sized.size | title}}</div>
+                          
+                                   <div class="py-2 smallerFont" ><strong>{% if useri.langSet == 0 %}Vipimo {% else %} Units{% endif %}:</strong> <span class="text-primary">  {{sz.price.vipimo}}</span> </div>
+                          
+                                   <div class=" smallerFont" ><strong>{% if useri.langSet == 0 %}Idadi {% else %} Qty{% endif %}:</strong> 
+                                    <strong style="color: brown;">  
+                                       
+                                        <script>document.write((Number('{{sz.size.idadi}}')/Number('{{sz.price.idadi}}')).toLocaleString())</script>
+                                    </strong>
+                                   
+                                     
+                                     
+                                  </div>
+                          
+                                   <div class="py-2 row" >
+                                     <div class="col-md-8">
+                                          <strong class="smallerFont" >{% if useri.langSet == 0 %}Bei {% else %}Price {% endif %}/<span class="text-primary">{{sz.price.vipimo}}</span> 
+                                         
+                          
+                                      </div>
+                          
+                                    {% if  total.user_customer.by == useri and not sz.size.packed and not total.bill_kwa.nunua %}
+                                   <div class="col-md-4">
+                                    <a class="btn btn-default float-right text-primary" href="{% url 'displaySelItem' %}?value={{shop.id}}&i={{b.itm.produ.id}}&e=1" title="{% if useri.langSet == 0 %}Marekebisho {% else %}Edit {% endif %}" >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                                        <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                                      </svg>
+                                    </a>
+                          
+                                    <a href="{% url 'removeToCart_itm' %}?value={{shop.id}}&i={{b.itm.id}}&s={{sz.size.id}}" class="btn btn-default float-right text-danger" title="{% if useri.langSet == 0 %}Ondoa {% else %}Remove {% endif %}"  >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                      </svg>
+                                    </a>
+                                  </div>
+                          
+                                    {% endif %}
+                          
+                                  </div>
+                          
+                          
+                                </div>
+                          
+                                <!-- ITEM TOTAL PRICE -->
+                                <div class="col-md-3 row">
+                                     <h6 class="col-5 d-md-none" >{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</h6>
+                                    <h6 class="text-right col-7 col-md-12" >
+                                      <span class="latoFont" >{{shop.currencii}}.</span>
+                                      <span  style="color:brown;font-weight:700;text-shadow:0 1 1px #000"> 
+                                        <script>document.write(((Number('{{sz.size.idadi}}')*Number('{{b.itm.saveT}}')*Number('{{sz.price.bei}}'))/Number('{{sz.price.idadi}}')).toLocaleString())</script>
+                                      </span> 
+                                    </h6>
+                              
+                                   
+                                    {% if total.bill_kwa.nunua and not b.match and duka.Interprise %}
+                                    {% if not b.itm.match %}
+                                    <p class="text-right col-12">
+                                     <button class="btn btn-danger btn-sm latoFont" onclick = "$('.husiana_name').text('{{b.itm.produ.bidhaa.bidhaa_jina}}');$('#item_match_form').data('item','{{b.itm.id}}');$('.shop_vipimo').text('{{b.itm.produ.bidhaa.vipimo}}')"  data-toggle="modal" data-target="#modal_Item_match" >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-left-right" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5zm14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5z"/>
+                                      </svg>
+                                      {% if useri.langSet == 0 %}Husianisha Bidhaa{% else %}Match Item{% endif %}
+                                    </button>
+                                    </p>
+                                    <input type="hidden" value="{{match}}" class="matchItem">
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+                          
+                                <hr class="col-12" >
+                                {% endfor %}
+                          
+                                {% else %}
+                          <!-- THIS IS  IF ITEM INVOLVES COLOR ONLY................................................................ -->
+                           <!-- The image -->
+                               <div class="col-md-4 col-4" style="display: flex;justify-content:center">
+                                  
+                                    {% if cs.img.count > 0 %}
+                          
+                                      <div class="classic_div item_order_img" >
+                                           <img src="{{cs.img.first.picha.picha.url}}" style="max-width: 100%;">
+                                      </div>
+                                      
+                          
+                                   {% else %}
+                                   <span class="text-muted " >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="currentColor" class="bi bi-cart-check-fill" viewBox="0 0 16 16">
+                                      <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+                                    </svg>
+                                 </span>
+                                   {% endif %}
+                                </div>
+                                <!-- ITEM DETAILS -->
+                                <div class="col-md-5 col-8">
+                                   <h5   >
+                                     {{b.itm.produ.bidhaa.bidhaa_jina | title}}
+                                   </h5> 
+                                   <div>{{b.itm.produ.bidhaa.maelezo | title}}</div>
+                          
+                                   <div class="py-2 smallerFont" ><strong>
+                                    {% if b.itm.produ.bidhaa.colorAttr %}
+                                        {{b.itm.produ.bidhaa.colorAttr}}
+                                    {% else %}
+                                      {% if useri.langSet == 0 %} Rangi{% else %}Color {% endif %} 
+                                    {% endif %}
+                                    
+                                    :</strong> {{cs.color.color.color.color_name | title}}</div>
+                          
+                          
+                                   <div class="py-2 smallerFont" ><strong>{% if useri.langSet == 0 %}Vipimo {% else %}Units {% endif %}:</strong> <span class="text-primary">  {{cs.price.vipimo}}</span> </div>
+                          
+                                   <div class=" smallerFont" ><strong>{% if useri.langSet == 0 %}Idadi {% else %}Qty {% endif %}:</strong> 
+                                    <strong style="color: brown;">                
+                                      
+                                      <script>document.write((Number('{{cs.color.idadi}}')/Number('{{cs.price.idadi}}')).toLocaleString())</script>
+                                    </strong> </div>
+                          
+                                   <div class="py-2 row" >
+                                    <div class="col-md-8">
+                          
+                                     <strong class="smallerFont" >{% if useri.langSet == 0 %}Bei {% else %}Price {% endif %}/<span class="text-primary">{{cs.price.vipimo}}</span> 
+                                     
+                                      :</strong> <span class="smallerFont" >{{shop.currencii}}</span>. <strong style="color: brown;" >{{cs.price.bei | floatformat:'-2' |intcomma }}</strong>
+                                     
+                                 
+                                    </div>
+                                    {% if  total.user_customer.by == useri and not cs.color.packed and not total.bill_kwa.nunua %}
+                                    <div class="col-md-4">
+                                    <a class="btn btn-default float-right text-primary" href="{% url 'displaySelItem' %}?value={{shop.id}}&i={{b.itm.produ.id}}&e=1" title="{% if useri.langSet == 0 %}Marekebisho {% else %}Edit {% endif %}" >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                                        <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                                      </svg>
+                                    </a>
+                          
+                                    <a href="{% url 'removeToCart_itm' %}?value={{shop.id}}&i={{b.itm.id}}&c={{cs.color.id}}" class="btn btn-default float-right text-danger" title="{% if useri.langSet == 0 %}Ondoa {% else %}Remove {% endif %}"  >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                      </svg>
+                                    </a>
+                                    </div>
+                                    {% endif %}
+                                  </div>
+                          
+                          
+                                </div>
+                           <!-- ITEM TOTAL PRICE -->
+                                <div class="col-md-3  py-3 row">
+                                     
+                                  <h6 class="col-5 d-md-none" >{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</h6>
+                                  <h6 class="text-right col-7 col-md-12" >
+                                      <span class="latoFont" >{{shop.currencii}}.</span>
+                                      <span  style="color:brown;font-weight:700;text-shadow:0 1 1px #000"> 
+                                        <script>document.write(((Number('{{cs.color.idadi}}')*Number('{{b.itm.saveT}}')*Number('{{cs.price.bei}}'))/Number('{{cs.price.idadi}}')).toLocaleString())</script>
+                                      </span> 
+                                    </h6>
+                                    
+                                    {% if total.bill_kwa.nunua and not b.match and duka.Interprise %}
+                                    {% if not b.itm.match %}
+                                    <p class="text-right col-12">
+                                     <button class="btn btn-danger btn-sm latoFont" onclick = "$('.husiana_name').text('{{b.itm.produ.bidhaa.bidhaa_jina}}');$('#item_match_form').data('item','{{b.itm.id}}');$('.shop_vipimo').text('{{b.itm.produ.bidhaa.vipimo}}')"  data-toggle="modal" data-target="#modal_Item_match" >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-left-right" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5zm14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5z"/>
+                                      </svg>
+                                      {% if useri.langSet == 0 %}Husianisha Bidhaa{% else %}Match Item{% endif %}
+                                    </button>
+                                    </p>
+                                    <input type="hidden" value="{{match}}" class="matchItem">
+                                    {% endif %}
+                                    {% endif %}
+                          
+                                    
+                                    
+                                </div>
+                                <hr class="col-12" />
+                                
+                                {% endif %}
+                          
+                                {% endfor %}
+                          
+                                {% else %}
+                          
+                            <!-- THIS IS  IF ITEM HAS NEITHER COLOR NO SIZE................................................................ -->
+                          <!-- The image -->
+                               <div class="col-md-4 col-4" style="display: flex;justify-content:center">
+                                  
+                                    {% if b.img.count > 0 %}
+                          
+                                      <div class="classic_div item_order_img" >
+                                           <img src="{{b.img.first.picha.picha.url}}" style="max-width: 100%;">
+                                      </div>
+                                      
+                          
+                                   {% else %}
+                                   <span class="text-muted" >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="currentColor" class="bi bi-cart-check-fill" viewBox="0 0 16 16">
+                                      <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+                                    </svg>
+                                 </span>
+                                   {% endif %}
+                                </div>
+                          
+                                <!-- ITEM DETAILS -->
+                                <div class="col-md-5 col-8">
+                                   <h5   >
+                                     {{b.itm.produ.bidhaa.bidhaa_jina | title}}
+                                   </h5> 
+                                   <div>{{b.itm.produ.bidhaa.maelezo | title}}</div>
+                          
+                                   <div class="py-2 smallerFont" ><strong>{% if useri.langSet == 0 %}Vipimo {% else %}Units {% endif %}:</strong> <span class="text-primary">  {{b.price.vipimo}}</span> </div>
+                          
+                                   <div class=" smallerFont" ><strong>{% if useri.langSet == 0 %}Idadi {% else %}Qty {% endif %}:</strong> 
+                                    <strong style="color: brown;">                
+                                      
+                                      <script>document.write((Number('{{b.itm.idadi}}')/Number('{{b.price.idadi}}')).toLocaleString())</script>
+                                    </strong> </div>
+                          
+                                   <div class="py-2 row" >
+                                     <div class="col-md-8">
+                                     <strong class="smallerFont " >{% if useri.langSet == 0 %}Bei {% else %}Price {% endif %}/<span class="text-primary">{{b.price.vipimo}}</span> 
+                                     
+                                      :</strong> <span class="smallerFont" >{{shop.currencii}}</span>. <strong style="color: brown;" >{{b.price.bei | floatformat:'-2' |intcomma }}</strong>
+                                    
+                                    </div>
+                                    {% if  total.user_customer.by == useri and not b.itm.packed and not total.bill_kwa.nunua %}
+                                   <div class="col-md-4">
+                                    <a class="btn btn-default float-right text-primary" href="{% url 'displaySelItem' %}?value={{shop.id}}&i={{b.itm.produ.id}}&e=1" title="{% if useri.langSet == 0 %}Marekebisho {% else %}Edit {% endif %}" >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                                        <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                                      </svg>
+                                    </a>
+                          
+                                    <a href="{% url 'removeToCart_itm' %}?value={{shop.id}}&i={{b.itm.id}}" class="btn btn-default float-right text-danger" title="{% if useri.langSet == 0 %}Ondoa {% else %}Remove {% endif %}"  >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                      </svg>
+                                    </a>
+                               </div>
+                                    {% endif %}
+                                  </div>
+                          
+                          
+                                </div>
+                           <!-- ITEM TOTAL PRICE -->
+                                <div class="col-md-3 row">
+                                  <h6 class="col-5 d-md-none" >{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</h6>
+                                  <h6 class="text-right col-7 col-md-12" >
+                                      <span class="latoFont" >{{shop.currencii}}.</span>
+                                      <span  style="color:brown;font-weight:700;text-shadow:0 1 1px #000"> 
+                                        <script>document.write(((Number('{{b.itm.idadi}}')*Number('{{b.itm.saveT}}')*Number('{{b.price.bei}}'))/Number('{{b.price.idadi}}')).toLocaleString())</script>
+                                      </span> 
+                                    </h6>
+                               
+
+                          
+                                </div>
+                                <hr class="col-12" />
+                                
+                                {% endif %}
+                               
+                                {% endfor %}
+                          
+                               {% if discount > 0 %}
+                                <h6 class="col-6 pl-4" style="font-weight: 500;"> {% if useri.langSet == 0 %}Jumla kwa Bei{% else %} Total By Price {% endif %} </h6>
+                                <h6 class="col-6 text-right">
+                                    <span class="latoFont" >{{shop.currencii}}.</span>
+                                      <span  style="color:brown;font-weight:600;text-shadow:0 1 1px #000"> 
+                                        {{tot_p | floatformat:'-2' | intcomma }}
+                                    </span> 
+                                  </h6>
+                                  
+                                <h6 class="col-6 pl-4" style="font-weight: 500;"> {% if useri.langSet == 0 %}Punguzo{% else %}Discount {% endif %} </h6>
+                                <h6 class="col-6 text-right">
+                                    <span class="latoFont" >{{shop.currencii}}.</span>
+                                      <span  style="color:brown;font-weight:600;text-shadow:0 1 1px #000"> 
+                                        {{discount | floatformat:'-2' | intcomma }}
+                                    </span> 
+                                  </h6>
+                          
+                                  <hr class="col-12">
+                                  {% endif %}
+                          
+                                <h5 class="col-6 pl-4" style="font-weight: 600;"> {% if useri.langSet == 0 %} Kiasi kinacholipwa{% else %}Payable Amount{% endif %} </h5>
+                                <h5 class="col-6 text-right">
+                                    <span class="latoFont" >{{shop.currencii}}.</span>
+                                      <span  style="color:brown;font-weight:700;text-shadow:0 1 1px #000"> 
+                                        {{total.amount | floatformat:'-2' | intcomma }}
+                                    </span> 
+                                  </h5>
+                                
+                          
+
+            
+                             
+                            </div>
+
+                            {% endif %}
+                
+            
+
+                </div>
+             </div>
+        </div>
+
+</div>
+</div>
+<script>
+  '{% if not the_bill.user_customer.tr.seen %}'
+   $(document).ready(function(){
+      const dtA = {
+        data:{
+            bil:Number('{{the_bill.id}}')
+        },
+        url:'/purchase/seenPick'
+      },
+      thenSend = POSTREQUEST(dtA)
+      thenSend.then(dt=>{
+        toastr.success(lang('Mzigo umeonekana','Package seen'), lang('Imefanikiwa','Success Alert'), {timeOut: 2000})
+      })
+
+   })
+    
+  '{% endif %} '  
+</script>
+
+
+>
+
+<!-- Modal -->
+<div class="modal fade" id="confirmReceive" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">{% if useri.langSet == 0 %}Hakiki kupokea bidhaa {% else %} Confirm Item(s) Receive {% endif %}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+          <p>{% if useri.langSet == 0 %} Hakiki kupokea bidhaa kutoka   {% else %} Confirm Items receive from {% endif %}
+          <u class="darkblue">{{total.Interprise.name | title}}</u>
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" onclick="
+        $('#confirmReceive').modal('hide')
+        $('#loadMe').modal('show')
+          const theDt = {data:{b:Number('{{total.id}}')},url:'/purchase/pickConfirm'},SendIt = POSTREQUEST(theDt)
+               sendIt.then(data=>{
+                if(data.success){
+                  toastr.success(lang(data.msg_swa,data.msg_eng), lang('Imefanikiwa','success'), {timeOut: 2000});
+                
+                  location.reload()
+        
+                }else{
+                  toastr.error(lang(data.msg_swa,data.msg_eng), lang('Haijafanikiwa','Error'), {timeOut: 2000});
+            
+                }
+                $('#loadMe').modal('hide')
+               }) 
+        
+        " class="btn btn-primary">{% if useri.langSet == 0 %} Hakiki  {% else %} Confirm {% endif %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block pickUpNote %}
+{% if the_bill.user_customer.tr.seen %}
+    <div id="pickupNote">
+    </div>
+ {% endif %}   
+{% endblock %}
+
+{% block for_oda %}
+  {{the_bill.id}}
+{% endblock %}

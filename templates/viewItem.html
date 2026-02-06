@@ -1,0 +1,3407 @@
+{% extends 'userdash.html' %}
+
+{% load humanize %}
+
+
+
+{% block Dashboard %}
+
+<link rel="stylesheet" href="/static/css/viewItem.css">
+<link rel="stylesheet" href="/static/css/customradio.css">
+
+
+
+<div  class=" Analytical  p-2 p-md-3 whiteBg" id="general-panel" style="margin-top: -12px;min-height:100vh" >
+<div class="row classic_div">
+  {% if bidhaa.service  %}
+  <div class="col-12 row p-2 classic_div mb-3 bg-primary " style="border: 2px solid rgba(0, 0, 255, 0.555);color:#fff" >
+    <div class="col-md-5 d-md-flex  align-items-md-center py-2 text-md-light text-center">
+      {% if useri.langSet == 0 %}Tafadhari weka muda wa haduma {% else %}Please Set Service Time {% endif %}
+    </div>
+    <div class="col-md-7 row classic_div mx-0 px-0"> 
+        <div class="col-md-6 px-0  smallFont text-right"> 
+          {% if useri.langSet == 0 %}Kuanzia{% else %}From{% endif %}: <input type="datetime-local" 
+           style="border: 2px solid rgba(0, 0, 255, 0.555);color:rgba(0, 0, 255, 0.795)"
+           class="made-input kwaMuda" id="hudumaKuanzia" >
+        </div>
+        <div class="col-md-6 px-0 smallFont  text-right">
+          {% if useri.langSet == 0 %}Hadi{% else %}To{% endif %}: <input type="datetime-local" class="made-input kwaMuda" 
+               id="hudumaHadi"  style="border: 2px solid rgba(0, 0, 255, 0.555);color:rgba(0, 0, 255, 0.795)" >
+        </div>
+    </div>
+  </div>
+  {% endif %}
+
+
+  <div class="col-md-5">
+
+    <h5 class=" d-block d-md-none" >{{bidhaa.bidhaa.bidhaa_jina | title }}</h5>
+      <p class="smallFont {% if duka == shop %} mb-4 pb-2 {% endif %} d-md-none" >
+        
+          {{bidhaa.bidhaa.maelezo}}
+       
+        
+      
+      {% if duka == shop %}
+
+      
+
+             <br/>
+          <button type="button" class="btn btn-primary float-right btn-sm latoFont smallFont " data-toggle="modal" data-target="#Item_editModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+              <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+              <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+            </svg> {% if useri.langSet == 0 %}Kuediti {% else %}Edit {% endif %}
+          </button>
+  
+
+      {% endif %}
+      </p>
+
+      
+
+
+    {% if duka == shop  %}      
+    
+      <input type="file" hidden name="produ-pic" accept="image/*" class="form-control" id="produ-pic" multiple  />
+
+      <label title="{% if useri.langSet == 0 %}Ongeza Picha {% else %}Add Image {% endif %}" type="button" for="produ-pic"  class=" position-absolute border btn classic_div btn-light">
+        <svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px"  fill="currentColor">
+          <path d="M180-120q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h409v60H180v600h600v-408h60v408q0 24.75-17.62 42.37Q804.75-120 780-120H180Zm520-498v-81h-81v-60h81v-81h60v81h81v60h-81v81h-60ZM240-282h480L576-474 449-307l-94-124-115 149Zm-60-498v600-600Z"/>
+        </svg>
+          
+      </label>
+      <div id="penye-picha"   style="cursor: pointer;"  data-owner = 1 >
+        {% else %}
+       <div id="penye-picha" style="cursor: pointer;"  >
+        {% endif %}
+        
+        {% if img %}
+            <!-- width css on mediascreen.css -->
+          <div class="preSlide"  style="padding:0" >
+
+            <div class="text-center" style="width:100%;height:100%">
+               <img src="{{img.url}}" class="clasic_div"  style="max-height:100%;max-width:100%">
+            </div>
+
+          </div>
+        {% else %}
+        <svg width="100%"  viewBox="0 0 16 16" class="bi bi-card-image" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+           <path fill-rule="evenodd" d="M14.5 3h-13a.5.5 0 0 0-.5.5v9c0 .013 0 .027.002.04V12l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094L15 9.499V3.5a.5.5 0 0 0-.5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm4.502 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+         </svg> 
+        {% endif %}
+
+        </div>
+    
+    {% if duka == shop  %}
+  <div class="row container  p-0">
+      <div class="col-7 ">
+          
+            <strong>{% if useri.langSet == 0 %}Nafasi Iliyotumika {% else %}Used Storage {% endif %}</strong>
+      </div>
+    <div class="col-5  p-0 mx-0">
+        <label class="font-weight-bold" for="used" ><span  id="used-memory">0KB</span>/<span id="Total-memory-assign">500KB</span></label>
+    </div>
+  </div>
+
+   <!-- <form action="/stoku/kuwekaPicha" id="save-produ-img" data-itm={{bidhaa.id}}  enctype="multipart/form-data" method="POST">
+          {% csrf_token %}
+        <div class="row p-0">
+          
+          <div class="col-7 col-md-10 p-0 mx-0">
+
+
+
+          </div>
+          
+        </div>
+
+  </form>  -->
+
+  <!-- Image Upload Modal -->
+  <div class="modal fade" id="thePreviewModal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title"> {% if useri.langSet == 0 %} Tupia Picha{% else %} Upload  Image{% endif %} </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        <div class="modal-body">
+          <div id="image_preview" class="container-fluid " style="max-height: 80vh;overflow-y: auto;" >
+           
+          </div>
+        </div>
+        <form action="/stoku/kuwekaPicha" id="save-produ-img" data-itm={{bidhaa.id}}  class="modal-footer">
+          <input type="hidden" value=0 id="hold-color-id" name="hold-color-id" >
+          <input type="hidden" value={{bidhaa.id}} id="hold-produ-id" name="hold-produ-id" >
+          
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
+                            <path d="M260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H520q-33 0-56.5-23.5T440-240v-206l-64 62-56-56 160-160 160 160-56 56-64-62v206h220q42 0 71-29t29-71q0-42-29-71t-71-29h-60v-80q0-83-58.5-141.5T480-720q-83 0-141.5 58.5T280-520h-20q-58 0-99 41t-41 99q0 58 41 99t99 41h100v80H260Zm220-280Z"/>
+                  </svg>
+                           {% if useri.langSet == 0 %} Tupia {% else %} Upload  {% endif %} 
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+
+
+  
+
+
+
+{% endif %}
+
+<div class="mt-2">
+     <!-- VISTORS BTN ,,,,,,,,,,,,,,,........ -->
+   <div >
+      <button class="btn btn-light btn-sm " type="button" id="triggerId" onclick="$('#showItemUserOptions').toggle(200)" aria-expanded="false">
+
+              <span class="px-1 border-right">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24" fill="rgb(87, 87, 87)"  stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              </span>
+            <span class="px-1 weight700" > {{bidhaa.visted | intcomma }} </span>
+
+            {% if duka == shop %}
+            <span> 
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </span>
+
+            {% endif %}
+
+        </button>
+
+
+      {% if shop == duka %}  
+      <div id="showItemUserOptions" class="mt-3" style="display: none;" >
+          <div class="form-check">
+            <label class="form-check-label">
+              {% if bidhaa.showToVistors %}
+              <input type="checkbox" onclick="ShowToItemVistors({chk:$(this).prop('checked'),itm:'{{bidhaa.id}}'})" class="form-check-input" name="showtoVisitors" id="showtoVisitors"  checked>
+              {% else %}
+              <input type="checkbox" onclick="ShowToItemVistors({chk:$(this).prop('checked'),itm:'{{bidhaa.id}}'})" class="form-check-input" name="showtoVisitors" id="showtoVisitors"  >
+
+              {% endif %}
+
+               {% if useri.langSet == 0 %}Onesha Bidhaa kwa Watembeleaji{% else %}Show Item to Vistors{% endif %}
+          
+          
+              </label>
+          </div>
+
+          <!-- <div class="form-check">
+            <label class="form-check-label">
+              <input type="checkbox" class="form-check-input" name="" id="" value="checkedValue" checked>
+              {% if useri.langSet == 0 %}Onesha Idadi ya Watembeleaji kwa Watembeleaji{% else %}Show Item Vistors Number to Vistors{% endif %}
+            </label>
+          </div> -->
+
+      </div>
+
+      {% else %}
+
+<!-- SAVE ITEM BTN .... -->
+      <button id="saveItemd" class="btn-light btn btn-sm float-right" title="{% if useri.langSet == 0 %}Ongeza kwenye Bidhaa zilizohifadhiwa{% else %}Add to Saved Items{% endif %}" data-saved="{{saved}}" onclick="let itm='{{bidhaa.id}}';svd='{{saved}}';UserItemSave({itm,svd})">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24" fill="{% if saved %}brown{% else %}none{% endif %}" stroke="rgb(87, 87, 87)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bookmark">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+       </svg>
+      </button>
+
+     {% endif %}
+
+
+  </div> 
+</div>
+
+
+
+  </div>
+
+
+
+  <div class="col-md-4">
+      <h5 class=" d-none d-md-block" >{{bidhaa.bidhaa.bidhaa_jina | title }}</h5>
+      <p class="smallFont d-none d-md-block py-1" >{{bidhaa.bidhaa.maelezo}}
+      <!-- Button trigger modal -->
+      {% if duka == shop %}
+      <button type="button" class="btn btn-primary  latoFont smallFont float-right" data-toggle="modal" data-target="#Item_editModal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+          <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+          <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+        </svg> {% if useri.langSet == 0 %}Kuediti {% else %}Edit {% endif %}
+      </button>
+      {% endif %}
+      </p>
+
+      <hr>
+     <div class="the_price">
+       <!-- <div  style="font-weight: 600;" >{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}</div> -->
+       
+       <div class="pb-2" style="overflow-x: auto;" >
+         <div class="d-flex" style="text-indent: 1%;white-space: nowrap" >
+           <div class="price_sh">
+              <span style="color:brown" > <span class="darkblue smallFont">{{shop.currencii  }}</span>  .<span style="font-size: medium;font-weight:600;text-shadow:0 1 1px #000" >{{bidhaa.Bei_kuuza | floatformat:'-2' | intcomma}}</span> <small class="text-primary">/{{bidhaa.bidhaa.vipimo}} 
+                <span class="brown" >
+                  {%if bidhaa.timely > 0  %}
+                  / 
+                  {%if bidhaa.timely == 1  %}
+                  {% if useri.langSet == 0 %} Dakika{% else %}Minute {% endif %}
+                  {% endif %}
+                  {%if bidhaa.timely == 2  %}
+                  {% if useri.langSet == 0 %} Saa{% else %}Hour {% endif %}
+                  {% endif %}
+                  {%if bidhaa.timely == 3  %}
+                  {% if useri.langSet == 0 %} Siku{% else %}Day {% endif %}
+                  {% endif %}
+                  {%if bidhaa.timely == 4  %}
+                  {% if useri.langSet == 0 %} Wiki{% else %}Week {% endif %}
+                  {% endif %}
+                  {%if bidhaa.timely == 5  %}
+                  {% if useri.langSet == 0 %} Mwezi{% else %}Month {% endif %}
+                  {% endif %}
+                  {%if bidhaa.timely == 6  %}
+                  {% if useri.langSet == 0 %} Mwaka{% else %}Year {% endif %}
+                  {% endif %}
+                  
+                  {%endif%} </span>
+              
+              </small> </span> 
+           </div>
+
+           {% if bei.count > 0  %}
+               {% for bi in bei %}
+                <div type="button" data-qty="{{bi.idadi}}" data-val="{{bi.id}}" data-bei="{{bi.bei}}" data-toggle="modal" data-edit=1 data-target="#units_modal" data-units="{{bi.jina}}" class="price_sh ml-2 settingsUnit border-left pl-2">
+                      <span style="color:brown" > 
+                        <span class="darkblue smallFont">{{shop.currencii  }}</span>   .<span style="font-size: medium;font-weight:600;text-shadow:0 1 1px #000" >{{bi.bei | floatformat:'-2'  | intcomma}}</span> <small class="text-primary" >/{{bi.jina | title }} <small class="text-danger">({{bidhaa.bidhaa.vipimo}} => {{bi.idadi | floatformat:'-2' | intcomma }})</small> </small> 
+                        <span class="brown" >
+                          {%if bidhaa.timely > 0  %}
+                          / 
+                          {%if bidhaa.timely == 1  %}
+                          {% if useri.langSet == 0 %} Dakika{% else %}Minute {% endif %}
+                          {% endif %}
+                          {%if bidhaa.timely == 2  %}
+                          {% if useri.langSet == 0 %} Saa{% else %}Hour {% endif %}
+                          {% endif %}
+                          {%if bidhaa.timely == 3  %}
+                          {% if useri.langSet == 0 %} Siku{% else %}Day {% endif %}
+                          {% endif %}
+                          {%if bidhaa.timely == 4  %}
+                          {% if useri.langSet == 0 %} Wiki{% else %}Week {% endif %}
+                          {% endif %}
+                          {%if bidhaa.timely == 5  %}
+                          {% if useri.langSet == 0 %} Mwezi{% else %}Month {% endif %}
+                          {% endif %}
+                          {%if bidhaa.timely == 6  %}
+                          {% if useri.langSet == 0 %} Mwaka{% else %}Year {% endif %}
+                          {% endif %}
+                          
+                          {%endif%} </span>
+                    </span> 
+                </div>
+               {% endfor %}
+           {% endif %}
+
+             {% if bidhaa.bidhaa.idadi_jum > 1 %}
+                 <div class="price_sh ml-2 border-left pl-2">
+                      <span style="color:brown" > <span class="darkblue smallFont">{{shop.currencii }}</span> . <span style="font-size: medium;font-weight:600;text-shadow:0 1 1px #000" >{{bidhaa.Bei_kuuza_jum | floatformat:'-2'  | intcomma}}</span> <small class="text-primary" >/{{bidhaa.bidhaa.vipimo_jum | title }} <small class="text-danger" >({{bidhaa.bidhaa.vipimo}} => {{bidhaa.bidhaa.idadi_jum  | floatformat:'-2'  | intcomma}})</small> </small> 
+                      <span class="brown" >
+                        {%if bidhaa.timely > 0  %}
+                        / 
+                        {%if bidhaa.timely == 1  %}
+                        {% if useri.langSet == 0 %} Dakika{% else %}Minute {% endif %}
+                        {% endif %}
+                        {%if bidhaa.timely == 2  %}
+                        {% if useri.langSet == 0 %} Saa{% else %}Hour {% endif %}
+                        {% endif %}
+                        {%if bidhaa.timely == 3  %}
+                        {% if useri.langSet == 0 %} Siku{% else %}Day {% endif %}
+                        {% endif %}
+                        {%if bidhaa.timely == 4  %}
+                        {% if useri.langSet == 0 %} Wiki{% else %}Week {% endif %}
+                        {% endif %}
+                        {%if bidhaa.timely == 5  %}
+                        {% if useri.langSet == 0 %} Mwezi{% else %}Month {% endif %}
+                        {% endif %}
+                        {%if bidhaa.timely == 6  %}
+                        {% if useri.langSet == 0 %} Mwaka{% else %}Year {% endif %}
+                        {% endif %}
+                        
+                        {%endif%} </span>
+                    </span> 
+                </div>
+          {% endif %}
+
+
+          
+
+       
+      
+          
+ 
+         </div>
+       </div>
+        {% if duka == shop  %} 
+            <div class="col-12 mt-2 text-right">
+                    <a type="button" data-toggle="modal" class="smallerFont uni_for_idadi"  data-target="#units_modal" href="#">
+                          + {% if useri.langSet  == 0 %}Ongeza{% else %}Add {% endif %}
+                    </a>
+            </div>
+       {% endif %}
+     </div>
+
+     
+     {% if rangi.count > 0 and rangi.last.color.colored  %}
+     <div class="row mt-2">
+       <div class="col-3 " style="font-weight: 600;">
+
+        {% if bidhaa.bidhaa.colorAttr %}
+             {{bidhaa.bidhaa.colorAttr}}
+        {% else %}
+          {% if useri.langSet  == 0 %}Rangi{% else %}Color{% endif %}
+        {% endif %}  
+          {% if duka == shop %}
+             <button class="btn-default btn text-primary p-0 btn-sm" onclick="$('#setColorKey').toggle(300)" >
+                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-settings">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+             </button>
+          {% endif %}
+          :
+       </div>
+       <div class="col-9">
+          <span id="color_text" class="capitalize" ></span>
+          
+       </div>
+     </div>
+    
+     {% if duka == shop %}
+      <div id="setColorKey" style="display:none" >
+         <div class="input-group">
+           
+           <input type="text" name="TheItemAttr" value="{% if bidhaa.bidhaa.colorAttr %}{{bidhaa.bidhaa.colorAttr}} {% endif %}" id="TheItemAttr" class="form-control" placeholder="{% if useri.langSet  == 0 %}Rangi{% else %}Color{% endif %}" aria-describedby="helpId">
+           <button onclick="saveColorAttr()" class="btn btn-primary btn-sm input-group-append latoFont">
+              Save
+           </button>
+         </div>
+      </div>
+      <script>
+            function saveColorAttr(){
+              $('#loadMe').modal('show')
+              const itmAttr = $('#TheItemAttr').val(),
+                    AttrSet = Number(itmAttr != ''),
+                    dta = {
+                      data:{
+                        itmAttr,
+                        AttrSet,
+                        itm:Number('{{bidhaa.bidhaa.id}}')
+                      },
+                      url:'/stoku/saveItmAttr'
+                    },
+                    sendIt = POSTREQUEST(dta)
+
+                    sendIt.then(resp=>{
+                      if(resp.success){
+                        toastr.success(`{% if useri.langSet == 0 %}${resp.msg_swa}{% else %}${resp.msg_eng}{% endif %}`, lang('Imefanikiwa','Success '), {timeOut: 2000});
+                        location.reload()
+                      }else{
+                        toastr.error(`{% if useri.langSet == 0 %}${resp.msg_swa}{% else %}${resp.msg_eng}{% endif %}`, lang('Haikufanikiwa','Error '), {timeOut: 2000});
+
+                      }
+                      $("#loadMe").modal('hide');
+                      hideLoading()
+                    })
+
+
+
+                    
+            }
+      </script>
+     {% endif %}
+
+     <div class="row mt-3 classic_div" id="penye-rangi"  >
+      {% for r in rangi %}
+        
+      <script>
+        
+        document.write( `
+            <div data-qty=0 data-uwiano=0 class="column btn mb-2 mx-1 the_identify rounded" data-idadi={{r.idadi}} data-toggle="modal" data-target="#kuweka-rangi-model" data-rangi={{r.color.id}} data-val={{r.id}}  data-jina="{{r.color.color_name}}" data-other="{{r.color.nick_name}}" data-code="{{r.color.color_code}}" title='{{r.color.color_name | title }}' style="height: 25px;width:40px;background-color:${'{{r.color.color_code}}'}; cursor:pointer;
+                  -webkit-box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37); 
+                  box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37);
+                  
+                  " >
+         <div class="position-absolute bg-primary successmark" id="success{{r.id}}"  
+            style="
+            margin-left:13px;
+            margin-top:-8px;
+            height:17px;
+            width:15px;
+            border-radius:50%;
+            color:#fff;
+           
+            border:1px solid #fff;
+            display:none;
+          "> 
+       <span style="top:-6px;left:-2px;position:absolute;">
+          <svg width="1.1em" height="1.1em" viewBox="0 0 16 16" class="bi bi-check" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 0 1 .02-.022z"/>
+          </svg>
+      </span>
+   </div>
+                  
+           </div>
+         `)
+      </script>
+
+     
+
+      {% endfor %}
+    </div>
+
+   
+
+     {% if size.count > 0 %}
+     <div class="row mt-3">
+      <div class="col-1 py-1" style="font-weight: 600;">
+        Size:
+      </div>
+      <div class="col-11" style="overflow-x: auto;">
+         <div id="penye_size" class="py-1 capitalize d-flex" >
+           {% for s in size %}
+          <span data-toggle="modal" style="display: none;"  id="siz{{s.id}}"  data-qty=0 data-target="#kuweka-size-model" data-idadi={{s.idadi}} data-val={{s.id}} data-color={{s.sized.color.id}} data-jina="{{s.sized.size}}" class="text-danger border item_sized_{{s.sized.color.id}} item_sized_ btn btn-default mx-1 px-2 py-0" >
+            {{s.sized.size}} 
+
+            <div class="position-relative bg-primary successmark" id="success{{s.id}}"  
+            style="
+            margin-left:-10px;
+            margin-top:-8px;
+            height:12px;
+            width:12px;
+            border-radius:50%;
+            color:#fff;
+           
+            border:1px solid #fff;
+            display:none;
+          
+          "> 
+       <span style="top:-9px;left:-3px;position:absolute;">
+          <svg width=".9em" height=".9em" viewBox="0 0 16 16" class="bi bi-check" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 0 1 .02-.022z"/>
+          </svg>
+      </span>
+   </div>
+          </span>
+          {% endfor %}
+          <span id="hakuna_size" style="display: none;" data-uwiano=0 class="text-primary btn btn-default px-2 py-0" >{% if useri.langSet == 0 %}Hakuna Size{% else %}No Size{% endif %}</span>
+          
+         </div>
+         
+      </div>
+    </div>
+    {% endif %}
+
+
+    <script>
+      $(document).ready(function(){
+
+        $('#penye-rangi').children('.the_identify').first().addClass('redbox')
+        let colored =$('#penye-rangi').children('.redbox').first().data('rangi') || 0
+         
+        $(`.item_sized_${colored}`).fadeIn()
+        $('#penye_size').children(`.item_sized_${colored}`).first().addClass('bluebox')
+
+        let size_length = $(`.item_sized_${colored}`).length
+      
+        if(size_length>0){
+              $('#hakuna_size').hide()
+            }else{
+              $('#hakuna_size').show()
+            }
+        
+        
+       // $('#penye_size').children('.item_sized_').first().addClass('bluebox')
+          other = $('#penye-rangi').children('.the_identify').first().data('other') || ''
+
+        if(other != '' ) {
+          other = `<small class="text-primary"> (${other.replace(/[/[&\/\\#,+()$~%"*?<>{}`]/g, "")})</small>`
+        }
+      
+        $('#color_text').html($('#penye-rangi').children('.the_identify').first().attr('title')+other )
+        $('#hold-color-id').val($('#penye-rangi').children('.the_identify').first().data('val'))
+        
+       })
+
+    </script>
+
+     {% endif %}
+
+<!-- SELECT QUANTITIY -->
+     <div class=" mt-3">
+       
+                <div class="smallFont col-12 py-1 " style="font-weight: 600;"> 
+                  {% if bidhaa.service  %}
+                     {% if useri.langSet == 0 %}Nafasi{% else %}Space{% endif %} 
+                  {% else %}
+                    {% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %} 
+                  {% endif %}  
+            
+              {% if not duka == shop %}
+                <span hidden class="pl-2 text-danger latoFont" style="font-weight: 400;" id="zimeisha_aret"> 
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                      <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                      <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                    </svg>
+                    {% if bidhaa.service %}
+                       {% if useri.langSet == 0 %} Nafasi kwa muda ulioweka zimeisha tafadari wasiliana na muhusika{% else %}Already booked by that time please contact manager{% endif %}
+                    {% else %}
+                      {% if useri.langSet == 0 %} Zimeisha kwa sasa tafadhari wasiliana na muhusika au andika idadi unazoitaji kuagiza{% else %}Out of stock by now please contact vendor or set the quantity you need{% endif %}
+                    {% endif %}  
+                </span> 
+              {% endif %}    
+
+                </div>
+          <div class="d-flex">
+               <div>
+                      <select name="price_select" onchange="$('.redbox').data({uwiano:0,qty:0});$('.bluebox').data({uwiano:0,qty:0});place_idadi();feedqty(0);$('#fractions_qty').html($('#fractions_qty').html())
+                      " class="smallFont made-input" id="price_select">
+                              <option value=1 data-idadi=1 data-bei={{bidhaa.Bei_kuuza}} data-jina="{{bidhaa.bidhaa.vipimo}}" >{{bidhaa.bidhaa.vipimo}}</option>
+                            {% if bei.count > 0 %}
+                            {% for b in bei %}
+                              <option value={{b.idadi}} data-idadi={{b.idadi}} data-bei={{b.bei}} data-jina="{{b.jina}}" >{{b.jina}}</option>
+                            {% endfor %}
+                          {% endif %}
+                            {% if bidhaa.bidhaa.idadi_jum > 1 %}
+                              <option value={{bidhaa.bidhaa.idadi_jum}} data-idadi={{bidhaa.bidhaa.idadi_jum}} data-jina="{{bidhaa.bidhaa.vipimo_jum}}" data-bei={{bidhaa.Bei_kuuza_jum}} >{{bidhaa.bidhaa.vipimo_jum}}</option>
+                          {% endif %}
+                      </select>   
+               </div>
+
+                  <div class="pl-2">
+                      <div class="input-group " >
+                        <button onclick="addItems(-1)" class="btn input-group-append border btn-default btn-sm">
+                          <strong>- </strong> 
+                        </button>
+                        <input  type="number" placeholder="0" onkeyup="
+                        
+                        let val=Number($(this).val()),
+                            fracT = [
+                              {val:0,option:'<option value=0 >0</option>'},
+                              {val:0.25,option:'<option value=0.25 >{% if useri.langSet == 0 %}Robo{% else %}Quarter{% endif %} (0.25) </option>'},
+                              {val:0.50,option:'<option value=0.50 >{% if useri.langSet == 0 %}Nusu{% else %}Half{% endif %} (0.5)</option>'},
+                              {val:0.75,option:'<option value=0.75 >{% if useri.langSet == 0 %}Robo Tatu{% else %}3 Quarters{% endif %} (0.75)</option>'},
+                            ],
+                            fracTO = '',
+                            uwiano=Number($('#price_select').val())
+                            const IS_SERVICE = Number('{% if bidhaa.service %}1{% else %}0{% endif %}'),
+                                  ITM_QTY = Number($(this).data('qty'))
+
+                                  if(IS_SERVICE&&ITM_QTY<val)$(this).val(ITM_QTY)
+                          
+
+                            fracT.forEach(fr=>{
+                              if(Number((fr.val)+val)*uwiano <= Number('{{bidhaa.idadi}}') ){
+                                fracTO += fr.option
+      
+                              }
+                            });  
+                            
+
+                            $('#fractions_qty').html(fracTO)
+                            feedqty(val*uwiano);
+                        "
+                        
+                        name="item_idadi" class="smallFont form-control" id="item_idadi" data-qty=0 data-timely="{{bidhaa.timely}}" data-muda=0>
+                            
+                      
+                        <button onclick="addItems(1)"
+                        
+                        class="btn input-group-append border btn-default btn-sm">
+                            <strong>+</strong>
+                        </button>
+                      </div>
+                  </div>
+                  
+
+
+          </div>
+      
+             
+            <div class="form-group mt-3">
+
+            {% if duka == shop and cheo.product_edit  %}
+              <div class="custom-control custom-checkbox">
+                     
+                        {% if bidhaa.bidhaa.fractions %}
+                        <input type="checkbox" class="custom-control-input"
+                        onchange="var dataaa={data:{value:'{{bidhaa.bidhaa.id}}',prop:Number($(this).prop('checked')),csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/stoku/allowFractions',fract:1};submitOder(dataaa)"
+                        style="cursor: pointer !important;"
+                          checked 
+                        id="Fraction_Idadi">
+
+                        {% else %}
+                      <input type="checkbox" class="custom-control-input"
+                        onchange="var dataaa={data:{value:'{{bidhaa.bidhaa.id}}',prop:Number($(this).prop('checked')),csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/stoku/allowFractions',fract:1};submitOder(dataaa)"
+                        style="cursor: pointer !important;"
+                            
+                        id="Fraction_Idadi">
+                      {% endif %}
+                     
+
+
+                    <label class="custom-control-label smallFont" style="cursor: pointer !important;" for="Fraction_Idadi">
+                      {% if useri.langSet == 0 %}Ruhusu Idadi kwa Sehemu{% else %}Allow quantity by fraction {% endif %}
+                    </label>
+              </div>
+            {% else %}  
+                   {% if bidhaa.bidhaa.fractions %}
+                       <label class="smallFont"  for="fractions_qty">
+                         {% if useri.langSet == 0 %}Sehemu {% else %}Fractions{% endif %}
+                      </label>
+                   {% endif %}
+                  
+                   
+            {% endif %}
+            {% if bidhaa.bidhaa.fractions or duka == shop %}
+                  
+               <select class="made-input smallFont" onchange="var val_u = Number($(this).val()),idadd=Number($('#item_idadi').val()),weino=Number($('#price_select').val());feedqty((val_u+idadd)*weino)" name="fractions_qty"  id="fractions_qty">
+                 <option value=0 >0</option>
+                 {% if bidhaa.idadi >= 0.25 or duka == shop %}
+                    <option value=0.25 >{% if useri.langSet == 0 %}Robo{% else %}Quarter{% endif %} (0.25) </option>
+                 {% endif %}
+                 {% if bidhaa.idadi >= 0.5 or duka == shop %}
+                    <option value=0.50 >{% if useri.langSet == 0 %}Nusu{% else %}Half{% endif %} (0.5)</option>
+                 {% endif %}
+                 {% if bidhaa.idadi >= 0.75 or duka == shop %}
+                    <option value=0.75 >{% if useri.langSet == 0 %}Robo Tatu{% else %}3 Quarters{% endif %} (0.75)</option>
+                 {% endif %}
+               </select>
+               
+               {% endif %}
+
+            </div>
+            
+
+            <!-- MAELEZO YA SAUTI KWA BIDHAA -->
+      {% if duka == shop  %}
+
+          {% if bidhaa.bidhaa.audio %} 
+
+          <div class="d-flex">
+              <audio controls  >
+              <source src="{{bidhaa.bidhaa.audio.url}}" >
+              Your browser does not support the audio element.
+          </audio>
+
+          <button class="btn btn-default btn-sm text-danger" onclick="
+          if(confirm('{% if useri.langSet == 0 %}Ondoa sauti{% else %}Remove voice {% endif %} ?')){
+                    let data={data:{itm:'{{bidhaa.bidhaa.id}}',csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()},url:'stoku/RemoveItemAudio'}
+                    $.ajax({
+                        type:'POST',
+                        url:data.url,
+                        data:data.data,
+                        success:function(dt){
+                        if(dt.success){
+                          toastr.success(`{% if useri.langSet == 0 %}${dt.msg_swa}{%else%} ${dt.msg_eng} {% endif %}`, '{% if useri.langSet == 0 %} Imefanikiwa {% else %} Success {% endif %}', {timeOut: 2000});
+
+                            location.reload()
+                        }else{
+                          toastr.error(`{% if useri.langSet == 0 %}${dt.msg_swa}{%else%} ${dt.msg_eng} {% endif %}`, '{% if useri.langSet == 0 %} Haikufanikiwa {% else %} Error {% endif %}', {timeOut: 2000});
+
+                        }
+                    }
+                })
+          }
+         
+    
+    
+          ">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" title="{% if useri.langSet == 0 %}Ondoa{% else %}Remove{% endif %}"  fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+              </svg>
+          </button>        
+          </div>
+
+        
+          {% else %}
+
+          {% if cheo.product_edit or cheo.user == duka.owner %}
+          <p>
+            <button class="btn btn-outline-secondary btn-sm latoFont" data-toggle="modal" data-target="#poster_sound" >
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="currentColor" class="bi bi-megaphone-fill" viewBox="0 0 16 16">
+                    <path d="M13 2.5a1.5 1.5 0 0 1 3 0v11a1.5 1.5 0 0 1-3 0v-11zm-1 .724c-2.067.95-4.539 1.481-7 1.656v6.237a25.222 25.222 0 0 1 1.088.085c2.053.204 4.038.668 5.912 1.56V3.224zm-8 7.841V4.934c-.68.027-1.399.043-2.008.053A2.02 2.02 0 0 0 0 7v2c0 1.106.896 1.996 1.994 2.009a68.14 68.14 0 0 1 .496.008 64 64 0 0 1 1.51.048zm1.39 1.081c.285.021.569.047.85.078l.253 1.69a1 1 0 0 1-.983 1.187h-.548a1 1 0 0 1-.916-.599l-1.314-2.48a65.81 65.81 0 0 1 1.692.064c.327.017.65.037.966.06z"/>
+                  </svg>
+              {% if useri.langSet == 0 %}Weka Sauti  {% else %} Add Voice{% endif %}
+          </button> 
+         </p>
+
+              <!-- Modal -->
+        <div class="modal fade" id="poster_sound" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                  <div class="modal-header">
+                      <h5 class="modal-title">{% if useri.langSet == 0 %}Maelezo ya Sauti{% else %}Audio Desc{% endif %} </h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                          </button>
+                  </div>
+                  <div class="modal-body pb-4">
+                      <form action="stoku/ItemVoice" id="poster_form" method="post">
+                        {% csrf_token %}
+
+                        <h6>{% if useri.langSet == 0 %} Mafaili yaliyowekwa: {{AudioUpload}} kati ya 15 {% else %} Uploaded Audio Files: {{AudioUpload}} of 15 {% endif %}</h6>
+
+                        <hr>
+
+                          <div class="form-group my-2 ">
+                            <label for="poster_word">
+                                {% if useri.langSet == 0 %}Faili la sauti lisizidi <strong class="text-danger" > 2Mb .</strong>  {% else %}Add Audio size, File not to exceed <strong class="text-danger" > 2Mb .</strong> {% endif %} (.mp3, .wav, .ogg )</label> 
+                            <br>
+                              <input type="file" id="audioFile" name="audioFile" >   
+                              <input type="hidden" name="itm" value="{{bidhaa.bidhaa.id}}" >                       
+                            </div>
+
+                            
+                            <div class="text-center mb-2">
+                                <button type="submit" class="btn btn-primary latoFont">
+                                    {% if useri.langSet == 0 %}Ongeza{% else %}Add{% endif %}
+                                </button>
+                            </div>
+
+                            <div class="text-center">
+                                <button type="button" class="btn btn-light  latoFont btn-sm smallFont" data-dismiss="modal">Close</button>
+                            </div>
+
+                      </form>
+                  </div>
+                  
+              </div>
+          </div>
+        </div>
+
+        {% endif %}
+
+        {% endif %}
+
+      {% endif %}
+     
+
+          
+<!-- IKIWA TAYARI IMESHAAGIZWA AU IMEWEKWA KWENYE KAPU -->
+{% if agizwa.last.mauzo.order  and not agizwa.last.mauzo.cart %}
+<p class="mt-3" >
+  <button style="padding:7px 11px;
+          font-weight:100;
+          border:0;
+          border-radius: 10px; 
+          color:#fff;
+          font-size:small;
+          background:rgb(22, 101, 153);
+      ">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+      </svg>
+        {% if  agizwa.last.mauzo.user_customer.by == useri %}
+            {% if useri.langSet == 0 %}Umeagiza{% else %}You have ordered{% endif %}
+        {% else %}
+            {% if useri.langSet == 0 %}Imeshaagizwa{% else %}Item has ordered{% endif %}
+        {% endif %}
+       
+    </button>
+</p>  
+{% endif %}
+
+{% if agizwa.last.mauzo.order and agizwa.last.mauzo.user_customer.by == useri and  agizwa.last.mauzo.cart %}
+<p class="mt-3">
+      <button style="padding:7px 11px;
+              font-weight:100;
+              border:0;
+              border-radius: 10px; 
+              color:#fff;
+              font-size:small;
+              background:rgb(22, 101, 153);
+          ">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+          </svg>
+          {% if useri.langSet == 0 %}Umeongeza kwenye kapu {% else %}You have added to Cart{% endif %}
+          
+        </button>
+</p> 
+{% endif %}
+
+     
+    </div>
+
+
+
+     <div class="item_feature mt-3 pl-3">
+      <ul id="show-sifa-muhimu"  >
+     
+        {% for s in bidhaaSifa  %}
+          {% if duka == shop %}
+        <li>       
+          <form action="/stoku/sifa_muhimu" data-value={{s.id}} data-valued={{bidhaa.bidhaa.id}} data-new=0 class="sifa_muhimu form-inlinle" method="POST">
+              <div class="input-group mb-1">
+             
+                  <input type="text" class="form-control  border-defaulti smallFont robotoFont"  value="{{s.sifa}}" id="sifa_yenyewe{{s.id}}" placeholder=" {% if useri.langSet == 0 %}Andika sifa muhimu kuhusu bidhaa {% else %} Write Item Feature{% endif %}" aria-label="Recipient's username" aria-describedby="button-addon2">
+                  <div class="input-group-append">
+                      <button class="btn btn-default text-success smallerFont btn-sm" type="submit" >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                          <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                          <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                        </svg>
+                      </button>
+                  </div>
+                  <div class="input-group-append">
+                    <button action="/stoku/ondoa_sifa" class="btn btn-default lagerFont ondoa_sifa  btn-sm" type="button" data-value={{s.id}} >&times;</button>
+                  </div>
+              </div>     
+              </form>
+
+
+          </li>
+        {% else %}
+           <li class="smallFont py-1">{{s.sifa}}</li>
+        {% endif %}
+     {% endfor %}
+
+
+      </ul>
+
+<!-- TERMS & CONDITIONS FOR YOUR CUSTOMERS -->
+      <!-- <p class="px-3 mt-5" >
+        {% if useri == duka.owner and shop == duka %}
+           <a class=" weight600 text-underline btn btn-light btn-sm" href="/buzinessTerms?s={{shop.id}}">    
+               <u> {% if useri.langSet == 0 %} Maelekezo na Utaratibu Kutoka{% else %} Instructions and Procedures From{% endif %} <span class="darkblue ml-2" > {{shop.name |title}}</span> </u>
+            </a>  
+        {%else%}
+        {% if shop.desc %}
+           <a class=" weight600 text-underline btn btn-light btn-sm" href="/buzinessTerms?s={{shop.id}}" target="blank" >
+               <u>{% if useri.langSet == 0 %} Maelekezo na Utaratibu Kutoka{% else %} Instructions & Procedures From{% endif %}
+               <span class="darkblue " > {{shop.name |title}}</span>
+            </u>
+            </a>  
+          {% endif %}  
+        {% endif %}
+    </p> -->
+
+
+      {% if duka == shop %}
+         <form action="/stoku/sifa_muhimu" id="sifa_muhimu" class="sifa_muhimu" data-value=0 data-valued={{bidhaa.bidhaa.id}} data-new=1 method="POST">
+           {% csrf_token %}
+           <div class="input-group mb-3">
+               <input type="text" class="form-control" id="sifa_yenyewe" placeholder="{% if useri.langSet == 0 %}Andika sifa muhimu kuhusu bidhaa {% else %} Write key Highlits {% endif %} " aria-label="Recipient's username" aria-describedby="button-addon2">
+                 <div class="input-group-append">
+                 <button class="btn btn-secondary robotoFont smallFont" type="submit" id="button-addon2">Add</button>
+               </div>
+           </div>     
+           </form>
+          {% endif %}
+
+        </div>  
+    </div>
+
+   
+  <div class="col-md-3 mt-4 mt-md-0 border-left"  >
+    <div class="text-center">
+      {% if shop.logo %}
+        <img src="{{shop.logo.url}}" style="height:40px" >
+      {% else %}
+        <span>
+          <svg width="2em" height="2em" viewBox="0 0 16 16" class="bi bi-shop-window mx-1" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M2.97 1.35A1 1 0 0 1 3.73 1h8.54a1 1 0 0 1 .76.35l2.609 3.044A1.5 1.5 0 0 1 16 5.37v.255a2.375 2.375 0 0 1-4.25 1.458A2.371 2.371 0 0 1 9.875 8 2.37 2.37 0 0 1 8 7.083 2.37 2.37 0 0 1 6.125 8a2.37 2.37 0 0 1-1.875-.917A2.375 2.375 0 0 1 0 5.625V5.37a1.5 1.5 0 0 1 .361-.976l2.61-3.045zm1.78 4.275a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 1 0 2.75 0V5.37a.5.5 0 0 0-.12-.325L12.27 2H3.73L1.12 5.045A.5.5 0 0 0 1 5.37v.255a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0zM1.5 8.5A.5.5 0 0 1 2 9v6h12V9a.5.5 0 0 1 1 0v6h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1V9a.5.5 0 0 1 .5-.5zm2 .5a.5.5 0 0 1 .5.5V13h8V9.5a.5.5 0 0 1 1 0V13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a.5.5 0 0 1 .5-.5z"/>
+          </svg>
+        </span>
+      {% endif %}
+    </div>
+    
+      <h6 class="text-center" > 
+        <div class="weight600">
+            <a href="{% url 'buzinessProfile' %}?value={{shop.id}}">{{shop.name |title }}</a>
+        </div>  
+       
+          <div class="smallFont latoFont">{{shop.slogan}}</div>
+        
+        
+    </h6>
+      <div class="text-center" >
+          <small>{{shop.jengo}}, {{shop.mtaa.mtaa | title }}, {{shop.mtaa.kata.kata | title }}, {{shop.mtaa.kata.wilaya.wilaya | title }} 
+            {{shop.mtaa.kata.wilaya.mkoa.mkoa | title }}, {{shop.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title }}
+          </small>
+      </div> 
+ 
+    
+
+     <p class="text-center" style="font-weight:600 " >
+       {% if useri.langSet == 0 %}Bei na Idadi/Nafasi{% else %}Price & Quantity/Space Summary {% endif %} 
+      </p>
+
+
+      {% if rangi.count > 0 and rangi.first.color.colored %}
+
+     
+<div >
+  <div class="container-fluid table-responsive">
+    <table class="table table-striped table-inverse " id="scrollable" >
+            <thead class="thead-inverse">
+              <tr class="smallFont" >
+                <th>{% if useri.langSet == 0 %}Rangi{% else %}Color{% endif %}</th>
+          {% if size.count > 0 %}
+                <th>Size</th>
+          {% endif %}
+                <th>{% if useri.langSet == 0 %}kipimo{% else %}Units{% endif %}</th>
+                <th> {% if useri.langSet == 0 %}{% if  bidhaa.service  %}Nafasi{% else %}Idadi{% endif %}{% else %}{% if  bidhaa.service  %}Space{% else %}Qty{% endif %}{% endif %}</th>
+                <th> {% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}<small class="text-primary">({{shop.currencii}})</small> </th>
+                <th>{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}<small class="text-primary">({{shop.currencii}})</small></th>
+              {% if bidhaa.timely %}
+                    <th style="white-space:nowrap" >{% if useri.langSet == 0 %}Muda{% else %}Duration{% endif %}<small class="text-primary ">({%if bidhaa.timely == 1  %}{% if useri.langSet == 0 %}Dakika{% else %}Minutes {% endif %}
+                        {% endif %}
+                        {%if bidhaa.timely == 2  %}
+                        {% if useri.langSet == 0 %}Saa{% else %}Hours {% endif %}
+                        {% endif %}
+                        {%if bidhaa.timely == 3  %}
+                        {% if useri.langSet == 0 %}Siku{% else %}Days {% endif %}
+                        {% endif %}
+                        {%if bidhaa.timely == 4  %}
+                        {% if useri.langSet == 0 %}Wiki{% else %}Weeks {% endif %}
+                        {% endif %}
+                        {%if bidhaa.timely == 5  %}
+                        {% if useri.langSet == 0 %}Miezi{% else %}Months {% endif %}
+                        {% endif %}
+                        {%if bidhaa.timely == 6  %}
+                        {% if useri.langSet == 0 %}Miaka{% else %}Years {% endif %}
+                        {% endif %})
+                      </small>
+                    </th> 
+                    <th> {% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}<small class="text-primary">({{shop.currencii}})</small></th>
+              {% endif %}
+              </tr>
+              </thead>
+              <tbody id="q_cart_sumary">
+                
+              
+              </tbody>
+      </table>
+  </div>
+  
+
+      <button style="position:absolute;margin-left:-19px;margin-top:-35px"   onclick="$('#scrollable').animate({scrollLeft:'-=90px'},'fast');" 
+      class="btn btn-default d-none d-md-inline">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-chevron-compact-left" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M9.224 1.553a.5.5 0 0 1 .223.67L6.56 8l2.888 5.776a.5.5 0 1 1-.894.448l-3-6a.5.5 0 0 1 0-.448l3-6a.5.5 0 0 1 .67-.223z"/>
+      </svg>
+  </button>
+   <button style="right:-11px;position:absolute;margin-top:-35px" onclick="$('#scrollable').animate({scrollLeft:'+=90px'},'fast');"  
+   class="btn btn-default d-none d-md-inline">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-chevron-compact-right" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M6.776 1.553a.5.5 0 0 1 .671.223l3 6a.5.5 0 0 1 0 .448l-3 6a.5.5 0 1 1-.894-.448L9.44 8 6.553 2.224a.5.5 0 0 1 .223-.671z"/>
+        </svg>
+   </button>
+              
+</div>
+     {% else %}
+      <div class="row" id="price_analysis" >
+        <div class="col-6 py-1 smallFont">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</div>
+        <div class="col-6 py-1 text-right" id="Measure_val"></div>
+        <div class="col-6 py-1  smallFont">{% if useri.langSet == 0 %}{% if  bidhaa.service  %}Nafasi{% else %}Idadi{% endif %}{% else %}{% if bidhaa.service  %}Space{% else%}Qty{% endif %}{% endif %}</div>
+        <div class="col-6  py-1 text-right " id="taken_qty">0</div>
+        <div class="col-6 py-1 smallFont"> {% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}<span class="text-primary" id="per_price" ></span>  </div>
+        <div class="col-6 py-1 text-right" >{{shop.currencii}} <strong id="perPrice" ></strong></div>
+
+        {% if bidhaa.timely %}
+          <div class="col-6 py-1 smallFont" style="white-space:nowrap">{% if useri.langSet == 0 %}Muda{% else %}Duration{% endif %}<span class="text-primary" >({%if bidhaa.timely == 1  %}{% if useri.langSet == 0 %} Dakika{% else %}Minute {% endif %}{% endif %}{%if bidhaa.timely == 2  %}
+            {% if useri.langSet == 0 %} Saa{% else %}Hour {% endif %}
+            {% endif %}
+            {%if bidhaa.timely == 3  %}
+            {% if useri.langSet == 0 %}Siku{% else %}Day {% endif %}
+            {% endif %}
+            {%if bidhaa.timely == 4  %}
+            {% if useri.langSet == 0 %} Wiki{% else %}Week {% endif %}
+            {% endif %}
+            {%if bidhaa.timely == 5  %}
+            {% if useri.langSet == 0 %} Mwezi{% else %}Month {% endif %}
+            {% endif %}
+            {%if bidhaa.timely == 6  %}
+            {% if useri.langSet == 0 %} Mwaka{% else %}Year {% endif %}
+            {% endif %})</span>  </div>
+          <div class="col-6 py-1 text-right" > <strong id="kwaMuda" >0</strong></div>
+        {% endif %}
+
+        <hr class="col-12" />
+        
+      </div>     
+
+
+     {% endif %}
+
+     <div class="row" id="the_item_" data-item={{bidhaa.id}} >
+       <div class="col-6"><strong> {% if useri.langSet == 0 %}Jumla{% else %} Total{% endif %}</strong></div>
+       <div class="col-6 text-right ">{{shop.currencii}}. <strong  style="color: rgb(110, 40, 0);font-size:18px" id="total_bei" data-sum=0 >0</strong> </div>
+     </div>
+
+
+     <hr>
+
+
+     <!-- BUTTON YA KUODA NA KUWEKA KWENYE KAPU -->
+ {% if duka.Interprise and not duka == shop  and not cheo.manunuziOda and not cheo.owner and not bidhaa.service and not useri.company  %}
+    <div class="text-center pb-3">
+      <div class="py-2" style="font-weight: 600;" >Personal Oder</div>
+      <small>
+        {% if useri.langSet == 0 %}
+           Hauna Ruhusa ya kuagiza bidhaa kwa ajiri ya Duka hivyo unaweza kuagiza kwa matumizi binafsi 
+        {% else %}
+           You have no permission to order items from another Interprise for this interprise else you ca order for persnal purpose 
+         {% endif %}
+      </small>
+    </div>
+ {% endif %}
+
+ <!-- KUAGIZA AU KUWEKA KWENYE  KAPU BIDHAA TU...... -->
+   {% if not shop == duka and not bidhaa.service %}
+     {% if not agizwa.last.mauzo.user_customer.by == useri or not agizwa.last.mauzo.order  %}
+        <p class="text-center">
+           <!-- KAMA BIDHAA INAAGIZWA KWA AJILI YA DUKA ONESHA MODAL YA KUOANISHA -->
+          {% if duka.Interprise and cheo.manunuziOda and not useri.company or cheo.owner and duka.Interprise and not useri.company %}
+          <button class="latoFont btn btn-primary add_to_cart_btn" 
+             
+          onclick="$('#duka_item').data('order',1)"
+          data-toggle="modal" data-target="#modal_Item_match"   >
+
+          {% else %}
+          <button class="latoFont btn btn-primary add_to_cart_btn" 
+                
+                onclick="addtoCart(1,1)" 
+                >
+
+                {% endif %}
+                <!-- <span >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart3" viewBox="0 0 16 16">
+                      <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l.84 4.479 9.144-.459L13.89 4H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                </span> -->
+                   {% if bidhaa.service %}
+                        {% if useri.langSet == 0 %}Weka Nafasi{% else %}Add Booking{% endif %}
+                    {% else %}
+                        {% if useri.langSet == 0 %}Weka kwenye Kapu{% else %}Add to Cart{% endif %}
+                    {% endif %}
+
+            </button>
+        </p>
+    {% endif %}
+    {% endif %}
+
+
+    <!-- KUAGIZA AU KUWEKA KWENYE  KAPU HUDUMA TU...... -->
+   {% if not shop == duka and  bidhaa.service %}
+     
+           <p class="text-center">
+
+          {% if duka.Interprise and cheo.manunuziOda and not useri.company or cheo.owner and duka.Interprise and not useri.company %}
+
+          <button class="latoFont btn btn-primary add_to_cart_btn" 
+              
+
+              onclick="
+              $('#duka_item').data('order',1)
+              var anzia = $('#hudumaKuanzia').val();
+                  hadi = $('#hudumaHadi').val();
+              
+                  if(anzia!='' && hadi!='' && moment(anzia)>=moment() && moment(hadi) > moment(anzia)  ){
+                    $('#itpOrPersonal').modal('show')
+                  }else{
+                    if(anzia==''){
+                      redborder('#hudumaKuanzia')
+                    }
+                    if(hadi==''){
+                      redborder('#hudumaHadi')
+                    }
+
+                    if(moment(anzia)<moment()){
+                      alert('{% if useri.langSet == 0 %}Muda unatakiwa kuanzia sasa {% else %}Time must be geater than current time{% endif %}')
+                      redborder('#hudumaKuanzia')
+                    }
+                    if(moment(hadi)<moment(anzia)){
+                      alert('{% if useri.langSet == 0 %}Muda wa kuanzia usizidi muda wz kukamilishia{% else %}Complition time must be greater tha starting time{% endif %}')
+                      redborder('#hudumaKuanzia')
+                      redborder('#hudumaKuanzia')
+                      
+                    }
+
+                    topslider.top()
+                    
+                  
+                  }
+                "
+         
+           >
+
+          {% else %}
+          <button class="latoFont btn btn-primary add_to_cart_btn" 
+                
+                onclick="
+                
+                var anzia = $('#hudumaKuanzia').val();
+                  hadi = $('#hudumaHadi').val();
+              
+                  if(anzia!='' && hadi!='' && moment(anzia)>=moment() && moment(hadi) > moment(anzia)  ){
+                    addtoCart(1,1)
+                  }else{
+                    if(anzia==''){
+                      redborder('#hudumaKuanzia')
+                    }
+                    if(hadi==''){
+                      redborder('#hudumaHadi')
+                    }
+
+                    if(moment(anzia)<moment()){
+                      alert('{% if useri.langSet == 0 %}Muda unatakiwa kuanzia sasa {% else %}Time must be geater than current time{% endif %}')
+                      redborder('#hudumaKuanzia')
+                    }
+                    if(moment(hadi)<moment(anzia)){
+                      alert('{% if useri.langSet == 0 %}Muda wa kuanzia usizidi muda wz kukamilishia{% else %}Complition time must be greater tha starting time{% endif %}')
+                      redborder('#hudumaKuanzia')
+                      redborder('#hudumaKuanzia')
+                      
+                    }
+
+                    topslider.top()
+                    
+                  
+                  }
+                
+                " 
+                >
+
+                {% endif %}
+                <!-- <span >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart3" viewBox="0 0 16 16">
+                      <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l.84 4.479 9.144-.459L13.89 4H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                </span> -->
+                
+                  {% if bidhaa.service %}
+                      {% if useri.langSet == 0 %}Weka Nafasi{% else %}Add Booking{% endif %}
+                  {% else %}
+                      {% if useri.langSet == 0 %}Weka kwenye Kapu{% else %}Add to Cart{% endif %}
+                  {% endif %}
+            </button>
+        </p>
+
+        
+   
+    {% endif %}
+
+
+   
+    
+    <!-- Modal -->
+    <div class="modal fade" id="itpOrPersonal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+      <div class="modal-dialog modal-sm animate" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h6 class="modal-title">
+              {% if useri.langSet == 0 %}Weka Kapuni {% else %}Add to Cart {% endif %}
+            </h6>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body">
+            <div class="classic_div border p-3 my-3 " style="max-width: 360px;" id="how_to_add">
+              <div class="smallFont brown mb-2" >
+                  {% if useri.langSet == 0 %}Weka kwa ajili ya{% else %}Add for{% endif %}:
+                  </div>
+              <label class="b-contain mb-2">
+                  <span class="weight600 latoFont" >{% if useri.langSet == 0 %}Uhitaji Binafsi{% else %}Personal Requirement{% endif %}</span>
+                  <input type="radio" id="Binafsii" name="radio1" >
+                  <div class="b-input"></div>
+              </label>
+          
+              <label class="b-contain">
+                  <span class="weight600 latoFont" >{% if useri.langSet == 0 %}Uhitaji katika biashara{% else %}Interprise requirement{% endif %}</span>
+                  <input type="radio" id="Ashara" name="radio1">
+                  <div class="b-input"></div>
+              </label>
+          </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" onclick="let bz=$('#Ashara').prop('checked'),pn=$('#Binafsii').prop('checked');if(bz||pn){$('#itpOrPersonal').modal('hide');$('#loadMe').modal('show');if(bz){addtoCart(0,Number($('#duka_item').data('order')))}else{addtoCart(1,Number($('#duka_item').data('order')))}}else{redborder('#how_to_add')}" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- KUAGIZA AU KUWEKA KWENYE KAPU UPYA .....................   -->
+    {% if edit and agizwa.last.mauzo.order and agizwa.last.mauzo.user_customer.by == useri and agizwa.last.mauzo.cart and not shop == duka %}
+       <p class="text-center" >
+         <button class="latoFont btn btn-primary add_to_cart_btn"
+        
+                 onclick="$('#duka_item').data('order',1)"
+                 data-toggle="modal" data-target="{% if bidhaa.service %}#itpOrPersonal{% else %}#modal_Item_match{% endif %}"  
+              >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+            <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+          </svg>
+               
+              {% if bidhaa.service %}
+                  {% if useri.langSet == 0 %}Weka Nafasi upya{% else %}Re-add Booking{% endif %}
+              {% else %}
+                 {% if useri.langSet == 0 %} Weka kwenye kapu upya{% else %}Readd to Cart{% endif %}
+              {% endif %}
+
+               
+        </button>
+       </p>
+    {% endif %}
+
+
+    {% if edit and agizwa.last.mauzo.order  and agizwa.last.mauzo.user_customer.by == useri and not agizwa.last.mauzo.cart and not shop == duka %}
+       <p class="text-center" >
+         <button class="latoFont btn btn-primary add_to_cart_btn"
+           
+
+            onclick="$('#duka_item').data('order',0)"
+            data-toggle="modal" data-target="#modal_Item_match" 
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+            <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+          </svg>
+            
+            
+
+            {% if bidhaa.service %}
+                  {% if useri.langSet == 0 %}Weka Nafasi upya{% else %}Re-add Booking{% endif %}
+              {% else %}
+                 {% if useri.langSet == 0 %}Agiza upya {% else %}Reorder{% endif %}
+              {% endif %}
+            
+        </button>
+       </p>
+    {% endif %}
+     
+    
+
+  </div>
+
+</div>
+
+<!-- ORDERING MODEL MATCHING MODAL...... -->
+<div class="modal fade" id="modal_Item_match" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">{% if useri.langSet == 0 %}Husianisha Bidhaa{% else %}Item matching{% endif %}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+      <div class="modal-body">
+        <div >
+
+          
+          <div class="form-group mb-4 suggest-holder">
+            <div class="row">
+              <div class="col-7">
+                    <label for="duka_item">{% if useri.langSet == 0 %}Bidhaa inayohusiana kwenye stoku{% else %}Item  matching instock{% endif %}</label>
+              </div>
+
+              <div class="col-5 text-right">
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" class="custom-control-input" id="Item_jipya">
+                  <label class="custom-control-label latoFont text-primary cursor-pointer" style="cursor: pointer !important;" for="Item_jipya">
+                    {% if useri.langSet == 0 %}Mpya{% else %}New{% endif %}
+                  </label>
+                </div>
+               </div>
+            </div>
+
+
+           
+            <div class="input-group">
+              
+                <input type="text" data-match="{% if  match.count > 0 %}1{% else %}0{% endif %}" data-itm=0 data-order=0 name="duka_item" id="duka_item" value="{% if match.count > 0 %}{{match.last.bidhaa.bidhaa_jina}}{% endif %}" class="form-control " style="color: blue;font-size:medium" placeholder="{% if useri.langSet == 0 %}Andika jina la bidhaa{% else %}Write Item name{% endif %}" aria-describedby="helpId">
+                <span class="input-group-append border btn-secondary d-flex justify-content-center px-2" style="align-items: center;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                  </svg>
+                </span>
+
+            </div>
+
+            <ul class="masaki15__  masaki" data-hiarch=1 style="min-width: 350px;z-index:999999;max-height:250px;overflow-y:scroll"></ul>
+
+          </div>
+
+          <div class="form-group mb-3">
+
+            <div class="row">
+              <div class="col-7">
+                    <label for="duka_item">{% if useri.langSet == 0 %}Aina{% else %}Category{% endif %}</label>
+              </div>
+
+              <div class="col-5 text-right">
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" class="custom-control-input" id="category_jipya">
+                  <label class="custom-control-label latoFont text-primary cursor-pointer" style="cursor: pointer !important;" for="category_jipya">
+                    {% if useri.langSet == 0 %}Mpya{% else %}New{% endif %}
+                  </label>
+                </div>
+               </div>
+            </div>            
+            
+            <select class="form-control selectpicker latoFont" style="color: blue;" data-live-search="true" name="duka_item_aina" id="duka_item_aina">
+               <option value=0> {% if useri.langSet == 0 %}--Chagua Aina --{% else %}--Select Category--{% endif %}</option>
+              
+               {% for ac in aina %}
+               <option value={{ac.bidhaa.bidhaa_aina.id}} data-value={{ac.bidhaa.bidhaa_aina.id}} >{{ac.bidhaa.bidhaa_aina.aina}}</option>
+               {% endfor %}
+
+              </select>
+
+
+            {% if match.count > 0 %}
+              <script>
+                $('#duka_item_aina').selectpicker('val','{{match.last.bidhaa.bidhaa_aina.id}}')
+              </script>
+            {% endif %}
+
+            
+          </div>
+
+
+
+          {% if  match.count == 0 %}
+          <div class="form-group mb-4 p-2" id="unitsMatch" style="border:1px solid #ccc" >
+              <label for="">  {% if  useri.langSet == 0 %}Vipimo na Bei ya Kuuza {% else %}Measurements & Sales Price {% endif %} </label>
+
+              <div class="d-flex pb-3" > 
+              
+                <div  class="d-flex px-2" style="color:rgb(139, 85, 4);justify-content:center;align-items:center" >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                      <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                      <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                    </svg>
+                </div>
+
+              <div class="text smallFont">
+                                
+
+                      {% if  useri.langSet == 0 %}
+                          kipimo kidogo zaidi cha kuuza kinachotumiwa  <u  style="color:rgb(139, 85, 4)" >{{shop.name |  title }}</u>  ni <span class="text-primary" >{{bidhaa.bidhaa.vipimo}}</span>
+                      {% else %}
+                           The smallest unit for selling used by <u  style="color:rgb(139, 85, 4)" >{{shop.name |  title }}</u>  is <span class="text-primary" >{{bidhaa.bidhaa.vipimo}}</span>
+                      {% endif %}          
+              </div>
+
+
+
+            </div>
+               
+         
+
+               <div class="custom-control custom-radio ">
+                <input type="radio" id="useUnitRadio" onclick="$('#createNewUnit').hide(500);$('#wekabeiyaKuza').show(500);$('#per_unit').text('/{{bidhaa.bidhaa.vipimo}}')" name="customRadio" class="custom-control-input">
+                <label class="custom-control-label" style="cursor: pointer !important;" for="useUnitRadio">
+              
+                    {% if  useri.langSet == 0 %}
+                           Tumia kipimo hiki pia kama kipimo kidogo kwa mauzo yako </label>
+                      {% else %}
+                          Use this unit too as a smallest unit for your sales
+                      {% endif %}
+                  </div>
+              <div class="custom-control custom-radio mt-2  mb-4">
+                <input type="radio" id="newUserUnit" onclick="$('#wekabeiyaKuza').hide(500);$('#createNewUnit').show(500)" name="customRadio" class="custom-control-input">
+                <label class="custom-control-label" style="cursor: pointer !important;" for="newUserUnit">
+                      {% if  useri.langSet == 0 %}
+                         Tengeneza kipimo kingine kidogo kwa ajiri ya mauzo yako
+                      {% else %}
+                          Create new quatity unit for your Sales
+                      {% endif %}
+                </label>
+              </div>
+
+            <div  style="display: none;" id="createNewUnit" >
+              <div class="row smallFont">
+                <div class="col-2"></div>
+                <div class="col-3"  style="font-weight: 600;"> {% if useri.langSet == 0 %}Kipimo{% else %}Qty Unit{% endif %} </div>
+                <div class="col-7" style="font-weight: 600;"> {% if useri.langSet == 0 %}Kipimo chako {% else %}Your Qty Unit{% endif %} </div>
+              </div>
+              <div class="row smallFont py-2">
+                <div class="col-2 text-danger" style="font-weight: 600; ">
+                  <span>{% if useri.langSet == 0 %}Jina{% else %}Name{% endif %}<sup>*</sup> </span>
+                </div>
+                <div class="col-3 text-primary">{{bidhaa.bidhaa.vipimo}}</div>
+                <div class="col-7"> <input type="text" onkeyup="$('#per_unit').text(`/${$(this).val()}`);if($(this).val()!=''){$('#wekabeiyaKuza').show(500)}else{$('#wekabeiyaKuza').hide()}" id="unitName" placeholder="{% if useri.langSet == 0 %}Andika Jina la  kipimo  chako {% else %}Your Qty Unit Name{% endif %}" class="form-control"> </div>
+              </div>
+              <div class="row smallFont">
+                <div class="col-2 text-danger" style="font-weight: 600;" >
+                  <span>{% if useri.langSet == 0 %}Uwiano{% else %}Ratio{% endif %}</span><sup>*</sup>
+                </div>
+                <div class="col-3">1</div>
+                <div class="col-7"> <input type="number"  id="uwianoQty1" placeholder="{% if useri.langSet == 0 %}Andika idadi kwa {{bidhaa.bidhaa.vipimo}}.1 {% else %}write unit qty/1{{bidhaa.bidhaa.vipimo}}{% endif %}" class="form-control"> </div>
+              </div>
+
+            </div>
+            
+          <div class="pb-3" style="display: none;" id="wekabeiyaKuza" >
+          <div  class="form-group mt-3 mb-4">
+            <div class="show_curency_blockt show_curency position-absolute text-danger   px-3" style="display: none ;margin-top:-26px">
+              <label class="mt-1" for=""></label> 
+              <div class="box-pointert d-inline "></div>
+            </div>
+            
+             <label for="bei_ya_kuuzia" class="text-danger" >
+              {% if useri.langSet == 0 %}Bei ya kuuza{% else %}Sales Price{% endif %} <span class="text-primary" id="per_unit" ></span> <sup>*</sup>
+            </label>
+            <input class="form-control money-fomat" id="Bei_kwa_kuuza_d" placeholder="{% if useri.langSet == 0 %}Andika Bei ya Kuuza{% else %}Write salles price{% endif %}" >
+          </div>
+
+          <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" style="cursor: pointer !important;" id="production_material">
+            <label class="custom-control-label" style="cursor: pointer !important;" for="production_material">
+               {% if useri.langSet == 0 %} Nyezo/Bidhaa kwa matumizi {% else %} Item to use {% endif %}
+            </label>
+          </div>
+          </div>  
+          </div>
+          {% endif %}
+
+         
+        </div>
+      </div>
+      <div class="text-center pb-1 ">
+        <button type="button" onclick="addtoCart(0,Number($('#duka_item').data('order')))" class="btn btn-primary latoFont">{% if useri.langSet == 0 %}Ongeza{% else %}Add{% endif %}</button>
+      </div>
+
+      <div class="text-center pb-1">
+        <button type="button"  onclick="addtoCart(1,Number($('#duka_item').data('order')))" class="btn btn-default darkblue my-2 pb-1 " >
+           <u class="pb-2">{% if useri.langSet == 0 %}Manunuzi Binafsi ..{% else %}Personal Order..{% endif %}</u> 
+        </button>
+      </div>
+      <div class="text-center pb-4">
+        <button type="button" data-dismiss="modal" aria-label="Close"   class="btn btn-light  smallFont">
+                      close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- PREVIEW UPLOADED IMAGES.......... -->
+
+
+
+
+<!-- if Interprise Order -->
+<script>
+  '{% if bidhaa.service %}'
+  $('.kwaMuda').change(function(){
+    let anza = moment($('#hudumaKuanzia').val()),
+        isha = moment($('#hudumaHadi').val()),
+        now = moment(),
+        Stm = Number('{{bidhaa.timely}}')
+        if(anza!=''&&isha!='')  {
+
+                  if(anza>=isha){
+                      redborder('#hudumaKuanzia')
+                      redborder('#hudumaHadi')
+                      $('#kwaMuda').text(0)
+                    }else if(anza<now){
+                        redborder('#hudumaKuanzia')
+                         $('#kwaMuda').text(0)
+                    }else{
+
+                     const  min = isha.diff(anza,'minutes'),
+                        dura=[
+                              {
+                                value:0,
+                                duration:0,
+                              
+                              },
+                              {
+                                value:1,
+                                duration:Math.ceil(min),
+                              
+                              },
+                                {
+                                value:2,
+                                duration:Math.ceil(min/60),
+                          
+                              },
+                                {
+                                value:3,
+                                
+                                duration:Math.ceil((min/60)/24),
+                              },
+                                {
+                                value:4,
+                                duration:Math.ceil(((min/60)/24)/7),
+                        
+                              },
+                                {
+                                value:5,
+                              
+                                duration:Math.ceil(min/(60*24*31)),
+                              
+                              },
+                                {
+                                value:6,
+                                
+                                duration:Math.ceil(Number(Math.ceil(min/(60*24*31)))/12),
+                              
+                              },
+                    
+                        
+                        ],
+
+                        theT = dura.find(v=>v.value === Stm)
+                        
+
+                        $('#kwaMuda').text(theT.duration || 0)
+                        $('#item_idadi').data('muda',theT.duration||0)
+
+                    }
+        }
+        $('.the_identify,.item_sized_').data('qty',0)
+        $('.successmark').fadeOut()
+
+        place_idadi()
+        feedqty(0)
+       
+
+
+  })
+
+
+
+  '{% if services %}'
+       $(document).ready(function(){
+        let anza = moment('{{services.last.mauzo.servFrom|date:"r"}}'),
+            isha = moment('{{services.last.mauzo.servTo|date:"r"}}'),
+            Stm = Number('{{bidhaa.timely}}')
+
+            const  min = isha.diff(anza,'minutes'),
+            dura=[
+                  {
+                    value:0,
+                    duration:0,
+                  
+                  },
+                  {
+                    value:1,
+                    duration:Math.ceil(min),
+                  
+                  },
+                    {
+                    value:2,
+                    duration:Math.ceil(min/60),
+              
+                  },
+                    {
+                    value:3,
+                    
+                    duration:Math.ceil((min/60)/24),
+                  },
+                    {
+                    value:4,
+                    duration:Math.ceil(((min/60)/24)/7),
+            
+                  },
+                    {
+                    value:5,
+                  
+                    duration:Math.ceil(min/(60*24*31)),
+                  
+                  },
+                    {
+                    value:6,
+                    
+                    duration:Math.ceil(Number(Math.ceil(min/(60*24*31)))/12),
+                  
+                  },
+        
+            
+            ],
+
+            theT = dura.find(v=>v.value === Stm)
+
+            $('#hudumaKuanzia').val(`${anza.format('YYYY-MM-DD')}T${anza.format('HH:mm')}`)
+            $('#hudumaHadi').val(`${isha.format('YYYY-MM-DD')}T${isha.format('HH:mm')}`)
+            
+
+            $('#kwaMuda').text(theT.duration || 0)
+            $('#item_idadi').data('muda',theT.duration||0)
+  
+        })     
+  '{% endif %}'
+
+
+  '{% endif %}'
+
+  //this will place quantities to  the output...........//
+  function  place_idadi(){
+    let item_q= `{% if bidhaa.produced.notsure %}${Number('{{bidhaa.produced.expqty}}')-Number('{{bidhaa.produced.qty}}')}{%else%}${Number('{{bidhaa.idadi}}')}{% endif %}` || 0 ,
+        col_q=$('#penye-rangi').children('.redbox').first().data('idadi') || $('#penye-rangi').children('.the_identify').first().data('idadi'),
+        colored =$('#penye-rangi').children('.redbox').first().data('rangi') || $('#penye-rangi').children('.the_identify').first().data('rangi') || 0,
+        siz_q=$('#penye_size').children('.bluebox').first().data('idadi') || $('#penye_size').children(`.item_sized_${colored}`).first().data('idadi'),
+        idad=siz_q || col_q || item_q,
+       
+        //FOR PERIODIC PAID SERVICES.................................//
+        serVs = 0,servS=0,servC=0,sVs=[],sVC=[],sVS=[],servd = 0
+        coloredV =$('#penye-rangi').children('.redbox').first().data('val') || $('#penye-rangi').children('.the_identify').first().data('val') || 0,
+        sizedV=$('#penye_size').children('.bluebox').first().data('val') || $('#penye_size').children(`.item_sized_${colored}`).first().data('val'),
+        anza = moment($('#hudumaKuanzia').val()),
+        isha = moment($('#hudumaHadi').val()),      
+
+        uwiano=Number($('.bluebox').data('uwiano')) || Number($('.redbox').data('uwiano')) || Number($('#price_select').find('option:selected').data('idadi'))
+        
+
+        '{% if bidhaa.timely %}'
+           '{% if servs %}'
+
+               '{% for s in servs %}'     
+                  sVs.push({  
+                     servFom:moment('{{s.mauzo.servFrom|date:"r"}}'),
+                     servTo:moment('{{s.mauzo.servTo|date:"r"}}'),
+                     idadi:Number('{{s.idadi}}')
+                  })
+               '{% endfor %}'
+
+               '{% if servsColor %}'
+               '{% for s in servsColor %}'     
+                  sVC.push({  
+                     servFom:moment('{{s.mauzo.mauzo.servFrom|date:"r"}}'),
+                     servTo:moment('{{s.mauzo.mauzo.servTo|date:"r"}}'),
+                     idadi:Number('{{s.idadi}}'),
+                     color:Number('{{s.color.id}}')
+                  })
+               '{% endfor %}'
+
+              ' {% endif %}'
+
+               '{% if servsSize %}'
+               '{% for s in servsSize %}'     
+                  sVS.push({  
+                     servFom:moment('{{s.mauzo.mauzo.servFrom|date:"r"}}'),
+                     servTo:moment('{{s.mauzo.mauzo.servTo|date:"r"}}'),
+                     idadi:'{{s.idadi}}',
+                     size:Number('{{s.size.id}}')
+                  })
+               '{% endfor %}'
+              ' {% endif %}'
+           '{% endif %}'
+
+           if(sVs.length){
+
+               serVs = sVs.filter(p=>anza<=p.servTo && isha >= p.servFom).reduce((a,b)=> Number(a) + Number(b.idadi),0)
+               servd = serVs
+              }
+
+           if(sVC.length){
+               servC = sVC.filter(p=>Number(p.color)==Number(coloredV) && anza <=p.servTo && isha >= p.servFom).reduce((a,b)=> Number(a) + Number(b.idadi),0)
+               servd = servC  
+              }
+
+           if(sVS.length){
+               servS = sVS.filter(p=>Number(p.size)==Number(sizedV) && anza<=p.servTo && isha >= p.servFom).reduce((a,b)=> Number(a) + Number(b.idadi),0)
+               servd = servS  
+              }
+
+           
+
+
+        '{% endif %}'
+
+       
+        idad = idad - servd
+
+        idadi = Math.floor(Number(idad)/uwiano)
+        const IS_SERVICE = Number('{% if bidhaa.service %}1{% else %}0{% endif %}')
+        
+        if(idad==0){
+          $('#zimeisha_aret').prop('hidden',false)
+        }else{
+          $('#zimeisha_aret').prop('hidden',true)
+        }
+        
+      
+
+    // opt=''
+    // for(let b=0; b<=idadi ; b++ ){
+    //     opt+=` <option value=${b}>${b}</option>`
+    // }
+
+    
+    $('#item_idadi').data('qty',idadi)
+    
+  }
+
+ 
+ 
+
+
+ function addItems(n_){
+     let last = Number($('#item_idadi').data('qty')),
+      val=  Number($('#item_idadi').val()),
+      uwiano=Number($('#price_select').val()),
+      n_u = Number(n_),
+      qty = (val+n_u)*uwiano
+
+        //check wether the selector is adding or decreesinq qty
+         if(Number(n_)<0){
+          //  let  first=Number($('#item_idadi option:first-child').val())
+
+
+           if(val>0){
+
+               $('#item_idadi').val(val+n_u) 
+              let fracT = [
+              {val:0,option:'<option value=0 >0</option>'},
+              {val:0.25,option:'<option value=0.25 >{% if useri.langSet == 0 %}Robo{% else %}Quarter{% endif %} (0.25) </option>'},
+              {val:0.50,option:'<option value=0.50 >{% if useri.langSet == 0 %}Nusu{% else %}Half{% endif %} (0.5)</option>'},
+              {val:0.75,option:'<option value=0.75 >{% if useri.langSet == 0 %}Robo Tatu{% else %}3 Quarters{% endif %} (0.75)</option>'},
+            ],
+            fracTO = ''
+          
+
+            fracT.forEach(fr=>{
+              if(Number(fr.val+val+n_u)*uwiano <= Number('{{bidhaa.idadi}}') ){
+                fracTO += fr.option
+
+              }
+            });  
+            
+
+            $('#fractions_qty').html(fracTO)
+              feedqty(qty) 
+                           
+         }
+
+       }else{
+         if(val<last){
+              $('#item_idadi').val(val+n_u)
+               feedqty(qty)
+               
+           }
+       }        
+
+     
+}
+
+
+//Assignig quantities to selected color and size
+ function feedqty(qty){
+   let colorVal = $('.redbox').data('rangi'),t_qty=0,
+       uwiano = Number($('#price_select').val()) 
+  if($(`.item_sized_${colorVal}`).length>0){
+   //  console.log($(`.item_sized_${colorVal}`).length)
+    $('.bluebox').data('qty',qty)
+    
+
+    
+    //if size has quantity picked then show the success indicator
+    if(qty>0){
+       $('.bluebox').data('uwiano',uwiano)
+        $('.bluebox').children('.successmark').fadeIn()
+        //$('.bluebox').data('qty',qty)
+        //$('#price_select').prop('disabled',true)
+
+
+    }else{
+        $('.bluebox').children('.successmark').fadeOut()
+       $('.bluebox').data('uwiano',0)
+
+    }
+
+     $(`.item_sized_${colorVal}`).each(function(){
+        t_qty+=Number($(this).data('qty'))
+     })
+
+      $('.redbox').data('qty',t_qty)
+      if(t_qty>0){
+        
+        $('.redbox').children('.successmark').fadeIn()
+      }else{
+        $('.redbox').children('.successmark').fadeOut()
+        
+      }
+  }else{
+     $('.redbox').data('qty',qty)
+     if(qty>0){
+        $('.redbox').children('.successmark').fadeIn()
+        $('.redbox').data('uwiano',uwiano)
+      }else{
+        $('.redbox').children('.successmark').fadeOut()
+        $('.redbox').data('uwiano',0)
+      }
+  }
+
+  let bei=[{bei:Number('{{bidhaa.Bei_kuuza}}'),idadi:1,jina:'{{bidhaa.bidhaa.vipimo}}'}],
+   br={}
+   
+
+  '{% if bidhaa.bidhaa.idadi_jum > 1 %}'
+    bei.push({bei:Number('{{bidhaa.Bei_kuuza_jum}}'),idadi:Number('{{bidhaa.bidhaa.idadi_jum}}'),jina:'{{bidhaa.bidhaa.vipimo_jum}}'})
+  '{% endif %}'
+
+  '{% for b in bei %}'
+   br={
+     bei:Number('{{b.bei}}'),
+     idadi:Number('{{b.idadi}}'),
+     jina:'{{b.jina}}',
+   }
+  '{% endfor %}'
+  bei.push(br)
+  sum_q(bei)
+ }
+                        
+
+ place_idadi()
+
+
+ 
+  // Add to Cart 
+  function addtoCart(p,c){
+
+    let itm = '{{bidhaa.id}}',
+        uwiano =Number($('#price_select').find('option:selected').data('idadi')),  
+        qty = Number($('#item_idadi').val()) || 0,
+        colored= [],
+        sized = [],
+        cl = $('.the_identify').length,
+        sl = $('.item_sized_').length,
+        match = $('#duka_item').data('itm') || 0,
+        matched = Number($('#duka_item').data('match')),
+        a_match = $('#duka_item_aina').val(),
+        shop = '{{shop.id}}',
+        newItm = Number($('#Item_jipya').prop('checked')),
+        newCat = Number($('#category_jipya').prop('checked')),
+        
+        useUnit = Number($('#useUnitRadio').prop('checked')) || 0,
+        newUnit = Number($('#newUserUnit').prop('checked')) || 0,
+ 
+        UnitName =  $('#unitName').val(),
+        newRatio =  Number($('#uwianoQty1').val()) || 0,
+
+        salesP =  Number($('#Bei_kwa_kuuza_d').val()) || 0,
+
+        material = Number($('#production_material').prop('checked')) ||  0,
+        //For service purpose.......................................//
+        
+        anza = moment(),
+        isha = moment(),
+        now = moment(),
+        Stm = Number('{{bidhaa.timely}}'),
+        service = Number('{% if bidhaa.service %}1{%else%}0{%endif%}'),
+        theT = 1 
+
+        
+
+        if(service){
+          anza = moment($('#hudumaKuanzia').val())
+          isha = moment($('#hudumaHadi').val())
+
+          let  min = isha.diff(anza,'minutes'),
+              dura=[
+                    {
+                      value:0,
+                      duration:1,
+                    
+                    },
+                    {
+                      value:1,
+                      duration:Math.ceil(min),
+                    
+                    },
+                      {
+                      value:2,
+                      duration:Math.ceil(min/60),
+                
+                    },
+                      {
+                      value:3,
+                      
+                      duration:Math.ceil((min/60)/24),
+                    },
+                      {
+                      value:4,
+                      duration:Math.ceil(((min/60)/24)/7),
+              
+                    },
+                      {
+                      value:5,
+                    
+                      duration:Math.ceil(min/(60*24*31)),
+                    
+                    },
+                      {
+                      value:6,
+                      
+                      duration:Math.ceil(Number(Math.ceil(min/(60*24*31)))/12),
+                    
+                    },
+          
+              
+              ]
+
+              theT = dura.find(v=>v.value === Stm).duration
+
+              
+        }
+
+        
+        
+
+       
+       
+        if(cl>0){
+          $('.the_identify').each(function(){
+           
+            let val = $(this).data('val'),
+                cqty = Number($(this).data('qty')),
+                wiano = Number($(this).data('uwiano'))
+               
+                if(cqty>0){
+                    colored.push({val:val,qty:cqty,uwiano:wiano})
+                    qty+=cqty
+                }
+          })
+        }
+
+        if(sl>0){
+          $('.item_sized_').each(function(){
+           
+            let val = $(this).data('val'),
+                sqty = Number($(this).data('qty')),
+                wiano = Number($(this).data('uwiano')),
+                rangi = $(this).data('color')
+                if(sqty>0){
+                    sized.push({val:val,qty:sqty,uwiano:wiano,rangi:rangi})
+                    qty+=sqty
+                }
+          })
+        }
+
+
+        data={
+          data:{
+            itm:itm,
+            qty:qty,
+            uwiano:uwiano,
+            color: JSON.stringify(colored),
+            size: JSON.stringify(sized),
+            shop:shop,
+            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
+            cart:c,
+            newItm:newItm,
+            newCat:newCat,
+            match:match,
+            a_match:a_match,
+            ps:p,
+            material:material,
+            edit:Number('{{edit}}'),
+            useUnit:useUnit,
+            newUnit:newUnit,
+            UnitName:UnitName,
+            newRatio:newRatio,
+            sale:salesP,
+            muda:theT,
+            sFrom:anza.format(),
+            sTo:isha.format()
+
+          },
+          url:'/purchase/addtoCart',
+         
+        }
+
+        if(p || Number(match)>0 || Number(matched) || newItm || service ) {
+
+          if((newItm && (Number(a_match)>0 || newCat ) && (useUnit || (UnitName!='' && newRatio>0)) && (salesP > 0 || material ) ) || !newItm ){
+             if(qty>0){
+
+              //units regu  
+
+            
+
+              if(anza!=''&& isha!=''||!service )  {
+                
+                if(anza>=isha && service ){
+                    redborder('#hudumaKuanzia')
+                    redborder('#hudumaHadi')
+                    $('#kwaMuda').text(0)
+                    topslider.top()
+                  }else if(anza<now&&service){
+                      redborder('#hudumaKuanzia')
+                      $('#kwaMuda').text(0)
+                      topslider.top()
+                  }else{
+                    
+                     submitOder(data)  
+                     
+
+                  }
+              }else{
+                          redborder('#hudumaKuanzia')
+                          redborder('#hudumaHadi')
+                          topslider.top()
+              }
+        
+                
+
+             }else{
+               alert('{% if useri.lanSet == 0 %}Tafadhari weka idadi{% else %}Please Set quantity{% endif %}')
+                redborder('#item_idadi')
+              }  
+           
+
+          }else{
+            if(newItm && ((Number(a_match))==0 && !newCat) ){
+              redborder('#duka_item_aina')
+              $('#duka_item_aina').selectpicker('setStyle', 'border-danger')
+            }
+
+            if(!useUnit && !newUnit){
+              redborder('#unitsMatch')
+          }
+          if(UnitName==''){
+            redborder('#unitName')
+          }
+          if(newRatio==0){
+            redborder("#uwianoQty1")
+          }
+
+          if(salesP==0 && !material ){
+            redborder('#Bei_kwa_kuuza_d')
+          }
+          }
+
+
+
+        }else{
+          redborder('#duka_item')
+        }
+    
+  }
+
+  function submitOder(data){
+
+    
+    $("#modal_Item_match").modal('hide');
+    $("#loadMe").modal('show');
+
+    $.ajax({
+        type: "POST",
+        url: data.url,
+         data: data.data,
+      }).done(function(respo) {
+         let msg = lang(respo.msg_swa,respo.msg_eng)
+         
+
+      if(respo.success){
+          toastr.success(msg, lang('Imefanikiwa','Success Alert'), {timeOut: 2000});
+          if(!('fract' in data) ){
+             location.reload() 
+          }
+
+  
+      }else{
+           toastr.error(msg, lang('Haikufanikiwa','Error Alert'), {timeOut: 2000});
+      }
+
+      $("#loadMe").modal('hide');
+
+    })
+  }
+ 
+
+</script>
+
+
+
+<hr>
+<h6 class="classic_div mt-2 p-2" style="font-weight: 600;" > {% if useri.langSet == 0  %}Sifa kwa ujumla{% else %}General Info {% endif %}:</h6>
+<div class="row classic_div">
+  <div class="col-6">  {% if useri.langSet == 0  %}Kampuni{% else %}Brand{% endif %}</div>
+  <div class="col-6"><a href="{% url 'displayProfItems' %}?value={{shop.id}}&k={{bidhaa.bidhaa.kampuni.id}}"  >{{bidhaa.bidhaa.kampuni.kampuni_jina}}</a> </div>
+</div>
+<hr>
+
+<div id="key_sifa-show" class="table-responsive" >
+  {% for f in keySifa %}
+   <div class="row classic_div"> 
+    {% if duka == shop %}
+     <div class="col-5"><input type="text" value="{{f.key}}" id="title{{f.id}}" class="  meta-title  form-control"></div>
+      <div class="col-5">
+        <input type="text" value="{{f.sifa}}" id="key{{f.id}}" class="form-control ml-2  meta-keyword robotoFont font-weight-light ">
+     </div>
+        <div class="col-2">
+          <button action="/stoku/maelezo_kina" data-key="#key{{f.id}}" data-title="#title{{f.id}}" data-new=0 data-value={{f.id}} data-valued={{bidhaa.bidhaa.id}} type="submit" class="btn btn-success update-sifa-muhimu btn-sm smallerFont">{% if useri.langSet == 0 %}Badili{% else %}Change{% endif %}</button>  
+          <button  data-value={{f.id}} action="/stoku/ondoa_keficha" type="button" data-valued={{bidhaa.bidhaa.id}}  class="btn btn-default ondoa_keficha">&times;</button>
+        </div>
+
+
+    {% else %}
+      <div class="col-6">
+        {{f.key}}
+      </div>
+      <div class="col-6">
+        {{f.sifa}}
+      </div>
+
+    {% endif %}
+</div>
+    <hr>
+    {% endfor %}
+</div>
+  
+
+{% if duka == shop %}
+<form action="/stoku/maelezo_kina" class="key_sifa table-responsive" data-value=0 data-valued={{bidhaa.bidhaa.id}} data-new=1 method="post">
+  <div class="row classic_div">
+      <div class="col-md-6">
+          <div class="form-group">
+              <label>{% if useri.langSet == 0 %}Sifa{% else %}Meta Title {% endif %} </label>
+              <input type="text" id="meta-title" class="form-control meta-title">
+          </div>
+      </div>
+      <div class="col-md-6">
+          <div class="form-group">
+              <label>{% if useri.langSet == 0 %}Maelezo{% else %}Meta Keyword{% endif %} </label>
+              <input type="text" id="meta-keyword" class="form-control meta-keyword">
+          </div>
+          <button class="btn btn-primary btn-sm  robotoFont float-right">Add</button>
+      </div>
+</div>
+</form>
+
+{% endif %}
+
+
+
+{% if qzlen > 0 %}
+<hr>
+<h6 class="classic_div mt-2 pl-2 " style="font-weight: 600;" >
+  
+  {% if useri.langSet == 0  %}Maswari Kuhusu {% else %}Asked Questions on {% endif %} <i class="text-capitalize" > {{bidhaa.bidhaa.bidhaa_jina}}</i>:
+</h6>
+
+<div class="container pb-3 px-2">
+   <ul class="list-unstyled pl-3">
+    {% for q in qz %}
+     <li class="my-3">
+       <div class="d-flex">
+         <div >
+          <svg xmlns="http://www.w3.org/2000/svg" height="25" width="25"  viewBox="0 0 24 24" fill="currentColor">
+            <path d="M0 0h24v24H0z" fill="none"/>
+            <path d="M19 2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h4l3 3 3-3h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-6 16h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 11.9 13 12.5 13 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+            </svg>
+         </div>
+         <div class="pl-2 ml-2 " style="border-left:2px solid rgba(36, 65, 160, 0.877);" >
+            <span style="color:rgb(59, 2, 2)" >{{q.swari.msg}} </span>  
+           <div class="pic border-bottom pb-2 ">
+             {% if q.swari.By.user.picha %} 
+             <img src="{{q.swari.By.user.picha.url}}" style="width: 20px;height:20px;border-radius:50%" alt="no_img">
+             {% else %}
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+              <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+              <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+            </svg>
+             {% endif %}
+             <span class="text-primary smallerFont text-capitalize">
+                {{q.swari.By.user.first_name}} {{q.swari.By.user.last_name}}
+
+
+             </span>
+             {% if shop == duka %}
+             <span class="ml-2 border-left">
+                <button 
+                  onclick="var dt={reload:1,data:{txt:'{{q.swari.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/toaSwari'};if(confirm('{% if useri.langSet == 0 %}Ondoa Ujumbe kama swari kwa bidhaa{% else %}Remove Chat as question to an Item{% endif %}')){sendTxtData(dt)}"
+                  class="btn btn-default btn-sm" title="{% if useri.langSet == 0 %}Ondoa Swari kwa Bidhaa{% else %} Remove Question to Item{% endif %}" >
+                    <svg xmlns="http://www.w3.org/2000/svg"  height="16" width="16" viewBox="0 0 24 24"  fill="currentColor">
+                      <path d="M0 0h24v24H0V0z" fill="none"/>
+                      <path d="M20 4v12h-1.34l1.91 1.91C21.39 17.66 22 16.9 22 16V4c0-1.1-.9-2-2-2H4.66l2 2H20zM6 12h2v2H6zm12-3h-6.34l2 2H18zm0-3h-8v1.34l.66.66H18zM1.41 1.59L0 3l2.01 2.01L2 22l4-4h9l5.73 5.73 1.41-1.41L1.41 1.59zM5.17 16L4 17.17V7l2 2v2h2l5 5H5.17z"/>
+                    </svg>
+                </button>
+             </span>
+
+             <span class="border-left">
+                <button 
+                onclick="getChats('{{q.swari.From.id}}')"
+                class="btn btn-default btn-sm" title="{% if useri.langSet == 0 %}Ondoa Swari kwa Bidhaa{% else %} Remove Question to Item{% endif %}" >
+                  <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24"  fill="currentColor">
+                  <path d="M0 0h24v24H0V0z" fill="none"/>
+                  <path d="M15 4v7H5.17l-.59.59-.58.58V4h11m1-2H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1zm5 4h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1z"/>
+                  </svg>
+                </button>
+             </span>
+             {% endif %}
+           </div>
+
+           <ul class="list-unstyled">
+             
+             {% for j in q.majibu %}
+             <li class="py-2">
+                <i class=" weight600">
+                 {% if useri.langSet == 0 %}Jibu{% else %} Answ{% endif %}:
+                </i>
+               <span   > {{j.msg}}</span> 
+           
+             </li>
+             {% endfor %}
+             
+           </ul>
+          
+         </div>
+       </div>
+     
+     </li>
+    {% endfor %} 
+   </ul>    
+</div>
+
+{% endif %}
+
+
+{% if not shop == duka %}
+{% if with_c > 0 %}
+
+<!-- OTHER SAME SOLD ITEM............ -->
+<h6 style="font-weight: 600;color:rgb(5, 92, 192)" class="classic_div  pl-4 mt-4" >
+  {% if bidhaa.service %}
+     {% if useri.langSet == 0 %}Huduma nyingine pamoja na huduma hii:{% else %}Other favorite service together with this:{% endif %}
+  {% else %}
+     {% if useri.langSet == 0 %}Bidhaa hii imenunuliwa pamoja na:{% else %}Also bought with {% endif %}
+  {% endif %}
+ 
+</h6>
+
+<!-- OTHER ITEMS THE ITEM PURCHASED WITH .................. -->
+<div class="container table-responsive">
+  <div class="row mb-5">
+{% for b in with %}          
+<a href="{% url 'displaySelItem' %}?value={{shop.id}}&i={{b.id}}" class=" item_show col-12 col-md-4 col-lg-3 mt-4">
+  <!-- ADDED TO CART OR ORDERED INDICATOR -->
+  <div class="text-center mb-2 " style="height: 20px;"  >
+    <!-- SHOW IF TE ITEM HAS ORDERED TO CART .................................. ... -->
+    {% if b.agizwa.last.mauzo.order and not b.agizwa.last.mauzo.cart %}
+        <span class="bg-primary latoFont smallerFont " 
+              style="-webkit-box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);
+              -moz-box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);
+              box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);color:#fff;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-all" viewBox="0 0 16 16">
+          <path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 1.854 7.146a.5.5 0 1 0-.708.708l3.5 3.5a.5.5 0 0 0 .708 0l7-7zm-4.208 7-.896-.897.707-.707.543.543 6.646-6.647a.5.5 0 0 1 .708.708l-7 7a.5.5 0 0 1-.708 0z"/>
+          <path d="m5.354 7.146.896.897-.707.707-.897-.896a.5.5 0 1 1 .708-.708z"/>
+        </svg>  {% if b.agizwa.last.mauzo.user_customer.by  == useri %}
+                  <span class="p-1" > {% if useri.langSet == 0 %}Umeagiza{% else %}You have ordered{% endif %}</span>
+               {% else %}
+                  <span class="p-1" title="{% if useri.langSet == 0 %}Na {% else %}By {% endif %}  {{b.agizwa.last.mauzo.user_customer.by.user.first_name |title }}  {{b.agizwa.last.mauzo.user_customer.by.user.last_name |title }}" > {% if useri.langSet == 0 %}Imeagizwa{% else %}ordered{% endif %}</span>
+               {% endif %}
+        </span>
+
+    {% endif %}    
+
+
+  <!-- SHOW IF TE ITEM HAS ADDED TO CART .................................. ... -->
+    {% if b.agizwa.last.mauzo.order and  b.agizwa.last.mauzo.cart %}
+    <span class="bg-primary latoFont smallerFont p-2" 
+    style="-webkit-box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);
+    -moz-box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);
+        box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);color:#fff;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cart-check-fill" viewBox="0 0 16 16">
+          <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708z"/>
+        </svg>
+    {% if b.agizwa.last.mauzo.user_customer.by  == useri %}
+    <span class="p-1" > {% if useri.langSet == 0 %}Umeshaweka Kapuni{% else %}You have added to Cart{% endif %}</span>
+      {% else %}
+          <span class="p-1" title="{% if useri.langSet == 0 %}Na {% else %}By {% endif %}  {{b.agizwa.last.mauzo.user_customer.by.user.first_name |title }}  {{b.agizwa.last.mauzo.user_customer.by.user.last_name |title }}" > {% if useri.langSet == 0 %}Imewekwa kapuni{% else %}Added to Cart{% endif %}</span>
+      {% endif %}   
+ </span>
+    {% endif %}
+</div>
+
+  <div class=" d-flex classic_div justify-content-center" style="align-items:center;width: 200px;height:30vh">
+        {% if b.img %}
+            <img src="{{b.img.url}}" style="max-width: 100%;max-height:100%" alt="">
+        {% else %}
+        <span style="color:rgb(163, 163, 163)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+            </svg>
+        </span>
+   {% endif %}
+
+        
+    </div>
+    <div class="pt-2 text-center classic_div" style="color:rgb(134, 39, 39) ;width: 200px;">
+       <small class="text-primary" > {{shop.currencii }}</small>.<strong>  {{b.bei | floatformat:'-2' | intcomma }}</strong></div>
+    <div class=" text-center classic_div" style="width: 200px;">
+        {% if b.name|length > 40 %}
+        {{b.name|slice:40 | title}} ...
+        {% else %}
+        {{b.name | title}}
+        {% endif %}
+    </div>
+</a>
+{% endfor %}
+</div>
+</div>
+
+{% endif %}
+{% endif %}
+
+
+{% if other_b_c > 0 %}
+<!-- OTHER SAME CATEGORIES ITEM............ -->
+<h6 style="font-weight: 600;color:rgb(5, 92, 192)" class="classic_div pl-4 mt-4  " >
+   {% if useri.langSet ==  0 %}Bidhaa/Huduma Nyingine{% else %}Other Items/services {% endif %}
+</h6>
+<div class="container ">
+<div class="row mb-5 "  >
+{% for b in other_b %}       
+  
+    <a href="{% url 'displaySelItem' %}?value={{shop.id}}&i={{b.id}}" class=" item_show  col-md-4 col-lg-3 mt-4">
+    
+      <!-- ADDED TO CART OR ORDERED INDICATOR -->
+      <div class="text-center  mb-2 " style="height: 20px;"  >
+        <!-- SHOW IF TE ITEM HAS ORDERED TO CART .................................. ... -->
+        {% if b.agizwa.last.mauzo.order and not b.kapu.mauzo.cart %}
+            <span class="bg-primary latoFont smallerFont " 
+                  style="-webkit-box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);
+                  -moz-box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);
+                  box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);color:#fff;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-all" viewBox="0 0 16 16">
+              <path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 1.854 7.146a.5.5 0 1 0-.708.708l3.5 3.5a.5.5 0 0 0 .708 0l7-7zm-4.208 7-.896-.897.707-.707.543.543 6.646-6.647a.5.5 0 0 1 .708.708l-7 7a.5.5 0 0 1-.708 0z"/>
+              <path d="m5.354 7.146.896.897-.707.707-.897-.896a.5.5 0 1 1 .708-.708z"/>
+            </svg>  {% if b.agizwa.last.mauzo.user_customer.by  == useri %}
+                      <span class="p-2" > {% if useri.langSet == 0 %}Umeagiza{% else %}You have ordered{% endif %}</span>
+                  {% else %}
+                      <span class="p-2" title="{% if useri.langSet == 0 %}Na {% else %}By {% endif %}  {{b.kapu.mauzo.user_customer.by.user.first_name |title }}  {{b.kapu.mauzo.user_customer.by.user.last_name |title }}" > {% if useri.langSet == 0 %}Imeagizwa{% else %}ordered{% endif %}</span>
+                  {% endif %}
+            </span>
+
+        {% endif %}    
+
+
+      <!-- SHOW IF TE ITEM HAS ADDED TO CART .................................. ... -->
+        {% if b.agizwa.last.mauzo.order and  b.kapu.mauzo.cart %}
+        <span class="bg-primary latoFont smallerFont p-2" 
+            style="-webkit-box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);
+                    -moz-box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);
+                    box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);color:#fff;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-all" viewBox="0 0 16 16">
+            <path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 1.854 7.146a.5.5 0 1 0-.708.708l3.5 3.5a.5.5 0 0 0 .708 0l7-7zm-4.208 7-.896-.897.707-.707.543.543 6.646-6.647a.5.5 0 0 1 .708.708l-7 7a.5.5 0 0 1-.708 0z"/>
+            <path d="m5.354 7.146.896.897-.707.707-.897-.896a.5.5 0 1 1 .708-.708z"/>
+        </svg>
+        {% if b.agizwa.last.mauzo.user_customer.by  == useri %}
+        <span class="p-2" > {% if useri.langSet == 0 %}Umeshaweka Kapuni{% else %}You have added to Cart{% endif %}</span>
+          {% else %}
+              <span class="p-2" title="{% if useri.langSet == 0 %}Na {% else %}By {% endif %}  {{b.kapu.mauzo.user_customer.by.user.first_name |title }}  {{b.kapu.mauzo.user_customer.by.user.last_name |title }}" > {% if useri.langSet == 0 %}Imewekwa kapuni{% else %}Added to Cart{% endif %}</span>
+          {% endif %}   
+        </span>
+        {% endif %}
+    </div>
+
+      <div class=" d-flex classic_div justify-content-center" style="align-items:center;width: 200px;height:30vh">
+        
+          {% if b.img %}
+                <img src="{{b.img.url}}" style="max-width: 100%;max-height:100%" alt="">
+            {% else %}
+            <span style="color:rgb(163, 163, 163)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                    <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                    <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                </svg>
+            </span>
+      {% endif %}
+
+            
+        </div>
+        <div class="pt-2 text-center" style="color:rgb(134, 39, 39) ;">
+          <small class="text-primary"  > {{shop.currencii }}</small>.<strong>  {{b.bei | floatformat:'-2' | intcomma }}</strong></div>
+        <div class=" text-center">
+            {% if b.name|length > 40 %}
+            {{b.name|slice:40 | title}} ...
+            {% else %}
+            {{b.name | title}}
+            {% endif %}
+        </div>
+    </a>
+   
+{% endfor %}
+</div>
+</div>
+
+{% endif %}
+
+</div>
+</div>
+
+{% if shop == duka %}
+<!-- Kuedit bidhaa -->
+<div class="modal fade bd-example-modal-lg" id="Item_editModal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog modal-lg md-user-dialog classic_div" style="margin-left:auto;margin-right:auto;width:100%" >
+    <div class="modal-content modal-content-one">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <button type="button" class="btn btn-default tab_show" data-show="#general-panel" style="color: rgb(104, 54, 240);">
+            <svg width="1.6em" height="1.6em" viewBox="0 0 16 16" class="bi bi-gem" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M3.1.7a.5.5 0 0 1 .4-.2h9a.5.5 0 0 1 .4.2l2.976 3.974c.149.185.156.45.01.644L8.4 15.3a.5.5 0 0 1-.8 0L.1 5.3a.5.5 0 0 1 0-.6l3-4zm11.386 3.785l-1.806-2.41-.776 2.413 2.582-.003zm-3.633.004l.961-2.989H4.186l.963 2.995 5.704-.006zM5.47 5.495l5.062-.005L8 13.366 5.47 5.495zm-1.371-.999l-.78-2.422-1.818 2.425 2.598-.003zM1.499 5.5l2.92-.003 2.193 6.82L1.5 5.5zm7.889 6.817l2.194-6.828 2.929-.003-5.123 6.831z"/>
+            </svg>
+           </button> 
+    
+
+             
+              
+              {% if bidhaa.service %}
+                 {% if useri.langSet == 0 %}Kuhusu Huduma {% else %} About Service {% endif %} 
+              {% else %} 
+               {% if useri.langSet == 0 %}Kuhusu Bidhaa {% else %} About Item {% endif %} 
+              {% endif %}
+
+        </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+      </div>
+      <div class="modal-body">
+                
+        <div class="row">
+          
+            <div class="form-body ">
+             <div class="row classic_div whiteBg p-3"  >
+                <form data-value={{bidhaa.id}}  id="kuediti-bidhaa-form" data-bidhaa=0 action="/stoku/editBidhaa">
+                  <div class="row classic_div">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="control-label"> {% if useri.langSet == 0 %}Jina la bidhaa   {% else %} Item Name {% endif %} </label>
+                            <input type="text" id="kuedit_jina_la-bidhaa" value="{{bidhaa.bidhaa.bidhaa_jina}}" data-true=""  class="form-control">
+                          </div>
+                      </div>
+                      <div class="col-md-6">
+                          <div class="form-group">
+                              <label class="control-label"> {% if useri.langSet == 0 %} Aina ya Bidhaa  {% else %} Item Category {% endif %}</label>
+
+                              <select  data-placeholder="Choose  Category" data-val={{bidhaa.bidhaa.bidhaa_aina.id}} id="kuedit-bidhaa-aina" tabindex="1" class="form-control selectpicker" data-live-search="True">
+                                
+                              </select>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="row classic_div">
+                      <div class="col-md-6">
+                          <div class="form-group">
+                              <label class="control-label"> {% if useri.langSet == 0 %} Chapa ya Bidhaa  {% else %} Item Brand {% endif %}</label>
+                              <select data-val={{bidhaa.bidhaa.kampuni.id}} data-placeholder="Choose a Category" id="kuedit-bidhaa-chapa" tabindex="1" class="form-control selectpicker" data-live-search="True">
+                          
+                              </select>
+                              </div>
+                          </div>
+                          <div class="col-md-6">
+                              <div class="form-group">
+                                  <label> {% if useri.langSet == 0 %} Msambazaji  {% else %} Supplier {% endif %}</label><br>
+                                     <select  data-placeholder="Choose a Category"   tabindex="1" class="form-control border0 smallFont" >
+                                       <option value=1>{{bidhaa.msambaji.jina}}</option>
+                                     </select>
+                              </div>
+                          </div>
+                      </div>
+                       <div class="row classic_div">
+                         <div class="col-md-6">
+                           <div class="form-group">
+                             <label for="">Bar code</label>
+
+                             <div class="input-group">
+                                <input type="text"
+                                    class="form-control" name="bar_code_place" id="bar_code_place" aria-describedby="helpId" placeholder="{{bidhaa.sirio}}">
+                                    <span class="input-group-btn border"> 
+                                      <button class="btn btn-default btn-sm ScanBarCode"  type="button" >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upc-scan" viewBox="0 0 16 16">
+                                              <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5zM.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5zM3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7z"/>
+                                            </svg>                        
+                                      </button> 
+                                  </span>
+                                  </div>
+                            
+                           </div>
+                         </div>
+
+                         <div class="col-md-6">
+                           <div class="form-group">
+                             <label for="">{% if useri.langSet == 0 %}Namba ya Bidhaa{% else %}Item Number{% endif %}</label>
+
+                             
+                                <input type="text"
+                                    class="form-control" name="item_namba_place" id="item_namba_place" aria-describedby="helpId" placeholder="{{bidhaa.bidhaa.namba}}">
+                                    
+                                 
+                            
+                           </div>
+                         </div>
+                       </div>
+
+                      <div class="row mt-3 classic_div">
+                          <div class="col-12">
+                              <p class="py-2 " style="border-bottom:1px dotted rgb(97, 63, 0)"> {% if useri.langSet == 0 %} Mauzo ya Jumla  {% else %} Whole Selling {% endif %}</p>
+                          </div>
+                          <div class="col-md-6 ">
+                          <div class="form-group">
+                              <label> {% if useri.langSet == 0 %} Bei ya kuuza  {% else %} Sales Price {% endif %}</label>
+
+                              
+
+                              <div class="input-group mb-3">
+                                  
+                                <div class="show_curency_inline show_curency position-absolute text-danger   px-3" style="display: none ;">
+                                  <label class="mt-1 text-danger" for=""></label> 
+                                <div class="box-pointer d-inline "></div>
+                              </div>
+                                  <div class="input-group-prepend">
+                                      <span id="basic-addon1" class="input-group-text robotoFont smallerFont">
+                                          {{duka.currencii }}
+                                      </span>
+                                  </div>
+                                  <input type="number" data-val="{{bidhaa.Bei_kuuza_jum | floatformat:'-2'}}"  id="kuediti-bidhaa-thamani" placeholder="{{bidhaa.Bei_kuuza_jum | floatformat:'-2'| intcomma }}"  class="money-fomat form-control">
+                              </div>
+                          </div>
+                      </div>
+
+                      <div class="col-md-6">
+                       <div class="form-group">
+                          <label for="">{% if useri.langSet == 0 %}Uzalishaji{% else %}Production{% endif %}</label>
+                  
+                          <div class="custom-control custom-checkbox">
+                            <input type="checkbox" {% block check %}{% if bidhaa.bidhaa.material %}checked{% endif %}{% endblock %} class="custom-control-input" id="addMaterialtoUse">
+                            <label class="custom-control-label" style="cursor:pointer !important" for="addMaterialtoUse">
+                              {% if bidhaa.bidhaa.material %}
+                                {% if useri.langSet == 0 %} Nyezo/Bidhaa kwa kuzalishia   {% else %} Material/Item for production {% endif %}
+                              {% else %}
+                                {% if useri.langSet == 0 %} Ongeza Nyenzo/bidhaa ya kuzalishia  {% else %}Add to Material for production {% endif %}
+                              {% endif %}
+                            
+                            </label>
+                          </div>
+                      </div>
+                      </div>
+                        <div class="col-md-6 ">
+                          <div class="form-group">
+                              <label> {% if useri.langSet == 0 %} Vipimo  {% else %} Units {% endif %}</label>
+                              <div class="input-group mb-3">
+                                  <input type="text" data-true="" id="kuediti-bidhaa-vipimo" placeholder="{{bidhaa.bidhaa.vipimo_jum}}" aria-label="price" aria-describedby="basic-addon1" class="form-control">
+                              </div>
+                          </div>
+                      </div>
+                      <div class="col-md-6">
+                          <div class="form-group">
+                              <label>{% if useri.langSet == 0 %}Zilizopo Stoku   {% else %} On shelf {% endif %}</label>
+                              <div class="input-group mb-3">
+                                <script>
+                                  document.write(`
+                                  <input type="number" placeholder="${Math.floor(Number('{{bidhaa.idadi}}')/Number('{{bidhaa.bidhaa.idadi_jum}}'))}" disabled id="kuediti-bidhaa-idadi_jum" aria-label="Discount" aria-describedby="basic-addon2" class="form-control">
+                                  `)
+                                </script>
+                                  
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  {% if bidhaa.bidhaa.idadi_jum > 1 %}
+                      <div class="row mt-3 classic_div" id="kuedit-rejareja">
+
+                  {% else %}
+                   <div class="row mt-3 classic_div" hidden id="kuedit-rejareja">
+                  {% endif %}
+
+                          <div class="col-12">
+                              <p class="py-2 " style="border-bottom:1px dotted rgb(97, 3, 0)"> {% if useri.langSet == 0 %} Mauzo ya Rejareja  {% else %} Retail Sales {% endif %}</p>
+                          </div>
+                          <div class="col-md-6 ">
+                          <div class="form-group">
+                              <label> {% if useri.langSet == 0 %} Bei ya kuuza  {% else %} Sales Price {% endif %}</label>
+                              <div class="input-group mb-3">
+
+                                  <div class="show_curency_inline show_curency position-absolute text-danger   px-3" style="display: none ;">
+                                      <label class="mt-1 text-danger" for=""></label> 
+                                    <div class="box-pointer d-inline "></div>
+                                  </div>
+
+                                  <div class="input-group-prepend">
+                                      <span id="basic-addon1" class="input-group-text currencii robotoFont smallerFont">
+                                          {{duka.currencii }}
+                                      </span>
+                                  </div>
+                                  <input type="number" data-true="" data-val="{{bidhaa.Bei_kuuza | floatformat:'-2' }}" id="kuediti-bidhaa-thamanireja" placeholder="{{bidhaa.Bei_kuuza | floatformat:'-2' | intcomma }}" aria-label="price" aria-describedby="basic-addon1" class="money-fomat form-control">
+                              </div>
+                          </div>
+                      </div>
+                      <div class="col-md-6">
+                          <div class="form-group">
+                              <label> {% if useri.langSet == 0 %} Uwiano  {% else %} Ratio {% endif %} (<span class="text-primary" id="uwiano-note">{{bidhaa.bidhaa.vipimo}} <span class="text-danger" >/{{bidhaa.bidhaa.vipimo_jum | title }}</span> </span>)</label>
+                              <div class="input-group mb-3">
+                        
+                                  <input type="number" data-val="{{bidhaa.bidhaa.idadi_jum}}" placeholder="{{bidhaa.bidhaa.idadi_jum}}" id="kuediti-bidhaa-uwiano" aria-label="Discount" aria-describedby="basic-addon2" class="form-control">
+                              </div>
+                          </div>
+                      </div>
+                          <div class="col-md-6 ">
+                          <div class="form-group">
+                              <label> {% if useri.langSet == 0 %} Vipimo  {% else %} Units {% endif %}</label>
+                              <div class="input-group mb-3">
+                                  <input type="text" data-true="" id="kuediti-bidhaa-vipimo_reja" placeholder="{{bidhaa.bidhaa.vipimo}}" aria-label="price" aria-describedby="basic-addon1" class="form-control">
+                              </div>
+                          </div>
+                      </div>
+                      <div class="col-md-6">
+                          <div class="form-group">
+                              <label> {% if useri.langSet == 0 %} Zilizopo stoku  {% else %} Items on shelf {% endif %}</label>
+                              <div class="input-group mb-3">
+                                
+                                  <input type="number" value="{{bidhaa.idadi | floatformat:'-2' | intcomma }}" disabled id="kuediti-bidhaa-idadi_reja" aria-label="Discount" aria-describedby="basic-addon2" class="form-control">
+                              </div>
+                          </div>
+                      </div>
+                      </div>
+                  <h6 class="card-title px-3 pt-3 "> 
+                    {% if bidhaa.service %}
+                    {% if useri.langSet == 0 %} Maelezo ya Huduma  {% else %} Service Descriptions {% endif %}
+                    {% else %} 
+                    {% if useri.langSet == 0 %}Maelezo ya Bidhaa {% else %} Item Descriptions {% endif %} 
+                    {% endif %}
+                  </h6>
+                 
+                  <div class="row classic_div">
+                      <div class="col-md-12">
+                          <div class="form-group">
+                              <textarea rows="2" id="kuediti-bidhaa-maelezo" class="form-control latoFont">{{bidhaa.bidhaa.maelezo}}</textarea>
+                          </div>
+                      </div>
+                  </div>
+
+
+            <div class="classic_div px-3">
+              <button type="button" class="btn btn-light   smallFont robotoFont btn-lg" data-dismiss="modal">
+                  <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-left" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                  Close
+                </button>
+
+              <div class="d-inline float-right">
+                  <button  class="bidhaa-edit-savebtn">
+                      <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-check2" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                          <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                        </svg>
+                      Save</button>
+
+              </div>
+            </div>
+
+
+                </form>
+              </div>
+          
+   
+            </div>
+         
+        </div>
+
+      </div>
+   
+    </div>
+  </div>
+</div>
+
+<!-- KUEDIT RANGI.......... -->
+<div class="modal fade" id="kuweka-rangi-model" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog animate" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">
+            <span class="text-danger">
+              <img  width="29" src="{{baseUrl}}/{{'colors.svg'}}" />
+
+            </span>
+        
+           {% if useri.langSet == 0 %}Marekebisho ya Rangi/Kielelezo{% else %}Item Color/Key Word Settings{% endif %}
+      </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      <div class="classic_div mx-4">
+          <form action="/stoku/save_color" data-new=0 data-rangi=0 data-value={{bidhaa.id}} id="weka-rangi-ya-bidhaa" method="post">
+              {% csrf_token %}
+          <div class="row mb-2">
+              <div class="col-6 ">
+                  <label for="jina-rangi">  {% if useri.langSet == 0 %}Jina {% else %}  Name{% endif %}</label>
+              </div>
+              <div class="col-6 form-group">
+                  <input type="text" class="form-control futika-rangi" id="jina-la_rangi" placeholder="">
+                 
+              </div>
+          </div>    
+          
+          <div class="row mb-2">
+              <div class=" col-6"><label for="yenye-rangi"> {% if useri.langSet == 0 %}  Weka Rangi {% else %} Set Color {% endif %}</label></div>
+              <div class="col-6 form-group">
+                 <input type="color" class="custom-color " id="chaguo-la-langi"  value="#ffffff">
+            </div>
+          </div>
+
+
+          <div class="row mb-2">
+              <div class=" col-6"><label for="yenye-rangi"> {% if useri.langSet == 0 %}  Jina Jingine  {% else %} Other Name {% endif %}</label></div>
+              <div class="col-6 form-group">
+              
+                   <textarea class="form-control" name="Other_color_name" id="Other_color_name" rows="3"></textarea>
+                
+            </div>
+          </div>
+
+            <div class="border-top py-3">
+              <!-- <button type="button" data-action="/stoku/ondoa_color" id="rangi-ondoa-btn" class="btn btn-outline-danger btn-sm float-left  smallFont" >
+                   
+                  <svg width="1.3em" height="1.3em" viewBox="0 0 16 16" class="bi bi-slash-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                      <path fill-rule="evenodd" d="M11.354 4.646a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                  {% if useri.langSet == 0 %} Ondoa  {% else %} Remove {% endif %}
+              </button> -->
+              <span class="float-right">
+            <button type="button" class="btn btn-light smallFont" data-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary smallFont">
+                  <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-check2 mr-1" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                  Save</button>
+              </span>
+             
+          </div>
+          </form>             
+      </div>
+         
+
+       </div>
+      
+    </div>
+  </div>
+</div>
+  
+<!-- ADD UNITS QUANTITY MODAL -->
+<div class="modal fade" id="units_modal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog modal-sm" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title"> {% if useri.langSet == 0 %}Ongeza Kipimo{% else %}Add Quantity Unit{% endif %}</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                  </button>
+          </div>
+          <div class="modal-body">
+              <form action="/mauzo/addUnits" data-val=0 data-edit=0 data-pos=0 id="submit_Units" class="px-2">
+
+                  <div class="form-group mb-3">
+                    <label for="price_jina_help" class="brown" >
+                      {% if useri.langSet == 0 %}Jina la Kipimo{% else %}Quantity Unit Name{% endif %}
+                    <sup>*</sup>
+                    </label>
+                    <input type="text"
+                      class="form-control" name="unit_name" id="unit_name" aria-describedby="price_jina_help" placeholder="">
+                    <small id="price_jina_help" hidden class="form-text  text-danger">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                          <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                          <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                        </svg>  
+                      {% if useri.langSet == 0 %}Tafadhari Andika Jina{% else %}Please write name{% endif %}</small>
+                  </div>
+              
+                  <div class="form-group mb-3">
+                    <label for="sm_unit" class="brown" >
+                       {% if useri.langSet == 0 %}Idadi kwa kipimo kidogo{% else %}Quantities by smallest Unit {% endif %}
+                      <sup>*</sup>
+                      </label>
+                    <div class="input-group">
+                        <div class="input-group-prepend border">
+                            <span class="text-primary latoFont px-2" id="sm_unit">
+                                {{bidhaa.bidhaa.vipimo}}
+                            </span>
+                        </div>
+                        <input type="number"
+                      class="form-control" name="unit_qty" id="unit_qty" aria-describedby="price_idadi_help" placeholder="">
+                   
+                      
+                    </div>
+
+                    
+                      <small id="price_idadi_help" hidden class="form-text  text-danger">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                          <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                          <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                        </svg>  
+                      {% if useri.langSet == 0 %}Tafadhari Andika idadi{% else %}Please write quantity{% endif %}</small>
+                  </div>
+
+                  <div class="form-group mb-2">
+                    <label for="unit_price" class="brown" >
+                      {% if useri.langSet == 0 %}Bei kwa Idadi{% else %}Quantity Unit Price {% endif %}
+                      <sup>*</sup>
+                    </label>
+
+                    <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+                      <label class="mt-1 text-danger" for="unit_price"></label> 
+                      <div class="box-pointer d-inline "></div>
+                    </div>
+
+                    <input type="number"
+                      class="form-control money-fomat" name="unit_price" data-bei=0 id="unit_price" aria-describedby="price_Bei" placeholder="">
+                   
+                      <small id="price_Bei" hidden class="form-text  text-danger"> 
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                          <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                          <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                        </svg>  
+                      {% if useri.langSet == 0 %}Tafadhari Andika Bei{% else %}Please write Price{% endif %}</small>
+                  </div>
+
+                  <div class="form-group mt-3 text-center">
+
+                      <button class="btn btn-primary smallFont latoFont">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
+                              <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+                              <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+                            </svg> 
+                            
+                            {% if useri.langSet == 0 %}Save Kipimo{% else %}Save Unit{% endif %}
+                      </button>
+
+                  </div>
+
+                  <div class="mt-3 mb-3 text-center" id="rmvUnitBtn" >
+                       <button id="removeUnit" class="btn btn-light btn-sm smallFont text-danger">
+                       
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                          
+                        {% if useri.langSet == 0 %}Ondoa{% else %}Delete{% endif %}
+                       </button>
+                  </div>
+
+              
+              </form>
+
+             
+          </div>
+          
+      </div>
+  </div>
+</div>
+
+
+
+<!-- KUEDIT SIZE.......... -->
+<div class="modal fade" id="kuweka-size-model" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog animate" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleColor">
+            <span class="text-danger">
+              <svg width="1.3em" height="1.3em" viewBox="0 0 16 16" class="bi bi-sort-numeric-down" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" d="M4 2a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11A.5.5 0 0 1 4 2z"/>
+                  <path fill-rule="evenodd" d="M6.354 11.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L4 12.793l1.646-1.647a.5.5 0 0 1 .708 0z"/>
+                  <path d="M12.438 7V1.668H11.39l-1.262.906v.969l1.21-.86h.052V7h1.046zm-2.84 5.82c.054.621.625 1.278 1.761 1.278 1.422 0 2.145-.98 2.145-2.848 0-2.05-.973-2.688-2.063-2.688-1.125 0-1.972.688-1.972 1.836 0 1.145.808 1.758 1.719 1.758.69 0 1.113-.351 1.261-.742h.059c.031 1.027-.309 1.856-1.133 1.856-.43 0-.715-.227-.773-.45H9.598zm2.757-2.43c0 .637-.43.973-.933.973-.516 0-.934-.34-.934-.98 0-.625.407-1 .926-1 .543 0 .941.375.941 1.008z"/>
+                </svg>
+            </span>
+        
+          {% if useri.langSet == 0 %} Kurekebisha Size  za bidhaa  {% else %}Edit Item Size {% endif %}
+      </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      <div class="classic_div mx-4">
+          <form action="/stoku/save_size" data-new=true data-size=0 data-rangi=0 data-value={{bidhaa.id}} id="weka-size-ya-bidhaa" method="post">
+              {% csrf_token %}
+          <div class="row mb-2">
+              <div class="col-4 ">
+                  <label for="jina-size"> Size</label>
+              </div>
+              <div class="col-8 form-group">
+                  <input type="text" class="form-control futika-size" id="jina-la_size" placeholder="{% if useri.langSet == 0 %}Andika size{% else %}write size name{% endif %}">
+              </div>
+          </div>    
+          
+        
+         
+            <div class="border-top py-3">
+          
+              <span class="float-right">
+            <button type="button" class="btn btn-light smallFont" data-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary smallFont">
+                  <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-check2 mr-1" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                  Save</button>
+              </span>
+             
+          </div>
+          </form>             
+      </div>
+         
+
+       </div>
+      
+    </div>
+  </div>
+</div>
+
+
+
+<script src="/static/js/edit_item.js"></script>
+<script src="/static/js/addAudio.js">  </script>
+
+<!-- Add UNITS -->
+<script>
+      $('#submit_Units').submit(function(e){
+           e.preventDefault()
+           const itm = Number('{{bidhaa.id}}'),
+                 price = Number($('#unit_price').val()) || 0,
+                 qty = Number($('#unit_qty').val()) || 0,
+                 name = $('#unit_name').val(),
+                 val = Number($(this).data('val')),
+                 edit =  Number($(this).data('edit')),
+                 url = $(this).attr('action'),
+                 data={
+                          data:{
+                              itm,
+                              price,
+                              qty,
+                              name,
+                              val,
+                              edit
+                          },
+                          url
+                     }
+                
+                
+                 if(price&&qty&&name!=''){
+                    $('#units_modal').modal('hide')
+                    $('#loadMe').modal('show')
+                    const  sendIt = POSTREQUEST(data)
+                    sendIt.then(resp=>{
+                      const msg = lang(resp.swa,resp.eng)
+                      
+                      hideLoading()
+                       $('#loadMe').modal('hide')
+                      if(resp.success){
+                        toastr.success(msg, lang('imefanikiwa','Success'), {timeOut: 2000});
+                        location.reload()
+                        }else{
+                          toastr.error(msg, lang('Haijafanikiwa','Error'), {timeOut: 2000});
+
+                      }
+                    })
+                 }else{
+                  if(!qty)redborder('#unit_qty')
+                  if(!price)redborder('#unit_price')
+                  if(name=='')redborder('#unit_name')
+                 }
+
+      })
+      
+      $('body').on('click','.settingsUnit',function(){
+        $('#sm_unit').text($(this).data('sm'))
+
+        // $('#submit_Units').data('pos',$(this).data('pos'))
+        $('#submit_Units').data('val',$(this).data('val'))
+        $('#submit_Units').data('edit',1)
+
+        $('#unit_name').attr('placeholder',$(this).data('units'))
+        $('#unit_qty').attr('placeholder',Number($(this).data('qty')).toFixed(2))
+        $('#unit_price').attr('placeholder',Number($(this).data('bei')).toLocaleString())
+        $('#unit_price').data('bei',Number($(this).data('bei')))
+        $('#rmvUnitBtn').show()
+
+    })
+
+    $('body').on('click','#removeUnit',function(){
+        if(confirm(lang('Ondoa kipimo','remove item unit'))){
+          $('#units_modal').modal('hide')
+          $('#loadMe').modal('show')
+
+            const val = Number($('#submit_Units').data('val')),
+                  itm = Number('{{bidhaa.id}}'),
+                  data = {
+                    data:{
+                      val,itm
+                    },
+                    url:'/mauzo/removeUnit'
+                  },
+                  sendIt = POSTREQUEST(data)
+
+                  sendIt.then(resp=>{
+
+                    const msg = lang(resp.swa,resp.eng)
+                      
+                      hideLoading()
+                       $('#loadMe').modal('hide')
+                      if(resp.success){
+                        toastr.success(msg, lang('imefanikiwa','Success'), {timeOut: 2000});
+                        location.reload()
+                        }else{
+                          toastr.error(msg, lang('Haijafanikiwa','Error'), {timeOut: 2000});
+
+                      }
+
+                  })
+
+
+        }
+    })
+
+    $('body').on('click','.uni_for_idadi',function(){
+        $('#sm_unit').text($(this).data('sm'))
+        $('#submit_Units').data('pos',$(this).data('pos'))
+        $('#submit_Units').data('val',0)
+        $('#submit_Units').data('edit',0)
+
+        $('#rmvUnitBtn').hide()
+
+        $('#unit_name').attr('placeholder','')
+        $('#unit_qty').attr('placeholder','')
+        $('#unit_price').attr('placeholder','')
+        $('#unit_price').data('bei',0)
+    })
+
+</script>
+
+
+{% endif %}
+
+
+
+
+
+
+
+
+{% if  duka == shop %}
+<span id="chart-cart-btns  "  style="position: fixed;top:75vh;right:25px">
+        <!-- CHATTING BTN..................... -->
+      
+        <a id="market" class="btn btn-default " title="{% if useri.langSet == 0 %}Tafuta Soko{% else %}Market{% endif %}" href="/ecommerce/marketing?itm={{bidhaa.id}}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-globe">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+         </svg>
+        </a>
+      
+</span>
+{% else %}
+<!-- Cart BTN..................... -->
+<span id="chart-cart-btns  "  style="position: fixed;top:75vh;right:25px">
+  <div class="btn-group-vertical py-1 shadow">
+
+    
+  <!-- SEARCH BTN..................... -->
+  <button class="btn btn-light btn-sm py-2" title="{% if useri.langSet == 0 %} Tafuta bidhaa/huduma  {% else %} Search Item/service {% endif %}" data-target="#search_bar_forEntp" data-toggle="modal"  > 
+    <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  </svg>
+  </button>
+
+  <a href="{% url 'viewCart' %}?value={{shop.id}}" class="btn btn-light py-2 btn-sm"  > 
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart3" viewBox="0 0 16 16">
+      <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l.84 4.479 9.144-.459L13.89 4H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+    </svg>
+
+    {% if kapu.count > 0 %}
+     <div  class="d-flex position-absolute " 
+        style="
+        justify-content:center;
+        align-items:center;
+        color: rgb(196, 196, 196);
+        
+        background:brown;
+        border:1px solid rgb(255, 255, 255);
+        width:14px;
+        height:14px;
+        font-weight:600;
+        border-radius:50%;
+        margin-top:-26px;
+        margin-left:14px;
+        font-size:.6em !important;
+        " >
+        
+         {{kapu.count}}
+    </div>
+    {% endif %}
+
+  </a>
+
+
+
+<!-- CHATTING BTN..................... -->
+<button class="btn btn-light btn-sm py-2" onclick="getChats('{{shop.id}}')"  > 
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-chat-left-text" viewBox="0 0 16 16">
+    <path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+    <path d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6zm0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
+  </svg>
+ 
+</button>
+
+
+
+
+  </div>
+
+
+</span>
+
+<!-- AUDUIO FOR VISTORS BTN -->
+
+{% if bidhaa.bidhaa.audio %}
+<p  >
+
+  <button class="audio_end" id="audio_end" onclick="$(this).hide();$(this).siblings('.audio_end').fadeIn(500);let p=document.getElementById('the_audio') ;p.pause()"> 
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-volume-up" viewBox="0 0 16 16">
+    <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/>
+    <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/>
+    <path d="M10.025 8a4.486 4.486 0 0 1-1.318 3.182L8 10.475A3.489 3.489 0 0 0 9.025 8c0-.966-.392-1.841-1.025-2.475l.707-.707A4.486 4.486 0 0 1 10.025 8zM7 4a.5.5 0 0 0-.812-.39L3.825 5.5H1.5A.5.5 0 0 0 1 6v4a.5.5 0 0 0 .5.5h2.325l2.363 1.89A.5.5 0 0 0 7 12V4zM4.312 6.39 6 5.04v5.92L4.312 9.61A.5.5 0 0 0 4 9.5H2v-3h2a.5.5 0 0 0 .312-.11z"/>
+</svg> 
+</button>
+
+<button class="audio_end" style="display: none;"  id="audio_start"
+   onclick="$(this).hide();$(this).siblings('.audio_end').fadeIn(500);let pl=document.getElementById('the_audio') ;pl.play()"
+> 
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16">
+    <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+</svg>
+</button>
+  
+    <audio controls autoplay loop hidden id="the_audio" >
+        <source src="{{bidhaa.bidhaa.audio.url}}" >
+        Your browser does not support the audio element.
+    </audio>
+
+  
+  </p>
+
+  {% endif %}
+
+
+{% endif %}
+
+
+{% if duka != shop %}
+   <input id="vistors" type="hidden" data-shop="{{shop.id}}" data-item='{{bidhaa.id}}' >
+   <script src="/static/js/countVistors.js">  </script>
+{% endif %}
+
+
+ <!-- SERCH ITEM?SERVICE MODAL -->
+ <div class="modal right fade " id="search_bar_forEntp"  role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog "  role="document" >
+ <div class="modal-content" style="border-radius:5px !important;max-width:420px">
+          <div class="modal-header " >
+              
+                 <!-- SEARCH BAR  FOR LAGEr DEVICES -->
+          <div class="d-flex ml-2  round shadowed bordered" style="width: 380px;border-radius:7px" >
+            <span class="  centerItem pl-2 p-1 SearchSvg fontColor "  id="SearchSvgL22">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+             </svg>
+            
+            </span>
+
+            <span class="centerItem pl-2 p-1 loadSearchContent" hidden id="loadSearchContentL22" >
+              <span class="spinner-border  spinner-border-sm"     role="status" aria-hidden="true"></span>
+            </span>
+
+            
+          
+            
+                 <input type="text" data-shop="{{shop.id}}" id="searchInputForAll2" placeholder="{% if useri.langSet == 0 %}Tafuta kwa {% else %}Search from {% endif %} {{shop.name | title }}" 
+                 onkeyup="var thisNum=Number(($(this).val()).length);
+                 if(thisNum>1){
+                  $('#loadSearchContentL22').prop('hidden',false)
+                  $('#SearchSvgL22').prop('hidden',true)
+                  AutoCompleteSearch({valu:$(this),shop:'{{shop.id}}',placeto:'serchAutoComplete22'})
+                }" 
+                 class="form-control searchInputForAll smallerFont" style="height:20px;margin:5px auto;border:0;border-right:1px solid #ccc;border-radius:0 " >
+            
+                
+               
+              
+           
+             
+              <button class="btn btn-default fontColor search_By_Bar btn-sm " data-shop="{{shop.id}}" data-onshelf="0"  type="button" id="triggerId" data-toggle="dropdown" aria-haspopup="true"
+                  aria-expanded="false">
+                    <span class="border-right pr-2" >
+                      <svg xmlns="http://www.w3.org/2000/svg" width=".95em" height=".95em" fill="currentColor" class="bi bi-upc-scan" viewBox="0 0 16 16">
+                        <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5zM.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5zM3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7z"/>
+                      </svg>  
+                    </span>
+                    
+              
+              </button>
+     
+        
+
+
+            
+
+         <div id="serchAutoComplete22"  class="serchAutoComplete whiteBg  position-absolute masaki shadow round  " style="overflow-x:auto;max-height:400px ;width:100%;margin-top:35px" >
+              <ul class="list-unstyled px-2" >
+                
+              </ul>
+         </div>
+      </div>
+                
+          </div>
+          <div class="modal-body">
+            <div class="chat_panels chatts_display p-3 " id="chats_div"  style="height: 58vh;overflow-y:auto">
+                  
+                 <ul class="list-unstyled" id="the_categlist" style="min-height:200px" data-entp="{{duka.id}}" data-by="{{useri.id}}" data-date=0  >
+                     
+                      
+                       
+                   </ul>
+             </div>
+
+                <div id="audio_recorder" class="container classic_div chat_panels position-absolute  " style="height: 100%;display:none;background:#262a305d;top:-22px;left:0;z-index:7777">
+                    
+                  <div class="container d-flex  justify-content-center align-items-center"  style="height: 100%;top:-50px">
+                         <div class="text-center">
+                           <button id="stop_record"  style="color: rgb(146, 6, 6);height:100px;width:100px;border-radius:50%;padding:9px;background:#fff;border:0 " >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="currentColor" class="bi bi-mic-fill" viewBox="0 0 16 16">
+                              <path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z"/>
+                              <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/>
+                            </svg>
+
+                             {% if useri.langSet == 0 %}Tuma{% else %}Send{% endif %}
+                           
+                          </button>
+                         
+                           <br>
+
+                         <h2 class="counter font-weight-bold mt-1" style="width: auto;background:rgba(255, 255, 255, 0.616)" id="count_sec" >
+                            
+                         </h2>
+
+                         
+                         
+
+                         </div>
+
+                         <br>
+
+                    
+                  </div>
+
+                 </div>
+
+             
+
+
+
+        
+          
+        
+
+          <div class="text-center" style="margin-top: -11px;" >
+            <button class="btn btn-light text-primary latoFont btn-sm " data-dismiss="modal" >
+                
+                {% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}
+            </button>
+          </div>
+
+       
+          
+         </div>
+        
+  </div>
+</div> 
+</div>
+
+
+{% endblock %}
+{% block dash-mapper %}
+{% if useri.langSet == 0 %} Bidhaa/Huduma  {% else %} Item/Service {% endif %}
+{% endblock %}      
+
+{% block akaunt-map %}  
+
+ <a href="{% url 'buzinessProfile' %}?value={{shop.id}}" class="tab_show latoFont smallFont" data-show="#general-panel"> {{shop.name | title }} </a>
+
+ <span class="text-muted">
+    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+    </svg>
+  </span> 
+
+ <a href="{% url 'displayProfItems' %}?m={{bidhaa.bidhaa.bidhaa_aina.mahi.id}}&value={{shop.id}}" class="tab_show latoFont smallFont" data-show="#general-panel"> {{bidhaa.bidhaa.bidhaa_aina.mahi.mahitaji | title }} </a> 
+ <span class="text-muted">
+    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+    </svg>
+
+  </span> 
+ <a href="{% url 'displayProfItems' %}?a={{bidhaa.bidhaa.bidhaa_aina.id}}&value={{shop.id}}" class="tab_show latoFont smallFont" data-show="#general-panel"> {{bidhaa.bidhaa.bidhaa_aina.aina | title }}</a> 
+  
+{% endblock %}
+{% block for_item %}{{bidhaa.id}}{% endblock %}
+
+{% block forItems %}
+  {% if duka.Interprise %}
+  <script>
+    getStokuData('/stoku/getItems')
+  </script>
+  {% endif %}
+{% endblock %}
+
+
+
+{% block lughaFirst %}
+<script src="/static/js/lugha.js"></script>
+
+<script src="/static/js/itemView.js"></script>
+<script>
+  $(document).ready(function(){
+     getItemData('{{bidhaa.id}}','{{shop.id}}')
+  })
+   
+</script>
+
+{% endblock %}
+
+
+
+
+

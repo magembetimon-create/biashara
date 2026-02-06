@@ -1,0 +1,487 @@
+{% extends 'userdash.html' %}
+
+{% block Dashboard %}
+
+<link rel="stylesheet" href="/static/css/posts.css">
+
+
+  <div class="whiteBg p-md-3 p-1" style="margin-top:-18px"  >
+    <p class="text-center classic_div position-fixed smallFont latoFont" id="ShowNewBanners" hidden style="left:44%;top:90px">
+      <a href="/posts" class="p-2 brown whiteBg shadowed weight700">
+       (<span id="newBanner"></span>) {% if useri.langSet == 0 %} Mpya {% else %} New {% endif %}
+       
+      </a>
+    </p>
+    <div  class="classic_div addBenners whiteBg shadow p-md-3 p-2" id="bannersContent"  style="max-width: 600px" >
+            {% if wilayaniI > 0 or mkoaniI > 0 or nchiniI > 0 %}
+              <div class="latoFont mb-2" >
+                        
+                      {% if useri.langSet == 0 %}Mapendekezo ya bidhaa/Huduma {% else %}Recommended Items/Services{% endif %}
+                
+                      {% if wilayaniI > 0 %}
+                    <a href="/ecommerce/itmsWithPlace?d={{useri.mtaa.kata.wilaya.id}}"  >  
+                        {{useri.mtaa.kata.wilaya.wilaya |title}}, {{useri.mtaa.kata.wilaya.mkoa.mkoa |title}}, {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+                    </a>
+                        {% elif mkoaniI > 0 and wilayaniI == 0 %}
+                    <a href="/ecommerce/itmsWithPlace?r={{useri.mtaa.kata.wilaya.mkoa.id}}"  >  
+                        {{useri.mtaa.kata.wilaya.mkoa.mkoa |title}}, {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+                    </a>
+
+                  {% elif nchiniI > 0 and mkoaniI == 0 and wilayaniI == 0 %}
+                    <a href="/ecommerce/itmsWithPlace?c={{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.id}}"  >  
+                        {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+                    </a>                  
+                            
+                  {% endif %}
+
+
+             
+                  </div>
+
+              <div class="table-responsive">
+                <div class="d-flex" style="min-width: 500px;" >
+                  {% if wilayaniI > 0 %}
+                  {% for it in wilayani %}
+                    <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}"  class=" centerItem mx-1 items_recommend"  >
+                          <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
+                    </a>
+                  
+                  {% endfor %} 
+                  {% endif %}  
+
+                  {% if wilayaniI == 0 and mkoaniI > 0  %}
+                  {% for it in mkoani %}
+                    <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}"  class=" centerItem mx-1 items_recommend "  >
+                          <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
+                    </a>
+                  
+                  {% endfor %} 
+                  {% endif %}  
+
+                  {% if wilayaniI == 0 and mkoaniI == 0 and nchiniI > 0 %}
+                  {% for it in nchini %}
+                    <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class=" centerItem mx-1  items_recommend"  >
+                          <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
+                          <div class="smallerFont latoFont">  </div>
+                    </a>
+                  
+                  {% endfor %} 
+                  {% endif %}  
+
+
+                </div>                
+              </div>
+              <hr>
+            {% endif %}  
+
+            
+
+            {% for bn in banners %}
+            {% if bn.banner.url or bn.banner.page == 2 %}
+             <div  type="button" onclick="updateVist('{{bn.banner.id}}')"  target="blank" class="thebanner no-hover clickUpdate d-block "  >
+            {% else %}
+             <a  href="/vistFromBanner?b={{bn.banner.id}}" class="thebanner no-hover d-block "  >
+            {% endif %}  
+              
+                <img src="{{bn.banner.banner.url}}"  style="width:100%" srcset="">
+           
+          
+              
+               <div class="noprimary" >
+             
+                  {{bn.banner.desc}} <span class="ml-1 pl-1 border-left darkblue"> @<u >{{bn.banner.Interprise.name | title}}</u> </span>
+                  <span class="ml-1 pl-1 border-left text-primary">{{bn.banner.Interprise.jengo}}, {{bn.banner.Interprise.mtaa.mtaa |title }}, {{bn.banner.Interprise.mtaa.kata.kata |title }}, {{bn.banner.Interprise.mtaa.kata.wilaya.wilaya |title }}, {{bn.banner.Interprise.mtaa.kata.wilaya.mkoa.mkoa |title }}, {{bn.banner.Interprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title }}. </span>
+                </div>
+              
+    
+                   <div class="d-flex noprimary">
+                      <span class=" mr-1 pr-1 centerItem border-right">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      </span>
+    
+                        <span id="vistedusers" data-num="{{bn.banner.visted}}" >{{bn.banner.visted}}</span> 
+                   </div>
+    
+
+                   {% if bn.banner.url or bn.banner.page == 2 %}
+                  </div>
+              {% else %}
+                </a>
+              {% endif %}  
+
+    
+    
+         <hr data-value={{bn.banner.id}}  class="detectView">
+               
+         {% if forloop.counter == 1 %}
+         {% if   mkoaniI > 0 or nchiniI > 0  %}
+         {% if wilayaniI > 0 %}
+         <div class="latoFont mb-2" >
+                   
+                 {% if useri.langSet == 0 %}Mapendekezo ya bidhaa/Huduma {% else %}Recommended Items/Services{% endif %} 
+           
+                
+                {% if mkoaniI > 0 and wilayaniI > 0  %}
+               <a href="/ecommerce/itmsWithPlace?r={{useri.mtaa.kata.wilaya.mkoa.id}}"  >  
+                   {{useri.mtaa.kata.wilaya.mkoa.mkoa |title}}, {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+               </a>
+
+             {% elif mkoaniI == 0 or wilayaniI == 0 and nchiniI > 0 %}
+               <a href="/ecommerce/itmsWithPlace?c={{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.id}}"  >  
+                   {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+               </a>                  
+                       
+             {% endif %}
+
+
+        
+              </div>
+
+         <div class="table-responsive">
+           <div class="d-flex" style="min-width: 500px;" >
+ 
+
+             {% if  mkoaniI > 0 and wilayaniI > 0 %}
+             {% for it in mkoani %}
+               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}"  class="mx-1 centerItem items_recommend"  >
+                     <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
+               </a>
+             
+             {% endfor %} 
+           
+
+             {% elif mkoaniI == 0  or wilayaniI == 0 and nchiniI > 0 %}
+
+             {% for it in nchini %}
+               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class=" mx-1 centerItem items_recommend"  >
+                     <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
+                     <div class="smallerFont latoFont">  </div>
+               </a>
+             
+             {% endfor %} 
+             {% endif %}  
+           </div>                
+         </div>
+         <hr>
+       {% endif %}  
+       {% endif %}
+       {% endif %}
+
+               
+         {% if forloop.counter == 2 %}
+         {% if   mkoaniI > 0 and nchiniI > 0 and wilayaniI > 0 %}
+         <div class="latoFont mb-2" >
+                 {% if useri.langSet == 0 %}Mapendekezo ya bidhaa/Huduma {% else %}Recommended Items/Services{% endif %}
+               <a href="/ecommerce/itmsWithPlace?c={{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.id}}"  >  
+                   {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+               </a>                  
+                  
+              </div>
+
+         <div class="table-responsive">
+           <div class="d-flex" style="min-width: 500px;" >
+             {% for it in nchini %}
+               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class=" centerItem items_recommend mx-1"  >
+                     <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
+                     <div class="smallerFont latoFont">  </div>
+               </a>
+             {% endfor %} 
+           
+           </div>                
+         </div>
+         <hr>
+       {% endif %}  
+       {% endif %}
+    
+      {% endfor %}
+
+
+      {% if banners.count <= 2 %}
+        {% if banners.count <= 1 %}
+        
+        <div class="centerItem" style="min-height:70vh" >
+          <img src="/static/pics/post1.svg" style="width:100%" alt="">
+        </div>
+        {% if   mkoaniI > 0 or nchiniI > 0  %}
+        {% if wilayaniI > 0 %}
+        <div class="latoFont mb-2" >
+                  
+                {% if useri.langSet == 0 %}Mapendekezo ya bidhaa/Huduma {% else %}Recommended Items/Services{% endif %} 
+          
+               
+               {% if mkoaniI > 0 and wilayaniI > 0  %}
+              <a href="/ecommerce/itmsWithPlace?r={{useri.mtaa.kata.wilaya.mkoa.id}}"  >  
+                  {{useri.mtaa.kata.wilaya.mkoa.mkoa |title}}, {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+              </a>
+
+            {% elif mkoaniI == 0 or wilayaniI == 0 and nchiniI > 0 %}
+              <a href="/ecommerce/itmsWithPlace?c={{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.id}}"  >  
+                  {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+              </a>                  
+                      
+            {% endif %}
+
+
+       
+            </div>
+        <div class="table-responsive">
+          <div class="d-flex" style="min-width: 500px;" >
+
+
+            {% if  mkoaniI > 0 and wilayaniI > 0 %}
+            {% for it in mkoani %}
+              <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}"  class="shadowed centerItem items_recommend"  >
+                    <img src="{{it.img.url}}" alt=""  style="max-width: 100%;max-height:100% " >
+              </a>
+            
+            {% endfor %} 
+          
+
+            {% elif mkoaniI == 0  or wilayaniI == 0 and nchiniI > 0 %}
+
+            {% for it in nchini %}
+              <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class=" centerItem  mr-3 items_recommend"  >
+                    <img src="{{it.img.url}}" alt=""  style="max-width: 100%;max-height:100% " >
+                    <div class="smallerFont latoFont">  </div>
+              </a>
+            
+            {% endfor %} 
+            {% endif %}  
+          </div>                
+        </div>
+       
+      {% endif %}  
+      {% endif %}
+      {% endif %}
+
+         <hr>
+        
+         <div class="centerItem" style="min-height:70vh">
+                  <img src="/static/pics/post2.svg" style="width:100%" alt="">
+
+         </div>
+
+         {% if   mkoaniI > 0 and nchiniI > 0 and wilayaniI > 0 %}
+         <div class="latoFont mb-2" >
+                 {% if useri.langSet == 0 %}Mapendekezo ya bidhaa/Huduma {% else %}Recommended Items/Services{% endif %}
+               <a href="/ecommerce/itmsWithPlace?c={{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.id}}"  >  
+                   {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+               </a>                  
+                  
+              </div>
+
+         <div class="table-responsive">
+           <div class="d-flex" style="min-width: 500px;" >
+             {% for it in nchini %}
+               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class=" centerItem  mr-3 items_recommend"  >
+                     <img src="{{it.img.url}}" alt=""  style="max-width: 100%;max-height:100% " >
+                     <div class="smallerFont latoFont">  </div>
+               </a>
+             {% endfor %} 
+           
+           </div>                
+         </div>
+         <hr>
+       {% endif %} 
+       
+
+      {% endif %}
+
+   </div>
+
+
+<div class="text-center mt-4" data-to=10 data-last=false data-load=true id="loadDataWhenVisible" >
+  <span class="spinner-border  spinner-border-sm"     role="status" aria-hidden="true"></span>
+</div>
+
+  </div>
+
+   <div id="chart-cart-btns"  style="position: fixed;top:90vh;right:10px">
+          <!-- MARKET BTN -->
+      <a id="market" class="btn btn-default " title="{% if useri.langSet == 0 %}Tafuta Soko{% else %}Market{% endif %}" href="{% if duka.Interprise %}/buzinessProfile?value={{duka.id}}{% else %}/ecommerce/marketing?hm=1{% endif %}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-globe">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+      </svg>
+      </a>
+
+    </div> 
+
+
+  <script>
+     //Update on click ........................//
+     function updateVist(bn){
+        const dataA = {
+           data:{
+            bn:Number(bn)
+           },
+           url:'/UpdateVist'
+        }
+        ,
+        sendIt =POSTREQUEST(dataA)
+        sendIt.then(resp=>{
+          if(resp.success){
+            $('#vistedusers').text(Number($('#vistedusers').data('num'))+1)
+            
+            window.open(resp.url,'_blank')
+            location.reload()
+          }
+      
+        })
+
+        
+        
+     }
+
+
+     $(document).ready(function(){
+      var updatedB = Number('{{seenB}}')
+          //LoadContent loader visibility 
+          function isInViewport(el) {
+            const rect = el.getBoundingClientRect();
+            return (
+                rect.top >= 0 &&
+                rect.left >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+        
+            );
+        }
+
+        function viewedBanner(){
+          const el = document.querySelectorAll('.detectView'),
+                windowHeight =  window.innerHeight ,
+                clientH = document.documentElement.clientHeight,
+                bnL = el.length
+
+         for(i=0;i<bnL;i++){
+           const rect = el[i].getBoundingClientRect(),
+                 bnV = el[i].dataset.value
+                 //console.log({bnL,i})
+
+           if(rect.top >= 0 && rect.bottom <= ((bnL-1)==i?(windowHeight || clientH):(windowHeight*.60 || clientH*.60)) && bnV > updatedB  )  {
+              
+              //console.log({bottom:rect.bottom,top:rect.top,id:bnV,i,bnL})
+              const data = {
+                data:{bnV},
+                url:'/seenBanner'
+              },
+              sendIt = POSTREQUEST(data)
+              sendIt.then(resp=>{
+                if(resp.success)updatedB = bnV
+                // console.log(resp)
+              })
+
+
+           }       
+           
+
+
+         }
+          //el.each(function(){
+          //  let itsbottom = Number($(this).offset().top ),
+          //        
+          //        
+          //         console.log({itsbottom,clientH,windowHeight})
+          //    if(itsbottom <= (windowHeight|| clientH)){
+          //        
+          //      
+          //  }
+          //})
+        }
+
+            $(document).scroll(function(){
+              viewedBanner()
+              const el = document.getElementById('loadDataWhenVisible'),
+              to = Number($('#loadDataWhenVisible').data('to')),
+              load=$('#loadDataWhenVisible').data('load')
+              if(isInViewport(el) && load )loadContents(to)
+
+            })  
+
+            function loadContents(to){
+              $('#loadDataWhenVisible').data('load',false)
+              const data = {
+                data:{
+                  to:Number(to)
+                },
+                url:'/loadPosts'
+              },
+              sendIt = POSTREQUEST(data)
+
+              sendIt.then(resp=>{
+              //  console.log(resp)
+
+
+                let post = ''
+                resp.banners.forEach(bn=>{
+                  post+=`
+                        ${bn.page==2 || bn.url!=null?`<div  type="button" onclick="updateVist(${bn.banner_id})"  target="blank" class="thebanner no-hover clickUpdate d-block "  >`:`<a  href="/vistFromBanner?b=${bn.banner_id}" class="thebanner no-hover d-block "  >`}
+                  
+                          <img src="${bn.img}"  style="width:100%" srcset="">
+                
+                
+                    
+                          <div class="noprimary" >
+                        
+                              ${bn.desc} 
+                            
+                                <span class="ml-1 pl-1 border-left darkblue"> @<u class="text-capitalize" >${bn.shop}</u> </span>
+                                <span class="ml-1 pl-1 border-left text-primary text-capitalize">${bn.jengo}, ${bn.mtaa}, ${bn.kata}, ${bn.wilayaN}, ${bn.mkoaN}, ${bn.nchiN}. </span>
+                            </div>
+                            
+                        
+              
+                              <div class="d-flex noprimary">
+                                <span class=" mr-1 pr-1 centerItem border-right">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+                                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                      <circle cx="12" cy="12" r="3"></circle>
+                                  </svg>
+                                </span>
+              
+                                  <span id="vistedusers" data-num="${bn.visted}" >${bn.visted}</span> 
+                              </div>
+
+                  
+                        ${bn.page==2 || bn.url!=null?`</div>`:`</a>`}
+
+                        <hr data-value=${bn.banner_id} class="detectView" >
+        
+                          `
+                })
+                
+                $('#bannersContent').append(post)   
+                $('#loadDataWhenVisible').data('to',to+10)       
+                $('#loadDataWhenVisible').data('load',resp.banners.length>0)
+                if(resp.banners.length==0) $('#loadDataWhenVisible').html(lang('Hakuna machapisho mengine','No other posts'))
+              })
+            }
+      
+     })
+
+
+  </script>
+
+{% endblock %}
+
+{% block nav-posts %}
+class="c-menu__item style-none is-active  "
+{% endblock %}
+
+{% block active-posts %} 
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-grid-fill  text-primary " viewBox="0 0 16 16">
+    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
+  </svg>
+{% endblock %}
+
+{% block dash-map %}
+   {% if useri.langSet == 0 %}Machapisho{% else %}Posts{% endif %}
+{% endblock %}
+
+
+

@@ -1,0 +1,217 @@
+{% extends 'userdash.html' %}
+
+{% block all-bills %}
+<div class="whiteBg py-2 " style="margin-top: -15px;"> 
+  <h5 class="py-3 px-2 {% if bil_num == 0 %} border-bottom {% endif %}">
+    <svg id="wine" fill-rule="evenodd" class="wine svgmade mx-1"  width="1.4em" height="1.4em" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 404 497">
+        <path d="M132-228.5v86A131.53,131.53,0,0,1,93.06-48.94,131.53,131.53,0,0,1-.5-10h-99a131.53,131.53,0,0,1-93.56-38.94A131.53,131.53,0,0,1-232-142.5v-86H132m19-20H-251a151.58,151.58,0,0,0-1,17v89C-252-58.62-183.38,10-99.5,10h99C83.38,10,152-58.62,152-142.5v-89a151.58,151.58,0,0,0-1-17Z" transform="translate(252 248.5)"/>
+        <line x1="7.5" y1="90" x2="392.5" y2="90" fill="none" stroke="#000" stroke-miterlimit="10" stroke-width="30"/>
+        <line x1="201.5" y1="258" x2="201.5" y2="487" fill="none" stroke="#000" stroke-miterlimit="10" stroke-width="30"/>
+        <line x1="69.5" y1="487" x2="326.5" y2="487" fill="none" stroke="#000" stroke-miterlimit="10" stroke-width="30"/>
+      </svg> 
+      {% if useri.langSet == 0 %} Orodha ya Matumizi{% else %} Expenses available {% endif %}
+</h5>
+ {% if len > 0 %}
+          {% load humanize %}
+   <div class="table-responsive pb-5" id="penye_table" >
+  
+  </div>
+
+  
+ 
+ {%else%}
+
+ 
+<p class="pt-3 pb-5 text-center">
+           {% if useri.langSet == 0 %} Hakuna Matumizi kwa sasa {% else %}No Expenses available {% endif %}
+ 
+</p>
+
+
+
+{% endif %}
+
+
+
+<script>
+   let exp=[]
+
+    '{% for bil in bili %}'
+        exp.push({
+               id:Number('{{bil.matumizi.id}}'),
+               name:'{{bil.matumizi.matumizi}}',
+               number:'{{bil.tumika}}'
+        })
+    '{% endfor %}'
+
+     
+    if(exp.length>0){
+
+        let trp = ` 
+        <table  class="table  smallFont" style="width:100%">
+        <thead>
+            <tr class="smallFont">
+                <th>#</th>
+                <th>{% if useri.langSet  == 0 %}Jina{% else %}Name{% endif %}</th>
+            
+                
+            
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody >`,
+            num=1
+            exp.forEach(m=>{
+
+                trp+=`<tr class="text-center">
+                <td>${num}</td>
+                <td style="font-weight:600" >${m.name}</td>
+                <td>
+
+                <button onclick="$('#matumizi_e_jina').val('${m.name}');$('#matumizi_e_jina').data('value',${m.id});if(Number(${m.number})==0){$('#ondoa_tumizi').prop('hidden',false)}else{$('#ondoa_tumizi').prop('hidden',true)}" data-toggle="modal" data-target="#Edit_matumizi" class="btn btn-default btn-sm latoFont text-primary" >Edit </button>
+
+                </td></tr>`
+                num+=1
+
+            })
+        trp+=`</tbody></table>`
+
+        $('#penye_table').html(trp)
+       
+
+    }
+</script>
+
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="Edit_matumizi" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+                <div class="modal-header">
+                        <h5 class="modal-title">           
+                            {% if useri.langSet == 0 %} Kuediti Matumizi {% else %}Edit Expense{% endif %}
+                        </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                    </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <form action="/purchase/editMatumizi" id="edit_matumizi_" method="post">
+                   <div class="form-group">
+                     <div class="input-group">
+                             <input type="text" name="matumizi_e_jina" data-value=0 data-ngapi=0 id="matumizi_e_jina" class="form-control" placeholder="" aria-describedby="helpId">
+                              <button type="button"
+                              onclick="if(confirm('{% if useri.langSet == 0 %}Ondoa Matumizi{% else %} Remove  expenses {% endif %}'))
+                                        {
+                                        let data={
+                                            data:{
+                                                val:Number($('#matumizi_e_jina').data('value')),
+                                                csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+                                            },
+                                            url:'/purchase/removeExpenses'
+                                        }
+                                    
+                                        sendData(data)
+                                        }
+                                        
+                                        "
+                              class="btn btn-deault text-danger btn-sm" id="ondoa_tumizi" hidden >
+                                <svg width="14" height="14" viewBox="0 0 16 16" class="bi bi-trash" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                </svg>
+                              </button>
+                     </div>
+                   </div>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center pb-3">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
+
+<script>
+   $('#edit_matumizi_').submit(function(e){
+       e.preventDefault()
+       let data={
+           data:{
+               name:$('#matumizi_e_jina').val(),
+               value:$('#matumizi_e_jina').data('value'),
+               csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+           },
+           url:$(this).attr('action')
+       }
+       if(data.data.name!=''&& data.data.value!=0){
+           sendData(data)
+       }else{
+           redborder('#matumizi_e_jina')
+       }
+   })
+
+
+
+   function sendData(data){
+      $('#Edit_matumizi').modal('hide')
+           $('#loadMe').modal('show')
+        $.ajax({
+            type: "POST", 
+              url: data.url,
+            data: data.data,
+          }).done(function(res){
+                  let msg= ''
+                  '{% if useri.langSet == 0 %} '
+                       msg = res.msg_swa
+                    '{% else %}'
+                        msg = res.msg_eng
+                    '{% endif %}'
+                  $('#loadMe').modal('hide')
+
+              if(res.success){
+                 toastr.success(msg, ' {% if useri.langSet == 0 %}  Imefanikiwa {% else %}Success {% endif %}', {timeOut: 7000});
+                  location.reload()
+              }else{
+                  
+                toastr.error(msg, ' {% if useri.langSet == 0 %}  Hitilafu {% else %}Error {% endif %}', {timeOut: 7000});
+
+              }
+
+          }) 
+   }
+   
+</script>
+
+ </div>
+{% endblock %}
+ 
+{% block dash-mapper %}
+ 
+{% if useri.langSet == 0 %}  Bili {% else %}Bills {% endif %}
+
+{% endblock %} 
+
+{% block nav-bills %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+
+{% block active-matumizi-menu %}
+class="btn-default btn btn-sm pop2_active_menu"
+{% endblock %}
+
+{% block active-bills %} 
+   <svg xmlns="http://www.w3.org/2000/svg" class="bi bi-receipt text-primary font-weight-bold" height="1.3em" width="1.3em" viewBox="0 0 24 24"  fill="currentColor">
+      <path d="M20,4H4C2.89,4,2.01,4.89,2.01,6L2,18c0,1.11,0.89,2,2,2h10v-2H4v-6h18V6C22,4.89,21.11,4,20,4z M20,8H4V6h16V8z M24,17v2 h-3v3h-2v-3h-3v-2h3v-3h2v3H24z"/>
+  </svg>
+  {% endblock %}
+
+{% block dash-map %} 
+   {% if useri.langSet == 0 %}Orodha ya Matumizi  {% else %}Expenses list{% endif %}
+{% endblock %}

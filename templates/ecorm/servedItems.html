@@ -1,0 +1,181 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+{% block Dashboard %}
+<div  class="whiteBg py-2 px-2 pb-5" style="min-height: 80vh;margin-top:-19px" >
+  <div class="text-md-right p-2">
+    <a href="/ecommerce/servedVendors">
+      <span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-compass">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+        </svg>        
+      </span>
+
+     {% if useri.langSet == 0 %}Wafanyabiashara Muhimu{% else %}Saved Vendors{% endif %}</a>
+ </div>
+
+    <h6 class="p-2" > 
+        <a class="noprimary" href="{% if the_group or the_Pgroup %}/ecommerce/servedItems{% else %}#{% endif %}">
+            {% if useri.langSet == 0 %}Bidhaa/huduma Muhimu{% else %}Saved Items/Services{% endif %}
+        </a>
+        {% if the_group or the_Pgroup %}
+
+        
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+        <a  href="/ecommerce/servedItems?grp={{the_Pgroup.id}}">
+          <i class="darkblue">
+            
+             {% if useri.langSet == 0 %}{{the_Pgroup.jina | title}} {% else %}{{the_Pgroup.name | title}}{% endif %}
+          </i>
+            
+            
+        </a>
+
+        
+        {% endif %}
+        {% if the_group  %}
+
+        
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+        <a  href="#">
+          <i class="darkblue">
+             {% if useri.langSet == 0 %}{{the_group.jina | title}} {% else %}{{the_group.name | title}}{% endif %}
+          </i>
+        </a>
+
+        {% endif %}
+    </h6>
+    <hr>
+
+    {% if zipo > 0 %}
+
+    <div class="categs " >
+        {% for b in bibi %}
+        <div class="dropdown open mx-1 d-inline"  >
+            <a class="btn btn-light btn-sm darkblue smallerFont dropdown-toggle" type="button" id="triggerId" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="true">
+                        {% if useri.langSet == 0 %} {{b.bidhaa.bidhaa.bidhaa_aina.mahi.aina.aina.jina | title}} {% else %} {{b.bidhaa.bidhaa.bidhaa_aina.mahi.aina.aina.name | title }}{% endif %}
+         </a>
+            <div class="dropdown-menu" aria-labelledby="triggerId">
+                {% for m in mama %}
+                {% if m.bidhaa.bidhaa.bidhaa_aina.mahi.aina.aina == b.bidhaa.bidhaa.bidhaa_aina.mahi.aina.aina %}
+                    <a class="dropdown-item btn-sm smallerFont" href="/ecommerce/servedItems?gr={{m.bidhaa.bidhaa.bidhaa_aina.mahi.aina.id}}">
+                        {% if useri.langSet == 0 %} {{m.bidhaa.bidhaa.bidhaa_aina.mahi.aina.jina | title}} {% else %} {{m.bidhaa.bidhaa.bidhaa_aina.mahi.aina.name | title }}{% endif %}
+
+                    </a>
+                {% endif %}
+            
+            {% endfor %} 
+            </div>
+        </div>
+        {% endfor %}
+    </div>    
+
+    <ul class="list-unstyled p-2">
+   
+        {% for it in bidhaa %}
+          <li class="py-2 border-bottom" >
+                  <a href="/displaySelItem?value={{it.itm.Interprise.id}}&i={{it.itm.id}}" class="d-flex ">
+                       <div class="border-right p-2">
+                            {% if it.img %}
+                               <img src="{{it.img}}"  style="max-width:50px;max-height:50px">
+                            {% else %}
+                                <span style="color:rgba(66, 66, 66, 0.466)" >
+                                    {% if  it.itm.service %}
+                                    <svg xmlns="http://www.w3.org/2000/svg"  height="2.2em" width="2.2em" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12.22,19.85c-0.18,0.18-0.5,0.21-0.71,0c-0.18-0.18-0.21-0.5,0-0.71l3.39-3.39l-1.41-1.41l-3.39,3.39 c-0.19,0.2-0.51,0.19-0.71,0c-0.21-0.21-0.18-0.53,0-0.71l3.39-3.39l-1.41-1.41l-3.39,3.39c-0.18,0.18-0.5,0.21-0.71,0 c-0.19-0.19-0.19-0.51,0-0.71l3.39-3.39L9.24,10.1l-3.39,3.39c-0.18,0.18-0.5,0.21-0.71,0c-0.19-0.2-0.19-0.51,0-0.71L9.52,8.4 l1.87,1.86c0.95,0.95,2.59,0.94,3.54,0c0.98-0.98,0.98-2.56,0-3.54l-1.86-1.86l0.28-0.28c0.78-0.78,2.05-0.78,2.83,0l4.24,4.24 c0.78,0.78,0.78,2.05,0,2.83L12.22,19.85z M21.83,13.07c1.56-1.56,1.56-4.09,0-5.66l-4.24-4.24c-1.56-1.56-4.09-1.56-5.66,0 l-0.28,0.28l-0.28-0.28c-1.56-1.56-4.09-1.56-5.66,0L2.17,6.71c-1.42,1.42-1.55,3.63-0.4,5.19l1.45-1.45 C2.83,9.7,2.96,8.75,3.59,8.12l3.54-3.54c0.78-0.78,2.05-0.78,2.83,0l3.56,3.56c0.18,0.18,0.21,0.5,0,0.71 c-0.21,0.21-0.53,0.18-0.71,0L9.52,5.57l-5.8,5.79c-0.98,0.97-0.98,2.56,0,3.54c0.39,0.39,0.89,0.63,1.42,0.7 c0.07,0.52,0.3,1.02,0.7,1.42c0.4,0.4,0.9,0.63,1.42,0.7c0.07,0.52,0.3,1.02,0.7,1.42c0.4,0.4,0.9,0.63,1.42,0.7 c0.07,0.54,0.31,1.03,0.7,1.42c0.47,0.47,1.1,0.73,1.77,0.73c0.67,0,1.3-0.26,1.77-0.73L21.83,13.07z"/>
+                                      </svg>
+                                    {% else %}
+                                      <svg width="2.2em" height="2.2em" viewBox="0 0 16 16" stroke-width="1" class="bi bi-gem" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                        <path fill-rule="evenodd" d="M3.1.7a.5.5 0 0 1 .4-.2h9a.5.5 0 0 1 .4.2l2.976 3.974c.149.185.156.45.01.644L8.4 15.3a.5.5 0 0 1-.8 0L.1 5.3a.5.5 0 0 1 0-.6l3-4zm11.386 3.785l-1.806-2.41-.776 2.413 2.582-.003zm-3.633.004l.961-2.989H4.186l.963 2.995 5.704-.006zM5.47 5.495l5.062-.005L8 13.366 5.47 5.495zm-1.371-.999l-.78-2.422-1.818 2.425 2.598-.003zM1.499 5.5l2.92-.003 2.193 6.82L1.5 5.5zm7.889 6.817l2.194-6.828 2.929-.003-5.123 6.831z"/>
+                                      </svg>
+                                    {% endif %}    
+                                    </span>
+                            {% endif %}
+                       </div>
+    
+                       <div class="pl-2">
+                           <h6 style="font-size:14px ;" class="text-capitalize py-0 mb-0" >{{it.itm.bidhaa.bidhaa_jina}}</h6>
+                            <div  class="smallerFont" >
+                                  <span style="color:rgb(44, 44, 44)" class="ml-1" > {{it.itm.bidhaa.maelezo}} </span> 
+                                  <!-- <span class=" border-left px-1" > #{{it.itm.bidhaa.kampuni.kampuni_jina}} </span> 
+                                  <span class=" border-left px-1" > #{{it.itm.bidhaa.bidhaa_aina.aina}} </span> 
+                                  <span class=" border-left px-1" > #{{it.itm.bidhaa.bidhaa_aina.mahi.mahitaji}} </span>  -->
+                            </div>
+                           <div class="smallFont text-capitalize" style="color:rgba(32, 32, 32, 0.842) ;" > 
+                            <span class="mr-1 border-right pr-1"> <span class="darkblue smallFont latoFont">{{it.itm.Interprise.currencii}}.</span>
+                            <span class="brown weight600">{{it.itm.Bei_kuuza | floatformat:'-2' | intcomma  }}</span> 
+                            </span>  
+                             
+                            {{it.itm.Interprise.name}}  <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                                        </svg>
+    
+                                                        
+                            {{it.itm.Interprise.jengo | title}} ,    
+                            {{it.itm.Interprise.mtaa.mtaa | title}} ,    
+                            {{it.itm.Interprise.mtaa.kata.kata | title}} ,    
+                            {{it.itm.Interprise.mtaa.kata.wilaya.wilaya | title}},
+                            {{it.itm.Interprise.mtaa.kata.wilaya.mkoa.mkoa | title}},
+                            {{it.itm.Interprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}},
+    
+    
+                            </div> 
+                       </div>
+                  </a>
+          </li>
+          {% endfor %}
+       </ul>
+
+       <p class="py-2" style="-webkit-box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14); 
+       box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14);">
+       
+           {% if page.has_previous %}
+             <a href="{% url 'servedItems' %}?page=1&r={{r}}&d={{d}}" type="button"  class="btn btn-default border0">
+               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+                 <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+               </svg>
+               </a>
+         
+               <a href="{% url 'servedItems' %}?page={{page.previous_page_number}}&r={{r}}&d={{d}}" type="button"  class="btn btn-default  border0">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                   <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                 </svg>
+               </a>
+             {% endif %}
+         
+           {% if page.has_next %}
+               <a href="{% url 'servedItems' %}?page={{page.next_page_number}}&r={{r}}&d={{d}}" type="button" class="btn btn-default border0">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                   <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                 </svg>
+               </a>
+         
+               <a href="{% url 'servedItems' %}?page={{pages}}&r={{r}}&d={{d}}" type="button"  class="btn btn-default border0" >
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+                   <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                 </svg>
+               </a>
+         {% endif %}
+               <p >
+                
+                 {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+         
+               </p>
+       </p>
+
+    {% else %}   
+       <div class="centerItem" style="height:50vh" >
+            <p>{% if useri.langSet == 0 %} Hakuna Bidhaa/huduma yeyote Muhimu iliyopatikana {% else %}No Saved Item found{% endif %} </p>
+       </div>
+    {%endif%}
+</div>
+{% endblock %}    
+
+{% block dash-map %}
+   {% if useri.langSet == 0 %}Bidhaa/huduma Muhimu{% else %}Saved Items{% endif %}
+{% endblock %}

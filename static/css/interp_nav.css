@@ -1,0 +1,30 @@
+#intp_navii li{
+    -webkit-box-shadow: 0px 0px 10px -7px rgba(0,0,0,0.75);
+    -moz-box-shadow: 0px 0px 10px -7px rgba(0,0,0,0.75);
+    box-shadow: 0px 0px 10px -7px rgba(0,0,0,0.75);
+
+}
+
+#intp_navii li a{
+    padding: 3px 10px;
+}
+#intp_navii li a p{
+ line-height: 0;
+ font-size: 18px;
+ color:var(--fontColor)
+}
+
+#intp_navii li a:hover{
+    text-decoration: none;
+}
+
+.chat_not span svg{
+    stroke:var(--fontColor)
+}
+
+.chat_not span span{
+  margin-left:-3px;
+  color:var(--brown);
+  
+  font-weight: 600;
+}

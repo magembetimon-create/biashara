@@ -1,0 +1,507 @@
+{% extends 'userdash.html' %}
+
+{% block billcss %}
+<link rel="stylesheet" href="/static/css/notify.css">
+{% endblock %}
+
+{% block Dashboard %}
+
+<div class=" py-2 px-3 whiteBg" style="margin-top: -15px;min-height:100vh"> 
+  <h5 class="pt-3 px-3" >
+        <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-bell-fill" viewBox="0 0 16 16">
+            <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zm.995-14.901a1 1 0 1 0-1.99 0A5.002 5.002 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901z"/>
+          </svg>  {% if useri.langSet == 0 %}Notifikesheni 
+          
+          {% if a == 1 %}
+            zote
+          {% endif %}
+          {% if ed == 1 %}
+           za Kuediti Bidhaa
+          {% endif %}
+          {% if ced == 1 %}
+           za Kuediti Aina ya Bidhaa
+          {% endif %}
+          {% if po == 1 %}
+            za Oda za manunuzi
+          {% endif %}
+          {% if so == 1 %}
+            za Oda za mauzo
+          {% endif %}
+          
+          {% if it == 1 %}
+            za Kuhamisha bidhaa
+          {% endif %}
+
+          {% if ir == 1 %}
+            za Kupokea bidhaa
+          {% endif %}
+
+          {% if rt == 1 %}
+            za Kurudisha bidhaa
+          {% endif %}
+          {% if rd == 1 %}
+            za bidhaa kurudishwa
+          {% endif %}
+          
+          {% else %}
+          
+        {% if a == 1 %}
+          All
+        {% endif %}
+        {% if ed == 1 %}
+          Editing Item
+        {% endif %}
+        {% if ced == 1 %}
+          Editing Items Category
+        {% endif %}
+        {% if po == 1 %}
+          Purchase Order
+        {% endif %}
+        {% if so == 1 %}
+          Sales Order
+        {% endif %}
+        
+        {% if it == 1 %}
+          Items Transfer
+        {% endif %}
+
+        {% if ir == 1 %}
+          Items Receive 
+        {% endif %}
+
+        {% if rt == 1 %}
+          Item(s) Return
+        {% endif %}
+        {% if rd == 1 %}
+          Returned Item(s)
+        {% endif %}
+         Notifications{% endif %}
+  </h5>
+
+  <div class="produ-opt-panel py-0 table-responsive" style="padding: 0;" >
+      <ul style="min-width: 1350px;" class="list-unstyled d-none  smallerFont d-md-flex border-bottom ">
+      <li class="py-3 {% if a == 1 %} actively {% endif %}">
+          <a class="p-3 " href="/notificationing"> 
+            
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-list-ul" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+            </svg>
+            
+        {% if useri.langSet == 0 %} Zote  {% else %} All {% endif %}
+       </a></li>
+      <li class="py-3 {% if ed == 1 %} actively {% endif %}"><a class="p-3 " href="/notificationing?ed=1">
+            
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+          <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+          <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+        </svg>
+       
+         {% if useri.langSet == 0 %} Kuediti Bidhaa  {% else %}Item Editing {% endif %} 
+        </a></li>
+      <li class="py-3 {% if ced == 1 %} actively {% endif %}"><a class="p-3 " href="/notificationing?ced=1">
+            
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+          <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+          <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+        </svg>
+       
+         {% if useri.langSet == 0 %} Kuediti Aina  {% else %}Cateory Editing {% endif %} 
+        </a></li>
+      <li class="py-3  "><a class="p-3 {% if po == 1 %} actively {% endif %}" href="/notificationing?po=1">
+         
+        <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M0 0h24v24H0zm18.31 6l-2.76 5z" fill="none"/>
+          <path d="M11 9h2V6h3V4h-3V1h-2v3H8v2h3v3zm-4 9c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-9.83-3.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.86-7.01L19.42 4h-.01l-1.1 2-2.76 5H8.53l-.13-.27L6.16 6l-.95-2-.94-2H1v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.13 0-.25-.11-.25-.25z"/>
+          </svg>
+        
+         {% if useri.langSet == 0 %} Oda za Manunuzi  {% else %} Purchase Order {% endif %} 
+        </a></li>
+      <li class="py-3 {% if so == 1 %} actively {% endif %} "><a class="p-3 " href="/notificationing?so=1">
+         
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-cart-check" viewBox="0 0 16 16">
+          <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+          <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+        </svg>
+        
+         {% if useri.langSet == 0 %} Oda za Mauzo  {% else %} Sales Order {% endif %} </a></li>
+
+      <li class="py-3  {% if it == 1 %} actively {% endif %}"><a class="p-3 " href="/notificationing?it=1"> 
+           
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-90deg-up" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M4.854 1.146a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L4 2.707V12.5A2.5 2.5 0 0 0 6.5 15h8a.5.5 0 0 0 0-1h-8A1.5 1.5 0 0 1 5 12.5V2.707l3.146 3.147a.5.5 0 1 0 .708-.708l-4-4z"/>
+        </svg>
+        
+        {% if useri.langSet == 0 %} Kuhamisha Bidhaa  {% else %} Items Transfer{% endif %} </a></li>
+    
+      <li class="py-3  {% if ir == 1 %} actively {% endif %}"><a class="p-3 " href="/notificationing?ir=1"> 
+          
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-90deg-down" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M4.854 14.854a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V3.5A2.5 2.5 0 0 1 6.5 1h8a.5.5 0 0 1 0 1h-8A1.5 1.5 0 0 0 5 3.5v9.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4z"/>
+        </svg>
+       
+        {% if useri.langSet == 0 %} Kupokea Bidhaa  {% else %} Items Receives{% endif %} </a>
+      </li>
+
+      <li class="py-3  {% if pk == 1 %} actively {% endif %}"><a class="p-3 " href="/notificationing?pk=1"> 
+          
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
+          <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+        </svg>
+       
+        {% if useri.langSet == 0 %} Usafirishaji {% else %} Delivery {% endif %} </a>
+      </li>
+
+      <li class="py-3  {% if rt == 1 %} actively {% endif %}"><a class="p-3 " href="/notificationing?rt=1"> 
+          
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-cart-dash-fill" viewBox="0 0 16 16">
+          <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM6.5 7h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1 0-1z"/>
+        </svg>
+       
+        {% if useri.langSet == 0 %} Kurudisha Bidhaa {% else %} Items Returns{% endif %} </a>
+      </li>
+
+      <li class="py-3  {% if rd == 1 %} actively {% endif %}"><a class="p-3 " href="/notificationing?rd=1"> 
+          
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-cart-x" viewBox="0 0 16 16">
+          <path d="M7.354 5.646a.5.5 0 1 0-.708.708L7.793 7.5 6.646 8.646a.5.5 0 1 0 .708.708L8.5 8.207l1.146 1.147a.5.5 0 0 0 .708-.708L9.207 7.5l1.147-1.146a.5.5 0 0 0-.708-.708L8.5 6.793 7.354 5.646z"/>
+          <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+        </svg>
+       
+        {% if useri.langSet == 0 %} Bidhaa Kurudishwa  {% else %}Returned Items {% endif %} </a>
+      </li>
+    
+      </ul>
+  </div>
+    {% if noticel  > 0 %}
+    
+    
+
+   <ul class=" px-3 classic_div" id="notifications_list" >
+       {% for nt in notice %}
+          <li class="border-y list-unstyled px-2 border-bottom">
+              
+              <a href="{% url 'notify' %}?vl={{nt.note}}" style="color: var(--fontColor);" class="p-2">
+                <h6 style="font-weight: 600;color:var(--fontColor)"> 
+                  {% if nt.itmTr %}
+                  <span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-90deg-up" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.854 1.146a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L4 2.707V12.5A2.5 2.5 0 0 0 6.5 15h8a.5.5 0 0 0 0-1h-8A1.5 1.5 0 0 1 5 12.5V2.707l3.146 3.147a.5.5 0 1 0 .708-.708l-4-4z"/>
+                    </svg>
+                  </span>
+                 
+                  {% if useri.langSet == 0 %}Kuhamishwa  Bidhaa{% else %}Item(s) Transfer{% endif %}
+                  {% endif %}  
+
+                  {% if nt.ItemEdit %}
+                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                      <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                      <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                    </svg>
+                  </span>
+                 
+                  {% if useri.langSet == 0 %}Kuediti  Bidhaa{% else %}Item Editing{% endif %}
+                  {% endif %}  
+
+                  {% if nt.ItemCatEdit %}
+                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                      <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                      <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                    </svg>
+                  </span>
+                 
+                  {% if useri.langSet == 0 %}Kuediti Aina ya Bidhaa{% else %}Items Category Editing{% endif %}
+                  {% endif %}  
+
+                  {% if nt.itmRcv %}
+                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-90deg-down" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.854 14.854a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V3.5A2.5 2.5 0 0 1 6.5 1h8a.5.5 0 0 1 0 1h-8A1.5 1.5 0 0 0 5 3.5v9.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4z"/>
+                      </svg>
+                 </span>
+                  {% if useri.langSet == 0 %}Kupokea Bidhaa zilizohamishwa{% else %}Receive Transfered item(s){% endif %}
+                  {% endif %}  
+
+                  {% if nt.puO %}
+                  <span><svg xmlns="http://www.w3.org/2000/svg" height="20" width="20"  fill="currentColor">
+                    <path d="M0 0h24v24H0zm18.31 6l-2.76 5z" fill="none"/>
+                    <path d="M11 9h2V6h3V4h-3V1h-2v3H8v2h3v3zm-4 9c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-9.83-3.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.86-7.01L19.42 4h-.01l-1.1 2-2.76 5H8.53l-.13-.27L6.16 6l-.95-2-.94-2H1v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.13 0-.25-.11-.25-.25z"/>
+                    </svg></span>
+                   
+                    {% if useri.langSet == 0 %}Oda ya manunuzi{% else %}Purchase Order{% endif %}
+                  {% endif %} 
+
+                  {% if nt.pickUp %}
+                  <span>                              
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
+                      <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                    </svg>
+                </span>
+                   
+                    {% if useri.langSet == 0 %}Mzigo wa kusafirisha{% else %}Package delivery{% endif %}
+                  {% endif %} 
+
+                  {% if nt.bilRtn %}
+                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-dash-fill" viewBox="0 0 16 16">
+                        <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM6.5 7h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1 0-1z"/>
+                      </svg>
+                  </span>
+                    {% if useri.langSet == 0 %}Manunuzi Kurudishwa{% else %}Purchase Return{% endif %}
+                  {% endif %}  
+                  {% if nt.saO %}
+                    <span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-check" viewBox="0 0 16 16">
+                            <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+                            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                          </svg>
+                    </span>
+                    {% if useri.langSet == 0 %}Oda ya mauzo{% else %}Sales Order{% endif %}
+                  {% endif %}  
+                  {% if nt.saRtn %}
+                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-x" viewBox="0 0 16 16">
+                        <path d="M7.354 5.646a.5.5 0 1 0-.708.708L7.793 7.5 6.646 8.646a.5.5 0 1 0 .708.708L8.5 8.207l1.146 1.147a.5.5 0 0 0 .708-.708L9.207 7.5l1.147-1.146a.5.5 0 0 0-.708-.708L8.5 6.793 7.354 5.646z"/>
+                        <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                      </svg>
+                  </span>
+                    {% if useri.langSet == 0 %}Mauzo Kurudishwa{% else %}Sales Return{% endif %}
+                  {% endif %}  
+
+                </h6>
+
+                  <div class="latoFont" >{% autoescape off %} {% if useri.langSet == 0 %} {{nt.msg_swa }}{% else %}{{nt.msg_eng}}{% endif %}{% endautoescape %} </div>
+                    
+                  
+                  <div class="brown"> 
+                      <script  >
+                        document.write(moment('{{nt.date| date:"r"}}').format('DD/MM/YYYY, HH:mm'))
+                     </script> 
+                </div>
+              </a>
+
+              
+          </li>
+       {% endfor %}
+   </ul>
+   <p class=" p-4 border-top">
+     
+
+    {% if noting.has_previous %}
+      <a href="{% url 'notificationing' %}?page=1" type="button"  class="btn btn-light border0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-left" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M8.354 1.646a.5.5 0 0 1 0 .708L2.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+            <path fill-rule="evenodd" d="M12.354 1.646a.5.5 0 0 1 0 .708L6.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+          </svg>
+        </a>
+  
+        <a href="{% url 'notificationing' %}?page={{noting.previous_page_number}}" type="button"  class="btn btn-light  border0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+          </svg>
+        </a>
+      {% endif %}
+  
+    {% if noting.has_next %}
+        <a href="{% url 'notificationing' %}?page={{noting.next_page_number}}" type="button" class="btn btn-light border0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </a>
+  
+        <a href="{% url 'notificationing' %}?page={{pages}}" type="button"  class="btn btn-light border0" >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M3.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L9.293 8 3.646 2.354a.5.5 0 0 1 0-.708z"/>
+            <path fill-rule="evenodd" d="M7.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L13.293 8 7.646 2.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </a>
+  {% endif %}
+        <label for="">
+         
+          {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+  
+        </label>
+    </p>
+   {% else %}
+       <div class="centerItem " style="min-height: 50vh;"  >
+            <h6 class="text-center" >{% if useri.langSet == 0 %}Hakuna Notification yeyote kwa sasa{% else %}No any Notification found{% endif %}</h6>
+       </div>
+   {% endif %}
+
+    
+
+    
+<!-- fixed navbar for mobiles -->
+<nav class="mobile-bottom-nav2 classic_div lightBg d-md-none position-fixed" style="left:0;overflow-x: auto;bottom:0;;width:100%" >
+
+  <div class="d-flex pt-1" style="min-width: 900px ;color:var(--fontColor)" >
+
+  <div class="mobile-bottom-nav__item  ">
+      <a href="/notificationing" class="{% if a == 1 %}text-primary{% endif %} " >
+        <div class="text-center  " >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-list-ul" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+          </svg>
+        </div>
+        <div class="text-center nav-text ">
+            
+            {% if useri.langSet == 0 %}Noti Zote {% else %} All Notes {% endif %}
+        </div>
+        
+       
+      </a>
+  </div>
+
+  <div class="mobile-bottom-nav__item ">
+      <a href="/notificationing?ed=1" class="{% if ed == 1 %}text-primary{% endif %}">
+        <div class="text-center " >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+          </svg>
+        </div>
+        <div class="text-center nav-text ">
+             
+            {% if useri.langSet == 0 %} Kuediti Bidhaa{% else %}Item Editing{% endif %}
+
+        </div>
+        
+       
+      </a>
+  </div>
+
+  <div class="mobile-bottom-nav__item ">
+      <a href="/notificationing?ced=1" class="{% if ced == 1 %}text-primary{% endif %}">
+        <div class="text-center " >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+          </svg>
+        </div>
+        <div class="text-center nav-text ">
+             
+            {% if useri.langSet == 0 %} Kuediti Aina{% else %}Category Editing{% endif %}
+
+        </div>
+        
+       
+      </a>
+  </div>
+
+  <div class="mobile-bottom-nav__item  ">
+      <a href="/notificationing?po=1" class="{% if po == 1 %} text-primary{% endif %}">
+        <div class="text-center" >
+          
+          <svg xmlns="http://www.w3.org/2000/svg" height="17" width="17" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M0 0h24v24H0zm18.31 6l-2.76 5z" fill="none"/>
+            <path d="M11 9h2V6h3V4h-3V1h-2v3H8v2h3v3zm-4 9c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-9.83-3.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.86-7.01L19.42 4h-.01l-1.1 2-2.76 5H8.53l-.13-.27L6.16 6l-.95-2-.94-2H1v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.13 0-.25-.11-.25-.25z"/>
+            </svg>
+          
+        </div>
+        <div class="text-center nav-text ">
+           
+           {% if useri.langSet == 0 %} Manunuzi Oda{% else %}Purchase Orders{% endif %}
+
+        </div>
+        
+       
+      </a>
+  </div>
+
+  <div class="mobile-bottom-nav__item  ">
+      <a href="/notificationing?so=1" class="{% if so == 1 %}text-primary{% endif %}">
+        <div class="text-center" >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-cart-check" viewBox="0 0 16 16">
+            <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+          </svg>
+        </div>
+        <div class="text-center nav-text ">
+          
+           {% if useri.langSet == 0 %} Mauzo Oda{% else %}Sales Order{% endif %}
+
+        </div>
+      </a>
+  </div>
+
+  <div class="mobile-bottom-nav__item  ">
+      <a href="/notificationing?it=1" class="{% if it == 1 %}text-primary{% endif %}">
+        <div class="text-center" >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-arrow-90deg-up" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M4.854 1.146a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L4 2.707V12.5A2.5 2.5 0 0 0 6.5 15h8a.5.5 0 0 0 0-1h-8A1.5 1.5 0 0 1 5 12.5V2.707l3.146 3.147a.5.5 0 1 0 .708-.708l-4-4z"/>
+          </svg>
+        </div>
+        <div class="text-center nav-text ">
+          
+           {% if useri.langSet == 0 %} Kuhamisha Bidhaa {% else %} Items Transfer{% endif %}
+
+        </div>
+        
+       
+      </a>
+  </div>
+
+  <div class="mobile-bottom-nav__item  ">
+      <a href="/notificationing?ir=1" class="{% if ir == 1 %}text-primary{% endif %}">
+        <div class="text-center" >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-arrow-90deg-down" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M4.854 14.854a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V3.5A2.5 2.5 0 0 1 6.5 1h8a.5.5 0 0 1 0 1h-8A1.5 1.5 0 0 0 5 3.5v9.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4z"/>
+          </svg>
+        </div>
+        <div class="text-center nav-text ">
+          
+           {% if useri.langSet == 0 %} Kupokea Bidhaa {% else %} Items Receves{% endif %}
+
+        </div>
+        
+       
+      </a>
+  </div>
+
+  <div class="mobile-bottom-nav__item  ">
+      <a href="/notificationing?rt=1" class="{% if rt == 1 %}text-primary{% endif %}">
+        <div class="text-center" >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-cart-dash-fill" viewBox="0 0 16 16">
+            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM6.5 7h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1 0-1z"/>
+          </svg>
+        </div>
+        <div class="text-center nav-text ">
+          
+           {% if useri.langSet == 0 %} Kurudisha Bidhaa {% else %} Items Return{% endif %}
+
+        </div>
+        
+       
+      </a>
+  </div>
+  <div class="mobile-bottom-nav__item  ">
+      <a href="/notificationing?rd=1" class="{% if rd == 1 %}text-primary{% endif %}">
+        <div class="text-center" >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-cart-x" viewBox="0 0 16 16">
+            <path d="M7.354 5.646a.5.5 0 1 0-.708.708L7.793 7.5 6.646 8.646a.5.5 0 1 0 .708.708L8.5 8.207l1.146 1.147a.5.5 0 0 0 .708-.708L9.207 7.5l1.147-1.146a.5.5 0 0 0-.708-.708L8.5 6.793 7.354 5.646z"/>
+            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+          </svg>
+        </div>
+        <div class="text-center nav-text ">
+          
+           {% if useri.langSet == 0 %} Bidhaa Kurudishwa {% else %}Returned Items {% endif %}
+
+        </div>
+        
+       
+      </a>
+  </div>
+
+  </div>
+
+
+</nav>
+
+</div>
+{% endblock %}
+ 
+
+{% block dash-map %} {% if useri.langSet == 0 %}Notifikesheni{% else %}Notifications{% endif %}
+
+{% endblock %}

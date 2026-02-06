@@ -1,0 +1,412 @@
+{% extends 'userdash.html' %}
+
+{% block billcss %}
+<link rel="stylesheet" href="/static/css/sales.css">
+{% endblock %}
+
+{% block bidhaa %}
+<div  class=" whiteBg" >
+    <div class="row classic_div py-3 mx-2">
+        <h5 class="col-8">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-file-earmark-diff-fill" viewBox="0 0 16 16">
+                <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zM8 6a.5.5 0 0 1 .5.5V8H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V9H6a.5.5 0 0 1 0-1h1.5V6.5A.5.5 0 0 1 8 6zm-2.5 6.5A.5.5 0 0 1 6 12h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>
+              </svg>
+            <span class="pl-2">
+               {% if useri.langSet == 0 %}Marekebisho Stoku {% else %} Stock Adjustment {% endif %}      
+            </span>
+        </h5>
+
+
+
+        <h5 class="col-4 text-right">
+            <a type="button" href="/stoku/AllAdjs" class="border0 btn btn-primary smallFont latoFont">
+                {% if useri.langSet == 0 %}Notisi za Marekebisho  {% else %}Adjastment Notes{% endif %}
+            </a>
+        </h5>
+    </div>
+
+    <ul class="nav nav-tabs mx-0 mt-3 px-2 mb-3">
+        <li class="nav-item">
+          <a href="/stoku/reduceItemQuantity" class="nav-link active text-primaryi tab_show robotoFont produ-add-nav smallFont" id="kupunguza-bidhaa" data-show="#kupunguza-bidhaa-panel" type='button'>
+               {% if useri.langSet == 0 %}  Kupunguza Bidhaa  {% else %} Reduce Item(s) Qty {% endif %}
+            </a>
+        </li>
+        <li class="nav-item ">
+          <a href="/stoku/AddItemQuantity" class="nav-link robotoFont smallFont tab_show produ-add-nav" id="kuongeza-bidhaa" data-show="#kuongeza-bidhaa-panel"  type='button'>
+              
+
+              {% if useri.langSet == 0 %}  Kuongeza Bidhaa  {% else %} Add Item(s) Qty {% endif %}
+            
+            </a>
+        </li>
+       
+      </ul>
+
+    
+  <div class="p-3 ml-4 mt-3" style="max-width: 400px;">
+      <div class="row">
+          <div class="col-3">
+              <label for="transfer_code">
+                {% if useri.langSet == 0 %}Punguza# {% else %}Reduce#{% endif %}
+              </label>
+          </div>
+          <div class="col-9">
+              <input name="transfer_code"  id="transfer_code" placeholder="ADJ-{{adjst}}" class="form-control smallFont" /> 
+                  
+          </div>
+      </div>
+
+      <div class="row mt-3">
+          <div class="col-3">
+              <label for="transfer_date">
+                {% if useri.langSet == 0 %}Tarehe  {% else %}Date{% endif %}
+              </label>
+          </div>
+          <div class="col-9">
+              <input name="transfer_date" type="date"  id="transfer_date" class="form-control smallFont" /> 
+                  
+              <script>
+                var date = new Date();
+              var day = date.getDate();
+              var month = date.getMonth() + 1;
+              var year = date.getFullYear();
+          
+              if (month < 10) month = "0" + month;
+              if (day < 10) day = "0" + day;
+          
+              var today = year + "-" + month + "-" + day;       
+              document.getElementById("transfer_date").value = today;
+          
+              var today = new Date().toISOString().split('T')[0];
+              document.getElementsByName("transfer_date")[0].setAttribute('max', today);
+             </script>
+
+          </div>
+      </div>
+
+      <div class="row mt-3">
+          <div class="col-3">
+              <label for="from_interprise">
+                {% if useri.langSet == 0 %}Stoku  {% else %}Stock{% endif %}
+              </label>
+          </div>
+          <div class="col-9">
+              <select name="from_interprise"  id="from_interprise" class="form-control smallFont">
+                  <option value={{duka.id}} >{{duka | title}} </option>
+              </select>
+
+          </div>
+      </div>
+      
+      <div class="row mt-3">
+          <div class="col-3">
+              <label for="adjReason" class="text-danger font-weight-bold" >
+                {% if useri.langSet == 0 %}Sababu{% else %}Reason{% endif %} <sup>*</sup>
+              </label>
+          </div>
+          <div class="col-9">
+              <select name="adjReason"  id="adjReason"  class="custom-select smallFont">
+                 <option value=1 >{% if useri.langSet == 0 %}Kutumika{% else %}Used{% endif %} </option>
+                 <option value=2 >{% if useri.langSet == 0 %}Kuharibika{% else %}Demaged{% endif %}</option>
+                 <option value=3 >{% if useri.langSet == 0 %}Kupita Muda wa Matumizi{% else %}Expired{% endif %}</option>
+                 <option value=4 >{% if useri.langSet == 0 %}Kupotea{% else %}Waste{% endif %} </option>
+                 <option value=9 >{% if useri.langSet == 0 %}Mengineyo{% else %}Others{% endif %} </option>
+              </select>
+
+          </div>
+      </div>
+
+    
+       <div class="row mt-3" id="if_used" >
+          <div class="col-3">
+             
+          </div>
+          <div class="col-9">
+            <div class="row py-0">
+                <div class="col-8">
+                     <label for="choose_matum" class="brown smallFont weight600" >{% if useri.langSet == 0 %}Chagua Matumizi{% else %}Select Expense{% endif %}<sup>*</sup> </label>
+                </div>
+                <div class="col-4 text-right">
+                 <div class="custom-control custom-checkbox">
+                   <input type="checkbox" class="custom-control-input" 
+                   onchange="if($(this).prop('checked')){$('#tumia_jina-adj').prop('hidden',false);$('#chagua-matumizi-adj').hide()}else{$('#tumia_jina-adj').prop('hidden',true);$('#chagua-matumizi-adj').show()}" 
+                   id="tumizi_jipya-adj">
+                   <label class="custom-control-label latoFont text-primary cursor-pointer" style="cursor: pointer !important;" for="tumizi_jipya-adj">
+                     {% if useri.langSet == 0 %}Mpya{% else %}New{% endif %}
+                   </label>
+                 </div>
+                </div>
+              </div>
+ 
+            <input type="text" name="tumia_jina-adj" hidden id="tumia_jina-adj" class="form-control" placeholder="{% if useri.langSet == 0 %}Andika Matumizi{% else %}Write Expese{% endif %}" aria-describedby="helpId">
+ 
+            <div id="chagua-matumizi-adj" >
+                   <select name="chagua-matumizi-adjst" id="chagua-matumizi-adjst"   class="form-control selectpicker" data-live-search="true">
+                       <option data-value=0 value="0">{% if useri.langSet == 0 %}--Chagua Matumizi--   {% else %}--Select Expense--{% endif %}</option>
+                       {% for t in tumizi %}
+                       <option data-value={{t.id}} value={{t.id}} >{{t.matumizi}}</option>
+                       {% endfor %}
+                    </select>       
+            </div>
+          </div>
+      </div>
+
+      <div class="row mt-3">
+          <div class="col-3">
+              <label for="to_interprise">
+                {% if useri.langSet == 0 %}Maelezo  {% else %}Descriptions{% endif %}
+
+              </label>
+          </div>
+          <div class="col-9">
+                 <textarea name="Reduce_maelezo" id="Reduce_maelezo" class="form-control" col=5 ></textarea>
+
+          </div>
+      </div>
+  </div>
+
+
+  <div class="row  border-bottom" style="max-width: 750px;">
+    <div class="col-md-12"  >
+      <div class="mx-md-2  bgWhite px-1 py-3 table-responsive" style="padding-bottom:220px;margin-top:-10px;">
+        <table id="prod_table" class=" table-bordered table table-sm" style="min-width: 600px;" data-row=1>
+         
+          <thead>
+              <tr class="smalleFont latoFont">
+                  <th> {% if useri.langSet == 0 %}Picha  {% else %}Image{% endif %}</th>
+                  <th> {% if useri.langSet == 0 %}Bidhaa  {% else %}Item{% endif %}</th>
+                  <th> {% if useri.langSet == 0 %}Idadi  {% else %}Qty{% endif %}</th>
+              </tr>
+          </thead>
+          <tbody id="item_tr_tbody">
+              <tr id="list_tr1" data-pos=1 >
+                  <td   class="p-1 " >
+                    
+                    <!-- IMAGE -->
+                    <div class=" bg-light centerItem" id="imgplace1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
+                            <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                            <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                          </svg>
+                      </div>
+
+                      </td>
+
+                      <td >
+                      <!-- ITEM NAME -->
+                      <div class="suggest-holder  item-attr1 ">
+                        <input
+                        placeholder=" {% if useri.langSet == 0 %} Andika Jina la Bidhaa {% else %} Write Item name {% endif %}"
+                        style="min-width: 210px;"
+                        type="text" 
+                        data-pos=1
+                        id = "search1"
+                        data-itm=0
+                        class="form-control border0 darkblue text-capitalize weight500 muhimu-b-kununua-zilizopo suggest-prompt1 suggest-prompt input-data latoFont" />
+                       
+                        <ul class="masaki masaki1" data-hiarch=1 style="min-width: 350px;z-index:999999;max-height:250px;overflow-y:scroll"></ul>
+
+                      </div>
+                      <div class="smallerFont" id="ItemDesc1"></div>
+                  
+                  </td>
+
+                  <td class="p-1">
+                      <!-- QUANTITY -->
+                      <div class="input-group" style="max-width: 190px;">
+                          <!-- UNITS -->
+                          <select name="qty_unit" style="max-width: 80px;" id="unit_sel1" class="input-group-prepend made-input latoFont smallerFont">
+                              <option value=0 ></option>
+                          </select>
+
+                      <input type="number" id="qty1" data-notsure=0 data-sm=0 data-onshelf=0 data-pos=1 class="form-control sh_qty border0 smallFont" >
+
+                          <!-- Button trigger color modal -->
+                         <div class=" input-group-append border" id="is_colored_item1" >
+                              <button  id="colored_items1" title="{% if useri.langSet == 0 %}  Rangi  {% else %} Color {% endif %}" class="btn btn-light colored_items btn-sm px-1" data-toggle="modal" data-pos=1  data-target="#modal_color"  data-val=0>
+                                  <img  width="20" src="{{baseUrl}}/{{'colors.svg'}}" />
+                              </button>
+                          </div>
+
+                          <!-- Button to remove item from table -->
+                      <button data-pos=1 class="btn-default remove_bill_item_tr  btn btn-sm text-danger position-absolute" style="right: -62px;top:12px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" fill="currentColor" class="bi bi-dash-circle-dotted" viewBox="0 0 16 16">
+                            <path d="M8 0c-.176 0-.35.006-.523.017l.064.998a7.117 7.117 0 0 1 .918 0l.064-.998A8.113 8.113 0 0 0 8 0zM6.44.152c-.346.069-.684.16-1.012.27l.321.948c.287-.098.582-.177.884-.237L6.44.153zm4.132.271a7.946 7.946 0 0 0-1.011-.27l-.194.98c.302.06.597.14.884.237l.321-.947zm1.873.925a8 8 0 0 0-.906-.524l-.443.896c.275.136.54.29.793.459l.556-.831zM4.46.824c-.314.155-.616.33-.905.524l.556.83a7.07 7.07 0 0 1 .793-.458L4.46.824zM2.725 1.985c-.262.23-.51.478-.74.74l.752.66c.202-.23.418-.446.648-.648l-.66-.752zm11.29.74a8.058 8.058 0 0 0-.74-.74l-.66.752c.23.202.447.418.648.648l.752-.66zm1.161 1.735a7.98 7.98 0 0 0-.524-.905l-.83.556c.169.253.322.518.458.793l.896-.443zM1.348 3.555c-.194.289-.37.591-.524.906l.896.443c.136-.275.29-.54.459-.793l-.831-.556zM.423 5.428a7.945 7.945 0 0 0-.27 1.011l.98.194c.06-.302.14-.597.237-.884l-.947-.321zM15.848 6.44a7.943 7.943 0 0 0-.27-1.012l-.948.321c.098.287.177.582.237.884l.98-.194zM.017 7.477a8.113 8.113 0 0 0 0 1.046l.998-.064a7.117 7.117 0 0 1 0-.918l-.998-.064zM16 8a8.1 8.1 0 0 0-.017-.523l-.998.064a7.11 7.11 0 0 1 0 .918l.998.064A8.1 8.1 0 0 0 16 8zM.152 9.56c.069.346.16.684.27 1.012l.948-.321a6.944 6.944 0 0 1-.237-.884l-.98.194zm15.425 1.012c.112-.328.202-.666.27-1.011l-.98-.194c-.06.302-.14.597-.237.884l.947.321zM.824 11.54a8 8 0 0 0 .524.905l.83-.556a6.999 6.999 0 0 1-.458-.793l-.896.443zm13.828.905c.194-.289.37-.591.524-.906l-.896-.443c-.136.275-.29.54-.459.793l.831.556zm-12.667.83c.23.262.478.51.74.74l.66-.752a7.047 7.047 0 0 1-.648-.648l-.752.66zm11.29.74c.262-.23.51-.478.74-.74l-.752-.66c-.201.23-.418.447-.648.648l.66.752zm-1.735 1.161c.314-.155.616-.33.905-.524l-.556-.83a7.07 7.07 0 0 1-.793.458l.443.896zm-7.985-.524c.289.194.591.37.906.524l.443-.896a6.998 6.998 0 0 1-.793-.459l-.556.831zm1.873.925c.328.112.666.202 1.011.27l.194-.98a6.953 6.953 0 0 1-.884-.237l-.321.947zm4.132.271a7.944 7.944 0 0 0 1.012-.27l-.321-.948a6.954 6.954 0 0 1-.884.237l.194.98zm-2.083.135a8.1 8.1 0 0 0 1.046 0l-.064-.998a7.11 7.11 0 0 1-.918 0l-.064.998zM4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7z"/>
+                          </svg>
+                      </button>
+
+                      </div>
+
+
+                      <div class="idadi_imezidi" id="idadi_imezidi1">
+                     </div>
+
+                      <!-- DISPLAY SHOWED COLOR -->
+                      <div class="color-wrapper mt-1 text-right" style="height: 35px;">
+                        <div  id="popColored1" class="py-1 whiteBg p-1 text-left shrink-palet popColored  rounded  "
+                       
+                         style="
+                            cursor:pointer;display: none;
+                            ">
+     
+                      <div class="row classic_div">
+                         <label for="" style="cursor: pointer;"  class="smallerFont latoFont col-8 latoFont px-2">
+                             {% if useri.langSet == 0 %}Rangi{% else %}Color{% endif %}(<span id="color_qt1" class="text-danger" >0</span>)
+                         </label>
+     
+                           <p class="text-right col-4">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+                                 <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                               </svg>
+                           </p>
+                      </div>
+                      
+                        
+                      
+     
+                     <div id="color_obj1" 
+                     style="-webkit-box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37); 
+                             box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37);" >
+     
+                     </div>
+     
+                     
+                     </div>
+                    </div>
+                      
+                  </td>
+              </tr>
+       
+          </tbody>
+      </table>
+
+      </div>
+    </div>
+    <div class="col-md-12">
+          <p class="text-right" >
+         <button class="btn-sm latoFont smallerFont btn btn-secondary" id="add-btn">
+            +  {% if useri.langSet == 0 %}Kuongeza  {% else %}Add{% endif %}
+         </button>
+     </p>
+     <form action="/stoku/Zipungue" data-order=0 method="post" id="saveReduceAdj" >
+        {% csrf_token %}
+
+     <p class="text-center mb-5 pb-5">
+         <button class="btn btn-primary  latoFont">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
+                <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+                <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+              </svg>   Save
+         </button>
+     </p>
+   </form>
+
+    </div>
+   
+
+     
+  </div>
+
+   
+
+</div>
+
+ <!-- Modal Color Rangi Rangi-->
+ <div class="modal fade" id="modal_color" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog animate" role="document">
+        <div class="modal-content">
+                <div class="modal-header">
+                        <h6 class="modal-title">
+                             <img  width="25" src="{{baseUrl}}/{{'colors.svg'}}" />
+                           
+                            {% if useri.langSet == 0 %}
+
+                            Rangi za <span style="color:rgb(108, 39, 236)" id="item_jina"></span> {% else %} <span style="color:rgb(108, 39, 236)" id="item_jina"></span> color  {% endif %}
+                        </h6>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                    </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-5">
+
+                    </div>
+                    <div class="col-7">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <label for="input" class="pt-2 px-2 smallFont">{% if useri.langSet == 0 %}Tafuta Rangi{% else %} Filter color {% endif %}:</label>                            </div>
+                            <input type="text" id="filter_itm_color" class="form-control smallerFont">
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    $(document).ready(function(){
+                      $("#filter_itm_color").on("keyup", function() {
+                        var value = $(this).val().toLowerCase();
+                        $("#bill_item_color .the_color_itm").filter(function() {
+                          $(this).toggle($(this).data('rangi_names').toLowerCase().indexOf(value) > -1)
+                        });
+                      });
+                    });
+                </script>
+                <div class="container-fluid pr-5 mt-3" id="bill_item_color">                       
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary border0" data-dismiss="modal">Close</button>
+                <!-- <button type="button" class="btn btn-primary">Save</button> -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).on('mouseenter', '.popColored', function (e) {
+        $(this).addClass('extend-palet')
+        $(this).removeClass('shrink-palet')
+
+      //   let pos=$(this).parent('div').position()
+      //  // console.log(pos)
+      //   $(this).css('left',pos.left+'px')
+
+
+    })
+
+    $(document).on('mouseleave', '.popColored', function (e) {
+        $(this).removeClass('extend-palet')
+        $(this).addClass('shrink-palet')
+
+    })
+</script>
+
+<script src="/static/js/stokuAdjust.js"></script>
+
+
+
+{% endblock %}
+
+{% block billmpya %}
+<script>    
+    $('#loadMe').modal('show')
+  </script>
+{%endblock%}
+
+{% block dash-mapper %}
+ {% if useri.langSet == 0 %} Bidhaa  {% else %} Items {% endif %}
+{% endblock %}   
+{% block nav-stock %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+
+
+
+{% block active-stock %} class="bi bi-shop text-primary font-weight-bold"{% endblock %}
+
+{% block dash-map %}<a href="#" class="tab_show" data-show="#general-panel">  {% if useri.langSet == 0 %}Marekebisho stoku{% else %}Stock Adjustments{% endif %}</a> {% endblock %}
+{% block forItems %}
+<script>
+  getStokuData('/stoku/getItems')
+</script>
+{% endblock %}

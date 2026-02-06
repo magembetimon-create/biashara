@@ -1,0 +1,631 @@
+
+{% load humanize %}
+
+{% load static %}
+{% static "pics" as baseUrl %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>
+       
+        INVO-{{the_bill.code}}
+     
+    </title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
+    <script type="text/javascript" src="{% static 'js/jquery.js' %}" ></script>
+
+    <!-- <script src="{% static 'js/staffaccordion.js' %}"></script> -->
+
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/momentlocale.js' %}"></script>
+    <script src="{% static 'js/qrcode.min.js' %}"></script>
+
+
+<style>
+    html, body {
+       
+        min-width: 1130px;
+      }
+
+      * {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        
+      }
+      
+    body{
+        
+        color: rgba(17, 17, 17, 0.89);
+        margin: 0;
+        padding: 0;
+        justify-content: stretch;
+        font-family:'Times New Roman';
+        font-weight: 400;
+    } 
+
+    td{
+        color: rgb(44, 44, 44);
+        font-weight:500;
+        font-size: large;
+
+    }
+    .smallFont{
+        font-size: small;
+    }
+
+    th{
+        text-align: center;
+    }
+
+    table{
+        border-color:#000  !important;
+        background:#f2f2f2;
+    }
+
+    .total_amount{
+        font-size: 1.6em;
+    }
+    .invo_sumary{
+        font-size: large;
+    }
+    .itm_desc{
+        font-weight:lighter;
+    }
+    td div strong{
+        color: #0a528af8;
+        font-weight: 500;
+        font-size: 1.3em;
+    }
+
+    .brown{
+        color: brown;
+    }
+
+
+</style>
+</head>
+  <body>
+
+    
+<div  class="table-responsive pt-3 pb-5" id="invo_box" >
+
+    <div class="classic_div mt-sm-2 pt-3 pb-2 px-3 the_invo_page" id="the_invo_page" >
+        <h3 class="mb-3"><a href="/"> FanyaBiashara.com</a> </h3>
+        <div class="border-bottom py-3 text-center">
+                   {% if duka.logo and duka.invo_logo %}
+                         <div  style="height: 80px;">
+                            <img src="{{duka.logo.url}}" style="height:100%">
+                          </div> 
+                       {% endif %}
+                    
+                       <h1 class="font-weight-bold">
+                           {{duka.name | title}}
+                           
+                       </h1>
+
+                        <h4 style="margin-top:-10px"  >
+                           {{duka.slogan}}
+                        </h4>
+
+                        <h4 style="margin-top:-10px"  >
+                           {{duka.jengo}}
+                        </h4>
+
+                       <h4 style="margin-top:-10px" >
+                        
+                        {{duka.mtaa.mtaa | title}} ,{{duka.mtaa.kata.kata | title}} ,{{duka.mtaa.kata.wilaya.wilaya | title}}, 
+                        {{duka.mtaa.kata.wilaya.mkoa.mkoa | title}}, {{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}}
+                    </h4>
+                    
+
+                    {% if reg.count > 0 %}
+                              
+                    <div class="col-12" style="margin-top: -6px;">
+                        <h6>
+                         {% for r in reg %}
+                            {% if forloop.counter > 1 %}
+                               ,
+                            {% endif %}
+                               {{r.reg_name }}:  {{r.reg_no }}
+                            {% endfor %}
+                        </h6>
+                    </div>   
+                   
+                {% endif %}
+                    
+                       <h3 style="margin-top:-10px" ><strong>{{duka.Intp_code}}</strong> </h3>
+       </div>
+  <div class="row classic_div pt-4" >
+     <!-- <div class="col-5 border-right">
+            
+            <address>
+                <div class="row" >
+               
+            </div>
+
+             <div class="row" style="margin-top: -6px;">
+            
+                <div class="col-12">
+                    <h4 class="">
+                        {{duka.owner.email }} 
+                    </h4>
+                </div>
+                {% if reg.count > 0 %}
+                   {% for r in reg %}
+                    <div class="col-12" style="margin-top: -6px;">
+                        <h4 >
+                            {{r.reg_name }}:  {{r.reg_no }}
+                        </h4>
+                    </div>   
+                   {% endfor %}
+                {% endif %}
+
+                  
+               
+                
+            </div>
+          </address>
+        <br>
+
+    </div> -->
+     <div class="col-12">
+         <h2 class="text-danger ">
+
+          {% if the_bill.order and not the_bill.service %}  
+             {% if then.langSet == 0 %} ANKARA {% else %} INVOICE{% endif %}
+          {% else %}   
+             {% if then.langSet == 0 %} ANKARA {% if the_bill.service %}YA HUDUMA{% endif %} {% else %}{% if the_bill.service %}SERVICE{% endif %} INVOICE {% endif %}
+          {% endif %}
+
+
+         </h2>
+          <div class=" " style="margin-top:-8px">
+              
+               <h4>INVO-{{the_bill.code}}</h4> 
+             
+          </div>
+          <hr>
+
+          <div class="row smallFont" style="margin-top: -6px;">
+            <div class="col-6 ">
+                <h4 >
+                    {% if then.langSet == 0 %} Tarehe ya Ankara{% else %} Invoice Date {% endif %}
+                </h4>
+            </div>
+            <div class="col-6 ">
+                <h4>
+                    {{the_bill.date | date:'d/m/Y' }}
+                </h4>
+            </div>  
+          </div>
+
+       <div class="row smallFont" style="margin-top: -6px;">
+        <div class="col-6 ">
+           
+              <h4 >
+                   {% if then.langSet == 0 %}Tarehe ya Kukamilisha  {% else %} Due date {% endif %}
+              </h4>
+            
+          </div>
+        <div class="col-6 ">
+            <h4>
+                {{the_bill.kulipa | date:'d/m/Y'}}
+            </h4>
+        </div>
+        </div>
+
+        
+    <div class="row ">
+        <div class="col-6">
+            <h4>
+                {% if then.langSet == 0 %} Statasi{% else %} Status  {% endif %} :
+            </h4>
+        </div>
+      <h4 class="col-6">
+            {% if the_bill.ilolipwa == the_bill.amount %}
+            <strong style="font-family:'Ubuntu',sans serif;color:#205302f3" >
+               {% if then.langSet == 0 %}   IMELIPIWA{% else %} PAID  {% endif %}
+            </strong>
+            {% elif the_bill.ilolipwa != 0 %}
+            <strong style="font-family:'Ubuntu',sans serif;color:#2f6a79" >
+               {% if then.langSet == 0 %}  IMELIPWA KIASI {% else %} LESS PAID {% endif %}
+            </strong>
+            {% elif the_bill.ilolipwa == 0 %}
+            <strong style="font-family:'Ubuntu',sans serif;color:#9b1010" >
+                {% if then.langSet == 0 %}  HAIJALIPIWA {% else %} UNPAID {% endif %}
+            </strong>
+            {% endif %}
+        </h4>
+
+        </div>
+
+
+        
+
+
+     </div>
+ </div>
+   <hr>
+     <!-- IF IS SERVICE -->
+     {% if the_bill.service %}
+     <h4 class="latoFont px-3 weight600">
+                   
+        {% if useri.langSet == 0 %} Muda wa Huduma{% else %} Service Duration {% endif %}
+     </h4> 
+   <h4 class="row px-3">
+       <div class="col-7 row">
+           <div class="col-3 brown"> {% if useri.langSet == 0 %}Kuanzia   {% else %} From {% endif %}:  </div>
+           <div class="col-8 weight500">
+               <script> document.write(moment('{{the_bill.servFrom | date:"r" }}').format('MMMM DD, YYYY, HH:mm')) </script>
+                
+            </div>
+          
+       </div>
+       <div class="col-7 row"> 
+         <div class="col-3 brown"> {% if useri.langSet == 0 %} Hadi {% else %} To {% endif %}:  </div>
+           <div class="col-8 weight500">
+            <script> document.write(moment('{{the_bill.servTo | date:"r" }}').format('MMMM DD, YYYY, HH:mm')) </script>
+           </div>
+        </div>
+    </h4>
+
+   <hr>
+   {% endif %}
+
+   <div class="row px-3">
+      <div class="col-6"></div>
+     <div class="col-6 border-left border-bottom">
+         <h4 class="row  ">
+             <div class="col-4">
+               <span class="text-danger">{% if then.langSet == 0 %} Kiasi  {% else %} Amount {% endif %}</span>:
+             </div>
+             <div class="col-8 text-right">
+               <span class="smallFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <span>{{the_bill.amount | floatformat:'-2' | intcomma }} </span>
+
+             </div>
+             <div class="col-4">
+               <span class="text-danger">{% if then.langSet == 0 %} Ilolipwa  {% else %} Paid {% endif %}</span>:
+             </div>
+             <div class="col-8 text-right">
+               <span class="smallFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <span >{{the_bill.ilolipwa | floatformat:'-2' | intcomma }} </span>
+
+             </div>
+             {% if the_bill.ilolipwa != the_bill.amount %}
+             <div class="col-4 border-top">
+               <span class="text-danger">{% if then.langSet == 0 %} Deni  {% else %} Debt {% endif %}</span>:
+             </div>
+             <div class="col-8 border-top text-right">
+               <span class="smallerFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <label class="text-danger">
+                   <script>
+                     //  $(document).ready(function(){
+                           let am= Number('{{the_bill.amount}}'),
+                            pd = Number('{{the_bill.ilolipwa}}')
+                            document.write((am-pd).toLocaleString())
+                      // })
+                       
+                   </script>
+               </label>
+
+             </div>
+
+             {% endif %}
+         </h4>
+     </div>
+
+   
+     
+
+
+
+     <h4 class="col-12">
+        <span class="text-danger">
+            {% if then.langSet == 0 %} Bili kwa  {% else %} Bill To {% endif %}:
+        </span> <br>
+        <address >
+           <strong> {{the_bill.mteja_jina | title }}</strong>
+        <br>
+         
+      
+          {% if the_bill.online %}
+               {% if useri.langSet == 0 %} Simu  {% else %} Phone {% endif %}:   {{the_bill.user_customer.enteprise.owner.simu1 }}
+                    <br>
+                        {% if useri.langSet == 0 %} Barua Pepe  {% else %} Email {% endif %}:  {{the_bill.user_customer.enteprise.owner.user.email }}
+                    <br>
+                    {% if not the_bill.customer_in %}
+                    {% if useri.langSet == 0 %} Sehemu  {% else %} Place {% endif %}:   {{the_bill.user_customer.jengo }}
+                        <br>
+                    {% endif %}    
+
+                {% if useri.langSet == 0 %} Anwani  {% else %} Address {% endif %}:  {{the_bill.user_customer.enteprise.mtaa.mtaa |title}},  {{the_bill.user_customer.enteprise.mtaa.kata.kata |title}},  
+                {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.wilaya |title}},  {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.mkoa.mkoa |title}},  
+                {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}         
+             <br>
+
+                        {% if the_bill.customer_in %}
+                        <div class="classic_div mt-2 p-2 border-top text-left" style="max-width: 450px;">
+                            <h6 class="weight500" >{% if useri.langSet == 0 %}Mteja  eneo la Biashara  {% else %} Customer around business area{% endif %}</h6> 
+                            <div class="row mb-2">
+                            <div class="col-3">
+                                
+                                {% if useri.langSet == 0 %}Eneo {% else %} Area{% endif %}
+                                </div>
+                                <div class="col-9 ">
+                                    <strong class="brown" ><u class="pb-2"> {{the_bill.customer_in.area.name}} </u> </strong> 
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3">
+                                    {% if useri.langSet == 0 %}Sehemu {% else %} Position {% endif %}
+                                </div>
+                                <div class="col-9 ">
+                                    <strong class="brown" ><u class="pb-2"> {{the_bill.customer_in.name}} </u> </strong> 
+                                </div>
+                            </div>
+                        </div>   
+                       {% endif %}
+            
+             {% else %}
+                {% if then.langSet == 0 %} Simu  {% else %} Phone {% endif %}:   {{the_bill.simu }}
+               <br>
+            {{the_bill.address}}
+          {% endif %}  
+        </address>
+        
+        
+
+       </h4>
+       
+   </div>
+   <br>
+
+
+   <table id="prod_table" class=" table-bordered table"  data-row=1>
+    <tr class="bg-light  ">
+      <th   >#</th>
+      <th   > {% if then.langSet == 0 %}{% if the_bill.service %}Huduma{% else %}Bidhaa{% endif %}  {% else %}{% if the_bill.service %}Service(s){% else %}Item(s){% endif %}  {% endif %}</th>
+
+      {% if color.count > 0  %}
+      <th > {% if then.langSet == 0 %} Rangi {% else %} Color {% endif %}</th>
+      {% endif %}
+
+      {% if size.count > 0  %}
+      <th > {% if then.langSet == 0 %} Size {% else %} Size {% endif %}</th>
+      {% endif %}
+
+      <th > {% if then.langSet == 0 %} Vipimo {% else %}  Units {% endif %}</th>
+      <th > {% if then.langSet == 0 %} Bei {% else %}  Price {% endif %}</th>
+      <th > {% if then.langSet == 0 %} Idadi  {% else %} Quantity {% endif %}</th>
+      <th >{% if then.langSet == 0 %}  Jumla  {% else %}  Total {% endif %}</th>
+      {% if the_bill.service %}
+      <th colspan="2" > {% if then.langSet == 0 %}Muda  {% else %} Duration {% endif %}</th>
+     
+      <th >{% if then.langSet == 0 %}  Jumla{% else %}  Total{% endif %}</th>
+      {% endif %}
+      
+    </tr>
+
+
+
+            <tbody  id="view-invo_tbody">
+               
+
+
+            </tbody>
+
+   </table>
+
+
+   <h6 class="row ">
+       <div class="col-5">
+
+        <div class="col-12">
+            <div id="imgBox">
+                <img src="" alt="" id="qrImage">
+            </div>
+          </div>
+
+
+          <script>
+             $(document).ready(function(){
+                const url = window.location.host;
+                const imgBox= document.getElementById("imgBox")
+
+                  qrcode = new QRCode('imgBox',{
+                    text:`${url}/mauzo/viewInvo?item_valued={{the_bill.id}}`,
+                    height:200,
+                    width:200,
+                  
+                })
+             })
+          </script>
+
+       </div>
+       <div class="col-7 row border py-2 text-right latoFont invo_sumary" style="margin-top: -9px;">
+      <!-- ACTUAL TOTAL -->
+      <!-- <div class="row  border-bottom " id="when_discount" style="display: none;margin-right:auto;margin-left:auto"> -->
+          <div class="py-1 col-5 when_discount" style="display: none;">
+            {% if then.langSet == 0 %}  Jumla kwa Bei {% else %}  Actual Total {% endif %}: 
+        </div>
+       <div class="col-7 when_discount" style="display: none">
+           <span class=" pl-2" style="color:blue;font-size:small">
+             {{duka.currencii}}
+            </span>. 
+            <span id="bei_halisi"></span>
+       </div>
+
+       <!-- DISCOUNT FIELD -->
+        <div class="py-1 col-5 when_discount" style="display: none">
+            {% if then.langSet == 0 %}  Punguzo {% else %}  Discount {% endif %}: 
+        </div>
+       <div class="col-7 when_discount" style="display: none">
+           <span class=" pl-2" style="color:blue;font-size:small">
+             {{duka.currencii}}
+            </span>. 
+            <span id="punguzo_tu"></span>
+       </div>
+
+      <!-- </div> -->
+        
+
+       <div class="row  classic_div col-12 m-0 p-0" id="show_vat_if" style="display: none;">
+       <!-- SUB TOTAL -->
+        <div class="py-1 col-5">
+            {% if then.langSet == 0 %}  Jumla kwa Mauzo {% else %}  Sub Total {% endif %}: 
+        </div>
+       <div class="col-7 ">
+           <span class=" pl-2" style="color:blue;font-size:small">
+             {{duka.currencii}}
+            </span>. 
+            <span id="bei_bila_vat"></span>
+       </div>
+
+
+       <!-- VAT -->
+
+       <div class="py-1 col-5 bg-light">VAT({{duka.vatper|floatformat:'-2'}}%): 
+       </div>
+
+       <div class="col-7 bg-light text-right">
+           <span class=" pl-2" style="color:blue;font-size:small">
+            {{duka.currencii}}
+        </span>.  
+          <span id="the_invo_vat">
+          </span>
+       </div>
+       </div>
+
+  <!--TO BE PAID AMOUNT  -->
+    <div class="col-5 py-3 border-top total_amount" >
+          <strong>{% if then.langSet == 0 %} Inayolipwa  {% else %} Payable {% endif %}</strong> : 
+        </div>
+       <div class="col-7 py-3 border-top total_amount">
+           <span class="pl-2" style="color:blue;font-size:small">
+              {{duka.currencii}}
+            </span>.
+             <strong class="text-danger">{{the_bill.amount | floatformat:'-2' | intcomma }}</strong>
+       </div>
+
+    </div>
+
+  
+    
+
+      
+       
+
+
+</h6>
+
+
+ {% if malipo %}       
+     <hr>
+   <div class="row">
+       <div class="col-8">
+          <h4>{% if then.langSet == 0 %} Malipo  {% else %} Payments{% endif %} </h4>
+           
+            <table class="table table-hover " >
+                <thead>
+                    <tr>
+                        <th>{% if then.langSet == 0 %} Tarehe{% else %} Date{% endif %}</th>
+                        <th>{% if then.langSet == 0 %} Kiasi {% else %} Amount{% endif %} <span class="text-primary smallerFont">({{duka.currencii}})</span> </th>
+                        <th>{% if then.langSet == 0 %} Njia ya Malipo{% else %} Payments Type{% endif %}</th>
+                        <th>{% if then.langSet == 0 %} Ilipokelewa{% else %}Receved By{% endif %}</th>
+                    </tr>
+                </thead>
+                    {% for m in malipo %}
+                    <tr class="text-center" >
+                         <td> 
+                                <script>
+                                    document.write(moment('{{m.tarehe | date:"r" }}').format('DD/MM/YYYY, HH:mm:'))
+                                </script>
+                        </td>
+                        <td><strong class="brown" > {{m.Amount | floatformat:'-2' | intcomma }} </strong></td>
+                        <td>{{m.Akaunt.aina | title }} </td>
+                        <td>{{m.by.user.user.first_name | title }}  {{m.by.user.user.last_name | title}}  </td>
+                    </tr>
+                     
+                    {% endfor %}
+            </table>
+
+
+
+            
+       </div>
+   </div>  
+ {% endif %}  
+ 
+     <hr>
+
+     <p> <h4>{% if then.langSet == 0 %} Imetolewa Na  {% else %} Issued By {% endif %}: <strong>{{user.first_name | title}}   {{user.last_name | title}}</strong> </h4>  </p>
+     <p> <h4> <strong>{% if then.langSet == 0 %} Sahihi  {% else %} Signature {% endif %}........................ </strong> </h4> </p>
+
+
+     {% if fidia is not none %}
+                 <h5 class="py-3" style="border-left: 3px solid #9c4545 ;background:rgb(250, 242, 242)">
+                   <span class="px-2" style="color:#9c4545;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
+                      <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5.002 5.002 0 0 1 13 6c0 .88.32 4.2 1.22 6z"/>
+                    </svg>
+                   </span>
+                   {% if then.langSet == 0 %} Fidia ya bidhaa zilizorudishwa, kiasi {% else %} Refunding the returned items, amount {% endif %} {{duka.currencii | title }}.{{fidia.re_am  | floatformat:'-2' | intcomma  }} ,
+                   <a class="text-primary" href="#" >
+                       RE-{{fidia.sale_rtn.code}}
+
+                   </a>
+                  
+                 </h5>
+                 {% endif %}
+
+        {% if the_bill.ilolipwa != the_bill.amount %}
+            <div class="desc">
+                {{the_bill.invo_desc.desc | safe }}
+            </div>      
+        {% endif %}             
+
+
+     <h4 class=" text-center" >
+           {{duka.name | title}},   {% if then.langSet == 0 %} Simu  {% else %} Phone {% endif %}:
+           {% for sim in contact %}
+           {% if sim.owner or sim.SIM1_invoince %}
+          <label class="pr-2" style="color:blue">
+             <u>  {{sim.user.simu1}}</u> , 
+          </label>
+
+          {%endif%}
+        {% if sim.SIM2_invoince %}
+          <label class="pr-2" style="color:blue">
+             <u>  {{sim.user.simu2}}</u> , 
+          </label>
+          {% endif %}
+          
+       {% endfor %}
+
+        </h4>
+
+
+</div>
+</div>
+
+  <span id="luga" hidden >{{then.langSet}}</span>
+
+  <script src="/static/js/lugha.js"></script>
+
+{% include 'invoItemsPrint.html' %}
+
+
+
+
+      
+    </body>
+</html>
+
+
+
+
+
+

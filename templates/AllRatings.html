@@ -1,0 +1,264 @@
+{% extends 'userdash.html' %}
+
+{% block Dashboard %}
+
+
+{% block billcss %}
+<link rel="stylesheet" href="/static/css/Ratingstars.css">
+{% endblock %}   
+
+
+
+
+<div  class=" Analytical whiteBg tab_div p-4" style="min-height: 100vh;" id="general-panel">
+
+  <ul style="min-width: 1350px;" class="list-unstyled d-none  smallerFont d-md-flex border-bottom ">
+        <li class="py-2 {% if  us == 0 and ur == 0 %} actively {% endif %}">
+            <a class="p-2 theRateNav" href="/mauzo/AllRatings"> 
+                  {% if useri.langSet == 0 %} Zote  {% else %} All {% endif %}
+            </a>
+        </li>
+        <li class="py-2 {% if  us == 1 %} actively {% endif %}">
+          <a class="p-2 theRateNav" href="/mauzo/AllRatings?us=1">
+              {% if useri.langSet == 0 %} Mpya  {% else %}New{% endif %} 
+          </a>
+        </li>
+        <li class="py-2 {% if ur == 1 %} actively {% endif %}">
+          <a class="p-2 theRateNav" href="/mauzo/AllRatings?ur=1">
+              {% if useri.langSet == 0 %} Hazijajibiwa  {% else %}Unreplied{% endif %} 
+          </a>
+        </li>
+    </ul>
+    {% if num > 0 %}
+    <ul class="p-2 list-unstyled" >
+           {% for li in page %}
+              <li class="d-flex py-3 border-bottom" >
+                    <div class="centerItems mx-2">
+                        <div class="border centerItems" style="height:40px ;width: 40px;border-radius:50%" >
+                           {% if li.by.picha %}
+                               <img src="{{li.by.picha.url}}" style="width:100%;height:100%;border-radius:50%" >
+                           {% else %}
+                                <img src="/static/pics/userlogo.png" style="width: 100%;height:100%;border-radius:50%" alt="None">
+                           {% endif %}
+                        </div>
+                        </div>
+
+                        <div>
+                            <div class="text-capitalize weight700" >{{li.by.user.first_name}} {{li.by.user.last_name}}</div>
+                       
+                            <div>
+                                <span class="mr-1  border-right">
+                                    <script>
+                                        document.write(moment('{{li.date|date:"r"}}').format('DD/MM/YYYY HH:mm'))
+                                    </script>
+                                 </span> 
+
+                                  <strong>{{li.rating|floatformat:'1'}}</strong>
+
+                                 <span class="mx-1">
+                                
+
+                                    {% if li.rating == 1 %}
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                   {% endif %}
+
+                                   {% if li.rating == 2 %}
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                   {% endif %}
+                                   {% if li.rating == 3 %}
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                   {% endif %}
+                                   {% if li.rating == 4 %}
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                   {% endif %}
+                                   {% if li.rating == 5 %}
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather rated feather-star">
+                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                       </svg>
+                                   {% endif %}
+                                 </span>
+
+
+                            </div>
+
+                            <div>{{li.desc}} 
+                              <a href="/mauzo/viewInvo?item_valued={{li.invo.id}}" class="mx-1 px-1 border-left">INVO-{{li.invo.code}}</a> 
+                             
+                                  <span class="mx-1 px-1 border-left">
+                                   {% if not li.seen %}
+                                    <a onclick="markAsSeen('{{li.id}}')" id="SeenBtn{{li.id}}" type="button" title="{% if useri.langSet == 0 %}Umeshaisoma{% else %}Seen{% endif %}" class="ml-1" >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+                                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                          <circle cx="12" cy="12" r="3"></circle>
+                                      </svg>
+                                  </a>
+                                  {% endif %}
+
+                                
+                                  </span>
+                             
+                            </div>
+
+                            
+                              {% if li.reply %}
+                                  <div class="ml-2">
+                                    <i class="weight600 smallFont"> {% if useri.langSet == 0 %}Jibu{% else %}Reply{% endif %}:</i>  {{li.reply}}
+                                    <a onclick="$('#replyForm{{li.id}}').toggle(200)" type="button" title="{% if useri.langSet == 0 %}Umeshaisoma{% else %}Seen{% endif %}" class="ml-1" >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                  </svg>
+                                  </a>
+                                  </div>
+                                {% endif %}
+
+                              {% if li.reply  %}
+                                 <form action="/mauzo/ReplyRating" method="POST" id="replyForm{{li.id}}" style="max-width: 300px;display:none" class="ReplyForComment">
+                              {% else %}  
+                                   <form action="/mauzo/ReplyRating" method="POST" id="replyForm{{li.id}}" style="max-width: 300px" class="ReplyForComment">
+                              {% endif %}
+                              
+                                {% csrf_token %}
+                                <div class="form-group">
+                                  <label for="replyRate" class="weight700" >{% if useri.langSet == 0 %}Jibu..{% else %}Reply{% endif %}</label>
+                                  <textarea class="form-control" name="replyRate" id="replyRate" rows="3"></textarea>
+                                  <input type="hidden" name="valu" value="{{li.id}}"  >
+                                  <input type="hidden" name="ur" value="{{ur}}"  >
+                                  <input type="hidden" name="us" value="{{us}}"  >
+                                </div>
+
+                            
+
+                                <div class="text-right">
+                                  <button type="submit" class="btn-primary btn-sm latoFont smallFont">
+                                      {% if useri.langSet == 0 %}Tuma{% else %}Send{% endif %}..
+                                  </button>
+                                </div>
+                              
+                              </form>
+                            
+                        
+                        </div>
+                    
+
+
+              </li>
+           {% endfor %}
+    </ul>
+
+    <p class=" p-4 border-top">
+           
+
+
+      {% if page.has_previous %}
+        <a href="{% url 'AllRatings' %}?page=1" type="button"  class="btn btn-light border0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+          </svg>
+          </a>
+    
+          <a href="{% url 'AllRatings' %}?page={{page.previous_page_number}}" type="button"  class="btn btn-light  border0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+            </svg>
+          </a>
+        {% endif %}
+    
+      {% if page.has_next %}
+          <a href="{% url 'AllRatings' %}?page={{page.next_page_number}}" type="button" class="btn btn-light border0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </a>
+    
+          <a href="{% url 'AllRatings' %}?page={{pages}}" type="button"  class="btn btn-light border0" >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+            </svg>
+          </a>
+    {% endif %}
+          <label for="">
+           
+            {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+    
+          </label>
+      </p>
+   {% else %}
+
+   <div class="centerItem" style="height: 40vh;">
+            {% if useri.langSet == 0 %} Hakuna taarifa yeyote iliyopatikana  {% else %}No any rating was found{% endif %} 
+   </div>
+  {% endif %}
+
+</div>
+
+<script>
+   function markAsSeen(valu){
+
+    $('#loadMe').modal('show')
+         const data={
+                 data:{
+                     valu
+                 },
+                 url:'/mauzo/markRateAsSeen'
+         } ,
+         sendit = POSTREQUEST(data)
+
+         sendit.then(dt=>{
+          $('#loadMe').modal('hide')
+            if(dt.success){
+              $(`#SeenBtn${valu}`).fadeOut(200)
+            }
+         })
+            
+        }
+</script>
+
+{% endblock %}
+ 
+{% block dash-mapper %}
+  Dashboard
+{% endblock %}
+
+
+
+
+{% block dash-map %}{% if useri.langSet == 0 %}Uthaminishwaji {% else %}Ratings{% endif %}{% endblock %}

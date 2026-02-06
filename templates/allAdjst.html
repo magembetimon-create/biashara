@@ -1,0 +1,318 @@
+{% extends 'userdash.html' %}
+
+{% block bidhaa %}
+<!-- <div  class="page-content Analytical tab_div"> -->
+    
+    <div class="whiteBg py-2 " style="margin-top: -15px;"> 
+      <div class="row classic_div">
+         <div class="col-md-6  py-3 pl-2 {% if adj_num == 0 %} border-bottom {% endif %}">
+                <div class="btn-group " id="">
+                    <a href="/stoku/AllAdjs" type="button"  class="btn border-secondary btn-sm {% if not un %}btn-primary{% else %}btn-light{% endif %}" data-r="0" data-riport="0" data-val="0" title="{% if useri.langSet == 0 %}Orodha{% else %}List{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                      </a>
+
+                    <a href="/stoku/AllAdjs?un=1" type="button"  class="btn border-secondary btn-sm  {% if  un %}btn-primary{% else %}btn-light{% endif %} " data-r="1" data-riport="0" data-val="0" title="{% if useri.langSet == 0 %}Marekebisho yaloiyotenguliwa{% else %}Stock Adjustment Undo{% endif %}">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                        <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                      </svg>
+                      
+                    </a>  
+            </div>
+          </div>
+
+          <div class=" col-md-6 row py-3 ">
+            <div class=" col-md-2">
+           
+            </div>
+            <div class=" col-md-10 px-0">
+              <div class="row">
+                <div class="col-8 ">
+                  <form action="{% url 'viewAdjst' %}" method="get">
+                    <div class="input-group"> 
+                    
+                       
+                              <input type="text" name="code" id="code" placeholder=" {% if useri.langSet == 0 %}  Andika no ya Marekebisho {% else %} write Adjustment no.. {% endif %}" class="form-control smallFont">
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-secondary smallerFont btn-sm pt-2">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                   <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                                 </svg>
+                            </button>
+                        </div>  
+                       
+                       
+                    </div>
+              </form>
+                </div>
+                <div class="col-4 text-right">
+                   <a href="/stoku/reduceItemQuantity" class="btn latoFont  smallFont btn-primary border0 btn-sm">
+                  + {% if useri.langSet == 0 %}Ongeza  {% else %}Add {% endif %}
+                </a>
+                </div>
+              </div>
+              
+            </div>
+
+         
+          </div>
+      </div>
+
+
+     
+        
+
+
+
+       {% if adj_num > 0 %}
+                {% load humanize %}
+      <div class="table-responsive pb-5">
+       <table class="table table-hover " >
+            <thead>
+              <tr>
+                <th class="latoFont" scope="col">
+                  {% if useri.langSet == 0 %}  Marekebisho# {% else %} Adjument# {% endif %}
+                
+                </th>
+                <th class="latoFont" scope="col">
+                  {% if useri.langSet == 0 %} Tarehe   {% else %}Date {% endif %}
+      
+                </th>
+              
+                <th class="latoFont" scope="col">
+                  {% if useri.langSet == 0 %} Aina  {% else %}Type {% endif %}
+      
+                </th>
+                <th class="latoFont" scope="col">
+                  {% if useri.langSet == 0 %} Thamani  {% else %}Worth {% endif %}
+                     (<span class="text-primary " > {{duka.currencii}}</span>)
+                </th>
+
+                <th class="latoFont" scope="col">
+                  {% if useri.langSet == 0 %} Sababu  {% else %}Reason {% endif %}
+      
+                </th>
+
+                <th class="latoFont" scope="col">
+                  {% if useri.langSet == 0 %} Maelezo  {% else %}Descriptions {% endif %}
+      
+                </th>
+                <th class="latoFont" scope="col">          
+                  {% if useri.langSet == 0 %} Na  {% else %}By {% endif %}
+                </th>
+               
+                <th class="latoFont" scope="col"> Action </th>
+              </tr>
+            </thead>
+            <tbody>
+                  {% for bil in bili %}
+              <tr>
+                <td class="text-center latoFont">ADJ-{{bil.ad.code}}</td>
+                <td class="text-center latoFont">
+                   <script>
+                    document.write(moment('{{bil.ad.date | date:"r" }}').format('DD/MM/YYYY HH:mm '))
+                  </script> 
+                  
+
+                </td>
+
+                <td class="text-center text-primary latoFont ">
+                    {% if not bil.ad.Ongezwa  %}
+                    <span class="text-danger">
+                            {% if useri.langSet == 0 %} Kupunguza Bidhaa {% else %}Reducing Item(s) {% endif %}
+                    </span>
+                    {% else %}
+                      {% if useri.langSet == 0 %} Kuongeza Bidhaa {% else %} Adding Item(s){% endif %}
+                    {% endif %}
+                </td>
+                <td class="brown weight700 text-center" >
+                  {{bil.total | floatformat:'-2' | intcomma  }}
+                </td>
+                <td class="text-center text-primary latoFont ">
+                
+                    {% if  bil.ad.Ongezwa %}
+                        <label for="oda" class="latoFont  px-1 py-1 smallFont text-light" style="background-color: rgba(5, 136, 0, 0.925);color:#fff" >
+                          <svg xmlns="http://www.w3.org/2000/svg"  height="16" width="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M15,17h2v-3h1v-2l-1-5H2l-1,5v2h1v6h9v-6h4V17z M9,18H4v-4h5V18z"/><rect height="2" width="15" x="2" y="4"/>
+                            <polygon points="20,18 20,15 18,15 18,18 15,18 15,20 18,20 18,23 20,23 20,20 23,20 23,18"/>
+                            </svg>
+                           {% if useri.langSet == 0 %} Zimeongezwa  {% else %} Added {% endif %}
+                        </label>
+                    {% endif %}
+
+                    {% if  bil.ad.haribika %}
+                        <label for="oda" class="latoFont  px-1 smallFont py-1 text-light" style="background-color: rgba(167, 64, 23, 0.815);color:#fff" >
+                            <svg xmlns="http://www.w3.org/2000/svg"  height="16" width="16" viewBox="0 0 24 24"  fill="currentColor">
+                              <circle cx="10.5" cy="8.5" r="1.5"/>
+                              <circle cx="8.5" cy="13.5" r="1.5"/><circle cx="15" cy="15" r="1"/>
+                              <path d="M21.95,10.99c-1.79-0.03-3.7-1.95-2.68-4.22c-2.97,1-5.78-1.59-5.19-4.56C7.11,0.74,2,6.41,2,12c0,5.52,4.48,10,10,10 C17.89,22,22.54,16.92,21.95,10.99z M12,20c-4.41,0-8-3.59-8-8c0-3.31,2.73-8.18,8.08-8.02c0.42,2.54,2.44,4.56,4.99,4.94 c0.07,0.36,0.52,2.55,2.92,3.63C19.7,16.86,16.06,20,12,20z"/>
+                            </svg>
+                           {% if useri.langSet == 0 %} Kuharibika {% else %} Damage {% endif %}
+                        </label>
+                    {% endif %}
+
+                    {% if  bil.ad.expire %}
+                       <label for="oda" class="latoFont  px-1 py-1 smallFont text-light" style="background-color: rgba(126, 82, 1, 0.575);color:#fff" >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16"  height="16" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M15,1H9v2h6V1z M11,14h2V8h-2V14z M19.03,7.39l1.42-1.42c-0.43-0.51-0.9-0.99-1.41-1.41l-1.42,1.42 C16.07,4.74,14.12,4,12,4c-4.97,0-9,4.03-9,9s4.02,9,9,9s9-4.03,9-9C21,10.88,20.26,8.93,19.03,7.39z M12,20c-3.87,0-7-3.13-7-7 s3.13-7,7-7s7,3.13,7,7S15.87,20,12,20z"/>
+                            </svg>
+                           {% if useri.langSet == 0 %} Kupitwa na Muda{% else %} Expired {% endif %}
+                      </label>
+                    {% endif %}
+                    {% if  bil.ad.tumika  %}
+                       <label for="oda" class="latoFont px-1 smallFont py-1 text-light" style="color: #fff;background:rgba(145, 82, 11, 0.884)" >
+                        <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24"  fill="currentColor">
+                          <path d="M0 0h24v24H0V0z" fill="none"/>
+                          <path d="M14.77 9L12 12.11 9.23 9h5.54M21 3H3v2l8 9v5H6v2h12v-2h-5v-5l8-9V3zM7.43 7L5.66 5h12.69l-1.78 2H7.43z"/>
+                        </svg>
+
+                           {% if useri.langSet == 0 %} Matumizi{% else %} Usage {% endif %}
+                        </label>
+                    {% endif %}
+                    {% if  bil.ad.production %}
+                       <label for="oda" class="latoFont px-1 py-1 text-light" style="color: #fff;background:rgba(11, 65, 145, 0.884)" >
+                        <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor">
+                          <path d="M0 0h24v24H0z" fill="none"/>
+                          <path d="M21 3.01H3c-1.1 0-2 .9-2 2V9h2V4.99h18v14.03H3V15H1v4.01c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98v-14c0-1.11-.9-2-2-2zM11 16l4-4-4-4v3H1v2h10v3z"/>
+                          </svg>
+
+                           {% if useri.langSet == 0 %} Kuzalishia{% else %} Production  {% endif %}
+                        </label>
+                    {% endif %}
+                    {% if  bil.ad.potea %}
+                       <label for="oda" style="background-color: rgb(117, 8, 0);color:#fff" class="latoFont  px-1 py-1 text-light" >
+                        <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16"  viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M0 0h24v24H0V0z" fill="none"/>
+                          <path d="M3 9h2V7H3v2zm0-4h2V3H3v2zm4 16h2v-2H7v2zm0-8h2v-2H7v2zm-4 0h2v-2H3v2zm0 8h2v-2H3v2zm0-4h2v-2H3v2zM7 5h2V3H7v2zm12 12h2v-2h-2v2zm-8 4h2V3h-2v18zm8 0h2v-2h-2v2zm0-8h2v-2h-2v2zm0-10v2h2V3h-2zm0 6h2V7h-2v2zm-4-4h2V3h-2v2zm0 16h2v-2h-2v2zm0-8h2v-2h-2v2z"/>
+                          </svg>
+                           {% if useri.langSet == 0 %} Kupotea{% else %} Waste {% endif %}
+                        </label>
+                    {% endif %}
+
+                    {% if  bil.ad.others %}
+                       <label for="oda" style="background-color: rgb(117, 0, 0);color:#fff" class="latoFont  px-2 py-1 text-light" >
+                      
+                           {% if useri.langSet == 0 %} Mengineyo{% else %} Others {% endif %}
+                        </label>
+                    {% endif %}
+                </td>
+
+                <td class="text-center   latoFont ">
+                  {% if bil.ad.production %}
+                  {% if useri.langSet == 0 %} 
+                     Zimetumika Kuzalishia bidhaa 
+                  {% else %} 
+                     Used for Item(s) production  
+                  {% endif %}<a href="/production/productonReport?pr={{bil.ad.production.id}}">PROD-{{bil.ad.production.code}}</a>
+                  {% else %}
+                   {{bil.ad.desc}}
+                   {% endif %}
+                </td>
+      
+                <td class="text-center latoFont"> {{bil.ad.Na.user.user.first_name | title }}  {{bil.ad.Na.user.user.last_name | title }}</td>
+      
+                
+                <td class="text-center">
+                      <div class=" text-center">
+                        
+        
+        
+                        <a href="{% url 'viewAdjst' %}?item_valued={{bil.ad.id}}&back_to='allbill'&un={{un}} "  class="btn btn-default text-primary btn-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                              </svg>
+                            </a>
+                        <!-- </form> -->
+                           
+      
+                           
+      
+                      </div>
+                </td>
+              </tr>
+             {% endfor %}
+            </tbody>
+          </table>
+        </div>
+ <p class=" p-4 border-top">
+           
+
+
+        {% if page.has_previous %}
+          <a href="{% url 'AllAdjs' %}?page=1" type="button"  class="btn btn-light border0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+            </svg>
+            </a>
+      
+            <a href="{% url 'AllAdjs' %}?page={{page.previous_page_number}}" type="button"  class="btn btn-light  border0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+              </svg>
+            </a>
+          {% endif %}
+      
+        {% if page.has_next %}
+            <a href="{% url 'AllAdjs' %}?page={{page.next_page_number}}" type="button" class="btn btn-light border0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </a>
+      
+            <a href="{% url 'AllAdjs' %}?page={{pages}}" type="button"  class="btn btn-light border0" >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+              </svg>
+            </a>
+      {% endif %}
+            <label for="">
+             
+              {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+      
+            </label>
+        </p>
+       {%else%}
+      
+       
+      <p class="pt-3 pb-5 text-center">
+                 {% if useri.langSet == 0 %} Hakuna Marekebisho {% if un %} <u class="brown">yaliyotenguliwa </u> {% endif %} stoku kwa sasa{% else %}No Stock adjustment {% if un %} <u class="brown">Undo</u> {% endif %} Found{% endif %}
+       
+      </p>
+      
+      {% endif %}
+      
+      
+      
+</div>
+{% endblock %}
+
+
+
+    
+{% block nav-stock %}
+class="c-menu__item style-none is-active  showingpop2"
+{% endblock %}
+
+{% block dash-mapper %}
+  {% if useri.langSet == 0 %} Stoku {% else %} Stock{% endif %}
+{% endblock %}
+
+{% block akaunt-map %} {% if useri.langSet == 0 %}   Marekesho Stoku{% else %}  Stock Adjustment{% endif %}{% endblock %}
+
+{% block active-stadjust-menu %} class="btn-default btn pop2_active_menu btn-sm " {% endblock %}
+
+{% block active-stock %} class="bi bi-cart-check text-primary" {% endblock %}
+
+{% block stock-item %}
+    <svg xmlns="http://www.w3.org/2000/svg" height="24" class="text-primary" viewBox="0 0 24 24" width="24" fill="currentColor">
+      <path d="M0 0h24v24H0z" fill="none"/><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/>
+    </svg>
+{% endblock %}

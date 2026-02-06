@@ -1,0 +1,90 @@
+{% extends 'services.html' %}
+
+<!-- IF THE THERE IS FILTER -->
+{% block descriptions %}
+
+{% if prod.count > 0 %}
+<h6 class="pb-2" ><i class="text-primary text-capitalize" >{{prod.last.aina}} </i> </h6> 
+{% endif %}
+
+
+{% endblock %}
+
+{% block itemEdited %}         
+{% if edit.count > 0 %}
+<div class="pl-2 py-2 mt-4" style="color:rgb(88, 88, 88)" >
+  <div class="weight700" style="color: rgb(9, 43, 80);" >
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+      </svg>
+      {% if useri.langSet == 0 %} Huduma kuhaririwa{% else %} Service Editing{% endif %}..</div> 
+  <div class="mt-2 pl-2" style="border-left:2px solid rgb(59, 118, 194);" >
+      {% for e in edit %}
+     <div class="py-2">
+     <div  > 
+         <span class="weight600 " style="color: brown;">
+                <script>
+                    document.write(moment('{{e.date | date:"r" }}').format('MMM DD YYYY, HH:mm'))
+                </script>
+         </span>
+        
+
+          <span class=" border-left ml-2 pl-2">
+                {% if useri.langSet == 0 %} Na{% else %}By {% endif %}  <span class="text-capitalize " style="color:rgb(44, 74, 175)" >{{e.Incharge.user.first_name}}  {{e.Incharge.user.last_name}}</span>               
+          </span>
+     </div>
+      {% if e.Item_map.nameEdit %}
+         <div class="pl-2  smallFont " >- <span class="weight600" > {% if useri.langSet == 0 %} Jina lilieditiwa {% else %}Name Edited{% endif %} </span> 
+            {% if useri.langSet == 0 %} Kutoka{% else %}from{% endif %}
+             <i class="text-danger text-capitalize" >{{e.Item_map.former_name}}</i> 
+             <strong>
+                {% if useri.langSet == 0 %} na kuwa {% else %}to be {% endif %}
+            </strong> 
+            <i class="text-primary text-capitalize" >{{e.Item_map.current_name}}</i> </div>
+      {% endif %}
+
+      {% if e.Item_map.categEdit %}
+         <div class="pl-2 smallFont " >- 
+             <span class="weight600">{% if useri.langSet == 0 %} Aina Ilibadilishwa {% else %} Category  Changed{% endif %}</span> 
+               
+              {% if useri.langSet == 0 %} kutoka {% else %}from{% endif %}
+              <i class="text-danger text-capitalize" >{{e.Item_map.former_Categ.aina}}</i> <strong>
+                {% if useri.langSet == 0 %} na kuwa {% else %}to be{% endif %}
+                </strong>  <i class="text-primary text-capitalize" >{{e.Item_map.new_Categ.new_Categ.aina}}</i> </div>
+      {% endif %}
+        </div>
+     {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+<!-- TOP NAVIATIONS <MENU -->
+    {% block top-nav-all %} actively {% endblock %}
+    {% block top-nav-all-icon %}
+    <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="20" viewBox="0 0 24 24" width="20" fill="currentColor">
+        <path d="M16.48,10.41c-0.39,0.39-1.04,0.39-1.43,0l-4.47-4.46l-7.05,7.04l-0.66-0.63c-1.17-1.17-1.17-3.07,0-4.24l4.24-4.24 c1.17-1.17,3.07-1.17,4.24,0L16.48,9C16.87,9.39,16.87,10.02,16.48,10.41z M17.18,8.29c0.78,0.78,0.78,2.05,0,2.83 c-1.27,1.27-2.61,0.22-2.83,0l-3.76-3.76l-5.57,5.57c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71 l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41 c0.39,0.39,1.02,0.39,1.41,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.41,0l8.32-8.34 c1.17-1.17,1.17-3.07,0-4.24l-4.24-4.24c-1.15-1.15-3.01-1.17-4.18-0.06L17.18,8.29z"/>
+        </svg>
+    {% endblock %}
+
+ 
+<!-- NAVIGATIONS FOR MOBILE -->
+{% block active-all-menu %}
+text-primary weight700
+{% endblock %}
+{% block all-icon %}
+<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="20" viewBox="0 0 24 24" width="20" fill="currentColor">
+    <path d="M16.48,10.41c-0.39,0.39-1.04,0.39-1.43,0l-4.47-4.46l-7.05,7.04l-0.66-0.63c-1.17-1.17-1.17-3.07,0-4.24l4.24-4.24 c1.17-1.17,3.07-1.17,4.24,0L16.48,9C16.87,9.39,16.87,10.02,16.48,10.41z M17.18,8.29c0.78,0.78,0.78,2.05,0,2.83 c-1.27,1.27-2.61,0.22-2.83,0l-3.76-3.76l-5.57,5.57c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71 l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.42,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41 c0.39,0.39,1.02,0.39,1.41,0l4.62-4.62l0.71,0.71l-4.62,4.62c-0.39,0.39-0.39,1.02,0,1.41c0.39,0.39,1.02,0.39,1.41,0l8.32-8.34 c1.17-1.17,1.17-3.07,0-4.24l-4.24-4.24c-1.15-1.15-3.01-1.17-4.18-0.06L17.18,8.29z"/>
+    </svg>
+{% endblock %}
+
+<!-- ROAD ALL ITEME -->
+{% block roadMap %}/stoku/servicepanel{% endblock %}
+
+{% block datatable %}
+<script>    
+    $('#loadMe').modal('show')
+  </script>
+<script src="/static/js/services/services.js"></script>    
+{% endblock %}

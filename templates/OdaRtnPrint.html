@@ -1,0 +1,340 @@
+
+{% load humanize %}
+
+
+{% load static %}
+{% static "pics" as baseUrl %}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>REF-{{the_bill.code}}</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
+    <script type="text/javascript" src="{% static 'js/jquery.js' %}" ></script>
+
+    <!-- <script src="{% static 'js/staffaccordion.js' %}"></script> -->
+
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/momentlocale.js' %}"></script>
+<style>
+    body{
+       font-family: 'Times New Roman', Times, serif;
+       color: rgb(97, 97, 97);
+    } 
+
+    td{
+        color: rgb(51, 51, 51);
+        font-weight:500;
+        font-size: large;
+
+    }
+    .smallFont{
+        font-size: small;
+    }
+
+    th{
+        text-align: center;
+    }
+
+    table{
+        border-color:#000 i !important;
+        background:#f2f2f2;
+    }
+
+    .total_amount{
+        font-size: x-large;
+    }
+    .invo_sumary{
+        font-size: large;
+    }
+    .itm_desc{
+        font-weight:lighter;
+    }
+    td div strong{
+        font-weight: bolder;
+        color: #3989c6;
+    }
+
+
+</style>
+</head>
+  <body>
+
+    
+    <div  class="table-responsive pt-3 " id="invo_box" >
+
+        <div class="classic_div mt-sm-2 pt-3 pb-2 px-3 the_invo_page" id="the_invo_page" >
+
+          <h3 class="text-secondary my-3 text-center font-weight-bold">
+            {% if then.langSet == 0 %}NOTISI YA KURUDISHA PESA YA ODA {% else %}SALES ORDER REFUND  NOTE{% endif %}
+          </h3>
+      <div class="row classic_div pt-3" >
+            <div class="col-7 border-right">
+                <div class="row" >
+                  <div class="col-12">
+                    <h4 class="text-danger">
+                       {% if then.langSet == 0 %} Malipo Kutoka {% else %} Payment From {% endif %}:
+                    </h4>
+
+                  </div>
+                    <div class="col-12">
+                        <h4 class="font-weight-bold">
+                            {{duka.name | title}}
+                        </h4>
+                    </div>
+                                                 
+                    <div class="col-12" style="margin-top:-6px">
+                        <h4 class="">
+                            {{duka.mtaa | title}} , {{duka.wilaya}} , {{duka.mkoa}}
+                        </h4>
+                    </div>
+
+                </div>
+
+                 <div class="row" style="margin-top: -6px;">
+
+                   <div class="col-12">
+                        <h4 class="">
+                          code:{{duka.Intp_code}} 
+                        </h4>
+                    </div>
+                    <div class="col-12">
+                        <h4 class="">
+                            {{duka.owner.email | title}} 
+                        </h4>
+                    </div>
+
+                      
+                   
+                    
+                </div>
+
+                <hr>
+
+              <h4 >
+                 <span class="text-danger">
+                     {% if then.langSet == 0 %} Kwa Mteja   {% else %} To Customer {% endif %}:
+                 </span> <br>
+                 <span style="font-weight: 700;" >
+                     {{the_bill.ivo.mteja_jina | title }}
+                 </span>
+                 </span> <br>
+     
+                 <span >
+                  {% if then.langSet == 0 %} Simu  {% else %} Phone {% endif %}:   {{the_bill.ivo.simu }}
+                 </span>
+                 <br>
+                 <span >
+                     {{the_bill.ivo.address}}
+                 </span>
+             </h4> 
+
+               
+                
+
+            
+
+        </div>
+         <div class="col-5">
+
+              <div class="row smallFont" style="margin-top: -6px;">
+                <div class="col-5 text-right">
+                    <h4 class="text-danger">
+                        {% if then.langSet == 0 %} Tarehe  {% else %} Invoice Date {% endif %} :
+                    </h4>
+                </div>
+                <div class="col-7 text-right">
+                    <h4>
+                        {{the_bill.date}}
+                    </h4>
+                </div>  
+              </div>
+
+              <div class="text-right" >
+                 <h4>REF-{{the_bill.code}}</h4> 
+              </div>
+
+              <div class="text-right" >
+                 <h4>ORD-{{the_bill.ivo.code}}</h4> 
+              </div>
+             
+
+          
+
+
+         </div>
+     </div>
+       <hr>
+       <div class="row px-3">
+
+         <div class="col-12">
+             <h4 class="row">
+               
+              
+              <div class="col-4">
+                <span >{% if then.langSet == 0 %} Pesa ya Oda  {% else %} Order Amount Paid {% endif %}</span>:
+              </div>
+                <div class="col-8 text-right">
+                  <span class="smallerFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <label >
+                  <script>
+                    let p_ = Number('{{the_bill.amount}}'),
+                        r_ = Number('{{the_bill.ivo.ilolipwa}}')
+
+                        document.write(Number((p_+r_).toFixed(2)).toLocaleString())
+                  </script>  
+                  </label>
+
+                </div>
+
+                 <div class="col-4">
+                   <span >{% if then.langSet == 0 %}Pesa Iliyorudishwa  {% else %}Returned Amount {% endif %}</span>:
+                 </div>
+                 <div class="col-8 text-right">
+                   <span class="smallerFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <label >{{the_bill.amount | floatformat:'-2' | intcomma }} </label>
+
+                 </div>
+
+                 <div class="col-4">
+                   <span >{% if then.langSet == 0 %} Makato  {% else %} Charges {% endif %}</span>:
+                 </div>
+                 <div class="col-8 text-right">
+                   <span class="smallerFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <label >{{the_bill.makato | floatformat:'-2' | intcomma }} </label>
+
+                 </div>
+
+
+                 <div class="col-4 border-top border-bottom py-2">
+                   <span >{% if then.langSet == 0 %} Ilobaki Kwenye Oda  {% else %} Order Amount Remaining {% endif %}</span>:
+                 </div>
+                 <div class="col-8 border-top border-bottom text-right py-2">
+                   <span class="smallerFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <label >
+                      {{the_bill.ivo.ilolipwa | floatformat:'-2' | intcomma }}
+                   </label>
+
+                 </div>
+
+             </h4>
+         </div>
+       </div>
+      
+
+      <h4 class="row  mt-3 classic_div px-2 pt-2">
+         <div class="col-6">
+            <p><strong>{% if then.langSet == 0 %} Saini ya Mtoaji  {% else %} Cashier Signature {% endif %}</strong> </p>
+            <p> <strong>...........................</strong></p>     
+         </div>
+         <div class="col-6 text-right">
+          
+            <p><strong> {% if then.langSet == 0 %}Saini ya Mpokeaji  {% else %} Recipient Signature {% endif %}</strong> </p>
+            <p> <strong>...........................</strong></p>                     
+            
+         </div>
+      </h4>
+
+
+      <h4> {% if then.langSet == 0 %} Imetolewa Na{% else %} Issued By{% endif %}:<strong> {{the_bill.By.user.user.first_name | title}}   {{the_bill.By.user.user.last_name | title}}</strong></h4> 
+      
+
+       <h4 class="text-center py-2 mt-2" style="border-left:3px solid yellow;background:#f0f8fc">
+                  
+        <div class="p-3 d-inline" style="height: 50px;width:50px;border-radius:50%;color:rgb(191, 230, 253)">
+             <span class="text-info">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+                     <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                     <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+                   </svg>
+             </span>
+          </div>|
+         <span  style="font-family: 'Assistant';" >{{the_bill.maelezo}} </span>  
+    
+     </h4>
+
+    
+
+
+
+       <br>
+
+
+       
+
+
+    
+       
+      
+
+
+    </div>
+    </div>
+
+
+
+
+
+            <script>
+             
+           
+       
+
+
+
+           
+//function for title Case
+function titleCase(str) {
+    var splitStr = str.toLowerCase().split(' ');
+    for (var i = 0; i < splitStr.length; i++) {
+        // You do not need to check if i is larger than splitStr length, as your for does that for you
+        // Assign it back to the array
+        splitStr[i] = splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);     
+    }
+    // Directly return the joined string
+    return splitStr.join(' '); 
+ }
+
+
+          
+    $(document).ready(function(){
+      setTimeout(function(){window.print();}, 200)
+
+      window.onafterprint = function(e){
+                 closeMe()
+
+       }
+
+        function closeMe()
+          {
+              
+              window.opener = self;
+              try{
+                  if(window.outerWidth>800){
+                    setTimeout(function(){window.close();}, 100)
+                    
+                }else{
+                    window.open()
+                    setTimeout(function(){window.close();}, 5000)
+                }
+                }catch(err){
+                  alert(err.message)
+              }
+              
+          }
+
+
+  })      
+
+              
+
+
+            </script>
+      
+    </body>
+</html>
+
+
+
+
+
+

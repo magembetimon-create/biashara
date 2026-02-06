@@ -1,0 +1,66 @@
+
+{% extends 'services.html' %}
+
+
+{% block descriptions %}
+{% if mahi.count > 0 %}
+<h6 class="pb-2" ><i class="text-primary text-capitalize" >{{mahi.last.mahitaji}} </i> </h6> 
+{% endif %}
+
+
+{% if brand.count > 0 %}
+<h6 class="pb-2" ><i class="text-primary text-capitalize" >{{brand.last.kampuni_jina}} </i> </h6> 
+{% endif %}
+<input type="hidden" id="itemsKey" value="{{f}}"  >
+<input type="hidden" id="brandFilter" value="{{bf}}"  >
+
+{% endblock %}
+
+<!-- NAV MAPPER -->
+{% block map-with %}
+ {% if useri.langSet == 0 %}Aina{% else %}Categories{% endif %}
+{% endblock %}
+
+<!-- TOP NAVIATIONS <MENU -->
+{% block top-nav-cat %} actively {% endblock %}
+{% block top-nav-cat-icon %}
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-layers-fill" viewBox="0 0 16 16">
+<path d="M7.765 1.559a.5.5 0 0 1 .47 0l7.5 4a.5.5 0 0 1 0 .882l-7.5 4a.5.5 0 0 1-.47 0l-7.5-4a.5.5 0 0 1 0-.882l7.5-4z"/>
+<path d="m2.125 8.567-1.86.992a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882l-1.86-.992-5.17 2.756a1.5 1.5 0 0 1-1.41 0l-5.17-2.756z"/>
+</svg>
+{% endblock %}
+
+<!-- NAVIGATIONS FOR MOBILE -->
+{% block active-cate-menu %}
+  text-primary weight700
+{% endblock %}
+{% block cat-icon %}
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-layers-fill" viewBox="0 0 16 16">
+    <path d="M7.765 1.559a.5.5 0 0 1 .47 0l7.5 4a.5.5 0 0 1 0 .882l-7.5 4a.5.5 0 0 1-.47 0l-7.5-4a.5.5 0 0 1 0-.882l7.5-4z"/>
+    <path d="m2.125 8.567-1.86.992a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882l-1.86-.992-5.17 2.756a1.5 1.5 0 0 1-1.41 0l-5.17-2.756z"/>
+  </svg>
+{% endblock %}
+
+{% block ufupisho %}
+{% if useri.langSet == 0 %} Aina za Huduma{% else %}Services Categories{% endif %}
+{% endblock %}
+
+
+
+{% block dash-map %}
+   {% if useri.langSet == 0 %}Aina  {% else %}Categories{% endif %}
+{% endblock %}
+
+<!-- ROAD ALL ITEME -->
+{% block roadMap %}/stoku/servicesAina{% endblock %}
+
+{% block li-title %}
+  {% if useri.langSet == 0 %}Orodha ya Aina za Huduma zote{% else %}All Services Categories  List{% endif %}
+{% endblock %}
+
+{% block datatable %}
+<script>    
+    $('#loadMe').modal('show')
+  </script>
+<script src="/static/js/services/servicesAina.js"></script>    
+{% endblock %}

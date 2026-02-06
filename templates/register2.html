@@ -1,0 +1,591 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>fanyaBiashara</title>
+    
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+   
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    
+ 
+    <link rel="stylesheet" href="{% static 'css/header.css' %}">
+    <link rel="stylesheet" href="{% static 'css/radiobuttons.css' %}">
+<script src="{% static 'js/nav.js' %}"></script>
+<script src="{% static 'js/jisaji.js' %}"></script>
+    
+
+   <link rel="stylesheet" href="{% static 'css/jisajili.css' %}">
+
+<style>
+.col-4 label{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+     font-size: smaller;
+     color:#0463a3;
+}
+.col-8 input, .col-8 select{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+font-size:small;
+}
+.control span{
+     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        color:#0463a3;
+font-size:small;
+
+}
+
+</style>
+</head>
+<body >
+
+    <div class="bs-example">
+        <nav class="navbar navbar-expand-md navbar-light bg-default">
+            <a href="#" class="navbar-brand"><img id="brandlogo" style="width:150px" src="{%  static 'pics/logo.svg'  %}" /></a>
+            <button type="button" class="navbar-toggler btn btn-sm" data-toggle="collapse" data-target="#navbarCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+    
+            <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse" >
+                <div class="navbar-nav">
+                   
+                </div>
+    
+    
+                <!-- <form class="form-inline mt-3"   method="POST" action="" >
+                         {% csrf_token %}
+                  <div class="input-group input-group-sm mb-3 ">   
+                      <div class="input-group-prepend">
+                          <span  class="btn btn-outline-secondary">  <i class=" small material-icons ">phone</i>
+                          </span>
+                      </div>        
+                      <input id="username" type="tel" class="validate form-control" placeholder="namba ya simu" name="username">
+    
+    
+                  </div>
+                  <div class="input-group input-group-sm mb-3 ml-1 "> 
+                          <div class="input-group-prepend">
+                          <span class="btn btn-outline-secondary"><i class=" small material-icons ">https</i></span>
+                      </div>             
+                      <input id="password" type="password" placeholder="Andika password" name="password" class="validate form-control">
+                      
+    
+                  </div>
+              <div class="input-group input-group-sm mb-3 ml-1 float-right " >
+                  <button type="submit" class="btn btn-primary btn-sm " name="action">login</button>
+    
+              </div>
+    
+    
+    
+    
+              </form> -->
+               
+                <div class="navbar-nav">
+                    <a href="#" class="nav-item nav-link active">Home</a>
+                    <a href="#" class="nav-item nav-link">Profile</a>
+                    <a href="register" class="nav-item nav-link">Register</a>
+                   
+    
+                </div>
+            </div>
+        </nav>
+    
+        <div class="col-xs-12">
+    
+            {% for message in messages %}
+
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" id="invalid_credit"  role="alert">
+       
+              <span > {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                
+
+                  <ion-icon size="medium"  name="checkmark-circle"></ion-icon>
+                  {% elif message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}<ion-icon size="large" name="warning-outline"></ion-icon> {% endif %} 
+               <span  id="logerror"  >{{message}}</span>
+            </span>
+               <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                 <span aria-hidden="true">&times;</span>
+               </button>
+             </div>
+
+
+                  {% endfor %}
+       
+       
+       </div>
+    
+    </div>
+	
+	
+        <div class="row lassic_div rounded mt-5 register1" >
+            <div  class="side_panel col-md-4 col-lg-4 col-xl-4 col-12 rounded-left" style="border-radius:7px 0 0 7px">
+
+                <div class="lassic_div mt-3" style="display:flex ;justify-content:center">
+                    <i class="large material-icons" style="color:#000;font-size:70px">store</i>
+                </div>
+               <ul >
+                   <li></li>
+                   <li>
+                       <span class="p-1">
+                          <ion-icon size="medium" name="person"></ion-icon>  
+                       <span style="font-size: 15px;">
+                             Taarifa Binafsi
+                       </span> 
+
+                       </span>
+
+                       <div class="d-inline float-right activel" style="opacity: 0;" id="first_a" ></div>
+
+                   </li>
+
+                   <li>
+                        
+
+                    <span class="p-1">
+                        <ion-icon name="location"></ion-icon>
+
+                    <span style="font-size: 15px;">
+                           Taarifa kuhusu Biashara
+                  
+                    </span> 
+
+                    </span>
+
+
+                    <div class="d-inline float-right activel" id="second_a" ></div>
+
+                </li>
+                   <li>
+                    <span class="p-1">
+                        <ion-icon name="key"></ion-icon>
+                    <span style="font-size: 15px;">
+                           Namna ya Matumizi
+                  
+                    </span> 
+
+                    </span>
+
+                    <div class="d-inline float-right activel" id="Third_a" style="opacity: 0;"></div>
+                </li>
+               </ul>
+            </div>
+
+
+            <div class="col-md-8 col-lg-8 col-xl-8 col-12 lassic_div mb-4" style="width:100%;" >
+                <div class="display:flex" style="height: 7px;padding:0;">
+                      <div class="div-loader">
+
+                      </div>
+                </div>
+             <div class="d-flex justify-content-center">
+                 <img src="{% static 'pics/location.svg' %}" alt="">
+             </div>
+
+
+<hr>                       
+<div class="register2" >
+
+<p class="p-3" style="font-size:12px;font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+color:rgb(26, 98, 156)">Tafadhari jaza taarifa zinazohusu biashara yako na Uendelee na hatua inayofuata.</p>
+
+
+
+<form class="form-style-7"  method="POST"  action="register2">
+    {% csrf_token %}
+
+
+ 
+<div class="row pl-3">
+     <div class="col-4"><label>Matumizi</label></div>
+     <div class="col-8">
+       <div class="control-group mb-3 ">
+        
+        <label class="control control-radio">
+           <span>Mfanyabiashara</span> 
+                <input type="radio" name="radio" 
+                onchange="
+                if($(this).prop('checked')==true){
+                    $('#buzi_jina').show()
+                    $('#buzi_jina input').val('')
+                    $('#number_detect').val(1)
+
+                }else{$('#buzi_jina').hide()
+            }" id="radio1" checked="checked"  value="biashara" />
+            <div class="control_indicator"></div>
+        </label>
+        <label class="control control-radio ml-3">
+            <span>Mtumiaji wa kawaida</span>
+            
+                <input type="radio" id="radio" 
+                onchange="if($(this).prop('checked')==true){
+                    $('#buzi_jina').hide()
+                    $('#buzi_jina input').val('Personal')
+                    $('#number_detect').val(0)
+
+                }" 
+                name="radio" value="prsonal" />
+            <div class="control_indicator"></div>
+        </label>
+        <input type="text" value=1 name="number_detect" id="number_detect" hidden type="number" />
+    </div>
+</div>
+</div>
+
+
+
+    <div class="row pl-3" id="buzi_jina">
+     <div class="col-4">
+    <label for="name" class="text-danger">Jina la biashara </label>
+
+     </div>
+
+     <div class="col-8">
+    <input required type="text" placeholder="Jina unalolitumia katika biashara... " class="form-control" name="mradi"   id="mradi">
+
+
+     </div>
+
+     <div class="col-12">
+             <span  style="float:right;font-size:12px;font-family:'Assistant'" id="mradil"></span>
+
+     </div>
+
+    </div>
+
+
+    
+    <div class="row pl-3 pt-3">
+
+        <div class="col-4">
+        <label class="display-7" >Nchi </label>
+        </div>
+
+
+        <div class="col-8">
+                <select class="form-control d-inline"   data-style="btn-info"  data-live-search="true" id="Nchini" name="Nchini" >
+                     <option  data-select=0 > ---Chagua Nchi---</option>
+               </select>
+
+               <input type="text" hidden readonly id="clallcode" name='clallcode'>
+               <input type="text" hidden readonly id="curencii" name="curencii">
+               <input type="number" value=0 hidden readonly id="tz_select" name='tz_select'>
+
+        </div>
+
+        <script>
+
+            $.ajax({
+                url:"https://restcountries.com/v2/all",
+                type:"get",
+                success:function(data){
+                    let opt=`  <option  data-select=0 > ---Chagua Nchi---</option>
+                    `                      
+                   
+
+                    for(let c in data){
+                        let cr 
+                        if(data[c].hasOwnProperty('currencies')){
+                            cr = data[c]?.currencies[0].code 
+                        }else{
+                            cr =NaN
+                        }
+
+                        
+                        opt+=`<option   data-curencii='${cr}' data-call=${data[c].callingCodes[0]} data-select=7 > ${data[c].name} </option>`
+                    }
+                     
+                    $('#Nchini').html(opt)
+
+                }
+            })
+
+
+         $('#Nchini').change(function(){
+           $('#clallcode').val($(this).find('option:selected').data('call'))
+           $('#curencii').val($(this).find('option:selected').data('curencii')) 
+           let code = $(this).find('option:selected').data('call')
+           if(code=='255'){
+               $('.tz_country').show()
+                 $('.other_country').hide()
+                 $('#tz_select').val(1)
+              
+           }else{
+                $('.other_country').show()
+               $('.tz_country').hide()
+                 $('#tz_select').val(0)
+
+           }
+           
+         })
+
+           
+        </script>
+
+
+</div>
+   
+
+
+
+<div class="tz_country" style="display:none" > 
+
+    <div class="row pl-3 pt-3">
+
+        <div class="col-4">
+        <label class="display-7" >Chagua Kanda </label>
+        </div>
+
+
+        <div class="col-8">
+                <select class="form-control d-inline"   data-style="btn-info"  data-live-search="true" id="kanda" name="kanda" >
+  <option  data-select=0 > ---------</option>
+
+  {% for kanda in kanda %}
+  <option data-kanda="{{kanda.kanda}}"   data-select=1  >{{kanda.kanda}}</option>
+  {% endfor %}
+</select>
+        </div>
+
+ 
+
+
+</div>
+
+    <div class="row pl-3 pt-3">
+    <div class="col-4">
+    <label for="select-box1" class="label select-box1"><span class="label-desc">Chagua Mkoa </span> </label>
+
+    </div>
+
+    <div class="col-8">
+            <select id="select-box1" class="form-control" name="select-box1"  >
+      <option data-kanda="ketchup mustard" data-select=0  >---------</option>
+      {% for mikoa in mikoa %}
+      <option data-kanda="{{mikoa.kanda}}"  data-mikoa="{{mikoa.mikoa}}" data-select=1  > {{mikoa.mikoa}}</option>
+      {% endfor %}
+
+     
+    </select>
+
+</div>
+</div>
+
+
+<div class="row pl-3 pt-3">
+    <div class="col-4">
+    <label for="select-box1" class="label select-box1"><span class="label-desc" id="wil">Chagua Wilaya </span> </label>
+
+    </div>
+
+    <div class="col-8">
+    
+    <select id="wilaya" class="form-control" name="wilaya" >
+	  <option  data-select=0 >---------</option>
+      {% for wilaya in wilaya%}
+      <option data-mikoa='{{wilaya.mikoa}}' data-kanda="{{wilaya.kanda}}" data-select=1  >{{wilaya.wiaya}}</option>
+      {% endfor %}
+    </select>
+    </div>
+</div>
+
+ <!--   <select  id="wilaya">
+  <option >Wilaya</option>
+  
+</select>-->
+
+</div>
+
+<div class="other_country">
+    <div class="row pl-3 pt-3">
+
+        <div class="col-4">
+        <label class="display-7" >State </label>
+        </div>
+
+
+        <div class="col-8">
+                <input type="text" class="form-control" id="kanda-other" name="kanda-other">
+        </div>
+
+ 
+
+
+</div>
+
+    <div class="row pl-3 pt-3">
+    <div class="col-4">
+    <label for="select-box1" class="label select-box1"><span class="label-desc">Region/sub state </span> </label>
+
+    </div>
+
+    <div class="col-8">
+          <input type="text" class="form-control" id="mikoa-others" name="mikoa-others">
+
+</div>
+</div>
+
+
+<div class="row pl-3 pt-3">
+    <div class="col-4">
+    <label for="select-box1" class="label select-box1"><span class="label-desc" id="wil">Distric/sub state division  </span> </label>
+
+    </div>
+
+    <div class="col-8">
+    
+    <input type="text" class="form-control" id="wilaya-others" name="wilaya-others">
+    </div>
+</div>
+
+ <!--   <select  id="wilaya">
+  <option >Wilaya</option>
+  
+</select>-->
+<!-- <div class="row pl-3 pt-3" id="maarufu" >
+
+    <div class="col-4">
+            <label >famous place</label>
+
+    </div>
+
+    <div class="col-8">
+    	<input required  type="text" placeholder="famous place"  class="form-control" name="mtaa-others" id="mtaa-others">
+    
+    </div>
+
+    <div class="col-12 mt-1">
+	    <span style="font-size:12px;float:right" id="mtaani"> </span>
+
+    </div>
+	
+
+</div> -->
+</div>
+
+
+<div class="row pl-3 pt-3" id="maarufu" >
+
+    <div class="col-4">
+            <label >Sehemu maarufu</label>
+
+    </div>
+
+    <div class="col-8">
+    	<input required type="text" placeholder="Jina la sehemu maarufu kama mtaa n.k"  class="form-control" name="mtaa" id="mtaa">
+    
+    </div>
+
+    <div class="col-12 mt-1">
+	    <span style="font-size:12px;float:right" id="mtaa"> </span>
+
+    </div>
+	
+
+</div>
+
+
+
+<div class="flex d-block pb-4 mt-3" >
+    <button class="submitii float-right btn-sm btn btn-outline-success " name="action" disabled id="fisi2"     >
+        <span class="large material-icons">
+            trending_flat
+            </span>            
+         </button>
+</div>
+
+</form>
+
+
+</div>
+</div>
+            </div>
+        </div>
+</div>
+<script>
+    $('.form-style-7 li input').focus(function(){
+        $(this).siblings('span').show()
+    })
+
+
+//taarifa binafsi
+$('#fisi2').click(function(e){
+	
+			$('.div-loader').show()
+/*
+	e.preventDefault()
+	
+	
+	if(($('#jina').val().length>2)&&($('#namba').val().length==10)&&($('#siri').val().length>=6)&&($('#hakiki').val()==$('#siri').val())){
+		
+		var name = $("#jina").val();
+        var namba = $("#namba").val();
+        var siri = $("#siri").val();
+        var hakiki = $("#hakiki").val();
+
+
+        $.ajax({
+            url:'{% url "register" %}',
+            type:'POST',
+            data:{
+                name:name,
+                siri:siri,
+                namba:namba,
+                hakiki:hakiki
+
+            }
+        }).done(function(response){
+
+            $('.activel').css('opacity',0);
+            $('.second_a').css('opacity',1);
+
+          console.log(response)
+          $('.div-loader').hide()
+
+        }).fail(function(response){
+            console.log(response)
+            $('.div-loader').hide()
+
+        })
+		
+
+	 $('.register2').siblings().fadeOut(100);
+	
+	$('.register2').fadeIn(1000);
+		 
+	}else{
+	$('#makiki').html('<span style="color:red;padding-left:36px"><i class=\"fas fa-exclamation\"></i> Tafadhari Jaza fomu Kama ilivyoelekezwa !! </span>');
+
+    }
+    */
+});
+
+
+</script>
+
+<script  src="{% static 'js/jisaji.js' %}" >
+
+
+
+
+</script>
+
+<div class="footer" style="bottom:0;width:100%" >
+<div class="ft" style="background:#e6e6e6;padding:15px;margin-top:30px;position:relative">
+<p style="text-align:center;color:blue">copyright &copy; 2019 fanyaBiashara.com</p>
+</div>
+</div>
+
+<script src="https://unpkg.com/ionicons@5.1.2/dist/ionicons.js"></script>
+
+</body>
+</html>

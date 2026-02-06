@@ -1,0 +1,109 @@
+{% extends 'userdash.html' %}
+
+{% block Dashboard %}
+<div  class=" Analytical whiteBg tab_div p-4" style="min-height: 100vh;" id="general-panel">
+    
+<div class="row">
+  <div class="col-md-3">
+     <h5> {% if useri.langSet == 0 %}Hesabu za Stoku{% else %}Inventory{% endif %} </h5>
+          <ul class="list-unstyled " >
+              <li class="py-1 weight600" ><a href="/riport/StockStateR">{% if useri.langSet == 0 %}Hali ya Hesabu na Mwenendo{% else %}Inventory State & Trends{% endif %}</a></li>
+              <!-- <li class="py-1 weight600" ><a href="/stoku/sambazajitu"> {% if useri.langSet == 0 %}Wasambazaji{% else %}Suppliers{% endif %}</a></li> -->
+              <li class="py-1 weight600"><a href="/riport/ReduceAdj">{% if useri.langSet == 0 %}Marekebisho ya Kupunguza Bidhaa {% else %}Stock adjustment By Reducing{% endif %}</a></li>
+            
+              <li class="py-1 weight600"><a href="/riport/AddingAdjRiport"> {% if useri.langSet == 0 %}Marekebisho ya Kuongeza Bidhaa{% else %}Stock adjustment By adding{% endif %}</a></li>
+             
+              <!-- <li class="py-1 weight600"><a href="#"> {% if useri.langSet == 0 %}Kuhamisha Bidhaa{% else %}Items Transfer{% endif %}</a></li> -->
+              <li class="py-1 weight600"><a href="/riport/receivesRiport">{% if useri.langSet == 0 %}Kupokea Bidhaa{% else %}Items Receives{% endif %}</a></li>
+              
+              {% if duka.produxn %}
+                <li class="py-1 weight600"><a href="/riport/prodxnRiport">{% if useri.langSet == 0 %}Uzalishaji/Uchakataji Bidhaa{% else %}Manufacturing/Processing{% endif %}</a></li>
+              {% endif %}
+
+              <li class="py-1 weight600"><a href="/riport/ExpiredItems">{% if useri.langSet == 0 %} Bidhaa zilizokaribu kupita/zilizopita muda wa matumizi {% else %}Items about to expire or expired{% endif %} </a></li>
+              <!-- <li class="py-1 weight600"><a href="#"> {% if useri.langSet == 0 %} Bidhaa zilizopita muda wa matumizi{% else %}Exprired Items{% endif %} </a></li> -->
+          </ul>
+  </div>
+
+  {% if duka.sales %}
+    <div class="col-md-3">
+        <h5>{% if useri.langSet == 0 %}Mauzo {% else %}Sales{% endif %}</h5>
+        <ul class="list-unstyled " >
+          <li class="py-1 weight600" ><a href="/riport/riportMauzo">{% if useri.langSet == 0 %}Mauzo {% else %}Sales{% endif %}</a></li>
+          <li class="py-1 weight600"><a href="/riport/SalesReturn">{% if useri.langSet == 0 %}Bidhaa Kurudishwa {% else %}Returned Items{% endif %}</a></li>
+          <li class="py-1 weight600"><a href="/riport/AmountReturn">{% if useri.langSet == 0 %}Pesa ya Oda Kurudishwa {% else %}Order Amount Return{% endif %}</a></li>
+        </ul>
+    </div>
+  {% endif %}
+
+  {% if duka.service %} 
+    <div class="col-md-3">
+        <h5>{% if useri.langSet == 0 %}Huduma {% else %}Services{% endif %}</h5>
+        <ul class="list-unstyled " >
+          <li class="py-1 weight600" ><a href="/riport/riportServiceIncome">{% if useri.langSet == 0 %}Mapato {% else %}Income{% endif %}</a></li>
+          <li class="py-1 weight600" ><a href="/riport/riportServiceChange"> {% if useri.langSet == 0 %}Huduma zilizobadilishwa{% else %}Changed Services{% endif %}</a></li>
+          <li class="py-1 weight600"><a href="/riport/AmountServReturn">{% if useri.langSet == 0 %}Kurudisha Pesa{% else %}Amount Return{% endif %}</a></li>
+        </ul>
+    </div>
+  {% endif %}  
+
+
+  <div class="col-md-3">
+    <h5> {% if useri.langSet == 0 %}Manunuzi{% else %}Purchases{% endif %}</h5>
+     <ul class="list-unstyled " >
+        <li class="py-1 weight600" ><a href="/riport/purchasesRiport"> {% if useri.langSet == 0 %}Manunuzi ya Bidhaa{% else %} Goods Purchases  {% endif %}</a></li>
+        <!-- <li class="py-1 weight600" ><a href="#"> {% if useri.langSet == 0 %}Kurudisha Bidhaa{% else %}Item(s) Return{% endif %}</a></li> -->
+        <li class="py-1 weight600" ><a href="/riport/Expensesr">{% if useri.langSet == 0 %}Ghalama za uendeshaji {% else %}Expenses{% endif %}</a></li>
+     
+      </ul>
+  </div>
+
+  <div class="col-md-3">
+      <h5>{% if useri.langSet == 0 %}Malipo {% else %}Payments{% endif %}</h5>
+       <ul class="list-unstyled " >
+              <li class="py-1 weight600" ><a href="/riport/IncomeExpenditure"> {% if useri.langSet == 0 %}Mapato Na Matumizi{% else %}Income & Expenditure{% endif %}</a></li>
+              <li class="py-1 weight600" ><a href="/riport/TansferR">{% if useri.langSet == 0 %}Kuhamisha Pesa {% else %}Amount Transfer{% endif %}</a></li>
+              
+       </ul>
+  </div>
+
+  
+  {% if duka.sales or duka.service %}
+  <div class="col-md-3">
+     <h5>{% if useri.langSet == 0 %}Biashara kwa Mtandao{% else %}E-commerce {% endif %}</h5>
+          <ul class="list-unstyled " >
+              <li class="py-1 weight600" ><a href="/riport/VistorsCounter">{% if useri.langSet == 0 %}Watembeleaji{% else %}Interprise Vistors {% endif %}</a></li>
+              <!-- <li class="py-1 weight600" ><a href="#">{% if useri.langSet == 0 %}Bidhaa  zilizotembelewa {% else %}Interprise Visted Items {% endif %}</a></li> -->
+              <!-- <li class="py-1 weight600"><a href="#">{% if useri.langSet == 0 %}Bidhaa zilizouzwa{% else %}Sold Items{% endif %}</a></li> -->
+
+              <!-- <li class="py-1 weight600"><a href="#">{% if useri.langSet == 0 %}Bidhaa Ulizotembelea{% else %}Visted Items  {% endif %} </a></li>
+              <li class="py-1 weight600"><a href="#">{% if useri.langSet == 0 %}Bidhaa zilizonunuliwa{% else %}Purchesed Items{% endif %}</a></li> -->
+
+              <!-- <li class="py-1 weight600"><a href="#"> {% if useri.langSet == 0 %}Bidhaa pendwa{% else %} Favorite Items{% endif %}</a></li>
+              <li class="py-1 weight600"><a href="#"> {% if useri.langSet == 0 %}Wasambazaji kupitia Mtandao{% else %}Online Suppliers{% endif %}</a></li>
+              -->
+              <li class="py-1 weight600"><a href="/ecommerce/allBanners">{% if useri.langSet == 0 %}Machapisho{% else %}Posts{% endif %}</a></li>
+              
+          </ul>
+  </div>
+  {% endif %}
+
+
+
+</div>
+ 
+
+</div>
+{% endblock %}
+ 
+{% block dash-mapper %}
+  Dashboard
+{% endblock %}
+
+{% block nav-ripoti %}
+class="c-menu__item style-none is-active"
+{% endblock %}
+
+{% block active-riport %} class="bi bi-graph-up text-primary" {% endblock %}
+
+{% block dash-map %}{% if useri.langSet == 0 %}Ripoti {% else %}Reports{% endif %}{% endblock %}

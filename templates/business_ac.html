@@ -1,0 +1,227 @@
+{% extends 'userdash.html' %}
+
+{% load humanize %}
+
+{% block Dashboard %}
+<link rel="stylesheet" href="/static/css/interp_nav.css">
+
+ <div  class=" Analytical p-md-5 whiteBg" id="general-panel" style="margin-top: -23px;min-height:100vh" >
+
+{% if useri.ImSuper or useri.ImModelate %}
+<div class="text-right py-3">
+  <a href="/activateEnterp" class="btn btn-primary btn-sm">
+       {% if useri.langSet == 0 %} Wezesha Karakana {% else %} Activate Enterprise {% endif %}
+  </a>
+</div>
+{% endif %}
+
+
+  <div class="row">
+    <div class="col-md-6">
+   <ul class="list-unstyled " id="intp_navii" >
+    {% for int in dt %}
+    {% if int.entp.Interprise.id == duka.id %}
+       <li class=" my-3 px-2 highlight" style="border-left:4px solid blue ;" >
+    {% else %}        
+       <li class=" my-3 px-2"  >
+     {% endif %}    
+         <a href="{% if int.entp.Allow  %}/interpnav/{{int.entp.Interprise.id}}{% else %}#{% endif %}" class="p-2 px-2" >
+          <div class="d-flex">
+            <div class="pic centerItem px-2 border-right">
+               <span>
+                    <svg width="2em" height="2em" viewBox="0 0 16 16" class="bi bi-shop" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" d="M2.97 1.35A1 1 0 0 1 3.73 1h8.54a1 1 0 0 1 .76.35l2.609 3.044A1.5 1.5 0 0 1 16 5.37v.255a2.375 2.375 0 0 1-4.25 1.458A2.371 2.371 0 0 1 9.875 8 2.37 2.37 0 0 1 8 7.083 2.37 2.37 0 0 1 6.125 8a2.37 2.37 0 0 1-1.875-.917A2.375 2.375 0 0 1 0 5.625V5.37a1.5 1.5 0 0 1 .361-.976l2.61-3.045zm1.78 4.275a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 1 0 2.75 0V5.37a.5.5 0 0 0-.12-.325L12.27 2H3.73L1.12 5.045A.5.5 0 0 0 1 5.37v.255a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0zM1.5 8.5A.5.5 0 0 1 2 9v6h1v-5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v5h6V9a.5.5 0 0 1 1 0v6h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1V9a.5.5 0 0 1 .5-.5zM4 15h3v-5H4v5zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-3zm3 0h-2v3h2v-3z"/>
+                    </svg>
+               </span>
+            </div>
+    
+            <div class="group_name ml-2">
+                    <div  > {{int.entp.Interprise.name | title}}</div>
+                    <div  class="smallFont latoFont fontColor" >
+                        {{int.entp.Interprise.mtaa.mtaa |title}}, {{int.entp.Interprise.mtaa.kata.kata |title}}, 
+                        {{int.entp.Interprise.mtaa.kata.wilaya.wilaya |title}}, {{int.entp.Interprise.mtaa.kata.wilaya.mkoa.mkoa |title}}, 
+                        {{int.entp.Interprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
+                    </div>    
+                    
+                    <div class="chat_not"  >
+                      {% if int.entp.Allow %}
+                       <span class="px-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-shopping-cart">
+                              <circle cx="9" cy="21" r="1"></circle>
+                              <circle cx="20" cy="21" r="1"></circle>
+                              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                 
+                            </svg>
+
+                             <span class="smallerFont " >{{int.Oda}} </span>  
+                       </span>
+                       <span class="px-2 border-left" >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-square">
+                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            <span class="smallerFont " >{{int.Chat}} </span>
+                       </span>
+                       <span class="px-2 border-left" >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bell">
+                              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                          </svg>
+                          <span class="smallerFont " >{{int.Noti}} </span>
+                       </span>
+
+                       {% else  %}
+                            <span class="px-1 brown border-right" >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-lock">
+                                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2">
+                                  </rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                              </svg>
+                            </span>
+                            
+                            <span class="px-1 brown" >{% if useri.langSet == 0 %}Hauna Ruhusa kwa sasa {% else %} You are not allowed by now {% endif %} </span>
+                       {% endif %}
+
+
+                    </div>
+
+                    <div class="mt-2" >
+                      
+                       {% if int.entp.Interprise.bill_tobePaid < leo %}
+                              <span class="px-1 brown " >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-lock">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2">
+                                        </rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                  </span>
+                                  
+                                  <span class="px-1 brown" >{% if useri.langSet == 0 %}Akaunti haijawezeshwa kwa sasa {% else %} The account is currently disabled {% endif %} </span>
+                        {% endif %}
+                    </div>
+            </div>
+
+          </div>
+
+        </a>
+        </li>
+    {% endfor %}
+
+
+    {% if cheo is None %}
+       <li class=" my-2 px-3 highlight" style="border-left:4px solid blue " >
+    {% else %}        
+       <li class=" my-2 px-3"  >
+     {% endif %}    
+
+         <a href="/interpnav/0" class="p-2 px-2" >
+             <div class="d-flex">
+              <div class="pic centerItem px-2 border-right">
+                 <span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-user">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2">
+                    </path><circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                 </span>
+              </div>
+      
+              <div class="group_name ml-2">
+                      <div  > {{user.first_name | title}}  {{user.last_name | title}}</div>
+                      <div style="color:rgb(58, 58, 58)" class="smallFont latoFont" >
+                        {% if useri.langSet == 0 %}Akaunti Binafsi{% else %}Personal Account{% endif %}                      
+                      </div>    
+                      <div class="chat_not"  >
+                     
+                        <span class="px-2" >
+                             <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-square">
+                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                             </svg>
+                             <span class="smallerFont " >{{perChat}} </span>
+                        </span>
+                        <span class="px-2 border-left" >
+                             <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bell">
+                               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                           </svg>
+                          
+                        </span>
+                     </div>        
+              </div>
+  
+            </div>
+        </a>
+       </li>
+    </ul>
+
+   <!-- Order: {{Oded.last.code}} -->
+
+    {% if useri == duka.owner %}
+    
+        <p class="text-right mt-3">
+          
+          {% if useri.business == 0 %}
+          <a class="btn btn-primary  latoFont" href="/entpreg" >
+            
+            {% if useri.langSet == 0 %}Wezesha Akaunti za Usimamizi{% else %}Activate Management Accounts{% endif %}
+          </a>
+          {% else %}
+
+         
+          <!-- <button onclick="checkdpo()" class="btn btn-primary btn-lg">
+             check dpo
+          </button> -->
+
+          <script>
+              function checkdpo(){
+                $('#loadMe').modal('show')
+                 const data={data:{s:1},url:'/dpoPay'},
+                       sendIt = POSTREQUEST(data)
+                       sendIt.then(resp=>{
+                       $('#loadMe').modal('hide')
+                       hideLoading()
+                       const token = resp.pay
+                             console.log(token);
+                          //  location.replace(`https://secure.3gdirectpay.com/payv2.php?ID=${token}`)
+                       }
+
+                       )
+              }
+
+
+          </script>
+
+
+
+            {% if accs < useri.business %}
+                <a class="btn btn-primary  latoFont" href="/stoku/AddStoku" >
+                    {% if useri.langSet == 0 %} Ongeza karakana/biashara {% else %}Add Enterprise{% endif %}
+                </a>   
+            {% else %}
+                <a href="/entpreg" class="btn btn-primary  latoFont" >
+                    {% if useri.langSet == 0 %}Panua Akaunti{% else %} Extend Account {% endif %}
+                </a>
+            {% endif %}
+
+          {% endif %}
+        </p>
+    {% endif %}
+
+    
+
+    </div>
+  
+
+  </div>
+ 
+
+</div>
+
+
+{% endblock %}
+{% block dash-mapper %}
+{% if useri.langSet == 0 %} Mpangilio  {% else %} Settings {% endif %}
+{% endblock %}      
+
+
+{% block akaunt-map %}  
+    <a href="#" class="tab_show" data-show="#general-panel">
+        {% if useri.langSet == 0 %} Akaunti za Biashara  {% else %}Business Accounts{% endif %}
+    </a>   
+{% endblock %}
+
+

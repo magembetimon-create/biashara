@@ -1,0 +1,219 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+{% block Dashboard %}
+ <div  class="whiteBg py-2 px-2 pb-5" style="min-height: 80vh;margin-top:-19px" >
+  <div class="text-md-right p-2">
+     <a href="/ecommerce/servedItems">
+      <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bookmark">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+     </svg>
+      {% if useri.langSet == 0 %}Bidhaa/Huduma Muhimu{% else %}Saved Items/Services{% endif %}</a>
+  </div>
+
+    <h6 class="p-2 " > 
+        <a class="noprimary" href="{% if the_group or the_Pgroup or d > 0 or r > 0 %}/ecommerce/servedVendors{% else %}#{% endif %}">
+            {% if useri.langSet == 0 %}Wafanyabiashara Muhimu{% else %}Saved Vendors{% endif %}
+        </a>
+        {% if the_group or the_Pgroup %}
+
+        
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+        <a  href="/ecommerce/servedVendors?grp={{the_Pgroup.id}}&r={{r}}&d={{d}}">
+          <i class="darkblue">
+            
+             {% if useri.langSet == 0 %}{{the_Pgroup.jina | title}} {% else %}{{the_Pgroup.name | title}}{% endif %}
+          </i>
+            
+            
+        </a>
+
+        
+        {% endif %}
+        {% if the_group  %}
+
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+        <a  href="#">
+          <i class="darkblue">
+             {% if useri.langSet == 0 %}{{the_group.jina | title}} {% else %}{{the_group.name | title}}{% endif %}
+          </i>
+        </a>
+
+        {% endif %}
+
+        {% if r > 0 or d > 0 %}
+      
+            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+            <a  href="/ecommerce/servedVendors?grp={{grp}}&gr={{gr}}&r={{mkoani.id}}">
+              {{mkoani.mkoa | title}}
+                
+            </a>
+
+            {% if d > 0 %}
+            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+            <a  href="#">
+              {{wilayani.wilaya | title}}
+                
+            </a>                  
+            {% endif %}
+
+        {% endif %}
+    </h6>
+    <hr>
+    {% if zipo %}
+
+    <div class="categs " >
+       
+        {% for b in bibi %}
+        <div class="dropdown open mx-1 d-inline"  >
+            <a class="btn btn-light btn-sm darkblue smallerFont dropdown-toggle" type="button" id="triggerId" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="true">
+                        {% if useri.langSet == 0 %} {{b.aina.aina.jina | title}} {% else %} {{b.aina.aina.name | title }}{% endif %}
+         </a>
+            <div class="dropdown-menu" aria-labelledby="triggerId">
+                {% for m in mama %}
+                {% if m.aina.aina == b.aina.aina %}
+                    <a class="dropdown-item btn-sm smallerFont" href="/ecommerce/servedVendors?gr={{m.aina.id}}&d={{d}}&r={{r}}">
+                        {% if useri.langSet == 0 %} {{m.aina.jina | title}} {% else %} {{m.aina.name | title }}{% endif %}
+
+                    </a>
+                {% endif %}
+            
+            {% endfor %} 
+            </div>
+        </div>
+        {% endfor %}
+    </div>    
+
+    <hr>
+
+    <ul class="list-unstyled p-2">
+   
+        {% for it in vendors %}
+          <li class="py-2 border-bottom" >
+                  <a href="/buzinessProfile?value={{it.vendor.vendor.id}}" class="d-flex ">
+                       <div class="border-right p-2">
+                            {% if it.vendor.vendor.logo %}
+
+                               <img src="{{it.vendor.vendor.logo.url}}"  style="max-width:50px;max-height:50px">
+                            {% else %}
+                                <span style="color:rgba(66, 66, 66, 0.466)" >
+                           
+                                    <svg width="2.2em" height="2.2em" viewBox="0 0 16 16" class="bi bi-shop-window" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                        <path fill-rule="evenodd" d="M2.97 1.35A1 1 0 0 1 3.73 1h8.54a1 1 0 0 1 .76.35l2.609 3.044A1.5 1.5 0 0 1 16 5.37v.255a2.375 2.375 0 0 1-4.25 1.458A2.371 2.371 0 0 1 9.875 8 2.37 2.37 0 0 1 8 7.083 2.37 2.37 0 0 1 6.125 8a2.37 2.37 0 0 1-1.875-.917A2.375 2.375 0 0 1 0 5.625V5.37a1.5 1.5 0 0 1 .361-.976l2.61-3.045zm1.78 4.275a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 1 0 2.75 0V5.37a.5.5 0 0 0-.12-.325L12.27 2H3.73L1.12 5.045A.5.5 0 0 0 1 5.37v.255a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0zM1.5 8.5A.5.5 0 0 1 2 9v6h12V9a.5.5 0 0 1 1 0v6h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1V9a.5.5 0 0 1 .5-.5zm2 .5a.5.5 0 0 1 .5.5V13h8V9.5a.5.5 0 0 1 1 0V13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a.5.5 0 0 1 .5-.5z"/>
+                                      </svg>
+                                     
+                                    </span>
+                            {% endif %}
+                       </div>
+    
+                       <div class="pl-2">
+                           <h6 style="font-size:14px ;" class="text-capitalize py-0 mb-0" >{{it.vendor.vendor.name}} 
+                             {% if it.new > 0 %}
+                               <span class="border-left px-1 smallerFont darkblue weight400"> {% if useri.langSet == 0 %} mpya {% else %} new {% endif %}: </span><span class="badge badge-pill text-light" style="background-color:brown" >{{it.new}}</span>  
+                             {% endif %}
+                          </h6>
+                            <div  class="smallerFont" >
+                                  <span style="color:rgb(44, 44, 44)" class="ml-1" > {{it.vendor.vendor.slogan}} </span> 
+                                  
+                                   <span class=" border-left px-1" > {{it.vendor.desk}} </span> 
+                                 <!-- <span class=" border-left px-1" > #{{it.itm.bidhaa.bidhaa_aina.aina}} </span> 
+                                  <span class=" border-left px-1" > #{{it.itm.bidhaa.bidhaa_aina.mahi.mahitaji}} </span>  -->
+                            </div>
+                           <div class="smallFont text-capitalize" style="color:rgba(32, 32, 32, 0.842) ;" > 
+                           
+                                 
+                                                        
+                            {{it.vendor.vendor.jengo | title}} ,    
+                            {{it.vendor.vendor.mtaa.mtaa | title}} ,    
+                            {{it.vendor.vendor.mtaa.kata.kata | title}} ,    
+                            {{it.vendor.vendor.mtaa.kata.wilaya.wilaya | title}},
+                            {{it.vendor.vendor.mtaa.kata.wilaya.mkoa.mkoa | title}},
+                            {{it.vendor.vendor.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}},
+    
+    
+                            </div> 
+                       </div>
+                  </a>
+          </li>
+          {% endfor %}
+    </ul>
+
+       <p class="p-2 " style="-webkit-box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14); 
+       box-shadow: 0px -1px 4px -1px rgba(0,0,0,0.14);">
+       
+           {% if page.has_previous %}
+             <a href="{% url 'servedVendors' %}?page=1&r={{r}}&d={{d}}grp={{grp}}&gr={{gr}}" type="button"  class="btn btn-default border0">
+               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+                 <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+               </svg>
+               </a>
+         
+               <a href="{% url 'servedVendors' %}?page={{page.previous_page_number}}&r={{r}}&d={{d}}grp={{grp}}&gr={{gr}}" type="button"  class="btn btn-default  border0">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                   <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                 </svg>
+               </a>
+             {% endif %}
+         
+           {% if page.has_next %}
+               <a href="{% url 'servedVendors' %}?page={{page.next_page_number}}&r={{r}}&d={{d}}grp={{grp}}&gr={{gr}}" type="button" class="btn btn-default border0">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                   <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                 </svg>
+               </a>
+         
+               <a href="{% url 'servedVendors' %}?page={{pages}}&r={{r}}&d={{d}}grp={{grp}}&gr={{gr}}" type="button"  class="btn btn-default border0" >
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+                   <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                 </svg>
+               </a>
+         {% endif %}
+               <p class="px-2">
+                
+                 {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+         
+               </p>
+       </p>
+
+       <hr>
+       {% for b in mikoa %}
+       <div class="dropdown open mx-1 d-inline"  >
+           <a class="btn btn-light btn-sm darkblue smallerFont dropdown-toggle" type="button" id="triggerId" data-toggle="dropdown" aria-haspopup="true"
+                   aria-expanded="true">
+                       {{b.vendor.mtaa.kata.wilaya.mkoa.mkoa | title }}
+        </a>
+           <div class="dropdown-menu" aria-labelledby="triggerId">
+               {% for m in wilaya %}
+               {% if m.vendor.mtaa.kata.wilaya.mkoa.id == b.vendor.mtaa.kata.wilaya.mkoa.id %}
+                   <a class="dropdown-item btn-sm smallerFont" href="/ecommerce/servedVendors?d={{m.vendor.mtaa.kata.wilaya.id}}">
+                       {{m.vendor.mtaa.kata.wilaya.wilaya | title }}
+
+                   </a>
+               {% endif %}
+           
+           {% endfor %} 
+           </div>
+       </div>
+       {% endfor %}
+
+    {% else %}
+         <div class="centerItem" style="height:50vh" >
+            <p>{% if useri.langSet == 0 %} Hakuna Mfanyabiashara yeyote Muhimu aliyepatikana {% else %}No Saved Vendor found{% endif %} </p>
+        </div>
+    {% endif %}
+
+
+ </div>
+{% endblock %} 
+
+{% block dash-map %}
+   {% if useri.langSet == 0 %}Wafanyabiashara Muhimu{% else %}Saved Vendors{% endif %}
+{% endblock %}

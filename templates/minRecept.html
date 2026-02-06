@@ -1,0 +1,736 @@
+{% load humanize %}
+
+{% load static %}
+{% static "pics" as baseUrl %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
+    <script type="text/javascript" src="{% static 'js/jquery.js' %}" ></script>
+
+    <!-- <script src="{% static 'js/staffaccordion.js' %}"></script> -->
+
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/momentlocale.js' %}"></script>
+    <script src="{% static 'js/qrcode.min.js' %}"></script>
+
+    <link rel="stylesheet" href="/static/css/minRecept.css">
+</head>
+<body>
+
+    <div id="invoice-POS">
+
+        <center id="top">
+           <H4 class="text-center" >-----{% if then.langSet == 0 %}Mwanzo wa Risiti{% else %}Receipt Start {% endif %}-----</H4>
+          {% if duka.logo and duka.invo_logo %}
+            <div  class="logo">
+                <img src="{{duka.logo.url}}" style="max-height: 100%;" alt="">
+            </div>
+          {% endif %}
+          
+
+          <div class="info">
+            <h2> {{duka.name | title}}</h2>
+            <div style="margin-top: -10px;" class="the_address" >{{duka.slogan}}</div>
+            <div class="the_address" > 
+              {{duka.jengo}},
+              {{duka.mtaa.mtaa | title}} ,{{duka.mtaa.kata.kata | title}} ,{{duka.mtaa.kata.wilaya.wilaya | title}}, 
+              {{duka.mtaa.kata.wilaya.mkoa.mkoa | title}}, {{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}}
+
+            </div>
+            {% if reg.count > 0 %}
+                              
+                    <div class="the_address" >
+                        <h6>
+                         {% for r in reg %}
+                            {% if forloop.counter > 1 %}
+                               ,
+                            {% endif %}
+                               {{r.reg_name }}:  {{r.reg_no }}
+                            {% endfor %}
+                        </h6>
+                    </div>   
+                   
+                {% endif %}
+
+                <div class="the_address pb-2">
+                     <strong>{{duka.Intp_code}}</strong>
+                </div>
+            
+          </div>
+          <!--End Info-->
+        </center>
+
+        
+        <h2 class="pt-2" >INVO-{{the_bill.code}}</h2>
+        
+        <div class="the_address row">
+          <div class="col-8">
+            {% if then.langSet == 0 %} Tarehe ya Ankara{% else %} Invoice Date {% endif %}:
+          </div>
+          <div class="col-4">
+            {{the_bill.date | date:'d/m/Y' }}
+          </div>
+          
+        </div>
+
+        <div class="the_address row">
+          <div class="col-8">
+               {% if then.langSet == 0 %}Tarehe ya Kukamilisha  {% else %} Due date {% endif %}:
+          </div>
+          <div class="col-4">
+            {{the_bill.kulipa | date:'d/m/Y'}}
+          </div>
+          
+        </div>
+
+        <hr>
+
+            <!-- IF IS SERVICE -->
+        {% if the_bill.service %}
+        <h4 class="">
+                      
+            {% if useri.langSet == 0 %} Muda wa Huduma{% else %} Service Duration {% endif %}
+        </h4> 
+      
+          <div class=" row  the_address">
+              <div class="col-5 brown"> {% if useri.langSet == 0 %}Kuanzia{% else %} From{% endif %}:  </div>
+              <div class="col-7 weight500">
+                  <script> document.write(moment('{{the_bill.servFrom | date:"r" }}').format('DD/M/YYYY, HH:mm')) </script>
+                    
+                </div>
+              
+          </div>
+          <div class="row the_address"> 
+            <div class="col-5 brown"> {% if useri.langSet == 0 %} Hadi{% else %} To{% endif %}:  </div>
+              <div class="col-7 weight500">
+                <script> document.write(moment('{{the_bill.servTo | date:"r" }}').format('DD/M/YYYY, HH:mm')) </script>
+              </div>
+            </div>
+       
+
+      <hr>
+      {% endif %}
+
+
+        
+
+        <div class="the_address row">
+          <div class="col-8">
+              <strong>{% if then.langSet == 0 %} Statasi{% else %} Status  {% endif %}</strong>:
+          </div>
+          <div class="col-4">
+            {% if the_bill.ilolipwa == the_bill.amount %}
+            <strong style="font-family:'Ubuntu',sans serif;color:#205302f3" >
+               {% if then.langSet == 0 %}   IMELIPIWA{% else %} PAID  {% endif %}
+            </strong>
+            {% elif the_bill.ilolipwa != 0 %}
+            <strong style="font-family:'Ubuntu',sans serif;color:#2f6a79" >
+               {% if then.langSet == 0 %}  IMELIPWA KIASI {% else %} LESS PAID {% endif %}
+            </strong>
+            {% elif the_bill.ilolipwa == 0 %}
+            <strong style="font-family:'Ubuntu',sans serif;color:#9b1010" >
+                {% if then.langSet == 0 %}  HAIJALIPIWA {% else %} UNPAID {% endif %}
+            </strong>
+            {% endif %}
+          </div>
+          
+        </div>
+
+        <div class="row the_address">
+          <div class="col-4">
+            <span class="text-danger">{% if then.langSet == 0 %} Kiasi{% else %} Amount{% endif %}</span>:
+          </div>
+          <div class="col-8 text-right">
+            <span class="smallFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <span>{{the_bill.amount | floatformat:'-2' | intcomma }} </span>
+
+          </div>
+          <div class="col-4">
+            <span class="text-danger">{% if then.langSet == 0 %} Ilolipwa  {% else %} Paid {% endif %}</span>:
+          </div>
+          <div class="col-8 text-right">
+            <span class="smallFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <span >{{the_bill.ilolipwa | floatformat:'-2' | intcomma }} </span>
+
+          </div>
+          {% if the_bill.ilolipwa != the_bill.amount %}
+          <div class="col-4 border-top">
+            <span class="text-danger">{% if then.langSet == 0 %} Deni  {% else %} Debt {% endif %}</span>:
+          </div>
+          <div class="col-8 border-top text-right">
+            <span class="smallerFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <label class="text-danger">
+                <script>
+                  //  $(document).ready(function(){
+                        let am= Number('{{the_bill.amount}}'),
+                         pd = Number('{{the_bill.ilolipwa}}')
+                         document.write((am-pd).toLocaleString())
+                   // })
+                    
+                </script>
+            </label>
+
+          </div>
+
+          {% endif %}
+        </div>
+        
+        <hr>
+
+        <!--End InvoiceTop-->
+      
+        <div id="mid">
+          <div class="info">
+            <h2>
+              {% if then.langSet == 0 %}
+                 Bili Kwa
+              {% else %}   
+                 Bill To
+              {% endif %}:
+            </h2>
+            <p>
+              {% if then.langSet == 0 %}Jina{%else%}Name{%endif%} : <strong> {{the_bill.mteja_jina | title }}</strong> <br>
+            
+              {% if the_bill.online %}
+
+                  Address : {% if not the_bill.customer_in %} {{the_bill.user_customer.jengo }}, {% endif %}  {{the_bill.user_customer.enteprise.mtaa.mtaa |title}},  {{the_bill.user_customer.enteprise.mtaa.kata.kata |title}},  
+                  {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.wilaya |title}},  {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.mkoa.mkoa |title}},  
+                  {{the_bill.user_customer.enteprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}         
+                </br>
+                {% if useri.langSet == 0 %} Barua Pepe  {% else %} Email {% endif %} : {{the_bill.user_customer.enteprise.owner.user.email }}</br>
+              
+                {% if the_bill.customer_in %}
+                <div class="classic_div mt-2 p-2 border-top text-left" style="max-width: 450px;">
+                    <h6 class="weight500" >{% if useri.langSet == 0 %}Mteja  eneo la Biashara  {% else %} Customer around business area{% endif %}</h6> 
+                    <div class="row the_address mb-2">
+                    <div class="col-3">
+                        
+                        {% if useri.langSet == 0 %}Eneo{% else %} Area{% endif %}:
+                        </div>
+                        <div class="col-9 ">
+                            <strong class="brown" ><u class="pb-2"> {{the_bill.customer_in.area.name}} </u> </strong> 
+                        </div>
+                    </div>
+                    <div class="row the_address">
+                        <div class="col-3">
+                            {% if useri.langSet == 0 %}Sehemu{% else %} Position{% endif %}:
+                        </div>
+                        <div class="col-9 ">
+                            <strong class="brown" ><u class="pb-2"> {{the_bill.customer_in.name}} </u> </strong> 
+                        </div>
+                    </div>
+                </div>   
+               {% endif %}
+
+              {% else %}
+              {% if then.langSet == 0 %} Anwani  {% else %} Address {% endif %}  : {{the_bill.address}}</br>
+                {% if then.langSet == 0 %} Simu  {% else %} Phone {% endif %}  :  {{the_bill.simu }}</br>
+              {% endif %} 
+              </p>
+          </div>
+        </div>
+        <!--End Invoice Mid-->
+      
+        <div id="bot">
+      
+          <div id="table">
+            <h4> {% if the_bill.service %} 
+                     {% if then.langSet == 0 %} Huduma  {% else %} Service(s) {% endif %} 
+                  {% else %} 
+                     {% if then.langSet == 0 %} Bidhaa  {% else %} Item(s) {% endif %} 
+
+                  {% endif %}
+            </h4>
+          <ul id="itm_list" >
+
+          </ul>
+
+          <div id="totalSumartion">
+              
+          </div>
+          </div>
+          <!--End Table-->
+
+
+
+          <div class="classic_div mt-3">
+            
+              <div class="d-flex justify-content-center align-items-center" id="imgBox">
+                  <img src="" alt="" id="qrImage">
+              </div>
+            
+  
+  
+            <script>
+               $(document).ready(function(){
+                  const url = window.location.host;
+                  const imgBox= document.getElementById("imgBox")
+  
+                    qrcode = new QRCode('imgBox',{
+                      text:`${url}/mauzo/viewInvo?item_valued={{the_bill.id}}`,
+                      height:120,
+                      width:120,
+                    
+                  })
+               })
+            </script>
+          </div>
+      
+          <div id="legalcopy">
+            <p class="legal">
+                {{the_bill.invo_desc.desc  | safe}}
+            </p>
+          </div>
+          <H4 class="text-center" >-----{% if then.langSet == 0 %}Mwisho wa Risiti{% else %}Receipt End {% endif %}-----</H4>
+
+        </div>
+        <!--End InvoiceBot-->
+      </div>
+      <!--End Invoice-->
+
+
+      <script>
+         $('document').ready(function(){
+        let tot_vat=0,vat_include = false,vat_set=false,sub_tot=0
+            const vatper = Number('{{duka.vatper}}')/100
+            let itms=[],itm_var={},
+                colors=[],color_var={},
+                sizes=[],sizes_var={},
+                tr='',
+                
+                set_v='',
+                includ_v='',
+                bei = 0,
+                act_bei=0,
+                sold_p
+        //create objects for items , color & sizes ...........................//
+
+
+        //CREATE ITEMS OBJECT...............// 
+
+        '{% for li in list %}'
+         vat_include=false
+         set_v='{{li.itm.vat_set}}'
+         includ_v='{{li.itm.vat_included}}'
+         vat_set=false
+         bei = Number('{{li.itm.produ.Bei_kuuza}}')
+         sale_bei = Number('{{li.itm.bei}}')
+         sold_p = sale_bei/(1+vatper)
+
+        
+         //make the price equal to sold price if the item sold price is greater than its actul saved price
+         if(sold_p>bei){
+             bei = sale_bei
+         }
+
+         
+         if(includ_v =='True' ){
+            vat_include=true
+         }
+
+         if(set_v =='True' ){
+            vat_set=true
+         }
+
+         itm_var={
+            val:'{{li.itm.id}}',
+            prod:'{{li.itm.bidhaa.id}}',
+            bei:bei,
+            bei_jum:'{{li.itm.produ.Bei_kuuza_jum}}',
+            sold:sale_bei,
+            idadi:Number('{{li.itm.idadi}}')-Number('{{li.itm.returned}}'),
+            jum:'{{li.itm.jum}}',
+            vat_set:vat_set,
+            vat_include:vat_include,
+            maelezo:`{{li.itm.produ.bidhaa.maelezo}}`,
+            vipimo:`{{li.itm.produ.bidhaa.vipimo}}`,
+            vipimo_jum:`{{li.itm.produ.bidhaa.vipimo_jum}}`,
+            jina:`{{li.itm.produ.bidhaa.bidhaa_jina}}`,
+            uwiano:'{{li.itm.produ.bidhaa.idadi_jum}}',
+            serial:`{% if li.serial  %}{{li.serial}}{% endif %}`,
+            picha:`{{li.picha}}`,
+            timely:Number('{{li.itm.produ.timely}}'),
+            muda:Number('{{li.itm.saveT}}')
+        }
+        itms.push(itm_var)
+
+        '{% endfor %}'
+        //COLOR OBJECTS....................//
+        '{% for col in color %}'
+          color_var={
+              itm:'{{col.mauzo.id}}',
+              val:'{{col.id}}',
+              idadi:Number('{{col.idadi}}')-Number('{{col.returned}}'),
+              color_name:`{{col.color.color.color_name}}`,
+              color_code:'{{col.color.color.color_code}}',
+              color_nick:'{{col.color.color.nick_name}}'
+          }
+          colors.push(color_var)
+         '{% endfor %}'
+
+         //SIZES OBJECT...............//
+         '{% for sz in size %}'
+            sizes_var={
+                color:'{{sz.color.id}}',
+                size:`{{sz.size.sized.size}}`,
+                idadi:Number('{{sz.idadi}}')-Number('{{sz.returned}}'),
+            }
+            sizes.push(sizes_var)
+         '{% endfor %}'
+
+         //USED PRICES.........................//
+         let pr=[],pr_var={}
+         '{% for p in prices %}'
+            pr_var={
+                unit:'{{p.unit}}',
+                price:Number('{{p.price}}'),
+                qty:Number('{{p.qty}}'),
+                prod:'{{p.prod}}'
+            }
+            pr.push(pr_var)
+
+         '{% endfor %}'
+
+         const itms_data = [],
+               IS_SERVICE = Number('{% if the_bill.service %}1{% else %}0{% endif %}'),
+               duraxn = [
+                    {
+                    value:1,
+                    name:lang('dakika','Minute(s)'),
+                    
+                    },
+                    {
+                    value:0,
+                    name:'----',
+                    
+                    },
+                    {
+                    value:2,
+                    name:lang('Saa','hour(s)'),
+                    
+                    
+                    },
+                    {
+                    value:3,
+                    name:lang('Siku','Day(s)'),
+                    
+                    
+                    },
+                    {
+                    value:4,
+                    name:lang('Wiki','Week(s)'),
+                    
+                    
+                    },
+                    {
+                    value:5,
+                    name:lang('mwezi','Month(s)'),
+                    
+                
+                    },
+                    {
+                    value:6,
+                    name:lang('Miaka','Year(s)'),
+                    
+                    
+                    },
+                
+                ]
+
+                itms.forEach(itm=>{
+                  let itmC = colors.filter(cl=>itm.val===cl.itm)
+                      
+                  if(itmC.length){
+                    itmC.forEach(ci=>{
+                      szC=sizes.filter(s=>s.color===ci.val)   
+
+                                            if(szC.length){
+                                                //Item with color and size............................//
+                                                szC.forEach(szd=>{
+                                                    itms_data.push({
+                                                        'id':itm.val,
+                                                        'name':itm.jina,
+                                                        'color_name':ci.color_name,
+                                                        'color_nick':ci.color_nick,
+                                                        'color_id':ci.val,
+                                                        'size_name':szd.size,
+                                                        'sold':itm.sold,
+                                                        'maelezo':itm.maelezo,
+                                                        'bei':itm.bei,
+                                                        'bei_jum':itm.bei_jum,
+                                                        'idadi':szd.idadi,
+                                                        'picha':itm.picha,
+                                                        'vipimo':itm.vipimo,
+                                                        'uwiano':itm.uwiano,
+                                                        'vipimo_jum':itm.vipimo_jum,
+                                                        'vat_included':itm.vat_include,
+                                                        'vat_set':itm.vat_set,
+                                                        'muda':itm.timely?(itm.muda):1,
+                                                        'timely':itm.timely
+                                                    })   
+                                                })
+
+                                            }else{
+                                                  //Item with color but no size......................//
+                                                  itms_data.push({
+                                                      'id':itm.val,
+                                                        'name':itm.jina,
+                                                        'color_name':ci.color_name,
+                                                        'color_nick':ci.color_nick,
+                                                        'color_id':ci.val,
+                                                        'size_name':'',
+                                                        'sold':itm.sold,
+                                                        'maelezo':itm.maelezo,
+                                                        'bei':itm.bei,
+                                                        'bei_jum':itm.bei_jum,
+                                                        'idadi':ci.idadi,
+                                                        'picha':itm.picha,
+                                                        'vipimo':itm.vipimo,
+                                                        'uwiano':itm.uwiano,
+                                                        'vipimo_jum':itm.vipimo_jum,
+                                                        'vat_included':itm.vat_include,
+                                                        'vat_set':itm.vat_set,
+                                                        'muda':itm.timely?(itm.muda):1,
+                                                        'timely':itm.timely
+                                                    })   
+
+                                            }
+                    })
+
+                  }else{
+
+                    itms_data.push({
+                                                      'id':itm.val,
+                                                        'name':itm.jina,
+                                                        'color_name':'',
+                                                        'color_nick':'',
+                                                        'color_id':'',
+                                                        'size_name':'',
+                                                        'maelezo':itm.maelezo,
+                                                        'bei':itm.bei,
+                                                        'sold':itm.sold,
+                                                        'bei_jum':itm.bei_jum,
+                                                        'idadi':itm.idadi,
+                                                        'picha':itm.picha,
+                                                        'vipimo':itm.vipimo,
+                                                        'uwiano':itm.uwiano,
+                                                        'vipimo_jum':itm.vipimo_jum,
+                                                        'vat_included':itm.vat_include,
+                                                        'vat_set':itm.vat_set,
+                                                        'muda':itm.timely?(itm.muda):1,
+                                                        'timely':itm.timely
+                                                    })   
+
+                  }
+
+                })
+
+        
+         let li = "",count = 1,sales=0,total_vat=0
+         itms_data.forEach(pi=>{
+             
+             let    beis = 0 ,idadis=0,idad=0,vpmo='',sale=0,
+
+                                prics = [],
+                                  prc1 = {
+                                    unit:pi.vipimo,
+                                    price:Number(pi.bei),
+                                    qty:1
+                                  } 
+
+                                prics.push(prc1)   
+
+                            if(Number(pi.uwiano)>1){
+                                prc2={
+                                    unit:pi.vipimo_jum,
+                                    price:Number(pi.bei_jum),
+                                    qty:Number(pi.uwiano)
+                                }
+                                prics.push(prc2)
+
+                            }
+
+
+                            prics = [...prics,...pr]
+
+              let prp = b => pi.idadi % b.qty===0
+
+              const prop_price = prics.filter(prp)
+
+              prop_price.sort((a,b)=>(a.qty>b.qty)? 1 :(a.qty ===b.qty)
+                ?((a.qty > b.qty)? 1 : -1) : -1 )
+              let ps = prop_price[prop_price.length-1]  
+                      
+                          beis = Number(pi.bei)*Number(ps.qty)
+
+                    
+
+                      vpmo = ps.unit
+                      idad = Number(pi.idadi)/Number(ps.qty)
+                      sale=Number(pi.sold)*Number(pi.idadi)
+
+              if( pi.vat_set){
+                  //REGULATE MEASUARES.............//
+                      beis= pi.vat_included?(beis/(1+vatper)):beis
+                      sales+=(Number(pi.sold)/(1+vatper))*Number(pi.idadi)*pi.muda
+                      sale=sale/(1+vatper)               
+
+              }else{
+                      sales+=Number(pi.sold)*Number(pi.idadi)*pi.muda
+
+              }
+
+              sub_tot+=(beis*idad*pi.muda)
+              if(pi.vat_set){
+                  total_vat+=sale*vatper*pi.muda
+              }
+                      
+
+         const  siz = pi.size_name!=""?`<i>Size:<strong class="brown text-uppercase" >${pi.size_name}</strong></i>`:'',
+                color_nik = pi.color_nick!=""?`(${pi.color_nick})`:'',
+                color = pi.color_name!=""?` <i class="text-primary text-capitalize" >${pi.color_name}${color_nik}</i>  `:''  ,
+                dura = IS_SERVICE?duraxn.find(d=>d.value===pi.timely):{name:'',duration:1,opt:'',value:0},
+                servT = IS_SERVICE?dura.duration:1,
+                tms = IS_SERVICE&&pi.timely?`&times;<span>${pi.muda}</span><span class="text-primary">${dura.name}</span>`:''
+                // picha =`<img style="max-width: 40px;"  src="${pi.picha?pi.picha:'/static/pics/img.svg'}" alt="${lang('Hakuna Picha','No Image')}">`
+         li += `
+                 <li class=" border-bottom  "  >
+                      <div class="d-flex" >
+                           <div><strong>${count}.</strong></div>
+
+                        <div>
+                            <div class="d-flex"  >     
+                                <div class="text-capitalize smallFont" style="min-width:100%px" >  ${siz} ${color} ${pi.name} </div>
+                              
+                            </div>
+
+                            <div class="row p-0 smallerFont">
+                                <div class="col-12"> 
+                                      
+                                        <span class=" add-reduce-btn  " ><span class="text-primary">{{duka.currencii}}</span>.${Number(beis).toLocaleString()} &times; ${idad}</span><span class="add-reduce-btn   text-primary" >${vpmo}</span>${tms} 
+                                            
+                                </div>
+                                <div class="col-12 border-bottom  row"> 
+                                  <div class="col-4">
+                                      <strong>${lang('Jumla','Total')}</strong>
+                                   </div> 
+                                  <div class="col-8 text-right">
+                                        <span class="text-primary" >{{duka.currencii}}.</span> <strong class="py-1 " style="color:var(--text-muted)" >${Number(beis*idad*pi.muda).toLocaleString()} </strong> 
+
+                                   </div> 
+                                        
+                                </div>
+                            </div>
+
+                        </div>
+                        </div>
+                      <hr style="margin-top:2px" />
+                    </li> `
+
+                    count+=1
+         })
+
+         const vat_allowed = Number('{% if not duka.vat_set %}1{% else %}0{% endif %}'), totSum = `
+                   <h6 class="row" ${sales==sub_tot?'hidden':''}>
+                       <div class="col-4">
+                          ${lang('Jumla kwa Bei','Total By Price')}
+                       </div>
+                       <div class="col-8 text-right" >
+                          ${CURRENCII}  ${Number(sub_tot).toLocaleString()}
+                       </div>
+                   </h6>
+
+                   <h6 class="row" ${sales==sub_tot?'hidden':''}>
+                       <div class="col-4">
+                          ${lang('Punguzo','Discount')}
+                       </div>
+                       <div class="col-8 text-right" >
+                          ${CURRENCII}  ${Number(sub_tot-sales).toLocaleString()}
+                       </div>
+                   </h6>
+                   <h6 class="row" ${sales==sub_tot&&!vat_allowed?'hidden':''}  >
+                       <div class="col-4">
+                          ${lang('Jumla Kwa Mauzo','Sub Total')}
+                       </div>
+                       <div class="col-8 text-right" >
+                          ${CURRENCII}  ${Number(sales).toLocaleString()}
+                       </div>
+                   </h6>
+                   <h6 class="row" ${vat_allowed?'':'hidden'}  >
+                       <div class="col-4">
+                          VAT(${vatper*100}%)
+                       </div>
+                       <div class="col-8 text-right" >
+                          ${CURRENCII}  ${Number(total_vat).toLocaleString()}
+                       </div>
+                   </h6>
+                   <h4 class="row"  >
+                       <div class="col-3" >
+                            ${lang('Inayolipwa','Payable')}
+                       </div>
+                       <div class="col-9 text-right" >
+                          ${CURRENCII} <span  style="font-weight:700"> ${Number('{{the_bill.amount}}').toLocaleString()} </span>
+                       </div>
+                   </h4>
+
+                   <hr/>
+         `
+             
+            
+            $('#itm_list').html(li)
+            $('#totalSumartion').html(totSum)
+          })
+
+         
+
+          
+
+    $(document).ready(function(){
+                 setTimeout(function(){window.print();}, 200)
+
+                    window.onafterprint = function(e){
+                            closeMe()
+
+                  }
+
+         
+
+
+         function closeMe()
+             {
+                 
+                 window.opener = self;
+                 try{
+                     if(window.outerWidth>800){
+                       setTimeout(function(){window.close();}, 100)
+                       
+                    }else{
+                        window.open()
+                        
+                        setTimeout(function(){window.close();}, 5000)
+                    }
+                    }catch(err){
+                     alert(err.message)
+                 }
+                  
+             }
+
+
+             })      
+
+     
+
+
+
+         
+      </script>
+
+
+  <input type="hidden" id="luga" value="{{then.langSet}}" name="luga">
+  <input type="hidden" id="entpCurrencii" value="{{duka.currencii}}" name="entpCurrencii">
+  <script src="/static/js/lugha.js"></script>
+
+    
+</body>
+</html>

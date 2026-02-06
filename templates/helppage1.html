@@ -1,0 +1,35 @@
+{% extends 'welcome.html' %}
+
+{% block content %}
+<div class="content-panel py-3 whiteBg"  id="Welcome"  style="margin-top:90px;min-height:60vh">
+    <div class="row latoFont">
+    <div class="col-md-8 pb-3">
+        <div id="ContactUs" class="termPanel mb-3">
+            <h4 class="mb-2">
+                {% if lang == 0 %}Mawasiliano{% else %}Contact us{% endif %}
+            </h4>
+        
+            <p>
+                {% if lang == 0 %}
+                 Kwa maelezo zaidi wasiliana nasi
+                {% else %}
+                  For more information feel free to contact us any time. 
+                {% endif %}
+
+                <h6 class="weight600">{% if lang == 0 %}Simu{% else %}Phone{% endif %}: +255 753202965, +255 782330586, +255 765370232</h6>
+                <h6 class="weight600">{% if lang == 0 %}Barua Pepe {% else %}email{% endif %}: fanyabiashara@info.com</h6>
+                <h6 class="weight600">{% if lang == 0 %}Anwani{% else %}Address{% endif %}: Buzuruga plaza 2nd floor, Room No 215, Buzuruga, Mwanza, Tanzania</h6>
+             </p>
+            
+        </div>
+    </div>
+
+    
+
+</div>
+</div>
+
+
+{% endblock %}
+
+{% block homepage %}/?lang={{lang}}{% endblock %}

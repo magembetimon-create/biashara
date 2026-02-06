@@ -1,0 +1,6 @@
+.change-price .input-group ::-webkit-input-placeholder{
+  color:var(--brown);
+  font-weight: 700;
+  font-size: large;
+
+}

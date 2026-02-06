@@ -1,0 +1,29 @@
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 350 100" style="enable-background:new 0 0 350 100;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#628CC8;}
+	.st1{fill:#FFFFFF;}
+	.st2{fill:#F68A1F;}
+	.st3{font-family:'SegoeUI-BoldItalic';}
+	.st4{font-size:34px;}
+	.st5{fill:#434343;}
+	.st6{font-family:'SegoeUI-Light';}
+	.st7{font-size:14px;}
+</style>
+<g>
+	<g>
+		<g>
+			<path class="st0" d="M78.8,86H27.2c-3.4,0-6.2-2.8-6.2-6.2V28.2c0-3.4,2.8-6.2,6.2-6.2h51.7c3.4,0,6.2,2.8,6.2,6.2v51.7
+				C85,83.2,82.2,86,78.8,86z"/>
+		</g>
+		<path class="st1" d="M71.8,45H34.2c-1.8,0-3.2-1.4-3.2-3.2v-2.5c0-1.8,1.4-3.2,3.2-3.2h37.5c1.8,0,3.2,1.4,3.2,3.2v2.5
+			C75,43.6,73.6,45,71.8,45z"/>
+		<path class="st1" d="M55.7,59H34.3c-1.8,0-3.3-1.5-3.3-3.3v-2.4c0-1.8,1.5-3.3,3.3-3.3h21.4c1.8,0,3.3,1.5,3.3,3.3v2.4
+			C59,57.5,57.5,59,55.7,59z"/>
+		<circle class="st2" cx="36.5" cy="68.5" r="5.5"/>
+	</g>
+	<text transform="matrix(1 0 0 1 92.4248 59.0103)" style="font-wight:700" class="st0 st3 st4">FanyaBiashara</text>
+	<text transform="matrix(1 0 0 1 92.0259 79.4355)" class="st5 st6 st7">Manage your Inventory ,Be Connected</text>
+</g>
+<circle class="st2" cx="216.5" cy="36.5" r="3.5"/>
+</svg>

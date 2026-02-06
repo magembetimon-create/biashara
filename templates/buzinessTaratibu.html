@@ -1,0 +1,98 @@
+{% extends 'userdash.html' %}
+
+
+{% block billcss %}
+     <link href="static/sumanote/summernote.css" rel="stylesheet">
+    <script src="static/sumanote/summernote.js"></script>
+    <!-- include codemirror (codemirror.css, codemirror.js, xml.js, formatting.js) -->
+<!-- <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/codemirror/3.20.0/codemirror.css">
+<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/codemirror/3.20.0/theme/monokai.css">
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/codemirror/3.20.0/codemirror.js"></script>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/codemirror/3.20.0/mode/xml/xml.js"></script>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/codemirror/2.36.0/formatting.js"></script> -->
+
+{% endblock %}
+
+{% block mauzo %}
+<div  class="Analytical whiteBg tab_div " id="topForEditor" >
+    <h6 class="p-2 pt-3 mt-3" > 
+       {% if useri.langSet == 0 %}
+           Andika maelekezo Kwa Wateja Wako
+       {% else %} 
+           Descriptions to Your Customers
+        {% endif %} 
+
+    <p  class="weight400 smallFont mt-1" > 
+        {% if useri.langSet == 0 %} 
+            Maelekezo na utaratibu wa kufuata kwa wateja watakaokuwa wanahitaji bidhaa/huduma zako
+        {% else %} 
+          Descriptions & procedures for your customer about Goods/service 
+        {% endif %} 
+    </p>
+    
+    </h6>
+    
+    {% include 'summanote_rich.html' %}
+
+    <p class="text-center pb-4 mt-4">
+          <a href="/buzinessTerms?pr=1&s={{duka.id}}" target="_blank" class="btn btn-light" id="getText">
+                prevew
+          </a>
+    </p>
+
+    <script>
+      //SAVe Descriptions,,,,,,,,,,,,,,,,,,,,,,,,,,,,//
+              $('body').on('click','#getText',function(){
+
+
+                var markupStr = $('#summernote').summernote('code');
+                let sz = markupStr.length/1024,
+                  csrfToken =   $('input[name=csrfmiddlewaretoken]').val()
+            
+                // console.log(sz)
+            
+            if (sz<=10){
+                $('#loadMe').modal('show')
+                $.ajax({
+                  type: "POST", 
+                    url: "/SaveTerms",
+                  data: {terms:markupStr,csrfmiddlewaretoken:csrfToken},
+                }).done(function(data){ 
+                    
+                    $('#loadMe').modal('hide')
+                    hideLoading()
+                    if(data.success){
+                            toastr.success(lang(data.msg_swa,data.msg_eng), '{% if useri.langSet == 0 %}Imefanikiwa{% else %}Success Alert{% endif %}', {timeOut: 5000});
+                    }else{
+                            toastr.error(lang(data.msg_swa,data.msg_eng), '{% if useri.langSet == 0 %}Haikufanikiwa {% else %} Error Alert{% endif %}', {timeOut: 5000});
+                        
+                    }
+            
+                })
+            
+            
+            }else{
+                let msg = '{% if useri.langSet == 0 %}Maelekezo hayataweza kuhifadhiwa kutokana na kuwa na size kubwa tafadhari andika upya na upunguze ya picha na mengineyo{% else %}The document size is too large cant be saved please reduce the pictures size associate with the document{% endif %}'
+                alert(msg)
+            }
+              })   
+    
+    </script>
+
+  <span id="luga" hidden >{{then.langSet}}</span>
+
+
+
+
+ 
+      
+</div>
+{% endblock %}
+    
+
+
+
+{% block akaunt-map %}
+   {% if useri.langSet == 0 %}Ukurasa wa Maelezo  {% else %} Page Content{% endif %}
+{% endblock %}
+

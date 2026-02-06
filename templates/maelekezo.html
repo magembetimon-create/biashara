@@ -1,0 +1,78 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>{{shop.name | title}}</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'pics/logo1.png' %}">
+
+
+</head>
+  <body>
+
+    <div style="max-width: 800px;margin-left:auto;margin-right:auto;min-height:80vh" >
+            <!-- <div class="row" style="margin-left: auto;margin-right:auto;width:100%;padding:10px;background:rgba(255, 201, 201, 0.34);"  >
+            
+                    <div class="col-md-2" style= "display:flex;justify-content:center;align-items:center;" >
+                       <div>
+                            <div class="text-center" >  <svg xmlns="http://www.w3.org/2000/svg" width="3.3em" height="3.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-triangle">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg> 
+                              </div>    
+                              <div class="text-center font-weight-bold" style="color:brown" > 
+                                 {% if useri.langSet == 0 %} Onyo {% else %} Warning {% endif %}
+                              </div>                    
+                       </div>
+
+                    </div>
+                            
+                <div class="col-md-10 p-2"  > 
+                    <div>{% if useri.langSet == 0 %} Maelekezo na Utaratibu kutoka  {% else %} Instructions and Procedures From {% endif %} <a href="#" onclick="window.close()" > {{shop.name | title }}. </a> </div>
+                     <div  style="font-size:small;" > 
+                         
+                            {% if useri.langSet == 0 %} 
+                               Tafadhari epuka kutapeliwa, endapo mtoa huduma au muuzaji usiyemjua atataka utume pesa kwa njia ya mtandao, hakikisha unauhakika na unaemtumia pesa Ansante. Imetolewa na
+                            {% else %} 
+                                Please be carefully of being scammed, in case the vendor/service provider you are not sure of, require you to send money, make sure you know well the vendor/service provider, thank you. Provided by 
+                            {% endif %}
+
+
+                            <a href="#">FanyaBiashara.com</a>
+                        </div> 
+                    </div>
+            </div> -->
+
+
+           {{shop.desc | safe}}
+
+
+           
+    </div>
+  <hr>
+  <div class="footer">
+    
+    <h6 style="text-align:center">
+        {% if useri.langSet == 0 %} Rudi  {% else %} Back to {% endif %}
+        <a href="#" onclick="window.close()">
+             FanyaBiashara.com
+        </a>
+    </h6>
+  </div>
+
+
+     
+    
+      
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script type="text/javascript" src="{% static 'js/jquery.js' %}" ></script>
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+  </body>
+</html>

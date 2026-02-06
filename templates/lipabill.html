@@ -1,0 +1,48 @@
+{% extends 'userdash.html' %}
+
+{% block all-bills %}
+<div class="whiteBg py-2 " style="margin-top: -15px;"> 
+    <h5 class="text-right py-3 px-2 {% if bil_num == 0 %} border-bottom {% endif %}">
+          <a type="button" href="/purchase/newBill" class="border-0 btn btn-primary smallFont latoFont"><b class="largeFont">+</b> 
+            {% if useri.langSet == 0 %} Bili Mpya  {% else %}New Bill {% endif %}
+
+      </a>
+    </h5>
+ 
+
+ 
+
+
+
+
+
+
+ </div>
+{% endblock %}
+ 
+{% block dash-mapper %}
+ 
+{% if useri.langSet == 0 %}  Bili {% else %}Bills {% endif %}
+
+{% endblock %} 
+
+{% block nav-bills %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+
+{% block active-allBills-menu %}
+class="btn-default btn btn-sm pop2_active_menu"
+{% endblock %}
+
+{% block active-bills %} 
+<svg xmlns="http://www.w3.org/2000/svg" class="bi bi-receipt text-primary font-weight-bold" height="1.3em" width="1.3em" viewBox="0 0 24 24"  fill="currentColor">
+
+  <path d="M20,4H4C2.89,4,2.01,4.89,2.01,6L2,18c0,1.11,0.89,2,2,2h10v-2H4v-6h18V6C22,4.89,21.11,4,20,4z M20,8H4V6h16V8z M24,17v2 h-3v3h-2v-3h-3v-2h3v-3h2v3H24z"/>
+  </svg>
+  {% endblock %}
+
+{% block dash-map %} 
+{% if useri.langSet == 0 %}  Lipia Bili  {% else %}Pay Bill {% endif %}
+
+{% endblock %}

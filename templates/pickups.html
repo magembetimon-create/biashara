@@ -1,0 +1,208 @@
+{% extends 'userdash.html' %}
+
+{% block Dashboard %}
+<div class="whiteBg py-2 " style="margin-top: -15px;"> 
+
+    {% if bil_num > 0 %}
+    {% load humanize %}
+    <div class="table-responsive pb-5">
+         <table class="table table-hover " style="color: rgb(92, 92, 92);">
+              <thead>
+                <tr  >
+                  <th class="latoFont" scope="col">
+                    {% if useri.langSet == 0 %}  Mzigo# {% else %} Package# {% endif %}
+                  
+                  </th>
+                  <th class="latoFont" scope="col">
+                    {% if useri.langSet == 0 %} Tarehe ya Kuagiza{% else %}Ordered Date{% endif %}
+                  </th>
+               <th class="latoFont" scope="col">      
+                     {% if useri.langSet == 0 %}  Inategemewa {% else %}Expected {% endif %}
+                </th>
+                  <th class="latoFont" scope="col">
+                    {% if useri.langSet == 0 %} Kutoka  {% else %}From {% endif %}
+        
+                  </th>
+                  <th class="latoFont" scope="col">          
+                    {% if useri.langSet == 0 %} Kwenda  {% else %}To {% endif %}
+                    
+                </th>
+          
+                  
+                  <th class="latoFont" scope="col">      
+                     {% if useri.langSet == 0 %} Statasi {% else %}Stutus {% endif %}
+                  </th>
+                  <th class="latoFont" scope="col">      
+                     {% if useri.langSet == 0 %} Malipo  {% else %}Payment {% endif %}
+                  </th>
+                  <th class="latoFont" scope="col"> Action </th>
+                </tr>
+              </thead>
+              <tbody>
+                    {% for bil in bili %}
+                <tr class="noWordCut" >
+                  <td class="text-center latoFont">PACK-{{bil.user_customer.tr.code}}</td>
+                  <td class="text-center latoFont">
+                     {% if  bil.cart %}
+                       {% if useri.langSet == 0 %} Bado  {% else %}Yet {% endif %}
+                     {% else %}              
+                      {{bil.date | date:'d/m/Y' }}
+                     {% endif %} 
+                     
+                   </td>
+   
+                  <td class="text-center latoFont">
+                   {% if  bil.cart %}
+                       {% if useri.langSet == 0 %} Bado  {% else %}Yet {% endif %}
+                   {% else %}
+                     <script>
+                         document.write(moment('{{bil.expected_date|date:"r"}}').format('DD/MM/YYYY HH:mm'))
+                     </script>
+                   {% endif %}
+                     
+                 </td>
+    
+                  <td class="text-center text-primary latoFont ">
+                   
+                       <a class="text-primary" href="{% url 'buzinessProfile' %}?value={{bil.Interprise.id}}">{{bil.Interprise.name|title}} </a> 
+                     
+                 
+                  </td>
+
+                  <td class="text-center text-primary latoFont ">
+                   
+                       <a class="text-primary" href="{% if bil.user_customer.enteprise.Interprise %}{% url 'buzinessProfile' %}?value={{bil.user_customer.enteprise.id}}{% else %}#{% endif %}">{{bil.user_customer.enteprise.name |title}}  </a> 
+                     
+                 
+                  </td>
+    
+                  <td class="text-center smallFont">
+                      {% if not bil.packed  %}
+                        {% if useri.langSet == 0 %} Inasubiria ..  {% else %}Pending .. {% endif %}
+                      {% elif bil.packed and not bil.derivered %}
+                      {% if bil.service %}
+                          <span style="color: rgb(0, 66, 3);" > {% if useri.langSet == 0 %} Huduma Imeshahakikiwa {% else %}Service Confimed{% endif %}</span>
+                      {% else %}
+                           <span style="color: rgb(0, 66, 3);" > {% if useri.langSet == 0 %} Mzigo Umefungwa  {% else %}Packed{% endif %}</span>  
+                      {% endif %}
+                      {% elif bil.derivered  and not bil.received %}
+                        <span style="color: rgb(97, 39, 5);" > {% if useri.langSet == 0 %} Mzigo Umeshatumwa  {% else %}Package Transfered{% endif %}</span>  
+                      {% elif bil.received  %}
+                        <span style="color: rgb(97, 39, 5);" > {% if useri.langSet == 0 %} Mzigo Umepokelewa  {% else %}Package Received{% endif %}</span>  
+                      
+                      {% endif %}
+                  </td>
+    
+                  <td class="text-center">
+    
+    
+    <div class="d-flex ">
+                         <div class="progress border" style="width:90px;height:11px">
+                          <div class="progress-bar "  id="prog{{bil.id}}" role="progressbar"  aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+    
+                          </div>
+                        </div>   
+    
+            <div class="smallerFont pl-1">
+              <script>
+                 $('#prog{{bil.id}}').css('width',(Number('{{bil.ilolipwa}}')/Number('{{bil.amount}}') * 100) + '%' )
+                 document.write((Number('{{bil.ilolipwa}}')/Number('{{bil.amount}}') * 100).toFixed(0) + '%' )
+             </script>
+            </div>            
+           
+    </div>
+    
+    
+                  </td>
+                  <td class="text-center">
+                        <div class=" text-center">
+                          <!-- <form class="form-inline" action="/mauzo/viewInvo" method="POST">
+                            {% csrf_token %}
+        
+                            <input type="text" name="back_to"  value="AllBills" class="f_input">
+                            <input type="text" name="item_valued"  value="{{bil.id}}" class="f_input"> -->
+          
+          
+          
+                          <a href="{% url 'ViewPickup' %}?p={{bil.id}}"  class="btn btn-default text-primary btn-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                  <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                  <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                                </svg>
+                           </a>
+                          <!-- </form> -->
+                             
+        
+                             
+        
+                        </div>
+                  </td>
+                </tr>
+               {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <p class=" p-4 border-top">
+             
+          {% if bili.has_previous %}
+            <a href="{% url 'pickUps' %}?page=1" type="button"  class="btn btn-light border0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0zM4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/>
+              </svg>
+              </a>
+        
+              <a href="{% url 'pickUps' %}?page={{bili.previous_page_number}}" type="button"  class="btn btn-light  border0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+              </a>
+            {% endif %}
+        
+          {% if bili.has_next %}
+              <a href="{% url 'pickUps' %}?page={{bili.next_page_number}}" type="button" class="btn btn-light border0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </a>
+        
+              <a href="{% url 'pickUps' %}?page={{pages}}" type="button"  class="btn btn-light border0" >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-bar-right" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0zM11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                </svg>
+              </a>
+        {% endif %}
+              <label for="">
+               
+                {% if useri.langSet == 0 %} Ukurasa wa {{p_num}} kati ya {{pages}} {% else %} page {{p_num}} of {{pages}} {% endif %}
+        
+              </label>
+          </p>
+   {%else%}
+   <div class="d-flex justify-content-center align-items-center" style="min-height: 50vh;">
+      <p class="pt-3 pb-5 text-center">
+         
+           {% if useri.langSet == 0 %} Hakuna Mzigo kwa sasa{% else %}No Package Found{% endif %} 
+   
+       </p>
+   </div>
+   
+   
+      {%  endif %}
+</div>
+
+{% endblock %}
+
+{% block dash-mapper %}
+    {% if useri.langSet == 0 %}Manunuzi {% else %}Purchases{% endif %} 
+{% endblock %}
+
+
+{% block nav-oda %}
+      class="c-menu__item  is-active has-submenu  "
+{% endblock %}
+
+
+
+{% block active-oda %} class="bi bi-receipt text-primary font-weight-bold"{% endblock %}
+
+{% block dash-map %}{% if useri.langSet == 0 %}Mzigo wa kusafirisha {% else %}Package Delivery{% endif %} {% endblock %} 

@@ -1,0 +1,454 @@
+{% extends 'userdash.html' %}
+
+{% block all-bills %}
+<div class="whiteBg py-2  px-3 " style="margin-top: -15px;"> 
+  <div class="row py-3 ">
+    <h5 class="col-4" >
+      <div id="bill_btn_wrap" style="display: none;">
+      
+     <button  data-toggle="modal" data-target="#lipiaBill" class="btn btn-secondary smallFont btn-sm ml-2" >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi mr-1 bi-clipboard-check" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+            <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+            <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+          </svg>
+           {% if useri.langSet == 0 %} Lipia  {% else %}Pay {% endif %}
+    </button>
+
+
+      <button data-toggle="modal" data-target="#confirm_modal" onclick="$('#checkmany').prop('checked',true)" class="btn btn-sm border0 smallFont btn-default text-danger ">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+          <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+          <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+        </svg>
+      </button>
+      </div>
+
+    </h5>
+    <h5 class="text-right  col-8 {% if bil_num == 0 %} border-bottom {% endif %}">
+
+    <a type="button" href="/purchase/AllBills" class="border0 btn btn-light smallFont latoFont">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-receipt" viewBox="0 0 16 16">
+        <path d="M1.92.506a.5.5 0 0 1 .434.14L3 1.293l.646-.647a.5.5 0 0 1 .708 0L5 1.293l.646-.647a.5.5 0 0 1 .708 0L7 1.293l.646-.647a.5.5 0 0 1 .708 0L9 1.293l.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .801.13l.5 1A.5.5 0 0 1 15 2v12a.5.5 0 0 1-.053.224l-.5 1a.5.5 0 0 1-.8.13L13 14.707l-.646.647a.5.5 0 0 1-.708 0L11 14.707l-.646.647a.5.5 0 0 1-.708 0L9 14.707l-.646.647a.5.5 0 0 1-.708 0L7 14.707l-.646.647a.5.5 0 0 1-.708 0L5 14.707l-.646.647a.5.5 0 0 1-.708 0L3 14.707l-.646.647a.5.5 0 0 1-.801-.13l-.5-1A.5.5 0 0 1 1 14V2a.5.5 0 0 1 .053-.224l.5-1a.5.5 0 0 1 .367-.27zm.217 1.338L2 2.118v11.764l.137.274.51-.51a.5.5 0 0 1 .707 0l.646.647.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.509.509.137-.274V2.118l-.137-.274-.51.51a.5.5 0 0 1-.707 0L12 1.707l-.646.647a.5.5 0 0 1-.708 0L10 1.707l-.646.647a.5.5 0 0 1-.708 0L8 1.707l-.646.647a.5.5 0 0 1-.708 0L6 1.707l-.646.647a.5.5 0 0 1-.708 0L4 1.707l-.646.647a.5.5 0 0 1-.708 0l-.509-.51z"/>
+        <path d="M3 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm8-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5z"/>
+      </svg>
+      {% if useri.langSet == 0 %}Bili Zote {% else %}All {% endif %}
+      </a>
+    <a type="button" href="/purchase/halfpaid" class="border0 btn btn-light smallFont latoFont">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-calculator" viewBox="0 0 16 16">
+        <path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/>
+        <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-2zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-4z"/>
+      </svg>
+      {% if useri.langSet == 0 %} zilizolipwa kiasi  {% else %}less paid {% endif %}
+      </a> 
+      
+      <a type="button" href="/purchase/newBill" class="border0 btn btn-primary smallFont latoFont"><b class="largeFont">+</b>
+         {% if useri.langSet == 0 %} Bili Mpya  {% else %}New Bill {% endif %}
+      </a>
+</h5>
+  </div>
+  
+ 
+    {% if bil_num > 0 %}
+    {% load humanize %}
+<div class="table-responsive pb-5">
+<table class="table table-hover ">
+<thead>
+  <tr>
+    <th class="latoFont" scope="col">            
+          {% if useri.langSet == 0 %}  Bili# {% else %} Bill# {% endif %}
+</th>
+    <th class="latoFont" scope="col">             
+          {% if useri.langSet == 0 %} Tarehe ya Bili  {% else %}Bill Date {% endif %}
+</th>
+    <th class="latoFont" scope="col">            
+          {% if useri.langSet == 0 %} Tarehe ya kulipa  {% else %}Due Date{% endif %}
+</th>
+    <th class="latoFont" scope="col">
+      {% if useri.langSet == 0 %} Msambazaji  {% else %}Bill From{% endif %}
+
+    </th>
+    <th class="latoFont" scope="col">            
+          {% if useri.langSet == 0 %} Jumla  {% else %}Total {% endif %}
+      ({{duka.currencii}})</th>
+    <th class="latoFont" scope="col">  
+      {% if useri.langSet == 0 %} Statasi  {% else %}Stutus {% endif %}
+
+    </th>
+    <th class="latoFont" scope="col"> Action </th>
+  </tr>
+</thead>
+<tbody>
+      {% for bil in bili %}
+  <tr id="bil_row{{bil.id}}">
+    <td class="text-center latoFont">
+      <div class="custom-control custom-checkbox">
+          <input type="checkbox" name="bilCheck{{bil.id}}" data-val={{bil.id}} data-amount={{bil.amount}} data-paid={{bil.ilolipwa}} id="bilCheck{{bil.id}}" value="checkedValue" class="custom-control-input checkbill">
+          <label for="bilCheck{{bil.id}}" class="custom-control-label " style="padding-top: 2px;"> BI-{{bil.code}}</label>
+      </div>  
+  </td>
+    <td class="text-center latoFont">{{bil.date}}</td>
+    <td class="text-center latoFont">{{bil.kulipa}}</td>
+    <td class="text-center latoFont ">
+      <a class="text-primary" href='#' >{{bil.supplier_id.jina|title}} </a>
+    </td>
+
+    <td class="text-center latoFont"> {{bil.amount|intcomma}}</td>
+    <td class="text-center">
+          {% if bil.amount == bil.ilolipwa %}
+          <label for="paid" class="bg-success py-1 px-2 smallerFont latoFont"  style="color: aliceblue;">
+            {% if useri.langSet == 0 %} imelipiwa  {% else %}Paid {% endif %}
+          </label>
+          {% elif bil.amount > bil.ilolipwa and bil.ilolipwa > 0 %}
+        <label for="paid" class="bg-info py-1 px-2 smallerFont latoFont" style="color: aliceblue;">
+            {% if useri.langSet == 0 %} imelipiwa kiasi  {% else %}less Paid {% endif %}
+          </label>
+          {% else %}
+
+          <label for="paid" class="bg-danger py-1 px-2 smallerFont latoFont" style="color: aliceblue;">
+            {% if useri.langSet == 0 %} Haijalipiwa  {% else %}Unpaid {% endif %}
+          </label>
+          {% endif %}
+    </td>
+    <td class="text-center">
+          <div class="d-flex text-center">
+                <form class="form-inline" action="/purchase/viewbill" method="POST">
+                  {% csrf_token %}
+                  <input type="text" name="back_to"  value="unpaid" class="f_input">
+                  <input type="text" name="item_valued"  value="{{bil.id}}" class="f_input">
+
+
+
+                <button href="#" type="submit" class="btn btn-default text-primary btn-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                      </svg>
+                  </button>
+                </form>
+
+                    <a data-toggle="modal" onclick="$('#bill_itm_val').val($(this).data('act'));$('#checkmany').prop('checked',false)" data-act={{bil.id}} data-target="#confirm_modal" type="button" class="btn btn-default text-danger btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                            </svg>                     
+                      
+                      </a>
+                
+
+              <button 
+                  onclick="$('#lipabill_form').data('val',$(this).data('val'));
+                  
+                  $('#bill-lipwa-amount').attr('placeholder',Number($(this).data('totol')-$(this).data('paid')).toLocaleString());
+                  $('#bill-lipwa-amount').data('amount',Number($(this).data('totol')-$(this).data('paid')));
+                  $('#bill-lipwa-amount').prop('disabled',false)
+                  $('#lipabill_form').data('many',false);
+                  "
+                  type="button" id="pay_btn{{bil.id}}" data-totol = {{bil.amount}} data-paid={{bil.ilolipwa}} data-val={{bil.id}} data-toggle="modal" data-target="#lipiaBill" class="btn btn-primary smallFont btn-sm ml-2" style="border-radius:0 ;">
+                        {% if useri.langSet == 0 %} Lipia  {% else %}Pay {% endif %}
+              </button>
+          </div>
+    </td>
+  </tr>
+ {% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+
+
+<p class="pt-3 pb-5 text-center">
+     {% if useri.langSet == 0 %}  Hakuna Bili ambayo haijalipiwa kwa sasa{% else %}No unpaid bill available {% endif %}
+
+</p>
+
+{% endif %}
+
+<script>
+
+  $('body').on('click','.checkbill',function(){
+    let n=0,am=0,ids = []
+        $('.checkbill').each(function(){
+          if($(this).prop('checked')){
+            n+=1
+            am+=Number($(this).data('amount')-$(this).data('paid'))
+            ids.push({'id':$(this).data('val')})
+          }
+          
+
+        })
+
+        //weka id nyingi incase anafuta bibdhaa nyingine................................................//
+        $('#bill_itm_val').val(JSON.stringify(ids))
+
+         $('#bill-lipwa-amount').attr('placeholder',am.toLocaleString());
+         $('#bill-lipwa-amount').data('amount',am);
+         
+        if(n>=1){
+          $('#lipabill_form').data('many',true);
+
+          $('#bill_btn_wrap').fadeIn(400)
+          $('#bill-lipwa-amount').prop('disabled',true)
+        }else{
+          $('#bill_btn_wrap').fadeOut(400)
+          $('#bill-lipwa-amount').prop('disabled',false)
+          $('#lipabill_form').data('many',false);
+   
+        }
+  })
+
+</script>
+
+
+<!-- MODAL KULIPIA BILL -->
+
+<!-- Modal -->
+<div class="modal fade" id="lipiaBill" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog animate" role="document">
+    <div class="modal-content ">
+
+      <form action="/purchase/payBill" data-many=false id="lipabill_form" data-val=0 method="post">
+        {% csrf_token %}
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">     
+          {% if useri.langSet == 0 %}  Lipa Bili{% else %}Pay Bill {% endif %}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body px-4">
+      
+ 
+        <div class="form-group mb-3" >
+          <label for=""> {% if useri.langSet == 0 %}  Chagua Akaunti{% else %}Select account{% endif %}</label>
+          <select name="" id="malipo-akaunti"
+          onchange="if(Number($(this).find('option:selected').data('value'))>0){
+            let ac_am=Number($(this).find('option:selected').data('amount')),
+                am =Number($('#bill-lipwa-amount').data('amount'));
+                $('#ac-baki-amount').attr('placeholder','')
+
+            if(ac_am>=am){
+              $('#ac-baki-amount').attr('placeholder',(ac_am-am).toLocaleString())
+                  $('#helpinId').prop('hidden',true)
+
+
+            }else{
+              $('#helpinId').prop('hidden',false)
+
+
+
+            }
+
+                  $('#helpinId2').prop('hidden',true)
+
+          }else{
+            $('#ac-baki-amount').attr('placeholder','')
+
+          }
+
+          "
+          class="form-control machaguo-pesa smallFont selectpicker" data-live-search="true">
+            <option value="" data-amount=0 data-value=0 >{% if useri.langSet == 0 %}--Chagua Akaunti--{% else %}--Select Account--{% endif %}</option>
+          </select>
+
+            <small id="helpinId" hidden class="mt-5 " style="color:rgb(129, 116, 0)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+              </svg>
+              {% if useri.langSet == 0 %}Akaunti haina kiasi cha kutosha kulipia bili{% else %}insufficient  Account amount to pay the bill{% endif %}
+            </small>
+
+            <small id="helpinId2" hidden class="mt-5 text-danger" >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+              </svg>
+              {% if useri.langSet == 0 %}Tafadhari Chagua Akaunti kulipia bili{% else %}Please select payment account to pay the bill{% endif %}
+            </small>
+
+        </div>
+
+        <div class="form-group mb-3" >
+          <label for=""> {% if useri.langSet == 0 %}  Kiasi kinacholipwa{% else %}Amount{% endif %}</label>
+        
+          <div class="show_curency_block show_curency position-absolute    px-3" style="display: none ;">
+            <label class="mt-1 text-danger" for=""></label> 
+        <div class="box-pointer d-inline "></div>
+        </div>
+
+          <input type="number"
+          onkeyup="if(Number($(this).val())>0 && $(this).val()!='' ){
+            let ac_am=Number($('#malipo-akaunti').find('option:selected').data('amount')),
+                am =Number($(this).data('amount')),
+                paid = Number($(this).val())
+            if(ac_am>=paid){
+              $('#ac-baki-amount').attr('placeholder',(ac_am-am).toLocaleString())
+                  $('#helperId').prop('hidden',true)
+
+                if(am>=paid){
+                       $('#helperId2').prop('hidden',true)
+
+                }else{
+
+                        $('#helperId2').prop('hidden',false)
+               }
+
+               $('#ac-baki-amount').attr('placeholder',(ac_am-paid).toLocaleString()) 
+
+            }else{
+              $('#helperId').prop('hidden',false)
+
+            }
+
+
+          }else{
+            $('#ac-baki-amount').attr('placeholder','')
+
+          }
+
+          "
+          name="bill-lipwa-amount" data-amount=0 id="bill-lipwa-amount" class="input-data form-control money-fomat" placeholder="" aria-describedby="helpId">
+          <small id="helperId" hidden class=" text-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+            </svg> {% if useri.langSet == 0 %}  Kiasi kinacholipwa kimezidi kiasi kilichopo kwenye akaunti iliyochaguliwa{% else %}the amount to be paid exceed Account Balance of the selected account{% endif %}
+          </small>
+
+          <small id="helperId2" hidden class="text-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+            </svg> {% if useri.langSet == 0 %}  Kiasi kinacholipwa kimezidi kiasi halisi cha bili{% else %}the amount to be paid exceed the actual bill amount{% endif %}
+          </small>
+        </div>
+
+        <div class="form-group mb-3" >
+          <label for=""> {% if useri.langSet == 0 %}  Inayobaki kwenye Akaunt{% else %}Account Balance{% endif %}</label>
+         
+          <div class="show_curency_block show_curency position-absolute    px-3" style="display: none ;">
+            <label class="mt-1 text-danger" for=""></label> 
+        <div class="box-pointer d-inline "></div>
+        </div>
+          <input type="number" name="ac-baki-amount"
+          onkeyup="if(Number($(this).val())>0 && $(this).val()!='' ){
+            let ac_am=Number($('#malipo-akaunti').find('option:selected').data('amount')),
+                am =Number($('#bill-lipwa-amount').data('amount')),
+                paid = Number($('#bill-lipwa-amount').val()),
+                baki = Number($(this).val())
+
+                if($('#bill-lipwa-amount').val()!=''){
+                  am = paid
+                }
+            if((ac_am-am) >=baki){
+                   $('#helpedId').prop('hidden',true)
+
+            }else{
+              $('#helpedId').prop('hidden',false)
+
+            }
+
+
+          }
+
+          "
+          
+          data-amount=0 id="ac-baki-amount" class="money-fomat form-control input-data" placeholder="" aria-describedby="helpId">
+          <small id="helpedId" hidden class=" text-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+            </svg> {% if useri.langSet == 0 %} Kiasi kinachobaki kinazidi kiasi halisi cha akaunti baada ya malipo ya bili{% else %}The account balance exceeds the actual balance after bill payment{% endif %}
+          </small>
+        </div>
+            
+          
+</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary border0" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary border0">{% if useri.langSet == 0 %}  Lipa {% else %}Pay {% endif %}</button>
+      </div>
+
+       </form> 
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal KUFUTA BILL.... -->
+<div class="modal fade" id="confirm_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog animate" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">
+            
+                  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                      </svg>
+
+                  {% if useri.langSet == 0 %} Ondoa Bili {% else %}Remove Bill{% endif %}
+
+            </h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            {% if useri.langSet == 0 %} Hakiki kwa  kubonyeza ondoa au hapana kurudi {% else %}To Remove Bill  press remove or cancel to back{% endif %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary border0" data-dismiss="modal">          
+                    {% if useri.langSet == 0 %} Hapana {% else %}Cancel{% endif %}
+            </button>
+            <form action="/purchase/removebill" data-many=false id="#removeBillForm" class="form-inline" method="post">
+                  {% csrf_token %}
+                  <input type="text" name="bill_itm_val" id="bill_itm_val" class="f_input" hidden />
+                  <input name="many" id="checkmany"  class="f_input" type="checkbox" />
+            <button type="submit" class="btn btn-danger border0">
+                  {% if useri.langSet == 0 %} Ondoa {% else %}Remove{% endif %}
+
+            </button>
+            </form>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+ </div>
+ 
+ 
+{% block billmpya %}
+<script src="/static/js/paybill.js"></script>
+{% endblock %}
+
+
+
+{% endblock %}
+ 
+{% block dash-mapper %}
+
+{% if useri.langSet == 0 %}  Bili {% else %}Bills {% endif %}
+
+{% endblock %} 
+
+{% block nav-bills %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+
+{% block active-allBills-menu %}
+class="btn-default btn btn-sm pop2_active_menu"
+{% endblock %}
+
+{% block active-bills %} 
+   <svg xmlns="http://www.w3.org/2000/svg" class="bi bi-receipt text-primary font-weight-bold" height="1.3em" width="1.3em" viewBox="0 0 24 24"  fill="currentColor">
+     <path d="M20,4H4C2.89,4,2.01,4.89,2.01,6L2,18c0,1.11,0.89,2,2,2h10v-2H4v-6h18V6C22,4.89,21.11,4,20,4z M20,8H4V6h16V8z M24,17v2 h-3v3h-2v-3h-3v-2h3v-3h2v3H24z"/>
+  </svg>
+{% endblock %}
+
+{% block dash-map %}
+
+
+{% if useri.langSet == 0 %}  Billi Ambazo hazijalipiwa {% else %}Unpaid Bills {% endif %}
+
+{% endblock %}

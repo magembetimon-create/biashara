@@ -1,0 +1,1423 @@
+{% extends 'userdash.html' %}
+
+{% block billcss %}
+<link rel="stylesheet" href="/static/css/sales.css">
+{% endblock %}
+
+{% load humanize %}
+
+
+{% block mauzo %}
+<div class="whiteBg py-2" style="margin-top: -15px;">
+    <div class="row classic_div py-2 mx-2 border-bottom">
+        <h5 class="col-7">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+              </svg>
+
+              {% if useri.langSet == 0 %} Malekeisho ya Oda {% else %} Edit Sales Order{% endif %}      
+        </h5>
+
+        <h5 class="col-5 text-right">
+            <a type="button" href="{% url 'viewOda' %}?item_valued={{the_bill.id}}&back_to='allbill' "  class="border0 btn btn-primary smallFont latoFont">
+                {% if useri.langSet == 0 %}Oda {% else %}Sales Order{% endif %}
+            </a>
+        </h5>
+    </div>
+
+    <div class="row classic_div px-3 py-2">
+
+        <div class="col-md-6">
+          <p class="text-right">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-person-badge" viewBox="0 0 16 16">
+                <path d="M6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zM11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                <path d="M4.5 0A2.5 2.5 0 0 0 2 2.5V14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2.5A2.5 2.5 0 0 0 11.5 0h-7zM3 2.5A1.5 1.5 0 0 1 4.5 1h7A1.5 1.5 0 0 1 13 2.5v10.795a4.2 4.2 0 0 0-.776-.492C11.392 12.387 10.063 12 8 12s-3.392.387-4.224.803a4.2 4.2 0 0 0-.776.492V2.5z"/>
+              </svg>
+
+            {% if useri.langSet == 0 %}Taarifa Mteja..  {% else %} Customer Details..{% endif %}
+           
+        </p>
+          
+            <div class="row mb-3">
+               <div class="col-4">
+                <strong>
+                   <label class="text-danger " for="cusmomer_nami"> {% if useri.langSet == 0 %}Jina la Mteja  {% else %} Customer Name{% endif %} <sup>*</sup> </label> 
+                </strong>
+            </div>
+            <div class="col-8">
+                <div class="suggest-holder2n" >
+                    <input id="lim_num" data-cust=0 value="{{the_bill.mteja_jina}}" class="form-control border0 smallFont latoFont " style="color:rgb(34, 34, 202)"    />
+                    
+                      <ul class="masaki2n masaki" 
+                       style="max-height:350px;overflow-y:auto;min-width:102%;
+                       -webkit-box-shadow: 0px 16px 31px -5px rgba(0,0,0,0.92); 
+                        box-shadow: 0px 16px 31px -5px rgba(0,0,0,0.92);">
+                    </ul>
+                  </div>	                
+                 <div class=" text-right" >
+                     <button data-toggle="modal" data-target="#wateja-modal" class="btn latoFont btn-default btn-sm smallFont text-primary">
+                         +  {% if useri.langSet == 0 %} Ongeza  {% else %} Add {% endif %}
+                     </button>
+                    </div>
+               
+               </div> 
+            </div>
+
+            <div class="row mb-3">
+               <div class="col-4">
+                   <label  for="cusmomer_nami"> {% if useri.langSet == 0 %}Mahari   {% else %} Address{% endif %}  </label> 
+            </div>
+            <div class="col-8">
+                    <input id="cust_address" value="{{the_bill.address}}" class="form-control smallFont latoFont  border0"   style="color:rgb(34, 34, 202)"  />
+            </div>	                
+          </div> 
+
+            <div class="row mb-3">
+               <div class="col-4">
+                   <label  for="cusmomer_nami"> {% if useri.langSet == 0 %}Simu   {% else %} Phone{% endif %}  </label> 
+            </div>
+            <div class="col-8">
+                    <input id="cust_phone" value="{{the_bill.simu}}" class="form-control smallFont border0 latoFont  "  style="color:rgb(34, 34, 202)"   />
+            </div>	                
+          </div> 
+
+            <div class="row mb-3">
+               <div class="col-4">
+                   <label  for="cusmomer_nami"> {% if useri.langSet == 0 %}Barua pepe   {% else %} Email{% endif %}  </label> 
+            </div>
+            <div class="col-8">
+                    <input id="cust_mail" value="{{the_bill.mail}}" class="form-control smallFont border0 latoFont "  style="color:rgb(34, 34, 202)"   />
+            </div>	                
+          </div> 
+
+
+          {% if the_bill.service %}
+
+                <hr>
+
+                <p class="text-right weight600 brown">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stopwatch" viewBox="0 0 16 16">
+                        <path d="M8.5 5.6a.5.5 0 1 0-1 0v2.9h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5V5.6z"/>
+                        <path d="M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64a.715.715 0 0 1 .012-.013l.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354a.512.512 0 0 1-.013.012A7 7 0 1 1 7 2.071V1.5a.5.5 0 0 1-.5-.5zM8 3a6 6 0 1 0 .001 12A6 6 0 0 0 8 3z"/>
+                    </svg>
+                    {% if useri.langSet == 0 %} Muda wa huduma..... {% else %} Service Duration...{% endif %}
+                </p>
+
+
+                <div class="row mb-3">
+                    <div class="col-4">
+                        <label class="brown weight600" for="serviceFrom"> {% if useri.langSet == 0 %}Kuanzia {% else %} From {% endif %} <sup>*</sup> </label> 
+                </div>
+                <div class="col-8">
+                        <input id="serviceFrom" readonly type="datetime-local" onchange="var servFrom = $('#serviceFrom').val(),servTo = $('#ServiceTo').val();$('#new-bill_tbody').html(tablerow(1)); if(servFrom&&servTo&&servFrom<servTo){$('.showServ').show()}else{$('.showServ').hide();if(servFrom&&servTo&&servFrom>=servTo){redborder('#serviceFrom')}}" class="form-control smallFont border0"     />
+                </div>	                
+            </div>
+                <div class="row mb-3">
+                    <div class="col-4">
+                        <label class="brown weight600" for="ServiceTo"> {% if useri.langSet == 0 %}Hadi{% else %} To{% endif %}  <sup>*</sup></label> 
+                </div>
+                <div class="col-8">
+                        <input id="ServiceTo" readonly type="datetime-local" onchange="var servFrom = $('#serviceFrom').val(),servTo = $('#ServiceTo').val();$('#new-bill_tbody').html(tablerow(1)); if(servFrom&&servTo && servFrom<servTo ){$('.showServ').show()}else{$('.showServ').hide();if(servFrom&&servTo&&servFrom>=servTo){redborder('#ServiceTo')}}" class="form-control smallFont border0"     />
+                </div>	                
+            </div>
+
+           
+                <script>
+                    $(document).ready(function(){
+                        $('#serviceFrom').val(`${moment('{{the_bill.servFrom|date:"r"}}').format('YYYY-MM-DD')}T${moment('{{the_bill.servFrom|date:"r"}}').format('HH:mm')}`)
+                        $('#ServiceTo').val(`${moment('{{the_bill.servTo|date:"r"}}').format('YYYY-MM-DD')}T${moment('{{the_bill.servTo|date:"r"}}').format('HH:mm')}`)
+                    })
+                </script>
+         
+
+
+          {% endif %}
+
+
+          <hr>
+
+          <p class="text-right">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-file-earmark-medical" viewBox="0 0 16 16">
+                <path d="M7.5 5.5a.5.5 0 0 0-1 0v.634l-.549-.317a.5.5 0 1 0-.5.866L6 7l-.549.317a.5.5 0 1 0 .5.866l.549-.317V8.5a.5.5 0 1 0 1 0v-.634l.549.317a.5.5 0 1 0 .5-.866L8 7l.549-.317a.5.5 0 1 0-.5-.866l-.549.317V5.5zm-2 4.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 2a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5z"/>
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+              </svg>
+              {% if useri.langSet == 0 %} Taarifa za Oda..... {% else %} Order Details...{% endif %}
+          </p>
+
+          <div class="row mb-3">
+            <div class="col-4">
+                <label  for="cusmomer_nami"> {% if useri.langSet == 0 %}Oda #{% else %} Order #{% endif %}  </label> 
+         </div>
+         <div class="col-8">
+                 <input id="invoice_no" placeholder="ORD-{{the_bill.code}}" class="form-control smallFont border0"     />
+         </div>	                
+       </div>
+ 
+     <div class="row mb-2">
+         <div class="col-4">
+             <label class="text-danger " for="vendor_nami"> {% if useri.langSet == 0 %} Tarehe  {% else %} Date {% endif %} <sup>*</sup> </label> 
+         </div>
+         <div class="col-8">
+             <input type="date" id="mauzo-date" name="mauzo-date" class="form-control smallerFont">
+             <script>
+                 $(document).ready(function(){
+                    let date = new Date('{{ the_bill.date|date:"Y-m-d" }}'),
+                        day = date.getDate(),
+                            month = date.getMonth() + 1,
+                            year = date.getFullYear();
+                    
+                        if (month < 10) month = "0" + month;
+                        if (day < 10) day = "0" + day;
+                    
+                        var today = year + "-" + month + "-" + day;   
+                    document.getElementById("mauzo-date").value = today;
+                
+                    var today = new Date().toISOString().split('T')[0];
+                    document.getElementsByName("mauzo-date")[0].setAttribute('max', today);                     
+                 })
+
+              </script>
+         </div>
+     </div>
+
+
+    
+  
+    
+
+ </div>
+ </div>
+<div class="row classic_div border-bottom" >
+    <div class="col-md-12"  >
+        <div class="mx-md-2  bgWhite px-1 py-3 table-responsive" style="padding-bottom:220px;margin-top:-10px;">
+            <table id="prod_table" class=" table-bordered table table-sm" style="min-width: 1000px;" data-row=1>
+                <tr class="bg-light smallFont">
+                  <th  colspan="2" >
+                      {% if the_bill.service %}
+                           {% if useri.langSet == 0 %} Huduma  {% else %} Service  {% endif %}
+                      {% else %} 
+                            {% if useri.langSet == 0 %} Bidhaa  {% else %} Item  {% endif %}
+                      {% endif %}
+                    </th>
+                  <th > 
+                      {% if the_bill.service %}
+                        {% if useri.langSet == 0 %} Nafasi  {% else %} Space {% endif %}
+                      {% else %} 
+                            {% if useri.langSet == 0 %} Idadi  {% else %}  Quantity {% endif %}
+                      {% endif %}
+                    </th>
+
+                  <th > {% if useri.langSet == 0 %} Bei   {% else %}  Price {% endif %}</th>
+                
+                  {% if duka.vat_allow %} 
+                  <th >{% if useri.langSet == 0 %}  Jumla kwa Bei {% else %}  Actual Total {% endif %}</th>
+                  <th  data-vat={{duka.vatper}} id="vat_percent"> VAT({{duka.vatper | floatformat:'-2'}}%)
+                  {%  endif %}
+                   
+                  <th >  {% if useri.langSet == 0 %} Jumla {% if duka.vat_allow %}  na VAT {% endif %} {% else %} Total  {% if duka.vat_allow %}  & VAT {% endif %} {% endif %}</th>
+                {% if the_bill.service %}
+                     <th > {% if useri.langSet == 0 %} Muda  {% else %} Duration {% endif %}</th>
+                     <th >  {% if useri.langSet == 0 %} Jumla na Muda {% else %} Total with Duration {% endif %}</th>
+
+                {% endif %}
+                
+                </tr>
+
+                <tbody id="new-bill_tbody" class="pb-4" data-cur = '{{duka.currencii}}'>
+                    
+                   
+               </tbody>
+
+                  </table>
+ </div>
+
+
+ </div>
+
+ <div class="row classic_div col-md-12">
+         <p class="text-right  col-6">
+         </p>
+
+
+  <p class="text-right mt-3 col-6">
+    <button class="btn btn-secondary btn-sm latoFont " data-service="{% if the_bill.service %}1{% else %}0{% endif %}" id="add_bill_item" >
+       + 
+       {% if useri.langSet == 0 %} Ongeza Bidhaa   {% else %}Add item{% endif %}
+
+    </button>
+</p>
+ </div>
+
+
+</div>
+
+ 
+<div class="border-bottom mx-3 mt-3">
+    <h6 class="text-right py-2 px-3">
+        <span class=" latoFont" style="color: rgb(102, 102, 102);">
+            {% if useri.langSet == 0 %}  Jumla {% if duka.vat_allow %}  bila kodi {% endif %} {% else %} Sub total {% endif %}:
+            <span class="font-weight-nomal" style="font-size:11px;color:rgb(0, 56, 161)">{{duka.currencii}}.</span>
+            <strong id="bill_sub_total">0</strong>
+        </span>
+    </h6>
+</div>
+ 
+{% if duka.vat_allow %} 
+<div class="border-bottom mx-3">
+    <h6 class="text-right py-2 px-3">
+        <span class=" latoFont" style="color: rgb(70, 70, 70);">
+           VAT ({{duka.vatper | floatformat:'-2' }}%) : 
+            <span class="font-weight-nomal" style="font-size:11px;color:rgb(0, 56, 161)">{{duka.currencii}}.</span>
+            <strong id="total_vat_disp">0</strong>
+        </span>
+    </h6>
+</div>
+{% endif %}
+
+<div class="border-bottom mx-3">
+    <h6 class="text-right py-3 px-3">
+        <strong class=" NuniFont" style="color: rgb(88, 88, 88);">
+            {% if useri.langSet == 0 %}  Jumla  {% else %} Total {% endif %}:
+            <span class="font-weight-nomal" style="font-size:11px;color:rgb(0, 56, 161)">{{duka.currencii}}.</span>
+            <strong data-total=0 id="total_bill_cash">0</strong>
+        </strong>
+    </h6>
+</div>
+
+<div class="border-bottom mx-3 with_expenses" style="display: none;">
+    <div class="text-right py-3 px-3">
+        <span class=" latoFont" style="color: rgb(88, 88, 88);">
+            {% if useri.langSet == 0 %}  Ghalama Nyingine  {% else %} Other expenses {% endif %}:
+            <span class="font-weight-nomal" style="font-size:11px;color:rgb(0, 56, 161)">{{duka.currencii}}.</span>
+            <strong id="total_bill_expenses">0</strong>
+        </span>
+    </div>
+</div>
+
+<div class="border-bottom mx-3 with_expenses" style="display: none;">
+    <h5 class="text-right py-3 px-3">
+        <strong class=" latoFont" style="color: rgb(88, 88, 88);">
+            {% if useri.langSet == 0 %}  Jumla na Ghalama  {% else %} Total & Expenses {% endif %}:
+            <span class="font-weight-nomal" style="font-size:11px;color:rgb(0, 56, 161)">{{duka.currencii}}.</span>
+            <strong data-total=0 id="total_bill_wth_expenses">0</strong>
+        </strong>
+    </h5>
+</div>
+
+
+
+
+
+
+<div class="classic_div my-4" hidden style="width: 220px;">
+    <div class="inputGroup">
+        {% if the_bill.ilolipwa > 0 %}
+            <input id="bill_tobe_paid" checked name="bill_tobe_paid" onchange='if($(this).prop("checked")){$("#chagua_akaunti_ya_kulipa_bill,.chagua_akaunti_ya_kulipa_bill").fadeIn(499);$("#bill_pay_date").hide();$("#save_the_bill").addClass("py-3")}else{$("#chagua_akaunti_ya_kulipa_bill,.chagua_akaunti_ya_kulipa_bill").fadeOut(100);$("#bill_pay_date").show();$("#save_the_bill").removeClass("py-3")}' type="checkbox"/>
+
+        {% else %}
+         {% endif %} 
+            <label for="bill_tobe_paid">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard-check" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd" d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+                      <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                      <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                    </svg>
+                {% if useri.langSet == 0 %}  Oda Iliyolipiwa {% else %} Pre Paid Order {% endif %}
+            </label>
+        </div>
+</div>
+
+
+
+
+<div class="row mb-2 pt-2 classic_div" style="max-width:450px" hidden id = "chagua_akaunti_ya_kulipa_bill">
+<div class="col-5 text-right" >
+  <strong>
+      <label class="text-danger " for="vendor_nami"> {% if useri.langSet == 0 %}  Akaunti {% else %}  Account {% endif %} <sup>*</sup>
+     </label> 
+  </strong> 
+</div>
+<div class="col-7">
+            <select name="" id="malipo-akaunti"  class="form-control machaguo-pesa smallFont selectpicker" data-live-search="true">
+            <option value="" data-value=0 >{% if useri.langSet == 0 %}--Chagua Akaunti--{% else %}--Select Account--{% endif %}</option>
+            </select>
+</div>
+</div>
+
+
+
+<div class="row mb-3 pt-5 classic_div chagua_akaunti_ya_kulipa_bill" style="max-width:450px" >
+<div class="col-5 text-right">
+  <strong>
+      <label  for="vendor_nami"> {% if useri.langSet == 0 %} kiasi Kilicholipwa {% else %} Payed Amount {% endif %} :
+     </label> 
+  </strong> 
+</div>
+<div class="col-7">
+    <div >
+          <div class="show_curency_blockt show_curency position-absolute text-danger   px-3" style="display: none ;">
+              <label class="mt-1" for=""></label> 
+              <div class="box-pointert d-inline "></div>
+            </div>
+          <input type="number" class="form-control money-fomat" placeholder="{{the_bill.ilolipwa | floatformat:'-2' | intcomma}}" data-pay=0 >
+         
+          <!-- <div class="input-group-prepend">
+            <button type="button" onclick="$('#kama_change').toggle(400)" class="input-group-text btn btn-default text-primary btn-sm latoFont smallFont" id="basic-addon1">{% if useri.langSet == 0 %} Chenji {% else %} Change {% endif %} 
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-caret-down-fill ml-2" viewBox="0 0 16 16">
+                <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+              </svg>
+            </button>
+          </div> -->
+          <input type="text" hidden id="inayolipwa_invoice" value={{the_bill.ilolipwa}} data-pay=0>
+
+        </div>
+  
+            <small class="latoFont text-danger" id="amount_verifier" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi mr-1 bi-exclamation-triangle" viewBox="0 0 16 16">
+                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                    <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                  </svg>
+                  {% if useri.langSet == 0 %} kiasi kimezidi kiasi cha Oda inayolipwa {% else %} The amount exceeds the Order amount {% endif %}
+            </small>
+
+    </div>
+</div>
+
+
+<!-- CHENJI PANEL -->
+<div class="row mb-3 classic_div" id="kama_change" style="display: none;max-width:500px">
+    <hr class="col-12 py-2">
+    <div class="col-md-6">
+        <div class="form-groupn mb-3">
+            <label for="kiasi_lipwa"> {% if useri.langSet == 0 %} Kiasi Kilichotolewa {% else %} Payed Cash Amount {% endif %}</label>
+            <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+                <label class="mt-1 text-danger" for=""></label> 
+                <div class="box-pointer d-inline "></div>
+              </div>
+            <input type="number" 
+            onkeyup="let am=Number($('#inayolipwa_invoice').data('pay')),
+                         paid = Number($(this).val())
+                      if($('#inayolipwa_invoice').val()!=''){
+                          am =Number($('#inayolipwa_invoice').val())
+                             }
+                          if(paid>am){
+                              $('#kiasi_Chenji').val((paid-am).toLocaleString())
+                              $('#kiasi_Chenji').css({'background':'blue','color':'#fff','font-weight':'bold'})
+                          }else{
+                              $('#kiasi_Chenji').val('')
+                              $('#kiasi_Chenji').css({'background':'#fff','color':'#777','font-weight':'bold'})
+                          }
+                      
+            "
+            id="kiasi_lipwa" class="form-control money-fomat">
+        </div>
+
+    </div>
+    <div class="col-md-6">
+        <div class="form-groupn mb-3">
+            <label for="kiasi_lipwa">{% if useri.langSet == 0 %} Chenji {% else %} Change {% endif %}</label>
+            <input type="text" id="kiasi_Chenji" class="form-control">
+        </div>
+
+    </div>
+</div>
+
+
+<!-- PAY DATE -->
+<div class=" row mb-3 classic_div" style="max-width: 450px;" id="bill_pay_date">
+ <div class="col-5 text-right">
+     <strong > {% if useri.langSet == 0 %}   Kukamilisha Malipo{% else %} Order Due Date  {% endif %}:</strong>
+ </div>   
+<div class="col-7">
+    <input type="date" class="made-input form-control" id="tarehe_kulipa" name="tarehe_kulipa" >
+
+    <script>
+        $(document).ready(function(){
+        let dateP = new Date('{{ the_bill.kulipa|date:"Y-m-d" }}') ,
+            day = dateP.getDate(),
+             month = dateP.getMonth() + 1,
+             year = dateP.getFullYear();
+     
+         if (month < 10) month = "0" + month;
+         if (day < 10) day = "0" + day;
+     
+         var today = year + "-" + month + "-" + day;   
+        document.getElementById("tarehe_kulipa").value = today;
+    
+       // var today = new Date().toISOString().split('T')[0];
+       // document.getElementsByName("tarehe_kulipa")[0].setAttribute('max', today);            
+        })
+
+       </script>
+
+</div>
+</div>
+
+<form action="/mauzo/addInvoice" method="POST" class="save_bill_data" data-rudi=0 data-rudi_val=0 data-edit=1 data-bill={{the_bill.id}} data-oda=1 id="save_bill_data">
+    {% csrf_token %}
+<p class="text-center pb-5" id="save_the_bill">
+
+      <button type="submit" class="btn btn-primary btn-lg latoFont"   >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-cart-check" viewBox="0 0 16 16">
+            <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+          </svg> 
+          
+          {% if useri.langSet == 0 %} Save Mabadiliko {% else %} Save Changes {% endif %}   
+</button>
+
+</p>
+
+</form>
+  
+ <!-- PLACE COLOR And size in appropriate js variables..........................................// -->
+ <script>
+    let colr=[],size=[],prod=[],itm_colori={},itmSize={},itmprod={},imgs=[],imgs_var={},tr=``                                   
+    const vatper = Number('{{duka.vatper}}')/100
+
+      let vat_s = false,vat_in = false
+    '{% for ls in list %}'
+            vat_s = false
+            vat_in = false
+          if('{{ls.itm.vat_set}}'=='True'){
+              vat_s = true
+          }
+
+          if('{{ls.itm.vat_included}}'=='True'){
+              vat_in=true
+
+
+            }
+
+           var onshelfi = Number('{{ls.itm.produ.idadi}}')
+
+        //   '{% if the_bill.online %}'
+        //     onshelfi+=Number('{{ls.itm.idadi}}')
+        //   '{% endif %}'
+
+        itmprod = {
+           id:Number('{{ ls.itm.id }}'),
+           maelezo:`{{ls.itm.produ.bidhaa.maelezo}}`,
+           jum:'{{ls.itm.produ.bidhaa.idadi_jum }}',
+           vipimo:`{{ls.itm.produ.bidhaa.vipimo }}`,
+           vipimo_jum:`{{ ls.itm.produ.bidhaa.vipimo_jum }}`,
+           idadi:Number('{{ls.itm.idadi}}'),
+           vat_set:vat_s,
+           bei:Number('{{ls.itm.bei}}'),
+           name:`{{ls.itm.produ.bidhaa.bidhaa_jina}}`,
+           zilizopo:Number(`{{ls.itm.produ.idadi}}`),
+           shelf:onshelfi,
+           bidhaa:Number('{{ls.itm.produ.id}}'),
+           prod:Number('{{ls.itm.produ.bidhaa.id}}'),
+           bei_og:Number('{{ls.itm.produ.Bei_kuuza}}'),
+           bei_jum:Number('{{ls.itm.produ.Bei_kuuza_jum}}'),
+           pu_pr:Number('{{ls.itm.produ.Bei_kununua}}'),
+           serial:String(`{{ls.itm.serial}}`),
+           match:'{{ls.itm.match.id}}',
+           vat_include:vat_in,
+           timely:Number('{{ls.itm.produ.timely}}'),
+           muda:Number('{{ls.itm.saveT}}'),
+           picha:`{{ls.picha}}`,
+       }
+       prod.push(itmprod)
+    '{% endfor %}'
+
+    
+     //PUSH IMGS...................................................................//
+    //  '{% for im in pic }'
+    //     imgs_var={
+    //         val:Number('{{im.bidhaa.id}}'),
+    //         pic:'{{im.url}}'
+    //     }
+    //     imgs.push(imgs_var)
+    //  '{% endfor }'
+
+    //  console.log(imgs);
+     
+   '{% for cl in color %}'
+      itm_colori = {
+         id:Number('{{ cl.id }}'),
+         color:Number('{{cl.color.id}}'),
+         bidhaa:Number('{{cl.bidhaa.id}}'),
+         idadi:Number('{{cl.idadi}}'),
+         code:'{{ cl.color.color.color_code }}',
+         name:'{{ cl.color.color.color_name }}'
+     }
+     colr.push(itm_colori)
+   '{% endfor %}'
+
+   '{% for sz in size %}'
+       itmSize = {
+          id:Number('{{ sz.id }}'),
+          idadi:Number('{{ sz.idadi}}'),
+          color:Number('{{ sz.color.id }}'),
+          colored:Number('{{sz.color.color.id}}'),
+          size:Number('{{sz.size.id}}'),
+          name:'{{ sz.size.sized.size }}',
+          bidhaa:Number('{{sz.bidhaa.id}}')
+      }
+      size.push(itmSize)
+   '{% endfor %}'
+  
+
+    //USED PRICES.........................//
+    let pr=[],pr_var={}
+    '{% for p in prices %}'
+       pr_var={
+           unit:'{{p.unit}}',
+           price:Number('{{p.price}}'),
+           qty:Number('{{p.qty}}'),
+           prod:'{{p.prod}}'
+       }
+       pr.push(pr_var)
+
+    '{% endfor %}'
+
+
+
+    let sales=0,total_vat=0,rnum = 0,
+      dura = [
+                {
+                value:1,
+                name:langu('dakika','Minute(s)'),
+                
+                },
+                {
+                value:0,
+                name:'----',
+                
+                },
+                {
+                value:2,
+                name:langu('Saa','hour(s)'),
+                
+                
+                },
+                {
+                value:3,
+                name:langu('Siku','Day(s)'),
+                
+                
+                },
+                {
+                value:4,
+                name:langu('Wiki','Week(s)'),
+                
+                
+                },
+                {
+                value:5,
+                name:langu('mwezi','Month(s)'),
+                
+            
+                },
+                {
+                value:6,
+                name:langu('Miaka','Year(s)'),
+                
+                
+                },
+            
+            ]
+
+prod.forEach(it=>{
+let     uwiano=Number(it.jum),
+        vipimo=it.vipimo,
+        vipimo_jum=it.vipimo_jum,
+        bei = it.bei,
+        vat_set = it.vat_set,
+        idadi=it.idadi,
+        tot_p = it.bei,
+        serial = it.serial,
+        muda = dura.find(v=>v.value===it.timely)
+        
+
+
+        if(vat_set){
+            bei=(bei/(1+vatper))
+        }
+//SIZE FILTER FOR ITEM
+    let idsz=x=>x.bidhaa===it.bidhaa
+    const sz = size.filter(idsz)
+
+
+ //COLOR FILTER FOR ITEM
+    let idc=x=>x.bidhaa===it.bidhaa
+       const clr = colr.filter(idc)
+
+
+tr+=` <tr id="bill_item${it.id}"  class="bill_data" data-jum=false  data-jumin="#jum_item_qty${it.id}" data-rejin="#rej_item_qty${it.id}" data-pos=${it.id} data-match=${it.match} >
+    <!-- IMAGE COL -->
+     <td  >
+         <div class="container centerItem" id="imgplace${it.id}">
+        `
+         let f= `
+           <svg xmlns="http://www.w3.org/2000/svg" width="2.6em" height="2.6em" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
+            <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+            <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+          </svg>
+         `
+        // imgs.forEach(p=>{
+        //     if(p.val == it.prod){
+               if(it.picha!=''){
+                    f=`<img src="${it.picha}" style="max-width:4.9em;max-height:4.9em;cursor:pointer">`
+
+               }
+        //     }
+        // })
+        
+       tr+=`${f}
+        </div>
+       </td>
+
+
+     <!-- ITEM NAME -->
+     <td class="py-2">
+         
+
+        <!-- AFTER SEARCHING THE ITEM NAME COME HERE -->
+        <h6 id="place_searched1" style="min-width: 240px;" class="item-attr1 py-2  border-bottom">
+           
+            <label class="latoFont" style="color:rgb(108, 39, 236)" for="placeSearch">${it.name}</label>
+            
+          
+ 
+         
+
+            <div id="item-desc${it.id}" class="d-block text-muted border-bottom smallerFont Assistant">
+                 ${it.maelezo}  
+            </div>
+
+            <textarea  name="serial_add${it.id}" placeholder="${it.serial}" style="display: none;" class="form-control smallerFont" id="serial_add${it.id}" cols="30" rows="3"></textarea>
+            <div class="text-right p-1">
+                   <button class="btn btn-light btn-sm seliar_adder smallerFont text-primary latoFont" data-pos=${it.id}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-node-plus-fill" viewBox="0 0 16 16">
+                        <path d="M11 13a5 5 0 1 0-4.975-5.5H4A1.5 1.5 0 0 0 2.5 6h-1A1.5 1.5 0 0 0 0 7.5v1A1.5 1.5 0 0 0 1.5 10h1A1.5 1.5 0 0 0 4 8.5h2.025A5 5 0 0 0 11 13zm.5-7.5v2h2a.5.5 0 0 1 0 1h-2v2a.5.5 0 0 1-1 0v-2h-2a.5.5 0 0 1 0-1h2v-2a.5.5 0 0 1 1 0z"/>
+                      </svg> Serial
+                    </button>
+            </div>
+        </h6>
+
+     
+        </td>
+
+
+        <!-- QUANTITY-->
+     <td class="pb-3 pt-2 qty">
+         <!-- show  item units  -->
+        <div class="row classic_div"> 
+            <span class="text-primary float-left d-block  idadi-units_disp${it.id}" style="font-size: 11px;">${it.vipimo}</span>
+        </div>
+
+        <div class="input-group pt-2" style="width: 140px;">
+
+                    <!-- ITEM UNITS  -->
+
+
+         <div class="dropdown input-group-prepend">
+             <button class="btn btn-light btn-sm  smallerFont drop_down dropdown-toggle"  title="Units" type="button" id="dropbtn${it.id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+               
+             </button>
+             <div class="dropdown-menu" id="idadi_prod${it.id}" aria-labelledby="dropbtn${it.id}">
+               
+
+                 <!-- <button  data-jum=false data-units='' data-pos=1 data-show=".rej-panel1" data-hide=.jum-panel1   class=" btn-primary btn btn-sm setPu setPusecond1 dropdown-item"  > </button>              
+               <button  data-jum=true data-units='' data-pos=1 data-show=".jum-panel1" data-hide=.rej-panel1 class="btn-light btn btn-sm setPu setPufirst1 dropdown-item"> </button>
+                 -->
+             </div>
+           </div>
+
+                <div class=" jum-panel${it.id}  idadi-jum-panel${it.id}" style="display: none;padding-left: 0;" >
+                    <input type="number" data-sm='${it.vipimo}' placeholder=${it.idadi}
+                    `
+                    if(clr.length>0){
+                        tr+=`disabled`
+                    }
+
+                    tr+=`value=${it.idadi} data-onshelf=${it.shelf} data-ids=${it.id} data-sale="#bill_kuuza_jum${it.id}" data-itm=${it.bidhaa} data-unit=1  class=" form-control item-bill-jum_idadi smallFont border0" id="jum_item_qty${it.id}" data-pos=${it.id} data-tot_wth_vat='#jum-total${it.id}' data-vat_allow="#vatallow-jum${it.id}" data-bei='#bill_bei_jum${it.id}' data-vat='#vat-disp-jum${it.id}' data-jum='#jum-actual-total${it.id}' style=" width:71px;border:0">  
+                </div>
+
+                <div class="rej-panel${it.id} idadi-rej-panel${it.id}"  style="padding-left:0">
+                    <input type="number" 
+                    `
+                    if(clr.length>0){
+                        tr+=`disabled`
+                    }
+                    tr+=` data-sm='${it.vipimo}'   placeholder=1 value=${it.idadi} data-onshelf=${it.shelf} data-ids=${it.id} data-sale="#bill_kuuza_rej${it.id}" data-itm=${it.bidhaa} data-unit=1  id="rej_item_qty${it.id}" class=" made-input smallFont item-bill-rej_idadi border0" data-pos=${it.id} data-tot_wth_vat='#rej-total${it.id}' data-vat_allow="#vatallow-rej${it.id}" data-bei='#bill_bei_rej${it.id}' data-vat='#vat-disp-rej${it.id}' data-jum='#rej-actual-total${it.id}' style="width: 71px;border:0">  
+                </div>`
+       
+
+
+                       if(clr.length>0){
+                        tr+=`<div class=" input-group-append " id="is_colored_item${it.id}"  >
+                        <button  id="colored_items${it.id}"  title="{% if useri.langSet == 0 %}Rangi{% else %}Color{% endif %}" class="btn btn-light colored_items btn-sm px-1" data-toggle="modal" data-pos=${it.id} data-color=${JSON.stringify(clr.map((x,r)=>{return r ={idadi:x.idadi,color:x.color} }))} data-size=${JSON.stringify(sz.map((x,s)=>{return s={idadi:x.idadi,size:x.size,color:x.colored}}))} data-target="#modal_color"  data-val=${it.bidhaa} data-valu=${it.prod} >
+                            <img  width="20" src="/static/pics/colors.svg" />
+                        </button>
+                       </div>`
+                       }
+
+
+                       let msg=`<small class="text-danger p-2" style="font-size:11px;" > 
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                                    <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                                    </svg>                                
+                                {% if useri.langSet == 0 %}Idadi zilizopo {% else %}Qty onshef {% endif %}
+                                <span class="text-primary">${it.vipimo}.</span> <strong>${it.shelf}</strong>
+                                </small>`
+
+
+
+            tr+=`   </div>
+        
+
+         <div class="idadi_imezidi p-2" id="idadi_imezidi${it.id}">
+             ${it.shelf<it.idadi?msg:''}
+         </div>
+        
+
+
+       <div class="color-wrapper  mt-1 " style="height: 35px;">
+           <div  id="popColored${it.id}" class="py-2 whiteBg p-1  shrink-palet popColored  rounded  "
+          
+        style="-webkit-box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37); 
+               box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37);
+               cursor:pointer;`
+               if(clr.length==0){
+                   tr+='display:none'
+               }
+               tr+=`
+               ">
+
+         <div class="row classic_div">
+            <label for="color_qt${it.id}" style="cursor: pointer;"  class="smallerFont col-8 latoFont px-2">
+                {% if useri.langSet == 0 %}Rangi{% else %}Color{% endif %}(<span id="color_qt${it.id}" class="text-danger">${clr.length}</span>)
+           </label>
+
+              <p class="text-right col-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+              </p>
+              
+         </div>`
+         
+           
+         
+
+       tr+=` <div id="color_obj${it.id}">  `
+
+             
+
+            //Place data size to the button......................//
+
+                if(sz.length>0){
+                    $(`#colored_items${it.id}`).data('size',sz)
+                } 
+                
+                
+
+
+                if(clr.length>0){
+                    //$(`#is_colored_item${it.id}`).show()
+                   // $(`#colored_items${it.id}`).data('color',clr)
+                   // $(`#popColored${it.id}`).show()
+                   // $(`#color_qt${it.id}`).text(clr.length)
+                    clr.forEach(cor=>{
+                tr+=`<div class="p-1 smallerFont latoFont ">
+                        <div class="rounded p-2  d-inline"
+                        style="-webkit-box-shadow: 0px 0px 8px -3px rgba(18,13,255,0.22); 
+                        box-shadow: 0px 0px 8px -3px rgba(18,13,255,0.22);"
+                        >
+                        <label 
+                            style="width:15px;
+                            height:15px;
+                            background:${cor.code};
+                            border-radius:100%;
+                            color:rgba(240, 248, 255, 0);
+                            border:1px solid #ccc"
+                            >
+                            ''
+                        </label> 
+                        <span  style="margin-left:6px;font-size:14px">
+                        <span  class="text-capitalize"  >
+                        ${cor.name} =>
+                        </span>
+                        `
+                        let colr_sz=sz=>sz.color===cor.id
+                        const szn = size.filter(colr_sz)
+
+                        if(szn.length>0){
+                            szn.forEach(si=>{                               
+                            
+                                let  szqty= Number(si.idadi)
+                                            
+
+                            if(szqty>0){
+
+                            tr+=`<span> <span class="text-danger smallFont">${si.name} </span> `
+
+                                if(uwiano==1 || szqty/uwiano<=1){
+                                tr+=`<span class="smallFont">${vipimo}:</span> <span class="text-primary">${szqty}</span>`
+                            }else if(uwiano>1 && szqty/uwiano >1){
+                                tr+=`<span class="smallFont">${vipimo_jum}:</span><span class="text-primary">${parseInt(szqty/uwiano)}</span>`
+
+                                if(szqty%uwiano>0){
+                                tr+=`,<span class="smallFont">${vipimo}:</span><span class="text-primary">${szqty%uwiano}</span>`
+                                }
+                            }
+                            
+                            tr+=`</span> | `
+                            }
+                            
+                            
+                    
+                            })
+                        }else{
+                            if(Number(uwiano)==1 || Number(cor.idadi)/Number(uwiano)<=1){
+                                tr+=`<span class="smallFont">${vipimo}:</span> <span class="text-primary">${Number(cor.idadi)}</span>`
+                            }else if(Number(uwiano)>1 && Number(cor.idadi)/Number(uwiano) >1){
+                                tr+=`<span class="smallFont">${vipimo_jum}:</span><span class="text-primary">${parseInt(Number(cor.idadi)/Number(uwiano))}</span>`
+
+                                if(Number(cor.idadi)%Number(uwiano)>0){
+                                tr+=`,<span class="smallFont">${vipimo}:</span><span class="text-primary">${Number(cor.idadi)%Number(uwiano)}</span>`
+                                }
+                            }
+                        }
+                        
+
+                        tr+=`
+                        </span>
+                        </div>
+                        </div>
+
+
+                        `
+
+
+                    })
+                    
+
+
+
+            //$(`#rej_item_qty${it.id}`).prop('readonly',true)
+            //$(`#jum_item_qty${it.id}`).prop('readonly',true)
+
+                }
+
+        tr+=`</div>
+
+            
+            </div>
+        </div>
+        
+
+
+
+         
+         
+     </td>
+
+
+
+    <!-- SALES PRICE -->
+    <td class="pb-3 pt-2 ">
+
+     <div class="row classic_div">
+         <span class="text-primary float-left units_disp1" style="font-size: 11px;">@${it.vipimo}</span>
+    </div> 
+
+    <div class="input-group  pt-2" style="width:150px">
+         <div class="  jum-panel${it.id}  kununua-jum-panel${it.id}" style="display: none;padding-left:0">
+         
+
+         <div class="show_curency_blockt show_curency position-absolute text-danger   px-3" style="display: none ;">
+             <label class="mt-1" for=""></label> 
+             <div class="box-pointert d-inline "></div>
+         </div>
+
+
+        <input type="number" value=${tot_p} data-pos=${it.id} data-val=${it.bei_og} data-bei=${Number(it.pu_pr)/uwiano} class=" form-control money-fomat bill_kuuza_jum border0" id="bill_kuuza_jum${it.id}" style="font-size:12px;width: 110px;">  
+      </div>
+
+      <div class="   rej-panel${it.id} kununua-rej-panel${it.id}" style="padding-left:0" >
+         <div class="show_curency_blockt show_curency position-absolute text-danger   px-3" style="display: none ;">
+                 <label class="mt-1" for=""></label> 
+             <div class="box-pointert d-inline "></div>
+         </div>
+        <input type="number" value=${tot_p}  data-pos=${it.id} data-val=${it.bei_og} data-bei=${Number(it.pu_pr)/uwiano} class=" form-control money-fomat bill_kuuza_rej border0" id="bill_kuuza_rej${it.id}" style="width: 120px;font-size:13px;border:0">  
+      </div>
+
+      <div class="dropdown input-group-prepend ">
+         <button class="btn btn-light btn-sm drop_down smallerFont dropdown-toggle"  title="{% if useri.langSet == 0%} Bei nyingine{% else %} Other Price{% endif %}" type="button" id="price_drop_btn${it.id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+           
+         </button>
+         <div class="dropdown-menu" aria-labelledby="price_drop_btn${it.id}">`
+            //Price selection dropdown ...........................................//
+          tr+=`  <div class="btn-group px-0 dropdown-item" role="group" aria-label="Basic example">
+                <button  data-jum=false data-units='${it.vipimo}'  data-bei=${it.bei_og} data-qty=1  data-pos=${it.id} data-show=".rej-panel1" data-hide=.jum-panel1   class=" btn-primary btn btn-sm smallFont border-bottom set_pricing latoFont dropdown-item"  >${it.vipimo}<span class=" latoFont">(<span class="text-primary">${it.vipimo}</span>:<span class="text-danger">1</span>=><span class="text-danger">${Number(it.bei_og).toLocaleString()}</span>) </button>
+          </div>
+                `
+     
+          
+
+            const be_i=pr.filter(x=>Number(x.prod)===Number(it.prod))
+            if(be_i.length>0){
+            be_i.forEach(u=>{
+              tr+=`<div class="btn-group px-0 dropdown-item" role="group" aria-label="Basic example">
+                <button  data-jum=false data-units='${u.unit}'  data-bei=${u.price} data-qty=${u.qty}  data-pos=${it.id} data-show=".rej-panel1" data-hide=.jum-panel1   class=" btn-primary btn btn-sm smallFont border-bottom set_pricing latoFont dropdown-item"  >${u.unit} <span class=" latoFont">(<span class="text-primary">${it.vipimo}</span>:<span class="text-danger">${Number(u.qty).toFixed(2)}</span>=><span class="text-danger">${Number(u.price).toLocaleString()}</span>) </span> </button> 
+              </div>
+                `
+  
+            })
+            }
+            
+
+              if(Number(it.jum)>1){
+           tr+=`  <div class="btn-group px-0 dropdown-item" role="group" aria-label="Basic example">
+                         <button  data-jum=false data-units='${it.vipimo_jum}'  data-bei=${it.bei_jum} data-qty=${uwiano}  data-pos=${it.id} data-show=".rej-panel1" data-hide=.jum-panel1   class=" btn-primary btn btn-sm smallFont border-bottom set_pricing latoFont dropdown-item"  >${it.vipimo_jum}<span class=" latoFont">(<span class="text-primary">${it.vipimo}</span>:<span class="text-danger">${uwiano}</span>=><span class="text-danger">${Number(it.bei_jum).toLocaleString()}</span>) </button>
+                   </div>
+                `
+            }
+
+            tr+=`<button  data-pos=${it.id} class="dropdown-item btn-sm latoFont text-primary  uni_price"  data-sm='${it.vipimo}' data-toggle="modal" data-target="#price_units_modal"  >+ {% if useri.langSet == 0 %}Tengeneza Bei {% else %} Set Unit Price {% endif %} </button>`
+
+
+            tr+=`  </div>
+              </div>
+            </div>
+
+     
+
+      <div class="custom-control  custom-checkbox" id="na_vat_panel1" >
+         <input type="checkbox"`
+         if(it.vat_include){
+             tr+=`checked`
+         }
+      tr+=  ` data-pos=${it.id} class="custom-control-input vat-include" id="na_vat${it.id}">
+         <label class="custom-control-label latoFont smallerFont" for="na_vat${it.id}"> 
+             {% if useri.langSet == 0 %} pamoja na VAT   {% else %} VAT included {% endif %}
+         </label>
+      </div> 
+
+
+     <div class="  idadi_imezidi" id="hasra_${it.id}">
+     </div>
+      
+  </td>
+
+      
+  {% if duka.vat_allow %} 
+     <!--ACTUAL TOTAL .................. . -->
+     <td class="pb-3 pt-3 ">
+        <div class="row classic_div">
+            <span class=" float-left idadi-units_disp${it.id}" style="font-size: 11px;color:rgba(240, 248, 255, 0)">@</span>
+       </div> 
+
+        <div class=" jum-panel1 " style="display: none;" >
+             
+                <input type="text" id="jum-actual-total${it.id}" value=${(bei*idadi).toLocaleString()} readonly class="smallerFont made-input" style="width:110px;border:0;font-size:16px">
+        </div>
+        
+        <div class=" rej-panel${it.id}" >
+            
+                <input type="text" id="rej-actual-total${it.id}" value=${(bei*idadi).toLocaleString()} readonly class="smallerFont made-input" style="width:110px;border:0;font-size:16px">
+        </div>
+    </td>
+
+
+
+     <!-- VAT .................. . -->
+     <td class="pb-3 pt-3">
+        <div class="row classic_div">
+            <span class=" float-left idadi-units_disp${it.id}" style="font-size: 11px;color:rgba(240, 248, 255, 0)">@</span>
+       </div>   
+
+        <div class="custom-control jum-panel${it.id} custom-checkbox " style="display: none;">
+            <input type="checkbox" data-pos=${it.id} data-vat_val=0 `
+            if(vat_set){
+                tr+=`checked`
+            }
+         if(it.vat_include){
+             tr+=  ` data-include=true `
+         }else{
+             tr+=  ` data-include=false `
+         }   
+         tr+=` data-actual="#jum-actual-total${it.id}" data-qty='#jum_item_qty${it.id}' data-total_with_vat="#jum-total${it.id}" data-bei='#bill_bei_jum${it.id}' class="custom-control-input vat-fill" id="vatallow-jum${it.id}">
+            <label class="custom-control-label" for="vatallow-jum${it.id}"> 
+                <input type="text" data-vat_val=0  readonly class="smallerFont made-input" id="vat-disp-jum${it.id}" style="width:110px">
+            </label>
+        </div>
+        
+        <div class="custom-control rej-panel${it.id}  custom-checkbox">
+            <input type="checkbox" data-pos=${it.id} `
+            if(vat_set){
+                tr+=`checked`
+            }
+
+            if(it.vat_include){
+                tr+=  ` data-include=true `
+            }else{
+                tr+=  ` data-include=false `
+            }   
+         tr+=  `data-qty='#rej_item_qty${it.id}' data-actual="#rej-actual-total${it.id}" data-total_with_vat="#rej-total${it.id}" data-vat_val=0 data-bei='#bill_bei_rej${it.id}' class="custom-control-input vat-fill" id="vatallow-rej${it.id}" />
+            <label class="custom-control-label" for="vatallow-rej${it.id}"> 
+                <input type="text"  data-vat_val=0  `
+                if(vat_set){
+                    tr+=`value=${(bei*vatper).toLocaleString()}`
+                }
+             tr+=  ` readonly class="smallerFont made-input" id="vat-disp-rej${it.id}" style="width:120px;border:0" />
+            </label>
+        </div> 
+
+       
+    </td>
+
+
+    {% endif %}
+
+     
+
+    {% if the_bill.service %}
+    <td class="pb-3 pt-3 ">
+        <div class="row classic_div">
+           <span class=" float-left idadi-units_disp${it.id}" style="font-size: 11px;color:rgba(240, 248, 255, 0)"></span>
+        </div>   
+   
+           <div class=" jum-panel${it.id}" style="display: none;">
+                   <input type="text" id="jum-actual-total${it.id}" value="${(tot_p*idadi).toLocaleString()}" readonly class="smallerFont made-input" style="width:110px">
+           </div>
+           
+        <div class="rej-panel${it.id}" >
+                   <input type="text" id="rej-actual-total${it.id}" value="${(tot_p*idadi).toLocaleString()}" readonly class="smallerFont made-input" style="width:110px">
+           </div>
+       </td>
+        
+        
+        <!-- DURATION -->
+        <td class="pb-3 pt-2 ">
+
+         <div class="row classic_div">
+             <span class="text-primary float-left units_disp${it.id}" style="font-size: 11px;"></span>
+        </div> 
+
+        <div class="input-group  pt-2" style="width:200px">
+        <div class="input-group-prepend  ">
+        <select name="servduration${it.id}" id="servduration${it.id}" class="form-control smallFont" >
+            <option value=0 > ${muda.name}</option>
+        </select>
+      </div>
+
+             <div  style="padding-left:0">
+            <input type="number" data-pos=${it.id} data-val=0 data-bei=0 class="  form-control   border0" value=${it.muda} id="serviceDuration${it.id}" readonly style="font-size:12px;width: 40px;">  
+          </div>
+
+        </div>
+
+        </td>
+
+    {% endif %}
+    
+     
+     
+    
+<!-- TOTAL -->
+     <td class="pb-3 pt-3 remove-rw ">
+        <div class="row classic_div">
+            <span class=" float-left idadi-units_disp1" style="font-size: 11px;color:rgba(240, 248, 255, 0)">@</span>
+       </div> 
+         <input type="text" readonly id="jum-total${it.id}" value=${(tot_p*idadi*Number(it.muda)).toLocaleString()} class="smallerFont made-input jum-panel${it.id}" style="width: 115px;display:none">
+         <input type="text" readonly id="rej-total${it.id}" value=${(tot_p*idadi*Number(it.muda)).toLocaleString()} class="smallerFont made-input rej-panel${it.id}" style="width: 115px;border:0">
+   
+         {% if not the_bill.online %}
+         <div class="text-right remove_bill_item " style="margin-bottom: 2px;margin-right:0">
+             <button type="button" data-remove='#bill_item${it.id}' class="btn btn-default btn-sm text-danger remove_bill_item_tr"  style="padding: 0 !important;">
+                 <span style="font-size:x-large;padding: 3px 4px !important;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"  class="bi bi-dash-circle  " viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z"/>
+                      </svg>
+                </span>
+                </button>
+         </div>
+         {% endif %}
+   
+        </td>
+     
+      </tr>`
+
+})
+
+$('#new-bill_tbody').html(tr)
+
+
+
+
+//show the sat color/size on hover ...........................................//
+$(document).on('mouseenter', '.popColored', function (e) {
+    $(this).addClass('extend-palet')
+    $(this).removeClass('shrink-palet')
+
+    // let pos=$(this).parent('div').position()
+    // $(this).css('left',pos.left+'px')
+
+
+})
+
+  //Adding serial numers for added item
+  $('body').on('click','.seliar_adder',function(){
+    let pos = $(this).data("pos")
+    $(`#serial_add${pos}`).toggle()
+    
+   
+})    
+
+
+$(document).on('mouseleave', '.popColored', function (e) {
+    $(this).removeClass('extend-palet')
+    $(this).addClass('shrink-palet')
+
+})
+
+
+function langu(swa,eng){
+   '{% if useri.langSet == 0 %}'
+          return swa
+      '{% else %}'
+          return eng
+     '{% endif %}' 
+  }
+
+
+
+</script>
+
+     
+    <!-- Modal Color Rangi Rangi-->
+    <div class="modal fade" id="modal_color" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+        <div class="modal-dialog animate" role="document">
+            <div class="modal-content">
+                    <div class="modal-header">
+                            <h6 class="modal-title">
+                                 <img  width="25" src="{{baseUrl}}/{{'colors.svg'}}" />
+                               
+                                {% if useri.langSet == 0 %}
+                                Rangi za <span style="color:rgb(108, 39, 236)" id="item_jina"></span> {% else %} <span style="color:rgb(108, 39, 236)" id="item_jina"></span> color  {% endif %}
+                            </h6>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                        </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-5">
+
+                        </div>
+                        <div class="col-7">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <label for="input" class="pt-2 px-2 smallFont">Tafuta Rangi:</label>
+                                </div>
+                                <input type="text" id="filter_itm_color" class="form-control smallerFont">
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        $(document).ready(function(){
+                          $("#filter_itm_color").on("keyup", function() {
+                            var value = $(this).val().toLowerCase();
+                            $("#bill_item_color .the_color_itm").filter(function() {
+                              $(this).toggle($(this).data('rangi_names').toLowerCase().indexOf(value) > -1)
+                            });
+                          });
+                        });
+                        </script>
+                    <div class="container-fluid pr-5 mt-3" id="bill_item_color">                       
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary border0" data-dismiss="modal">Close</button>
+                    <!-- <button type="button" class="btn btn-primary">Save</button> -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- ADD UNIT PRICE.. MODAL -->
+<div class="modal fade" id="price_units_modal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"> {% if useri.langSet == 0 %}Tengeza Bei kwa idadi{% else %}Set Unit Price{% endif %}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+            </div>
+            <div class="modal-body">
+                <form action="/mauzo/addUnits" data-val=0 data-edit=0 data-pos=0 id="submit_price_Units" class="px-2">
+
+                    <div class="form-group mb-3">
+                      <label for="">{% if useri.langSet == 0 %}Jina la Bei{% else %}Unit Price Name{% endif %}</label>
+                      <input type="text"
+                        class="form-control" name="" id="price_unit_name" aria-describedby="unit_jina_help" placeholder="">
+                      <small id="unit_jina_help" hidden class="form-text  text-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                            <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                            <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                          </svg>  
+                        {% if useri.langSet == 0 %}Tafadhari Andika Jina{% else %}Please write name{% endif %}</small>
+                    </div>
+                
+                    <div class="form-group mb-3">
+                      <label for=""> {% if useri.langSet == 0 %}Idadi kwa kipimo kidogo{% else %}Quantity by smallest  Unit {% endif %}</label>
+                      <div class="input-group">
+                          <div class="input-group-prepend border">
+                              <span class="text-primary latoFont px-2" id="pr_sm_unit">
+                                  
+                              </span>
+                          </div>
+                          <input type="number"
+                        class="form-control" name="" id="unit_pr_qty" aria-describedby="uni_price_idadi_help" placeholder="">
+                     
+                        
+                      </div>
+
+                      
+                        <small id="uni_price_idadi_help" hidden class="form-text  text-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                            <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                            <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                          </svg>  
+                        {% if useri.langSet == 0 %}Tafadhari Andika idadi{% else %}Please write quantity{% endif %}</small>
+                    </div>
+
+                    <div class="form-group mb-2">
+                      <label for="">{% if useri.langSet == 0 %}Bei ya Kuuza{% else %} Unit quantity Price{% endif %}</label>
+
+                      <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+                        <label class="mt-1 text-danger" for=""></label> 
+                        <div class="box-pointer d-inline "></div>
+                      </div>
+
+                      <input type="number"
+                        class="form-control money-fomat" name="" data-bei=0 id="pr_unit_price" aria-describedby="pr_price_Bei" placeholder="">
+                     
+                        <small id="pr_price_Bei" hidden class="form-text  text-danger"> 
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                            <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                            <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                          </svg>  
+                        {% if useri.langSet == 0 %}Tafadhari Andika Bei{% else %}Please write Price{% endif %}</small>
+                    </div>
+
+                    <div class="form-group mt-3 text-center">
+
+                        <button type="button" id="set_pr_unit"  class="btn btn-secondary smallFont latoFont">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+                                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+                              </svg>
+                              
+                              {% if useri.langSet == 0 %}Tumia Bei{% else %}Use Price{% endif %}
+                        </button>
+
+                        <button class="btn btn-primary smallFont latoFont">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
+                                <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+                                <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+                              </svg> 
+                              
+                              {% if useri.langSet == 0 %}Save  Bei{% else %}Save Unit Price{% endif %}
+                        </button>
+
+                    </div>
+
+                
+                </form>
+
+               
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+
+    //FOR  QUANTITY UNIT PRICE ......................................//
+    $('body').on('click','.uni_price',function(){
+        let pos=$(this).data('pos')
+
+        $('#pr_sm_unit').text($(this).data('sm'))
+        $('#submit_price_Units').data('pos',pos)
+        $('#submit_price_Units').data('val',0)
+        $('#submit_price_Units').data('edit',0)
+
+        let idad_ = Number($(`#rej_item_qty${pos}`).val()) || 1,
+            uwiano_ = Number($(`#rej_item_qty${pos}`).data('unit')),
+            tot_ = idad_ * uwiano_   
+            $('#unit_pr_qty').attr('placeholder',tot_)     
+
+        
+
+
+    })
+
+
+    
+
+
+
+    $('body').on('click','.settingsUnit_pr',function(){
+        $('#pr_sm_unit').text($(this).data('sm'))
+
+        $('#submit_price_Units').data('pos',$(this).data('pos'))
+        $('#submit_price_Units').data('val',$(this).data('val'))
+        $('#submit_price_Units').data('edit',1)
+
+        $('#price_unit_name').attr('placeholder',$(this).data('units'))
+        $('#unit_pr_qty').attr('placeholder',Number($(this).data('qty')).toFixed(2))
+        $('#pr_unit_price').attr('placeholder',Number($(this).data('bei')).toLocaleString())
+        $('#pr_unit_price').data('bei',Number($(this).data('bei')))
+
+    })
+</script>
+
+
+
+{% block billmpya %}
+<script src="/static/js/sales.js"></script>
+{% endblock %}
+
+<script>
+    $('.rej-panel').hide()
+    $('.jum-panel').addClass('pt-2')
+    setTimeout(calculateSum, 1000);
+</script>
+
+{% endblock %}
+ 
+{% block dash-mapper %}
+ {% if useri.langSet == 0 %} Sales Order  {% else %} Sales Order {% endif %}
+{% endblock %} 
+
+{% block nav-mauzo %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+
+{% block active-saleOda-menu %} class="btn-default btn pop2_active_menu btn-sm " {% endblock %}
+
+{% block active-mauzo %} class="bi bi-cart-check text-primary"{% endblock %}
+
+{% block dash-map %} {% if useri.langSet == 0 %}  Mabadiliko ya Oda {% else %} Edit Order {% endif %}{% endblock %}
+{% block forItems %}
+<script>
+    $('#loadMe').modal('show')
+  getStokuData('/stoku/getItems')
+</script>
+{% endblock %}

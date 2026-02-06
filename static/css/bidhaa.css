@@ -1,0 +1,334 @@
+.contained {
+
+    justify-content: space-between;
+
+}    
+
+.contained .show-detail {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: center;
+    text-align: center;
+    flex-shrink: 0;
+    padding-top: 10px ;
+    
+}
+.contained .show-detail .round-border{
+    display: flex;
+    flex-direction: column; 
+    border: 1px solid rgb(253, 253, 253);
+    border-radius:8px;
+    background-color: var(--whiteBg);
+ cursor: pointer;
+ -webkit-transition: all .2s linear;
+ -o-transition: all .2s linear;
+ transition: all .2s linear; 
+}
+.contained .show-detail .round-border:hover{
+    transform: scale(1.1);
+    -webkit-box-shadow: 0px 9px 17px -12px rgba(0,0,0,0.75);
+-moz-box-shadow: 0px 9px 17px -12px rgba(0,0,0,0.75);
+box-shadow: 0px 9px 17px -12px rgba(0,0,0,0.75);
+
+}
+
+
+.contained .show-detail span  .show-item-detail {
+    font-weight: 600;
+    font-size: large;
+    color:var(--figureColor);
+}
+
+
+.contained .show-detail   .item-title {
+    font-weight: 100;
+    font-size: smaller;
+}
+
+.contained .show-detail .icon_div{
+    height: 45px;
+    width: 45px;
+   border-radius: 50%;
+   padding:15px 6px;
+position: relative;
+-webkit-box-shadow: 0px 0px 5px 0px rgba(217,185,235,1);
+-moz-box-shadow: 0px 0px 5px 0px rgba(217,185,235,1);
+box-shadow: 0px 0px 5px 0px rgba(217,185,235,1);
+margin-top:-21px;
+background: var(--whiteBg);
+
+}
+
+
+
+.contained .show-detail .item-detail-holder{
+    margin-top: 8px;
+}
+.contained .show-detail:nth-child(1) .icon_div {
+    color: rgba(136, 36, 0, 0.966);
+}
+.contained .show-detail:nth-child(2) .icon_div {
+    color: rgba(45, 10, 199, 0.966);
+}
+.contained .show-detail:nth-child(4) .icon_div {
+    color: rgba(199, 10, 114, 0.966);
+}
+.contained .show-detail:nth-child(3) .icon_div {
+    color: rgba(68, 66, 230, 0.993);
+}
+
+.bidhaa-edit-savebtn {
+	box-shadow:inset 0px -1px 0px 0px #9acc85;
+	background:linear-gradient(to bottom, #74ad5a 5%, #68a54b 100%);
+	background-color:#74ad5a;
+	border-radius:4px;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:13px;
+	font-weight:bold;
+	padding:11px 39px;
+    text-decoration:none;
+    border:0;
+}
+.bidhaa-edit-savebtn:hover {
+	background:linear-gradient(to bottom, #68a54b 5%, #74ad5a 100%);
+	background-color:#68a54b;
+}
+.bidhaa-edit-savebtn:active {
+	position:relative;
+	top:1px;
+}
+.maroon{
+    color: rgba(35, 44, 99, 0.952);
+}
+.greyscale{
+    color: rgba(40, 18, 61, 0.89);
+}
+
+.produ-add-nav{
+    color:rgb(110, 110, 110)
+}
+.text-primaryi{
+    color:blue !important;
+    border-top:2px solid blue !important;
+}
+
+.squuze_top{
+    margin-top: -80px !important;
+}
+
+#kuediti-bidhaa-form .form-group .form-control,#kuediti-bidhaa-form .form-group .bootstrap-select .btn{
+    color:rgba(28, 28, 201, 0.774) !important;
+}
+.Produ-color-save {
+	box-shadow:inset 0px 1px 0px 0px #54a3f7;
+	background:linear-gradient(to bottom, #007dc1 5%, #0061a7 100%);
+	background-color:#007dc1;
+	border-radius:3px;
+	border:1px solid #124d77;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-size:13px;
+	padding:6px 10px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #154682;
+}
+.Produ-color-save:hover {
+	background:linear-gradient(to bottom, #0061a7 5%, #007dc1 100%);
+    background-color:#0061a7;
+    text-decoration: none;
+    color:#fff
+}
+.Produ-color-save:active {
+	position:relative;
+	top:1px;
+}
+
+input[type="color"].custom-color {
+    padding: 0;
+  border: 1px solid #154682;
+  height: 32px;
+  width: 39px;
+  cursor: pointer;
+}
+.ka-rangi{
+    margin-top: 4px;
+    border: 1px solid rgb(0, 19, 129)
+}
+
+* {
+    box-sizing: border-box;
+  }
+  
+  img {
+    vertical-align: middle;
+  }
+  
+  /* Position the image container (needed to position the left and right arrows) */
+  .container {
+    position: relative;
+  }
+  
+  /* Hide the images by default */
+  .mySlides {
+    display: none;
+  }
+  
+  /* Add a pointer when hovering over the thumbnail images */
+  .cursor {
+    cursor: pointer;
+  }
+  
+  /* Next & previous buttons */
+  #penye-picha .prev ,#penye-picha .next {
+    cursor: pointer;
+    position: absolute;
+    top: 40%;
+    width: auto;
+    padding: 16px;
+    margin-top: -50px;
+    color: rgb(197, 193, 193);
+    font-weight: bold;
+    font-size: 20px;
+    border-radius: 0 3px 3px 0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  
+  /* Position the "next button" to the right */
+  #penye-picha .next {
+    right: 0;
+    border-radius: 3px 0 0 3px;
+  }
+  /* Position the "next button" to the right */
+  #penye-picha .prev {
+    left: 0;
+    border-radius: 0 3px 3px 0 ;
+  }
+  
+  /* On hover, add a black background color with a little bit see-through */
+  #penye-picha .prev:hover,
+  #penye-picha .next:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+  
+  /* Number text (1/3 etc) */
+  .numbertext {
+    color: #f2f2f2;
+    font-size: 12px;
+    padding: 8px 12px;
+    position: absolute;
+    top: 0;
+  }
+  
+  /* Container for image text */
+  .caption-container {
+    text-align: center;
+    background-color: #222;
+    padding: 2px 16px;
+    color: white;
+  }
+  
+  .row:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  
+  /* Six columns side by side */
+  .column {
+    float: left;
+    width: 16.66%;
+  }
+  
+  /* Add a transparency effect for thumnbail images */
+  .demo {
+    opacity: 0.6;
+  }
+  
+  .active,
+  .demo:hover {
+    opacity: 1;
+  }
+
+  .Ondoa_picha h6{
+    position: absolute;
+    right: 12px;
+  }
+
+  .Ondoa_picha h6 button{
+    opacity: .8;
+    font-size: 11px !important;
+    font-family: 'Roboto',sans-serif;
+  }
+  .Ondoa_picha h6 button:hover{
+        opacity: 1;
+
+  }
+
+  .size_table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+    font-size: smaller;
+  }
+  
+ .size_table td,.size_table th {
+    border: 1px solid #dddddd;
+    text-align: center;
+    padding: 2px;
+  }
+  .color_specify{
+    cursor: pointer;
+  }
+  
+  /* .size_table tr:nth-child(even) {
+    background-color: #dddddd;
+  } */
+.produ-opt-panel {
+  padding:0;
+
+}
+/* .produ-opt-panel ul li a{
+  color:rgb(14, 59, 110);
+  
+} */
+
+
+.produ-opt-panel ul li a:hover{
+  text-decoration: none;
+  color:var(--alistColor);
+}
+
+.actively{
+  border-bottom:2px solid var(--actively);
+  
+}
+.actively a{
+  color:var(--actively) !important;
+}
+
+
+.produ-opt-panel ul li{
+  padding: 12px;
+}
+
+
+.redbox{
+  -webkit-box-shadow: 0px 0px 9px 2px rgba(255, 0, 0, 0.616) !important; 
+box-shadow: 0px 0px 9px 2px rgba(255, 0, 0, 0.493) !important;
+border: 1px dotted red;
+}
+
+.bluebox{
+   -webkit-box-shadow: 0px 0px 9px 2px rgba(0, 89, 255, 0.616) !important; 
+box-shadow: 0px 0px 9px 2px rgba(0, 68, 255, 0.493) !important;
+border: 1px dotted rgb(19, 73, 190);
+}
+
+
+ 

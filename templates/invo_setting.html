@@ -1,0 +1,237 @@
+{% extends 'userdash.html' %}
+
+{% load humanize %}
+
+{% block billcss %}
+   <link rel="stylesheet" href="/static/richtext/richtext.css">
+
+          
+
+
+{% endblock %}
+
+{% block Dashboard %}
+<div  class=" Analytical p-4 whiteBg" id="general-panel" style="margin-top: -23px;min-height:100vh" >
+
+  <h6 class="mt-3"  ><strong> {% if useri.langSet == 0 %}Anwani za Biashara{% else %}Business Address{% endif %}</strong></h6>
+
+  {% if duka.logo %}
+  <p><strong> {% if useri.langSet == 0 %}Nembo ya Biashara{% else %}Logo{% endif %}:</strong></p>
+  <div style="max-width:200px">
+    <img src="{{duka.logo.url}}" style="width:100%" alt="">
+
+  </div>
+  <div class="custom-control custom-checkbox py-3">
+    {%if duka.invo_logo %}
+          <input type="checkbox" checked onchange="var data={data:{val:Number($(this).prop('checked')),csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/setlogo_to_log'};saveChangeFuct(data)" class="custom-control-input" id="addLogo">
+    {%else%}
+          <input type="checkbox" onchange="var data={data:{val:Number($(this).prop('checked')),csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/setlogo_to_log'};saveChangeFuct(data)" class="custom-control-input" id="addLogo">
+    {% endif %}
+    <label class="custom-control-label"  style="cursor:pointer" for="addLogo"> {% if useri.langSet == 0 %} Weka Nembo kwenye Risiti {% else %}Add Logo to invoince{% endif %} </label>
+  </div>
+{% endif %}
+  
+{% if reg.count > 0 %}
+  <hr>
+  <div class="row mt-5" style="max-width:600px">
+  <p class="col-12"><strong> {% if useri.langSet == 0 %} Usajiri na anwani {% else %} Registrations & Addresses {% endif %}</strong></p>
+  
+  <div class="col-6 pb-1"><strong style="font-size: small;"  >{% if useri.langSet == 0 %}Usajiri/Anwani{% else %} Regstration/Address {% endif %} </strong> </div>
+  <div class="col-6 pb-1"> <strong style="font-size: small;" >{% if useri.langSet == 0 %}Weka{% else %}Set{% endif %}  </strong> </div>
+
+  {% for r in reg %}
+    <div class="col-6">
+        {{r.reg_name }} : {{r.reg_no}}
+    </div>
+    <div class="col-6">
+      <div class="custom-control  custom-checkbox " style="cursor: pointer;" >
+        {% if r.show_to_invo %}
+        <input type="checkbox" checked onchange="let data={data:{val:Number($(this).prop('checked')),valued:'{{r.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/setreg_to_invo'};saveChangeFuct(data)" class="custom-control-input" style="cursor: pointer;" id="addreg{{r.id}}">
+       {% else %}
+        <input type="checkbox" onchange="let data={data:{val:Number($(this).prop('checked')),valued:'{{r.id}}',csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/setreg_to_invo'};saveChangeFuct(data)" class="custom-control-input" style="cursor: pointer;" id="addreg{{r.id}}">
+       {% endif %}
+        <label class="custom-control-label" style="cursor: pointer;" for="addreg{{r.id}}"></label>
+      </div>
+    </div>
+
+{% endfor %}
+</div>
+{% endif %}
+
+
+<hr>
+
+<h6 class="mt-5" ><Strong> {% if useri.langSet == 0 %}Mawasiliano {% else %} Contacts {%endif%}</Strong></h6>
+
+<div class=" table-responsive">
+    <div class="row pb-5 " style="max-width: 800px;min-width:600px"  >
+      <div class="col-3"><strong style="font-size: small;"  > {% if useri.langSet == 0 %} Mhusika{% else %} Member {%endif%} </strong></div>
+      <div class="col-3"><strong style="font-size: small;"  > {% if useri.langSet == 0 %}Cheo {% else %} Position {%endif%}</strong></div>
+      <div class="col-3"><strong style="font-size: small;"  >SIM1</strong></div>
+      <div class="col-3"><strong style="font-size: small;"  >SIM2</strong></div>
+
+      {% for n in namba %}
+          <div class="col-3 py-2">
+            {% if n.user.picha %}
+              <img src="{{n.user.picha.url}}" alt="none" style="width:30px;height:30px;border-radius:50%;border:1px solid rgb(182, 182, 182)" >
+            {% endif %}
+            {{n.user.user.first_name | title }}  {{n.user.user.last_name | title }}
+          </div>
+        
+          <div class="col-3 py-2 font-weight-bold smallerFont">{{n.cheo | title }}</div>
+         
+          <div class="col-3 py-2">
+            <div class="custom-control  custom-checkbox " style="cursor: pointer;" >
+              {% if n.owner %}
+               <input type="checkbox" disabled checked class="custom-control-input" style="cursor: pointer;" id="addphone1{{n.id}}">
+              {% else %}
+                  {% if n.SIM1_invoince %}
+                      <input type="checkbox" checked onchange="let data={data:{val:Number($(this).prop('checked')),valued:'{{n.id}}',sim1:1,csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/setphone_to_invo'};saveChangeFuct(data)"  class="custom-control-input" style="cursor: pointer;" id="addphone1{{n.id}}">
+                  {% else %}
+                      <input type="checkbox"  onchange="let data={data:{val:Number($(this).prop('checked')),valued:'{{n.id}}',sim1:1,csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/setphone_to_invo'};saveChangeFuct(data)"  class="custom-control-input" style="cursor: pointer;" id="addphone1{{n.id}}">
+                  {% endif %}
+               {% endif %}
+               <label class="custom-control-label" style="cursor: pointer;" for="addphone1{{n.id}}">{{n.user.simu1}}</label>
+          </div>
+        </div>
+        <div class="col-3 py-2">
+        
+          {% if n.user.simu2 %}
+          <div class="custom-control  custom-checkbox " style="cursor: pointer;" >
+            {% if n.SIM2_invoince %}
+            <input type="checkbox" checked onchange="let data={data:{val:Number($(this).prop('checked')),valued:'{{n.id}}',sim1:0,csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/setphone_to_invo'};saveChangeFuct(data)"    class="custom-control-input" style="cursor: pointer;" id="addphone2{{n.id}}">
+            {% else %}
+            <input type="checkbox" onchange="let data={data:{val:Number($(this).prop('checked')),valued:'{{n.id}}',sim1:0,csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},url:'/setphone_to_invo'};saveChangeFuct(data)"    class="custom-control-input" style="cursor: pointer;" id="addphone2{{n.id}}">
+            {% endif %}
+            <label class="custom-control-label" style="cursor: pointer;" for="addphone2{{n.id}}">{{n.user.simu2}}</label>
+          </div>
+        
+        {% else %}
+             ------------
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+</div>
+
+<hr>
+<h6 class="mt-5" >
+  <Strong> 
+    {% if useri.langSet == 0 %}
+       Maelekezo ya Ankara ambazo hazijalipiwa 
+    {% else %} 
+      Description for unpaid Invoices
+    {%endif%}
+  </Strong>
+</h6>
+
+<div id="theRichtext"  >
+    {% include 'richText.html' %}
+
+  <p class="text-right px-2">
+    <button type="submit" id="the_submit_btn" class="btn btn-primary">
+    
+         Save
+    </button>
+  </p>
+
+</div>    
+
+
+
+ 
+<script>
+   function saveChangeFuct(data){
+       $('#loadMe').modal('show')
+       $.ajax({
+           type:"POST",
+           url:data.url,
+           data:data.data
+
+           }).done(function(dt){
+               $('#loadMe').modal('hide')
+               if(dt.success){
+                toastr.success(lang(dt.msg_swa,dt.msg_eng), 'Success Alert', {timeOut: 7000});
+
+               }else{
+                   
+                toastr.error(lang(dt.msg_swa,dt.msg_eng), 'Error Alert', {timeOut: 7000});
+               }
+           }).fail(err=>{
+               toastr.error(lang("Kitendo hakikufanikiwa kutokana na hitilafu","The action was unsuccesfuly, please try again"), 'Error Alert', {timeOut: 7000});
+           })
+   }
+
+
+   //SAVE RICHTEXT................................//
+    
+   
+
+    $('#the_submit_btn').unbind("click").click(function(){
+        const desc = $('#richTextField').contents().find("body").html(),
+              data = {
+                data:{desc},
+                url:'/update_invo_desc'
+              }
+        if(desc!=''){
+          $('#loadMe').modal('show')
+           const sendIt = POSTREQUEST(data)
+           sendIt.then(dt=>{
+
+              $('#loadMe').modal('hide')
+                if(dt.success){
+                  toastr.success(lang(dt.msg_swa,dt.msg_eng), 'Success Alert', {timeOut: 4000});
+
+                }else{
+                    
+                  toastr.error(lang(dt.msg_swa,dt.msg_eng), 'Error Alert', {timeOut: 4000});
+                }
+             
+           }).fail(err=>{
+               toastr.error(lang("Kitendo hakikufanikiwa kutokana na hitilafu","The action was unsuccesfuly, please try again"), 'Error Alert', {timeOut: 7000});
+           })
+        }else{
+                toastr.warning(lang('Hakuna maelezo ya kusave, tafadhari andika maelezo','No Description to save, please write the description'), 'Warning', {timeOut: 6000});
+
+        }
+        
+    })
+
+$(document).ready(function(){
+  const desk_exists = Number('{{desc_exists}}')
+  if(desk_exists)$('#richTextField').contents().find("body").html('{{desc.desc | safe }}')
+})
+    
+
+   
+</script>
+ 
+
+ 
+
+ 
+  
+
+
+
+
+</div>
+
+{% endblock %}
+{% block dash-mapper %}
+{% if useri.langSet == 0 %} Mpangilio  {% else %} Settings {% endif %}
+{% endblock %}      
+
+
+{% block akaunt-map %}  <a href="#" class="tab_show" data-show="#general-panel">
+
+  {% if useri.langSet == 0 %} Marekeisho ya Risiti  {% else %}Invoice Settings{% endif %}
+</a>   
+{% endblock %}
+
+{% block billmpya %}
+<script src="/static/richtext/richtext.js">  </script>
+<!-- <script src="/static/js/miamala.js">  </script> -->
+{% endblock %}
+
