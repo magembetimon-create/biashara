@@ -102,30 +102,6 @@ DATABASES = {
     }
 }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.environ.get('DBNAME'),
-#         'HOST': os.environ.get('DBHOST'),
-#         'USER': os.environ.get('DBUSER'),
-#         'PASSWORD': os.environ.get('DBPASS'),
-#         'OPTIONS': {'sslmode': 'require'},
-#     }
-# }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'biashara',
-#         'HOST': 'fanyabiashara.postgres.database.azure.com',
-#         'USER':'biashara',
-#         'PASSWORD': 'Pwd@me12',
-#         'OPTIONS': {'sslmode': 'require'},
-#     }
-# }
-
-# Password validation
-# https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -185,18 +161,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_LOCATION = "static"
 MEDIA_LOCATION = "media"
 
-
-
-# AZURE_ACCOUNT_NAME = os.getenv('AZURE_ACCOUNT_NAME')
-# AZURE_ACCOUNT_KEY='6Yy2WwCSORV3m3twcW3uMr/Uei+sjIP0egWW+EWIZ5kPF/PyY+WyhlQ5dxdNzz6ubdfcGS4x8tVK+AStRwDvVA=='
-
-# AZURE_CUSTOM_DOMAIN ='fanyabiashara.blob.core.windows.net'
-
-# STATIC_URL = f'https://{AZURE_CUSTOM_DOMAIN}/static/'
-# STATIC_ROOT =  BASE_DIR / 'static'
-
-# MEDIA_URL = f'https://{AZURE_CUSTOM_DOMAIN}/media/'
-# MEDIA_ROOT = BASE_DIR / 'media'
 
 
 
