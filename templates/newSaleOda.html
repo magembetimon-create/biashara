@@ -1,6 +1,7 @@
 {% extends 'userdash.html' %}
+{% load static %}
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/sales.css">
+<link rel="stylesheet" href="{% static 'css/sales.css' %}">
 {% endblock %}
 {% block mauzo %}
 <div  class="whiteBg py-2" style="margin-top: -15px;">
@@ -1105,7 +1106,7 @@
 </div>
 
 {% block billmpya %}
-<script src="/static/js/sales.js"></script>
+<script src="{% static 'js/sales.js' %}"></script>
 {% endblock %}
 
 {% endblock %}

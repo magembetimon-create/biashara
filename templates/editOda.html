@@ -1,7 +1,8 @@
 {% extends 'userdash.html' %}
+{% load static %}
 
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/sales.css">
+<link rel="stylesheet" href="{% static 'css/sales.css' %}">
 {% endblock %}
 
 {% load humanize %}
@@ -752,7 +753,7 @@ tr+=` <tr id="bill_item${it.id}"  class="bill_data" data-jum=false  data-jumin="
                        if(clr.length>0){
                         tr+=`<div class=" input-group-append " id="is_colored_item${it.id}"  >
                         <button  id="colored_items${it.id}"  title="{% if useri.langSet == 0 %}Rangi{% else %}Color{% endif %}" class="btn btn-light colored_items btn-sm px-1" data-toggle="modal" data-pos=${it.id} data-color=${JSON.stringify(clr.map((x,r)=>{return r ={idadi:x.idadi,color:x.color} }))} data-size=${JSON.stringify(sz.map((x,s)=>{return s={idadi:x.idadi,size:x.size,color:x.colored}}))} data-target="#modal_color"  data-val=${it.bidhaa} data-valu=${it.prod} >
-                            <img  width="20" src="/static/pics/colors.svg" />
+                            <img  width="20" src="{% static 'pics/colors.svg' %}" />
                         </button>
                        </div>`
                        }
@@ -1390,7 +1391,7 @@ function langu(swa,eng){
 
 
 {% block billmpya %}
-<script src="/static/js/sales.js"></script>
+<script src="{% static 'js/sales.js' %}"></script>
 {% endblock %}
 
 <script>

@@ -180,7 +180,7 @@
           </div>
     
           <!-- SEARCH BAR  FOR LAGEr DEVICES -->
-          <div class="d-lg-flex d-none ml-2  round shadowed bordered" style="width: 380px;border-radius:7px" >
+          <div id="search_for_larger_devices" class="d-lg-flex d-none ml-2  round shadowed bordered" style="width: 380px;border-radius:7px" >
                 <span class="  centerItem pl-2 p-1 SearchSvg"  id="SearchSvgL">
                   <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
                     <circle cx="11" cy="11" r="8"></circle>
@@ -391,6 +391,18 @@
 
                   </div>
                 </div>
+
+             <!-- IMAGE SEARCH BUTTON (large screens) -->
+             <label class="btn btn-default fontColor btn-sm mb-0 border-left" for="imgSearchInputL"
+               title="{% if useri.langSet == 0 %}Tafuta kwa Picha{% else %}Search by Image{% endif %}"
+               style="cursor:pointer;padding:0.3rem 0.45rem;border-radius:0 7px 7px 0">
+               <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                 <circle cx="12" cy="13" r="4"></circle>
+               </svg>
+             </label>
+             <input type="file" id="imgSearchInputL" accept="image/*" hidden>
 
              <div id="serchAutoComplete"  class="serchAutoComplete whiteBg position-absolute masaki shadow round  " style="overflow-x:auto;max-height:400px ;width:360px;margin-top:35px" >
                   <ul class="list-unstyled px-2" >
@@ -694,7 +706,8 @@ let shwCo = false
 <div class="d-lg-none " id="smallSearchPop" style="display:none;width:100%;height:100%;top:0;right:0;position:fixed;z-index:99" >
   <div class="centerItem  whiteBg" style="width: 100%;height:70px;"> 
     <div class="d-flex bordered round shadowed" style="min-width: 320px;border-radius:7px" >
-        <span class="  centerItem p-1 SearchSvg" id="SearchSvgS" >
+        <span class="  centerItem p-1 SearchSvg" id
+        ="SearchSvgS" >
 
           <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
             <circle cx="11" cy="11" r="8"></circle>
@@ -905,6 +918,18 @@ let shwCo = false
 
                   </div>
         </div>
+
+        <!-- IMAGE SEARCH BUTTON (small screens) -->
+        <label class="btn btn-default fontColor btn-sm mb-0" for="imgSearchInputS"
+          title="{% if useri.langSet == 0 %}Tafuta kwa Picha{% else %}Search by Image{% endif %}"
+          style="cursor:pointer;padding:0.3rem 0.45rem">
+          <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+        </label>
+        <input type="file" id="imgSearchInputS" accept="image/*" hidden>
 
         <button onclick="$('#smallSearchPop').fadeOut(300)" class="btn btn-default fontColor largeFont btn-sm" >
           <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x">
@@ -2459,6 +2484,7 @@ $('.muamala-genu').click(function(){
 <!-- PANEL YA KUONGEZA BIDHAA........................................................ -->
 <div class="tab_div pb-3  p-3 whiteBg" id="Ongeza-bidhaa-Panel" >
     <form action="/stoku/ongezaBidhaa" data-forbill="{% block fromBill %}0{% endblock %}" id="form-Bidaa-Add">
+      {% csrf_token %}
 
           <div class="row mb-3 mt-3">
               <div class="col-12 col-md-10">
@@ -2524,7 +2550,7 @@ $('.muamala-genu').click(function(){
                   </div>
                
                 <select name="produ_campuni" id="produ_campuni"  data-width="100%" data-style="btn-light" class="form-control rega selectpicker robotoFont  muhimu-b" data-live-search="true" onchange=" if($(this).find('option:selected').data('value')!='0'){ $(this).selectpicker('setStyle', 'restore-border');$(this).selectpicker('setStyle', 'btn-light');}">
-                  <option value="">{% if useri.langSet == 0 %}Chagua Chapa   {% else %} select Brand {% endif %}</option>
+                  <option value=0 >{% if useri.langSet == 0 %}Chagua Chapa   {% else %} select Brand {% endif %}</option>
                 </select>
                 
               </div>
@@ -2569,7 +2595,7 @@ $('.muamala-genu').click(function(){
                 </div>
                 
                 <select onchange=" if($(this).find('option:selected').data('value')!='0'){ $(this).selectpicker('setStyle', 'restore-border');$(this).selectpicker('setStyle', 'btn-light');}" name="prodAina" id="prodAina" data-width="100%" class="form-control selectpicker rega muhimu-b smallFont robotoFont " data-live-search="true">
-                  <option value=""> {% if useri.langSet == 0 %} Chagua Aina  {% else %} Select Category {% endif %}</option>
+                  <option value=0 > {% if useri.langSet == 0 %} Chagua Aina  {% else %} Select Category {% endif %}</option>
                 </select>
               </div>
              
@@ -2843,7 +2869,7 @@ $('.muamala-genu').click(function(){
 
     </div>
     <div class="add_img text-center">
-        <img src="/static/pics/addPic.svg" class="classic_div" style="width:70px;height:70px"  alt="" srcset="">
+        <img src="{% static 'pics/addPic.svg' %}" class="classic_div" style="width:70px;height:70px"  alt="" srcset="">
 
         <p class="text-center" >{% if useri.langSet == 0 %} Bonyeza hapa au vuta na kuachia picha hapa {% else %} Click or drag and drop add Image {% endif %} </p>
         <p id="show_size" class="text-center " >
@@ -3243,7 +3269,7 @@ $('.muamala-genu').click(function(){
               <div class="dropdown-menu whiteBg fontColor smallFont" aria-labelledby="dropdownMenuButton">
 
                 <a class="dropdown-item" href="/mauzo/POStab">
-                 <img src="/static/pics/pos-1.svg" style="width: 1.6em;" alt="" srcset="">
+                 <img src="{% static 'pics/pos-1.svg' %}" style="width: 1.6em;" alt="" srcset="">
                   POS {% if useri.langSet == 0 %} Mauzo {% else %}Sales {% endif %}
                 </a>
 
@@ -3251,7 +3277,7 @@ $('.muamala-genu').click(function(){
 
                 {% if duka.service %}
                 <a class="dropdown-item" href="/mauzo/POStab?s=1">
-                 <img src="/static/pics/pos-1.svg" style="width: 1.6em;" alt="" srcset="">
+                 <img src="{% static 'pics/pos-1.svg' %}" style="width: 1.6em;" alt="" srcset="">
                   POS {% if useri.langSet == 0 %}Huduma  {% else %} Service{% endif %}
                 </a>
 
@@ -3259,7 +3285,7 @@ $('.muamala-genu').click(function(){
                 {% endif %}
 
                 <a class="dropdown-item" href="/mauzo/newInvoice">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" fill="currentColor" class="bi bi-file-earmark-text mr-2" viewBox="0 0 16 16">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" class="bi bi-file-earmark-text mr-2" viewBox="0 0 16 16">
                     <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>
                     <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
                   </svg>
@@ -3278,7 +3304,7 @@ $('.muamala-genu').click(function(){
               
                 {% if duka.service %}
                 <a class="dropdown-item" href="/mauzo/newService">
-                  <svg xmlns="http://www.w3.org/2000/svg"  height="1.1em" width="1.1em" viewBox="0 0 24 24" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="mr-2" height="1.5em" width="1.5em" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12.22,19.85c-0.18,0.18-0.5,0.21-0.71,0c-0.18-0.18-0.21-0.5,0-0.71l3.39-3.39l-1.41-1.41l-3.39,3.39 c-0.19,0.2-0.51,0.19-0.71,0c-0.21-0.21-0.18-0.53,0-0.71l3.39-3.39l-1.41-1.41l-3.39,3.39c-0.18,0.18-0.5,0.21-0.71,0 c-0.19-0.19-0.19-0.51,0-0.71l3.39-3.39L9.24,10.1l-3.39,3.39c-0.18,0.18-0.5,0.21-0.71,0c-0.19-0.2-0.19-0.51,0-0.71L9.52,8.4 l1.87,1.86c0.95,0.95,2.59,0.94,3.54,0c0.98-0.98,0.98-2.56,0-3.54l-1.86-1.86l0.28-0.28c0.78-0.78,2.05-0.78,2.83,0l4.24,4.24 c0.78,0.78,0.78,2.05,0,2.83L12.22,19.85z M21.83,13.07c1.56-1.56,1.56-4.09,0-5.66l-4.24-4.24c-1.56-1.56-4.09-1.56-5.66,0 l-0.28,0.28l-0.28-0.28c-1.56-1.56-4.09-1.56-5.66,0L2.17,6.71c-1.42,1.42-1.55,3.63-0.4,5.19l1.45-1.45 C2.83,9.7,2.96,8.75,3.59,8.12l3.54-3.54c0.78-0.78,2.05-0.78,2.83,0l3.56,3.56c0.18,0.18,0.21,0.5,0,0.71 c-0.21,0.21-0.53,0.18-0.71,0L9.52,5.57l-5.8,5.79c-0.98,0.97-0.98,2.56,0,3.54c0.39,0.39,0.89,0.63,1.42,0.7 c0.07,0.52,0.3,1.02,0.7,1.42c0.4,0.4,0.9,0.63,1.42,0.7c0.07,0.52,0.3,1.02,0.7,1.42c0.4,0.4,0.9,0.63,1.42,0.7 c0.07,0.54,0.31,1.03,0.7,1.42c0.47,0.47,1.1,0.73,1.77,0.73c0.67,0,1.3-0.26,1.77-0.73L21.83,13.07z"/>
                     </svg>
                   {% if useri.langSet == 0 %} Kurekodi Huduma {% else %} Service Record {% endif %}
@@ -3288,20 +3314,16 @@ $('.muamala-genu').click(function(){
 
           
                 <a class="dropdown-item" href="#" onclick="$('#matumizi_data').data({'with_bil':0,'bill':0});" data-toggle="modal" data-target="#recodiMatumizi" >
-                  <svg id="Layer_1" fill="currentColor" class="wine mr-2" width="1.2em" height="1.2em" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 404 497">
-                      
-                    <path class="svg-element" d="M132-228.5v86A131.53,131.53,0,0,1,93.06-48.94,131.53,131.53,0,0,1-.5-10h-99a131.53,131.53,0,0,1-93.56-38.94A131.53,131.53,0,0,1-232-142.5v-86H132m19-20H-251a151.58,151.58,0,0,0-1,17v89C-252-58.62-183.38,10-99.5,10h99C83.38,10,152-58.62,152-142.5v-89a151.58,151.58,0,0,0-1-17Z" transform="translate(252 248.5)"/>
-                    <line class="svg-element" x1="7.5" y1="90" x2="392.5" y2="90" fill="currentColor" stroke="currentColor" stroke-miterlimit="10" stroke-width="20"/>
-                    <line class="svg-element" x1="201.5" y1="258" x2="201.5" y2="487" fill="currentColor" stroke="currentColor" stroke-miterlimit="10" stroke-width="20"/>
-                    <line class="svg-element" x1="69.5" y1="487" x2="326.5" y2="487" fill="currentColor" stroke="currentColor" stroke-miterlimit="10" stroke-width="20"/></svg> 
-                    
+                   <svg xmlns="http://www.w3.org/2000/svg" height="1.7em" viewBox="0 -960 960 960" width="1.7em" fill="currentColor" class="bi bi-cash-coin mr-2" >
+                       <path d="M320-120v-80h120v-164q-86-14-143-80t-57-156v-240h480v240q0 90-57 156t-143 80v164h120v80H320Zm258-354q42-34 56-86H326q14 52 56 86t98 34q56 0 98-34ZM320-640h320v-120H320v120Zm160 200Z"/>
+                  </svg>
                   {% if useri.langSet == 0 %} Matumizi  {% else %} Expenses {% endif %}
                 
                 </a>
                   <div class="dropdown-divider"></div>
 
                   <a href="/stoku/reduceItemQuantity" class="dropdown-item tab_show"   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" fill="currentColor" class="bi bi-file-earmark-diff" viewBox="0 0 16 16">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1.4em" height="1.4em" fill="currentColor" class="bi bi-file-earmark-diff" viewBox="0 0 16 16">
                       <path d="M8 5a.5.5 0 0 1 .5.5V7H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V8H6a.5.5 0 0 1 0-1h1.5V5.5A.5.5 0 0 1 8 5zm-2.5 6.5A.5.5 0 0 1 6 11h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>
                       <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
                     </svg>
@@ -3311,7 +3333,7 @@ $('.muamala-genu').click(function(){
                  <div class="dropdown-divider"></div>
 
                 <a class="dropdown-item tab_show" href="#" type="button"   data-toggle="modal" data-target="#add-products">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" fill="currentColor" class="bi bi-gem mr-2" viewBox="0 0 16 16">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" fill="currentColor" class="bi bi-gem mr-2" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M3.1.7a.5.5 0 0 1 .4-.2h9a.5.5 0 0 1 .4.2l2.976 3.974c.149.185.156.45.01.644L8.4 15.3a.5.5 0 0 1-.8 0L.1 5.3a.5.5 0 0 1 0-.6l3-4zm11.386 3.785l-1.806-2.41-.776 2.413 2.582-.003zm-3.633.004l.961-2.989H4.186l.963 2.995 5.704-.006zM5.47 5.495l5.062-.005L8 13.366 5.47 5.495zm-1.371-.999l-.78-2.422-1.818 2.425 2.598-.003zM1.499 5.5l2.92-.003 2.193 6.82L1.5 5.5zm7.889 6.817l2.194-6.828 2.929-.003-5.123 6.831z"/>
                   </svg>
                     {% if useri.langSet == 0 %}Sajiri Bidhaa/Huduma   {% else %} Item/Service Register {% endif %}
@@ -3320,7 +3342,7 @@ $('.muamala-genu').click(function(){
            <div class="dropdown-divider"></div>
 
                 <a class="dropdown-item tab_show" href="/production/productionUsedItems" type="button"   >
-                   <svg xmlns="http://www.w3.org/2000/svg"  height="1.4em" width="1.4em" viewBox="0 0 24 24" fill="currentColor">
+                   <svg xmlns="http://www.w3.org/2000/svg" class="mr-2"  height="1.5em" width="1.5em" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19.93,8.35l-3.6,1.68L14,7.7V6.3l2.33-2.33l3.6,1.68c0.38,0.18,0.82,0.01,1-0.36c0.18-0.38,0.01-0.82-0.36-1l-3.92-1.83 c-0.38-0.18-0.83-0.1-1.13,0.2L13.78,4.4C13.6,4.16,13.32,4,13,4c-0.55,0-1,0.45-1,1v1H8.82C8.4,4.84,7.3,4,6,4C4.34,4,3,5.34,3,7 c0,1.1,0.6,2.05,1.48,2.58L7.08,18H6c-1.1,0-2,0.9-2,2v1h13v-1c0-1.1-0.9-2-2-2h-1.62L8.41,8.77C8.58,8.53,8.72,8.28,8.82,8H12v1 c0,0.55,0.45,1,1,1c0.32,0,0.6-0.16,0.78-0.4l1.74,1.74c0.3,0.3,0.75,0.38,1.13,0.2l3.92-1.83c0.38-0.18,0.54-0.62,0.36-1 C20.75,8.34,20.31,8.17,19.93,8.35z M6,8C5.45,8,5,7.55,5,7c0-0.55,0.45-1,1-1s1,0.45,1,1C7,7.55,6.55,8,6,8z M11.11,18H9.17 l-2.46-8h0.1L11.11,18z"/>
                     </svg>  
                     {% if useri.langSet == 0 %}Uzalishaji Bidhaa   {% else %} Item Manufacturing {% endif %}
@@ -3332,7 +3354,7 @@ $('.muamala-genu').click(function(){
                <div class="dropdown-divider"></div>
 
                 <a class="dropdown-item " href="/purchase/newBill" >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" fill="currentColor" class="mr-2 bi bi-receipt-cutoff" viewBox="0 0 16 16">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" class="mr-2 bi bi-receipt-cutoff" viewBox="0 0 16 16">
                     <path d="M3 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zM11.5 4a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1zm0 2a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1zm0 2a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1zm0 2a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1zm0 2a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z"/>
                     <path d="M2.354.646a.5.5 0 0 0-.801.13l-.5 1A.5.5 0 0 0 1 2v13H.5a.5.5 0 0 0 0 1h15a.5.5 0 0 0 0-1H15V2a.5.5 0 0 0-.053-.224l-.5-1a.5.5 0 0 0-.8-.13L13 1.293l-.646-.647a.5.5 0 0 0-.708 0L11 1.293l-.646-.647a.5.5 0 0 0-.708 0L9 1.293 8.354.646a.5.5 0 0 0-.708 0L7 1.293 6.354.646a.5.5 0 0 0-.708 0L5 1.293 4.354.646a.5.5 0 0 0-.708 0L3 1.293 2.354.646zm-.217 1.198l.51.51a.5.5 0 0 0 .707 0L4 1.707l.646.647a.5.5 0 0 0 .708 0L6 1.707l.646.647a.5.5 0 0 0 .708 0L8 1.707l.646.647a.5.5 0 0 0 .708 0L10 1.707l.646.647a.5.5 0 0 0 .708 0L12 1.707l.646.647a.5.5 0 0 0 .708 0l.509-.51.137.274V15H2V2.118l.137-.274z"/>
                   </svg>
@@ -3347,7 +3369,7 @@ $('.muamala-genu').click(function(){
         <span class="position-absolute">
 
               <a class="nav-opt" title="{% if useri.langSet == 0 %}Msaada {% else %} Help {% endif %}" href="/help">
-                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-question-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-question-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                   <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                   <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
                 </svg>
@@ -5241,13 +5263,13 @@ background-color:rgb(22, 22, 22);color:#f2f2f2" >
 
 <div class="beep_audio" hidden >
   <audio id="beep_audio" preload="auto">
-      <source src="/static/audio/beep.wav"  type="audio/wav"> 
+      <source src="{% static 'audio/beep.wav' %}"  type="audio/wav"> 
   </audio>
   <audio id="notifyAudio" preload="auto">
-      <source src="/static/audio/notify.wav"  type="audio/wav"> 
+      <source src="{% static 'audio/notify.wav' %}"  type="audio/wav"> 
   </audio>
   <audio id="msgRead" preload="auto">
-      <source src="/static/audio/forMsg.wav"  type="audio/wav"> 
+      <source src="{% static 'audio/forMsg.wav' %}"  type="audio/wav"> 
   </audio>
 </div>
 
@@ -5510,7 +5532,7 @@ $('body').on('keyup','.money-fomat',function(){
   if( Number($(this).val())>0 && $(this).val()!='' ){
         $(this).siblings('.show_curency').fadeIn(400)
 
-   $(this).siblings('.show_curency').children('label').text(floatValue($(this).val())+'/=')
+   $(this).siblings('.show_curency').children('label').text(floatValue($(this).val()))
  }else{
   $(this).siblings('.show_curency').fadeOut(400)
 
@@ -5520,7 +5542,7 @@ $('body').on('keyup','.money-fomat',function(){
 $('body').on('focus','.money-fomat',function(){
   if(Number($(this).val())>0){
     $(this).siblings('.show_curency').fadeIn(400)
-    $(this).siblings('.show_curency').children('label').text(floatValue($(this).val())+'/=')
+    $(this).siblings('.show_curency').children('label').text(floatValue($(this).val()))
 
  }
 })
@@ -5586,7 +5608,7 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     
 
     {% block load_data_script %}
-       <script src="/static/js/akauntgeresha.js"></script>
+       <script src="{% static 'js/akauntgeresha.js' %}"></script>
     {% endblock %}
 
     {% endif %}
@@ -5628,6 +5650,280 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     <script src="{% static 'js/barcode_process.js' %}"></script>
 
     <script src="{% static 'js/audiorecord.js' %}"></script>
+
+    <!-- IMAGE SEARCH RESULTS MODAL -->
+    <div class="modal fade" id="imgSearchModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header py-2">
+            <h6 class="modal-title d-flex align-items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1.15em" height="1.15em" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+              {% if useri.langSet == 0 %}Matokeo ya Utafutaji kwa Picha{% else %}Image Search Results{% endif %}
+              &nbsp;<span id="imgSearchResultsCount" class="badge badge-primary smallerFont"></span>
+            </h6>
+            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+          </div>
+          <div class="modal-body p-2" style="max-height:72vh;overflow-y:auto">
+            <!-- preview of uploaded image -->
+            <div class="d-flex align-items-center mb-3 px-1 border-bottom pb-2" id="imgSearchPreviewRow" style="display:none!important">
+              <img id="imgSearchPreview" src="" alt="preview" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #ddd">
+              <span class="ml-2 text-muted smallerFont">
+                {% if useri.langSet == 0 %}Picha ya kutafutwa{% else %}Search image{% endif %}
+              </span>
+            </div>
+
+            <div id="imgSearchLocationData"
+              data-wilaya="{{useri.mtaa.kata.wilaya.wilaya|title|escapejs}}"
+              data-mkoa="{{useri.mtaa.kata.wilaya.mkoa.mkoa|title|escapejs}}"
+              data-kanda="{{useri.mtaa.kata.wilaya.mkoa.kanda.kanda|title|escapejs}}"
+              data-nchi="{{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name|title|escapejs}}"
+              style="display:none"></div>
+
+            <div class="mb-2 px-1 pb-2 border-bottom" id="imgSearchLocationWrap">
+              <div class="smallestFont text-muted mb-1">
+                {% if useri.langSet == 0 %}Tafuta bidhaa kuanzia:{% else %}Search from:{% endif %}
+              </div>
+              <div class="btn-group btn-group-sm d-flex" role="group" id="imgSearchScopeBtns">
+                <button type="button" class="btn btn-primary img-search-scope-btn" data-scope="wilaya">{{useri.mtaa.kata.wilaya.wilaya|title}}</button>
+                <button type="button" class="btn btn-outline-primary img-search-scope-btn" data-scope="mkoa">{{useri.mtaa.kata.wilaya.mkoa.mkoa|title}}</button>
+                <button type="button" class="btn btn-outline-primary img-search-scope-btn" data-scope="kanda">{{useri.mtaa.kata.wilaya.mkoa.kanda.kanda|title}}</button>
+                <button type="button" class="btn btn-outline-primary img-search-scope-btn" data-scope="nchi">{{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name|title}}</button>
+              </div>
+              <div class="smallestFont text-muted mt-1" id="imgSearchScopeHint"></div>
+            </div>
+            
+            <div id="imgSearchResultsList">
+              <div class="text-center py-4 text-muted" id="imgSearchLoaderMsg">
+                <span class="spinner-border spinner-border-sm mr-1"></span>
+                {% if useri.langSet == 0 %}Inatafuta...{% else %}Searching...{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    // ===== IMAGE SEARCH (tafuta kwa picha) =====
+  var imgSearchState = {
+    file: null,
+    activeScope: 'wilaya',
+    isSearching: false
+  };
+
+  function getImgScopeName(scope) {
+    var el = $('#imgSearchLocationData');
+    if (!el.length) return scope;
+    return el.data(scope) || scope;
+  }
+
+  function setActiveImgScope(scope) {
+    imgSearchState.activeScope = scope || 'wilaya';
+    $('#imgSearchScopeBtns .img-search-scope-btn').each(function() {
+      var isActive = ($(this).data('scope') === imgSearchState.activeScope);
+      $(this).toggleClass('btn-primary', isActive)
+           .toggleClass('btn-outline-primary', !isActive);
+    });
+
+    var isSwahili = Number($('#luga').val()) == 0;
+    var scopeName = getImgScopeName(imgSearchState.activeScope);
+    $('#imgSearchScopeHint').text(
+      (isSwahili ? 'Eneo la utafutaji: ' : 'Search area: ') + scopeName
+    );
+  }
+
+  function tafutaBidhaaKwaPicha(file, scope) {
+    if (file) {
+      imgSearchState.file = file;
+    }
+    setActiveImgScope(scope || imgSearchState.activeScope || 'wilaya');
+
+    if (!imgSearchState.file) return;
+        var url = '/stoku/tafutaPicha';
+        var csrfToken = $('input[name=csrfmiddlewaretoken]').val();
+    imgSearchState.isSearching = true;
+
+        // Show loading modal immediately
+        $('#imgSearchResultsList').html(
+            '<div class="text-center py-4 text-muted" id="imgSearchLoaderMsg">' +
+            '<span class="spinner-border spinner-border-sm mr-1"></span>' +
+            (Number($('#luga').val()) == 0 ? 'Inatafuta...' : 'Searching...') +
+            '</div>'
+        );
+        $('#imgSearchResultsCount').text('');
+        $('#imgSearchModal').modal('show');
+
+        // Show preview
+        if (file) {
+          var previewReader = new FileReader();
+          previewReader.onload = function(e) {
+            $('#imgSearchPreview').attr('src', e.target.result);
+            $('#imgSearchPreviewRow').show();
+          };
+          previewReader.readAsDataURL(file);
+        }
+
+        function doImgSearchUpload(imgFile) {
+            var fd = new FormData();
+            fd.append('csrfmiddlewaretoken', csrfToken);
+            fd.append('IMG', imgFile);
+          fd.append('scope', imgSearchState.activeScope);
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: fd,
+                cache: false,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+              imgSearchState.isSearching = false;
+                    if (response.success) {
+                        showImgSearchResults(response);
+                        // console.log(response)
+
+                    } else {
+                       console.log(response)
+                        var msg = Number($('#luga').val()) == 0
+                            ? (response.msg_swa || 'Hitilafu imetokea')
+                            : (response.msg_eng || 'An error occurred');
+                        $('#imgSearchResultsList').html(
+                            '<div class="text-center py-4 text-danger">' + msg + '</div>'
+                        );
+                    }
+                },
+                error: function() {
+                      imgSearchState.isSearching = false;
+                    $('#imgSearchResultsList').html(
+                        '<div class="text-center py-4 text-danger">' +
+                        (Number($('#luga').val()) == 0 ? 'Hitilafu ya muunganiko' : 'Connection error') +
+                        '</div>'
+                    );
+                }
+            });
+        }
+
+                if (imgSearchState.file.size / 1024 <= 490) {
+                  doImgSearchUpload(imgSearchState.file);
+        } else {
+            // Compress before uploading
+            var reader = new FileReader();
+                  reader.readAsDataURL(imgSearchState.file);
+            reader.onload = function(event) {
+                var image_URL = event.target.result;
+                var image = document.createElement('img');
+                image.src = image_URL;
+                image.onload = function(e) {
+                    var canvas = document.createElement('canvas');
+                    var ratio = 500 / e.target.width;
+                    canvas.width = 500;
+                    canvas.height = e.target.height * ratio;
+                    var context = canvas.getContext('2d');
+                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    var new_image_url = canvas.toDataURL('image/jpeg', 0.8);
+                    var compressed = urltoFile(new_image_url);
+                    imgSearchState.file = compressed;
+                    doImgSearchUpload(compressed);
+                };
+            };
+        }
+    }
+
+    function showImgSearchResults(response) {
+        var results = response.results || [];
+        var isSwahili = Number($('#luga').val()) == 0;
+        var html = '';
+
+      function escHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\"/g, '&quot;')
+          .replace(/\'/g, '&#39;');
+      }
+
+        if (results.length === 0) {
+            html = '<div class="text-center py-4 text-muted">' +
+                (isSwahili ? 'Hakuna bidhaa inayofanana na picha uliyopakia' : 'No items found matching the uploaded image') +
+                '</div>';
+        } else {
+            html = '<div class="row mx-0">';
+            results.forEach(function(item) {
+                var imgSrc = item.picha ? item.picha : "{% static 'pics/logo1.png' %}";
+                var matchBadge = item.similarity >= 70
+                    ? 'badge-success'
+                    : item.similarity >= 45 ? 'badge-warning' : 'badge-secondary';
+
+              var maeneo = Array.isArray(item.locations) ? item.locations : [];
+              var locationHtml = '';
+              if (maeneo.length > 0) {
+                var topLoc = maeneo[0] || {};
+                var locParts = [topLoc.shop, topLoc.mtaa, topLoc.kata, topLoc.wilaya, topLoc.mkoa].filter(Boolean);
+                locationHtml = '<p class="smallestFont text-muted mb-1" style="line-height:1.15">' +
+                  escHtml(locParts.join(', ')) +
+                  '</p>';
+
+                if (maeneo.length > 1) {
+                  locationHtml += '<div class="smallestFont text-muted">+' +
+                    (maeneo.length - 1) + ' ' +
+                    (isSwahili ? 'maduka mengine' : 'other shops') +
+                    '</div>';
+                }
+              }
+
+                html += '<div class="col-6 col-sm-4 col-md-3 mb-3 px-1">' +
+                  '<a href="/displaySelItem?i=' + encodeURIComponent(item.bidhaa_stoku_id || 0) + '&value=' + encodeURIComponent(item.shop_id || 0) + '" class="text-decoration-none d-block h-100">' +
+                    '<div class="card border shadow-sm h-100" style="border-radius:8px;overflow:hidden">' +
+                    '<img src="' + imgSrc + '" class="card-img-top" style="height:110px;object-fit:cover" ' +
+                    'onerror="this.style.display=\'none\'">' +
+                    '<div class="card-body p-2">' +
+                '<p class="card-text smallerFont text-capitalize mb-1 fontColor font-weight-500" style="line-height:1.2">' + escHtml(item.jina) + '</p>' +
+                locationHtml +
+                    '<span class="badge ' + matchBadge + ' smallestFont">' +
+                    (isSwahili ? 'Ufanani' : 'Match') + ': ' + item.similarity + '%</span>' +
+                    '</div></div></a></div>';
+            });
+            html += '</div>';
+        }
+
+        $('#imgSearchResultsList').html(html);
+        $('#imgSearchResultsCount').text(
+            results.length + ' ' + (isSwahili ? 'zimepatikana' : 'found')
+        );
+    }
+
+    // Bind file input events for both large and small screen
+    $('#imgSearchInputL, #imgSearchInputS').on('change', function() {
+        var file = this.files[0];
+        if (file) {
+        tafutaBidhaaKwaPicha(file, 'wilaya');
+            this.value = '';
+        }
+    });
+
+    $(document).on('click', '#imgSearchScopeBtns .img-search-scope-btn', function() {
+      var scope = $(this).data('scope');
+      setActiveImgScope(scope);
+      if (imgSearchState.file && !imgSearchState.isSearching) {
+        tafutaBidhaaKwaPicha(null, scope);
+      }
+    });
+
+    setActiveImgScope('wilaya');
+
+    // Reset preview when modal closes
+    $('#imgSearchModal').on('hidden.bs.modal', function() {
+        $('#imgSearchPreviewRow').hide();
+        $('#imgSearchPreview').attr('src', '');
+      imgSearchState.file = null;
+      imgSearchState.isSearching = false;
+      setActiveImgScope('wilaya');
+    });
+    </script>
 
     <!-- datepickers -->
     

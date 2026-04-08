@@ -1,8 +1,8 @@
 {% extends 'userdash.html' %}
 {% load humanize %}
-
+{% load static %}
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/newbill.css">
+<link rel="stylesheet" href="{% static 'css/newbill.css' %}">
 {% endblock %}
 
 {% block all-bills %}
@@ -850,7 +850,7 @@
 <script>
     $('#loadMe').modal('show')
 </script>
-<script src="/static/js/newbill.js"></script>
+<script src="{% static 'js/newbill.js' %}"></script>
 
 {% endblock %}
 

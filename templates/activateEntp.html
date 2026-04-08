@@ -1,6 +1,7 @@
 {% extends 'userdash.html' %}
 
-{% load humanize  %}
+{% load humanize %}
+{% load static %}
 
 {% block Dashboard %}
 <div  class="Analytical whiteBg pb-5 p-md-5 tab_div ">
@@ -8,7 +9,7 @@
 
     <div class="row">
         <div class="col-md-6">
-            <img src="/static/pics/addentp.svg" alt="" style="width:100%" srcset="">
+            <img src="{% static 'pics/addentp.svg' %}" alt="" style="width:100%" srcset="">
         </div>
         <div class="col-md-6 ">
               <div class="form-group">

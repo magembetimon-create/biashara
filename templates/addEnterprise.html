@@ -1,5 +1,7 @@
 {% extends 'userdash.html' %}
 
+{% load static %}
+
 {% block Dashboard %}
 
 <div  class=" Analytical tab_div whiteBg p-md-5 p-2" style="min-height: 80vh;" id="general-panel">
@@ -14,7 +16,7 @@
 
     <div class="row mt-4 classic_div">
         <div class="col-md-6">
-            <img src="/static/pics/enterprise.svg" alt="none" width="95%" srcset="">
+            <img src="{% static 'pics/enterprise.svg' %}" alt="none" width="95%" srcset="">
         </div>
 
         <div class="col-md-6">
@@ -289,7 +291,7 @@
 {% endblock %}
 
 {% block billmpya %}
-<script src="/static/js/jisaji.js"></script>
+<script src="{% static 'js/jisaji.js' %}"></script>
 {% endblock %}
 
 

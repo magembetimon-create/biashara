@@ -1,8 +1,10 @@
 {% extends 'userdash.html' %}
 
+{% load static %}
+
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/sales.css">
-<link rel="stylesheet" href="/static/css/customradio.css">
+<link rel="stylesheet" href="{% static 'css/sales.css' %}">
+<link rel="stylesheet" href="{% static 'css/customradio.css' %}">
 
 {% endblock %}
 
@@ -381,7 +383,7 @@
 
   
 {% block billmpya %}
-<script src="/static/js/stokuAdjust.js"></script>
+<script src="{% static 'js/stokuAdjust.js' %}"></script>
 
   <script>    
     $('#loadMe').modal('show')

@@ -261,7 +261,7 @@ function posItms(){
        allItms = allItms.filter(ct=>ct.aina===ITM_CATEG)
     }
 
-    VAT_allowed = Items.state[0].vat_allow
+    VAT_allowed = Items.state[0]?.vat_allow || false
     
 
     if(search_itm()!=''){

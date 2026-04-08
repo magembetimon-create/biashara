@@ -1,8 +1,9 @@
 {% extends 'userdash.html' %}
+{% load static %}
 
 {% block Dashboard %}
 
-<link rel="stylesheet" href="/static/css/posts.css">
+<link rel="stylesheet" href="{% static 'css/posts.css' %}">
 
 
   <div class="whiteBg p-md-3 p-1" style="margin-top:-18px"  >
@@ -203,7 +204,7 @@
         {% if banners.count <= 1 %}
         
         <div class="centerItem" style="min-height:70vh" >
-          <img src="/static/pics/post1.svg" style="width:100%" alt="">
+          <img src="{% static 'pics/post1.svg' %}" style="width:100%" alt="">
         </div>
         {% if   mkoaniI > 0 or nchiniI > 0  %}
         {% if wilayaniI > 0 %}
@@ -260,7 +261,7 @@
          <hr>
         
          <div class="centerItem" style="min-height:70vh">
-                  <img src="/static/pics/post2.svg" style="width:100%" alt="">
+                  <img src="{% static 'pics/post2.svg' %}" style="width:100%" alt="">
 
          </div>
 

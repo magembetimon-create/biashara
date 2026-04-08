@@ -1,5 +1,6 @@
 {% extends 'businessProfile.html' %}
 {% load humanize %}
+{% load static %}
 
 {% block bizness %}
    
@@ -146,7 +147,7 @@
 {% if services.count > 0 %}
 <div class=" py-3 classic_div">
     <p class="smallFont px-3" style="color:rgb(141, 92, 0)">
-        <img src="/static/pics/handshake.svg" alt="" width="22" >
+        <img src="{% static 'pics/handshake.svg' %}" alt="" width="22" >
         {% if useri.langSet == 0 %}  Huduma nyingine{% else %}Other services{% endif %}
     </p>
     <div  style="overflow-x: auto;">
@@ -226,7 +227,7 @@
 
 {% if duka != shop %}
   <input id="vistors" type="hidden" data-shop="{{shop.id}}" data-home=1 >
-  <script src="/static/js/countVistors.js">  </script>
+  <script src="{% static 'js/countVistors.js' %}">  </script>
 {% endif %}
 
 </div>

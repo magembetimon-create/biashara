@@ -1,5 +1,5 @@
 {% extends 'stock.html' %}
-
+{% load static %}
 
 <!-- IF THE THERE IS FILTER -->
 {% block descriptions %}
@@ -48,7 +48,7 @@ class="btn-default btn btn-sm pop2_active_menu"
   <script>    
     $('#loadMe').modal('show')
   </script>
-  <script src="/static/js/stokutable/datatableSup.js"></script>    
+  <script src="{% static 'js/stokutable/datatableSup.js' %}"></script>    
 {% endblock %}
 
 {% block dash-map %}

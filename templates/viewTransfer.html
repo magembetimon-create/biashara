@@ -1,4 +1,5 @@
 {% extends 'userdash.html' %}
+{% load static %}
 
 {% block mauzo %}
     {% load humanize %}
@@ -957,7 +958,7 @@
     </div>
 
 
-    <script src="/static/js/item_transfer.js"></script>
+    <script src="{% static 'js/item_transfer.js' %}"></script>
 
 {% endblock %}
 {% block dash-mapper %}

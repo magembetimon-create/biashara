@@ -1,5 +1,6 @@
 {% extends 'userdash.html' %}
 {% load humanize %}
+{% load static %}
 {% block Dashboard %}
 <div  class=" Analytical whiteBg tab_div p-md-4 p-2" style="min-height: 100vh;" id="general-panel">
     
@@ -371,8 +372,8 @@
 {% endblock %}
 
 {% block billmpya %}
-   <script src="/static/js/riports/repots.js">  </script>
-   <script src="/static/js/riports/ecomarce/vistors.js">  </script>
+   <script src="{% static 'js/riports/repots.js' %}">  </script>
+   <script src="{% static 'js/riports/ecomarce/vistors.js' %}">  </script>
 {% endblock %}
  
 {% block dash-mapper %}

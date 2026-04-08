@@ -1,9 +1,10 @@
 {% extends 'userdash.html' %}
 
 {% load humanize %}
+{% load static %}
 
 {% block Dashboard %}
-<link rel="stylesheet" href="/static/css/interp_nav.css">
+<link rel="stylesheet" href="{% static 'css/interp_nav.css' %}">
 
  <div  class=" Analytical p-md-5 whiteBg" id="general-panel" style="margin-top: -23px;min-height:100vh" >
 

@@ -1,10 +1,11 @@
 {% extends 'userdash.html' %}
 
 {% load humanize %}
+{% load static %}
 
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/businessprof.css">
-<link rel="stylesheet" href="/static/css/Ratingstars.css">
+<link rel="stylesheet" href="{% static 'css/businessprof.css' %}">
+<link rel="stylesheet" href="{% static 'css/Ratingstars.css' %}">
 {% endblock %}
 
 {% block Dashboard %}
@@ -175,8 +176,9 @@ box-shadow: 0px 0px 5px -1px rgba(0,0,0,0.32);">
 
     <ul class="list-unstyled d-flex py-3" style="overflow-x: auto;white-space:nowrap" id="buzi_nav">
         <li><a class=" {% block active-home %} {% endblock %} " href="{% url 'buzinessProfile' %}?value={{shop.id}}">Home</a></li>
+        <li><a href="#" class="{% block active-maps %} {% endblock %}" >{% if useri.langSet == 0 %}Ramani{% else %}Maps{% endif %}</a></li>
+       
         <li><a href="{% url 'profileAbout' %}?value={{shop.id}}" class="{% block active-about %} {% endblock %}" > {% if useri.langSet == 0 %}Kuhusu{% else %}About{% endif %}</a></li>
-        <!-- <li><a href="#" class="{% block active-maps %} {% endblock %}" >{% if useri.langSet == 0 %}Ramani{% else %}Maps{% endif %}</a></li> -->
         <li><a href="{% url 'profileRegistration' %}?value={{shop.id}}" class="{% block active-register %} {% endblock %}" > {% if useri.langSet == 0 %}Usajiri{% else %}Registrations{% endif %}</a></li>
         {% block active-item %}{% endblock %}
 
@@ -570,7 +572,7 @@ $(document).ready(function(){
 
 </script>
 
-<script src="/static/js/businessProf.js"></script>
+<script src="{% static 'js/businessProf.js' %}"></script>
 
 {% endblock %}
 {% block dash-mapper %}

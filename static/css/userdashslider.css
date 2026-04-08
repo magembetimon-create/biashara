@@ -23,10 +23,12 @@
     --btn-lightBg:#f8f9fa;
     --btn-lightFnt:#212529;
     --infoColor:#bee5eb;
+    --text-secondary:#6a7f99;
 
   }
 
   body.dark{
+    --text-secondary:#6c757d;
     --border-color:#636363;
     --infoColor:rgb(77, 77, 77);
     --lightBg:#0c0c1ef1;

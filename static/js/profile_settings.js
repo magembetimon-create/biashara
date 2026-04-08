@@ -252,6 +252,7 @@ function sendThedt(dt){
             const sendIt = POSTREQUEST(dt)
                   sendIt.then(resp=>{
                     $('#loadMe').modal('hide')
+                    hideLoading()
                       if(resp.success){
                         SHOPCELLS = resp.cell
                        
@@ -280,6 +281,7 @@ $(document).ready(function(){
    getThedata.then(resp=>{
        SHOPCELLS = resp.cell
     $('#loadMe').modal('hide')
+    hideLoading()
         placethePleces(resp)
         
    })

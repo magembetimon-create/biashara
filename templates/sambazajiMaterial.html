@@ -1,5 +1,5 @@
 {% extends 'productionMaterial.html' %}
-
+{% load static %}
 
 {% block top-nav-sup %} actively {% endblock %}
 {% block top-nav-sup-icon %}   
@@ -37,6 +37,6 @@
   <script>    
     $('#loadMe').modal('show')
   </script>
-  <script src="/static/js/materialtable/materialsup.js"></script>    
+  <script src="{% static 'js/materialtable/materialsup.js' %}"></script>    
   {% endblock %}
 

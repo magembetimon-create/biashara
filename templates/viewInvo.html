@@ -1,9 +1,9 @@
 {% extends 'userdash.html' %}
-
+{% load static %}
 {% block mauzo %}
 
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/Ratingstars.css">
+<link rel="stylesheet" href="{% static 'css/Ratingstars.css' %}">
 {% endblock %}   
 
     {% load humanize %}

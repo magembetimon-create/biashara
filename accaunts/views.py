@@ -3,13 +3,18 @@
  
 from genericpath import exists
 from ipaddress import ip_address
+import traceback
 from typing import Dict
+from django.core.files import storage
 from django.db import reset_queries
 from django.db.models.fields import NullBooleanField
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
+from django.core.files.storage import default_storage # Hii inahitajika kwa kufuta faili la zamani
+from django.conf import settings
 # from graphql import visit
+from business import settings
 from management.models import Notifications,VistorsSavedItems,customer_in_cell,customer_area,Activator,invoice_desk,Activated,marketPlace,VistedBanners,marketBanner,deliveryBy,KulipaPI,PhoneMailConfirm,bidhaa,Zones,Mikoa,Mitaa,Wilaya,Kata,mahitaji,Interprise_Rating, UserExtend,EmployeeAttachments,InterpriseVisotrs, makampuni,savedStockState,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive, stokAdjustment,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
@@ -1229,28 +1234,38 @@ def biz_prof(request):
 @login_required(login_url='login')
 def remove_reg(request):
   if request.method=="POST":
-    val=request.POST.get('val')
-    todo=todoFunct(request)
-    duka=todo['duka']
-    data={
-      'success':True,
-      'msg_swa':'Usajiri wa biashara umeondolewa kikamilifu',
-      'msg_eng':'Business Registration removed successfull'
-    }
-    buz_=businessReg.objects.filter(pk=val,Interprise=duka.id)
-    
-    if buz_.exists():
-      if buz_.reg_pic:
-        buz_.reg_pc.delete(save=True)
-      buz_.delete()
-    else:
+    try:
+      val=request.POST.get('val')
+      todo=todoFunct(request)
+      duka=todo['duka']
+      data={
+        'success':True,
+        'msg_swa':'Usajiri wa biashara umeondolewa kikamilifu',
+        'msg_eng':'Business Registration removed successfull'
+      }
+      buz_=businessReg.objects.filter(pk=val,Interprise=duka.id)
+      
+      if buz_.exists():
+        buzi = buz_.first()
+        if buzi.reg_pic:
+          buzi.reg_pic.delete(save=True)
+        buzi.delete()
+      else:
+        data={
+          'success':False,
+        'msg_swa':'Usajiri wa biashara Haukutambulika',
+        'msg_eng':'Business was not found'
+        } 
+        
+      return JsonResponse(data)    
+    except:
+      traceback.print_exc()
       data={
         'success':False,
-      'msg_swa':'Usajiri wa biashara Haukutambulika',
-      'msg_eng':'Business was not found'
-      } 
-      
-    return JsonResponse(data)    
+        'msg_swa':'Kitendo hakikufanikiwa kutokana na hitilafu tafadhari jaribu tena',
+        'msg_eng':'The action was not successfully please try again'
+      }
+      return JsonResponse(data)
   else:
        return render(request,'pagenotFound.html',todoFunct(request)) 
 
@@ -1312,11 +1327,17 @@ def entprof_pic(request):
         
       }
             
+      gcs_storage = default_storage
+      if not settings.DEBUG:
+          gcs_storage = settings.GCS_STORAGE_INSTANCE
+      ext = img.name.split('.')[-1]
+      filename = f'profile/{duka.id}_{duka.name}_{str(int(time.time()))}.{ext}'    
+      path = gcs_storage.save(filename, img)
 
       if siz/1024 <=700  :
         if duka.prof_pic !='':
           duka.prof_pic.delete(save=True)        
-        duka.prof_pic = img
+        duka.prof_pic = path
         duka.save()
  
       else:
@@ -1469,12 +1490,19 @@ def entlogo_pic(request):
         'msg_swa':'Nembo ya biashara imefanikiwa kikamilifu',
         'msg_eng':'Enterprise logo uploaded successfully'
         
-      }      
+      }     
+
+      gcp_storage = default_storage
+      if not settings.DEBUG:
+          gcp_storage = settings.GCS_STORAGE_INSTANCE
+      ext = img.name.split('.')[-1]
+      filename = f'logo/{duka.id}_{duka.name}_{str(int(time.time()))}.{ext}'    
+      path = gcp_storage.save(filename, img) 
 
       if siz/1024 <=500  :
         if duka.logo !='':
           duka.logo.delete(save=True)        
-        duka.logo = img
+        duka.logo = path
         duka.save()
 
      
@@ -1516,10 +1544,17 @@ def regPic(request):
      
      
       if siz/1024 <=500  :
+         gcs_storage = default_storage
+         if not settings.DEBUG:
+             gcs_storage = settings.GCS_STORAGE_INSTANCE
+         ext = img.name.split('.')[-1]
+         filename = f'registration/{duka.id}_{duka.name}_{str(int(time.time()))}.{ext}'
+         path = gcs_storage.save(filename, img)
+         
          regst = businessReg.objects.get(pk=reg,Interprise=duka.id)
          if regst.reg_pic:
            regst.reg_pic.delete(save=True)
-         regst.reg_pic = img
+         regst.reg_pic = path
          regst.save()  
 
      
@@ -1899,7 +1934,20 @@ def saveuserimg(request):
             m = UserExtend.objects.get(user=request.user.id)
             if UserExtend.objects.get(user=request.user.id).picha !='':
                 UserExtend.objects.get(user=request.user.id).picha.delete(save=True)
-            m.picha = request.FILES['IMG']
+
+                gcs_storage = default_storage
+                if not settings.DEBUG:
+                    gcs_storage = settings.GCS_STORAGE_INSTANCE
+                file = request.FILES['IMG']
+                todo = todoFunct(request)
+                useri = todo['useri']
+
+                ext = file.name.split('.')[-1]
+                filename = f"users/{useri.id}_{int(time.time())}.{ext}"
+                path = gcs_storage.save(filename, file)
+    
+            m.picha = path
+
             m.save()
             url=UserExtend.objects.get(user = request.user.id ).picha.url
             data = {
@@ -2340,13 +2388,20 @@ def userImgAdd(request):
         
       }
 
+      gcs_storage = default_storage
+      if not settings.DEBUG:
+          gcs_storage = settings.GCS_STORAGE_INSTANCE
+
+      ext = img.name.split('.')[-1]
+      filename = f"users/{wk}_{int(time.time())}.{ext}"
+      path = gcs_storage.save(filename, img)
 
 
       if siz/1024 <=500  :
         userPic = Workers.objects.get(pk=wk,Interprise=duka.id)
         if userPic.picha !='':
           userPic.picha.delete(save=True)        
-        userPic.picha = img
+        userPic.picha = path
         userPic.save()
 
      
@@ -2400,8 +2455,14 @@ def AddEmployeeAttachments(request):
 
           if Uatt.fileAttach !='':
             Uatt.fileAttach.delete(save=True)    
+        gcs_storage = default_storage
+        if not settings.DEBUG:
+            gcs_storage = settings.GCS_STORAGE_INSTANCE
+        ext = attach.name.split('.')[-1]
+        filename = f"users/{workr.id}_{int(time.time())}.{ext}"
+        path = gcs_storage.save(filename, attach)    
 
-        Uatt.fileAttach = attach
+        Uatt.fileAttach = path
         Uatt.desc = text
         Uatt.employee = workr
         Uatt.save()
@@ -2985,7 +3046,9 @@ def displaySelItem(request):
     else:
        return render(request,'pagenotFound.html',todo)
 
-  except:
+  except Exception as err:
+     print(err)
+     traceback.print_exc()
      return render(request,'pagenotFound.html',todo)
 
 #Selected items brand or category for Interprises  Profile................................................//
@@ -4114,8 +4177,16 @@ def sendAudioChat(request):
             if item.exists():
               chat.onItem = item.last()
 
+          gcs_storage = default_storage  
+          if not settings.DEBUG:
+            gcs_storage = settings.GCS_STORAGE_INSTANCE
+          ext = audio.name.split('.')[-1]
+          filename = f"chat_audios/{chat.id}_{int(time.time())}.{ext}"
+          file_path = gcs_storage.save(filename, audio)
+                                                                             
+
           chat.to = chatto
-          chat.audio = audio
+          chat.audio = file_path
           chat.save()
 
           data={

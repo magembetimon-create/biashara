@@ -1,12 +1,12 @@
 {% extends 'userdash.html' %}
 
 {% load humanize %}
-
+{% load static %}
 
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/sales.css">
+<link rel="stylesheet" href="{% static 'css/sales.css' %}">
 {% if  ch %}
-<link rel="stylesheet" href="/static/css/customradio.css">
+<link rel="stylesheet" href="{% static 'css/customradio.css' %}">
 {% endif %}
 
 
@@ -1212,7 +1212,7 @@
 </script>
 
 {% block billmpya %}
-<script src="/static/js/sales.js"></script>
+<script src="{% static 'js/sales.js' %}"></script>
 
   <script>    
     $('#loadMe').modal('show')

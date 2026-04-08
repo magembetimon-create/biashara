@@ -1,5 +1,7 @@
 # from genericpath import exists
 # from tkinter import OFF
+import traceback
+
 from django.shortcuts import render
 
 import json
@@ -2609,6 +2611,7 @@ def  Invoprint(request):
                   else:             
                         return render(request,goto ,todo)
       except:
+            traceback.print_exc()
             return render(request,'errorpage.html',todoFunct(request))          
 
 # WHEN RETURN ITEM BUTTON IS CLICLED......................................//    
@@ -2643,6 +2646,7 @@ def  itm_return(request):
             else:              
                   return render(request,'saleReturn.html' ,todo)
       except:
+            traceback.print_exc()
             return render(request,'errorpage.html' ,todoFunct(request))
 
 # LOAD SALES RETURN DATA ...................................................//
@@ -2681,6 +2685,7 @@ def  viewRef(request):
       else:       
          return render(request,'odaRef.html',todo)
     except:
+        traceback.print_exc()
         return render(request,'errorpage.html',todoFunct(request))    
 
 

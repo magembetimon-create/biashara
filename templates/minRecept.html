@@ -17,14 +17,14 @@
     <script src="{% static 'js/momentlocale.js' %}"></script>
     <script src="{% static 'js/qrcode.min.js' %}"></script>
 
-    <link rel="stylesheet" href="/static/css/minRecept.css">
+    <link rel="stylesheet" href="{% static 'css/minRecept.css' %}">
 </head>
 <body>
 
     <div id="invoice-POS">
 
         <center id="top">
-           <H4 class="text-center" >-----{% if then.langSet == 0 %}Mwanzo wa Risiti{% else %}Receipt Start {% endif %}-----</H4>
+           <H4 class="text-center" >-----{% if then.langSet == 0 %}Mwanzo wa Ankara{% else %}Invoice Start {% endif %}-----</H4>
           {% if duka.logo and duka.invo_logo %}
             <div  class="logo">
                 <img src="{{duka.logo.url}}" style="max-height: 100%;" alt="">
@@ -142,25 +142,25 @@
 
         <div class="row the_address">
           <div class="col-4">
-            <span class="text-danger">{% if then.langSet == 0 %} Kiasi{% else %} Amount{% endif %}</span>:
+            <span>{% if then.langSet == 0 %} Kiasi{% else %} Amount{% endif %}</span>:
           </div>
           <div class="col-8 text-right">
-            <span class="smallFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <span>{{the_bill.amount | floatformat:'-2' | intcomma }} </span>
+            <span class="smallFont"> {{duka.currencii}}</span>. <span>{{the_bill.amount | floatformat:'-2' | intcomma }} </span>
 
           </div>
           <div class="col-4">
-            <span class="text-danger">{% if then.langSet == 0 %} Ilolipwa  {% else %} Paid {% endif %}</span>:
+            <span>{% if then.langSet == 0 %} Ilolipwa{% else %}Paid{% endif %}</span>:
           </div>
           <div class="col-8 text-right">
-            <span class="smallFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <span >{{the_bill.ilolipwa | floatformat:'-2' | intcomma }} </span>
+            <span class="smallFont"> {{duka.currencii}}</span>. <span >{{the_bill.ilolipwa | floatformat:'-2' | intcomma }} </span>
 
           </div>
           {% if the_bill.ilolipwa != the_bill.amount %}
           <div class="col-4 border-top">
-            <span class="text-danger">{% if then.langSet == 0 %} Deni  {% else %} Debt {% endif %}</span>:
+            <span>{% if then.langSet == 0 %} Deni  {% else %} Debt {% endif %}</span>:
           </div>
           <div class="col-8 border-top text-right">
-            <span class="smallerFont" style="color: #2900dd;"> {{duka.currencii}}</span>. <label class="text-danger">
+            <span class="smallerFont"> {{duka.currencii}}</span>. <label>
                 <script>
                   //  $(document).ready(function(){
                         let am= Number('{{the_bill.amount}}'),
@@ -282,7 +282,7 @@
                 {{the_bill.invo_desc.desc  | safe}}
             </p>
           </div>
-          <H4 class="text-center" >-----{% if then.langSet == 0 %}Mwisho wa Risiti{% else %}Receipt End {% endif %}-----</H4>
+          <H4 class="text-center" >-----{% if then.langSet == 0 %}Mwisho wa Ankara{% else %}Invoice End {% endif %}-----</H4>
 
         </div>
         <!--End InvoiceBot-->
@@ -589,10 +589,10 @@
 
          const  siz = pi.size_name!=""?`<i>Size:<strong class="brown text-uppercase" >${pi.size_name}</strong></i>`:'',
                 color_nik = pi.color_nick!=""?`(${pi.color_nick})`:'',
-                color = pi.color_name!=""?` <i class="text-primary text-capitalize" >${pi.color_name}${color_nik}</i>  `:''  ,
+                color = pi.color_name!=""?` <i clas text-capitalize" >${pi.color_name}${color_nik}</i>  `:''  ,
                 dura = IS_SERVICE?duraxn.find(d=>d.value===pi.timely):{name:'',duration:1,opt:'',value:0},
                 servT = IS_SERVICE?dura.duration:1,
-                tms = IS_SERVICE&&pi.timely?`&times;<span>${pi.muda}</span><span class="text-primary">${dura.name}</span>`:''
+                tms = IS_SERVICE&&pi.timely?`&times;<span>${pi.muda}</span><span>${dura.name}</span>`:''
                 // picha =`<img style="max-width: 40px;"  src="${pi.picha?pi.picha:'/static/pics/img.svg'}" alt="${lang('Hakuna Picha','No Image')}">`
          li += `
                  <li class=" border-bottom  "  >
@@ -608,7 +608,7 @@
                             <div class="row p-0 smallerFont">
                                 <div class="col-12"> 
                                       
-                                        <span class=" add-reduce-btn  " ><span class="text-primary">{{duka.currencii}}</span>.${Number(beis).toLocaleString()} &times; ${idad}</span><span class="add-reduce-btn   text-primary" >${vpmo}</span>${tms} 
+                                        <span class=" add-reduce-btn  " ><span>{{duka.currencii}}</span>.${Number(beis).toLocaleString()} &times; ${idad}</span><span class="add-reduce-btn" >${vpmo}</span>${tms} 
                                             
                                 </div>
                                 <div class="col-12 border-bottom  row"> 
@@ -616,7 +616,7 @@
                                       <strong>${lang('Jumla','Total')}</strong>
                                    </div> 
                                   <div class="col-8 text-right">
-                                        <span class="text-primary" >{{duka.currencii}}.</span> <strong class="py-1 " style="color:var(--text-muted)" >${Number(beis*idad*pi.muda).toLocaleString()} </strong> 
+                                        <span >{{duka.currencii}}.</span> <strong class="py-1 " style="color:var(--text-muted)" >${Number(beis*idad*pi.muda).toLocaleString()} </strong> 
 
                                    </div> 
                                         
@@ -729,7 +729,7 @@
 
   <input type="hidden" id="luga" value="{{then.langSet}}" name="luga">
   <input type="hidden" id="entpCurrencii" value="{{duka.currencii}}" name="entpCurrencii">
-  <script src="/static/js/lugha.js"></script>
+  <script src="{% static 'js/lugha.js' %}"></script>
 
     
 </body>

@@ -1,10 +1,11 @@
 {% extends 'businessProfileNoneLoged.html' %}
+{% load static %}
 {% load humanize %}
 
 
 {% block contenthere %}
-<link rel="stylesheet" href="/static/css/viewItem.css">
-<link rel="stylesheet" href="/static/css/customradio.css">
+<link rel="stylesheet" href="{% static 'css/viewItem.css' %}">
+<link rel="stylesheet" href="{% static 'css/customradio.css' %}">
 
 
 <div  class=" Analytical  p-2 p-md-3 whiteBg" id="general-panel" style="margin-top: 70px;min-height:100vh" >
@@ -2077,9 +2078,9 @@
 {% endblock %}   
 
 {% block lughaFirst %}
-    <script src="/static/js/lugha.js"></script>
+    <script src="{% static 'js/lugha.js' %}"></script>
 
-    <script src="/static/js/itemView.js"></script>
+    <script src="{% static 'js/itemView.js' %}"></script>
     <script>
         getItemData('{{bidhaa.id}}','{{shop.id}}')
     </script>

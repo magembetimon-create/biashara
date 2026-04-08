@@ -1,11 +1,12 @@
 {% extends 'userdash.html' %}
 
 {% load humanize %}
+{% load static %}
 
 {% block Dashboard %}
 
-<link rel="stylesheet" href="/static/css/viewItem.css">
-<link rel="stylesheet" href="/static/css/viewCustItem.css">
+<link rel="stylesheet" href="{% static 'css/viewItem.css' %}">
+<link rel="stylesheet" href="{% static 'css/viewCustItem.css' %}">
 
 
 <div  class="Analytical py-3 py-md-1 whiteBg" id="general-panel"   style="margin-top: -23px;min-height:100vh;overflow-x:auto" >
@@ -984,6 +985,9 @@
         url: data.url,
         data: data.data,
         success: function (rs) {
+
+         $("#loadMe").modal('hide');  
+         hideLoading()
             if(rs.success){
               if('hide' in data.data || 'show' in data.data ){
                 $(data.data.hide).hide()
@@ -998,7 +1002,7 @@
               toastr.error('{% if useri.langSet == 0 %}Oparesheni haikufanikiwa kutokana na hitilafu{% else %}The Operation was not successfull please try again{% endif %}','{% if useri.langSet == 0 %}Haikfanikiwa{% else %}Error{% endif %}')
             }
 
-          $("#loadMe").modal('hide');  
+         
 
           }
           })

@@ -2,6 +2,7 @@
 
 {% block mauzo %}
     {% load humanize %}
+    {% load static %}
 
 <div  class="whiteBg  pb-5 classic_div pr-3" id="invoice_wrapper"  >
     <div class="row ">
@@ -929,7 +930,7 @@
 
 
         {% block billcss %}
-        <link rel="stylesheet" href="/static/css/newbill.css">
+        <link rel="stylesheet" href="{% static 'css/newbill.css' %}">
         {% endblock %}    
 
 
@@ -937,7 +938,7 @@
 {% endblock %}
 
 {% block billmpya %}
-  <script src="/static/js/lugha.js"></script>
+  <script src="{% static 'js/lugha.js' %}"></script>
 {% endblock %}
 
 {% block active-service %}

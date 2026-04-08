@@ -1,4 +1,5 @@
 {% extends 'userdash.html' %}
+{% load static %}
 
 {% block all-bills %}
 <div class="whiteBg py-2  px-3 " style="margin-top: -15px;"> 
@@ -418,7 +419,7 @@
  
  
 {% block billmpya %}
-<script src="/static/js/paybill.js"></script>
+<script src="{% static 'js/paybill.js' %}"></script>
 {% endblock %}
 
 

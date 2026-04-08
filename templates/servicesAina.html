@@ -1,6 +1,6 @@
 
 {% extends 'services.html' %}
-
+{% load static %}
 
 {% block descriptions %}
 {% if mahi.count > 0 %}
@@ -62,5 +62,5 @@
 <script>    
     $('#loadMe').modal('show')
   </script>
-<script src="/static/js/services/servicesAina.js"></script>    
+<script src="{% static 'js/services/servicesAina.js' %}"></script>    
 {% endblock %}

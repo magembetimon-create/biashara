@@ -70,11 +70,11 @@
    
             <div class="row ">
                 <div class="col-8 text-right">
-                     <img class="classic_div" src="/static/pics/logowithtext.png" alt="" srcset="">
+                     <img class="classic_div" src="{% static 'pics/logowithtext.png' %}" alt="" srcset="">
                 </div>
 
                 <div class="col-4" style="height:150px" >
-                       <img src="/static/pics/phoneTabPc.svg" style="max-height: 100%;" alt="">
+                       <img src="{% static 'pics/phoneTabPc.svg' %}" style="max-height: 100%;" alt="">
 
                 </div>
               
@@ -131,8 +131,8 @@
 </h3>
 
 <div class="mt-5 d-flex app_play">
-     <img src="/static/pics/plyastorelogo.png" alt="" srcset="">
-     <img src="/static/pics/appStore.png" alt="" srcset="">
+     <img src="{% static 'pics/plyastorelogo.png' %}" alt="" srcset="">
+     <img src="{% static 'pics/appStore.png' %}" alt="" srcset="">
 </div>
 
 <div class="row mt-4 p-3 classic_div" style="width: 80%;">
@@ -264,7 +264,7 @@
 
 
   <span id="luga" hidden >{{useri.langSet}}</span>
-  <script src="/static/js/lugha.js"></script>
+  <script src="{% static 'js/lugha.js' %}"></script>
 
       
     </body>

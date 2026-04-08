@@ -1,4 +1,5 @@
 {% extends 'userdash.html' %}
+{% load static %}
 
 {% load humanize %}
 
@@ -228,7 +229,7 @@
     }
 </script>
  
-<script src="/static/js/usajiritokaNje.js"></script>
+<script src="{% static 'js/usajiritokaNje.js' %}"></script>
  
 
  
@@ -252,8 +253,8 @@
 {% endblock %}
 
 {% block load_data_script %}
-<!-- <script src="/static/js/getakaunti.js">  </script> -->
-<!-- <script src="/static/js/miamala.js">  </script> -->
+<!-- <script src="{% static 'js/getakaunti.js' %}">  </script> -->
+<!-- <script src="{% static 'js/miamala.js' %}">  </script> -->
 
 {% endblock %}
 

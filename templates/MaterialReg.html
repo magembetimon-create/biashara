@@ -1,4 +1,5 @@
 {% extends 'productionMaterial.html' %}
+{% load static %}
 
 <!-- IF THE THERE IS FILTER -->
 {% block descriptions %}
@@ -50,5 +51,5 @@
 <script>    
     $('#loadMe').modal('show')
   </script>
-<script src="/static/js/materialtable/materialReg.js"></script>    
+<script src="{% static 'js/materialtable/materialReg.js' %}"></script>    
 {% endblock %}

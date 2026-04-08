@@ -1,5 +1,5 @@
 {% extends 'services.html' %}
-
+{% load static %}
 <!-- TOP NAVIATIONS <MENU -->
     {% block top-nav-group %} actively {% endblock %}
     {% block top-nav-group-icon %}
@@ -44,5 +44,5 @@
 <script>    
     $('#loadMe').modal('show')
   </script>
-<script src="/static/js/services/servicesKundi.js"></script>    
+<script src="{% static 'js/services/servicesKundi.js' %}"></script>    
 {% endblock %}

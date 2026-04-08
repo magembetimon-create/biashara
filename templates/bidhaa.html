@@ -1,5 +1,5 @@
 {% extends 'stock.html' %}
-
+{% load static %}
 
 <!-- IF THE THERE IS FILTER -->
 {% block descriptions %}
@@ -71,7 +71,7 @@
   <script>    
     $('#loadMe').modal('show')
   </script>
-  <script src="/static/js/stokutable/datatableItm.js"></script>    
+  <script src="{% static 'js/stokutable/datatableItm.js' %}"></script>    
 {% endblock %}
 
 {% block dash-mapper %}

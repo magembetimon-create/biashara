@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bidhaa - Fanyabiashara</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="container nav-container">
+        <a href="index.html" class="logo">Fanya<span>biashara</span></a>
+        <div class="nav-links">
+            <a href="index.html">Nyumbani</a>
+            <a href="#">Bidhaa</a>
+            <a href="#">Kikapu <span class="cart-badge">2</span></a>
+        </div>
+        <button class="menu-toggle" id="menuToggle">☰</button>
+    </div>
+</nav>
+
+<!-- Breadcrumb -->
+<div class="container breadcrumb">
+    <a href="index.html">Nyumbani</a> / <a href="#">Bidhaa</a> / <span>Samsung Galaxy S24 Ultra</span>
+</div>
+
+<!-- Product Section -->
+<section class="container product-section">
+    <div class="product-gallery">
+        <div class="main-image-wrapper" id="mainImageWrapper">
+            <img id="mainImage" src="https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=800&q=80" alt="Bidhaa" class="main-image">
+            <div class="image-zoom-overlay" id="zoomOverlay">
+                <img id="zoomImage" src="" alt="Zoom">
+            </div>
+            <!-- <span class="badge-discount">-15%</span> -->
+            <div class="swipe-dots" id="swipeDots"></div>
+            <div class="swipe-hint" id="swipeHint">← Swipe →</div>
+        </div>
+        <div class="thumbnail-strip">
+            <img src="https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=200&q=80" alt="View 1" class="thumbnail active" onclick="changeImage(this)">
+            <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200&q=80" alt="View 2" class="thumbnail" onclick="changeImage(this)">
+            <img src="https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=200&q=80" alt="View 3" class="thumbnail" onclick="changeImage(this)">
+            <img src="https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=200&q=80" alt="View 4" class="thumbnail" onclick="changeImage(this)">
+        </div>
+    </div>
+
+    <div class="product-info">
+        <span class="product-category">Simu / Smartphones</span>
+        <h1 class="product-title">Samsung Galaxy S24 Ultra</h1>
+        
+        <div class="rating">
+            <span class="stars">★★★★★</span>
+            <span class="rating-count">(128 tathmini)</span>
+        </div>
+
+        <div class="price-box">
+            <span class="price-current">TSh 3,200,000</span>
+            <span class="price-old">TSh 3,800,000</span>
+        </div>
+
+        <p class="product-description">
+            Samsung Galaxy S24 Ultra ni simu ya kisasa yenye kamera bora zaidi, 
+            skrini kubwa ya 6.8", processor ya Snapdragon 8 Gen 3, na battery ya 5000mAh. 
+            Inafaa kwa wafanyabiashara na watumiaji wanaotaka ubora wa hali ya juu.
+        </p>
+
+        <!-- Rangi -->
+        <div class="option-group">
+            <label>Rangi:</label>
+            <div class="color-options">
+                <button class="color-btn active" style="background:#1a1a2e;" data-color="Titanium Black"></button>
+                <button class="color-btn" style="background:#c0c0c0;" data-color="Titanium Gray"></button>
+                <button class="color-btn" style="background:#e8d5b7;" data-color="Titanium Yellow"></button>
+                <button class="color-btn" style="background:#6a0dad;" data-color="Titanium Violet"></button>
+            </div>
+            <span class="selected-color" id="selectedColor">Titanium Black</span>
+        </div>
+
+        <!-- Kumbukumbu -->
+        <div class="option-group">
+            <label>Kumbukumbu:</label>
+            <div class="size-options">
+                <button class="size-btn active">256GB</button>
+                <button class="size-btn">512GB</button>
+                <button class="size-btn">1TB</button>
+            </div>
+        </div>
+
+        <!-- Quantity -->
+        <div class="option-group">
+            <label>Idadi:</label>
+            <div class="quantity-selector">
+                <button class="qty-btn" onclick="changeQty(-1)">−</button>
+                <input type="number" id="quantity" value="1" min="1" max="10" readonly>
+                <button class="qty-btn" onclick="changeQty(1)">+</button>
+            </div>
+            <span class="stock-status">✓ Inapatikana (12 zimebaki)</span>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-primary" onclick="addToCart()">🛒 Ongeza Kwenye Kikapu</button>
+            <button class="btn-secondary" onclick="buyNow()">⚡ Nunua Sasa</button>
+            <button class="btn-wishlist" onclick="toggleWishlist(this)">♡</button>
+        </div>
+
+        <!-- Delivery Info -->
+        <div class="delivery-info">
+            <div class="delivery-item">
+                <span class="delivery-icon">🚚</span>
+                <div>
+                    <strong>Usafirishaji Bure</strong>
+                    <p>Dar es Salaam - siku 1-2</p>
+                </div>
+            </div>
+            <div class="delivery-item">
+                <span class="delivery-icon">🔄</span>
+                <div>
+                    <strong>Rudisha Ndani ya Siku 7</strong>
+                    <p>Kama bidhaa ina tatizo</p>
+                </div>
+            </div>
+            <div class="delivery-item">
+                <span class="delivery-icon">🛡️</span>
+                <div>
+                    <strong>Dhamana ya Mwaka 1</strong>
+                    <p>Dhamana ya mtengenezaji</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features / Specifications -->
+<section class="container specs-section">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('features', this)">Vipengele</button>
+        <button class="tab-btn" onclick="switchTab('specs', this)">Maelezo ya Kiufundi</button>
+        <button class="tab-btn" onclick="switchTab('reviews', this)">Tathmini</button>
+    </div>
+
+    <div class="tab-content" id="features">
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="feature-icon">📸</span>
+                <h3>Kamera 200MP</h3>
+                <p>Piga picha za ubora wa hali ya juu na kamera ya megapixel 200 yenye AI.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🖥️</span>
+                <h3>Skrini 6.8" QHD+</h3>
+                <p>Dynamic AMOLED 2X yenye refresh rate ya 120Hz kwa ulaini wa hali ya juu.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">⚡</span>
+                <h3>Battery 5000mAh</h3>
+                <p>Battery ya kudumu siku nzima na fast charging ya 45W.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">✏️</span>
+                <h3>S Pen Ndani</h3>
+                <p>Andika, chora, na dhibiti simu yako kwa urahisi na S Pen.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🧠</span>
+                <h3>Galaxy AI</h3>
+                <p>Teknolojia ya AI kwa kutafsiri, kutafuta, na kuhariri picha.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">💧</span>
+                <h3>IP68 Sugu Maji</h3>
+                <p>Imehifadhiwa dhidi ya maji na vumbi kwa kiwango cha IP68.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content hidden" id="specs">
+        <table class="specs-table">
+            <tr><td>Skrini</td><td>6.8" Dynamic AMOLED 2X, 3120x1440</td></tr>
+            <tr><td>Processor</td><td>Snapdragon 8 Gen 3</td></tr>
+            <tr><td>RAM</td><td>12GB</td></tr>
+            <tr><td>Kumbukumbu</td><td>256GB / 512GB / 1TB</td></tr>
+            <tr><td>Kamera ya Nyuma</td><td>200MP + 50MP + 12MP + 10MP</td></tr>
+            <tr><td>Kamera ya Mbele</td><td>12MP</td></tr>
+            <tr><td>Battery</td><td>5000mAh, 45W Fast Charging</td></tr>
+            <tr><td>OS</td><td>Android 14, One UI 6.1</td></tr>
+            <tr><td>Uzito</td><td>232g</td></tr>
+            <tr><td>Rangi</td><td>Titanium Black, Gray, Yellow, Violet</td></tr>
+        </table>
+    </div>
+
+    <div class="tab-content hidden" id="reviews">
+        <div class="review-card">
+            <div class="review-header">
+                <strong>Juma M.</strong>
+                <span class="stars">★★★★★</span>
+            </div>
+            <p>"Simu nzuri sana! Kamera ni ya ajabu na battery inakaa siku nzima."</p>
+            <span class="review-date">Januari 15, 2025</span>
+        </div>
+        <div class="review-card">
+            <div class="review-header">
+                <strong>Amina K.</strong>
+                <span class="stars">★★★★☆</span>
+            </div>
+            <p>"Imeniletea furaha kubwa, ila bei ni kubwa kidogo. Lakini thamani yake ipo."</p>
+            <span class="review-date">Februari 3, 2025</span>
+        </div>
+    </div>
+</section>
+
+<!-- Related Products -->
+<section class="container related-section">
+    <h2>Bidhaa Zinazofanana</h2>
+    <div class="related-grid">
+        <div class="related-card">
+            <img src="https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&q=80" alt="iPhone 15 Pro">
+            <h4>iPhone 15 Pro Max</h4>
+            <span class="related-price">TSh 3,500,000</span>
+        </div>
+        <div class="related-card">
+            <img src="https://images.unsplash.com/photo-1605236453806-6ff36851218e?w=400&q=80" alt="Google Pixel">
+            <h4>Google Pixel 8 Pro</h4>
+            <span class="related-price">TSh 2,800,000</span>
+        </div>
+        <div class="related-card">
+            <img src="https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=400&q=80" alt="OnePlus">
+            <h4>OnePlus 12</h4>
+            <span class="related-price">TSh 2,200,000</span>
+        </div>
+        <div class="related-card">
+            <img src="https://images.unsplash.com/photo-1512054502232-10a0a035d672?w=400&q=80" alt="Xiaomi">
+            <h4>Xiaomi 14 Ultra</h4>
+            <span class="related-price">TSh 2,600,000</span>
+        </div>
+    </div>
+</section>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

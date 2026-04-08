@@ -13,6 +13,12 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from storages.backends.gcloud import GoogleCloudStorage
+from google.oauth2 import service_account
+from django.core.exceptions import ImproperlyConfigured
+
+from django.core.files.storage import default_storage 
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,7 +33,7 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = '0b16!x@8u)cj16v148tg5ljj6s^90&@f%#y9z$+yw94x$=j*um'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', '0').lower() in ['true', 't', '1']
+DEBUG = False
 # DEBUG = True
 
 # ALLOWED_HOSTS = [os.getenv('HOST']
@@ -89,14 +95,36 @@ WSGI_APPLICATION = 'business.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'biashara',
+            'USER': 'postgres',
+            'PASSWORD' : '1152',
+            'HOST' : 'localhost'
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD' : os.getenv('DB_PASSWORD'),
+            'HOST' : os.getenv('DB_HOST'),
+            'PORT' : os.getenv('DB_PORT', '5432'),
+        }
+    }    
 
-DATABASES = {
+    DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'biashara',
         'USER': 'postgres',
-        'PASSWORD' : '1152',
-        'HOST' : 'localhost'
+        'PASSWORD': 'Biashara@122',
+        'HOST': '104.197.123.120',
+        'PORT': '5432',
     }
 }
 
@@ -140,24 +168,62 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_URL = '/static/'
+if  DEBUG:
+    STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [
+    STATICFILES_DIRS = [
 
-    os.path.join(BASE_DIR, 'static')
-]
+        os.path.join(BASE_DIR, 'static')
+    ]
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-STATIC_LOCATION = "static"
-MEDIA_LOCATION = "media"
 
+
+    STATIC_LOCATION = "static"
+    MEDIA_LOCATION = "media"
+
+else:
+    # 1. Google Cloud Storage Settings
+    GS_BUCKET_NAME = 'fbiashara'  
+    
+    # Lazima iwe Credential Object, siyo string ya path
+    from google.oauth2 import service_account
+    key_path = os.path.join(BASE_DIR, 'secrets', 'gcp-storage.json')
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(key_path)
+
+    # 2. Hapa ndipo muhimu - Hakikisha majina haya yapo nje ya mabano yoyote
+    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    STATICFILES_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+
+    # 3. Locations
+    GS_MEDIA_LOCATION = 'media'
+    GS_STATIC_LOCATION = 'static'
+
+    # 4. URLs
+    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/{GS_MEDIA_LOCATION}/'
+    STATIC_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/{GS_STATIC_LOCATION}/'
+
+    GS_DEFAULT_ACL = None  
+    GS_QUERYSTRING_AUTH = False
+
+    GCS_STORAGE_INSTANCE = GoogleCloudStorage(
+    bucket_name=GS_BUCKET_NAME,
+    credentials=GS_CREDENTIALS,
+    location=GS_MEDIA_LOCATION
+)
+
+
+# Hii inatafuta njia kuelekea folder la secrets
+# BASE_DIR = Path(__file__).resolve().parent.parent
+GCP_JSON_KEY_PATH = os.path.join(BASE_DIR, 'secrets', 'gcp-vision-key.json')
+
+# Iambie Google Cloud itumie hili faili
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GCP_JSON_KEY_PATH
 
 
 

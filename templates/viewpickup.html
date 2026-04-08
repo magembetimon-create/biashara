@@ -1,10 +1,11 @@
 {% extends 'userdash.html' %}
+{% load static %}
 
 {% load humanize %}
 
 {% block Dashboard %}
 
-<link rel="stylesheet" href="/static/css/viewItem.css">
+<link rel="stylesheet" href="{% static 'css/viewItem.css' %}">
 
 
 <div  class="whiteBg  pb-5 classic_div pr-3" id="invoice_wrapper"  >

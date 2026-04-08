@@ -90,8 +90,8 @@
 <script type="text/javascript" src="{% static 'js/projectntc.js' %}"></script>
 <script src="{% static 'js/momentlocale.js' %}"></script>
 
-<link rel="stylesheet" href="/static/css/businessprof.css">
-<link rel="stylesheet" href="/static/css/Ratingstars.css">
+<link rel="stylesheet" href="{% static 'css/businessprof.css' %}">
+<link rel="stylesheet" href="{% static 'css/Ratingstars.css' %}">
 
 
  <link rel="shortcut icon" type="image/x-icon" href="{% static 'pics/logo1.png' %}">
@@ -352,7 +352,7 @@
                     {% if services.count > 0 %}
                     <div class=" py-3 classic_div">
                         <p class="smallFont px-3" style="color:rgb(141, 92, 0)">
-                            <img src="/static/pics/handshake.svg" alt="" width="22" >
+                            <img src="{% static 'pics/handshake.svg' %}" alt="" width="22" >
                             {% if useri.langSet == 0 %}  Huduma nyingine{% else %}Other services{% endif %}
                         </p>
                         <div  style="overflow-x: auto;">
@@ -667,7 +667,7 @@
 <script src="{% static 'js/userdash.js' %}"></script>
 
 
-  <script src="/static/js/businessProf.js"></script>
+  <script src="{% static 'js/businessProf.js' %}"></script>
   
     <!-- <script src="{% static 'path/to/dist/feather.js' %}"></script> -->
     <script src="{% static 'js/quagga.js' %}"></script>

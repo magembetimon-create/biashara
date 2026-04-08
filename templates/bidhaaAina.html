@@ -1,5 +1,5 @@
 {% extends 'stock.html' %}
-
+{% load static %}
 
  
 {% block dash-mapper %}
@@ -17,7 +17,7 @@ class="c-menu__item  is-active has-submenu showingpop2 "
 <script>    
     $('#loadMe').modal('show')
   </script>
-  <script src="/static/js/stokutable/datatableAina.js"></script> 
+  <script src="{% static 'js/stokutable/datatableAina.js' %}"></script> 
 {% endblock %}
 
 

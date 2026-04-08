@@ -1,9 +1,9 @@
 {% extends 'userdash.html' %}
 
 {% load humanize %}
-
+{% load static %}
 {% block billcss %}
-   <link rel="stylesheet" href="/static/richtext/richtext.css">
+   <link rel="stylesheet" href="{% static 'richtext/richtext.css' %}">
 
           
 
@@ -231,7 +231,7 @@ $(document).ready(function(){
 {% endblock %}
 
 {% block billmpya %}
-<script src="/static/richtext/richtext.js">  </script>
+<script src="{% static 'richtext/richtext.js' %}">  </script>
 <!-- <script src="/static/js/miamala.js">  </script> -->
 {% endblock %}
 

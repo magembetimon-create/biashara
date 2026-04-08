@@ -1,7 +1,7 @@
 {% extends 'userdash.html' %}
 
 {% load humanize %}
-
+{% load static %}
 {% block Dashboard %}
 
 
@@ -14,7 +14,7 @@
 
         <div class="row mt-4 classic_div">
             <div class="col-md-6">
-                <img src="/static/pics/manageSave.svg" alt="none" width="95%" srcset="">
+                <img src="{% static 'pics/manageSave.svg' %}" alt="none" width="95%" srcset="">
             </div>
 
             <div class="col-md-6 ">

@@ -1,5 +1,7 @@
 {% extends 'userdash.html' %}
 
+{% load static %}
+
 {% block akaunt %}
 <div  class=" Analytical Akaunting_place tab_div" id="general-panel" >
 
@@ -12,7 +14,7 @@
     <div class="col-6 col-md-3 pt-4  pl-3 pb-3 imgdiv" style="overflow:hidden" >
         <div class="p-0   d-flex justify-content-center " style="overflow:hidden">
         
-        <img width="100%" height="100%" src="/static/pics/ebank.svg" alt="">
+        <img width="100%" height="100%" src="{% static 'pics/ebank.svg' %}" alt="">
      </div>
 
 
@@ -111,8 +113,8 @@ class="c-menu__item style-none is-active"
 <script>
   $('#loadMe').modal('show')
 </script>
-<script src="/static/js/getakaunti.js">  </script>
-<!-- <script src="/static/js/miamala.js">  </script> -->
+<script src="{% static 'js/getakaunti.js' %}">  </script>
+<!-- <script src="{% static 'js/miamala.js' %}">  </script> -->
 
 {% endblock %}
 

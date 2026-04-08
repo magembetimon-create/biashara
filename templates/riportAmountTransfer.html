@@ -1,9 +1,10 @@
 {% extends 'userdash.html' %}
 {% load humanize %}
+{% load static %}
 {% block Dashboard %}
 
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/calender.css">
+<link rel="stylesheet" href="{% static 'css/calender.css' %}">
 {% endblock %}
 
 <div  class=" Analytical whiteBg tab_div p-4" style="min-height: 100vh;" id="general-panel">
@@ -328,9 +329,9 @@
 {% endblock %}
 
 {% block billmpya %}
-   <script src="/static/js/riports/repots.js">  </script>
-   <script src="/static/js/riports/calender.js">  </script>
-   <script src="/static/js/riports/payments/amounttransfer.js">  </script>
+   <script src="{% static 'js/riports/repots.js' %}">  </script>
+   <script src="{% static 'js/riports/calender.js' %}">  </script>
+   <script src="{% static 'js/riports/payments/amounttransfer.js' %}">  </script>
 {% endblock %}
  
 {% block dash-mapper %}

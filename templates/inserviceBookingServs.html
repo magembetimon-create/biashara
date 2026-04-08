@@ -1,6 +1,6 @@
 
 {% extends 'inserviceBooking.html' %}
-
+{% load static %}
 {% block servActive %}text-primaryi active{% endblock %}
 
 {% block invoservActive %}{% endblock %}
@@ -39,6 +39,5 @@
 <script>    
     $('#loadMe').modal('show')
   </script>
-<script src="/static/js/services/inservingServs.js"></script>  
-
+<script src="{% static 'js/services/inservingServs.js' %}"></script>
 {% endblock %}

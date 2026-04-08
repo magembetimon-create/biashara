@@ -1,5 +1,5 @@
 {% extends 'services.html' %}
-
+{% load static %}
 <!-- IF THE THERE IS FILTER -->
 {% block descriptions %}
 
@@ -86,5 +86,5 @@ text-primary weight700
 <script>    
     $('#loadMe').modal('show')
   </script>
-<script src="/static/js/services/services.js"></script>    
+<script src="{% static 'js/services/services.js' %}"></script>    
 {% endblock %}

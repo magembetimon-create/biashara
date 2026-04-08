@@ -1,5 +1,6 @@
-{% extends 'stock.html' %}
 
+{% extends 'stock.html' %}
+{% load static %}
 
     
 {% block nav-stock %}
@@ -11,7 +12,7 @@ class="c-menu__item  is-active has-submenu showingpop2 "
 <script>    
     $('#loadMe').modal('show')
   </script>
-  <script src="/static/js/stokutable/datatableMakundi.js"></script> 
+  <script src="{% static 'js/stokutable/datatableMakundi.js' %}"></script> 
 {% endblock %}
 
 <!-- TOP NAVIATIONS <MENU -->

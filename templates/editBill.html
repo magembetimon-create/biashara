@@ -1,7 +1,7 @@
 {% extends 'userdash.html' %}
-
+{% load static %}
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/newbill.css">
+<link rel="stylesheet" href="{% static 'css/newbill.css' %}">
 {% endblock %}
 
 {% load humanize %}
@@ -1126,7 +1126,7 @@ $(document).on('mouseleave', '.popColored', function (e) {
 
 
 {% block billmpya %}
-<script src="/static/js/newbill.js"></script>
+<script src="{% static 'js/newbill.js' %}"></script>
 {% endblock %}
 
 <script>

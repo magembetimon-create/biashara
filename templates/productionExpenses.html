@@ -1,4 +1,5 @@
 {% extends 'production.html' %}
+{% load static %}
 
 {% block active-expeses-menu %} text-primary weight600 {% endblock %}
 {% block expenses-icon %}
@@ -377,7 +378,7 @@
   <script>    
     $('#loadMe').modal('show')
   </script>
-<script src="/static/js/production/addExpense.js"></script>    
+<script src="{% static 'js/production/addExpense.js' %}"></script>    
 
 
 <script>

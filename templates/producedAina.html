@@ -1,5 +1,6 @@
 
 {% extends 'produced.html' %}
+{% load static %}
 
 
 {% block descriptions %}
@@ -55,5 +56,5 @@
 <script>    
     $('#loadMe').modal('show')
   </script>
-<script src="/static/js/produced/producedAinaTable.js"></script>    
+<script src="{% static 'js/produced/producedAinaTable.js' %}"></script>    
 {% endblock %}

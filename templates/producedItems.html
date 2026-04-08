@@ -1,4 +1,5 @@
 {% extends 'produced.html' %}
+{% load static %}
 
 <!-- IF THE THERE IS FILTER -->
 {% block descriptions %}
@@ -100,5 +101,5 @@ text-primary weight700
 <script>    
     $('#loadMe').modal('show')
   </script>
-<script src="/static/js/produced/producedItemsTable.js"></script>    
+<script src="{% static 'js/produced/producedItemsTable.js' %}"></script>    
 {% endblock %}

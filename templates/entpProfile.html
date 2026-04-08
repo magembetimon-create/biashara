@@ -1,7 +1,7 @@
 {% extends 'userdash.html' %}
 
 {% load humanize %}
-
+{% load static %}
 {% block Dashboard %}
 <div  class=" Analytical pt-1 whiteBg" id="general-panel" style="margin-top: -23px;min-height:100vh" >
    
@@ -357,6 +357,38 @@
 
 
 <script>
+    // Submit #entreg_pic form using AJAX
+    $('#entreg_pic').submit(function(e){
+        e.preventDefault(); // prevent default form submission
+        var formData = new FormData(this);
+        $('#addregPic').modal('hide'); 
+        $('#loadMe').modal('show'); // show loading indicator
+        $.ajax({
+            url: $(this).attr('action'), // use form's action attribute as URL
+            type: $(this).attr('method'), // use form's method attribute as HTTP method
+            data: formData, // send form data
+            processData: false, // prevent jQuery from processing data
+            contentType: false, // prevent jQuery from setting content type
+            success: function(response){
+                const msg = lang(response.msg_swa, response.msg_eng); // get message in appropriate language
+                $('#loadMe').modal('hide'); // hide loading indicator
+                hideLoading(); // hide loading overlay
+                if(response.success){
+                    toastr.success(msg,lang('Imefanikiwa','Success'),{timeOut: 5000}); // show success toast notification
+                    
+                    // hide modal on success
+                    location.reload(); // reload page to show updated registration picture
+                } else {
+                    toastr.error(msg,lang('Imeshindikana','Failed'),{timeOut: 5000}); // show error message on failure
+                }
+            },
+            error: function(xhr, status, error){
+                alert('An error occurred while uploading the image. Please try again.'); // show generic error message on AJAX failure
+            }
+        });
+    });
+
+
     function addReg(){
         reg=`
             <div class="row classic_div my-2 reg_attr" data-edit=0 data-value=0 style="width:98%">
@@ -466,7 +498,7 @@
     <h6 class="px-3" > <strong>{% if useri.langSet == 0 %} Huduma Nyingine{% else %}Other services{% endif %}</strong> </h6>
     <div class="overflow-x-auto d-flex" style="overflow-x:auto">
         <div class="d-flex px-3 border-right" style="justify-content: center;align-items:center " >
-           <img src="/static/pics/handshake.svg" alt="" width="100" >
+           <img src="{% static 'pics/handshake.svg' %}" alt="" width="100" >
         </div>
 
         <div class="px-4 huduma-nyingine ">
@@ -818,7 +850,7 @@
                 {% if m.user.picha %}
               <img src="{{m.user.picha.url}}" style="width: 100%;height:100%;border-radius:50%" alt="None">
               {% else %}
-               <img src="/static/pics/userlogo.png" style="width: 100%;height:100%;border-radius:50%" alt="None">
+               <img src="{% static 'pics/userlogo.png' %}" style="width: 100%;height:100%;border-radius:50%" alt="None">
              {% endif %}
             </div>
            <h6 class="text-center mt-2" >{{m.user.user.first_name | title}}  {{m.user.user.last_name | title}}</h6>
@@ -915,8 +947,8 @@
 {% endblock %}
 
 {% block billmpya %}
-<script src="/static/js/profile_settings.js">  </script>
-<!-- <script src="/static/js/miamala.js">  </script> -->
+<script src="{% static 'js/profile_settings.js' %}">  </script>
+<!-- <script src="{% static 'js/miamala.js' %}">  </script> -->
 
 {% endblock %}
 

@@ -1,5 +1,22 @@
 
-  var  ItemPicha=[],ItemSize = [],ITMVAL = 0
+  var  ItemPicha=[],ItemSize = [],ITMVAL = 0, itemGalleryImages = [], itemGalleryMeta = []
+
+  function sanitizeItemText(value = '') {
+    return String(value).replace(/[&/\\#,+()$~%"*?<>{}\[\]`]/g, '')
+  }
+
+  function renderGalleryPlaceholder() {
+    const emptyLabel = $('#penye-picha').data('empty-label') || lang('Hakuna picha ya bidhaa kwa sasa', 'No product image available yet')
+
+    return `
+      <div class="product-gallery-empty">
+          <svg width="96" viewBox="0 0 16 16" class="bi bi-card-image product-gallery-empty-icon" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M14.5 3h-13a.5.5 0 0 0-.5.5v9c0 .013 0 .027.002.04V12l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094L15 9.499V3.5a.5.5 0 0 0-.5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm4.502 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+          </svg>
+          <div class="product-gallery-empty-copy">${sanitizeItemText(emptyLabel)}</div>
+      </div>
+    `
+  }
   
 
   function getItemData(itm,value){
@@ -62,76 +79,64 @@ function  placeSize(size,val){
 
 function  placeImg(imgs,val){
 
-      const IMGS = imgs?.filter(r=>Number(r.rangi)===Number(val)),
-            PICSIZE = (!val?imgs:IMGS).reduce((a,b)=>a+Number(b.size),0)  
-            
-            
+      const filteredImgs = !val ? (imgs || []) : (imgs || []).filter(r => Number(r.rangi) === Number(val)),
+            orderedImgs = [...filteredImgs].reverse(),
+            PICSIZE = filteredImgs.reduce((a, b) => a + Number(b.size || 0), 0),
+            owner = Number($('#penye-picha').data('owner')) || 0,
+            many = orderedImgs.length
 
-      let img_div='',imgs_panel='',many=0,imgdots='',
-          owner = Number($('#penye-picha').data('owner')) || 0
-      
-      for (var im in imgs.reverse()) {
-          if(Number(imgs[im].rangi)==Number(val) || !val ){
-              many+=1
-  
-             img_div+=`
-             <div class="mySlides  " data-id=${imgs[im].id}  style="padding:0" >
-             
-             `
-              if(owner){
-               img_div+=`
-               <form action="/stoku/ondoaPicha"  class="Ondoa_picha" data-valued=${imgs[im].id} data-item=${imgs[im].bidhaa_id} method="POST">  
-                <h6 style="text-align:right "  >
-                <button type="submit" title="${lang('Ondoa','remove')}" class="btn btn-light btn-sm robotoFont smallerFont">
-                   
-                <svg width="25" height="25" viewBox="0 0 16 16" class="bi bi-trash" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                  <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>                 </button>
-                </h6>
-             </form>
-             
-             `
-              }
-             
-            img_div+=   ` 
-            <div class="text-center" style="width:100%;height:100%">
-             
-             <img src="${imgs[im].img}" class="clasic_div"  style="max-height:100%;max-width:100%">
-           
-           </div>
-           </div>
+      let thumbsMarkup = '',
+          dotsMarkup = ''
 
-             `
-  
-             imgs_panel+=`
-                      <div class="column px-1">
-                          <img class="demo cursor" src="${imgs[im].img}" style="max-width:50px;max-height:50px" onclick="currentSlide(${many})" alt="Item Img">
-                      </div>
-             `
+      itemGalleryImages = orderedImgs.map(i => i.img)
+      itemGalleryMeta = orderedImgs
 
-             imgdots+=`<span class="dot demo" onclick="currentSlide(${many})"></span>`
-          }}
-  
-  if(many>0){
-       const img_div_sum=img_div + ((IMGS.length>1 && val) || (many>1 && !val) ?`<a class="prev" onclick="plusSlides(-1)">❮</a><a class="next" onclick="plusSlides(1)">❯</a>`:''),
-              imgs_panel_sum= `<div class="${window.innerWidth<=766?'text-center':'row mt-2'} ${many<=1?'d-none':''}"> ${window.innerWidth<=766?imgdots:imgs_panel} </div>` ,
-              img_show =  img_div_sum +  imgs_panel_sum
-           
-      
-      $('#penye-picha').html(img_show)
-  
-      
-        showSlides(1);
-     
-      
-  
-  }else{
-    $('#penye-picha').html(`<svg width="100%"  viewBox="0 0 16 16" class="bi bi-card-image" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-    <path fill-rule="evenodd" d="M14.5 3h-13a.5.5 0 0 0-.5.5v9c0 .013 0 .027.002.04V12l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094L15 9.499V3.5a.5.5 0 0 0-.5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm4.502 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-   </svg> `)
-  }
+      orderedImgs.forEach((image, index) => {
+        const currentIndex = index + 1
 
-  $('#used-memory').text(Number(PICSIZE/1024).toFixed(2) + 'KB') 
+        thumbsMarkup += `
+          <img src="${image.img}" alt="${sanitizeItemText(lang('Mwonekano mdogo', 'Thumbnail'))} ${currentIndex}" class="thumbnail${currentIndex === 1 ? ' active' : ''}" data-slide="${currentIndex}">
+        `
+
+        dotsMarkup += `<span class="dot${currentIndex === 1 ? ' active' : ''}" data-slide="${currentIndex}"></span>`
+      })
+
+      if (many > 0) {
+        const img_show = `
+          <div class="product-gallery" data-total="${many}">
+            ${owner ? `
+               <form action="/stoku/ondoaPicha" class="Ondoa_picha gallery-remove" data-valued="${orderedImgs[0].id}" data-item="${orderedImgs[0].bidhaa_id}" method="POST">
+                <button type="submit" title="${lang('Ondoa Picha', 'Remove Image')}" class="btn btn-light btn-sm robotoFont smallerFont">
+                  <svg width="25" height="25" viewBox="0 0 16 16" class="bi bi-trash" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                  </svg>
+                </button>
+              </form> 
+            ` : ''}
+            <div class="main-image-wrapper" data-index="0">
+              <img src="${orderedImgs[0].img}" class="main-image clasic_div" alt="${sanitizeItemText(lang('Picha ya bidhaa', 'Product image'))}">  
+              <div class="image-zoom-overlay">
+                <img src="${orderedImgs[0].img}" alt="Zoom" class="zoom-image">
+              </div>
+              <div class="swipe-dots${many > 1 ? '' : ' is-hidden'}">${dotsMarkup}</div>
+              <div class="swipe-hint${many > 1 ? '' : ' is-hidden'}">← Swipe →</div>
+            </div>
+            <div class="thumbnail-strip${many > 1 ? '' : ' is-hidden'}">${thumbsMarkup}</div>
+          </div>
+        `
+
+       
+
+        $('#penye-picha').html(img_show)
+         
+        slideIndex = 1
+        showSlides(1)
+      } else {
+        $('#penye-picha').html(renderGalleryPlaceholder())
+      }
+
+      $('#used-memory').text(Number(PICSIZE / 1024).toFixed(2) + 'KB') 
 
 }
        
@@ -484,24 +489,74 @@ function   placeItmData(itm_val){
 
 var slideIndex = 1;
 
+$('body').on('click', '#penye-picha .thumbnail, #penye-picha .swipe-dots .dot', function() {
+  currentSlide(Number($(this).data('slide')))
+})
 
-$('#penye-picha').on('touchstart', function(event) {
-  const xClick = event.originalEvent.touches[0].pageX;
 
-  $(this).on('touchmove', function(event) {
-    const xMove = event.originalEvent.touches[0].pageX;
-    const sensitivityInPx = 8;
+$('body').on('mouseenter', '#penye-picha .main-image-wrapper', function() {
+  if (window.innerWidth <= 767) return
+  const mainImg = $(this).find('.main-image')
+  const zoomOverlay = $(this).find('.image-zoom-overlay')
+  const zoomImg = $(this).find('.zoom-image')
+  zoomOverlay.show()
+  zoomImg.attr('src', mainImg.attr('src'))
+})
 
-    if (Math.floor(xClick - xMove) > sensitivityInPx) {
-      plusSlides(1);
-      $(this).off('touchmove');
-    } 
-    else if (Math.floor(xClick - xMove) < -sensitivityInPx) {
-      plusSlides(-1);
-      $(this).off('touchmove');
-    }
-  });
-});
+$('body').on('mouseleave', '#penye-picha .main-image-wrapper', function() {
+  $(this).find('.image-zoom-overlay').hide()
+})
+
+$('body').on('mousemove', '#penye-picha .main-image-wrapper', function(e) {
+  if (window.innerWidth <= 767) return
+  const wrapperRect = this.getBoundingClientRect(),
+        x = ((e.clientX - wrapperRect.left) / wrapperRect.width) * 100,
+        y = ((e.clientY - wrapperRect.top) / wrapperRect.height) * 100,
+        zoomImg = $(this).find('.zoom-image')
+
+  zoomImg.css({
+    transform: `translate(-${x}%, -${y}%)`,
+    transformOrigin: `${x}% ${y}%`
+  })
+})
+
+
+let galleryStartX = 0,
+    galleryStartY = 0,
+    galleryDragging = false
+
+$('body').on('touchstart', '#penye-picha .main-image-wrapper', function(event) {
+  galleryStartX = event.originalEvent.touches[0].clientX
+  galleryStartY = event.originalEvent.touches[0].clientY
+  galleryDragging = true
+})
+
+$('body').on('touchmove', '#penye-picha .main-image-wrapper', function(event) {
+  if (!galleryDragging) return
+  const dx = Math.abs(event.originalEvent.touches[0].clientX - galleryStartX),
+        dy = Math.abs(event.originalEvent.touches[0].clientY - galleryStartY)
+
+  if (dx > dy && dx > 10) {
+    event.preventDefault()
+  }
+})
+
+$('body').on('touchend', '#penye-picha .main-image-wrapper', function(event) {
+  if (!galleryDragging) return
+  galleryDragging = false
+
+  const endX = event.originalEvent.changedTouches[0].clientX,
+        diff = galleryStartX - endX,
+        THRESHOLD = 50
+
+  if (Math.abs(diff) <= THRESHOLD) return
+
+  if (diff > 0 && slideIndex < itemGalleryImages.length) {
+    plusSlides(1)
+  } else if (diff < 0 && slideIndex > 1) {
+    plusSlides(-1)
+  }
+})
 
 
 
@@ -516,23 +571,42 @@ function currentSlide(n) {
 
 function showSlides(n) {
 
-  let i,
-   slides = document.getElementsByClassName("mySlides"),
-   dots = window.innerWidth>766?document.getElementsByClassName("demo"):document.getElementsByClassName("dot"),
-   active =  window.innerWidth>766?'active':'activedot'
-  if (n > slides.length || n==1) {slideIndex = 1}
-  if (n < 1) {slideIndex = slides.length}
-  for (i = 0; i < slides.length; i++) {
-    slides[i].style.display = "none";
+  const mainImage = $('#penye-picha .main-image'),
+        zoomImage = $('#penye-picha .zoom-image'),
+        thumbs = $('#penye-picha .thumbnail'),
+        dots = $('#penye-picha .swipe-dots .dot')
+
+  if (!itemGalleryImages.length || !mainImage.length) {
+    return
   }
 
-  for (i = 0; i < dots.length; i++) {
-      dots[i].className = dots[i].className.replace(active, "");
+  if (n > itemGalleryImages.length) {
+    slideIndex = itemGalleryImages.length
   }
 
+  if (n < 1) {
+    slideIndex = 1
+  }
 
-  slides[slideIndex-1].style.display = "block";
-  dots[slideIndex-1].className += active;
+  mainImage.css({ opacity: '0.5', transform: 'scale(0.95)' })
+
+  setTimeout(() => {
+    mainImage.attr('src', itemGalleryImages[slideIndex - 1])
+    zoomImage.attr('src', itemGalleryImages[slideIndex - 1])
+    mainImage.css({ opacity: '1', transform: 'scale(1)' })
+  }, 120)
+
+  thumbs.removeClass('active')
+  thumbs.eq(slideIndex - 1).addClass('active')
+
+  dots.removeClass('active')
+  dots.eq(slideIndex - 1).addClass('active')
+
+  const activeImage = itemGalleryMeta[slideIndex - 1]
+  if (activeImage && $('.gallery-remove').length) {
+    $('.gallery-remove').data('valued', activeImage.id)
+    $('.gallery-remove').data('item', activeImage.bidhaa_id)
+  }
 }
 
 

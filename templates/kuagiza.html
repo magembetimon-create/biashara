@@ -1,7 +1,7 @@
 {% extends 'userdash.html' %}
-
+{% load static %}
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/sales.css">
+<link rel="stylesheet" href="{% static 'css/sales.css' %}">
 {% endblock %}
 
 {% block bidhaa %}
@@ -345,7 +345,7 @@
     })
 </script>
 
-<script src="/static/js/item_transfer.js"></script>
+<script src="{% static 'js/item_transfer.js' %}"></script>
 
 
 {% endblock %}

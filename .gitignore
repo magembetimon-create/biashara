@@ -3,3 +3,5 @@ credentials.json
 __pycache__/
 *.pyc 
 business/azure_storage.py
+secrets/*.json
+media/

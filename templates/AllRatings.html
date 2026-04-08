@@ -1,10 +1,12 @@
 {% extends 'userdash.html' %}
 
+{% load static %}
+
 {% block Dashboard %}
 
 
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/Ratingstars.css">
+<link rel="stylesheet" href="{% static 'css/Ratingstars.css' %}">
 {% endblock %}   
 
 
@@ -38,7 +40,7 @@
                            {% if li.by.picha %}
                                <img src="{{li.by.picha.url}}" style="width:100%;height:100%;border-radius:50%" >
                            {% else %}
-                                <img src="/static/pics/userlogo.png" style="width: 100%;height:100%;border-radius:50%" alt="None">
+                                <img src="{% static 'pics/userlogo.png' %}" style="width: 100%;height:100%;border-radius:50%" alt="None">
                            {% endif %}
                         </div>
                         </div>

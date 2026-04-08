@@ -1,8 +1,9 @@
 {% extends 'userdash.html' %}
+{% load static %}
 {% load humanize %}
 {% block Dashboard %}
 
-<link rel="stylesheet" href="/static/css/riports.css">
+<link rel="stylesheet" href="{% static 'css/riports.css' %}">
 
 <div  class=" Analytical whiteBg tab_div p-md-4 p-2" style="min-height: 100vh;" id="general-panel">
     <h5 class="" >{% if useri.langSet == 0 %}Ripoti ya Bidhaa Zilizoongezwa {% else %}Added Items Report{% endif %}</h5>
@@ -529,9 +530,9 @@
 {% endblock %}
 
 {% block billmpya %}
-   <script src="/static/js/riports/repots.js">  </script>
-   <script src="/static/js/riports/calender.js">  </script>
-    <script src="/static/js/riports/addingAdj/addAdj.js">  </script>
+   <script src="{% static 'js/riports/repots.js' %}">  </script>
+   <script src="{% static 'js/riports/calender.js' %}">  </script>
+    <script src="{% static 'js/riports/addingAdj/addAdj.js' %}">  </script>
 {% endblock %}
  
 {% block dash-mapper %}

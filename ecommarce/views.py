@@ -24,6 +24,8 @@ from django.utils import timezone
 timezone.now()
 
 from datetime import date,timedelta,timezone
+from django.core.files.storage import default_storage # For GCS Storage
+from django.conf import settings
 
 import time  
 import pytz
@@ -82,6 +84,7 @@ def autoComlleteSearch(request):
   else:
   
     return render(request,'pagenotFound.html',todoFunct(request)) 
+
 
 @login_required(login_url='login')
 def saveVendor(request):
@@ -817,7 +820,15 @@ def marketingBanner(request):
         banner.group = grs.last()
 
       if siz <= (600 * 1024):
-        banner.banner = img
+        gcs_storage = default_storage
+        if not settings.DEBUG:
+          gcs_storage = settings.GCS_STORAGE_INSTANCE
+
+        ext = img.name.split('.')[-1]
+        filename = f"banners/{duka.id}_{int(time.time())}.{ext}"  
+        path = gcs_storage.save(filename, img)
+
+        banner.banner = path
         banner.Interprise = duka
         banner.by = todo['useri']
         banner.save()
@@ -907,6 +918,10 @@ def descImg(request):
    if request.method == "POST":
      try:
        img = request.FILES['IMG']
+       gcs_storage = default_storage
+       if not settings.DEBUG:
+          gcs_storage = settings.GCS_STORAGE_INSTANCE
+       ext = img.name.split('.')[-1]
        siz = img.size
        todo = todoFunct(request)
        duka = todo['duka']
@@ -915,11 +930,17 @@ def descImg(request):
          'msg_swa':'Picha imehifadhiwa kikamilifu',
          'msg_eng':'Image file uploaded successfull'
        }
+
+
+
+       filename = f"descImages/{duka.id}_{int(time.time())}.{ext}"
+       path = gcs_storage.save(filename, img)
+
        if siz <= (1024 * 1024):
          addTo = DescImages()
          addTo.Interprise = duka
          addTo.size = siz
-         addTo.image = img
+         addTo.image = path
          addTo.save()
 
          return JsonResponse(data)
@@ -954,11 +975,20 @@ def descDoc(request):
          'msg_swa':'Picha imehifadhiwa kikamilifu',
          'msg_eng':'Image file uploaded successfull'
        }
+
+       gcs_storage = default_storage
+       if not settings.DEBUG:
+          gcs_storage = settings.GCS_STORAGE_INSTANCE
+
+       ext = doc.name.split('.')[-1]
+       filename = f"descDocs/{duka.id}_{int(time.time())}.{ext}"
+       path = gcs_storage.save(filename, doc)
+       
        if siz <= (1024 * 1024 * 5):
          addTo = DescImages()
          addTo.Interprise = duka
          addTo.size = siz
-         addTo.attach = doc
+         addTo.attach = path
          addTo.save()
 
          return JsonResponse(data)

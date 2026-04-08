@@ -1,6 +1,7 @@
 
 {% extends 'userdash.html' %}
 {% load humanize %}
+{% load static %}
 {% block Dashboard %}
 <div  class=" Analytical " id="general-panel" style="min-height: 100vh;" >
 
@@ -180,7 +181,7 @@
 
 {% block billmpya %}
 
-  <script src="/static/js/lugha.js"></script>
+  <script src="{% static 'js/lugha.js' %}"></script>
 
 {% endblock %}
 

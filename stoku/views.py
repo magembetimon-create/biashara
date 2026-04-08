@@ -1,6 +1,7 @@
 # from asyncio.windows_events import NULL
 # from email.policy import default
 
+import traceback
 from xml.dom.expatbuilder import makeBuilder
 from django.shortcuts import render
 
@@ -8,6 +9,7 @@ import json
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
+from business import settings
 from management.models import HudumaNyingine, Notifications,ainaBibi,ainaMama,Kata,Mitaa,Wilaya,Zones,Mikoa,wateja_active,productionList,now_categ,now_group,bidhaaA_edit,stokAdjustment,bidhaa_edit,stockAdjst_confirm, UserExtend,Kanda,bei_za_bidhaa,user_Interprise,ColorChange,SizeChange,staff_akaunt_permissions,wateja,receive,receiveList,transferList,received_confirm,transfered_size,received_size,transfered_color,received_color,transfer,sizes,mauzoList,Interprise,bidhaa_sifa,key_sifa,picha_yenyewe,productChangeRecord,InterprisePermissions,PaymentAkaunts,toaCash,wekaCash,mahitaji,bidhaa_aina,makampuni,bidhaa,wasambazaji,manunuzi,manunuziList,matumizi,rekodiMatumizi,bidhaa_stoku,color_produ,produ_colored,picha_bidhaa,produ_size
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
@@ -15,7 +17,8 @@ from django.http import HttpResponse, JsonResponse
 from django.db.models import F,FloatField
 from django.core import paginator, serializers
 from django.db.models import Q
-
+from storages.backends.gcloud import GoogleCloudStorage
+from django.core.files.storage import default_storage 
 # from datetime import datetime
 from django.utils import timezone
 timezone.now()
@@ -3043,15 +3046,334 @@ def comfirmAdst(request):
             }   
 
             return JsonResponse(data)
- 
-#place picrure...........................
+
+from PIL import Image as PILImage
+import io
+
+def generate_avg_hash(img_file, size=16):
+    img = PILImage.open(img_file).convert('L').resize((size, size), PILImage.LANCZOS)
+    pixels = list(img.getdata())
+    avg = sum(pixels) / len(pixels)
+    # Tunairudisha kama String ya 0 na 1 ili iwe rahisi kusave kwenye CharField
+    return "".join(['1' if p > avg else '0' for p in pixels])          
+  
+
+from django.db.models import F
+from PIL import Image as PILImage
+import io
+
+@login_required(login_url='login')
+def tafutaPicha(request):
+    if request.method == "POST":
+        try:
+            from django.core.files.storage import default_storage
+
+            uploaded_img = request.FILES.get('IMG')
+
+            if not uploaded_img:
+                return JsonResponse({'success': False, 'msg_swa': 'Picha inahitajika', 'msg_eng': 'Image required'})
+
+            scope = request.POST.get('scope', 'wilaya')
+            allowed_scopes = {'wilaya', 'mkoa', 'kanda', 'nchi'}
+            if scope not in allowed_scopes:
+                scope = 'wilaya'
+
+            # 1. Tengeneza hash ya picha aliyopakia mteja
+            def get_hash_list(img_file, size=16):
+                img = PILImage.open(img_file).convert('L').resize((size, size), PILImage.LANCZOS)
+                pixels = list(img.getdata())
+                avg = sum(pixels) / len(pixels)
+                return [1 if p > avg else 0 for p in pixels]
+
+            upload_hash = get_hash_list(uploaded_img)
+
+            # 2. Pata taarifa za eneo la mtumiaji
+            todo = todoFunct(request)
+            useri = todo['useri']
+
+            place_ids = {
+                'wilaya': None,
+                'mkoa': None,
+                'kanda': None,
+                'nchi': None,
+            }
+
+            if useri and useri.mtaa and useri.mtaa.kata and useri.mtaa.kata.wilaya:
+                place_ids['wilaya'] = useri.mtaa.kata.wilaya.id
+                if useri.mtaa.kata.wilaya.mkoa:
+                    place_ids['mkoa'] = useri.mtaa.kata.wilaya.mkoa.id
+                    if useri.mtaa.kata.wilaya.mkoa.kanda:
+                        place_ids['kanda'] = useri.mtaa.kata.wilaya.mkoa.kanda.id
+                        if useri.mtaa.kata.wilaya.mkoa.kanda.nchi:
+                            place_ids['nchi'] = useri.mtaa.kata.wilaya.mkoa.kanda.nchi.id
+
+            # img_text=Picha_to_text(uploaded_img)  
+            # print(img_text)               
+
+            stock_qs = bidhaa_stoku.objects.filter(idadi__gt=0)
+
+            scope_filters = {
+                'wilaya': 'Interprise__mtaa__kata__wilaya_id',
+                'mkoa': 'Interprise__mtaa__kata__wilaya__mkoa_id',
+                'kanda': 'Interprise__mtaa__kata__wilaya__mkoa__kanda_id',
+                'nchi': 'Interprise__mtaa__kata__wilaya__mkoa__kanda__nchi_id',
+            }
+
+            scope_id = place_ids.get(scope)
+            scope_field = scope_filters.get(scope)
+            if scope_id and scope_field:
+                stock_qs = stock_qs.filter(**{scope_field: scope_id})
+
+            # Mahali bidhaa zilipo (duka + mtaa/kata/wilaya/mkoa)
+            # na item halisi ya stoku ya kuitumia kwenye displaySelItem
+            bidhaa_locations = {}
+            bidhaa_shop_seen = {}
+            bidhaa_primary_stock = {}
+
+            stock_places = stock_qs.values(
+                'id',
+                'bidhaa_id',
+                'Interprise_id',
+                'Interprise__name',
+                'Interprise__mtaa__mtaa',
+                'Interprise__mtaa__kata__kata',
+                'Interprise__mtaa__kata__wilaya__wilaya',
+                'Interprise__mtaa__kata__wilaya__mkoa__mkoa'
+            )
+
+            for st in stock_places:
+                bidhaa_id = st['bidhaa_id']
+                if not bidhaa_id:
+                    continue
+
+                if bidhaa_id not in bidhaa_primary_stock:
+                    bidhaa_primary_stock[bidhaa_id] = {
+                        'bidhaa_stoku_id': st['id'],
+                        'shop_id': st['Interprise_id'],
+                    }
+
+                shop_id = st['Interprise_id']
+                if bidhaa_id not in bidhaa_shop_seen:
+                    bidhaa_shop_seen[bidhaa_id] = set()
+                    bidhaa_locations[bidhaa_id] = []
+
+                # Epuka kurudia duka lilelile kwa bidhaa moja
+                if shop_id in bidhaa_shop_seen[bidhaa_id]:
+                    continue
+                bidhaa_shop_seen[bidhaa_id].add(shop_id)
+
+                bidhaa_locations[bidhaa_id].append({
+                    'shop': st['Interprise__name'] or '',
+                    'mtaa': st['Interprise__mtaa__mtaa'] or '',
+                    'kata': st['Interprise__mtaa__kata__kata'] or '',
+                    'wilaya': st['Interprise__mtaa__kata__wilaya__wilaya'] or '',
+                    'mkoa': st['Interprise__mtaa__kata__wilaya__mkoa__mkoa'] or '',
+                })
+
+            bidhaa_ids = stock_qs.values_list('bidhaa_id', flat=True).distinct()
+
+            # 3. Vuta hash zote kutoka DB za bidhaa za eneo husika TU
+            all_pics = picha_bidhaa.objects.filter(
+                bidhaa_id__in=bidhaa_ids
+            ).values(
+                'bidhaa_id', 
+                'bidhaa__bidhaa_jina', 
+                'picha__picha', 
+                'picha__picha_hash'
+            )
+
+            best_matches = {}
+
+            # 4. Linganisha hash ya mteja na hash za kwenye DB
+            for pic in all_pics:
+                stored_hash_str = pic['picha__picha_hash']
+                if not stored_hash_str:
+                    continue
+
+                # Geuza string "0101..." kwenda list [0, 1, 0, 1...]
+                stored_hash = [int(x) for x in stored_hash_str]
+                if not stored_hash:
+                    continue
+                
+                # Piga hesabu ya utofauti (Hamming Distance)
+                distance = sum(a != b for a, b in zip(upload_hash, stored_hash))
+                hash_len = min(len(upload_hash), len(stored_hash))
+                if hash_len == 0:
+                    continue
+                similarity = round((hash_len - distance) / hash_len * 100, 1)
+
+                # Chukua tu bidhaa zinazofanana kwa zaidi ya 50%
+                if similarity > 50:
+                    bidhaa_id = pic['bidhaa_id']
+
+                    pic_name = pic.get('picha__picha')
+                    pic_url = ''
+                    if pic_name:
+                        pic_name = str(pic_name)
+                        if pic_name.startswith('http://') or pic_name.startswith('https://'):
+                            pic_url = pic_name
+                        else:
+                            try:
+                                pic_url = default_storage.url(pic_name)
+                            except Exception:
+                                pic_url = f"/media/{pic_name.lstrip('/')}"
+
+                    current = best_matches.get(bidhaa_id)
+                    if (not current) or (similarity > current['similarity']):
+                        stock_info = bidhaa_primary_stock.get(bidhaa_id, {})
+                        best_matches[bidhaa_id] = {
+                            'bidhaa_id': bidhaa_id,
+                            'bidhaa_stoku_id': stock_info.get('bidhaa_stoku_id'),
+                            'shop_id': stock_info.get('shop_id'),
+                            'jina': pic['bidhaa__bidhaa_jina'],
+                            'picha': pic_url,
+                            'similarity': similarity,
+                            'distance': distance,
+                            'locations': bidhaa_locations.get(bidhaa_id, [])
+                        }
+
+            results = list(best_matches.values())
+
+            # 5. Panga matokeo (Inayofanana zaidi iwe juu)
+            results.sort(key=lambda x: x['similarity'], reverse=True)
+
+            return JsonResponse({
+                'success': True,
+                'results': results[:20], # Rudisha bidhaa 20 bora
+                'count': len(results[:20]),
+                'scope': scope,
+            })
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'msg_swa': f'Hitilafu: {str(e)}', 'msg_eng': 'Error occurred'})
+    
+    return render(request, 'pagenotFound.html')
+
+from google.cloud import vision
+
+# def Picha_to_text(img_file):
+#     """
+#     Inapokea picha, inatuma Google Vision AI (Text + Objects), 
+#     na kurudisha orodha ya maneno yaliyopatikana.
+#     """
+#     if img_file:
+#         try:
+#             from google.cloud import vision
+#             client = vision.ImageAnnotatorClient()
+
+#             # 1. Soma picha kutoka kwenye request
+#             picha = img_file
+#             picha.seek(0)  # Reset file pointer to beginning
+#             content = picha.read()
+#             image = vision.Image(content=content)
+
+#             # 2. Tengeneza maombi ya kutafuta Text na Labels kwa pamoja
+#             features = [
+#                 vision.Feature(type_=vision.Feature.Type.TEXT_DETECTION),
+#                 vision.Feature(type_=vision.Feature.Type.LABEL_DETECTION),
+#             ]
+            
+#             request_ai = vision.AnnotateImageRequest(image=image, features=features)
+            
+#             # 3. Tuma maombi kwa Google
+#             response = client.annotate_image(request_ai)
+            
+#             matokeo = set() # Tunatumia set ili kuzuia maneno yanayojirudia
+
+#             # Maneno yasiyo muhimu / generic tunayotaka kuyaondoa
+#             stop_words = {
+#                 'technology', 'tech', 'design', 'brand', 'product', 'products',
+#                 'image', 'photo', 'picture', 'graphics', 'illustration',
+#                 'object', 'objects', 'symbol', 'icon', 'font', 'text',
+#                 'style', 'modern', 'simple', 'quality', 'new', 'background',
+#                 'label', 'material', 'pattern', 'shape', 'line', 'number'
+#             }
+
+#             # Rangi tunazotaka zisionekane kwenye results
+#             color_words = {
+#                 'blue', 'red', 'white', 'black', 'green', 'yellow', 'orange',
+#                 'purple', 'pink', 'brown', 'grey', 'gray', 'gold', 'silver',
+#                 'beige', 'violet', 'indigo', 'cyan', 'magenta', 'maroon',
+#                 'navy', 'teal', 'olive', 'lime', 'turquoise', 'cream'
+#             }
+
+#             def clean_terms(words):
+#                 cleaned = []
+#                 for w in words:
+#                     term = re.sub(r'[^a-zA-Z0-9\-]', '', str(w).lower()).strip('-')
+
+#                     # Ondoa terms fupi sana / zisizo na maana / rangi
+#                     if len(term) < 3:
+#                         continue
+#                     if term.isdigit():
+#                         continue
+#                     if term in stop_words or term in color_words:
+#                         continue
+
+#                     cleaned.append(term)
+#                 return cleaned
+
+#             # --- A: CHUKUA MAANDISHI (OCR) ---
+#             if response.text_annotations:
+#                 # Tunachukua description nzima, tunaigeuza kuwa ndogo, kisha tunaigawa
+#                 maandishi = response.text_annotations[0].description.lower().split()
+#                 matokeo.update(clean_terms(maandishi))
+
+#             # --- B: CHUKUA LABELS (OBJECTS) ---
+#             if response.label_annotations:
+#                 for label in response.label_annotations:
+#                     # Tunachukua tu vitu ambavyo AI ina uhakika navyo (Score > 0.7)
+#                     if label.score >= 0.70:
+#                         matokeo.update(clean_terms(label.description.lower().split()))
+
+#             # 4. Angalia kama kuna makosa kutoka kwa Google
+#             if response.error.message:
+#                 {'success': False, 'error': response.error.message}
+
+#             # Rudisha majibu kama list
+#             final_list = list(matokeo)
+            
+#             if final_list:
+                
+#                 return {'success': True, 'results': final_list}
+#             else:
+#                 return {'success': False, 'message': 'Hakuna kilichotambulika'}
+
+#         except Exception as e:
+#             print(f"Error kwenye Vision AI: {e}")
+#             return {'success': False, 'error': str(e)}
+            
+#     return {'success': False, 'message': 'Picha haikupatikana'}
+
+# place picrure...........................
+
 @login_required(login_url='login')
 def kuwekaPicha(request):
      if request.method == 'POST' :
        try:
           picha = request.FILES['IMG']
+          picha_hash_value = generate_avg_hash(picha)
+          picha.seek(0) # Rudisha pointer mwanzo baada ya kuisoma kwa PIL
+          # ----------------
+
+
+
           value=request.POST.get('hold-color-id')
           idm=request.POST.get('hold-produ-id')
+
+          todo = todoFunct(request)
+          duka = todo['duka']
+          gcs_storage = default_storage
+          if not settings.DEBUG:
+            #   default_storage = GoogleCloudStorage()
+               gcs_storage = settings.GCS_STORAGE_INSTANCE
+
+          ext = picha.name.split('.')[-1]
+          filename = f"products/{duka.id}_{int(time.time())}.{ext}"
+          path = gcs_storage.save(filename, picha)
+
+          
+        #   print(f"Storage inayotumika sasa hivi ni: {gcs_storage.__class__}")
           size= picha.size
           colorin=None
           husiana=picha_bidhaa()
@@ -3072,13 +3394,18 @@ def kuwekaPicha(request):
 
           if float(SIZES + size)/float(1024) <= 500:
 
+            # print(picha_hash_value)
+
             if COLORED :
                 # if THECOLOR.exists() :
                     photo=picha_yenyewe.objects.create(
-                        picha=picha,
+                        picha=path,
                         pic_size=picha.size,
-                        owner= entp.owner.user             
+                        owner= entp.owner.user,     
+                        picha_hash=picha_hash_value,
+                              
                     )
+
 
                     husiana.picha=photo
                     husiana.color_produ=colorrV.color
@@ -3120,16 +3447,17 @@ def kuwekaPicha(request):
 
 
                     photo=picha_yenyewe.objects.create(
-                    picha=picha,
+                    picha=path,
                     pic_size=picha.size,
-                    owner=entp.owner.user
+                    owner=entp.owner.user,
+                    picha_hash=picha_hash_value,
 
 
                 )
                     husiana.picha=photo
                     husiana.color_produ=hamna_rangi
                     husiana.bidhaa=itm.bidhaa
-                    husiana.Interprise=entp
+                    # husiana.Interprise=entp
                     husiana.save()  
 
                     colorin=hamna_rangi.id
@@ -3166,6 +3494,7 @@ def kuwekaPicha(request):
             }
           return JsonResponse(data)
        except:
+            traceback.print_exc()
             data = {
             'success':False,
              'msg_swa':'Picha haikufanikiwa kutokana na hitilafu tafadhari jaribu tena kwa usahihi',
@@ -5002,7 +5331,14 @@ def ItemVoice(request):
            
 
             if siz/1024 <=2000  and SIZES <= 15: 
-                prod.audio = audio
+                gcs_storage = default_storage
+                if not settings.DEBUG:
+                    gcs_storage = settings.GCS_STORAGE_INSTANCE
+                ext = audio.name.split('.')[-1]
+                filename = f"{prod.id}_{prod.__class__.__name__}_voice.{ext}"
+                path = gcs_storage.save(f'audio/{filename}', audio) 
+
+                prod.audio = path
                 prod.Asize = float(siz)
                 prod.save()
 

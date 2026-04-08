@@ -1,7 +1,8 @@
 {% extends 'userdash.html' %}
+{% load static %}
 
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/notify.css">
+<link rel="stylesheet" href="{% static 'css/notify.css' %}">
 {% endblock %}
 
 {% block Dashboard %}

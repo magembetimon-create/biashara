@@ -1,5 +1,6 @@
 
 {% extends 'productionMaterial.html' %}
+{% load static %}
 
 
 {% block descriptions %}
@@ -56,5 +57,5 @@
 <script>    
     $('#loadMe').modal('show')
   </script>
-<script src="/static/js/materialtable/materialAina.js"></script>    
+<script src="{% static 'js/materialtable/materialAina.js' %}"></script>    
 {% endblock %}

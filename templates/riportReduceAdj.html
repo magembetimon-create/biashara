@@ -1,10 +1,11 @@
 {% extends 'userdash.html' %}
 {% load humanize %}
+{% load static %}
 {% block Dashboard %}
 
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/calender.css">
-<link rel="stylesheet" href="/static/css/riports.css">
+<link rel="stylesheet" href="{% static 'css/calender.css' %}">
+<link rel="stylesheet" href="{% static 'css/riports.css' %}">
 
 {% endblock %}
 
@@ -611,9 +612,9 @@
 {% endblock %}
 
 {% block billmpya %}
-   <script src="/static/js/riports/repots.js">  </script>
-   <script src="/static/js/riports/calender.js">  </script>
-   <script src="/static/js/riports/reduceAdj/reduceAdj.js">  </script>
+   <script src="{% static 'js/riports/repots.js' %}">  </script>
+   <script src="{% static 'js/riports/calender.js' %}">  </script>
+   <script src="{% static 'js/riports/reduceAdj/reduceAdj.js' %}">  </script>
 {% endblock %}
  
 {% block dash-mapper %}

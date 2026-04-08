@@ -1,6 +1,7 @@
+
 {% extends 'stock.html' %}
 
-
+{% load static %}
 
 {% block descriptions %}
 {% if aina.count > 0 %}
@@ -77,7 +78,7 @@
 <script>    
     $('#loadMe').modal('show')
   </script>
-  <script src="/static/js/stokutable/datatableRegItems.js"></script> 
+  <script src="{% static 'js/stokutable/datatableRegItems.js' %}"></script> 
 {% endblock %}
 
 

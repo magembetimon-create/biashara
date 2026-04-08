@@ -21,7 +21,7 @@ function loadStockDate(){
 
              fct.then(function(data){
                 $("#loadMe").modal('hide');
-
+                hideLoading()
                 if(data.success){
                     STATE.push(data)
                     
@@ -2586,6 +2586,7 @@ function theBilled(bil){
                
                if(data.success){
                  $("#loadMe").modal('hide');
+                 hideLoading()
                    THE_INITIAL.push({id:bil.bil,num:bil.num,data})
                 
                    theBilled(bil)
@@ -3172,6 +3173,7 @@ function removeSavedState(dt){
 
         fct.then(function(data){
            $("#loadMe").modal('hide');
+           hideLoading()
            if(data.success){
             toastr.success(lang(data.msg_swa,data.msg_eng), lang('Imefanikiwa','Success'), {timeOut: 2000});
              ALLSAVED   = ALLSAVED.filter(sv=>sv.id!=dt)

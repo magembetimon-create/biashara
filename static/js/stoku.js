@@ -691,64 +691,65 @@ $('#form-mteja').submit(function(e){
 
 
 // save NEW product item.................................................................................................//
-$('#form-Bidaa-Add').submit(function(e){
+$('body').on('submit', '#form-Bidaa-Add', function(e){
     e.preventDefault()
+const form = $(this)
 var jina,namba,service,timeP,paidTime,material,vipimo_jum,code,kampuni,sambazaji,kuuza_reja,aina,idadi=0,kununua,idadi_jum=0,kuuza_jum,punguzo,pimoreja,uwiano,stoku_nje=0,stoku_name ,idadi_stocku=0,idadi_reja=0 
-var url=$(this).attr("action")
-    fromBill = $(this).data('forbill')
+var url=form.attr("action"),
+    fromBill = Number(form.data('forbill')) || 0
 
     
 
-   jina =($('#jina-la-bidhaa').val()).replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")
-   vipimo_jum  =($('#vipimo-vya-bidhaa').val()).replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")
-   code         =$('#code-ya-bidhaa').val()
-   kampuni      =Number($('#produ_campuni').find('option:selected').data("value")) || 0
-   sambazaji = $('#produ_sambazaji').find('option:selected').data("value")
-   aina =$('#prodAina').find('option:selected').data("value")
-   kununua =Number($('#Bei_ya_kunua').val()) || 0
-   expire=$('#expirdate').val()
-   namba=$('#namba-ya-bidhaa').val()
-   material=Number($('#prodMaterial').prop('checked'))
+    jina =((form.find('#jina-la-bidhaa').val()) || '').replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")
+    vipimo_jum  =(((form.find('#vipimo-vya-bidhaa').val()) || '').replace(/[&\/\\#,+$~%"*?<>{}`]/g, ""))
+    code         =form.find('#code-ya-bidhaa').val()
+    kampuni      =Number(form.find('#produ_campuni').val()) || 0
+    sambazaji = Number(form.find('#produ_sambazaji').val()) || 0
+    aina = Number(form.find('#prodAina').val()) || 0
+    kununua =Number(form.find('#Bei_ya_kunua').val()) || 0
+    expire=form.find('#expirdate').val()
+    namba=form.find('#namba-ya-bidhaa').val()
+    material=Number(form.find('#prodMaterial').prop('checked'))
  
-   service=Number($('#ServiceItem').prop('checked'))
-   paidTime=Number($('#paidTimely').prop('checked'))
-   timeP=Number($('#payPerTime').val())
-   colorAttr = $('#attr_name').val()
+   service=Number(form.find('#ServiceItem').prop('checked'))
+   paidTime=Number(form.find('#paidTimely').prop('checked'))
+   timeP=Number(form.find('#payPerTime').val())
+   colorAttr = form.find('#attr_name').val()
    thereIsColorAttr = Number(colorAttr != '')
 
 
- if(parseInt($('#idadi_bidhaa').val())>0){
-        idadi=$('#idadi_bidhaa').val()
+ if(parseInt(form.find('#idadi_bidhaa').val())>0){
+     idadi=form.find('#idadi_bidhaa').val()
  }
  
 
-   kuuza_jum=Number($('#Bei_ya_kuuza').val()) || 0
+    kuuza_jum=Number(form.find('#Bei_ya_kuuza').val()) || 0
  
 
-   if($('#pimo-reja').val()!=''){
-    pimoreja = $('#pimo-reja').val()
+   if(form.find('#pimo-reja').val()!=''){
+    pimoreja = form.find('#pimo-reja').val()
    }else{
     pimoreja = vipimo_jum
    }
 
-   if($('#uwiano-reja').val()!=''){
-    uwiano = $('#uwiano-reja').val()
+   if(form.find('#uwiano-reja').val()!=''){
+    uwiano = form.find('#uwiano-reja').val()
    }else{
     uwiano = 1
    }
 
-   if($('#bei-reja').val()!=''){
-    kuuza_reja = Number($('#bei-reja').val()) ||  0
+   if(form.find('#bei-reja').val()!=''){
+    kuuza_reja = Number(form.find('#bei-reja').val()) ||  0
    }else{
     kuuza_reja = kuuza_jum
    }
 
-   if($('#idadi_bidhaa-reja').val()!=''){
-    idadi_reja = $('#idadi_bidhaa-reja').val()
+   if(form.find('#idadi_bidhaa-reja').val()!=''){
+    idadi_reja = form.find('#idadi_bidhaa-reja').val()
    }
 
 
-   if($('#stoku-nje').prop("checked")) {
+   if(form.find('#stoku-nje').prop("checked")) {
           stoku_nje=1
 
    }
@@ -761,7 +762,7 @@ var url=$(this).attr("action")
 
 
    let rangi = []
-   if(Number($('#idadi_bidhaa').data('colored'))){
+   if(Number(form.find('#idadi_bidhaa').data('colored'))){
        $('.coloredscene_').each(function(){
            let szd = $(this).children('.sizedscene_').length || 0,
                sz=[]
@@ -805,9 +806,9 @@ var url=$(this).attr("action")
    
    
 
-maelezo = ($('#maelezo_ya_bidhaa').val()).replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")
+maelezo = (((form.find('#maelezo_ya_bidhaa').val()) || '').replace(/[&\/\\#,+$~%"*?<>{}`]/g, ""))
 
-var csrfToken =   $('input[name=csrfmiddlewaretoken]').val()
+var csrfToken = form.find('input[name=csrfmiddlewaretoken]').val() || $('input[name=csrfmiddlewaretoken]').first().val()
 var data={
      data:{
 
@@ -842,8 +843,8 @@ var data={
     tarehe:"none",  
     new:"False",
     present:"False",  
-    saleWithtax: Number($('#item-sal-vat').prop('checked')),
-    puchWithtax: Number($('#item-puch-vat').prop('checked')),
+    saleWithtax: Number(form.find('#item-sal-vat').prop('checked')),
+    puchWithtax: Number(form.find('#item-puch-vat').prop('checked')),
     csrfmiddlewaretoken:csrfToken
 
 },
@@ -857,31 +858,30 @@ rl:'/stoku/getItems'
 // validate for any empty required field
 
 var isvalid=0
-$('.muhimu-b').each(function(){
+form.find('.muhimu-b').each(function(){
     
- if($(this).hasClass("rega")){
-     if(!Number($(this).val()) && $(this).attr('id') ){
-        isvalid+=1
-        // console.log($(this).attr('id'));
-        $(this).selectpicker('setStyle', 'border-danger');
-     }
- }else{
-     if($(this).val()==''&& $(this).attr('id') ){
+ if(!$(this).hasClass("rega")){
+    
+     if($(this).val()==''){
         isvalid+=1
         redborder('#'+$(this).attr('id'))
-
+        console.log('here 2')
      }
  }
 })
 
+
+if(!aina){form.find('#prodAina').selectpicker('setStyle', 'border-danger');isvalid+=1}
+if(!kampuni){form.find('#produ_campuni').selectpicker('setStyle', 'border-danger');isvalid+=1}
+
 // validate the form if user select that there is wholesaling and retail
 var isvalidrej=0
 
-$('.muhimu-br').each(function(){
+form.find('.muhimu-br').each(function(){
  if($(this).hasClass("select-data")){
      if($(this).find('option:selected').data('value')=="0" ){
         isvalidrej+=1
-        if($('#jum-na-reja').prop("checked")==true){
+        if(form.find('#jum-na-reja').prop("checked")==true){
                redborder('#'+$(this).attr('id'))
 
         }
@@ -889,7 +889,7 @@ $('.muhimu-br').each(function(){
  }else{
      if($(this).val()==''){
         isvalidrej+=1
-        if($('#jum-na-reja').prop("checked")==true){
+        if(form.find('#jum-na-reja').prop("checked")==true){
 
         redborder('#'+$(this).attr('id'))
         }
@@ -901,7 +901,7 @@ $('.muhimu-br').each(function(){
 
 // check whether there is any unfilled if user opt that there is stoku out
 var isvalidStoku=0 //use the valiabe to detect for any empty required input by addig 1
-$('.muhimu-st').each(function(){
+form.find('.muhimu-st').each(function(){
  if($(this).hasClass("select-data")){
      if($(this).find('option:selected').data('value')=="0"){
         isvalidStoku+=1
@@ -926,7 +926,7 @@ $('.muhimu-st').each(function(){
 // validate form for the basic form
 if(isvalid==0){
     //validate form if wholesale and retail is envolved using the valiable
-  if($('#jum-na-reja').prop("checked")==false || isvalidrej==0){
+    if(form.find('#jum-na-reja').prop("checked")==false || isvalidrej==0){
     if(stoku_nje==false || isvalidStoku==0){
 
      
@@ -935,11 +935,11 @@ if(isvalid==0){
         //validate purchase and sales price
         
          if(parseInt(kuuza_jum)>=parseInt(kununua) || Boolean(material) || service ){
-             if((parseInt(kuuza_reja)*parseInt(uwiano))>=parseInt(kununua) || !($('#jum-na-reja').prop("checked")) || Boolean(material) || service ){
+             if((parseInt(kuuza_reja)*parseInt(uwiano))>=parseInt(kununua) || !(form.find('#jum-na-reja').prop("checked")) || Boolean(material) || service ){
               if( timeP > 0 || !paidTime ){
                 saveStokuData(data)
 
-               $('#idadi_bidhaa').data('colored',0)
+               form.find('#idadi_bidhaa').data('colored',0)
                $('#color_alena').html('')
                        
                 goTo('#nunua-panel')
@@ -977,7 +977,7 @@ if(isvalid==0){
     
           }
 
-  }else if($('#jum-na-reja').prop("checked")==true && isvalidrej>0 ){
+    }else if(form.find('#jum-na-reja').prop("checked")==true && isvalidrej>0 ){
     goTo('#nunua-panel')
 
         alert(lang("Tafadhari jaza sehemu zote muhimu kwa usahihi","please fill all required fields correctly"))

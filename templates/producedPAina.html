@@ -1,4 +1,5 @@
 {% extends 'produced.html' %}
+{% load static %}
 
 <!-- TOP NAVIATIONS <MENU -->
     {% block top-nav-group %} actively {% endblock %}
@@ -39,5 +40,5 @@
 <script>    
     $('#loadMe').modal('show')
   </script>
-<script src="/static/js/produced/producedPAinaTable.js"></script>    
+<script src="{% static 'js/produced/producedPAinaTable.js' %}"></script>    
 {% endblock %}

@@ -67,6 +67,7 @@ urlpatterns=[
   
     path('kuwekaPicha',views.kuwekaPicha, name='kuwekaPicha'),
     path('ondoaPicha',views.ondoaPicha, name='ondoaPicha'),
+    path('tafutaPicha',views.tafutaPicha, name='tafutaPicha'),
 
 
 #Item Categories, Brands and  Groups navigations..........................................................//

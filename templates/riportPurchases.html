@@ -1,8 +1,9 @@
 {% extends 'userdash.html' %}
 {% load humanize %}
+{% load static %}
 {% block Dashboard %}
 
-<link rel="stylesheet" href="/static/css/riports.css">
+<link rel="stylesheet" href="{% static 'css/riports.css' %}">
 
 <div  class=" Analytical whiteBg tab_div p-md-4 p-2" style="min-height: 100vh;" id="general-panel">
     <h5>{% if useri.langSet == 0 %}Ripoti za Manunuzi {% else %}Purchases Report{% endif %}</h5>
@@ -526,9 +527,9 @@
 {% endblock %}
 
 {% block billmpya %}
-   <script src="/static/js/riports/repots.js">  </script>
-   <script src="/static/js/riports/calender.js">  </script>
-   <script src="/static/js/riports/purchases/purchasesr.js">  </script>
+   <script src="{% static 'js/riports/repots.js' %}">  </script>
+   <script src="{% static 'js/riports/calender.js' %}">  </script>
+   <script src="{% static 'js/riports/purchases/purchasesr.js' %}">  </script>
 {% endblock %}
  
 {% block dash-mapper %}

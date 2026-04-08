@@ -1,11 +1,11 @@
 {% extends 'userdash.html' %}
-
+{% load static %}
 {% block all-bills %}
 
 {% load humanize %}
 
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/newbill.css">
+<link rel="stylesheet" href="{% static 'css/newbill.css' %}">
 {% endblock %}
 
 <div class="whiteBg pb-3 classic_div " id="invoice_wrapper" > 

@@ -2,12 +2,12 @@
 
 {% load humanize %}
 
-
+{% load static %}
 
 {% block Dashboard %}
 
-<link rel="stylesheet" href="/static/css/viewItem.css">
-<link rel="stylesheet" href="/static/css/customradio.css">
+<link rel="stylesheet" href="{% static 'css/viewItem.css' %}">
+<link rel="stylesheet" href="{% static 'css/customradio.css' %}">
 
 
 
@@ -64,31 +64,38 @@
     {% if duka == shop  %}      
     
       <input type="file" hidden name="produ-pic" accept="image/*" class="form-control" id="produ-pic" multiple  />
+        <label title="{% if useri.langSet == 0 %}Ongeza Picha {% else %}Add Image {% endif %}" type="button" for="produ-pic" style="right:30px"  class="gallery-owner-edit-btn border btn classic_div btn-light">
+          <svg xmlns="http://www.w3.org/2000/svg" height="25" viewBox="0 -960 960 960" width="25"  fill="currentColor">
+            <path d="M180-120q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h409v60H180v600h600v-408h60v408q0 24.75-17.62 42.37Q804.75-120 780-120H180Zm520-498v-81h-81v-60h81v-81h60v81h81v60h-81v81h-60ZM240-282h480L576-474 449-307l-94-124-115 149Zm-60-498v600-600Z"/>
+          </svg>
+        </label>
+      <div id="penye-picha" class="product-gallery-host" style="cursor: pointer;" {% if cheo.picDescription and cheo.product_edit and not cheo.viewi or duka.owner == cheo.user %}data-owner="1"{% endif %} data-empty-label="{% if useri.langSet == 0 %}Hakuna picha ya bidhaa kwa sasa{% else %}No product image available yet{% endif %}" >
 
-      <label title="{% if useri.langSet == 0 %}Ongeza Picha {% else %}Add Image {% endif %}" type="button" for="produ-pic"  class=" position-absolute border btn classic_div btn-light">
-        <svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px"  fill="currentColor">
-          <path d="M180-120q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h409v60H180v600h600v-408h60v408q0 24.75-17.62 42.37Q804.75-120 780-120H180Zm520-498v-81h-81v-60h81v-81h60v81h81v60h-81v81h-60ZM240-282h480L576-474 449-307l-94-124-115 149Zm-60-498v600-600Z"/>
-        </svg>
-          
-      </label>
-      <div id="penye-picha"   style="cursor: pointer;"  data-owner = 1 >
         {% else %}
-       <div id="penye-picha" style="cursor: pointer;"  >
+       <div id="penye-picha" class="product-gallery-host" style="cursor: pointer;" data-empty-label="{% if useri.langSet == 0 %}Hakuna picha ya bidhaa kwa sasa{% else %}No product image available yet{% endif %}" >
         {% endif %}
         
         {% if img %}
-            <!-- width css on mediascreen.css -->
-          <div class="preSlide"  style="padding:0" >
-
-            <div class="text-center" style="width:100%;height:100%">
-               <img src="{{img.url}}" class="clasic_div"  style="max-height:100%;max-width:100%">
+          <div class="product-gallery">
+            <div class="main-image-wrapper" data-index="0">
+              <img src="{{img.url}}" alt="{{bidhaa.bidhaa.bidhaa_jina|title}}" class="main-image clasic_div">
+              <div class="image-zoom-overlay">
+                <img src="{{img.url}}" alt="Zoom" class="zoom-image">
+              </div>
+              <div class="swipe-dots is-hidden"></div>
+              <div class="swipe-hint is-hidden">← Swipe →</div>
             </div>
-
+            <div class="thumbnail-strip is-hidden"></div>
           </div>
         {% else %}
-        <svg width="100%"  viewBox="0 0 16 16" class="bi bi-card-image" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-           <path fill-rule="evenodd" d="M14.5 3h-13a.5.5 0 0 0-.5.5v9c0 .013 0 .027.002.04V12l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094L15 9.499V3.5a.5.5 0 0 0-.5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm4.502 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-         </svg> 
+        <div class="product-gallery-empty">
+            <svg width="96" viewBox="0 0 16 16" class="bi bi-card-image product-gallery-empty-icon" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M14.5 3h-13a.5.5 0 0 0-.5.5v9c0 .013 0 .027.002.04V12l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094L15 9.499V3.5a.5.5 0 0 0-.5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm4.502 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+            </svg>
+            <div class="product-gallery-empty-copy">
+              {% if useri.langSet == 0 %}Hakuna picha ya bidhaa kwa sasa{% else %}No product image available yet{% endif %}
+            </div>
+        </div>
         {% endif %}
 
         </div>
@@ -2980,8 +2987,8 @@
 
 
 
-<script src="/static/js/edit_item.js"></script>
-<script src="/static/js/addAudio.js">  </script>
+<script src="{% static 'js/edit_item.js' %}"></script>
+<script src="{% static 'js/addAudio.js' %}"></script>
 
 <!-- Add UNITS -->
 <script>
@@ -3220,7 +3227,7 @@
 
 {% if duka != shop %}
    <input id="vistors" type="hidden" data-shop="{{shop.id}}" data-item='{{bidhaa.id}}' >
-   <script src="/static/js/countVistors.js">  </script>
+   <script src="{% static 'js/countVistors.js' %}">  </script>
 {% endif %}
 
 
@@ -3389,9 +3396,9 @@
 
 
 {% block lughaFirst %}
-<script src="/static/js/lugha.js"></script>
+<script src="{% static 'js/lugha.js' %}"></script>
 
-<script src="/static/js/itemView.js"></script>
+<script src="{% static 'js/itemView.js' %}"></script>
 <script>
   $(document).ready(function(){
      getItemData('{{bidhaa.id}}','{{shop.id}}')

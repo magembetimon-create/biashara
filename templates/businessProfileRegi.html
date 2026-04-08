@@ -1,5 +1,6 @@
 {% extends 'businessProfile.html' %}
 {% load humanize %}
+{% load static %}
 
 {% block bizness %}
 
@@ -39,7 +40,7 @@
 
 {% if duka != shop %}
 <input id="vistors" type="hidden" data-shop="{{shop.id}}" data-reg=1 >
-<script src="/static/js/countVistors.js">  </script>
+<script src="{% static 'js/countVistors.js' %}">  </script>
 {% endif %}
 
 

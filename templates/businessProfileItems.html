@@ -1,5 +1,6 @@
 {% extends 'businessProfileHome.html' %}
 {% load humanize %}
+{% load static %}
 
 {% block bidhaa_aina %}
 {% endblock %}
@@ -249,12 +250,12 @@
   {% endif %}
 
   <input id="vistors" type="hidden" data-shop="{{shop.id}}" data-brand={{kampuni}} data-categ="{{aina}}" data-group="{{mahitaji}}" >
-  <script src="/static/js/countVistors.js">  </script>
+  <script src="{% static 'js/countVistors.js' %}">  </script>
 {% else %} 
 
 
 
-<script src="/static/js/addAudio.js">  </script> 
+<script src="{% static 'js/addAudio.js' %}">  </script> 
 {% endif %}
 
 {% endblock %}

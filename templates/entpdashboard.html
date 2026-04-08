@@ -1,7 +1,8 @@
 {% extends 'userdash.html' %}
+{% load static %}
 
 {% block billcss %}
-   <link rel="stylesheet" href="/static/css/home.css">
+   <link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock %}
 
 {% block Dashboard %}
@@ -551,7 +552,7 @@ class="c-menu__item style-none is-active  "
   <script>    
       $('#loadMe').modal('show')
   </script>
-<script src="/static/js/home.js"></script>
+<script src="{% static 'js/home.js' %}"></script>
 
 {% endblock %}
 

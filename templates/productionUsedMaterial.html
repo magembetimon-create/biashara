@@ -1,6 +1,7 @@
 {% extends 'production.html' %}
+{% load static %}
 {% block billcss %}
-<link rel="stylesheet" href="/static/css/sales.css">
+<link rel="stylesheet" href="{% static 'css/sales.css' %}">
 {% endblock %}
 
 
@@ -769,7 +770,7 @@
 
 
 {% block billmpya %}
-<script src="/static/js/production/addmaterial.js"></script>    
+<script src="{% static 'js/production/addmaterial.js' %}"></script>    
 
   <script>    
     $('#loadMe').modal('show')

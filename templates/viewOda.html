@@ -1,5 +1,6 @@
 
 {% extends 'userdash.html' %}
+{% load static %}
 
 {% block mauzo %}
     {% load humanize %}
@@ -2054,7 +2055,7 @@
 
           {%  include "invoSettingModal.html" %}
 
-          <script src="/static/js/deliveryAgent.js"></script>
+          <script src="{% static 'js/deliveryAgent.js' %}"></script>
 
 
        
