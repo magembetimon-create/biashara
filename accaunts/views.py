@@ -1935,16 +1935,16 @@ def saveuserimg(request):
             if UserExtend.objects.get(user=request.user.id).picha !='':
                 UserExtend.objects.get(user=request.user.id).picha.delete(save=True)
 
-                gcs_storage = default_storage
-                if not settings.DEBUG:
-                    gcs_storage = settings.GCS_STORAGE_INSTANCE
-                file = request.FILES['IMG']
-                todo = todoFunct(request)
-                useri = todo['useri']
+            gcs_storage = default_storage
+            if not settings.DEBUG:
+                gcs_storage = settings.GCS_STORAGE_INSTANCE
+            file = request.FILES['IMG']
+            todo = todoFunct(request)
+            useri = todo['useri']
 
-                ext = file.name.split('.')[-1]
-                filename = f"users/{useri.id}_{int(time.time())}.{ext}"
-                path = gcs_storage.save(filename, file)
+            ext = file.name.split('.')[-1]
+            filename = f"users/{useri.id}_{int(time.time())}.{ext}"
+            path = gcs_storage.save(filename, file)
     
             m.picha = path
 
