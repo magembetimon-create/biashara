@@ -1958,6 +1958,7 @@ def saveuserimg(request):
             }
             return JsonResponse(data)
         except:
+          traceback.print_exc()
           data = {
              'success':False,
              'msg_swa':'Kitendo hakikufanikiwa kutokana na hitilafu tafadhari jaribu tena',
