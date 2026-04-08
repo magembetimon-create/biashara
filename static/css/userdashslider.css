@@ -1000,3 +1000,176 @@ box-shadow: 0px 0px 11px -7px #000000, 0px 0px 11px -7px #000000;
 }
 
 
+/* ===================================================
+   TOP NAV — Professional Icon Redesign
+   =================================================== */
+
+/* 1. Explicit header height + refined shadow */
+.l-header {
+  height: 54px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.l-header__inner {
+  height: 54px;
+  padding: 0 6px;
+}
+
+/* 2. Logo — remove inner border-bottom, add right separator */
+.logo {
+  height: 54px;
+  border-bottom: none;
+  border-right: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+/* 3. Posts group — inline-flex alignment */
+.l-header .posts {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* 4. Icon wrapper — proper touch target + rounded hover area */
+.c-header-icon {
+  padding: 0 7px;
+  border-radius: 9px;
+  min-width: 38px;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+/* Nested c-header-icon (anchor inside wrapper div) — cancel double padding */
+.c-header-icon .c-header-icon {
+  padding: 0;
+  min-width: 0;
+  border-radius: 0;
+}
+
+/* 5. Hover effect — subtle background highlight */
+.c-header-icon:hover,
+.c-header-icon:focus-within {
+  background-color: var(--lightBg);
+  color: var(--actively);
+  text-decoration: none;
+}
+
+/* Nested anchor hover: do not re-apply bg */
+.c-header-icon .c-header-icon:hover {
+  background-color: transparent;
+  color: inherit;
+}
+
+/* Anchors inside icons: inherit color, no underline */
+.c-header-icon a {
+  color: inherit;
+  text-decoration: none;
+}
+.c-header-icon a:hover {
+  color: var(--actively);
+  text-decoration: none;
+}
+
+/* Active state */
+.c-header-icon:active {
+  background-color: var(--border-color);
+}
+
+/* 6. SVG — consistent size across all header icons */
+.l-header .c-header-icon svg {
+  width: 1.42em;
+  height: 1.42em;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* 7. Badge — reliable top-right anchor (was: bottom + margin-left) */
+.c-badge--header-icon {
+  position: absolute;
+  top: 7px;
+  right: 4px;
+  bottom: auto;
+  margin-left: 0;
+}
+
+.c-badge--header-icon2 {
+  position: absolute;
+  top: 7px;
+  right: 3px;
+  bottom: auto;
+  margin-left: 0;
+}
+
+/* 8. header-icons-group — gap + left divider from search/posts */
+.header-icons-group {
+  padding-left: 6px;
+  padding-right: 4px;
+  border-left: 1px solid var(--border-color);
+  gap: 2px;
+}
+
+/* 9. Hamburger — asymmetric bars for modern look */
+.hamburger-toggle [class*='bar-'] {
+  height: 2px;
+  width: 22px;
+  border-radius: 3px;
+  margin-bottom: 5px;
+}
+
+.hamburger-toggle [class*='bar-']:nth-child(2) {
+  width: 14px;
+}
+
+.hamburger-toggle [class*='bar-']:last-child {
+  margin-bottom: 0;
+  width: 22px;
+}
+
+/* 10. Mobile — larger tap targets, bigger icons */
+@media (max-width: 767.98px) {
+  .l-header {
+    height: 52px;
+  }
+  .l-header__inner {
+    height: 52px;
+    padding: 0 2px;
+  }
+  .logo {
+    height: 52px;
+    width: 56px;
+  }
+  .c-header-icon {
+    padding: 0 9px;
+    min-width: 42px;
+    border-radius: 8px;
+  }
+  .c-header-icon .c-header-icon {
+    padding: 0;
+    min-width: 0;
+  }
+  .l-header .c-header-icon svg {
+    width: 1.58em;
+    height: 1.58em;
+  }
+  .c-badge--header-icon,
+  .c-badge--header-icon2 {
+    top: 6px;
+    right: 3px;
+  }
+  .header-icons-group {
+    padding-left: 2px;
+    padding-right: 2px;
+    gap: 0;
+  }
+  .hamburger-toggle [class*='bar-'] {
+    width: 24px;
+  }
+  .hamburger-toggle [class*='bar-']:nth-child(2) {
+    width: 16px;
+  }
+  .hamburger-toggle [class*='bar-']:last-child {
+    width: 24px;
+  }
+}
+
+
