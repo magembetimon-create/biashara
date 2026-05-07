@@ -1753,8 +1753,10 @@ def saveItmAttr(request):
 @login_required(login_url='login')
 def ongezaBidhaa(request):
      if request.method == "POST":
-       try:  
-          intp=InterprisePermissions.objects.get(user__user=request.user,default=True)
+       try: 
+          todo = todoFunct(request)    
+          duka =  todo['duka'] 
+          intp=todo['cheo']
           if intp.owner or (intp.addproduct and not intp.viewi) :
             seltax=int(request.POST.get('saleWithtax'))
             putax=int(request.POST.get('puchWithtax'))
@@ -1808,8 +1810,7 @@ def ongezaBidhaa(request):
             produStock=bidhaa_stoku() 
             # regist = ItemRegister()
 
-            todo = todoFunct(request)    
-            duka =  todo['duka']
+
 
 
             if not bidhaa.objects.filter(bidhaa_jina=name,owner=duka.owner.user.id).exists():
