@@ -1600,7 +1600,7 @@ def registeredItemsRegister(request):
                     adj.code_num = adjno + 1
                     adj.Na = todo['cheo']
                     adj.registered = True
-                    if (float(itm.bidhaa.idadi_jum)*float(idj))+float(idr) > 0:
+                    if (float(itm['bidhaa'].idadi_jum)*float(idj))+float(idr) > 0:
                         adj.Ongezwa  = True
                     adj.save()    
 
