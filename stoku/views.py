@@ -1693,6 +1693,7 @@ def registeredItemsRegister(request):
 
 
        except:
+            traceback.print_exc()
             data={
                     'success':False,
                      'message_swa':"Bidhaa haijaongezwa kutokana Hitilafu",
