@@ -1987,6 +1987,7 @@ def ongezaBidhaa(request):
               }
               return JsonResponse(data)      
        except:
+             traceback.print_exc()
              data={
                 'success':False,
                 'message_swa':'Taarifa za bidhaa hazijaongezwa kutokana na hitilafu Tafadhari jaribu tena kwa ukamilifu',
