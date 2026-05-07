@@ -2285,6 +2285,7 @@ def getstaffdata(request):
       userdetails['images']=imgs
       userdetails["date"]=diff
       userdetails["assist"]=assistantpresent
+      userdetails["waiter_counter"]=bool(todo['duka'].waiter_counter)
 
 
     
@@ -2297,6 +2298,7 @@ def getstaffdata(request):
          "users":[],
          "date":None,
          "assist":None,
+        "waiter_counter":False,
       }
       return JsonResponse(data)  
   else:

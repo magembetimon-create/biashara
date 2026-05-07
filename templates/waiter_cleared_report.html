@@ -1,0 +1,412 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+
+{% block Dashboard %}
+<div class="whiteBg py-3" style="min-height: 80vh;">
+  <div class="classic_div" style="max-width: 1100px; margin: 0 auto;">
+
+    <div class="d-flex flex-wrap p-2 p-md-3 justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="mb-1 h6 h5-md">{% if useri.langSet == 0 %}Riport ya Oda Zilizoclear{% else %}Cleared Orders Report{% endif %}</h5>
+        <div class="text-muted small">{{ waiter_name|title }}</div>
+      </div>
+      <div class="mt-2 mt-md-0 d-flex flex-wrap align-items-center">
+        {% if waiter_counter %}
+        <div class="btn-group mr-2" id="counterSelect" >
+          <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+              <path d="M9 4v16"></path>
+            </svg>
+            {{ servicing_counter.Interprise.name | title }}
+          </button>
+          <div class="dropdown-menu dropdown-menu-right">
+            <h6 class="dropdown-header">{% if useri.langSet == 0 %}Counters Zangu{% else %}My Counters{% endif %}</h6>
+            {% for counter in waiter_counter %}
+            <form method="post" action="/mauzo/waiter_counter_activate" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="counter" value="{{ counter.id }}">
+              <input type="hidden" name="next" value="/mauzo/waiter_cleared_report{% if custom_from or custom_to %}?from={{ custom_from|urlencode }}&to={{ custom_to|urlencode }}{% endif %}">
+              <button type="submit" class="dropdown-item d-flex justify-content-between align-items-center">
+                <span>{{ counter.Interprise.name | title }}</span>
+                {% if counter.servicing %}
+                <span class="badge badge-success ml-2">{% if useri.langSet == 0 %}Inafanya kazi{% else %}Active{% endif %}</span>
+                {% endif %}
+              </button>
+            </form>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <a href="/mauzo/waiterpage" class="btn btn-outline-primary btn-sm">
+          {% if useri.langSet == 0 %}Rudi Waiter Page{% else %}Back to Waiter Page{% endif %}
+        </a>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body py-2">
+        <form method="get" class="form-row align-items-end">
+          <div class="col-md-4 mb-2">
+            <label class="small mb-1">{% if useri.langSet == 0 %}Kuanzia{% else %}From{% endif %}</label>
+            <input type="date" name="from" class="form-control form-control-sm" value="{{ custom_from }}">
+          </div>
+          <div class="col-md-4 mb-2">
+            <label class="small mb-1">{% if useri.langSet == 0 %}Mpaka{% else %}To{% endif %}</label>
+            <input type="date" name="to" class="form-control form-control-sm" value="{{ custom_to }}">
+          </div>
+          <div class="col-md-4 mb-2">
+            <button type="submit" class="btn btn-sm btn-primary btn-block">
+              {% if useri.langSet == 0 %}Tumia Custom Period{% else %}Apply Custom Period{% endif %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header py-2"><strong>{% if useri.langSet == 0 %}Vipindi vya Riport{% else %}Report Periods{% endif %}</strong></div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th>{% if useri.langSet == 0 %}Period{% else %}Period{% endif %}</th>
+              <th class="d-none d-sm-table-cell">{% if useri.langSet == 0 %}Tarehe{% else %}Range{% endif %}</th>
+              <th class="text-right d-none d-sm-table-cell">{% if useri.langSet == 0 %}Idadi ya Order{% else %}Orders{% endif %}</th>
+              <th class="text-right">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+            </tr>
+          </thead>
+          <tbody id="waiterReportPeriodsBody">
+            {% for row in period_rows %}
+            {% if row.period != 'custom' or custom_from or custom_to %}
+            <tr class="waiter-period-row" style="cursor:pointer;" data-period="{{ row.period }}" data-from="{{ row.start }}" data-to="{{ row.end }}">
+              <td class="font-weight-bold">{{ row.title }}<div class="small text-muted font-weight-normal d-sm-none">{{ row.start }}</div></td>
+              <td class="small text-muted d-none d-sm-table-cell">{{ row.start }} - {{ row.end }}</td>
+              <td class="text-right d-none d-sm-table-cell">{{ row.orders|intcomma }}</td>
+              <td class="text-right">
+                {{ duka.currencii }} {{ row.amount|floatformat:2|intcomma }}
+                {% if row.period == 'custom' %}
+                <a href="/mauzo/waiter_cleared_report" class="ml-2 text-danger" title="{% if useri.langSet == 0 %}Ondoa{% else %}Remove{% endif %}" onclick="event.stopPropagation();">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="0.85em" height="0.85em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header py-2 d-flex justify-content-between align-items-center">
+        <strong id="waiterClearingListTitle">{% if useri.langSet == 0 %}Entry za Clearing{% else %}Clearing Entries{% endif %}</strong>
+        <span class="small text-muted" id="waiterClearingRangeText"></span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th class="d-none d-sm-table-cell">#</th>
+              <th>{% if useri.langSet == 0 %}Muda{% else %}Date{% endif %}</th>
+              <th class="d-none d-md-table-cell">{% if useri.langSet == 0 %}By{% else %}By{% endif %}</th>
+              <th class="text-right d-none d-md-table-cell">{% if useri.langSet == 0 %}Orders{% else %}Orders{% endif %}</th>
+              <th class="text-right d-none d-sm-table-cell">{% if useri.langSet == 0 %}Order Amount{% else %}Order Amount{% endif %}</th>
+              <th class="text-right">{% if useri.langSet == 0 %}Clearing Amount{% else %}Clearing Amount{% endif %}</th>
+            </tr>
+          </thead>
+          <tbody id="waiterReportClearingsBody">
+            <tr><td colspan="6" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Chagua period kwanza.{% else %}Select a period first.{% endif %}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header py-2 d-flex justify-content-between align-items-center">
+        <strong id="waiterClearingOrdersTitle">{% if useri.langSet == 0 %}Order za Clearing{% else %}Clearing Orders{% endif %}</strong>
+        <span class="small text-muted" id="waiterClearingOrdersMeta"></span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th class="d-none d-sm-table-cell">#</th>
+              <th>{% if useri.langSet == 0 %}Order{% else %}Order{% endif %}</th>
+              <th class="d-none d-sm-table-cell">{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}</th>
+              <th class="d-none d-md-table-cell">{% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}</th>
+              <th class="d-none d-sm-table-cell">{% if useri.langSet == 0 %}Muda{% else %}Date{% endif %}</th>
+              <th class="text-right">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+            </tr>
+          </thead>
+          <tbody id="waiterClearingOrdersBody">
+            <tr><td colspan="6" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Bofya entry ya clearing kuona order.{% else %}Click a clearing entry to view orders.{% endif %}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal fade" id="waiterReportOrderItemsModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title" id="waiterReportOrderItemsTitle">{% if useri.langSet == 0 %}Items za Order{% else %}Order Items{% endif %}</h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="waiterReportOrderMeta" class="small text-muted mb-2"></div>
+        <div id="waiterReportOrderItemsWrap" class="small text-muted">{% if useri.langSet == 0 %}Inapakia...{% else %}Loading...{% endif %}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@media (max-width: 575.98px) {
+  #waiterReportPeriodsBody td,
+  #waiterReportClearingsBody td,
+  #waiterClearingOrdersBody td {
+    font-size: 0.82rem;
+    padding: 0.3rem 0.45rem;
+  }
+  #counterSelect .btn {
+    font-size: 0.78rem;
+    padding: 0.2rem 0.45rem;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .card-header strong {
+    font-size: 0.85rem;
+  }
+  #waiterClearingRangeText,
+  #waiterClearingOrdersMeta {
+    font-size: 0.75rem;
+    text-align: right;
+    max-width: 55%;
+  }
+  .card-header.d-flex {
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+  .modal-body {
+    padding: 0.75rem;
+  }
+}
+@media (max-width: 575.98px) {
+  .modal-dialog {
+    margin: 0;
+    max-width: 100%;
+    min-height: 100%;
+  }
+  .modal-content {
+    min-height: 100vh;
+    border-radius: 0;
+  }
+}
+</style>
+
+<script>
+(function () {
+  var periodsBody = document.getElementById('waiterReportPeriodsBody');
+  var clearingsBody = document.getElementById('waiterReportClearingsBody');
+  var clearingOrdersBody = document.getElementById('waiterClearingOrdersBody');
+  var clearingRangeText = document.getElementById('waiterClearingRangeText');
+  var clearingOrdersMeta = document.getElementById('waiterClearingOrdersMeta');
+  var orderItemsModal = $('#waiterReportOrderItemsModal');
+  var orderItemsTitle = document.getElementById('waiterReportOrderItemsTitle');
+  var orderItemsMeta = document.getElementById('waiterReportOrderMeta');
+  var orderItemsWrap = document.getElementById('waiterReportOrderItemsWrap');
+
+  function formatDateTime(rawDate) {
+    if (!rawDate) return '-';
+
+    var m = moment(rawDate, 'DD/MM/YYYY HH:mm', true);
+    if (!m.isValid()) {
+      m = moment(rawDate, moment.ISO_8601, true);
+    }
+
+    return m.isValid() ? m.format('YYYY-MM-DD HH:mm') : String(rawDate);
+  }
+
+  function renderOrderItems(items) {
+    if (!items || !items.length) {
+      return '{% if useri.langSet == 0 %}Hakuna items kwenye order hii.{% else %}No items in this order.{% endif %}';
+    }
+
+    var html = '<div class="table-responsive"><table class="table table-sm mb-0">';
+    html += '<thead class="thead-light"><tr>';
+    html += '<th>#</th><th>{% if useri.langSet == 0 %}Item{% else %}Item{% endif %}</th><th class="text-right">Qty</th><th>Unit</th><th class="text-right">{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}</th><th class="text-right">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</th>';
+    html += '</tr></thead><tbody>';
+
+    items.forEach(function (it, idx) {
+      html += '<tr>';
+      html += '<td>' + (idx + 1) + '</td>';
+      html += '<td>' + (it.name || '-') + '</td>';
+      html += '<td class="text-right">' + Number(it.qty || 0).toLocaleString() + '</td>';
+      html += '<td>' + (it.unit || '-') + '</td>';
+      html += '<td class="text-right">{{ duka.currencii }} ' + Number(it.price || 0).toLocaleString() + '</td>';
+      html += '<td class="text-right">{{ duka.currencii }} ' + Number(it.total || 0).toLocaleString() + '</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function loadClearings(period, fromDate, toDate, rowEl) {
+    if (!period) return;
+
+    var rows = periodsBody ? periodsBody.querySelectorAll('.waiter-period-row') : [];
+    rows.forEach(function (r) { r.classList.remove('table-primary'); });
+    if (rowEl) rowEl.classList.add('table-primary');
+
+    clearingsBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">{% if useri.langSet == 0 %}Inapakia...{% else %}Loading...{% endif %}</td></tr>';
+    clearingOrdersBody.innerHTML = '<tr><td colspan="6" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Bofya entry ya clearing kuona order.{% else %}Click a clearing entry to view orders.{% endif %}</td></tr>';
+    clearingOrdersMeta.textContent = '';
+
+    fetch('/mauzo/waiter_cleared_report_clearings?period=' + encodeURIComponent(period) + '&from=' + encodeURIComponent(fromDate || '') + '&to=' + encodeURIComponent(toDate || ''))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data || !data.success) {
+          clearingsBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">' + ((data && data.msg) ? data.msg : 'Failed') + '</td></tr>';
+          return;
+        }
+
+        clearingRangeText.textContent = (data.period_start || '') + ' - ' + (data.period_end || '');
+
+        var rows = data.rows || [];
+        if (!rows.length) {
+          clearingsBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">{% if useri.langSet == 0 %}Hakuna clearing kwenye period hii.{% else %}No clearings in this period.{% endif %}</td></tr>';
+          return;
+        }
+
+        var html = '';
+        rows.forEach(function (r, idx) {
+          html += '<tr class="waiter-clearing-row" style="cursor:pointer;" data-id="' + r.id + '">';
+          html += '<td class="d-none d-sm-table-cell">' + (idx + 1) + '</td>';
+          html += '<td>' + formatDateTime(r.date) + '<div class="small text-muted d-md-none" style="font-size:0.78rem">' + (r.by_name || '-') + '</div></td>';
+          html += '<td class="d-none d-md-table-cell">' + (r.by_name || '-') + '</td>';
+          html += '<td class="text-right d-none d-md-table-cell">' + Number(r.orders_count || 0).toLocaleString() + '</td>';
+          html += '<td class="text-right d-none d-sm-table-cell">{{ duka.currencii }} ' + Number(r.orders_amount || 0).toLocaleString() + '</td>';
+          html += '<td class="text-right">{{ duka.currencii }} ' + Number(r.amount || 0).toLocaleString() + '</td>';
+          html += '</tr>';
+        });
+        clearingsBody.innerHTML = html;
+      })
+      .catch(function () {
+        clearingsBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">{% if useri.langSet == 0 %}Imeshindikana kupakia data.{% else %}Failed to load data.{% endif %}</td></tr>';
+      });
+  }
+
+  function loadClearingOrders(clearingId, rowEl) {
+    if (!clearingId) return;
+
+    var rows = clearingsBody ? clearingsBody.querySelectorAll('.waiter-clearing-row') : [];
+    rows.forEach(function (r) { r.classList.remove('table-primary'); });
+    if (rowEl) rowEl.classList.add('table-primary');
+
+    clearingOrdersBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">{% if useri.langSet == 0 %}Inapakia...{% else %}Loading...{% endif %}</td></tr>';
+
+    fetch('/mauzo/waiter_cleared_report_clearing_orders?clearing=' + encodeURIComponent(clearingId))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data || !data.success) {
+          clearingOrdersBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">' + ((data && data.msg) ? data.msg : 'Failed') + '</td></tr>';
+          return;
+        }
+
+        var c = data.clearing || {};
+        clearingOrdersMeta.textContent = 'Clearing #' + (c.id || '-') + ' | {{ duka.currencii }} ' + Number(c.amount || 0).toLocaleString() + ' | ' + formatDateTime(c.date);
+
+        var rows = data.rows || [];
+        if (!rows.length) {
+          clearingOrdersBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">{% if useri.langSet == 0 %}Hakuna order kwenye clearing hii.{% else %}No orders in this clearing.{% endif %}</td></tr>';
+          return;
+        }
+
+        var html = '';
+        rows.forEach(function (r, idx) {
+          html += '<tr class="waiter-cleared-order-row" style="cursor:pointer;" data-id="' + r.id + '">';
+          html += '<td class="d-none d-sm-table-cell">' + (idx + 1) + '</td>';
+          html += '<td>' + (r.code || '-') + '<div class="small text-muted d-sm-none" style="font-size:0.78rem">' + (r.table || '-') + '</div></td>';
+          html += '<td class="d-none d-sm-table-cell">' + (r.table || '-') + '</td>';
+          html += '<td class="d-none d-md-table-cell">' + (r.place || '-') + '</td>';
+          html += '<td class="d-none d-sm-table-cell">' + formatDateTime(r.date) + '</td>';
+          html += '<td class="text-right">{{ duka.currencii }} ' + Number(r.amount || 0).toLocaleString() + '</td>';
+          html += '</tr>';
+        });
+        clearingOrdersBody.innerHTML = html;
+      })
+      .catch(function () {
+        clearingOrdersBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">{% if useri.langSet == 0 %}Imeshindikana kupakia order.{% else %}Failed to load orders.{% endif %}</td></tr>';
+      });
+  }
+
+  function loadOrderItems(orderId) {
+    if (!orderId) return;
+
+    orderItemsTitle.textContent = '{% if useri.langSet == 0 %}Items za Order{% else %}Order Items{% endif %}';
+    orderItemsMeta.textContent = '{% if useri.langSet == 0 %}Inapakia...{% else %}Loading...{% endif %}';
+    orderItemsWrap.innerHTML = '{% if useri.langSet == 0 %}Inapakia items...{% else %}Loading items...{% endif %}';
+    orderItemsModal.modal('show');
+
+    fetch('/mauzo/waiter_cleared_report_order_items?order=' + encodeURIComponent(orderId))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data || !data.success) {
+          orderItemsMeta.textContent = '';
+          orderItemsWrap.textContent = (data && data.msg) ? data.msg : '{% if useri.langSet == 0 %}Imeshindikana kupata items.{% else %}Failed to load items.{% endif %}';
+          return;
+        }
+
+        var od = data.order || {};
+        orderItemsTitle.textContent = '{% if useri.langSet == 0 %}Order{% else %}Order{% endif %} ' + (od.code || '-');
+        orderItemsMeta.textContent = '{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}: ' + (od.table || '-') + ' | {% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}: ' + (od.place || '-') + ' | {% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}: {{ duka.currencii }} ' + Number(od.amount || 0).toLocaleString();
+        orderItemsWrap.innerHTML = renderOrderItems(data.items || []);
+      })
+      .catch(function () {
+        orderItemsMeta.textContent = '';
+        orderItemsWrap.textContent = '{% if useri.langSet == 0 %}Imeshindikana kupata items.{% else %}Failed to load items.{% endif %}';
+      });
+  }
+
+  if (periodsBody) {
+    periodsBody.addEventListener('click', function (ev) {
+      var row = ev.target.closest('.waiter-period-row');
+      if (!row) return;
+      loadClearings(row.getAttribute('data-period'), row.getAttribute('data-from'), row.getAttribute('data-to'), row);
+    });
+
+    var firstRow = periodsBody.querySelector('.waiter-period-row');
+    if (firstRow) {
+      loadClearings(firstRow.getAttribute('data-period'), firstRow.getAttribute('data-from'), firstRow.getAttribute('data-to'), firstRow);
+    }
+  }
+
+  if (clearingsBody) {
+    clearingsBody.addEventListener('click', function (ev) {
+      var row = ev.target.closest('.waiter-clearing-row');
+      if (!row) return;
+      loadClearingOrders(row.getAttribute('data-id'), row);
+    });
+  }
+
+  if (clearingOrdersBody) {
+    clearingOrdersBody.addEventListener('click', function (ev) {
+      var row = ev.target.closest('.waiter-cleared-order-row');
+      if (!row) return;
+      loadOrderItems(row.getAttribute('data-id'));
+    });
+  }
+})();
+</script>
+{% endblock Dashboard %}

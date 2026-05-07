@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Receipt</title>
+
+<style>
+body {
+    font-family: monospace;
+    width: 240px;
+    margin: 0 auto;
+    padding: 8px;
+    font-size: 12px;
+}
+
+.center { text-align: center; }
+.bold { font-weight: bold; }
+
+.line {
+    border-top: 1px dashed #000;
+    margin: 6px 0;
+}
+
+.item {
+    margin-bottom: 12px;
+}
+
+/* JINA LA ITEM (limekuzwa) */
+.item-name {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* MAELEZO YA QTY (limekuzwa kidogo) */
+.item-desc {
+    font-size: 13px;
+}
+
+/* TOTAL YA ITEM */
+.item-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+/* JUMLA KUU */
+.grand-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    font-weight: bold;
+    margin-top: 8px;
+}
+
+.right {
+    white-space: nowrap;
+}
+
+/* PRINT SETTINGS */
+@media print {
+    body {
+        margin: 0;
+        width: 165px; /* kama ulivyoweka */
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="center bold">
+    BAR YA KONA<br>
+    Mwanza
+</div>
+
+<div class="line"></div>
+
+Receipt: 00123<br>
+Date: 06/05/2026
+
+<div class="line"></div>
+
+<!-- ITEM 1 -->
+<div class="item">
+    <div class="item-name">1. Pepsi</div>
+    <div class="item-desc">TZS 1,000 × 3pc</div>
+    <div class="item-total">
+        <span>Total</span>
+        <span class="right">TZS 3,000</span>
+    </div>
+</div>
+
+<!-- ITEM 2 -->
+<div class="item">
+    <div class="item-name">2. Maji</div>
+    <div class="item-desc">TZS 1,000 × 2pc</div>
+    <div class="item-total">
+        <span>Total</span>
+        <span class="right">TZS 2,000</span>
+    </div>
+</div>
+
+<div class="line"></div>
+
+<div class="grand-total">
+    <span>JUMLA</span>
+    <span class="right">TZS 5,000</span>
+</div>
+
+<div class="line"></div>
+
+<div class="center">
+    Asante kwa kununua
+</div>
+
+nataka tuongeze button ya kuclear malipo ya pesa anayodaiwa weiter  kwenye selected_waiter_orders  nataka tuoweke ndani ya card ya Total amount ionekane kwa kulia na akiibonyeza litokee dilisha linaloonesha account za malipo kwa maana ya payments account
+
+</body>
+</html>

@@ -1,0 +1,683 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+
+{% block Dashboard %}
+<div class="whiteBg py-4" style="min-height: 80vh;">
+  <div class="classic_div" style="max-width: 980px; margin: 0 auto;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="mb-1">
+          {% if useri.langSet == 0 %}Oda za Wahudumu{% else %}Waiter Orders{% endif %}
+        </h5>
+        <div class="text-muted small">
+          {% if useri.langSet == 0 %}
+            Oda ambazo bado hazijaclear kwa cashier au sales.
+          {% else %}
+            Waiter orders that are not yet cleared by cashier or sales.
+          {% endif %}
+        </div>
+      </div>
+      <div class="mt-2 mt-md-0 d-flex align-items-center flex-wrap" style="gap:6px;">
+        {% if selected_waiter_id and can_view_waiter_orders_detail %}
+        <a href="/mauzo/waiter_orders_summary" class="btn btn-outline-secondary btn-sm mr-1">
+          &larr; {% if useri.langSet == 0 %}Orodha ya Wahudumu{% else %}Waiter List{% endif %}
+        </a>
+        {% endif %}
+        <div class="btn-group btn-group-sm" role="group">
+          <a href="/mauzo/waiter_orders_summary" class="btn btn-primary">
+            {% if useri.langSet == 0 %}Oda za Wahudumu{% else %}Waiter Orders{% endif %}
+          </a>
+          <a href="/mauzo/waiter_clearing_list" class="btn btn-outline-primary">
+            {% if useri.langSet == 0 %}Historia ya Malipo{% else %}Clearing Records{% endif %}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% if not selected_waiter_id %}
+    <div class="row mb-3">
+      <div class="col-md-4 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Wahudumu wenye oda{% else %}Waiters with orders{% endif %}</div>
+          <div class="h4 mb-0">{{ waiter_summary.totals.waiters|intcomma }}</div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Oda hazijaclear{% else %}Uncleared orders{% endif %}</div>
+          <div class="h4 mb-0">{{ waiter_summary.totals.orders|intcomma }}</div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Jumla ya pesa{% else %}Total amount{% endif %}</div>
+          <div class="h4 mb-0">{{ duka.currencii }} {{ waiter_summary.totals.amount|floatformat:0|intcomma }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        {% if waiter_summary.rows %}
+        <div class="p-3 border-bottom bg-light">
+          <input
+            type="text"
+            id="waiterSummarySearch"
+            class="form-control form-control-sm"
+            placeholder="{% if useri.langSet == 0 %}Tafuta waiter kwa jina...{% else %}Search waiter by name...{% endif %}"
+          >
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">{% if useri.langSet == 0 %}Muhudumu{% else %}Waiter{% endif %}</th>
+                <th scope="col">{% if useri.langSet == 0 %}Cheo{% else %}Role{% endif %}</th>
+                <th scope="col" class="text-right">{% if useri.langSet == 0 %}Idadi ya oda{% else %}Orders{% endif %}</th>
+                <th scope="col" class="text-right">{% if useri.langSet == 0 %}Jumla ya pesa{% else %}Total amount{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody id="waiterSummaryTbody">
+              {% for row in waiter_summary.rows %}
+              <tr data-waiter-name="{{ row.waiter_name|lower }}" data-waiter-code="{{ row.waiter_code|lower }}">
+                <td>{{ forloop.counter }}</td>
+                <td>
+                  <div class="font-weight-bold waiter-name-col">
+                    {% if can_view_waiter_orders_detail %}
+                    <a href="/mauzo/waiter_orders_summary?waiter={{ row.waiter_id }}">{{ row.waiter_name | title }}</a>
+                    {% else %}
+                    <span>{{ row.waiter_name | title }}</span>
+                    {% endif %}
+                  </div>
+                  <div class="small text-muted">{{ row.waiter_code }}</div>
+                </td>
+                <td>{{ row.cheo }}</td>
+                <td class="text-right">{{ row.orders_count|intcomma }}</td>
+                <td class="text-right">{{ duka.currencii }} {{ row.total_amount|floatformat:0|intcomma }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+          {% if useri.langSet == 0 %}Hakuna oda za wahudumu ambazo bado hazijaclear.{% else %}There are no uncleared waiter orders.{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if selected_waiter_id and can_view_waiter_orders_detail %}
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>
+          {% if useri.langSet == 0 %}Oda za{% else %}Orders for{% endif %} {{ selected_waiter_name|default:'Waiter' | title }}
+          {% if selected_waiter_code %}
+          <span class="small text-muted">({{ selected_waiter_code }})</span>
+          {% endif %}
+        </strong>
+        <!-- <a class="btn btn-sm btn-outline-primary" href="/mauzo/waiter_orders_summary">
+          {% if useri.langSet == 0 %}Rudi Orodha ya Wahudumu{% else %}Back to Waiter List{% endif %}
+        </a> -->
+      </div>
+      <div class="card-body p-0">
+        {% if selected_waiter_orders %}
+        <div class="row mx-0 p-3 border-bottom bg-light">
+          <div class="col-md-6 mb-2 mb-md-0 px-1">
+            <div class="border rounded p-2 bg-white h-100">
+              <div class="text-muted small">{% if useri.langSet == 0 %}Idadi ya order{% else %}Orders count{% endif %}</div>
+              <div class="h5 mb-0">{{ selected_waiter_orders_count|intcomma }}</div>
+            </div>
+          </div>
+          <div class="col-md-6 px-1">
+            <div class="border rounded p-2 bg-white h-100">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-muted small">{% if useri.langSet == 0 %}Jumla ya hela{% else %}Total amount{% endif %}</div>
+                  <div class="h5 mb-0">{{ duka.currencii }} {{ selected_waiter_orders_total_amount|floatformat:0|intcomma }}</div>
+                </div>
+                {% if can_clear_waiter_payments %}
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-success"
+                  id="openWaiterClearingModal"
+                  data-waiter="{{ selected_waiter_id }}"
+                >
+                  {% if useri.langSet == 0 %}Clear Malipo{% else %}Clear Payments{% endif %}
+                </button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-3 border-bottom bg-light">
+          <input
+            type="text"
+            id="selectedWaiterOrdersSearch"
+            class="form-control form-control-sm"
+            placeholder="{% if useri.langSet == 0 %}Tafuta order no, meza, eneo/counter au kiasi...{% else %}Search order no, table, place/counter, or amount...{% endif %}"
+          >
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th>#</th>
+                <th>{% if useri.langSet == 0 %}Order{% else %}Order{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Muda{% else %}Time{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody id="selectedWaiterOrdersTbody">
+              {% for od in selected_waiter_orders %}
+              <tr
+                class="waiter-order-row"
+                style="cursor:pointer;"
+                data-id="{{ od.id }}"
+                data-order="{{ od.code|lower }}"
+                data-table="{{ od.table|lower }}"
+                data-place="{{ od.place|lower }}"
+                data-amount="{{ od.amount }}"
+              >
+                <td>{{ forloop.counter }}</td>
+                <td>{{ od.code }}</td>
+                <td>{{ od.table }}</td>
+                <td>{{ od.place }}</td>
+                <td>{{ od.date|date:'d/m/Y H:i' }}</td>
+                <td class="text-right">{{ duka.currencii }} {{ od.amount|floatformat:0|intcomma }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">
+          {% if useri.langSet == 0 %}Hakuna oda kwa muhudumu huyu.{% else %}No orders found for this waiter.{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade" id="waiterClearingModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title">
+          {% if useri.langSet == 0 %}Clear Malipo ya Waiter{% else %}Clear Waiter Payments{% endif %}
+        </h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-sm mb-2" id="clear_pay_table" >
+            <thead class="thead-light">
+              <tr>
+                <th>{% if useri.langSet == 0 %}Account{% else %}Account{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+                <th class="text-center">
+                  {% if useri.langSet == 0 %}Hatua{% else %}Action{% endif %}
+                  <div class="small mt-1">
+                    <label class="mb-0" style="cursor:pointer;">
+                      <input type="checkbox" id="waiterClearSelectAll">
+                      {% if useri.langSet == 0 %}Chagua zote{% else %}Select all{% endif %}
+                    </label>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="waiterClearingAccountsBody">
+              <tr>
+                <td colspan="3" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna account za malipo.{% else %}No payment accounts found.{% endif %}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2">
+          <div class="small text-muted">
+            <div>{% if useri.langSet == 0 %}Jumla ya zilizochaguliwa{% else %}Selected total{% endif %}: <strong id="waiterSelectedTotalText">{{ duka.currencii }} 0</strong></div>
+            <div>{% if useri.langSet == 0 %}Jumla ya waiter{% else %}Waiter total{% endif %}: <strong id="waiterOrdersTotalText">{{ duka.currencii }} {{ selected_waiter_orders_total_amount|floatformat:2 }}</strong></div>
+            <div>{% if useri.langSet == 0 %}Baki{% else %}Remaining{% endif %}: <strong id="waiterRemainingTotalText">{{ duka.currencii }} {{ selected_waiter_orders_total_amount|floatformat:2 }}</strong></div>
+          </div>
+          <button type="button" class="btn btn-sm btn-success" id="waiterClearSelectedBtn" disabled>
+            {% if useri.langSet == 0 %}Pay{% else %}Pay{% endif %}
+          </button>
+        </div>
+
+        <div id="waiterPaymentRecordsWrap" class="border rounded p-2" style="display:none;">
+          <div class="small font-weight-bold mb-2" id="waiterPaymentRecordsTitle">
+            {% if useri.langSet == 0 %}Records za malipo{% else %}Payment records{% endif %}
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead class="thead-light">
+                <tr>
+                  <th>#</th>
+                  <th>{% if useri.langSet == 0 %}Mteja{% else %}Customer{% endif %}</th>
+                  <th>{% if useri.langSet == 0 %}Order{% else %}Order{% endif %}</th>
+                  <th>{% if useri.langSet == 0 %}Muda{% else %}Date{% endif %}</th>
+                  <th class="text-right">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+                </tr>
+              </thead>
+              <tbody id="waiterPaymentRecordsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">
+          {% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="waiterOrderDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title" id="waiterOrderModalTitle">
+          {% if useri.langSet == 0 %}Detail za Order{% else %}Order Details{% endif %}
+        </h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="waiterOrderModalMeta" class="small text-muted mb-2"></div>
+        <div id="waiterOrderModalContent" class="small text-muted">
+          {% if useri.langSet == 0 %}Inapakia...{% else %}Loading...{% endif %}
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <button type="button" class="btn btn-sm btn-outline-danger" id="waiterOrderDeleteBtn" style="display:none;">
+          {% if useri.langSet == 0 %}Futa Order{% else %}Delete Order{% endif %}
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">
+          {% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function getCookie(name) {
+      var cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    var waiterSearch = document.getElementById('waiterSummarySearch');
+    var waiterBody = document.getElementById('waiterSummaryTbody');
+    if (waiterSearch && waiterBody) {
+      waiterSearch.addEventListener('input', function () {
+        var term = (waiterSearch.value || '').toLowerCase().trim();
+        var rows = waiterBody.querySelectorAll('tr');
+        rows.forEach(function (row) {
+          var waiterName = (row.getAttribute('data-waiter-name') || '').toLowerCase();
+          var waiterCode = (row.getAttribute('data-waiter-code') || '').toLowerCase();
+          var hit = !term || waiterName.indexOf(term) !== -1 || waiterCode.indexOf(term) !== -1;
+          row.style.display = hit ? '' : 'none';
+        });
+      });
+    }
+
+    var selectedSearch = document.getElementById('selectedWaiterOrdersSearch');
+    var selectedBody = document.getElementById('selectedWaiterOrdersTbody');
+    if (selectedSearch && selectedBody) {
+      selectedSearch.addEventListener('input', function () {
+        var term = (selectedSearch.value || '').toLowerCase().trim();
+        var rows = selectedBody.querySelectorAll('tr');
+        rows.forEach(function (row) {
+          var orderNo = (row.getAttribute('data-order') || '').toLowerCase();
+          var tableName = (row.getAttribute('data-table') || '').toLowerCase();
+          var placeName = (row.getAttribute('data-place') || '').toLowerCase();
+          var amount = String(row.getAttribute('data-amount') || '').toLowerCase();
+          var hit = !term || orderNo.indexOf(term) !== -1 || tableName.indexOf(term) !== -1 || placeName.indexOf(term) !== -1 || amount.indexOf(term) !== -1;
+          row.style.display = hit ? '' : 'none';
+        });
+      });
+    }
+
+    var modal = $('#waiterOrderDetailsModal');
+    var clearModal = $('#waiterClearingModal');
+    var modalTitle = document.getElementById('waiterOrderModalTitle');
+    var modalMeta = document.getElementById('waiterOrderModalMeta');
+    var modalContent = document.getElementById('waiterOrderModalContent');
+    var deleteBtn = document.getElementById('waiterOrderDeleteBtn');
+    var selectedOrderId = 0;
+    var openClearBtn = document.getElementById('openWaiterClearingModal');
+    var clearAccountsBody = document.getElementById('waiterClearingAccountsBody');
+    var recordsWrap = document.getElementById('waiterPaymentRecordsWrap');
+    var recordsTitle = document.getElementById('waiterPaymentRecordsTitle');
+    var recordsBody = document.getElementById('waiterPaymentRecordsBody');
+    var waiterClearSelectAll = document.getElementById('waiterClearSelectAll');
+    var waiterSelectedTotalText = document.getElementById('waiterSelectedTotalText');
+    var waiterRemainingTotalText = document.getElementById('waiterRemainingTotalText');
+    var waiterClearSelectedBtn = document.getElementById('waiterClearSelectedBtn');
+    var selectedWaiterId = Number((openClearBtn && openClearBtn.getAttribute('data-waiter')) || 0);
+    var waiterOverallTotal = Number('{{ selected_waiter_orders_total_amount|default:0|floatformat:2 }}' || 0);
+    var waiterPaymentAccounts = [];
+    try {
+      waiterPaymentAccounts = JSON.parse('{{ selected_waiter_payment_accounts_json|default:"[]"|escapejs }}');
+    } catch (e) {
+      waiterPaymentAccounts = [];
+    }
+
+    function renderClearingRows(rows) {
+      if (!clearAccountsBody) return;
+      if (!rows || !rows.length) {
+        clearAccountsBody.innerHTML = '<tr><td colspan="3" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna account za malipo.{% else %}No payment accounts found.{% endif %}</td></tr>';
+        if (waiterSelectedTotalText) waiterSelectedTotalText.textContent = '{{ duka.currencii }} 0';
+        if (waiterRemainingTotalText) waiterRemainingTotalText.textContent = '{{ duka.currencii }} ' + waiterOverallTotal.toLocaleString();
+        if (waiterClearSelectedBtn) waiterClearSelectedBtn.disabled = true;
+        if (waiterClearSelectAll) {
+          waiterClearSelectAll.checked = false;
+          waiterClearSelectAll.indeterminate = false;
+          waiterClearSelectAll.disabled = true;
+        }
+        return;
+      }
+
+      var html = '';
+      rows.forEach(function (row, idx) {
+        var accountName = String(row.name || '-');
+        var amount = Number(row.default_amount || row.amount || 0);
+        var accountId = Number(row.account_id || 0);
+        var isCash = !!row.is_cash;
+        var recordsCount = Number(row.records || 0);
+
+        html += '<tr>';
+        if (!isCash && recordsCount > 0) {
+          html += '<td><button type="button" class="btn btn-link btn-sm p-0 waiter-account-records" data-account="' + accountId + '" data-name="' + accountName + '">' + accountName + '</button></td>';
+        } else {
+          html += '<td>' + accountName + '</td>';
+        }
+
+        html += '<td class="text-right" style="max-width:180px;"><input type="number" min="0" step="0.01" class="form-control form-control-sm text-right waiter-clear-amount-input" data-account="' + accountId + '" value="' + amount + '" placeholder="Amount"></td>';
+
+        html += '<td class="text-center"><input type="checkbox" class="waiter-clear-select" data-account="' + accountId + '"></td>';
+        html += '</tr>';
+      });
+
+      clearAccountsBody.innerHTML = html;
+      if (waiterClearSelectAll) {
+        waiterClearSelectAll.checked = false;
+        waiterClearSelectAll.indeterminate = false;
+        waiterClearSelectAll.disabled = false;
+      }
+      updateSelectedTotal();
+    }
+
+    function updateSelectedTotal() {
+      if (!clearAccountsBody || !waiterSelectedTotalText) return;
+      var allChecks = clearAccountsBody.querySelectorAll('.waiter-clear-select');
+      var checked = clearAccountsBody.querySelectorAll('.waiter-clear-select:checked');
+      var total = 0;
+      checked.forEach(function (cb) {
+        var aid = Number(cb.getAttribute('data-account') || 0);
+        if (!aid) return;
+        var input = clearAccountsBody.querySelector('.waiter-clear-amount-input[data-account="' + aid + '"]');
+        var amt = Number((input && input.value) || 0);
+        if (amt > 0) total += amt;
+      });
+      waiterSelectedTotalText.textContent = '{{ duka.currencii }} ' + total.toLocaleString();
+      if (waiterRemainingTotalText) {
+        var remain = Math.max(0, waiterOverallTotal - total);
+        waiterRemainingTotalText.textContent = '{{ duka.currencii }} ' + remain.toLocaleString();
+      }
+      if (waiterClearSelectedBtn) waiterClearSelectedBtn.disabled = !(total > 0);
+      if (waiterClearSelectAll && allChecks.length) {
+        waiterClearSelectAll.checked = checked.length === allChecks.length;
+        waiterClearSelectAll.indeterminate = checked.length > 0 && checked.length < allChecks.length;
+      }
+    }
+
+    function loadNonCashRecords(accountId, accountName) {
+      if (!selectedWaiterId || !accountId) return;
+      fetch('/mauzo/waiter_summary_waiter_payment_records?waiter=' + encodeURIComponent(selectedWaiterId) + '&account=' + encodeURIComponent(accountId))
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (!data || !data.success) {
+            recordsWrap.style.display = 'none';
+            return;
+          }
+
+          var rows = data.records || [];
+          recordsTitle.textContent = '{% if useri.langSet == 0 %}Records za{% else %}Records for{% endif %} ' + accountName;
+          if (!rows.length) {
+            recordsBody.innerHTML = '<tr><td colspan="5" class="text-muted text-center py-2">{% if useri.langSet == 0 %}Hakuna records.{% else %}No records found.{% endif %}</td></tr>';
+          } else {
+            var html = '';
+            rows.forEach(function (r, idx) {
+              html += '<tr>';
+              html += '<td>' + (idx + 1) + '</td>';
+              html += '<td>' + (r.customerName || '-') + '</td>';
+              html += '<td>' + (r.order || '-') + '</td>';
+              html += '<td>' + (r.date || '-') + '</td>';
+              html += '<td class="text-right">{{ duka.currencii }} ' + Number(r.amount || 0).toLocaleString() + '</td>';
+              html += '</tr>';
+            });
+            recordsBody.innerHTML = html;
+          }
+          recordsWrap.style.display = '';
+        })
+        .catch(function () {
+          recordsWrap.style.display = 'none';
+        });
+    }
+
+    function clearWaiterWithAccount() {
+      if (!selectedWaiterId) return;
+
+      var checked = clearAccountsBody ? clearAccountsBody.querySelectorAll('.waiter-clear-select:checked') : [];
+      var payments = [];
+      var finalAmount = 0;
+      checked.forEach(function (cb) {
+        var aid = Number(cb.getAttribute('data-account') || 0);
+        var input = clearAccountsBody.querySelector('.waiter-clear-amount-input[data-account="' + aid + '"]');
+        var amt = Number((input && input.value) || 0);
+        if (aid && amt > 0) {
+          payments.push({ account_id: aid, amount: amt });
+          finalAmount += amt;
+        }
+      });
+
+      if (!(finalAmount > 0)) {
+        alert('{% if useri.langSet == 0 %}Weka amount sahihi.{% else %}Enter a valid amount.{% endif %}');
+        return;
+      }
+
+      var ok = confirm('{% if useri.langSet == 0 %}Una uhakika unataka kuclear malipo ya waiter huyu?{% else %}Are you sure you want to clear this waiter payments?{% endif %}');
+      if (!ok) return;
+
+      fetch('/mauzo/waiter_summary_clear_waiter_payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-CSRFToken': getCookie('csrftoken') || ''
+        },
+        body: 'waiter=' + encodeURIComponent(selectedWaiterId)
+          + '&payments=' + encodeURIComponent(JSON.stringify(payments))
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data && data.success) {
+            clearModal.modal('hide');
+            window.location.reload();
+          } else {
+            alert((data && data.msg) ? data.msg : '{% if useri.langSet == 0 %}Imeshindikana kuclear malipo.{% else %}Failed to clear payments.{% endif %}');
+          }
+        })
+        .catch(function () {
+          alert('{% if useri.langSet == 0 %}Imeshindikana kuclear malipo.{% else %}Failed to clear payments.{% endif %}');
+        });
+    }
+
+    if (openClearBtn) {
+      openClearBtn.addEventListener('click', function () {
+        renderClearingRows(waiterPaymentAccounts || []);
+        recordsWrap.style.display = 'none';
+        clearModal.modal('show');
+      });
+    }
+
+    if (clearAccountsBody) {
+      clearAccountsBody.addEventListener('click', function (ev) {
+        var recBtn = ev.target.closest('.waiter-account-records');
+        if (recBtn) {
+          var aid = Number(recBtn.getAttribute('data-account') || 0);
+          var aname = recBtn.getAttribute('data-name') || 'Account';
+          loadNonCashRecords(aid, aname);
+          return;
+        }
+
+        if (ev.target && ev.target.classList && ev.target.classList.contains('waiter-clear-select')) {
+          updateSelectedTotal();
+        }
+      });
+
+      clearAccountsBody.addEventListener('input', function (ev) {
+        if (ev.target && ev.target.classList && ev.target.classList.contains('waiter-clear-amount-input')) {
+          updateSelectedTotal();
+        }
+      });
+    }
+
+    if (waiterClearSelectAll && clearAccountsBody) {
+      waiterClearSelectAll.addEventListener('change', function () {
+        var allChecks = clearAccountsBody.querySelectorAll('.waiter-clear-select');
+        allChecks.forEach(function (cb) {
+          cb.checked = !!waiterClearSelectAll.checked;
+        });
+        updateSelectedTotal();
+      });
+    }
+
+    if (waiterClearSelectedBtn) {
+      waiterClearSelectedBtn.addEventListener('click', function () {
+        clearWaiterWithAccount();
+      });
+    }
+
+    function renderOrderItems(items, currency) {
+      if (!items || !items.length) {
+        return '{% if useri.langSet == 0 %}Hakuna items kwenye order hii.{% else %}No items found for this order.{% endif %}';
+      }
+
+      var html = '<div class="table-responsive"><table class="table table-sm mb-0">';
+      html += '<thead class="thead-light"><tr>';
+      html += '<th>#</th>';
+      html += '<th>{% if useri.langSet == 0 %}Item{% else %}Item{% endif %}</th>';
+      html += '<th class="text-right">{% if useri.langSet == 0 %}Qty{% else %}Qty{% endif %}</th>';
+      html += '<th>{% if useri.langSet == 0 %}Kipimo{% else %}Unit{% endif %}</th>';
+      html += '<th class="text-right">{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}</th>';
+      html += '<th class="text-right">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</th>';
+      html += '</tr></thead><tbody>';
+
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i] || {};
+        html += '<tr>';
+        html += '<td>' + (i + 1) + '</td>';
+        html += '<td>' + (it.name || '-') + '</td>';
+        html += '<td class="text-right">' + (it.qty || 0) + '</td>';
+        html += '<td>' + (it.unit || '-') + '</td>';
+        html += '<td class="text-right">' + currency + ' ' + Number(it.price || 0).toLocaleString() + '</td>';
+        html += '<td class="text-right">' + currency + ' ' + Number(it.total || 0).toLocaleString() + '</td>';
+        html += '</tr>';
+      }
+
+      html += '</tbody></table></div>';
+      return html;
+    }
+
+    if (selectedBody) {
+      selectedBody.addEventListener('click', function (ev) {
+        var row = ev.target.closest('tr.waiter-order-row');
+        if (!row) return;
+
+        selectedOrderId = Number(row.getAttribute('data-id') || 0);
+        if (!selectedOrderId) return;
+
+        modalTitle.textContent = '{% if useri.langSet == 0 %}Detail za Order{% else %}Order Details{% endif %}';
+        modalMeta.textContent = '{% if useri.langSet == 0 %}Inapakia...{% else %}Loading...{% endif %}';
+        modalContent.innerHTML = '{% if useri.langSet == 0 %}Inapakia items...{% else %}Loading items...{% endif %}';
+        deleteBtn.style.display = 'none';
+        modal.modal('show');
+
+        fetch('/mauzo/waiter_summary_order_details?order=' + selectedOrderId)
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (!data || !data.success) {
+              modalMeta.textContent = '';
+              modalContent.textContent = (data && data.msg) ? data.msg : '{% if useri.langSet == 0 %}Imeshindikana kupata detail.{% else %}Failed to load details.{% endif %}';
+              deleteBtn.style.display = 'none';
+              return;
+            }
+
+            var order = data.order || {};
+            modalTitle.textContent = '{% if useri.langSet == 0 %}Order{% else %}Order{% endif %} ' + (order.code || '-');
+            modalMeta.textContent = '{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}: ' + (order.table || '-') + ' | {% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}: ' + (order.place || '-') + ' | {% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}: {{ duka.currencii }} ' + Number(order.amount || 0).toLocaleString();
+            modalContent.innerHTML = renderOrderItems(data.items || [], '{{ duka.currencii }}');
+            deleteBtn.style.display = data.can_delete ? '' : 'none';
+          })
+          .catch(function () {
+            modalMeta.textContent = '';
+            modalContent.textContent = '{% if useri.langSet == 0 %}Imeshindikana kupata detail.{% else %}Failed to load details.{% endif %}';
+            deleteBtn.style.display = 'none';
+          });
+      });
+    }
+
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', function () {
+        if (!selectedOrderId) return;
+        var ok = confirm('{% if useri.langSet == 0 %}Una uhakika unataka kufuta order hii?{% else %}Are you sure you want to delete this order?{% endif %}');
+        if (!ok) return;
+
+        fetch('/mauzo/waiter_summary_delete_order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'X-CSRFToken': getCookie('csrftoken') || ''
+          },
+          body: 'order=' + encodeURIComponent(selectedOrderId)
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data && data.success) {
+              modal.modal('hide');
+              window.location.reload();
+            } else {
+              alert((data && data.msg) ? data.msg : '{% if useri.langSet == 0 %}Imeshindikana kufuta order.{% else %}Failed to delete order.{% endif %}');
+            }
+          })
+          .catch(function () {
+            alert('{% if useri.langSet == 0 %}Imeshindikana kufuta order.{% else %}Failed to delete order.{% endif %}');
+          });
+      });
+    }
+  })();
+</script>
+{% endblock %}

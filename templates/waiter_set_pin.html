@@ -1,0 +1,64 @@
+{% extends 'userdash.html' %}
+{% load static %}
+
+{% block billcss %}
+<link rel="stylesheet" href="{% static 'css/sales.css' %}">
+{% endblock %}
+
+{% block Dashboard %}
+<div class="whiteBg py-5" style="min-height:80vh;"> >
+  <div class="classic_div mb-4">
+    <h5 class="mb-1 latoFont text-center">
+      {% if useri.langSet == 0 %}Weka PIN ya Waiter{% else %}Set Waiter PIN{% endif %}
+    </h5>
+    <small class="text-muted d-block text-center">
+      {% if useri.langSet == 0 %}
+      PIN itatumika kufungua akaunti yako kwenye kompyuta ya pamoja ya waiter.
+      {% else %}
+      Your PIN will be used to unlock your account on the shared waiter POS computer.
+      {% endif %}
+    </small>
+  </div>
+
+  {% if success %}
+  <div class="alert alert-success">
+    {% if useri.langSet == 0 %}PIN imehifadhiwa.{% else %}PIN saved successfully.{% endif %}
+  </div>
+  {% endif %}
+
+  {% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <div class="classic_div" style="max-width:400px;">
+    <form method="POST" action="/mauzo/waiter_set_pin">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="smallFont mb-1">
+          {% if useri.langSet == 0 %}PIN Mpya (nambari 4-10){% else %}New PIN (4–10 digits){% endif %}
+        </label>
+        <input type="password" name="pin" class="form-control" inputmode="numeric" pattern="[0-9]{4,10}" maxlength="10" required autofocus>
+      </div>
+      <div class="form-group">
+        <label class="smallFont mb-1">
+          {% if useri.langSet == 0 %}Thibitisha PIN{% else %}Confirm PIN{% endif %}
+        </label>
+        <input type="password" name="pin_confirm" class="form-control" inputmode="numeric" pattern="[0-9]{4,10}" maxlength="10" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">
+        {% if useri.langSet == 0 %}Hifadhi PIN{% else %}Save PIN{% endif %}
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block nav-mauzo %}
+class="c-menu__item style-none is-active  showingpop2"
+{% endblock %}
+
+{% block akaunt-map %}
+{% if useri.langSet == 0 %}Weka PIN{% else %}Set PIN{% endif %}
+{% endblock %}
+
+{% block active-mauzo %} class="bi bi-cart-check text-primary" {% endblock %}

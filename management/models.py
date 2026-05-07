@@ -141,6 +141,7 @@ class Interprise(models.Model):
     service =  models.BooleanField(default=True)
     produxn =  models.BooleanField(default=True)
     sales =  models.BooleanField(default=True)
+    waiter_counter =  models.BooleanField(default=False)
     officeNo = models.CharField(max_length=200,blank=True)
     # tin_pic = models.ImageField(upload_to="pics",null=True,blank=True)
 
@@ -156,6 +157,9 @@ class Interprise(models.Model):
 
     def __str__(self):
         return self.name
+
+
+
 
 class DescImages(models.Model):
     Interprise = models.ForeignKey(Interprise,on_delete=models.CASCADE,null=True,blank=True)
@@ -268,11 +272,31 @@ class InterprisePermissions(models.Model):
 
     # if is employee
     fanyakazi = models.ForeignKey(Workers, on_delete=models.CASCADE,blank=True,null=True) 
-
+    waiter_counter = models.BooleanField(default=False)
+    servicing = models.BooleanField(default=False)
+    waiter_pin = models.CharField(max_length=10, null=True, blank=True)
+    waiter_pin_set = models.BooleanField(default=False)
+    waiter_check_up = models.BooleanField(default=False)
+    waiter_delete_order = models.BooleanField(default=False)
+    enable_print = models.BooleanField(default=False)
 
     def __str__(self):
         return self.Allow
  
+class WaiterPosDeviceSession(models.Model):
+    Interprise = models.ForeignKey(Interprise, on_delete=models.CASCADE)
+    device_id = models.CharField(max_length=255)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    active_user = models.ForeignKey(InterprisePermissions, on_delete=models.SET_NULL, null=True, blank=True)
+    device_name = models.CharField(max_length=255, null=True, blank=True)
+    class Meta:
+        unique_together = ('Interprise', 'device_id')
+
+    def __str__(self):
+        return f"{self.Interprise_id}:{self.device_id}"
+
 class Interprise_contacts(models.Model):
     Interprise=models.ForeignKey(Interprise,on_delete=models.CASCADE)
     phone = models.IntegerField()
@@ -633,6 +657,11 @@ class customer_in_cell(models.Model):
     area = models.ForeignKey(customer_area,on_delete=models.CASCADE)
     name = models.TextField()
     
+class waiter_clearing(models.Model):
+    waiter = models.ForeignKey(InterprisePermissions,on_delete=models.CASCADE,null=True,blank=True,related_name='waiter_clearing_waiter_set')
+    amount = models.DecimalField(max_digits=20,decimal_places=4)
+    tarehe = models.DateTimeField()
+    By = models.ForeignKey(InterprisePermissions,on_delete=models.SET_NULL,null=True,blank=True,related_name='waiter_clearing_by_set')
 
 
 class mauzoni(models.Model):
@@ -642,7 +671,8 @@ class mauzoni(models.Model):
     akaunt = models.ForeignKey(PaymentAkaunts,on_delete=models.SET_NULL,null=True)
     amount = models.DecimalField(max_digits=20,decimal_places=4)
     ilolipwa = models.DecimalField(max_digits=20,decimal_places=4,default=0)
-
+    waiter_pay = models.DecimalField(max_digits=20,decimal_places=4,default=0)
+    
     date =  models.DateField(null=True,blank=True)
     kulipa = models.DateField()
     tarehe = models.DateTimeField()
@@ -676,9 +706,12 @@ class mauzoni(models.Model):
 
     # Incase its order
     order = models.BooleanField(default=False)
+    waiter_order = models.ForeignKey(InterprisePermissions,on_delete=models.SET_NULL,null=True,blank=True,related_name='waiter_orders')
+    waiter_order_cleared = models.ForeignKey(waiter_clearing,on_delete=models.SET_NULL,null=True,blank=True)
     online = models.BooleanField(default=False)
     packed= models.BooleanField(default=False)
     Packed_at = models.DateTimeField(null=True,blank=True)
+
 
     # Incase is service.................................//
     service= models.BooleanField(default=False)
@@ -703,6 +736,17 @@ class mauzoni(models.Model):
 
     sioMuhimu = models.BooleanField(default=False)
     By = models.ForeignKey(InterprisePermissions,on_delete=models.SET_NULL,null=True,blank=True)
+    printed_number = models.IntegerField(default=0)
+
+class waiterPayments(models.Model):
+    waiter = models.ForeignKey(InterprisePermissions,on_delete=models.CASCADE,null=True,blank=True)
+    amount = models.DecimalField(max_digits=20,decimal_places=4)
+    tarehe = models.DateTimeField()
+    confirmed = models.BooleanField(default=False)
+    account = models.ForeignKey(PaymentAkaunts,on_delete=models.SET_NULL,null=True,blank=True)
+    sale = models.ForeignKey(mauzoni,on_delete=models.CASCADE,null=True,blank=True)
+    customerName = models.CharField(max_length=100,null=True,blank=True)
+    # kulipa = models.DateField(null=True,blank=True)
 
 class ForPrintingPupose(models.Model):
     user = models.ForeignKey(UserExtend,on_delete=models.CASCADE)
@@ -1129,6 +1173,7 @@ class wekaCash(models.Model):
     kuhamishaNje = models.BooleanField(default=False)
     mtaji = models.BooleanField(default=False)
     huduma_nyingine = models.ForeignKey(HudumaNyingine,on_delete=models.SET_NULL,null=True)
+    from_waiter_payments = models.ForeignKey(waiter_clearing,on_delete=models.SET_NULL,null=True)
 
 class  toaCash(models.Model):
     Interprise=models.ForeignKey(Interprise,on_delete=models.CASCADE)     

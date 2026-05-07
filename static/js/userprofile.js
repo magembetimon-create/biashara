@@ -23,6 +23,8 @@
 var PICHA = [],
     picha = id => PICHA.find(i=>i.id===id).picha
 
+let WAITER_COUNTER_ACTIVITY = false
+
 
 $(document).ready(function () {  
     $('#password').keyup(function () {  
@@ -178,6 +180,7 @@ class getstaff{
            data: {csrfmiddlewaretoken:csrfToken}
     }).done(function(data){
         PICHA =  data.images
+        WAITER_COUNTER_ACTIVITY = Boolean(data.waiter_counter)
         
 
          let udt =``,
@@ -514,6 +517,60 @@ $('body').on('click','.user_per', function () {
             </div>
           </span>
       </li>
+
+            `
+            if(WAITER_COUNTER_ACTIVITY){
+                us+=`
+  <li class="robotoFont py-1 smallFont">${lang('Mhudumu wa wateja (Waiter Counter)','Customer waiter (Waiter Counter)')} 
+  <span style="float:right;margin-right:3%">
+      <div class="onoffswitch-t2">
+          <form data-toggle="validator" class="togleparentuso" data-value=${ud.id} data-change="waiter_counter" action="/updatepermissions"  method="POST">
+               <input type="checkbox" name="onoffswitch-t2" class="onoffswitch-checkbox-t2 changePemit" id="waitercounter${ud.id}"` 
+               if(ud.waiter_counter) {us+=`checked`}
+               us+=` tabindex="0">
+                    <label class="onoffswitch-label-t2" for="waitercounter${ud.id}">
+                        <span class="onoffswitch-inner-t2"></span>
+                        <span class="onoffswitch-switch-t2"></span>
+                    </label>
+          </form>
+        </div>
+      </span>
+  </li>
+
+  <li class="robotoFont py-1 smallFont">${lang('Ruhusa ya kucheck/kuhakiki waiter orders na malipo','Check/verify waiter orders and payments')} 
+  <span style="float:right;margin-right:3%">
+      <div class="onoffswitch-t2">
+          <form data-toggle="validator" class="togleparentuso" data-value=${ud.id} data-change="waiter_check_up" action="/updatepermissions"  method="POST">
+               <input type="checkbox" name="onoffswitch-t2" class="onoffswitch-checkbox-t2 changePemit" id="waitercheckup${ud.id}"` 
+               if(ud.waiter_check_up) {us+=`checked`}
+               us+=` tabindex="0">
+                    <label class="onoffswitch-label-t2" for="waitercheckup${ud.id}">
+                        <span class="onoffswitch-inner-t2"></span>
+                        <span class="onoffswitch-switch-t2"></span>
+                    </label>
+          </form>
+        </div>
+      </span>
+  </li>
+
+  <li class="robotoFont brown py-1 smallFont">${lang('Ruhusa ya kufuta waiter printed order','Delete waiter printed order')} 
+  <span style="float:right;margin-right:3%">
+      <div class="onoffswitch-t2">
+          <form data-toggle="validator" class="togleparentuso" data-value=${ud.id} data-change="waiter_delete_order" action="/updatepermissions"  method="POST">
+               <input type="checkbox" name="onoffswitch-t2" class="onoffswitch-checkbox-t2 changePemit" id="waiterdeleteorder${ud.id}"` 
+               if(ud.waiter_delete_order) {us+=`checked`}
+               us+=` tabindex="0">
+                    <label class="onoffswitch-label-t2" for="waiterdeleteorder${ud.id}">
+                        <span class="onoffswitch-inner-t2"></span>
+                        <span class="onoffswitch-switch-t2"></span>
+                    </label>
+          </form>
+        </div>
+      </span>
+  </li>`
+            }
+
+            us+=`
 
       </ul>
       <hr>

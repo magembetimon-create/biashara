@@ -8,11 +8,12 @@ import json
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
-from management.models import UserExtend,Interprise_Rating,ForPrintingPupose,ChangedServiceFrom,invoice_desk,HudumaNyingine,ChangedServiceTo,ChangedService,Kanda,Workers,Notifications,deliveryAgents,productionList,deliveryBy,salePuMatch,manunuzi,remainedFromOda, manunuziList,order_from,order_to,bidhaa_aina,sale_return,user_customers,businessReg,sale_return_mauzo_fidia,sa_ret,sa_col_ret,sa_size_ret,picha_bidhaa,Cash_order_return,Interprise,toaCash,bei_za_bidhaa,bidhaa,Interprise_contacts,wekaCash,produ_size,color_produ,produ_colored,bidhaa_stoku,wateja,sales_color,sales_size,mauzoni,mauzoList,InterprisePermissions,PaymentAkaunts
+from management.models import UserExtend,Interprise_Rating,ForPrintingPupose,ChangedServiceFrom,invoice_desk,HudumaNyingine,ChangedServiceTo,ChangedService,Kanda,Workers,Notifications,deliveryAgents,productionList,deliveryBy,salePuMatch,manunuzi,remainedFromOda, manunuziList,order_from,order_to,bidhaa_aina,sale_return,user_customers,businessReg,sale_return_mauzo_fidia,sa_ret,sa_col_ret,sa_size_ret,picha_bidhaa,Cash_order_return,Interprise,toaCash,bei_za_bidhaa,bidhaa,Interprise_contacts,wekaCash,produ_size,color_produ,produ_colored,bidhaa_stoku,wateja,sales_color,sales_size,mauzoni,mauzoList,InterprisePermissions,PaymentAkaunts,customer_in_cell,waiterPayments,WaiterPosDeviceSession,waiter_clearing
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
-from django.db.models import F,FloatField
+from django.db.models import F,FloatField,Count
+from django.db import transaction
 from django.core import serializers
 from django.db.models import Q
 # from datetime import datetime
@@ -261,6 +262,413 @@ def  POStab(request):
        return render(request,'pos_tab.html',todo)
 
 @login_required(login_url='login')
+def waiterpage(request):
+      todo = newInvo_funct(request)
+      # if not todo['duka'].Interprise:
+      #       return redirect('/userdash')
+
+      if not todo.get('waiter_counter', False):
+            return redirect('/userdash')
+
+      counters = todo['waiter_counter']
+      servicing_counter = counters.filter(
+           
+            servicing=True
+      )
+
+      if servicing_counter.exists():
+            todo.update({'servicing_counter': servicing_counter.last()})
+            return render(request, 'waiterpage.html', todo)
+
+     
+      todo.update({'waiter_counters': counters})
+      return render(request, 'waiter_counter_select.html', todo)
+
+
+def _waiter_counter_mode(counter_obj):
+      if not counter_obj:
+            return 'all'
+
+      raw = f"{counter_obj.cheo or ''} {counter_obj.user.user.first_name or ''} {counter_obj.user.user.last_name or ''}".lower()
+      if re.search(r'(kinywaji|drink|beverage|bar|juice|soda)', raw):
+            return 'drinks'
+      if re.search(r'(chakula|food|kitchen|jikoni|meal)', raw):
+            return 'kitchen'
+      return 'all'
+
+
+def _waiter_mode_accepts(counter_mode, bidhaa_obj):
+      if counter_mode == 'all':
+            return True
+
+      aina_name = ''
+      try:
+            aina_name = str(bidhaa_obj.bidhaa.bidhaa_aina.aina or '').lower()
+      except:
+            aina_name = ''
+
+      if counter_mode == 'drinks':
+            return re.search(r'(kinywaji|drink|beverage|bar|juice|soda)', aina_name) is not None
+      if counter_mode == 'kitchen':
+            return re.search(r'(chakula|food|kitchen|jikoni|meal)', aina_name) is not None
+      return True
+
+
+def _resolve_waiter_context(request):
+      """Resolve waiter context either from device session or logged-in waiter counter."""
+      device_id = str(
+            request.POST.get('device_id', '')
+            or request.GET.get('device_id', '')
+            or request.session.get('waiter_pos_device', '')
+            or ''
+      ).strip()
+
+      biz_id_raw = request.POST.get('biz', '') or request.GET.get('biz', '') or request.session.get('waiter_pos_biz', 0)
+      try:
+            biz_id = int(biz_id_raw or 0)
+      except:
+            biz_id = 0
+
+      if device_id:
+            device_qs = WaiterPosDeviceSession.objects.select_related('Interprise', 'active_user').filter(
+                  device_id=device_id,
+                  active=True,
+            )
+
+            if biz_id:
+                  device_qs = device_qs.filter(Interprise__id=biz_id)
+
+            device_session = device_qs.order_by('-updated_at').first()
+            if device_session and device_session.active_user and device_session.active_user.waiter_counter:
+                  request.session['waiter_pos_biz'] = device_session.Interprise.id
+                  request.session['waiter_pos_device'] = device_id
+                  return {
+                        'ok': True,
+                        'source': 'device',
+                        'duka': device_session.Interprise,
+                        'cheo': device_session.active_user,
+                        'device_id': device_id,
+                  }
+
+            return {
+                  'ok': False,
+                  'msg': 'Kifaa hakijasajiliwa kwa waiter POS',
+            }
+
+      if not request.user.is_authenticated:
+            return {
+                  'ok': False,
+                  'msg': 'No active waiter counter',
+            }
+
+      todo = todoFunct(request)
+      counters = todo.get('waiter_counter')
+      active_counter = counters.filter(servicing=True).first() if counters is not None else None
+      duka = active_counter.Interprise if active_counter else None
+      cheo = active_counter if active_counter else None
+
+      if not duka or not cheo:
+            return {
+                  'ok': False,
+                  'msg': 'No active waiter counter',
+            }
+
+      return {
+            'ok': True,
+            'source': 'user',
+            'duka': duka,
+            'cheo': cheo,
+            'device_id': '',
+      }
+
+
+def waiter_order(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'message_swa': 'Njia si sahihi', 'message_eng': 'Invalid request method'})
+
+      try:
+            raw_items = request.POST.get('itm_dt', '[]')
+            itm_dt = json.loads(raw_items)
+      except:
+            return JsonResponse({'success': False, 'message_swa': 'Data za items sio sahihi', 'message_eng': 'Invalid items payload'})
+
+      if not isinstance(itm_dt, list) or not itm_dt:
+            return JsonResponse({'success': False, 'message_swa': 'Hakuna bidhaa kwenye oda', 'message_eng': 'No items in order'})
+
+      ctx = _resolve_waiter_context(request)
+      if not ctx.get('ok'):
+            return JsonResponse({'success': False, 'message_swa': 'Hakuna counter active', 'message_eng': str(ctx.get('msg') or 'No active waiter counter')})
+
+      active_counter = ctx['cheo']
+      duka = ctx['duka']
+      counter_mode = _waiter_counter_mode(active_counter)
+
+      table_name = str(request.POST.get('cusom_name', '') or '').strip()
+      if len(table_name) < 1:
+            return JsonResponse({'success': False, 'message_swa': 'Weka meza/mteja', 'message_eng': 'Set table/customer'})
+
+      akaunt_id = int(request.POST.get('akaunt', 0) or 0)
+      ilolipwa = float(request.POST.get('inalipwa', 0) or 0)
+
+      table_id = int(request.POST.get('table_id', 0) or 0)
+      if table_id:
+            table_obj = customer_in_cell.objects.filter(pk=table_id, area__Interprise=duka.id).last()
+      else:
+            table_obj = customer_in_cell.objects.filter(area__Interprise=duka.id, name=table_name).last()
+      pay_acc = PaymentAkaunts.objects.filter(pk=akaunt_id, Interprise=duka.id).last() if akaunt_id else None
+
+      try:
+            with transaction.atomic():
+                  last_invo = mauzoni.objects.filter(Interprise=duka.id).order_by('-pk').first()
+                  invono = int(last_invo.Invo_no) if last_invo else 0
+                  code = str(invono).zfill(5)
+
+                  sale = mauzoni()
+                  sale.Interprise = duka
+                  sale.code = code
+                  sale.kulipa = date.today()
+                  sale.tarehe = datetime.datetime.now(tz=timezone.utc)
+                  sale.date = date.today()
+                  sale.Invo_no = invono + 1
+                  sale.order = True
+                  sale.desc = str(request.POST.get('desc', '') or '')
+                  # sale.By = active_counter
+                  sale.waiter_order = active_counter
+                  sale.customer_in = table_obj
+                  sale.mteja_jina = table_name
+                  if pay_acc:
+                        sale.akaunt = pay_acc
+
+                  amount_total = 0.0
+                  pending_lines = []
+
+                  for line in itm_dt:
+                        stock_id = int(line.get('idn', 0) or 0)
+                        qty = float(line.get('idadi', 0) or 0)
+                        if stock_id <= 0 or qty <= 0:
+                              continue
+
+                        bidhaa_qs = bidhaa_stoku.objects.select_related('bidhaa__bidhaa_aina').filter(
+                              pk=stock_id,
+                              Interprise=duka.id
+                        )
+                        if not bidhaa_qs.exists():
+                              raise ValueError('ITEM_NOT_FOUND')
+
+                        bidhaa_obj = bidhaa_qs.last()
+                        # if not _waiter_mode_accepts(counter_mode, bidhaa_obj):
+                        #       raise ValueError('ITEM_NOT_ALLOWED_FOR_COUNTER')
+
+                        bei = float(bidhaa_obj.Bei_kuuza or 0)
+                        if bei <= 0:
+                              raise ValueError('ITEM_PRICE_INVALID')
+
+                        amount_total += qty * bei
+                        pending_lines.append((bidhaa_obj, qty, bei, float(line.get('vat_include', 0) or 0), float(line.get('vat_set', 0) or 0), int(line.get('match', 0) or 0)))
+
+                  if not pending_lines:
+                        return JsonResponse({'success': False, 'message_swa': 'Hakuna items halali', 'message_eng': 'No valid order items'})
+
+                  sale.amount = amount_total
+                  sale.waiter_pay = min(float(ilolipwa), float(amount_total))
+                  # sale.full_paid = float(sale.ilolipwa) >= float(amount_total)
+                  sale.save()
+
+                  # Record initial payment in waiterPayments if any amount was paid
+                  if ilolipwa > 0 and pay_acc:
+                        wp = waiterPayments()
+                        wp.waiter = active_counter
+                        wp.amount = sale.waiter_pay
+                        wp.tarehe = datetime.datetime.now(tz=timezone.utc)
+                        wp.account = pay_acc
+                        wp.sale = sale
+                        wp.confirmed = True
+                        wp.customerName = table_name
+                        wp.save()
+
+                  for bidhaa_obj, qty, bei, vat_included, vat_set, match_id in pending_lines:
+                        ln = mauzoList()
+                        ln.mauzo = sale
+                        ln.produ = bidhaa_obj
+                        ln.idadi = qty
+                        ln.bei = bei
+                        ln.bei_og = bei
+                        ln.vat_included = bool(vat_included)
+                        ln.vat_set = bool(vat_set)
+                        if match_id and salePuMatch.objects.filter(pk=match_id).exists():
+                              ln.match = salePuMatch.objects.get(pk=match_id)
+                        ln.save()
+
+      except ValueError as er:
+            code = str(er)
+            if code == 'ITEM_NOT_ALLOWED_FOR_COUNTER':
+                  return JsonResponse({'success': False, 'message_swa': 'Baadhi ya bidhaa haziruhusiwi kwa counter hii', 'message_eng': 'Some items are not allowed for this waiter counter'})
+            if code == 'ITEM_NOT_FOUND':
+                  return JsonResponse({'success': False, 'message_swa': 'Kuna item haijapatikana', 'message_eng': 'One or more items were not found'})
+            if code == 'ITEM_PRICE_INVALID':
+                  return JsonResponse({'success': False, 'message_swa': 'Bei ya item sio sahihi', 'message_eng': 'Invalid item price found'})
+            return JsonResponse({'success': False, 'message_swa': 'Data sio sahihi', 'message_eng': 'Invalid data'})
+      except:
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'message_swa': 'Hitilafu imetokea wakati wa kuhifadhi', 'message_eng': 'Failed to save waiter order'})
+
+      return JsonResponse({'success': True, 'bil': sale.id})
+
+
+def waiter_items_data(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'products': []})
+
+      ctx = _resolve_waiter_context(request)
+      if not ctx.get('ok'):
+            return JsonResponse({'success': False, 'products': []})
+
+      servicing_counter = ctx['cheo']
+      duka = ctx['duka']
+
+      
+      mode = _waiter_counter_mode(servicing_counter)
+
+      products_qs = bidhaa_stoku.objects.filter(
+            Q(idadi__gt=0) | Q(inapacha=False) | Q(produced__notsure=True),
+            Interprise=duka.id,
+            Bei_kuuza__gt=0
+      ).annotate(
+            st=F('Interprise'),
+            stName=F('Interprise__name'),
+            group_name=F('bidhaa__bidhaa_aina__mahi__mahitaji'),
+            group=F('bidhaa__bidhaa_aina__mahi__id'),
+            kampuni=F('bidhaa__kampuni__id'),
+            aina=F('bidhaa__bidhaa_aina__id'),
+            namba=F('bidhaa__namba'),
+            material=F('bidhaa__material'),
+            curenci=F('Interprise__currencii'),
+            vat=F('Interprise__vatper'),
+            ainaN=F('bidhaa__bidhaa_aina__aina'),
+            bidhaaN=F('bidhaa__bidhaa_jina'),
+            maelezo=F('bidhaa__maelezo'),
+            brand=F('bidhaa__kampuni__kampuni_jina'),
+            brandId=F('bidhaa__kampuni'),
+            taxInclusive=F('bidhaa__saletaxInluded'),
+            vat_allow=F('Interprise__vat_allow'),
+            notsure=F('produced__notsure'),
+            vipimo=F('bidhaa__vipimo'),
+            uwiano=F('bidhaa__idadi_jum'),
+            vipimoJum=F('bidhaa__vipimo_jum'),
+            # bidhaa_id=F('bidhaa__id')
+      ).values().order_by('-pk')
+
+      products = list(products_qs)
+      if mode == 'drinks':
+            products = [x for x in products if re.search(r'(kinywaji|drink|beverage|bar|juice|soda)', str(x.get('ainaN', '')).lower())]
+      elif mode == 'kitchen':
+            products = [x for x in products if re.search(r'(chakula|food|kitchen|jikoni|meal)', str(x.get('ainaN', '')).lower())]
+
+      bidhaaRangi = list(
+            produ_colored.objects.select_related('color_produ', 'bidhaa_stoku').filter(
+                  Interprise=duka.id,
+                  color__colored=True
+            ).exclude(
+                  bidhaa__inapacha=True,
+                  idadi=0
+            ).values(
+                  'id',
+                  'bidhaa',
+                  'color',
+                  'idadi',
+                  'color__nick_name',
+                  'color__color_code',
+                  'color__color_name',
+                  'color__colored',
+                  'bidhaa__bidhaa__vipimo',
+                  'bidhaa__bidhaa__vipimo_jum',
+                  'bidhaa__bidhaa__idadi_jum',
+                  'bidhaa__idadi'
+            )
+      )
+
+      sized = list(
+            produ_size.objects.select_related('sizes').filter(
+                  Interprise=duka.id
+            ).exclude(
+                  bidhaa__inapacha=True,
+                  idadi=0
+            ).values(
+                  'id',
+                  'sized__color',
+                  'sized__size',
+                  'bidhaa',
+                  'idadi',
+                  'bidhaa__bidhaa__idadi_jum',
+                  'bidhaa__idadi',
+                  'bidhaa__bidhaa__vipimo',
+                  'bidhaa__bidhaa__vipimo_jum'
+            )
+      )
+
+      itemImg = []
+      pics = picha_bidhaa.objects.filter(picha__owner=duka.owner.user).annotate(
+            rangi=F('color_produ'),
+            size=F('picha__pic_size')
+      )
+      if pics.exists():
+            for im in pics:
+                  itemImg.append({
+                        'picha__picha': im.picha.picha.url,
+                        'picha': im.picha.id,
+                        'id': im.id,
+                        'color_produ': im.rangi,
+                        'bidhaa': im.bidhaa.id
+                  })
+
+      return JsonResponse({
+            'success': True,
+            'products': products,
+            'bidhaa_Rangi': bidhaaRangi,
+            'sized': sized,
+            'img': itemImg,
+            'counter_mode': mode,
+            'counter_id': servicing_counter.id if servicing_counter else 0,
+            'counter_name': servicing_counter.Interprise.name if servicing_counter else '',
+            'counter_staff': f"{servicing_counter.user.user.first_name} {servicing_counter.user.user.last_name}".strip() if servicing_counter else '',
+            'counter_role': servicing_counter.cheo if servicing_counter else '',
+      })
+
+
+@login_required(login_url='login')
+def waiter_counter_activate(request):
+      default_redirect = '/mauzo/waiterpage'
+      next_url = str(request.POST.get('next', '') or request.GET.get('next', '') or '').strip()
+      if not next_url.startswith('/') or next_url.startswith('//'):
+            next_url = default_redirect
+      if not (next_url.startswith('/mauzo/') or next_url.startswith('/userdash')):
+            next_url = default_redirect
+
+      if request.method != 'POST':
+            return redirect(next_url)
+
+      todo = todoFunct(request)
+      counters = todo['waiter_counter']
+
+      if  not counters.exists():
+            return redirect('/userdash')
+
+      try:
+            counter_id = int(request.POST.get('counter', 0))
+      except:
+            return redirect(next_url)
+
+      
+
+      if not counters.filter(pk=counter_id).exists():
+            return redirect(next_url)
+
+      counters.update(servicing=False)
+      counters.filter(pk=counter_id).update(servicing=True)
+
+      return redirect(next_url)
+
+@login_required(login_url='login')
 def  newService(request):
     todo = newInvo_funct(request) 
     if not todo['duka'].Interprise:
@@ -310,8 +718,10 @@ def viewInvo_funct(request):
     else:    
          todo =todoFunct(request)
 
-
+#     is_weiter = todo['waiter_counter'].filter(servicing=True).first() if todo.get('waiter_counter') is not None else None
     duka=todo['duka']
+#     if is_weiter is not None and duka is  None:
+#           duka = is_weiter.Interprise
     emp = request.GET.get('emp',0)
 
     #     contacts= Interprise_contacts.objects.filter(Interprise=duka,show_to_invo=True)
@@ -439,6 +849,90 @@ def viewInvo_funct(request):
     
     } )
     return todo  
+
+
+def viewWaiterInvo_funct(request):
+    """Build print context for waiter orders only (separate from viewInvo_funct)."""
+    intp = request.GET.get('item_valued', '')
+    code = request.GET.get('code', '')
+    lang = int(request.GET.get('lang', 1))
+
+    ctx = _resolve_waiter_context(request)
+    if not ctx.get('ok'):
+          raise ValueError('NO_ACTIVE_WAITER_COUNTER')
+
+    duka = ctx['duka']
+    cheo = ctx['cheo']
+    todo = {
+          'duka': duka,
+          'useri': cheo.user,
+    }
+
+    waiter_scope = Q(waiter_order=cheo)
+    mauzo_qs = mauzoni.objects.filter(
+          waiter_scope,
+          Interprise=duka,
+          By__isnull=True,
+          full_returned=False,
+    )
+
+    if intp != '':
+          mauzo_qs = mauzo_qs.filter(pk=intp)
+    elif code != '':
+          mauzo_qs = mauzo_qs.filter(code=code)
+
+    if not mauzo_qs.exists():
+          raise ValueError('WAITER_ORDER_NOT_FOUND')
+
+    mauzo_ = mauzo_qs.last()
+
+    list_mauzo = mauzoList.objects.filter(mauzo=mauzo_.id).exclude(idadi=F('returned'))
+    reList = []
+    for li in list_mauzo:
+          pic = picha_bidhaa.objects.filter(bidhaa=li.produ.bidhaa.id)
+          picha = ''
+          if pic.exists() and pic.last().picha.picha:
+                picha = pic.last().picha.picha.url
+
+          reList.append({
+                'itm': li,
+                'picha': picha
+          })
+
+    bei_used = []
+    for li in list_mauzo:
+          the_bei = bei_za_bidhaa.objects.filter(item=li.produ.bidhaa.id)
+          for p in the_bei:
+                bei_used.append({
+                      'unit': p.jina,
+                      'qty': p.idadi,
+                      'price': p.bei,
+                      'prod': p.item.id
+                })
+
+    colors = sales_color.objects.filter(mauzo__mauzo=mauzo_.id).exclude(idadi=F('returned'))
+    sizen = sales_size.objects.filter(mauzo__mauzo=mauzo_.id).exclude(idadi=F('returned'))
+
+    # Waiter print uses waiterPayments history for this sale.
+    malipo = waiterPayments.objects.filter(sale=mauzo_.id, confirmed=True).order_by('-pk')
+
+    reg = businessReg.objects.filter(Interprise=duka.id, show_to_invo=True)
+    phone = InterprisePermissions.objects.filter(Interprise=duka.id)
+
+    todo.update({
+          'duka': duka,
+          'reg': reg,
+          'malipo': malipo,
+          'prices': bei_used,
+          'then': {'langSet': lang},
+          'size': sizen,
+          'color': colors,
+          'contact': phone,
+          'the_bill': mauzo_,
+          'list': reList,
+    })
+
+    return todo
 
 def  AllsaleOdaFuct(request):
     todo =todoFunct(request)
@@ -2552,6 +3046,74 @@ def  editOda(request):
        return render(request,'no_OdaFound.html',todo)  
 
 
+def _deduct_stock_for_order(sale):
+      if sale.online:
+            return
+
+      the_list = mauzoList.objects.filter(mauzo=sale)
+      for l in the_list:
+            if l.produ.produced and l.produ.produced.notsure:
+                  productionList.objects.filter(pk=l.produ.produced.id).update(qty=F('qty')+l.idadi)
+            else:
+                  bidhaa_stoku.objects.filter(pk=l.produ.id).update(idadi=F('idadi')-l.idadi)
+
+            if sales_color.objects.filter(mauzo=l.id).exists():
+                  sale_c = sales_color.objects.filter(mauzo=l.id)
+                  for sc in sale_c:
+                        produ_colored.objects.filter(pk=sc.color.id).update(idadi=F('idadi')-sc.idadi)
+
+            if sales_size.objects.filter(mauzo=l.id).exists():
+                  sale_s = sales_size.objects.filter(mauzo=l.id)
+                  for ss in sale_s:
+                        produ_colored.objects.filter(pk=ss.size.id).update(idadi=F('idadi')-ss.idadi)
+
+
+def _restore_stock_for_order(sale):
+      if sale.online:
+            return
+
+      the_list = mauzoList.objects.filter(mauzo=sale)
+      for l in the_list:
+            if l.produ.produced and l.produ.produced.notsure:
+                  productionList.objects.filter(pk=l.produ.produced.id).update(qty=F('qty')-l.idadi)
+            else:
+                  bidhaa_stoku.objects.filter(pk=l.produ.id).update(idadi=F('idadi')+l.idadi)
+
+            if sales_color.objects.filter(mauzo=l.id).exists():
+                  sale_c = sales_color.objects.filter(mauzo=l.id)
+                  for sc in sale_c:
+                        produ_colored.objects.filter(pk=sc.color.id).update(idadi=F('idadi')+sc.idadi)
+
+            if sales_size.objects.filter(mauzo=l.id).exists():
+                  sale_s = sales_size.objects.filter(mauzo=l.id)
+                  for ss in sale_s:
+                        produ_colored.objects.filter(pk=ss.size.id).update(idadi=F('idadi')+ss.idadi)
+
+
+def _parse_waiter_desc(desc):
+      table_name = ''
+      counter_name = 'all'
+      if not desc or not str(desc).startswith('WAITER|'):
+            return {
+                  'table': table_name,
+                  'counter': counter_name,
+            }
+
+      for part in str(desc).split('|'):
+            if '=' not in part:
+                  continue
+            key, value = part.split('=', 1)
+            if key == 'table':
+                  table_name = value
+            if key == 'counter':
+                  counter_name = value
+
+      return {
+            'table': table_name,
+            'counter': counter_name,
+      }
+
+
 @login_required(login_url='login')
 def  change_toInvo(request):
       intp= request.GET.get('item_valued',0)
@@ -2561,22 +3123,7 @@ def  change_toInvo(request):
       if od.exists() and od.last().ilolipwa <= od.last().amount :
             sale = mauzoni.objects.get(pk=intp,Interprise=duka.Interprise.id,order=True)
 
-            if not sale.online:
-                  the_list = mauzoList.objects.filter(mauzo=sale) 
-                  for l in the_list:
-                        if l.produ.produced and l.produ.produced.notsure:
-                              productionList.objects.filter(pk=l.produ.produced.id).update(qty=F('qty')+l.idadi)
-                        else:      
-                              bidhaa_stoku.objects.filter(pk=l.produ.id).update(idadi=F('idadi')-l.idadi)  
-                        if sales_color.objects.filter(mauzo=l.id).exists():
-                              sale_c = sales_color.objects.filter(mauzo=l.id)
-                              for sc in sale_c: 
-                                    produ_colored.objects.filter(pk=sc.color.id).update(idadi=F('idadi')-sc.idadi)         
-
-                        if sales_size.objects.filter(mauzo=l.id).exists():
-                              sale_s = sales_size.objects.filter(mauzo=l.id) 
-                              for ss in sale_s:
-                                    produ_colored.objects.filter(pk=ss.size.id).update(idadi=F('idadi')-ss.idadi)  
+            _deduct_stock_for_order(sale)
             
             sale.order=False
             sale.save()           
@@ -2586,6 +3133,1630 @@ def  change_toInvo(request):
       else:
             msg={'lipa':True,'success':False,'swa':'Oda ya mauzo haikufanikiwa kuwa Ankara Kutokana na kutotambulika','eng':'Sales Order was not converted to invoice the order  '} 
             return redirect('/mauzo/viewOda?item_valued='+str(intp)+'&page='+str(page_num)+'&msg='+json.dumps(msg))
+
+
+def waiter_orders_data(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False})
+
+      ctx = _resolve_waiter_context(request)
+      if not ctx.get('ok'):
+            return JsonResponse({'success': False, 'pending': [], 'printed': [], 'items': {}, 'enable_print': False})
+
+      duka = ctx['duka']
+      cheo = ctx['cheo']
+      device_mode = bool(ctx.get('device_id'))
+
+      waiter_scope = Q(waiter_order=cheo)
+
+      pending_qs = mauzoni.objects.filter(
+            waiter_scope,
+            Interprise=duka,
+            By__isnull=True,
+            full_returned=False,
+            order=True,
+            # desc__startswith='WAITER|'
+      ).select_related('customer_in__area').order_by('-pk')[:50]
+
+      printed_qs = mauzoni.objects.filter(
+            waiter_scope,
+            Interprise=duka,
+            By__isnull=True,
+            full_returned=False,
+            order=False,
+            receved=True,
+            # desc__startswith='WAITER|'
+      ).select_related('customer_in__area').order_by('-pk')[:50]
+
+      pending_ids = [x.id for x in pending_qs]
+      printed_ids = [x.id for x in printed_qs]
+      all_ids = pending_ids + printed_ids
+
+      items_map = {}
+      if all_ids:
+            lines = mauzoList.objects.filter(mauzo__in=all_ids).select_related('produ__bidhaa')
+            for line in lines:
+                  if line.mauzo_id not in items_map:
+                        items_map[line.mauzo_id] = []
+                  items_map[line.mauzo_id].append({
+                        'name': line.produ.bidhaa.bidhaa_jina,
+                        'qty': float(line.idadi),
+                        'unit': line.produ.bidhaa.vipimo,
+                        'price': float(line.bei),
+                        'total': float(line.bei) * float(line.idadi),
+                  })
+
+      def serialize_order(order_obj, status_name):
+            dmeta = _parse_waiter_desc(order_obj.desc)
+            amount = float(order_obj.amount or 0)
+            paid_amount = float(order_obj.waiter_pay or 0)
+            is_paid = paid_amount >= amount and amount > 0
+            table_name = ''
+            place_name = ''
+
+            if getattr(order_obj, 'customer_in_id', None):
+                  try:
+                        table_name = str(order_obj.customer_in.name or '').strip()
+                        area_obj = getattr(order_obj.customer_in, 'area', None)
+                        place_name = str(area_obj.name or '').strip() if area_obj else ''
+                  except:
+                        table_name = ''
+                        place_name = ''
+
+            table_name = table_name or dmeta['table']
+            place_name = place_name or dmeta['counter']
+
+            return {
+                  'id': order_obj.id,
+                  'code': order_obj.code,
+                  'table': table_name,
+                  'place': place_name,
+                  'counter': dmeta['counter'],
+                  'date': str(order_obj.date),
+                  'created': order_obj.tarehe.strftime('%Y-%m-%d %H:%M') if order_obj.tarehe else '',
+                  'amount': amount,
+                  'paid_amount': paid_amount,
+                  'remaining': max(0, amount - paid_amount),
+                  'is_paid': is_paid,
+                  'printed_number': int(order_obj.printed_number or 0),
+                  'status': status_name,
+            }
+
+      pending_data = [serialize_order(o, 'pending') for o in pending_qs]
+      printed_data = [serialize_order(o, 'printed') for o in printed_qs]
+      all_data = pending_data + printed_data
+
+      data = {
+            'success': True,
+            'pending': pending_data,
+            'printed': printed_data,
+            'items': items_map,
+            'enable_print': True if device_mode else bool(cheo.enable_print),
+            'counts': {
+                  'pending': len(pending_data),
+                  'printed': len(printed_data),
+                  'all': len(all_data),
+                  'my_orders': len(all_data),
+                  'paid': len([x for x in all_data if x.get('is_paid')]),
+                  'unpaid': len([x for x in all_data if not x.get('is_paid')]),
+            }
+      }
+      return JsonResponse(data)
+
+
+def _waiter_orders_summary_data(duka):
+      base_qs = mauzoni.objects.filter(
+            Interprise=duka,
+            waiter_order__isnull=False,
+            By__isnull=True,
+            full_returned=False,
+            printed_number__gt=0,
+      )
+
+      grouped = list(
+            base_qs.values(
+                  'waiter_order',
+                  'waiter_order__cheo',
+                  'waiter_order__fanyakazi__jina',
+                  'waiter_order__user__user__first_name',
+                  'waiter_order__user__user__last_name',
+                  'waiter_order__user_entp__Interprise__Intp_code',
+            ).annotate(
+                  orders_count=Count('id'),
+                  total_amount=Sum('amount'),
+            ).order_by('-orders_count', '-total_amount', 'waiter_order__user__user__first_name')
+      )
+
+      rows = []
+      total_amount = 0
+      total_orders = 0
+
+      for row in grouped:
+            waiter_name = str(row.get('waiter_order__fanyakazi__jina') or '').strip()
+            if not waiter_name:
+                  waiter_name = f"{str(row.get('waiter_order__user__user__first_name') or '').strip()} {str(row.get('waiter_order__user__user__last_name') or '').strip()}".strip()
+            if not waiter_name:
+                  waiter_name = str(row.get('waiter_order__cheo') or '').strip() or 'Waiter'
+
+            waiter_code = str(row.get('waiter_order__user_entp__Interprise__Intp_code') or '').strip()
+            orders_count = int(row.get('orders_count') or 0)
+            amount = float(row.get('total_amount') or 0)
+
+            total_orders += orders_count
+            total_amount += amount
+            rows.append({
+                  'waiter_id': row.get('waiter_order'),
+                  'waiter_name': waiter_name,
+                  'waiter_code': waiter_code,
+                  'cheo': str(row.get('waiter_order__cheo') or '').strip() or '-',
+                  'orders_count': orders_count,
+                  'total_amount': amount,
+            })
+
+      return {
+            'rows': rows,
+            'totals': {
+                  'waiters': len(rows),
+                  'orders': total_orders,
+                  'amount': total_amount,
+            }
+      }
+
+
+@login_required(login_url='login')
+def waiter_orders_summary(request):
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+      cheo = todo.get('cheo')
+
+      if not duka or not duka.waiter_counter:
+            return redirect('/userdash')
+
+      can_view_waiter_orders_detail = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_check_up', False)))
+      can_delete_waiter_orders = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_delete_order', False)))
+      can_clear_waiter_payments = bool(
+            cheo and (
+                  getattr(cheo, 'owner', False)
+                  or (getattr(cheo, 'waiter_check_up', False) and getattr(cheo, 'akaunti', False))
+            )
+      )
+
+      try:
+            selected_waiter_id = int(request.GET.get('waiter', 0) or 0)
+      except:
+            selected_waiter_id = 0
+
+      if selected_waiter_id and not can_view_waiter_orders_detail:
+            selected_waiter_id = 0
+
+      selected_waiter_orders = []
+      selected_waiter_name = ''
+      selected_waiter_code = ''
+      selected_waiter_orders_count = 0
+      selected_waiter_orders_total_amount = 0
+      selected_waiter_has_non_cash_payments = False
+      selected_waiter_payment_accounts = []
+      if selected_waiter_id:
+            selected_qs = mauzoni.objects.filter(
+                  Interprise=duka,
+                  waiter_order__id=selected_waiter_id,
+                  waiter_order__isnull=False,
+                  By__isnull=True,
+                  full_returned=False,
+                  printed_number__gt=0,
+            ).select_related('customer_in__area').order_by('-pk')[:120]
+
+            if selected_qs.exists():
+                  waiter_obj = selected_qs.first().waiter_order
+                  selected_waiter_code = ''
+                  try:
+                        selected_waiter_code = str(waiter_obj.user_entp.Interprise.Intp_code or '').strip()
+                  except:
+                        selected_waiter_code = ''
+                  selected_waiter_name = ''
+                  try:
+                        selected_waiter_name = str(waiter_obj.fanyakazi.jina or '').strip()
+                  except:
+                        selected_waiter_name = ''
+                  if not selected_waiter_name:
+                        selected_waiter_name = f"{str(waiter_obj.user.user.first_name or '').strip()} {str(waiter_obj.user.user.last_name or '').strip()}".strip()
+                  if not selected_waiter_name:
+                        selected_waiter_name = str(waiter_obj.cheo or '').strip() or 'Waiter'
+
+                  for od in selected_qs:
+                        table_name = '-'
+                        place_name = '-'
+                        try:
+                              if od.customer_in:
+                                    table_name = str(od.customer_in.name or '').strip() or '-'
+                                    place_name = str(od.customer_in.area.name or '').strip() if od.customer_in.area else '-'
+                        except:
+                              table_name = '-'
+                              place_name = '-'
+
+                        row_amount = float(od.amount or 0)
+                        selected_waiter_orders_total_amount += row_amount
+                        selected_waiter_orders.append({
+                              'id': od.id,
+                              'code': od.code,
+                              'date': od.tarehe,
+                              'amount': row_amount,
+                              'table': table_name,
+                              'place': place_name,
+                        })
+
+                  selected_sale_ids = [x.id for x in selected_qs]
+                  non_cash_groups = list(
+                        waiterPayments.objects.filter(
+                              waiter__id=selected_waiter_id,
+                              sale__id__in=selected_sale_ids,
+                              confirmed=True,
+                              account__isnull=False,
+                        ).exclude(
+                              account__aina__iexact='Cash'
+                        ).values(
+                              'account',
+                              'account__Akaunt_name',
+                              'account__aina',
+                        ).annotate(
+                              amount=Sum('amount'),
+                              records=Count('id'),
+                        ).order_by('account__Akaunt_name')
+                  )
+
+                  non_cash_total = 0
+                  if non_cash_groups:
+                        selected_waiter_has_non_cash_payments = True
+                        for row in non_cash_groups:
+                              acc_amount = float(row.get('amount') or 0)
+                              non_cash_total += acc_amount
+                              selected_waiter_payment_accounts.append({
+                                    'account_id': int(row.get('account') or 0),
+                                    'name': str(row.get('account__Akaunt_name') or '').strip() or '-',
+                                    'type': str(row.get('account__aina') or '').strip() or '-',
+                                    'amount': acc_amount,
+                                    'default_amount': acc_amount,
+                                    'records': int(row.get('records') or 0),
+                                    'is_cash': False,
+                              })
+
+                  cash_default_amount = max(0, float(selected_waiter_orders_total_amount or 0) - float(non_cash_total or 0))
+                  cash_account = PaymentAkaunts.objects.filter(
+                        Interprise=duka,
+                        aina__iexact='Cash'
+                  ).order_by('pk').last()
+                  if cash_account:
+                        selected_waiter_payment_accounts.append({
+                              'account_id': cash_account.id,
+                              'name': str(cash_account.Akaunt_name or '').strip() or '-',
+                              'type': str(cash_account.aina or '').strip() or '-',
+                              'amount': cash_default_amount,
+                              'default_amount': cash_default_amount,
+                              'records': 0,
+                              'is_cash': True,
+                        })
+
+            selected_waiter_orders_count = len(selected_waiter_orders)
+
+      todo.update({
+            'waiter_summary': _waiter_orders_summary_data(duka),
+            'can_view_waiter_orders_detail': can_view_waiter_orders_detail,
+            'can_delete_waiter_orders': can_delete_waiter_orders,
+            'can_clear_waiter_payments': can_clear_waiter_payments,
+            'selected_waiter_id': selected_waiter_id,
+            'selected_waiter_name': selected_waiter_name,
+            'selected_waiter_code': selected_waiter_code,
+            'selected_waiter_orders': selected_waiter_orders,
+            'selected_waiter_orders_count': selected_waiter_orders_count,
+            'selected_waiter_orders_total_amount': selected_waiter_orders_total_amount,
+            'selected_waiter_has_non_cash_payments': selected_waiter_has_non_cash_payments,
+            'selected_waiter_payment_accounts': selected_waiter_payment_accounts,
+            'selected_waiter_payment_accounts_json': json.dumps(selected_waiter_payment_accounts),
+      })
+      return render(request, 'waiter_orders_summary.html', todo)
+
+
+@login_required(login_url='login')
+def waiter_orders_summary_data(request):
+      if request.method not in ['GET', 'POST']:
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+
+      if not duka or not duka.waiter_counter:
+            return JsonResponse({'success': False, 'msg': 'Waiter counter is disabled'})
+
+      summary = _waiter_orders_summary_data(duka)
+      return JsonResponse({
+            'success': True,
+            'rows': summary['rows'],
+            'totals': summary['totals'],
+      })
+
+
+@login_required(login_url='login')
+def waiter_summary_order_details(request):
+      if request.method not in ['GET', 'POST']:
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            order_id = int(request.GET.get('order', 0) or request.POST.get('order', 0) or 0)
+      except:
+            order_id = 0
+
+      if not order_id:
+            return JsonResponse({'success': False, 'msg': 'Invalid order id'})
+
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+      cheo = todo.get('cheo')
+
+      if not duka or not duka.waiter_counter:
+            return JsonResponse({'success': False, 'msg': 'Waiter counter is disabled'})
+
+      can_view_waiter_orders_detail = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_check_up', False)))
+      can_delete_waiter_orders = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_delete_order', False)))
+      if not can_view_waiter_orders_detail:
+            return JsonResponse({'success': False, 'msg': 'Permission denied'})
+
+      sale = mauzoni.objects.filter(
+            pk=order_id,
+            Interprise=duka,
+            waiter_order__isnull=False,
+            By__isnull=True,
+            full_returned=False,
+            printed_number__gt=0,
+      ).select_related('customer_in__area').last()
+
+      if not sale:
+            return JsonResponse({'success': False, 'msg': 'Order not found'})
+
+      items = []
+      lines = mauzoList.objects.filter(mauzo=sale.id).select_related('produ__bidhaa')
+      for ln in lines:
+            qty = float(ln.idadi or 0)
+            price = float(ln.bei or 0)
+            items.append({
+                  'name': str(ln.produ.bidhaa.bidhaa_jina or '').strip(),
+                  'qty': qty,
+                  'unit': str(ln.produ.bidhaa.vipimo or '').strip(),
+                  'price': price,
+                  'total': qty * price,
+            })
+
+      table_name = '-'
+      place_name = '-'
+      try:
+            if sale.customer_in:
+                  table_name = str(sale.customer_in.name or '').strip() or '-'
+                  place_name = str(sale.customer_in.area.name or '').strip() if sale.customer_in.area else '-'
+      except:
+            table_name = '-'
+            place_name = '-'
+
+      return JsonResponse({
+            'success': True,
+            'can_delete': can_delete_waiter_orders,
+            'order': {
+                  'id': sale.id,
+                  'code': sale.code,
+                  'table': table_name,
+                  'place': place_name,
+                  'date': sale.tarehe.strftime('%d/%m/%Y %H:%M') if sale.tarehe else '',
+                  'amount': float(sale.amount or 0),
+            },
+            'items': items,
+      })
+
+
+@login_required(login_url='login')
+def waiter_summary_delete_order(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            order_id = int(request.POST.get('order', 0) or 0)
+      except:
+            order_id = 0
+
+      if not order_id:
+            return JsonResponse({'success': False, 'msg': 'Invalid order id'})
+
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+      cheo = todo.get('cheo')
+
+      if not duka or not duka.waiter_counter:
+            return JsonResponse({'success': False, 'msg': 'Waiter counter is disabled'})
+
+      can_delete_waiter_orders = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_delete_order', False)))
+      if not can_delete_waiter_orders:
+            return JsonResponse({'success': False, 'msg': 'Permission denied'})
+
+      sale = mauzoni.objects.filter(
+            pk=order_id,
+            Interprise=duka,
+            waiter_order__isnull=False,
+            By__isnull=True,
+            full_returned=False,
+            printed_number__gt=0,
+      ).last()
+
+      if not sale:
+            return JsonResponse({'success': False, 'msg': 'Order not found'})
+
+      with transaction.atomic():
+            _restore_stock_for_order(sale)
+            mauzoList.objects.filter(mauzo=sale.id).delete()
+            sale.delete()
+
+      return JsonResponse({'success': True})
+
+
+@login_required(login_url='login')
+def waiter_summary_waiter_payment_records(request):
+      if request.method not in ['GET', 'POST']:
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            waiter_id = int(request.GET.get('waiter', 0) or request.POST.get('waiter', 0) or 0)
+            account_id = int(request.GET.get('account', 0) or request.POST.get('account', 0) or 0)
+      except:
+            return JsonResponse({'success': False, 'msg': 'Invalid data'})
+
+      if not waiter_id or not account_id:
+            return JsonResponse({'success': False, 'msg': 'Waiter and account required'})
+
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+      cheo = todo.get('cheo')
+
+      if not duka or not duka.waiter_counter:
+            return JsonResponse({'success': False, 'msg': 'Waiter counter is disabled'})
+
+      can_view_waiter_orders_detail = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_check_up', False)))
+      if not can_view_waiter_orders_detail:
+            return JsonResponse({'success': False, 'msg': 'Permission denied'})
+
+      selected_sale_ids = list(
+            mauzoni.objects.filter(
+                  Interprise=duka,
+                  waiter_order__id=waiter_id,
+                  waiter_order__isnull=False,
+                  By__isnull=True,
+                  full_returned=False,
+                  printed_number__gt=0,
+            ).values_list('id', flat=True)
+      )
+
+      if not selected_sale_ids:
+            return JsonResponse({'success': True, 'records': []})
+
+      records_qs = waiterPayments.objects.filter(
+            waiter__id=waiter_id,
+            sale__id__in=selected_sale_ids,
+            account__id=account_id,
+            confirmed=True,
+      ).exclude(account__aina__iexact='Cash').select_related('sale').order_by('-pk')[:120]
+
+      records = []
+      for rp in records_qs:
+            records.append({
+                  'customerName': str(rp.customerName or '').strip() or '-',
+                  'amount': float(rp.amount or 0),
+                  'order': str(rp.sale.code or '').strip() if rp.sale else '-',
+                  'date': rp.tarehe.strftime('%d/%m/%Y %H:%M') if rp.tarehe else '',
+            })
+
+      return JsonResponse({'success': True, 'records': records})
+
+
+@login_required(login_url='login')
+def waiter_summary_clear_waiter_payments(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            waiter_id = int(request.POST.get('waiter', 0) or 0)
+            raw_payments = request.POST.get('payments', '[]')
+      except:
+            return JsonResponse({'success': False, 'msg': 'Invalid data'})
+
+      if not waiter_id:
+            return JsonResponse({'success': False, 'msg': 'Waiter required'})
+
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+      cheo = todo.get('cheo')
+
+      if not duka or not duka.waiter_counter:
+            return JsonResponse({'success': False, 'msg': 'Waiter counter is disabled'})
+
+      can_clear_waiter_payments = bool(
+            cheo and (
+                  getattr(cheo, 'owner', False)
+                  or (getattr(cheo, 'waiter_check_up', False) and getattr(cheo, 'akaunti', False))
+            )
+      )
+      if not can_clear_waiter_payments:
+            return JsonResponse({'success': False, 'msg': 'Permission denied'})
+
+      waiter_obj = InterprisePermissions.objects.filter(pk=waiter_id, Interprise=duka).last()
+      if not waiter_obj:
+            return JsonResponse({'success': False, 'msg': 'Waiter not found'})
+
+      try:
+            payments_data = json.loads(raw_payments or '[]')
+      except:
+            payments_data = []
+
+      if not isinstance(payments_data, list):
+            return JsonResponse({'success': False, 'msg': 'Invalid payments format'})
+
+      selected_qs = mauzoni.objects.filter(
+            Interprise=duka,
+            waiter_order__id=waiter_id,
+            waiter_order__isnull=False,
+            By__isnull=True,
+            full_returned=False,
+            printed_number__gt=0,
+      ).order_by('pk')
+
+      if not selected_qs.exists():
+            return JsonResponse({'success': False, 'msg': 'No uncleared waiter orders found'})
+
+      selected_sale_ids = list(selected_qs.values_list('id', flat=True))
+      total_orders_amount = float(selected_qs.aggregate(s=Sum('amount')).get('s') or 0)
+
+      non_cash_recorded_total = float(
+            waiterPayments.objects.filter(
+                  waiter__id=waiter_id,
+                  sale__id__in=selected_sale_ids,
+                  confirmed=True,
+                  account__isnull=False,
+            ).exclude(account__aina__iexact='Cash').aggregate(
+                  s=Sum('amount')
+            ).get('s') or 0
+      )
+
+      posted_amount_by_account = {}
+      for row in payments_data:
+            if not isinstance(row, dict):
+                  continue
+            try:
+                  acc_id = int(row.get('account_id', 0) or 0)
+                  acc_amount = float(row.get('amount', 0) or 0)
+            except:
+                  continue
+            if acc_id and acc_amount > 0:
+                  posted_amount_by_account[acc_id] = acc_amount
+
+      if not posted_amount_by_account:
+            return JsonResponse({'success': False, 'msg': 'Amount must be greater than zero'})
+
+      pay_accounts = {
+            x.id: x for x in PaymentAkaunts.objects.filter(
+                  Interprise=duka,
+                  pk__in=list(posted_amount_by_account.keys())
+            )
+      }
+      if len(pay_accounts.keys()) != len(posted_amount_by_account.keys()):
+            return JsonResponse({'success': False, 'msg': 'Some payment accounts are invalid'})
+
+      clear_amount = float(sum(posted_amount_by_account.values()) or 0)
+      if clear_amount <= 0:
+            return JsonResponse({'success': False, 'msg': 'Amount must be greater than zero'})
+
+      # Prevent over-clearing against current waiter orders total.
+      if clear_amount > float(total_orders_amount or 0):
+            return JsonResponse({'success': False, 'msg': 'Selected amount exceeds waiter total amount'})
+
+      waiter_name = ''
+      try:
+            waiter_name = str(waiter_obj.fanyakazi.jina or '').strip()
+      except:
+            waiter_name = ''
+      if not waiter_name:
+            waiter_name = f"{str(waiter_obj.user.user.first_name or '').strip()} {str(waiter_obj.user.user.last_name or '').strip()}".strip()
+      if not waiter_name:
+            waiter_name = str(waiter_obj.cheo or '').strip() or 'Waiter'
+
+      with transaction.atomic():
+            clear_rec = waiter_clearing()
+            clear_rec.waiter = waiter_obj
+            clear_rec.amount = clear_amount
+            clear_rec.tarehe = datetime.datetime.now(tz=timezone.utc)
+            clear_rec.By = cheo
+            clear_rec.save()
+
+            # Record account movements per entered payment account.
+            for account_id, acc_amount in posted_amount_by_account.items():
+                  acc_obj = pay_accounts.get(account_id)
+                  if not acc_obj:
+                        continue
+                  before = float(acc_obj.Amount or 0)
+                  after = before + float(acc_amount)
+                  PaymentAkaunts.objects.filter(pk=acc_obj.id).update(Amount=after)
+
+                  cash_in = wekaCash()
+                  cash_in.Interprise = duka
+                  cash_in.tarehe = datetime.datetime.now(tz=timezone.utc)
+                  cash_in.Akaunt = acc_obj
+                  cash_in.Amount = float(acc_amount)
+                  cash_in.before = before
+                  cash_in.After = after
+                  cash_in.kutoka = f'WAITER CLEARING - {waiter_name}'
+                  cash_in.maelezo = f'Orders total: {total_orders_amount}'
+                  cash_in.by = cheo
+                  cash_in.order = True
+                  cash_in.from_waiter_payments = clear_rec
+                  cash_in.save()
+
+            # Allocate paid amount through waiter orders in sequence.
+            paidAmo = float(clear_amount or 0)
+            for od in selected_qs:
+                  order_amount = float(od.amount or 0)
+                  if paidAmo <= 0:
+                        break
+
+                  if paidAmo >= order_amount:
+                        order_paid = order_amount
+                        new_full_paid = True
+                        new_by_id = cheo.id if cheo else None
+                        new_clear_id = clear_rec.id
+                        paidAmo = float(paidAmo - order_amount)
+                  else:
+                        order_paid = float(paidAmo)
+                        new_full_paid = False
+                        new_by_id = None
+                        new_clear_id = None
+                        paidAmo = 0
+
+                  mauzoni.objects.filter(pk=od.id).update(
+                        ilolipwa=order_paid,
+                        waiter_pay=order_paid,
+                        full_paid=new_full_paid,
+                        By_id=new_by_id,
+                        waiter_order_cleared_id=new_clear_id,
+                  )
+
+                  if paidAmo <= 0 and order_paid < order_amount:
+                        break
+
+      return JsonResponse({
+            'success': True,
+            'amount': clear_amount,
+            'total_orders_amount': total_orders_amount,
+            'non_cash_recorded_total': non_cash_recorded_total,
+      })
+
+
+def _waiter_person_name(counter_obj, default_name='Waiter'):
+      if not counter_obj:
+            return default_name
+
+      name = ''
+      try:
+            name = str(counter_obj.fanyakazi.jina or '').strip()
+      except:
+            name = ''
+
+      if not name:
+            try:
+                  name = f"{str(counter_obj.user.user.first_name or '').strip()} {str(counter_obj.user.user.last_name or '').strip()}".strip()
+            except:
+                  name = ''
+
+      if not name:
+            try:
+                  name = str(counter_obj.cheo or '').strip()
+            except:
+                  name = ''
+
+      return name or default_name
+
+
+def _waiter_report_period_dates(period_key, custom_from='', custom_to=''):
+      today = date.today()
+
+      if period_key == 'day':
+            return {
+                  'start': today,
+                  'end': today,
+                  'label': 'Siku ya Leo',
+            }
+
+      if period_key == 'week':
+            week_start = today - timedelta(days=today.weekday())
+            return {
+                  'start': week_start,
+                  'end': today,
+                  'label': 'Wiki Hii',
+            }
+
+      if period_key == 'month':
+            month_start = today.replace(day=1)
+            return {
+                  'start': month_start,
+                  'end': today,
+                  'label': 'Mwezi Huu',
+            }
+
+      if period_key == 'custom':
+            try:
+                  start_date = datetime.datetime.strptime(str(custom_from or '').strip(), '%Y-%m-%d').date()
+                  end_date = datetime.datetime.strptime(str(custom_to or '').strip(), '%Y-%m-%d').date()
+            except:
+                  return None
+
+            if end_date < start_date:
+                  return None
+
+            return {
+                  'start': start_date,
+                  'end': end_date,
+                  'label': 'Custom Period',
+            }
+
+      return None
+
+
+def _waiter_cleared_period_rows(duka, waiter_obj, custom_from='', custom_to=''):
+      rows = []
+      base_qs = mauzoni.objects.filter(
+            Interprise=duka,
+            waiter_order=waiter_obj,
+            waiter_order_cleared__isnull=False,
+            full_returned=False,
+      )
+
+      period_defs = [
+            ('day', 'Siku' if waiter_obj.user.langSet ==  0 else  'Day'),
+            ('week', 'Wiki' if waiter_obj.user.langSet ==  0 else  'Week'),
+            ('month', 'Mwezi' if waiter_obj.user.langSet ==  0 else  'Month'),
+            ('custom', 'Weka Muda' if waiter_obj.user.langSet ==  0 else  'Custom Period'),
+      ]
+
+      for period_key, period_title in period_defs:
+            period_meta = _waiter_report_period_dates(period_key, custom_from, custom_to)
+            if not period_meta:
+                  rows.append({
+                        'period': period_key,
+                        'title': period_title,
+                        'start': custom_from if period_key == 'custom' else '',
+                        'end': custom_to if period_key == 'custom' else '',
+                        'orders': 0,
+                        'amount': 0,
+                  })
+                  continue
+
+            qs = base_qs.filter(
+                  waiter_order_cleared__tarehe__date__gte=period_meta['start'],
+                  waiter_order_cleared__tarehe__date__lte=period_meta['end'],
+            )
+            agg = qs.aggregate(
+                  orders_count=Count('id'),
+                  total_amount=Sum('amount'),
+            )
+
+            rows.append({
+                  'period': period_key,
+                  'title': period_title,
+                  'start': period_meta['start'].strftime('%Y-%m-%d'),
+                  'end': period_meta['end'].strftime('%Y-%m-%d'),
+                  'orders': int(agg.get('orders_count') or 0),
+                  'amount': float(agg.get('total_amount') or 0),
+            })
+
+      return rows
+
+
+@login_required(login_url='login')
+def waiter_cleared_report(request):
+      todo = newInvo_funct(request)
+
+      if not todo.get('waiter_counter', False):
+            return redirect('/userdash')
+
+      counters = todo['waiter_counter']
+      servicing_counter = counters.filter(servicing=True)
+
+      if not servicing_counter.exists():
+            todo.update({'waiter_counters': counters})
+            return render(request, 'waiter_counter_select.html', todo)
+
+      cheo = servicing_counter.last()
+      duka = cheo.Interprise
+
+      if not duka or not duka.waiter_counter:
+            return redirect('/userdash')
+
+      custom_from = str(request.GET.get('from', '') or '').strip()
+      custom_to = str(request.GET.get('to', '') or '').strip()
+      rows = _waiter_cleared_period_rows(duka, cheo, custom_from, custom_to)
+
+      todo.update({
+            'servicing_counter': cheo,
+            'waiter_name': _waiter_person_name(cheo, 'Waiter'),
+            'period_rows': rows,
+            'custom_from': custom_from,
+            'custom_to': custom_to,
+      })
+      return render(request, 'waiter_cleared_report.html', todo)
+
+
+@login_required(login_url='login')
+def waiter_cleared_report_clearings(request):
+      if request.method not in ['GET', 'POST']:
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      period_key = str(request.GET.get('period', '') or request.POST.get('period', '') or '').strip().lower()
+      custom_from = str(request.GET.get('from', '') or request.POST.get('from', '') or '').strip()
+      custom_to = str(request.GET.get('to', '') or request.POST.get('to', '') or '').strip()
+
+      period_meta = _waiter_report_period_dates(period_key, custom_from, custom_to)
+      if not period_meta:
+            return JsonResponse({'success': False, 'msg': 'Invalid period'})
+
+      ctx = _resolve_waiter_context(request)
+      if not ctx.get('ok'):
+            return JsonResponse({'success': False, 'msg': str(ctx.get('msg') or 'No active waiter counter')})
+
+      duka = ctx['duka']
+      cheo = ctx['cheo']
+
+      clearings = waiter_clearing.objects.filter(
+            waiter=cheo,
+            tarehe__date__gte=period_meta['start'],
+            tarehe__date__lte=period_meta['end'],
+      ).select_related(
+            'By__fanyakazi',
+            'By__user__user'
+      ).order_by('-pk')
+
+      rows = []
+      for rec in clearings:
+            order_qs = mauzoni.objects.filter(
+                  Interprise=duka,
+                  waiter_order=cheo,
+                  waiter_order_cleared=rec,
+                  full_returned=False,
+            )
+            order_agg = order_qs.aggregate(
+                  c=Count('id'),
+                  s=Sum('amount'),
+            )
+
+            rows.append({
+                  'id': rec.id,
+                  'date': rec.tarehe.strftime('%d/%m/%Y %H:%M') if rec.tarehe else '',
+                  'amount': float(rec.amount or 0),
+                  'orders_count': int(order_agg.get('c') or 0),
+                  'orders_amount': float(order_agg.get('s') or 0),
+                  'by_name': _waiter_person_name(rec.By, '-'),
+            })
+
+      return JsonResponse({
+            'success': True,
+            'period_label': period_meta['label'],
+            'period_start': period_meta['start'].strftime('%Y-%m-%d'),
+            'period_end': period_meta['end'].strftime('%Y-%m-%d'),
+            'rows': rows,
+      })
+
+
+@login_required(login_url='login')
+def waiter_cleared_report_clearing_orders(request):
+      if request.method not in ['GET', 'POST']:
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            clearing_id = int(request.GET.get('clearing', 0) or request.POST.get('clearing', 0) or 0)
+      except:
+            clearing_id = 0
+
+      if not clearing_id:
+            return JsonResponse({'success': False, 'msg': 'Invalid clearing id'})
+
+      ctx = _resolve_waiter_context(request)
+      if not ctx.get('ok'):
+            return JsonResponse({'success': False, 'msg': str(ctx.get('msg') or 'No active waiter counter')})
+
+      duka = ctx['duka']
+      cheo = ctx['cheo']
+
+      clearing_obj = waiter_clearing.objects.filter(
+            pk=clearing_id,
+            waiter=cheo,
+      ).last()
+      if not clearing_obj:
+            return JsonResponse({'success': False, 'msg': 'Clearing record not found'})
+
+      orders_qs = mauzoni.objects.filter(
+            Interprise=duka,
+            waiter_order=cheo,
+            waiter_order_cleared=clearing_obj,
+            full_returned=False,
+      ).select_related('customer_in__area').order_by('-pk')
+
+      rows = []
+      for od in orders_qs:
+            table_name = '-'
+            place_name = '-'
+            try:
+                  if od.customer_in:
+                        table_name = str(od.customer_in.name or '').strip() or '-'
+                        place_name = str(od.customer_in.area.name or '').strip() if od.customer_in.area else '-'
+            except:
+                  table_name = '-'
+                  place_name = '-'
+
+            rows.append({
+                  'id': od.id,
+                  'code': od.code,
+                  'date': od.tarehe.strftime('%d/%m/%Y %H:%M') if od.tarehe else '',
+                  'amount': float(od.amount or 0),
+                  'table': table_name,
+                  'place': place_name,
+            })
+
+      return JsonResponse({
+            'success': True,
+            'clearing': {
+                  'id': clearing_obj.id,
+                  'amount': float(clearing_obj.amount or 0),
+                  'date': clearing_obj.tarehe.strftime('%d/%m/%Y %H:%M') if clearing_obj.tarehe else '',
+            },
+            'rows': rows,
+      })
+
+
+@login_required(login_url='login')
+def waiter_cleared_report_order_items(request):
+      if request.method not in ['GET', 'POST']:
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            order_id = int(request.GET.get('order', 0) or request.POST.get('order', 0) or 0)
+      except:
+            order_id = 0
+
+      if not order_id:
+            return JsonResponse({'success': False, 'msg': 'Invalid order id'})
+
+      ctx = _resolve_waiter_context(request)
+      if not ctx.get('ok'):
+            return JsonResponse({'success': False, 'msg': str(ctx.get('msg') or 'No active waiter counter')})
+
+      duka = ctx['duka']
+      cheo = ctx['cheo']
+
+      sale = mauzoni.objects.filter(
+            pk=order_id,
+            Interprise=duka,
+            waiter_order=cheo,
+            waiter_order_cleared__isnull=False,
+            full_returned=False,
+      ).select_related('customer_in__area').last()
+
+      if not sale:
+            return JsonResponse({'success': False, 'msg': 'Order not found'})
+
+      items = []
+      lines = mauzoList.objects.filter(mauzo=sale.id).select_related('produ__bidhaa')
+      for ln in lines:
+            qty = float(ln.idadi or 0)
+            price = float(ln.bei or 0)
+            items.append({
+                  'name': str(ln.produ.bidhaa.bidhaa_jina or '').strip(),
+                  'qty': qty,
+                  'unit': str(ln.produ.bidhaa.vipimo or '').strip(),
+                  'price': price,
+                  'total': qty * price,
+            })
+
+      table_name = '-'
+      place_name = '-'
+      try:
+            if sale.customer_in:
+                  table_name = str(sale.customer_in.name or '').strip() or '-'
+                  place_name = str(sale.customer_in.area.name or '').strip() if sale.customer_in.area else '-'
+      except:
+            table_name = '-'
+            place_name = '-'
+
+      return JsonResponse({
+            'success': True,
+            'order': {
+                  'id': sale.id,
+                  'code': sale.code,
+                  'table': table_name,
+                  'place': place_name,
+                  'date': sale.tarehe.strftime('%d/%m/%Y %H:%M') if sale.tarehe else '',
+                  'amount': float(sale.amount or 0),
+            },
+            'items': items,
+      })
+
+
+@login_required(login_url='login')
+def waiter_clearing_list(request):
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+      cheo = todo.get('cheo')
+
+      if not duka or not duka.waiter_counter:
+            return redirect('/userdash')
+
+      can_view = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_check_up', False)))
+      if not can_view:
+            return redirect('/userdash')
+
+      qs = waiter_clearing.objects.filter(
+            waiter__Interprise=duka
+      ).select_related(
+            'waiter__fanyakazi',
+            'waiter__user__user',
+            'By__fanyakazi',
+            'By__user__user',
+      ).order_by('-pk')
+
+      paginator = Paginator(qs, 15)
+      page_num = request.GET.get('page', 1)
+      try:
+            page_obj = paginator.page(page_num)
+      except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+
+      rows = []
+      for rec in page_obj:
+            waiter_name = _waiter_person_name(rec.waiter, 'Waiter')
+            by_name = _waiter_person_name(rec.By, '-')
+
+            rows.append({
+                  'id': rec.id,
+                  'waiter_name': waiter_name,
+                  'amount': rec.amount,
+                  'tarehe': rec.tarehe,
+                  'by_name': by_name,
+            })
+
+      todo.update({
+            'clearing_rows': rows,
+            'page_obj': page_obj,
+            'paginator': paginator,
+      })
+      return render(request, 'waiter_clearing_list.html', todo)
+
+
+def waiter_print_order(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            order_id = int(request.POST.get('order', 0))
+      except:
+            return JsonResponse({'success': False, 'msg': 'Invalid order id'})
+
+      ctx = _resolve_waiter_context(request)
+      if not ctx.get('ok'):
+            return JsonResponse({'success': False, 'msg': str(ctx.get('msg') or 'No active waiter counter')})
+
+      duka = ctx['duka']
+      cheo = ctx['cheo']
+      device_mode = bool(ctx.get('device_id'))
+
+      if not device_mode and not bool(cheo.enable_print):
+            return JsonResponse({'success': False, 'msg': 'Print mode is disabled'})
+
+      waiter_scope = Q(waiter_order=cheo)
+      with transaction.atomic():
+            sale = mauzoni.objects.select_for_update().filter(
+                  waiter_scope,
+                  pk=order_id,
+                  Interprise=duka,
+                  By__isnull=True,
+                  full_returned=False,
+            ).last()
+
+            if not sale:
+                  return JsonResponse({'success': False, 'msg': 'Order not found'})
+
+            first_print = int(sale.printed_number or 0) <= 0
+
+            if first_print:
+                  _deduct_stock_for_order(sale)
+
+            sale.order = False
+            sale.receved = True
+            sale.Packed_at = datetime.datetime.now(tz=timezone.utc)
+            sale.printed_number = int(sale.printed_number or 0) + 1
+            sale.save(update_fields=['order', 'receved', 'Packed_at', 'printed_number'])
+
+      return JsonResponse({
+            'success': True,
+            'first_print': first_print,
+            'printed_number': int(sale.printed_number or 0),
+      })
+
+
+def waiter_clear_order(request):
+      # Backward-compatible alias to the new print endpoint.
+      return waiter_print_order(request)
+
+
+def waiter_delete_order(request):
+      try:
+            if request.method != 'POST':
+                  return JsonResponse({'success': False})
+
+            try:
+                  order_id = int(request.POST.get('order', 0))
+            except:
+                  return JsonResponse({'success': False, 'msg': 'Invalid order id'})
+
+            ctx = _resolve_waiter_context(request)
+            if not ctx.get('ok'):
+                  return JsonResponse({'success': False, 'msg': str(ctx.get('msg') or 'No active waiter counter')})
+
+            duka = ctx['duka']
+            cheo = ctx['cheo']
+
+            waiter_scope = Q(waiter_order=cheo)
+            od = mauzoni.objects.filter(
+                  waiter_scope,
+                  pk=order_id,
+                  Interprise=duka,
+                  By__isnull=True,
+                  full_returned=False,
+            )
+
+            if not od.exists():
+                  return JsonResponse({'success': False, 'msg': 'Order not found'})
+
+            sale = od.last()
+            if not sale.order:
+                  return JsonResponse({'success': False, 'msg': 'Printed orders cannot be deleted'})
+
+            with transaction.atomic():
+                  mauzoList.objects.filter(mauzo=sale.id).delete()
+                  sale.delete()
+
+            return JsonResponse({'success': True})
+      except:
+           traceback.print_exc()
+           return JsonResponse({'success': False, 'msg': 'An error occurred while deleting the order'})
+
+
+def waiter_pay_order(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            order_id = int(request.POST.get('order', 0))
+            pay_amount = float(request.POST.get('amount', 0) or 0)
+            akaunt_id = int(request.POST.get('akaunt', 0) or 0)
+            customer_name = str(request.POST.get('customer_name', '') or '').strip()
+      except:
+            return JsonResponse({'success': False, 'msg': 'Invalid data'})
+
+      if pay_amount <= 0:
+            return JsonResponse({'success': False, 'msg': 'Amount must be greater than zero'})
+
+      if not akaunt_id:
+            return JsonResponse({'success': False, 'msg': 'Payment account required'})
+
+      ctx = _resolve_waiter_context(request)
+      if not ctx.get('ok'):
+            return JsonResponse({'success': False, 'msg': str(ctx.get('msg') or 'No active waiter counter')})
+
+      duka = ctx['duka']
+      cheo = ctx['cheo']
+
+      pay_acc = PaymentAkaunts.objects.filter(pk=akaunt_id, Interprise=duka.id).last()
+      if not pay_acc:
+            return JsonResponse({'success': False, 'msg': 'Payment account not found'})
+
+      waiter_scope = Q(waiter_order=cheo)
+      od = mauzoni.objects.filter(
+            waiter_scope,
+            pk=order_id,
+            Interprise=duka,
+            By__isnull=True,
+            full_returned=False,
+      )
+
+      if not od.exists():
+            return JsonResponse({'success': False, 'msg': 'Order not found'})
+
+      sale = od.last()
+      amount = float(sale.amount or 0)
+      already_paid = float(sale.waiter_pay or 0)
+      remaining = max(0, amount - already_paid)
+
+      if remaining <= 0:
+            return JsonResponse({'success': False, 'msg': 'Order already fully paid'})
+
+      actual_payment = min(pay_amount, remaining)
+
+      with transaction.atomic():
+            wp = waiterPayments()
+            wp.waiter = cheo
+            wp.amount = actual_payment
+            wp.tarehe = datetime.datetime.now(tz=timezone.utc)
+            wp.account = pay_acc
+            wp.sale = sale
+            wp.confirmed = True
+            wp.customerName = customer_name
+            wp.save()
+
+            new_paid = already_paid + actual_payment
+            mauzoni.objects.filter(pk=sale.id).update(waiter_pay=new_paid)
+
+            if customer_name:
+                  mauzoni.objects.filter(pk=sale.id).update(mteja_jina=customer_name)
+
+      return JsonResponse({
+            'success': True,
+            'paid_amount': new_paid,
+            'remaining': max(0, amount - new_paid),
+            'is_paid': new_paid >= amount,
+      })
+
+
+@login_required(login_url='login')
+def waiter_set_pin(request):
+      """Allow a waiter user to set or change their own waiter PIN."""
+      todo = todoFunct(request)
+      counters = todo.get('waiter_counter')
+      if counters is None or not counters.exists():
+            return redirect('/userdash')
+
+      if request.method == 'POST':
+            pin = str(request.POST.get('pin', '') or '').strip()
+            pin_confirm = str(request.POST.get('pin_confirm', '') or '').strip()
+
+            if len(pin) < 4 or not pin.isdigit():
+                  return render(request, 'waiter_set_pin.html', {**todo, 'error': 'PIN lazima iwe nambari za 4 hadi 10'})
+
+            if pin != pin_confirm:
+                  return render(request, 'waiter_set_pin.html', {**todo, 'error': 'PIN hazifanani'})
+
+            # Set the PIN on all counters belonging to this user
+            counters.update(waiter_pin=pin, waiter_pin_set=True)
+            return render(request, 'waiter_set_pin.html', {**todo, 'success': True})
+
+      return render(request, 'waiter_set_pin.html', todo)
+
+
+@login_required(login_url='login')
+def waiter_settings(request):
+      """Settings list page for waiter counter: set PIN and print mode toggle."""
+      todo = todoFunct(request)
+      counters = todo.get('waiter_counter')
+      if counters is None or not counters.exists():
+            return redirect('/userdash')
+
+      active_counter = counters.filter(servicing=True).first()
+      if not active_counter:
+            return redirect('/mauzo/waiterpage')
+
+      if request.method == 'POST':
+            enable_print = bool(request.POST.get('enable_print'))
+            InterprisePermissions.objects.filter(pk=active_counter.id).update(enable_print=enable_print)
+            active_counter.enable_print = enable_print
+            return render(request, 'waiter_settings.html', {**todo, 'active_counter': active_counter, 'saved': True})
+
+      return render(request, 'waiter_settings.html', {**todo, 'active_counter': active_counter})
+
+
+@login_required(login_url='login')
+@login_required(login_url='login')
+def waiter_pos_device_session(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            device_id   = str(request.POST.get('device_id',   '') or '').strip()
+            device_name = str(request.POST.get('device_name', '') or '').strip()
+      except:
+            return JsonResponse({'success': False, 'msg': 'Data sio sahihi'})
+
+      if len(device_id) < 4:
+            return JsonResponse({'success': False, 'msg': 'Device ID haipo'})
+
+      todo = todoFunct(request)
+      duka = todo.get('duka')
+      if not duka:
+            return JsonResponse({'success': False, 'msg': 'Biashara haikupatikana'})
+
+      if not duka.waiter_counter:
+            return JsonResponse({'success': False, 'msg': 'Biashara haina waiter counter'})
+
+      WaiterPosDeviceSession.objects.update_or_create(
+            Interprise=duka,
+            device_id=device_id,
+            defaults={
+                  'active': True,
+                  'device_name': device_name if device_name else None,
+            },
+      )
+
+      request.session['waiter_pos_biz']    = duka.id
+      request.session['waiter_pos_device'] = device_id
+
+      return JsonResponse({
+            'success': True,
+            'redirect': f'/mauzo/waiter_pos?biz={duka.id}&device_id={device_id}',
+      })
+
+
+def waiter_device_exit_session(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            device_id = str(request.POST.get('device_id', '') or '').strip()
+            biz_id = int(request.POST.get('biz', 0) or request.session.get('waiter_pos_biz', 0) or 0)
+      except:
+            return JsonResponse({'success': False, 'msg': 'Data sio sahihi'})
+
+      if len(device_id) < 4:
+            return JsonResponse({'success': False, 'msg': 'Device ID haipo'})
+
+      session_qs = WaiterPosDeviceSession.objects.filter(device_id=device_id)
+      if biz_id:
+            session_qs = session_qs.filter(Interprise__id=biz_id)
+
+      session_obj = session_qs.order_by('-updated_at').first()
+      if not session_obj:
+            fallback = f'/mauzo/waiter_pos?biz={biz_id}&device_id={device_id}' if biz_id else '/mauzo/waiter_pos'
+            return JsonResponse({'success': False, 'msg': 'Device session not found', 'redirect': fallback})
+
+      session_qs.update(active_user=None)
+
+      request.session['waiter_pos_biz'] = session_obj.Interprise.id
+      request.session['waiter_pos_device'] = device_id
+
+      return JsonResponse({
+            'success': True,
+            'redirect': f'/mauzo/waiter_pos?biz={session_obj.Interprise.id}&device_id={device_id}',
+      })
+
+
+@login_required(login_url='login')
+def waiter_pos_manage(request):
+      """Ukurasa wa kusimamia vifaa vya shared Waiter POS."""
+      todo = todoFunct(request)
+      duka = todo.get('duka')
+      if not duka or not duka.waiter_counter:
+            return redirect('/userdash')
+
+      if request.method == 'POST':
+            action    = request.POST.get('action', '')
+            device_id = str(request.POST.get('device_id', '') or '').strip()
+            if action == 'deactivate' and device_id:
+                  WaiterPosDeviceSession.objects.filter(
+                        Interprise=duka.Interprise, device_id=device_id
+                  ).update(active=False)
+            elif action == 'delete' and device_id:
+                  WaiterPosDeviceSession.objects.filter(
+                        Interprise=duka.Interprise, device_id=device_id
+                  ).delete()
+            return redirect('/mauzo/waiter_pos_manage')
+
+      devices = WaiterPosDeviceSession.objects.filter(
+            Interprise=duka.Interprise
+      ).order_by('-updated_at')
+
+      todo.update({'devices': devices})
+      return render(request, 'waiter_pos_manage.html', todo)
+
+
+def waiter_pos(request):
+      """
+      Public/shared POS computer page for waiter PIN login.
+      GET: Show all waiter counter users for a given business (by ?biz=<interprise_id>)
+           OR let user pick a business first.
+      POST: Verify PIN and set a session flag for the waiter, then redirect to waiterpage.
+      """
+      biz_id = int(request.GET.get('biz', 0) or request.POST.get('biz', 0) or 0)
+      device_id = str(request.GET.get('device_id', '') or request.POST.get('device_id', '') or request.session.get('waiter_pos_device', '') or '').strip()
+      duka = Interprise.objects.filter(pk=biz_id).first() if biz_id else None
+      device_session_ok = False
+
+      if duka and device_id:
+            device_session_ok = WaiterPosDeviceSession.objects.filter(
+                  Interprise=duka,
+                  device_id=device_id,
+                  active=True,
+            ).exists()
+            if device_session_ok:
+                  request.session['waiter_pos_biz'] = biz_id
+                  request.session['waiter_pos_device'] = device_id
+
+      if request.method == 'POST':
+            counter_id = int(request.POST.get('counter', 0) or 0)
+            pin = str(request.POST.get('pin', '') or '').strip()
+
+            if not biz_id or not counter_id or not pin:
+                  return JsonResponse({'success': False, 'msg': 'Data haipo'})
+
+            if not device_id:
+                  return JsonResponse({'success': False, 'msg': 'Kifaa hakijatambulika'})
+
+            if not device_session_ok:
+                  return JsonResponse({'success': False, 'msg': 'Kifaa hakijasajiliwa kwa waiter POS'})
+
+            counter = InterprisePermissions.objects.filter(
+                  pk=counter_id,
+                  Interprise__id=biz_id,
+                  waiter_counter=True,
+                  waiter_pin=pin,
+            ).first()
+
+            if not counter:
+                  return JsonResponse({'success': False, 'msg': 'PIN si sahihi'})
+
+            # Mark this counter as servicing (deactivate others first)
+            InterprisePermissions.objects.filter(
+                  Interprise__id=biz_id,
+                  waiter_counter=True,
+            ).update(servicing=False)
+            InterprisePermissions.objects.filter(pk=counter_id).update(servicing=True)
+
+            # Set session so the logged-in user (the device account) can proceed
+            request.session['waiter_pos_counter'] = counter_id
+            request.session['waiter_pos_biz'] = biz_id
+
+            # Save active_user to device session
+            WaiterPosDeviceSession.objects.filter(
+                  Interprise__id=biz_id,
+                  device_id=device_id,
+            ).update(active_user=counter)
+
+            return JsonResponse({'success': True, 'redirect': f'/mauzo/waiter_device_dashboard?biz={biz_id}&device_id={device_id}'})
+
+      # GET: load counters for selected business
+      counters = []
+      if duka:
+            counters = list(
+                  InterprisePermissions.objects.filter(
+                        Interprise=duka,
+                        waiter_counter=True,
+                  ).select_related('user__user').values(
+                        'id',
+                        'cheo',
+                        'user__user__first_name',
+                        'user__user__last_name',
+                        'waiter_pin',
+                        'user_entp__Interprise__Intp_code'
+                  )
+            )
+            # Only expose whether a PIN has been set, not the actual PIN
+            for c in counters:
+                  c['has_pin'] = bool(c.pop('waiter_pin', None))
+
+      return render(request, 'waiter_pos.html', {
+            'duka': duka,
+            'biz_id': biz_id,
+            'device_id': device_id,
+            'device_session_ok': device_session_ok,
+            'counters': counters,
+      })
+
+
+def waiter_device_exit(request):
+      """Clear active waiter user for a shared waiter POS device and return to PIN page."""
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      device_id = str(request.POST.get('device_id', '') or request.session.get('waiter_pos_device', '') or '').strip()
+      try:
+            biz_id = int(request.POST.get('biz', 0) or request.session.get('waiter_pos_biz', 0) or 0)
+      except:
+            biz_id = 0
+
+      if not device_id:
+            return JsonResponse({'success': False, 'msg': 'Kifaa hakijatambulika'})
+
+      ds_qs = WaiterPosDeviceSession.objects.filter(device_id=device_id, active=True)
+      if biz_id:
+            ds_qs = ds_qs.filter(Interprise__id=biz_id)
+
+      ds = ds_qs.select_related('Interprise').order_by('-updated_at').first()
+      if not ds:
+            return JsonResponse({'success': False, 'msg': 'Kifaa hakijasajiliwa'})
+
+      ds.active_user = None
+      ds.save(update_fields=['active_user', 'updated_at'])
+
+      request.session['waiter_pos_biz'] = ds.Interprise.id
+      request.session['waiter_pos_device'] = device_id
+
+      return JsonResponse({
+            'success': True,
+            'redirect': f'/mauzo/waiter_pos?biz={ds.Interprise.id}&device_id={device_id}',
+      })
+
+
+def waiter_device_dashboard(request):
+      """
+      Device-authenticated waiter POS dashboard.
+      Similar to waiterpage but uses device session instead of user login.
+      Print button always visible (force enable_print=True).
+      """
+      try:
+            biz_id = int(request.GET.get('biz', 0) or request.POST.get('biz', 0) or request.session.get('waiter_pos_biz', 0) or 0)
+            device_id = str(request.GET.get('device_id', '') or request.POST.get('device_id', '') or request.session.get('waiter_pos_device', '') or '').strip()
+
+            if not biz_id or not device_id:
+                  return redirect('/mauzo/waiter_pos')
+
+            duka = Interprise.objects.filter(pk=biz_id, waiter_counter=True).first()
+            if not duka:
+                  return redirect('/mauzo/waiter_pos')
+
+            device_session = WaiterPosDeviceSession.objects.filter(
+                  Interprise=duka,
+                  device_id=device_id,
+                  active=True,
+            ).first()
+
+            if not device_session or not device_session.active_user:
+                  return redirect(f'/mauzo/waiter_pos?biz={biz_id}')
+
+            active_counter = device_session.active_user
+            counters = InterprisePermissions.objects.filter(
+                  Interprise=duka,
+                  waiter_counter=True,
+            )
+
+            payaccs_waiter = PaymentAkaunts.objects.filter(Interprise=duka.id, onesha=True)
+            customer_table = customer_in_cell.objects.filter(area__Interprise=duka.id).select_related('area').order_by('area__name', 'name')
+
+            class _UserLangObj:
+                  langSet = 1
+
+            todo = {
+                  'duka': duka,
+                  'useri': _UserLangObj(),
+                  'waiter_counter': counters,
+                  'customer_table': customer_table,
+                  'payaccs_waiter': payaccs_waiter,
+            }
+
+            todo.update({
+                  'waiter_counters': counters,
+                  'active_waiter': active_counter,
+                  'device_id': device_id,
+                  'biz_id': biz_id,
+                  'force_enable_print': True,  # Force print button visible
+            })
+
+            return render(request, 'waiter_device_dashboard.html', todo)
+
+      except:
+            traceback.print_exc()
+            return redirect('/mauzo/waiter_pos')
+
+
+def waiter_Invoprint(request):
+      """Waiter-only print view, separate from Invoprint."""
+      try:
+            print_todo = viewWaiterInvo_funct(request)
+            m = int(request.GET.get('m', 0))
+            goto = 'minRecept.html' if m else 'invo.html'
+            return render(request, goto, print_todo)
+      except ValueError as er:
+            code = str(er)
+            if code == 'NO_ACTIVE_WAITER_COUNTER':
+                  return redirect('/mauzo/waiter_pos')
+            return redirect('/mauzo/waiter_pos')
+      except:
+            traceback.print_exc()
+            return redirect('/mauzo/waiter_pos')
 
 
 # @login_required(login_url='login')
@@ -3997,6 +6168,7 @@ def  addInvoice(request):
          return JsonResponse(data)
       else:
        return render(request,'pagenotFound.html',todoFunct(request))      
+
 
 @login_required(login_url='login')
 def  customer(request):

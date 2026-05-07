@@ -1,0 +1,59 @@
+{% extends 'userdash.html' %}
+{% load static %}
+
+{% block billcss %}
+<link rel="stylesheet" href="{% static 'css/sales.css' %}">
+{% endblock %}
+
+{% block Dashboard %}
+<div class="whiteBg py-3">
+  <div class="classic_div mb-3">
+    <h5 class="mb-1 latoFont">{% if useri.langSet == 0 %}Chagua Counter ya Kuhudumia{% else %}Choose Servicing Counter{% endif %}</h5>
+    <small class="text-muted">
+      {% if useri.langSet == 0 %}
+      Hakuna counter yenye huduma inayoendelea kwa sasa. Chagua moja ili iwe active.
+      {% else %}
+      No counter is currently marked as servicing. Pick one to activate it.
+      {% endif %}
+    </small>
+  </div>
+
+  <div class="classic_div">
+    {% if waiter_counters %}
+      <div class="list-group">
+        {% for ct in waiter_counters %}
+          <form method="POST" action="/mauzo/waiter_counter_activate" class="list-group-item d-flex justify-content-between align-items-center">
+            {% csrf_token %}
+            <input type="hidden" name="counter" value="{{ct.id}}">
+            <div>
+              <strong>{{ct.Interprise.name}}</strong>
+              <div class="small text-muted">{{ct.cheo}}</div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">
+              {% if useri.langSet == 0 %}Weka Active{% else %}Set Active{% endif %}
+            </button>
+          </form>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="waiter-empty text-center py-4">
+        {% if useri.langSet == 0 %}
+        Hakuna counter yenye ruhusa ya waiter iliyopatikana.
+        {% else %}
+        No waiter-enabled counter found.
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block nav-mauzo %}
+class="c-menu__item style-none is-active  showingpop2"
+{% endblock %}
+
+{% block akaunt-map %}
+{% if useri.langSet == 0 %}Waiter Counter{% else %}Waiter Counter{% endif %}
+{% endblock %}
+
+{% block active-mauzo %} class="bi bi-cart-check text-primary" {% endblock %}

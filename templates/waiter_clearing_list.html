@@ -1,0 +1,133 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+
+{% block Dashboard %}
+<div class="whiteBg py-4" style="min-height: 80vh;">
+  <div class="classic_div" style="max-width: 980px; margin: 0 auto;">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="mb-1">
+          {% if useri.langSet == 0 %}Historia ya Malipo ya Wahudumu{% else %}Waiter Clearing Records{% endif %}
+        </h5>
+        <div class="text-muted small">
+          {% if useri.langSet == 0 %}
+            Rekodi zote za malipo yaliyofanywa kwa wahudumu.
+          {% else %}
+            All waiter payment clearing records.
+          {% endif %}
+        </div>
+      </div>
+      <div class="mt-2 mt-md-0">
+        <div class="btn-group btn-group-sm" role="group">
+          <a href="/mauzo/waiter_orders_summary" class="btn btn-outline-primary">
+            {% if useri.langSet == 0 %}Oda za Wahudumu{% else %}Waiter Orders{% endif %}
+          </a>
+          <a href="/mauzo/waiter_clearing_list" class="btn btn-primary">
+            {% if useri.langSet == 0 %}Historia ya Malipo{% else %}Clearing Records{% endif %}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered table-hover bg-white">
+        <thead class="thead-light">
+          <tr>
+            <th class="text-center" style="width:50px;">#</th>
+            <th>{% if useri.langSet == 0 %}Mhudumu{% else %}Waiter{% endif %}</th>
+            <th class="text-right">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+            <th>{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
+            <th>{% if useri.langSet == 0 %}Alifanya{% else %}Cleared By{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if clearing_rows %}
+            {% for row in clearing_rows %}
+            <tr>
+              <td class="text-center text-muted small">{{ row.id }}</td>
+              <td>{{ row.waiter_name }}</td>
+              <td class="text-right font-weight-bold">
+                {{ duka.currencii }}&nbsp;{{ row.amount|floatformat:0|intcomma }}
+              </td>
+              <td class="small">
+                <script>
+                    document.write(moment('{{ row.tarehe|date:"r" }}').format('DD MMM YYYY HH:mm') + '</span>');
+                </script>
+              </td>
+              <td class="small">{{ row.by_name|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">
+                {% if useri.langSet == 0 %}Hakuna rekodi za malipo.{% else %}No clearing records found.{% endif %}
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if paginator.num_pages > 1 %}
+    <nav class="mt-3">
+      <ul class="pagination pagination-sm justify-content-center flex-wrap">
+
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1">&laquo;</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+            {% if useri.langSet == 0 %}Iliyopita{% else %}Prev{% endif %}
+          </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+        <li class="page-item disabled">
+          <span class="page-link">{% if useri.langSet == 0 %}Iliyopita{% else %}Prev{% endif %}</span>
+        </li>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
+          {% if page_obj.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+            {% if useri.langSet == 0 %}Inayofuata{% else %}Next{% endif %}
+          </a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ paginator.num_pages }}">&raquo;</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">{% if useri.langSet == 0 %}Inayofuata{% else %}Next{% endif %}</span>
+        </li>
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+        {% endif %}
+
+      </ul>
+      <div class="text-center text-muted small">
+        {% if useri.langSet == 0 %}
+          Ukurasa {{ page_obj.number }} kati ya {{ paginator.num_pages }}
+          &mdash; Rekodi {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }} kati ya {{ paginator.count }}
+        {% else %}
+          Page {{ page_obj.number }} of {{ paginator.num_pages }}
+          &mdash; Records {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }} of {{ paginator.count }}
+        {% endif %}
+      </div>
+    </nav>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock Dashboard %}

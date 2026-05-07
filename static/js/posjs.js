@@ -14,7 +14,6 @@ let selected = [],
     ServsC = [],
     ServsS = []
 
-
 const vat_per = Number($('#vat_percent').val()),
       IS_SERVICE = Number($('#ItemListView').data('serv')),
       cartSvg = `
@@ -1234,6 +1233,7 @@ window.addEventListener("scroll", function () {
        
 
 }, false);
+
 
 
 function isInViewport() {

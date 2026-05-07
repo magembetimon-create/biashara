@@ -35,25 +35,257 @@
 
  <style>
     body{
-        font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        min-width: 1000px;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-width: 1000px;
+    background:#f4f6fb;
+    color:#000000;
     }
+
+  .print-sheet{
+    max-width: 1280px;
+    margin: 18px auto;
+    background:#fff;
+    border:1px solid #e4e9f2;
+    border-radius: 16px;
+    box-shadow: 0 14px 32px rgba(34, 48, 74, 0.08);
+  }
+
+  .report-header{
+    border-bottom:1px solid #e9edf5;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .report-title{
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin-bottom: .25rem;
+    color:#000000;
+  }
+
+  .report-subtitle{
+    margin-bottom: .35rem;
+    color:#000000;
+    font-size: .98rem;
+  }
+
+  .report-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top: .85rem;
+  }
+
+  .report-chip{
+    display:inline-flex;
+    align-items:center;
+    padding:6px 12px;
+    border-radius:999px;
+    background:#eef3ff;
+    color:#000000;
+    font-size:.92rem;
+    font-weight:600;
+  }
+
+  .section-card{
+    border:1px solid #e6ebf3;
+    border-radius:14px;
+    background:#fff;
+    padding:16px 18px;
+    margin-bottom: 1rem;
+  }
+
+  .section-title{
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: .85rem;
+    color:#000000;
+  }
+
+  .remarks-box{
+    background:#f8faff;
+    border-left:4px solid #4c6fff;
+  }
+
+  .report-muted{
+    color:#4a5568 !important;
+  }
+
+  .report-accent{
+    color:#1f3a8a !important;
+    font-weight:700;
+  }
+
+  .report-strong{
+    color:#000000 !important;
+    font-weight:700;
+  }
+
+  .report-tag-initial{
+    color:#5b21b6 !important;
+    font-weight:700;
+  }
+
+  .report-tag-current{
+    color:#0f5132 !important;
+    font-weight:700;
+  }
+
+  .report-code{
+    color:#1d4ed8 !important;
+    font-weight:700;
+  }
+
+  .report-size{
+    color:#7c2d12 !important;
+    font-weight:700;
+  }
+
+  .report-color-dot{
+    display:inline-block;
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    border:1px solid #7a7a7a;
+    margin-right:6px;
+    vertical-align:middle;
+  }
+
+  .report-table{
+    margin-bottom: .6rem;
+  }
+
+  .report-table thead th{
+    background:#f3f6fb;
+    color:#000000;
+    border-color:#dfe6f1;
+    font-weight:700;
+    vertical-align:middle;
+  }
+
+  .report-table td,
+  .report-table th{
+    border-color:#e3e9f3;
+    vertical-align:middle;
+  }
+
+  .report-total{
+    background:#f8fbff;
+    border:1px solid #e3eaf7;
+    border-radius:12px;
+    padding:10px 14px;
+    margin-top: .65rem;
+  }
+
+  .report-total strong{
+    color:#000000;
+  }
+
+  @media print {
+    body{
+      min-width: auto;
+      background:#fff;
+      font-size: 12px;
+      color:#000 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .print-sheet{
+      max-width: 100%;
+      margin: 0;
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+    }
+
+    #loadMe,
+    .modal-backdrop,
+    .toast,
+    .toast-container{
+      display:none !important;
+      visibility:hidden !important;
+    }
+
+    .section-card{
+      break-inside: avoid;
+      page-break-inside: avoid;
+      border:1px solid #aeb8c7;
+      box-shadow:none;
+    }
+
+    .report-header,
+    .section-title,
+    .report-subtitle,
+    .report-chip,
+    .report-muted,
+    .report-accent,
+    .report-strong,
+    .report-tag-initial,
+    .report-tag-current,
+    .report-code,
+    .report-size,
+    .brown,
+    .darkblue,
+    .text-primary,
+    .text-danger,
+    .figureColor,
+    .showNumber,
+    .stockSings,
+    .PuchaseSigns,
+    .saleOderSigns,
+    .servicesSigns{
+      color:#000 !important;
+    }
+
+    .report-chip,
+    .remarks-box,
+    .report-total,
+    .report-table thead th,
+    .bg-light,
+    .manunuzi,
+    .zilizopo{
+      background:#fff !important;
+      background-color:#fff !important;
+    }
+
+    .report-table thead th,
+    .bg-light{
+      border-bottom:2px solid #000 !important;
+    }
+
+    .manunuzi,
+    .zilizopo{
+      border-top:1px solid #2e2e2e !important;
+      border-bottom:1px solid #2e2e2e !important;
+      font-weight:700;
+    }
+
+    .report-color-dot{
+      border-color:#000 !important;
+    }
+  }
  </style>
 </head>
 
   <body>
-    <div class="Analytical whiteBg tab_div p-md-4 p-2" style="background-color:#fff;min-height:100vh">
-        <h5 class="text-center">{{duka.name | title}}({{duka.Intp_code}})</h5>
-        <h5 class="text-center">{{duka.mtaa.mtaa | title}}, {{duka.mtaa.kata.kata | title}},{{duka.mtaa.kata.wilaya.wilaya | title}}, {{duka.mtaa.kata.wilaya.mkoa.mkoa | title}}, {{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}}</h5>
-        <h5 id="stateTitle"  class="text-center"> </h5>
+  <div class="Analytical whiteBg tab_div p-md-4 p-2 print-sheet" style="min-height:100vh">
+    <div class="report-header">
+      <div class="report-title text-center">{{duka.name | title}} ({{duka.Intp_code}})</div>
+      <div class="report-subtitle text-center">{{duka.mtaa.mtaa | title}}, {{duka.mtaa.kata.kata | title}}, {{duka.mtaa.kata.wilaya.wilaya | title}}, {{duka.mtaa.kata.wilaya.mkoa.mkoa | title}}, {{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}}</div>
+      <div id="stateTitle" class="report-subtitle text-center weight600"></div>
 
-     <h6 class="pt-2" >{% if langSel == 0 %}Na{% else %}By {% endif %} : <i> {{useri.user.first_name | title }}   {{useri.user.last_name | title }} </i> </h6>
+      <div class="report-meta">
+      <span class="report-chip">{% if langSel == 0 %}Ripoti ya Stoku{% else %}Inventory Report{% endif %}</span>
+      <span class="report-chip">{% if langSel == 0 %}Na{% else %}By{% endif %}: {{useri.user.first_name | title }} {{useri.user.last_name | title }}</span>
+      </div>
+    </div>
 
-      <div class="classic_div py-2" id="Maelekezo">
+    <div class="classic_div py-2 section-card remarks-box" id="Maelekezo">
       </div>
 
-        <div class="classic_div py-2 " >
-          <h6>
+    <div class="classic_div py-2 section-card" >
+      <h6 class="section-title">
               
               {% if langSel == 0 %}Hali ya Hesabu Kwa Ujumla{% else %}General Inventory State  {% endif %}
   
@@ -73,8 +305,8 @@
 
 
 
-      <div class="classic_div py-2">
-        <h6>
+      <div class="classic_div py-2 section-card">
+        <h6 class="section-title">
             {% if langSel == 0 %}Akaunti za Malipo{% else %}Payment Accounts  {% endif %}
 
         </h6>
@@ -85,7 +317,7 @@
       </div>
 
 
-      <div id="AllItems">
+  <div id="AllItems">
         
       </div>
 

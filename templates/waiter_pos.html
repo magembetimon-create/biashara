@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if duka %}{{ duka.name }} – Waiter POS{% else %}Waiter POS{% endif %}</title>
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+    }
+    .pos-wrap {
+      width: 100%;
+      max-width: 480px;
+      padding: 24px 16px;
+    }
+    .pos-logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .pos-logo h4 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #e0e0e0;
+      margin: 0;
+    }
+    .pos-logo small {
+      color: #aaa;
+      font-size: 0.85rem;
+    }
+    /* Waiter grid */
+    .waiter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .waiter-btn {
+      background: #16213e;
+      border: 2px solid #0f3460;
+      border-radius: 12px;
+      padding: 18px 8px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, transform .1s;
+      color: #fff;
+    }
+    .waiter-btn:hover, .waiter-btn.selected {
+      border-color: #e94560;
+      transform: scale(1.04);
+    }
+    .waiter-btn .avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #0f3460;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 0 auto 8px;
+      color: #e94560;
+    }
+    .waiter-btn .wname {
+      font-size: 0.82rem;
+      font-weight: 600;
+      word-break: break-word;
+    }
+    .waiter-btn .wcheo {
+      font-size: 0.72rem;
+      color: #aaa;
+    }
+    .no-pin-badge {
+      font-size: 0.65rem;
+      background: #e94560;
+      color: #fff;
+      border-radius: 4px;
+      padding: 1px 4px;
+      margin-top: 4px;
+      display: inline-block;
+    }
+    /* PIN pad */
+    #pinSection {
+      display: none;
+      background: #16213e;
+      border-radius: 16px;
+      padding: 24px 20px;
+    }
+    #pinSection h6 {
+      font-size: 1rem;
+      margin-bottom: 16px;
+      text-align: center;
+      color: #e0e0e0;
+    }
+    .pin-dots {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #e94560;
+      background: transparent;
+      transition: background .15s;
+    }
+    .pin-dot.filled { background: #e94560; }
+    .pin-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 240px;
+      margin: 0 auto 16px;
+    }
+    .pin-key {
+      background: #0f3460;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 600;
+      padding: 14px 0;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .pin-key:hover { background: #1a4a8a; }
+    .pin-key.del { background: #2a1a2e; color: #e94560; font-size: 1rem; }
+    .pin-key.ok { background: #e94560; color: #fff; font-size: 1rem; grid-column: 2; }
+    #pinError {
+      text-align: center;
+      color: #e94560;
+      font-size: 0.85rem;
+      min-height: 20px;
+    }
+    .back-btn {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: block;
+      margin: 12px auto 0;
+    }
+    .back-btn:hover { color: #fff; }
+    /* No counters */
+    .empty-msg {
+      text-align: center;
+      color: #aaa;
+      padding: 20px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="pos-wrap">
+  <div class="pos-logo">
+    {% if duka %}
+      {% if duka.logo %}
+        <img src="{{ duka.logo.url }}" style="height:48px;object-fit:contain;margin-bottom:8px;border-radius:8px;" alt="">
+      {% endif %}
+      <h4>{{ duka.name }}</h4>
+      <small>Waiter POS</small>
+    {% else %}
+      <h4>Waiter POS</h4>
+    {% endif %}
+  </div>
+
+  {% if not duka %}
+  <!-- No business selected — show simple form to enter business id -->
+  <div style="text-align:center;color:#aaa;font-size:.9rem;margin-bottom:16px;">
+    Ingiza ID ya biashara kuendelea
+  </div>
+  <form method="GET" action="/mauzo/waiter_pos" style="max-width:280px;margin:0 auto;">
+    <input type="number" name="biz" class="form-control mb-3" placeholder="Business ID" min="1" required>
+    <button type="submit" class="btn btn-danger btn-block">Endelea</button>
+  </form>
+  {% elif not counters %}
+  <div class="empty-msg">
+    Hakuna waiter counter iliyopatikana kwa biashara hii.
+  </div>
+  {% else %}
+
+  <!-- Waiter selection -->
+  <div id="waiterSelectSection">
+    <p style="text-align:center;color:#aaa;font-size:.85rem;margin-bottom:14px;">
+      Chagua jina lako kuendelea
+    </p>
+    <div class="waiter-grid" id="waiterGrid">
+      {% for ct in counters %}
+      <div class="waiter-btn" data-id="{{ ct.id }}" data-name="{{ ct.user__user__first_name }} {{ ct.user__user__last_name }}" data-haspin="{{ ct.has_pin|yesno:'1,0' }}">
+        <div class="avatar">{{ ct.user__user__first_name|slice:":1"|upper }}{{ ct.user__user__last_name|slice:":1"|upper }}</div>
+        <div class="wname">{{ ct.user_entp__Interprise__Intp_code }}</div>
+        <div class="wcheo">{{ ct.cheo }}</div>
+        {% if not ct.has_pin %}<span class="no-pin-badge">No PIN</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- PIN entry -->
+  <div id="pinSection">
+    <h6 id="pinLabel">Karibu!</h6>
+    <div class="pin-dots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" data-k="1">1</button>
+      <button class="pin-key" data-k="2">2</button>
+      <button class="pin-key" data-k="3">3</button>
+      <button class="pin-key" data-k="4">4</button>
+      <button class="pin-key" data-k="5">5</button>
+      <button class="pin-key" data-k="6">6</button>
+      <button class="pin-key" data-k="7">7</button>
+      <button class="pin-key" data-k="8">8</button>
+      <button class="pin-key" data-k="9">9</button>
+      <button class="pin-key del" id="pinDel">&#9003;</button>
+      <button class="pin-key" data-k="0">0</button>
+      <button class="pin-key ok" id="pinOk">OK</button>
+    </div>
+    <div id="pinError"></div>
+    <button class="back-btn" id="backBtn">&#8592; Rudi / Back</button>
+  </div>
+
+  {% endif %}
+</div>
+
+{% if duka and counters %}
+<script>
+  const BIZ_ID = Number('{{ biz_id }}');
+  let selectedCounterId = 0;
+  let pinValue = '';
+
+  const waiterGrid = document.getElementById('waiterGrid');
+  const waiterSection = document.getElementById('waiterSelectSection');
+  const pinSection = document.getElementById('pinSection');
+  const pinLabel = document.getElementById('pinLabel');
+  const pinError = document.getElementById('pinError');
+
+  function updateDots() {
+    for (let i = 0; i < 4; i++) {
+      document.getElementById('d' + i).classList.toggle('filled', i < pinValue.length);
+    }
+  }
+
+  function resetPin() {
+    pinValue = '';
+    updateDots();
+    pinError.textContent = '';
+  }
+
+  // Waiter button click
+  waiterGrid.addEventListener('click', function(e) {
+    const btn = e.target.closest('.waiter-btn');
+    if (!btn) return;
+    const hasPin = btn.dataset.haspin === '1';
+    if (!hasPin) {
+      alert('Waiter huyu bado hajaweka PIN. Tafadhali ingia kwenye akaunti yako na uweke PIN kwanza.');
+      return;
+    }
+    selectedCounterId = Number(btn.dataset.id);
+    const name = btn.dataset.name.trim();
+    pinLabel.textContent = 'Karibu ' + name + '!';
+    resetPin();
+    waiterSection.style.display = 'none';
+    pinSection.style.display = 'block';
+  });
+
+  // PIN key press
+  document.querySelectorAll('.pin-key[data-k]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (pinValue.length >= 10) return;
+      pinValue += btn.dataset.k;
+      updateDots();
+    });
+  });
+
+  // Delete
+  document.getElementById('pinDel').addEventListener('click', function() {
+    pinValue = pinValue.slice(0, -1);
+    updateDots();
+    pinError.textContent = '';
+  });
+
+  // OK / Submit
+  document.getElementById('pinOk').addEventListener('click', submitPin);
+
+  // Also allow keyboard
+  document.addEventListener('keydown', function(e) {
+    if (pinSection.style.display === 'none') return;
+    if (e.key >= '0' && e.key <= '9') {
+      if (pinValue.length < 10) { pinValue += e.key; updateDots(); }
+    } else if (e.key === 'Backspace') {
+      pinValue = pinValue.slice(0, -1); updateDots(); pinError.textContent = '';
+    } else if (e.key === 'Enter') {
+      submitPin();
+    }
+  });
+
+  // Back
+  document.getElementById('backBtn').addEventListener('click', function() {
+    pinSection.style.display = 'none';
+    waiterSection.style.display = 'block';
+    resetPin();
+  });
+
+  function submitPin() {
+    if (!pinValue) return;
+    pinError.textContent = '';
+    const formData = new FormData();
+    formData.append('counter', selectedCounterId);
+    formData.append('biz', BIZ_ID);
+    formData.append('pin', pinValue);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+    fetch('/mauzo/waiter_pos?biz=' + BIZ_ID, {
+      method: 'POST',
+      body: formData,
+    })
+    .then(r => r.json())
+    .then(function(resp) {
+      if (resp.success) {
+        window.location.href = resp.redirect || '/mauzo/waiterpage';
+      } else {
+        pinError.textContent = resp.msg || 'PIN si sahihi';
+        // Shake animation
+        pinSection.style.animation = 'none';
+        setTimeout(function() { pinSection.style.animation = ''; }, 10);
+        resetPin();
+      }
+    })
+    .catch(function() {
+      pinError.textContent = 'Hitilafu ya mtandao';
+    });
+  }
+
+  function getCookie(name) {
+    let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : '';
+  }
+</script>
+{% endif %}
+</body>
+</html>

@@ -401,6 +401,8 @@ def getItemsAll(request):
 def getItemsAssociate(request):
     todo = todoFunct(request)
     intpn = todo['cheo']
+    if not intpn:
+        return JsonResponse({'aina': [], 'mahi': [], 'kampuni': [], 'sambaza': [], 'tumizi': [], 'ainaMama': []})
     intp = intpn.Interprise 
     aina = list(bidhaa_aina.objects.filter(Interprise__owner=intp.owner.id).annotate(mahitaji=F('mahi__mahitaji')).values().order_by("-pk"))
     mahi = list(mahitaji.objects.filter(Interprise=intp).values().order_by("-pk"))

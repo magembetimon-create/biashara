@@ -88,7 +88,7 @@
         <div id="theCartList" class="col-md-3 pos-cart flex">
           
             <header class="row" >
-              <h6 class="col-6" >
+              <h6 class="col-5" >
                 {% if serv %}
                    {% if useri.langSet == 0 %} Huduma {% else %} Service {% endif %}
                 {% else %}
@@ -96,7 +96,7 @@
                 {% endif %}
               </h6>
 
-              <div class="col-6 text-right">
+              <div class="col-7 text-right" id="pos_nav" >
                 {% if serv %}
                   <a href="/mauzo/inservice" class="border-right px-1" title="{% if useri.langSet == 0 %} Zinazohudumia {% else %} Servicing {% endif %}" >
                       <svg xmlns="http://www.w3.org/2000/svg"   height="18" width="18" viewBox="0 0 24 24" fill="currentColor">

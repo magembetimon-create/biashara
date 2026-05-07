@@ -18,8 +18,8 @@ function getData(){
         //  console.log(saved)
           itms.then(data=>{
 
-            $('#loadMe').modal('hide')
-            $('#loadMe').modal('hide')  
+                        $('#loadMe').modal('hide')
+            hideLoading()  
 
             if(data.success){
                 const  {data:shelf,pay,PRODUXN,SERVICE,SALES,SVD,svdDate,svdDesc} = data,theDate = Number(SVD)?moment(svdDate):moment(),
@@ -41,12 +41,12 @@ function getData(){
 
 
                  let tr = `
-                        <table class="table  table-hover table-striped latoFont table-sm border">
+                       <table class="table table-hover table-striped latoFont table-sm border report-table">
                         <thead>
                             <tr>
                                 <th>${lang('Hesabu','Inventory')}</th>
                                 <th>%</th>
-                                <th>${lang('Thamani','Worth')}<span class="text-primary smallerFont">(${currencii})</span> </th>
+                                <th>${lang('Thamani','Worth')}<span class="report-muted smallerFont">(${currencii})</span> </th>
                                 
                             </tr>
                         </thead>
@@ -102,7 +102,7 @@ function getData(){
              placeItems(data)
             }else{
                 $('#loadMe').modal('hide')
-                $('#loadMe').modal('hide')   
+                hideLoading()  
                 $('.classic_div').hide()               
                 toastr.error(lang('Hakuna Hesabu iliyopatikana kwa sasa','No  Inventory State Found'), lang('Haikufanikiwa','Error'), {timeOut: 7000});
 
@@ -117,12 +117,12 @@ function getData(){
 function   placeAlipia(pay){
 
 
-              td=  `<table id="SoldItems" class="table table-bordered table-sm" style="width:100%">
+              td=  `<table id="SoldItems" class="table table-bordered table-sm report-table" style="width:100%">
           <thead>
               <tr class="smallFont ">
                   <th>#</th>
                   <th>${lang('Akaunti ya Malipo','Payment Account')}</th>
-                  <th> ${lang('Kiasi kilichopo','Account Amount')}<span class="text-primary latoFont">(${currencii})</span> </th>
+                  <th> ${lang('Kiasi kilichopo','Account Amount')}<span class="report-muted latoFont">(${currencii})</span> </th>
               </tr>
           </thead>
           <tbody id="products_list">`,
@@ -146,7 +146,7 @@ function   placeAlipia(pay){
       </table>
       `   
       
-        tot = `<div class="row"> 
+          tot = `<div class="row report-total"> 
                      <div class="col-7 text-right"  > <strong> ${lang('Jumla','Total')} </strong></div>
                      <div class="col-5 text-right" >  ${currencii}.<strong>${floatValue(pay.reduce((a,b)=>a+Number(b.Amount),0))}</strong></div>
                </div>`
@@ -261,8 +261,8 @@ function   placeAlipia(pay){
       
 
 
-      trendsT =`
-         <table id="prod_table" class="table-hover table-bordered table table-sm"  data-row=1>
+        trendsT =`
+            <table id="prod_table" class="table-hover table-bordered table table-sm report-table"  data-row=1>
          <tr class="bg-light smallerFont ">
              <th rowspan=3 >#</th>
              <th rowspan=3 >${lang('Namba','Number')}</th>
@@ -325,8 +325,8 @@ function   placeAlipia(pay){
             <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''}>${it.namba}</td>
             <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="text-capitalize "  > ${it.name}</td>
             <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="text-capitalize noWordCut" >${moment(it.intitDate).format('DD/MM/YYYY HH:mm')}</td>
-            <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="brown" >${it.initialN}</td>
-            <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="darkblue noWordCut" >${it.code?.code}</td>
+            <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="report-tag-initial" >${it.initialN}</td>
+            <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="report-code noWordCut" >${it.code?.code}</td>
 
             `
 
@@ -342,8 +342,8 @@ function   placeAlipia(pay){
                        const sz = it.puS.filter(cr=>cr.color_id==(SVD?c.color_id:c.id)),
                            szl = sz.length,
                            szll=szl+1,
-                           cl = `<div class="d-flex noWordCut justify-content-center align-items-center ">
-                            <label class="mr-1"
+                           cl = `<div class="d-flex noWordCut justify-content-center align-items-center report-strong">
+                            <label class="report-color-dot"
                                 style="width:12px;
                                 height:12px;
                                 background:${c?.color_code};
@@ -370,15 +370,15 @@ function   placeAlipia(pay){
                               shq = it.shelf_S.filter(z=>(SVD||it.code.num==1?z.id===s.id:z.size_id===s.size_id)).reduce((a,b)=> a + Number((b.idadi)),0)
                           
                               trendsT+=`${row1?'':`<tr >`}
-                                     <td style="padding: 10px 3px !important;"><span class="text-danger smallFont"> ${s.size_name}</span></td>
+                                     <td style="padding: 10px 3px !important;"><span class="report-size smallFont"> ${s.size_name}</span></td>
                                      <td>${it.kipimo}</td> 
                                      <td>${floatValue(it.bei)}</td> 
                                     
 
-                                     <td class="weight600 manunuzi " >${Number((!(SVD||it.code.num)==1?s.qty:s.idadi)).toFixed(FIXED_VALUE)}</td> 
+                                     <td class="weight600 manunuzi report-tag-initial" >${Number((!(SVD||it.code.num)==1?s.qty:s.idadi)).toFixed(FIXED_VALUE)}</td> 
                                      <td class="manunuzi">${floatValue(it.bei*Number(!(SVD||it.code.num)==1?s.qty:s.idadi))}</td> 
 
-                                    <td class="weight600 zilizopo">${Number(shq).toFixed(FIXED_VALUE)}</td> 
+                                    <td class="weight600 zilizopo report-tag-current">${Number(shq).toFixed(FIXED_VALUE)}</td> 
                                     <td class="zilizopo">${floatValue(it.bei*shq)}</td>   
 
 
@@ -404,12 +404,12 @@ function   placeAlipia(pay){
                                      <td>${floatValue(it.bei)}</td> 
                                     
 
-                                     <td class="weight600 manunuzi" >${Number((!(SVD||it.code.num)==1?c.qty:c.idadi)).toFixed(FIXED_VALUE)}</td> 
+                                                 <td class="weight600 manunuzi report-tag-initial" >${Number((!(SVD||it.code.num)==1?c.qty:c.idadi)).toFixed(FIXED_VALUE)}</td> 
                                      <td class="manunuzi">${floatValue(it.bei*Number(!(SVD||it.code.num)==1?c.qty:c.idadi))}</td> 
 
                                     
 
-                                        <td class="weight600 zilizopo">${Number(shq).toFixed(FIXED_VALUE)}</td> 
+                                                     <td class="weight600 zilizopo report-tag-current">${Number(shq).toFixed(FIXED_VALUE)}</td> 
                                         <td class="zilizopo">${floatValue(it.bei*shq)}</td>
                                         ${row1?'':'</tr>'}
                                         `
@@ -434,12 +434,12 @@ function   placeAlipia(pay){
                                      <td>${floatValue(it.bei)}</td> 
                                      
 
-                                     <td class="weight600 manunuzi" >${Number(it.bqty).toFixed(FIXED_VALUE)}</td> 
+                                     <td class="weight600 manunuzi report-tag-initial" >${Number(it.bqty).toFixed(FIXED_VALUE)}</td> 
                                      <td class="manunuzi" >${floatValue(it.bei*it.bqty)}</td> 
 
                                     
 
-                                    <td class="weight600 zilizopo">${Number(it.shelfqty).toFixed(FIXED_VALUE)}</td> 
+                                    <td class="weight600 zilizopo report-tag-current">${Number(it.shelfqty).toFixed(FIXED_VALUE)}</td> 
                                     <td class="zilizopo" >${floatValue(it.shelf)}</td>`
 
 
@@ -451,7 +451,7 @@ function   placeAlipia(pay){
 
     trendsT+=`</table></table>`
 
-    trendsT += `<div class="row"> 
+    trendsT += `<div class="row report-total"> 
     <div class="col-7 text-right"  > <strong> ${lang('Thamani ya zilizopo Jumla','Onshelf Net Worth')} </strong></div>
     <div class="col-5 text-right" >  ${currencii}.<strong>${floatValue(shefu.reduce((a,b)=>a+Number((SVD?b.sidadi:b.idadi) * b.Bei_kununua/b.uwiano),0))}</strong></div>
 </div>`
@@ -460,8 +460,8 @@ function   placeAlipia(pay){
                
         salesDt = () =>{
            const  sale =`
-                <div class="classic_div py-2">
-                <h6>
+                <div class="classic_div py-2 section-card">
+                <h6 class="section-title">
                     ${lang('Bidhaa/Vitu zilizopo/vilivyopo','Available Items')}
         
                 </h6>
@@ -477,8 +477,8 @@ function   placeAlipia(pay){
         },
         materialDt = () =>{
            const  theMaterial =`
-                <div class="classic_div py-2">
-                <h6>
+                <div class="classic_div py-2 section-card">
+                <h6 class="section-title">
                     ${lang('Nyenzo za Uchakataji/Uzalishaji bidhaa','Available Material Items')}
         
                 </h6>
@@ -494,8 +494,8 @@ function   placeAlipia(pay){
         },
         serviceDt = () =>{
            const  Assets =`
-                <div class="classic_div py-2">
-                <h6>
+                <div class="classic_div py-2 section-card">
+                <h6 class="section-title">
                     ${lang('Asseti kwa Huduma','Services Assets')}
         
                 </h6>
@@ -522,8 +522,6 @@ function   placeAlipia(pay){
 getData()
 
 function getRiportData(data){
-
-  $("#loadMe").modal(`${window.outerWidth>800?'show':'hide'}`);
     return   $.ajax({
                  type: "GET",
                  url: data.url,

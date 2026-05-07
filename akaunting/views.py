@@ -323,6 +323,8 @@ def getdata(request):
     todo = todoFunct(request)
     duka = todo['duka']
     cheo = todo['cheo']
+    if not cheo or not duka:
+        return JsonResponse({'sum': None, 'allsum': None, 'list': [], 'alllist': {}, 'otherCount': 0, 'Count': 0, 'menu': False})
     br = [duka.id]
 
 

@@ -8,18 +8,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
     <script type="text/javascript" src="{% static 'js/jquery.js' %}" ></script>
 
     <!-- <script src="{% static 'js/staffaccordion.js' %}"></script> -->
 
-    <script src="{% static 'js/bootstrap.min.js' %}"></script>
     <script src="{% static 'js/momentlocale.js' %}"></script>
     <script src="{% static 'js/qrcode.min.js' %}"></script>
 
     <link rel="stylesheet" href="{% static 'css/minRecept.css' %}">
 </head>
-<body>
+<body >
 
     <div id="invoice-POS">
 
@@ -34,10 +32,10 @@
 
           <div class="info">
             <h2> {{duka.name | title}}</h2>
-            <div style="margin-top: -10px;" class="the_address" >{{duka.slogan}}</div>
+            <div class="the_address" >{{duka.slogan}}</div>
             <div class="the_address" > 
-              {{duka.jengo}},
-              {{duka.mtaa.mtaa | title}} ,{{duka.mtaa.kata.kata | title}} ,{{duka.mtaa.kata.wilaya.wilaya | title}}, 
+            {% if not the_bill.waiter_order %}   {{duka.jengo}},
+              {{duka.mtaa.mtaa | title}} ,{{duka.mtaa.kata.kata | title}} , {% endif %} {{duka.mtaa.kata.wilaya.wilaya | title}}, 
               {{duka.mtaa.kata.wilaya.mkoa.mkoa | title}}, {{duka.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title}}
 
             </div>
@@ -65,26 +63,16 @@
         </center>
 
         
-        <h2 class="pt-2" >INVO-{{the_bill.code}}</h2>
+        <h2 class="pt-2" >INVO-{{the_bill.code}} <span style="margin-left:1px !important" >Print({{the_bill.printed_number}})</span> </h2>
         
-        <div class="the_address row">
-          <div class="col-8">
-            {% if then.langSet == 0 %} Tarehe ya Ankara{% else %} Invoice Date {% endif %}:
-          </div>
-          <div class="col-4">
-            {{the_bill.date | date:'d/m/Y' }}
-          </div>
-          
+        <div class="receipt-line the_address">
+          <span>{% if then.langSet == 0 %} Tarehe ya Ankara{% else %} Invoice Date {% endif %}:</span>
+          <span class="right">{{the_bill.date | date:'d/m/Y' }}</span>
         </div>
 
-        <div class="the_address row">
-          <div class="col-8">
-               {% if then.langSet == 0 %}Tarehe ya Kukamilisha  {% else %} Due date {% endif %}:
-          </div>
-          <div class="col-4">
-            {{the_bill.kulipa | date:'d/m/Y'}}
-          </div>
-          
+        <div class="receipt-line the_address">
+          <span>{% if then.langSet == 0 %}Tarehe ya Kukamilisha  {% else %} Due date {% endif %}:</span>
+          <span class="right">{{the_bill.kulipa | date:'d/m/Y'}}</span>
         </div>
 
         <hr>
@@ -96,71 +84,60 @@
             {% if useri.langSet == 0 %} Muda wa Huduma{% else %} Service Duration {% endif %}
         </h4> 
       
-          <div class=" row  the_address">
-              <div class="col-5 brown"> {% if useri.langSet == 0 %}Kuanzia{% else %} From{% endif %}:  </div>
-              <div class="col-7 weight500">
-                  <script> document.write(moment('{{the_bill.servFrom | date:"r" }}').format('DD/M/YYYY, HH:mm')) </script>
-                    
-                </div>
-              
+          <div class="receipt-line the_address"> 
+            <span class="brown"> {% if useri.langSet == 0 %}Kuanzia{% else %} From{% endif %}: </span>
+            <span class="right weight500">
+              <script> document.write(moment('{{the_bill.servFrom | date:"r" }}').format('DD/M/YYYY, HH:mm')) </script>
+            </span>
           </div>
-          <div class="row the_address"> 
-            <div class="col-5 brown"> {% if useri.langSet == 0 %} Hadi{% else %} To{% endif %}:  </div>
-              <div class="col-7 weight500">
-                <script> document.write(moment('{{the_bill.servTo | date:"r" }}').format('DD/M/YYYY, HH:mm')) </script>
-              </div>
-            </div>
+          <div class="receipt-line the_address"> 
+            <span class="brown"> {% if useri.langSet == 0 %} Hadi{% else %} To{% endif %}: </span>
+            <span class="right weight500">
+              <script> document.write(moment('{{the_bill.servTo | date:"r" }}').format('DD/M/YYYY, HH:mm')) </script>
+            </span>
+          </div>
        
 
       <hr>
       {% endif %}
 
 
-        
+        {% if not the_bill.waiter_order %}
 
-        <div class="the_address row">
-          <div class="col-8">
-              <strong>{% if then.langSet == 0 %} Statasi{% else %} Status  {% endif %}</strong>:
-          </div>
-          <div class="col-4">
+        <div class="receipt-line the_address">
+          <span><strong>{% if then.langSet == 0 %} Statasi{% else %} Status  {% endif %}</strong>:</span>
+          <span class="right">
             {% if the_bill.ilolipwa == the_bill.amount %}
-            <strong style="font-family:'Ubuntu',sans serif;color:#205302f3" >
+            <strong >
                {% if then.langSet == 0 %}   IMELIPIWA{% else %} PAID  {% endif %}
             </strong>
             {% elif the_bill.ilolipwa != 0 %}
-            <strong style="font-family:'Ubuntu',sans serif;color:#2f6a79" >
+            <strong>
                {% if then.langSet == 0 %}  IMELIPWA KIASI {% else %} LESS PAID {% endif %}
             </strong>
             {% elif the_bill.ilolipwa == 0 %}
-            <strong style="font-family:'Ubuntu',sans serif;color:#9b1010" >
+            <strong>
                 {% if then.langSet == 0 %}  HAIJALIPIWA {% else %} UNPAID {% endif %}
             </strong>
             {% endif %}
-          </div>
+          </span>
           
         </div>
 
-        <div class="row the_address">
-          <div class="col-4">
-            <span>{% if then.langSet == 0 %} Kiasi{% else %} Amount{% endif %}</span>:
-          </div>
-          <div class="col-8 text-right">
-            <span class="smallFont"> {{duka.currencii}}</span>. <span>{{the_bill.amount | floatformat:'-2' | intcomma }} </span>
+        <div class="receipt-line the_address">
+          <span>{% if then.langSet == 0 %} Kiasi{% else %} Amount{% endif %}:</span>
+          <span class="right"><span class="smallFont"> {{duka.currencii}}</span>. <span>{{the_bill.amount | floatformat:'-2' | intcomma }} </span></span>
+        </div>
 
-          </div>
-          <div class="col-4">
-            <span>{% if then.langSet == 0 %} Ilolipwa{% else %}Paid{% endif %}</span>:
-          </div>
-          <div class="col-8 text-right">
-            <span class="smallFont"> {{duka.currencii}}</span>. <span >{{the_bill.ilolipwa | floatformat:'-2' | intcomma }} </span>
+        <div class="receipt-line the_address">
+          <span>{% if then.langSet == 0 %} Ilolipwa{% else %}Paid{% endif %}:</span>
+          <span class="right"><span class="smallFont"> {{duka.currencii}}</span>. <span >{{the_bill.ilolipwa | floatformat:'-2' | intcomma }} </span></span>
+        </div>
 
-          </div>
           {% if the_bill.ilolipwa != the_bill.amount %}
-          <div class="col-4 border-top">
-            <span>{% if then.langSet == 0 %} Deni  {% else %} Debt {% endif %}</span>:
-          </div>
-          <div class="col-8 border-top text-right">
-            <span class="smallerFont"> {{duka.currencii}}</span>. <label>
+          <div class="receipt-line the_address border-top">
+            <span>{% if then.langSet == 0 %} Deni  {% else %} Debt {% endif %}:</span>
+            <span class="right"><span class="smallerFont"> {{duka.currencii}}</span>. <label>
                 <script>
                   //  $(document).ready(function(){
                         let am= Number('{{the_bill.amount}}'),
@@ -169,19 +146,27 @@
                    // })
                     
                 </script>
-            </label>
-
+            </label></span>
           </div>
 
           {% endif %}
-        </div>
         
         <hr>
-
+   {% endif %}
         <!--End InvoiceTop-->
       
         <div id="mid">
+
           <div class="info">
+            {% if the_bill.waiter_order %}
+            <div>
+                 <h2>{% if useri.langSet == 0 %}Mhudumu{% else %}Waiter{% endif %}: </h2>
+                 <h3>{{the_bill.waiter_order.user.user.first_name | title }} {{the_bill.waiter_order.user.user.last_name | title }}({{the_bill.waiter_order.user_entp.Interprise.Intp_code}})</h3>   
+
+            </div>
+            <hr>
+            {% endif %}
+
             <h2>
               {% if then.langSet == 0 %}
                  Bili Kwa
@@ -190,6 +175,8 @@
               {% endif %}:
             </h2>
             <p>
+              {% if the_bill.waiter_order %}
+              {% else %}
               {% if then.langSet == 0 %}Jina{%else%}Name{%endif%} : <strong> {{the_bill.mteja_jina | title }}</strong> <br>
             
               {% if the_bill.online %}
@@ -200,28 +187,22 @@
                 </br>
                 {% if useri.langSet == 0 %} Barua Pepe  {% else %} Email {% endif %} : {{the_bill.user_customer.enteprise.owner.user.email }}</br>
               
-                {% if the_bill.customer_in %}
+                
+              {% endif %}
+              {% endif %}
+              {% if the_bill.customer_in %}
                 <div class="classic_div mt-2 p-2 border-top text-left" style="max-width: 450px;">
-                    <h6 class="weight500" >{% if useri.langSet == 0 %}Mteja  eneo la Biashara  {% else %} Customer around business area{% endif %}</h6> 
-                    <div class="row the_address mb-2">
-                    <div class="col-3">
-                        
-                        {% if useri.langSet == 0 %}Eneo{% else %} Area{% endif %}:
-                        </div>
-                        <div class="col-9 ">
-                            <strong class="brown" ><u class="pb-2"> {{the_bill.customer_in.area.name}} </u> </strong> 
-                        </div>
+                    <!-- <h6 class="weight500" >{% if useri.langSet == 0 %}Mteja  eneo la Biashara  {% else %} Customer around business area{% endif %}</h6>  -->
+                    <div class="receipt-line the_address mb-2">
+                      <span>{% if useri.langSet == 0 %}Eneo{% else %} Area{% endif %}:</span>
+                      <span class="right"><strong> {{the_bill.customer_in.area.name}}</strong></span>
                     </div>
-                    <div class="row the_address">
-                        <div class="col-3">
-                            {% if useri.langSet == 0 %}Sehemu{% else %} Position{% endif %}:
-                        </div>
-                        <div class="col-9 ">
-                            <strong class="brown" ><u class="pb-2"> {{the_bill.customer_in.name}} </u> </strong> 
-                        </div>
+                    <div class="receipt-line the_address">
+                      <span>{% if useri.langSet == 0 %}Sehemu{% else %} Position{% endif %}:</span>
+                      <span class="right"><strong> {{the_bill.customer_in.name}}</strong></span>
                     </div>
                 </div>   
-               {% endif %}
+               
 
               {% else %}
               {% if then.langSet == 0 %} Anwani  {% else %} Address {% endif %}  : {{the_bill.address}}</br>
@@ -254,9 +235,8 @@
 
 
 
-          <div class="classic_div mt-3">
-            
-              <div class="d-flex justify-content-center align-items-center" id="imgBox">
+            <div class="classic_div mt-3">
+              <div id="imgBox">
                   <img src="" alt="" id="qrImage">
               </div>
             
@@ -266,11 +246,12 @@
                $(document).ready(function(){
                   const url = window.location.host;
                   const imgBox= document.getElementById("imgBox")
+                  imgBox.innerHTML = ''
   
                     qrcode = new QRCode('imgBox',{
                       text:`${url}/mauzo/viewInvo?item_valued={{the_bill.id}}`,
-                      height:120,
-                      width:120,
+                      height:80,
+                      width:80,
                     
                   })
                })
@@ -589,92 +570,56 @@
 
          const  siz = pi.size_name!=""?`<i>Size:<strong class="brown text-uppercase" >${pi.size_name}</strong></i>`:'',
                 color_nik = pi.color_nick!=""?`(${pi.color_nick})`:'',
-                color = pi.color_name!=""?` <i clas text-capitalize" >${pi.color_name}${color_nik}</i>  `:''  ,
+            color = pi.color_name!=""?` <i class="text-capitalize" >${pi.color_name}${color_nik}</i>  `:''  ,
                 dura = IS_SERVICE?duraxn.find(d=>d.value===pi.timely):{name:'',duration:1,opt:'',value:0},
                 servT = IS_SERVICE?dura.duration:1,
                 tms = IS_SERVICE&&pi.timely?`&times;<span>${pi.muda}</span><span>${dura.name}</span>`:''
                 // picha =`<img style="max-width: 40px;"  src="${pi.picha?pi.picha:'/static/pics/img.svg'}" alt="${lang('Hakuna Picha','No Image')}">`
          li += `
-                 <li class=" border-bottom  "  >
-                      <div class="d-flex" >
-                           <div><strong>${count}.</strong></div>
-
-                        <div>
-                            <div class="d-flex"  >     
-                                <div class="text-capitalize smallFont" style="min-width:100%px" >  ${siz} ${color} ${pi.name} </div>
-                              
-                            </div>
-
-                            <div class="row p-0 smallerFont">
-                                <div class="col-12"> 
-                                      
-                                        <span class=" add-reduce-btn  " ><span>{{duka.currencii}}</span>.${Number(beis).toLocaleString()} &times; ${idad}</span><span class="add-reduce-btn" >${vpmo}</span>${tms} 
-                                            
-                                </div>
-                                <div class="col-12 border-bottom  row"> 
-                                  <div class="col-4">
-                                      <strong>${lang('Jumla','Total')}</strong>
-                                   </div> 
-                                  <div class="col-8 text-right">
-                                        <span >{{duka.currencii}}.</span> <strong class="py-1 " style="color:var(--text-muted)" >${Number(beis*idad*pi.muda).toLocaleString()} </strong> 
-
-                                   </div> 
-                                        
-                                </div>
-                            </div>
-
-                        </div>
-                        </div>
-                      <hr style="margin-top:2px" />
+                 <li>
+              <div class="receipt-item-wrap">
+                <div class="receipt-item-index"><strong>${count}.</strong></div>
+                <div class="receipt-item-body">
+                  <div class="text-capitalize receipt-item-name">${siz} ${color} ${pi.name}</div>
+                  <div class="receipt-item-meta">
+                    <div class="receipt-item-desc-line"><span>{{duka.currencii}}</span>.${Number(beis).toLocaleString()} &times; ${idad} ${vpmo} ${tms}</div>
+                    <div class="receipt-item-total">
+                      <span><strong>${lang('Jumla','Total')}</strong></span>
+                      <span class="right"><span>{{duka.currencii}}.</span> <strong>${Number(beis*idad*pi.muda).toLocaleString()}</strong></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
                     </li> `
 
                     count+=1
          })
 
          const vat_allowed = Number('{% if not duka.vat_set %}1{% else %}0{% endif %}'), totSum = `
-                   <h6 class="row" ${sales==sub_tot?'hidden':''}>
-                       <div class="col-4">
-                          ${lang('Jumla kwa Bei','Total By Price')}
-                       </div>
-                       <div class="col-8 text-right" >
-                          ${CURRENCII}  ${Number(sub_tot).toLocaleString()}
-                       </div>
-                   </h6>
+            {% if not the_bill.waiter_order %}   <div class="receipt-summary-line" ${sales==sub_tot?'hidden':''}>
+                 <span>${lang('Jumla kwa Bei','Total By Price')}</span>
+                 <span class="right">${CURRENCII} ${Number(sub_tot).toLocaleString()}</span>
+               </div>
 
-                   <h6 class="row" ${sales==sub_tot?'hidden':''}>
-                       <div class="col-4">
-                          ${lang('Punguzo','Discount')}
-                       </div>
-                       <div class="col-8 text-right" >
-                          ${CURRENCII}  ${Number(sub_tot-sales).toLocaleString()}
-                       </div>
-                   </h6>
-                   <h6 class="row" ${sales==sub_tot&&!vat_allowed?'hidden':''}  >
-                       <div class="col-4">
-                          ${lang('Jumla Kwa Mauzo','Sub Total')}
-                       </div>
-                       <div class="col-8 text-right" >
-                          ${CURRENCII}  ${Number(sales).toLocaleString()}
-                       </div>
-                   </h6>
-                   <h6 class="row" ${vat_allowed?'':'hidden'}  >
-                       <div class="col-4">
-                          VAT(${vatper*100}%)
-                       </div>
-                       <div class="col-8 text-right" >
-                          ${CURRENCII}  ${Number(total_vat).toLocaleString()}
-                       </div>
-                   </h6>
-                   <h4 class="row"  >
-                       <div class="col-3" >
-                            ${lang('Inayolipwa','Payable')}
-                       </div>
-                       <div class="col-9 text-right" >
-                          ${CURRENCII} <span  style="font-weight:700"> ${Number('{{the_bill.amount}}').toLocaleString()} </span>
-                       </div>
-                   </h4>
+               <div class="receipt-summary-line" ${sales==sub_tot?'hidden':''}>
+                 <span>${lang('Punguzo','Discount')}</span>
+                 <span class="right">${CURRENCII} ${Number(sub_tot-sales).toLocaleString()}</span>
+               </div>
+               <div class="receipt-summary-line" ${sales==sub_tot&&!vat_allowed?'hidden':''}>
+                 <span>${lang('Jumla Kwa Mauzo','Sub Total')}</span>
+                 <span class="right">${CURRENCII} ${Number(sales).toLocaleString()}</span>
+               </div>
+               <div class="receipt-summary-line" ${vat_allowed?'':'hidden'}>
+                 <span>VAT(${vatper*100}%)</span>
+                 <span class="right">${CURRENCII} ${Number(total_vat).toLocaleString()}</span>
+               </div>
+               {% endif %}
+               <div class="receipt-summary-grand">
+                 <span>${lang('Inayolipwa','Payable')}</span>
+                 <span class="right">${CURRENCII} <strong>${Number('{{the_bill.amount}}').toLocaleString()}</strong></span>
+               </div>
 
-                   <hr/>
+               <hr/>
          `
              
             
@@ -687,7 +632,7 @@
           
 
     $(document).ready(function(){
-                 setTimeout(function(){window.print();}, 200)
+                setTimeout(function(){window.print();}, 200)
 
                     window.onafterprint = function(e){
                             closeMe()

@@ -1,0 +1,92 @@
+{% extends 'userdash.html' %}
+{% load static %}
+
+{% block billcss %}
+<link rel="stylesheet" href="{% static 'css/sales.css' %}">
+{% endblock %}
+
+{% block Dashboard %}
+<div class="whiteBg py-4" style="min-height:80vh;">
+  <div class="classic_div mb-3">
+    <h5 class="mb-1 latoFont text-center">
+      {% if useri.langSet == 0 %}Mpangilio wa Waiter{% else %}Waiter Settings{% endif %}
+    </h5>
+    {% if active_counter %}
+    <small class="text-muted d-block text-center">
+      {% if useri.langSet == 0 %}
+      Counter active: {{ active_counter.Interprise.name|title }}
+      {% else %}
+      Active counter: {{ active_counter.Interprise.name|title }}
+      {% endif %}
+    </small>
+    {% endif %}
+  </div>
+
+  {% if saved %}
+  <div class="alert alert-success">
+    {% if useri.langSet == 0 %}Mabadiliko yamehifadhiwa.{% else %}Settings saved successfully.{% endif %}
+  </div>
+  {% endif %}
+
+  <div class="classic_div mb-3" style="max-width:520px;">
+    <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:8px;">
+      <div>
+        <h6 class="mb-1">{% if useri.langSet == 0 %}Set PIN{% else %}Set PIN{% endif %}</h6>
+        <small class="text-muted">
+          {% if useri.langSet == 0 %}
+          Tumia hii kubadilisha PIN ya waiter.
+          {% else %}
+          Use this to create or change waiter PIN.
+          {% endif %}
+        </small>
+      </div>
+      <a href="/mauzo/waiter_set_pin" class="btn btn-outline-primary btn-sm">
+        {% if useri.langSet == 0 %}Fungua{% else %}Open{% endif %}
+      </a>
+    </div>
+  </div>
+
+  <div class="classic_div" style="max-width:520px;">
+    <form method="POST" action="/mauzo/waiter_settings">
+      {% csrf_token %}
+      <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:8px;">
+        <div>
+          <h6 class="mb-1">{% if useri.langSet == 0 %}Activate Print Mode{% else %}Activate Print Mode{% endif %}</h6>
+          <small class="text-muted">
+            {% if useri.langSet == 0 %}
+            Ikiwa imewashwa, button ya print itaonekana kwenye list ya order.
+            {% else %}
+            When enabled, print buttons are visible in waiter order list.
+            {% endif %}
+          </small>
+        </div>
+        <div class="custom-control custom-switch">
+          <input type="checkbox" class="custom-control-input" id="enable_print" name="enable_print" {% if active_counter.enable_print %}checked{% endif %}>
+          <label class="custom-control-label" for="enable_print">
+            {% if useri.langSet == 0 %}Washa{% else %}Enable{% endif %}
+          </label>
+        </div>
+      </div>
+
+      <div class="mt-3 d-flex" style="gap:8px;">
+        <button type="submit" class="btn btn-primary btn-sm">
+          {% if useri.langSet == 0 %}Hifadhi{% else %}Save{% endif %}
+        </button>
+        <a href="/mauzo/waiterpage" class="btn btn-light btn-sm">
+          {% if useri.langSet == 0 %}Rudi Waiter Page{% else %}Back to Waiter Page{% endif %}
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block nav-mauzo %}
+class="c-menu__item style-none is-active  showingpop2"
+{% endblock %}
+
+{% block akaunt-map %}
+{% if useri.langSet == 0 %}Waiter Settings{% else %}Waiter Settings{% endif %}
+{% endblock %}
+
+{% block active-mauzo %} class="bi bi-cart-check text-primary" {% endblock %}

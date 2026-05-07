@@ -7,17 +7,21 @@ const loadCells = () => {
     url:"/getPlaceCells"
    } ,
    getThedata = POSTREQUEST(data)
+    const onLoadCellsError = () => {
+          $('#loadMe').modal('hide')
+          hideLoading()
+    }
    getThedata.then(resp=>{
         $('#loadMe').modal('hide')
       hideLoading()
        SHOPCELLSS = resp
-      
-
-       
-   }).error(er=>{
-         $('#loadMe').modal('hide')
-        hideLoading()
    });
+
+    if (typeof getThedata.catch === 'function') {
+        getThedata.catch(onLoadCellsError)
+    } else if (typeof getThedata.fail === 'function') {
+        getThedata.fail(onLoadCellsError)
+    }
    
 }
 

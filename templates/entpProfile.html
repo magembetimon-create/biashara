@@ -458,6 +458,17 @@
                         <label class="custom-control-label" style="cursor: pointer;" for="SetProduction">{% if useri.langSet == 0 %}Uzalishaji/Uchakataji Bidhaa{% else %}Items Production/Processing{% endif %} </label>
                     </div>
                 </li>
+
+                <li>
+                    <div class="custom-control custom-checkbox">
+                      {% if duka.waiter_counter %}
+                          <input type="checkbox" checked  class="custom-control-input setactivity" data-set="waiter_counter"  id="SetWaiterCounter"  >
+                       {% else %} 
+                          <input type="checkbox"   class="custom-control-input setactivity" data-set="waiter_counter"  id="SetWaiterCounter"  >
+                       {% endif %}
+                       
+                        <label class="custom-control-label" style="cursor: pointer;" for="SetWaiterCounter">{% if useri.langSet == 0 %}Mhudumu na Wateja{% else %}Customer-waiter & counter Activity{% endif %} </label>
+                    </div>
                
                     
             </ul>

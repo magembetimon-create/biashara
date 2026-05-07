@@ -1,4 +1,4 @@
-from management.models import Notifications,ainaMama,ainaBibi, UserExtend,Zones,Nchi,EmployeeAttachments,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji
+from management.models import Notifications,ainaMama,ainaBibi, UserExtend,Zones,Nchi,EmployeeAttachments,Kanda,Workers, customer_area, customer_in_cell,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji
 from django.utils import timezone
 from django.db.models import Q,F
 from datetime import date
@@ -38,7 +38,17 @@ class Todos:
         Puorder = manunuzi.objects.filter(Interprise__in=[duka.id,pent.id],order=True)
        
         ukomo = duka.Interprise and (duka.usage > 0 or duka.marketing > 0) and duka.bill_tobePaid < date.today()
-
+        waiter_counter = InterprisePermissions.objects.filter(user=user.id,waiter_counter=True,Interprise__waiter_counter=True)
+        payaccs_waiter = PaymentAkaunts.objects.filter(Interprise__in=[wc.Interprise.id for wc in waiter_counter.filter(servicing=True)]) if waiter_counter.exists() else None
+        customer_table = customer_in_cell.objects.filter(area__Interprise__in=[wc.Interprise.id for wc in waiter_counter.filter(servicing=True)]) if waiter_counter.exists() else None
+        waiter_uncleared_waiters_count = 0
+        if duka and duka.Interprise and duka.waiter_counter:
+          waiter_uncleared_waiters_count = mauzoni.objects.filter(
+            Interprise=duka,
+            waiter_order__isnull=False,
+            By__isnull=True,
+            full_returned=False,
+          ).values('waiter_order').distinct().count()
         todo = {
         'cheo':dukap,
         'duka':duka,
@@ -50,7 +60,11 @@ class Todos:
         'matawi':matawi,
         'pent':pent,
         'puO':Puorder,
-        'ukomo':ukomo
+        'ukomo':ukomo,
+        'waiter_counter':waiter_counter,
+        'waiter_uncleared_waiters_count':waiter_uncleared_waiters_count,
+        'payaccs_waiter':payaccs_waiter,
+        'customer_table':customer_table
         }
 
 
@@ -67,7 +81,8 @@ class Todos:
             'hdm':None,
             'matawi':None,
             'pent':None,
-            'puO':None       
+            'puO':None,
+            'waiter_uncleared_waiters_count':0       
         }
       return todo
 

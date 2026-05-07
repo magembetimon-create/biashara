@@ -1,0 +1,390 @@
+{% extends 'userdash.html' %}
+{% load static %}
+
+{% block billcss %}
+<link rel="stylesheet" href="{% static 'css/sales.css' %}">
+<link rel="stylesheet" href="{% static 'css/waiterpage.css' %}">
+{% endblock %}
+
+{% block Dashboard %}
+<div id="waiterPageRoot" class="whiteBg py-2 waiter-shell">
+  <div id="waiterTopSection" class="waiter-top row classic_div mb-2 align-items-end">
+    <div class="col-12">
+      <div class="row justify-content-md-end align-items-end">
+        <div class="col-auto mb-2 mb-md-0">
+          {% if waiter_counter %}
+          <div class="btn-group" id="counterSelect" >
+            <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                <path d="M9 4v16"></path>
+              </svg>
+              {{servicing_counter.Interprise.name | title}}
+            </button>
+            <div class="dropdown-menu dropdown-menu-right">
+              <h6 class="dropdown-header">{% if useri.langSet == 0 %}Counters Zangu{% else %}My Counters{% endif %}</h6>
+              {% for counter in waiter_counter %}
+              <form method="post" action="/mauzo/waiter_counter_activate" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="counter" value="{{ counter.id }}">
+                <button type="submit" class="dropdown-item d-flex justify-content-between align-items-center">
+                  <span>{{ counter.Interprise.name | title }}</span>
+                  {% if counter.servicing %}
+                  <span class="badge badge-success ml-2">{% if useri.langSet == 0 %}Inafanya kazi{% else %}Active{% endif %}</span>
+                  {% endif %}
+                </button>
+              </form>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="col-auto text-md-right" id="settingsLink" >
+          <a href="/mauzo/waiter_cleared_report" class="btn btn-outline-primary btn-sm mr-1">
+            {% if useri.langSet == 0 %}Riport za Cleared{% else %}Cleared Reports{% endif %}
+          </a>
+          <a href="/mauzo/waiter_settings" class="btn btn-outline-secondary btn-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 .99-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 .99 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51.99H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51.99z"></path>
+            </svg>
+            {% if useri.langSet == 0 %}Mpangilio{% else %}Settings{% endif %}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="waiterCategoriesSection" class="row classic_div mb-2">
+    <div class="col-12">
+      <ul id="waiterCounterNav" class="waiter-counter-nav list-unstyled d-flex pt-2 mb-0"></ul>
+    </div>
+  </div>
+
+  <div class="row classic_div mb-2 waiter-search-row">
+    <div class="col-12">
+      <div class="input-group waiter-search-input-wrap">
+        <input type="text" id="waiterSearchInput" class="form-control" placeholder="{% if useri.langSet == 0 %}Tafuta Bidhaa{% else %}Search Item{% endif %}">
+        <div class="input-group-append">
+          <span class="input-group-text">
+           <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div id="waiterItemsColumn" class="col-lg-7 mb-3">
+      <div class="classic_div waiter-items-wrap">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="mb-0">{% if useri.langSet == 0 %}Bidhaa{% else %}Items{% endif %}</h6>
+          <small class="text-muted" id="waiterItemsCount">0</small>
+        </div>
+        <div id="waiterItemsList" class="waiter-items-grid"></div>
+      </div>
+    </div>
+
+    <div id="waiterSideColumn" class="col-lg-5 mb-3">
+      <div class="classic_div mb-2 waiter-desktop-panel-toggle">
+        <div class="btn-group btn-group-sm d-flex" role="group" aria-label="Waiter Panels">
+          <button type="button" class="btn btn-primary waiter-panel-tab" data-panel="current">
+            {% if useri.langSet == 0 %}Current Order{% else %}Current Order{% endif %}
+          </button>
+          <button type="button" class="btn btn-light waiter-panel-tab" data-panel="orders">
+            {% if useri.langSet == 0 %}My Orders{% else %}My Orders{% endif %} <span class="badge badge-secondary waiter-tab-badge" id="waiterMyOrdersCount">0</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="waiterCurrentOrderPanel" class="classic_div waiter-cart-wrap mb-3">
+        <h6>{% if useri.langSet == 0 %}Oda Ya Sasa{% else %}Current Order{% endif %}</h6>
+        <ul id="waiterCartList" class="list-unstyled waiter-cart-list"></ul>
+        <div class="border-top pt-2 d-flex justify-content-between">
+          <strong>{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</strong>
+          <strong><span class="text-primary">{{duka.currencii}}</span> <span id="waiterCartTotal">0</span></strong>
+        </div>
+        <div class="form-check my-2">
+          <input class="form-check-input" type="checkbox" id="clear_after_print">
+          <label class="form-check-label smallFont" for="clear_after_print">
+            {% if useri.langSet == 0 %}Nimeprint risiti sasa (clear order){% else %}Printed now (clear order){% endif %}
+          </label>
+        </div>
+        <button type="button" id="waiter_order_btn" class="btn btn-success btn-block">
+          {% if useri.langSet == 0 %}Order{% else %}Order{% endif %}
+        </button>
+      </div>
+
+      <div id="waiterMyOrdersPanel" class="classic_div waiter-history-wrap" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">{% if useri.langSet == 0 %}Order Zangu{% else %}My Orders{% endif %}</h6>
+          <button id="refreshWaiterOrders" class="btn btn-light btn-sm">{% if useri.langSet == 0 %}Refresh{% else %}Refresh{% endif %}</button>
+        </div>
+        <div class="waiter-history-tabs mt-2">
+          <button class="btn btn-sm btn-primary waiter-history-tab" data-tab="pending">{% if useri.langSet == 0 %}Pending{% else %}Pending{% endif %} <span class="badge badge-light waiter-tab-badge" id="waiterPendingCount">0</span></button>
+          <button class="btn btn-sm btn-light waiter-history-tab" data-tab="printed">{% if useri.langSet == 0 %}Printed{% else %}Printed{% endif %} <span class="badge badge-secondary waiter-tab-badge" id="waiterPrintedCount">0</span></button>
+        </div>
+        <div class="waiter-history-tabs mt-2">
+          <button class="btn btn-sm btn-primary waiter-payment-tab" data-pay="all">{% if useri.langSet == 0 %}Zote{% else %}All{% endif %} <span class="badge badge-light waiter-tab-badge" id="waiterAllCount">0</span></button>
+          <button class="btn btn-sm btn-light waiter-payment-tab" data-pay="paid">{% if useri.langSet == 0 %}Zilizolipwa{% else %}Paid{% endif %} <span class="badge badge-secondary waiter-tab-badge" id="waiterPaidCount">0</span></button>
+          <button class="btn btn-sm btn-light waiter-payment-tab" data-pay="unpaid">{% if useri.langSet == 0 %}Hazijalipwa{% else %}Unpaid{% endif %} <span class="badge badge-secondary waiter-tab-badge" id="waiterUnpaidCount">0</span></button>
+        </div>
+        <div id="waiterOrderHistory" class="waiter-history-list mt-2"></div>
+        <div class="mt-2 border-top pt-2">
+          <h6 class="smallFont mb-1">{% if useri.langSet == 0 %}Items za order uliyochagua{% else %}Selected order items{% endif %}</h6>
+          <ul id="waiterSelectedOrderItems" class="list-unstyled mb-0"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="waiter-mobile-bottom-nav" id="waiterMobileBottomNav">
+    <button type="button" class="waiter-mobile-nav-btn active" data-mobile-panel="items" id="waiterMobileItemsBtn">
+      <span>{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</span>
+    </button>
+    <button type="button" class="waiter-mobile-nav-btn" data-mobile-panel="current" id="waiterMobileCurrentBtn">
+      <span>{% if useri.langSet == 0 %}Current Order{% else %}Current Order{% endif %}</span>
+      <span class="waiter-mobile-count" id="waiterMobileCartCount">0</span>
+    </button>
+    <button type="button" class="waiter-mobile-nav-btn" data-mobile-panel="orders" id="waiterMobileOrdersBtn">
+      <span>{% if useri.langSet == 0 %}My Orders{% else %}My Orders{% endif %}</span>
+      <span class="waiter-mobile-count" id="waiterMobileOrdersCount">0</span>
+    </button>
+  </div>
+</div>
+
+<input type="hidden" id="vat_percent" value="{{duka.vatper}}">
+<div id="waiterPrintLabelMeta"
+  class="d-none"
+  data-print-swa="Print"
+  data-print-eng="Print"
+  data-count-swa="mara"
+  data-count-eng="times"></div>
+
+<!-- Waiter Order Modal -->
+<div class="modal fade" id="waiterOrderModal" tabindex="-1" role="dialog" aria-labelledby="waiterOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="waiterOrderModalLabel">
+          {% if useri.langSet == 0 %}Hifadhi Order{% else %}Save Order{% endif %}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Paid toggle -->
+        <div class="form-group">
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="waiterOrderPaid">
+            <label class="custom-control-label" for="waiterOrderPaid">
+              {% if useri.langSet == 0 %}Order Imelipwa?{% else %}Order Paid?{% endif %}
+            </label>
+          </div>
+        </div>
+
+        <!-- Payment method (visible only when paid) -->
+        <div class="form-group" id="waiterPayMethodWrap" style="display:none;">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Njia ya Malipo{% else %}Payment Method{% endif %}</label>
+          <select class="form-control" id="waiterPayMethod">
+            <option value="" data-aina="">-- {% if useri.langSet == 0 %}Chagua njia{% else %}Select method{% endif %} --</option>
+            {% if payaccs_waiter %}
+            {% for acc in payaccs_waiter %}
+            <option value="{{ acc.id }}" data-aina="{{ acc.aina }}">{{ acc.aina }}</option>
+            {% endfor %}
+            {% endif %}
+          </select>
+        </div>
+
+        <!-- Customer name (visible when payment method is not Cash) -->
+        <div class="form-group" id="waiterCustomerNameWrap" style="display:none;">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Jina la Mteja{% else %}Customer Name{% endif %}</label>
+          <input type="text" id="waiterCustomerName" class="form-control" placeholder="{% if useri.langSet == 0 %}Weka jina la mteja{% else %}Enter customer name{% endif %}">
+        </div>
+
+        <!-- Table selection -->
+        <div class="form-group mb-1">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}</label>
+          <div class="input-group">
+            <input type="text" id="place_where" class="form-control" placeholder="{% if useri.langSet == 0 %}Andika au chagua meza{% else %}Type or select table{% endif %}">
+            <input type="hidden" id="the_cell" value="0">
+            <input type="hidden" id="the_table_id" value="0">
+            <div class="input-group-append">
+              <button id="qr_scan_cell" type="button" data-onshelf="0" data-shop="{{duka.id}}" data-cell="1" class="btn btn-outline-primary scan_qr" title="Scan QR">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 9V5a2 2 0 0 1 2-2h4"></path>
+                  <path d="M15 3h4a2 2 0 0 1 2 2v4"></path>
+                  <path d="M21 15v4a2 2 0 0 1-2 2h-4"></path>
+                  <path d="M9 21H5a2 2 0 0 1-2-2v-4"></path>
+                  <rect x="8" y="8" width="3" height="3"></rect>
+                  <rect x="13" y="13" width="3" height="3"></rect>
+                </svg> QR
+              </button>
+            </div>
+          </div>
+        </div>
+        {% if customer_table %}
+        <div class="waiter-table-grid">
+          {% for tbl in customer_table %}
+          <button type="button" class="waiter-table-btn btn btn-light btn-sm" data-name="{{ tbl.name }}" data-area="{{ tbl.area.name }}" data-id="{{ tbl.id }}">
+            <div class="waiter-table-area smallerFont text-muted">{{ tbl.area.name }}</div>
+            <div class="waiter-table-name">{{ tbl.name }}</div>
+          </button>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+          {% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}
+        </button>
+        <button type="button" id="waiterSubmitOrderBtn" class="btn btn-success btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 12l2 2 4-4"></path>
+            <circle cx="12" cy="12" r="9"></circle>
+          </svg>
+          {% if useri.langSet == 0 %}Hifadhi Order{% else %}Save Order{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Waiter Pay Order Modal -->
+<div class="modal fade" id="waiterPayModal" tabindex="-1" role="dialog" aria-labelledby="waiterPayModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title mb-0" id="waiterPayModalLabel">
+          {% if useri.langSet == 0 %}Lipa Order{% else %}Pay Order{% endif %}
+        </h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="waiterPayOrderId" value="0">
+
+        <!-- Order summary -->
+        <div class="mb-3 p-2 bg-light rounded smallFont">
+          <div class="d-flex justify-content-between">
+            <span>{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</span>
+            <strong id="waiterPaySummaryTotal">0</strong>
+          </div>
+          <div class="d-flex justify-content-between text-success">
+            <span>{% if useri.langSet == 0 %}Imelipwa{% else %}Paid{% endif %}</span>
+            <strong id="waiterPaySummaryPaid">0</strong>
+          </div>
+          <div class="d-flex justify-content-between text-danger">
+            <span>{% if useri.langSet == 0 %}Inayobaki{% else %}Remaining{% endif %}</span>
+            <strong id="waiterPaySummaryRemaining">0</strong>
+          </div>
+        </div>
+
+        <!-- Payment method -->
+        <div class="form-group">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Njia ya Malipo{% else %}Payment Method{% endif %}</label>
+          <select class="form-control form-control-sm" id="waiterPayAccSelect">
+            <option value="" data-aina="">-- {% if useri.langSet == 0 %}Chagua njia{% else %}Select method{% endif %} --</option>
+            {% if payaccs_waiter %}
+            {% for acc in payaccs_waiter %}
+            <option value="{{ acc.id }}" data-aina="{{ acc.aina }}">{{ acc.aina }}</option>
+            {% endfor %}
+            {% endif %}
+          </select>
+        </div>
+
+        <!-- Customer name (shown for non-cash) -->
+        <div class="form-group" id="waiterPayCustomerWrap" style="display:none;">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Jina la Mteja{% else %}Customer Name{% endif %}</label>
+          <input type="text" id="waiterPayCustomerName" class="form-control form-control-sm" placeholder="{% if useri.langSet == 0 %}Weka jina la mteja{% else %}Enter customer name{% endif %}">
+        </div>
+
+        <!-- Amount to pay -->
+        <div class="form-group mb-1">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Kiasi Kinacholipwa{% else %}Amount Paying{% endif %}</label>
+          <input type="number" id="waiterPayAmountInput" class="form-control form-control-sm" min="0" step="0.01" placeholder="0">
+        </div>
+
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+          {% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}
+        </button>
+        <button type="button" id="waiterSubmitPayBtn" class="btn btn-primary btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+            <circle cx="12" cy="12" r="2"></circle>
+            <path d="M6 12h.01M18 12h.01"></path>
+          </svg>
+          {% if useri.langSet == 0 %}Rekodi Malipo{% else %}Record Payment{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Waiter Print Confirm Modal -->
+<div class="modal fade" id="waiterPrintConfirmModal" tabindex="-1" role="dialog" aria-labelledby="waiterPrintConfirmModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content border-0 shadow-sm">
+      <div class="modal-header py-2 bg-light">
+        <h6 class="modal-title mb-0" id="waiterPrintConfirmModalLabel">
+          {% if useri.langSet == 0 %}Uthibitisho wa Print{% else %}Print Confirmation{% endif %}
+        </h6>
+      </div>
+      <div class="modal-body text-center">
+        <div class="mb-2" style="font-size:28px; line-height:1;">🖨️</div>
+        <div class="smallFont mb-1" id="waiterPrintConfirmText">
+          {% if useri.langSet == 0 %}
+          Uko tayari kuprint order hii?
+          {% else %}
+          Are you ready to print this order?
+          {% endif %}
+        </div>
+        <div class="text-muted small mb-1" id="waiterPrintConfirmSubtext">
+          {% if useri.langSet == 0 %}
+          Ukithibitisha, stock itapunguzwa mara ya kwanza tu.
+          {% else %}
+          On confirmation, stock is deducted only on first print.
+          {% endif %}
+        </div>
+        <div class="text-muted small" id="waiterPrintConfirmOrderRef"></div>
+      </div>
+      <div class="modal-footer py-2 d-flex justify-content-between">
+        <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">
+          {% if useri.langSet == 0 %}Ghairi{% else %}Cancel{% endif %}
+        </button>
+        <button type="button" id="waiterConfirmPrintedBtn" class="btn btn-primary btn-sm">
+          {% if useri.langSet == 0 %}Ndio, Print Sasa{% else %}Yes, Print Now{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block nav-mauzo %}
+class="c-menu__item style-none is-active  showingpop2"
+{% endblock %}
+
+{% block akaunt-map %}
+{% if useri.langSet == 0 %}Waiter Page{% else %}Waiter Page{% endif %}
+{% endblock %}
+
+{% block active-mauzo %} class="bi bi-cart-check text-primary" {% endblock %}
+
+{% block for_pos %}
+<script src="{% static 'js/loadCells.js' %}"></script>
+<script src="{% static 'js/waiterpage.js' %}"></script>
+{% endblock %}
+
+{% block forItems %}{% endblock %}
