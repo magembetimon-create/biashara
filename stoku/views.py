@@ -1522,9 +1522,9 @@ def registeredItemsRegister(request):
                     }
        try:  
            val = request.POST.get('itm')
-           sup = request.POST.get('sup')
-           idr = int(request.POST.get('idr'))
-           idj = int(request.POST.get('idj'))
+           sup = int(request.POST.get('sup',0))
+           idr = int(request.POST.get('idr',0))
+           idj = int(request.POST.get('idj',0))
            rangi = json.loads(request.POST.get('rangi'))
            todo = todoFunct(request)
            duka = todo['duka']
