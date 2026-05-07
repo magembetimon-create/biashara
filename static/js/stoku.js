@@ -1003,7 +1003,7 @@ $('#addfrom_reistered').submit(function(e){
     idadi_reja= Number($('#idadi_rejareja').val()) || 0,
     rang = Number($('.coloredscene_').length),
     itm = $('#fetch_item').data('val'),
-    sup = $('#produ_sambazaji_').val()
+    sup = Number($('#produ_sambazaji_').val()) || 0
   
 
     let rangi = []
@@ -1074,7 +1074,9 @@ $('#addfrom_reistered').submit(function(e){
          $("#loadMe").modal('show');
         const sendIt = POSTREQUEST(data)
           sendIt.then(re=>{
-                  if(re.success){
+              $("#loadMe").modal('hide');
+              hideLoading()
+                if(re.success){
                 $('#idadi_jum_jum').val('')
                 $('#idadi_rejareja').val('')
                 $('#idadi_jum_jum').prop('readonly',false)
