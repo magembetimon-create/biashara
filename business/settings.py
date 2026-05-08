@@ -33,8 +33,7 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = '0b16!x@8u)cj16v148tg5ljj6s^90&@f%#y9z$+yw94x$=j*um'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-# DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').strip().lower() in ('1', 'true', 'yes', 'on')
 
 # ALLOWED_HOSTS = [os.getenv('HOST']
 
@@ -106,26 +105,16 @@ if  DEBUG:
         }
     }
 else:
-    # DATABASES = {
-    #     'default': {
-    #         'ENGINE': 'django.db.backends.postgresql',
-    #         'NAME': os.getenv('DB_NAME'),
-    #         'USER': os.getenv('DB_USER'),
-    #         'PASSWORD' : os.getenv('DB_PASSWORD'),
-    #         'HOST' : os.getenv('DB_HOST'),
-    #         'PORT' : os.getenv('DB_PORT', '5432'),
-    #     }
-    # }    
-
-    DATABASES = {
+   DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'biashara',
-        'USER': 'postgres',
-        'PASSWORD': 'Biashara@122',
-        'HOST': '104.197.123.120',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
+
 }
 
 

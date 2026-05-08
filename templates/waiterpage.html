@@ -229,16 +229,11 @@
             </div>
           </div>
         </div>
-        {% if customer_table %}
-        <div class="waiter-table-grid">
-          {% for tbl in customer_table %}
-          <button type="button" class="waiter-table-btn btn btn-light btn-sm" data-name="{{ tbl.name }}" data-area="{{ tbl.area.name }}" data-id="{{ tbl.id }}">
-            <div class="waiter-table-area smallerFont text-muted">{{ tbl.area.name }}</div>
-            <div class="waiter-table-name">{{ tbl.name }}</div>
-          </button>
-          {% endfor %}
-        </div>
-        {% endif %}
+
+
+          <div id="waiterTableGrid" class=" mb-3 ">
+             
+          </div>
 
       </div>
       <div class="modal-footer">

@@ -30,6 +30,32 @@
       font-size: 0.85rem;
     }
     .device-logout-btn:hover { background: #c82333; }
+    .whiteBg { background: white !important;}
+
+    #waiterTableGrid .waiter-device-area-list {
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-top: 4px;
+    }
+
+    #waiterTableGrid .waiter-device-area-btn {
+      width: 100%;
+    }
+
+    #waiterTableGrid .waiter-device-table-list {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    @media (max-width: 575px) {
+      #waiterTableGrid .waiter-device-table-layout > [class*="col-"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -180,43 +206,85 @@
 </div>
 
 <!-- Waiter Order Modal -->
-<div class="modal fade" id="waiterOrderModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
+<div class="modal fade" id="waiterOrderModal" tabindex="-1" role="dialog" aria-labelledby="waiterOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content whiteBg">
       <div class="modal-header">
-        <h5 class="modal-title">{% if useri.langSet == 0 %}Ingiza Meza/Mteja{% else %}Set Table/Customer{% endif %}</h5>
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h5 class="modal-title" id="waiterOrderModalLabel">
+          {% if useri.langSet == 0 %}Hifadhi Order{% else %}Save Order{% endif %}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
       <div class="modal-body">
-        <input type="hidden" id="the_cell" value="0">
-        <input type="hidden" id="the_table_id" value="0">
+
+        <!-- Paid toggle -->
         <div class="form-group">
-          <label>{% if useri.langSet == 0 %}Meza/Mteja{% else %}Table/Customer{% endif %}</label>
-          <input type="text" id="place_where" class="form-control" placeholder="Jina la meza..." readonly>
-        </div>
-        <div id="waiterTableGrid" class="waiter-table-grid mb-3"></div>
-        <div class="form-check mb-3">
-          <input class="form-check-input" type="checkbox" id="waiterOrderPaid">
-          <label class="form-check-label" for="waiterOrderPaid">
-            {% if useri.langSet == 0 %}Lipa Sasa{% else %}Pay Now{% endif %}
-          </label>
-        </div>
-        <div id="waiterPayMethodWrap" style="display:none;">
-          <div class="form-group">
-            <label>{% if useri.langSet == 0 %}Njia ya Kulipa{% else %}Payment Method{% endif %}</label>
-            <select id="waiterPayMethod" class="form-control"></select>
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="waiterOrderPaid">
+            <label class="custom-control-label" for="waiterOrderPaid">
+              {% if useri.langSet == 0 %}Order Imelipwa?{% else %}Order Paid?{% endif %}
+            </label>
           </div>
-          <div id="waiterCustomerNameWrap" style="display:none;">
-            <div class="form-group">
-              <label>{% if useri.langSet == 0 %}Jina la Mteja{% else %}Customer Name{% endif %}</label>
-              <input type="text" id="waiterCustomerName" class="form-control">
+        </div>
+
+        <!-- Payment method (visible only when paid) -->
+        <div class="form-group" id="waiterPayMethodWrap" style="display:none;">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Njia ya Malipo{% else %}Payment Method{% endif %}</label>
+          <select class="form-control" id="waiterPayMethod">
+            <option value="" data-aina="">-- {% if useri.langSet == 0 %}Chagua njia{% else %}Select method{% endif %} --</option>
+            {% if payaccs_waiter %}
+            {% for acc in payaccs_waiter %}
+            <option value="{{ acc.id }}" data-aina="{{ acc.aina }}">{{ acc.aina }}</option>
+            {% endfor %}
+            {% endif %}
+          </select>
+        </div>
+
+        <!-- Customer name (visible when payment method is not Cash) -->
+        <div class="form-group" id="waiterCustomerNameWrap" style="display:none;">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Jina la Mteja{% else %}Customer Name{% endif %}</label>
+          <input type="text" id="waiterCustomerName" class="form-control" placeholder="{% if useri.langSet == 0 %}Weka jina la mteja{% else %}Enter customer name{% endif %}">
+        </div>
+
+        <!-- Table selection -->
+        <div class="form-group mb-1">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}</label>
+          <div class="input-group">
+            <input type="text" id="place_where" class="form-control" placeholder="{% if useri.langSet == 0 %}Andika au chagua meza{% else %}Type or select table{% endif %}">
+            <input type="hidden" id="the_cell" value="0">
+            <input type="hidden" id="the_table_id" value="0">
+            <div class="input-group-append">
+              <button id="qr_scan_cell" type="button" data-onshelf="0" data-shop="{{duka.id}}" data-cell="1" class="btn btn-outline-primary scan_qr" title="Scan QR">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 9V5a2 2 0 0 1 2-2h4"></path>
+                  <path d="M15 3h4a2 2 0 0 1 2 2v4"></path>
+                  <path d="M21 15v4a2 2 0 0 1-2 2h-4"></path>
+                  <path d="M9 21H5a2 2 0 0 1-2-2v-4"></path>
+                  <rect x="8" y="8" width="3" height="3"></rect>
+                  <rect x="13" y="13" width="3" height="3"></rect>
+                </svg> QR
+              </button>
             </div>
           </div>
         </div>
+        <div id="waiterTableGrid" class=" mb-3 ">
+             
+        </div>
+
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</button>
-        <button type="button" id="waiterSubmitOrderBtn" class="btn btn-success">{% if useri.langSet == 0 %}Tengeneza Oda{% else %}Create Order{% endif %}</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+          {% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}
+        </button>
+        <button type="button" id="waiterSubmitOrderBtn" class="btn btn-success btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 12l2 2 4-4"></path>
+            <circle cx="12" cy="12" r="9"></circle>
+          </svg>
+          {% if useri.langSet == 0 %}Hifadhi Order{% else %}Save Order{% endif %}
+        </button>
       </div>
     </div>
   </div>
@@ -225,7 +293,7 @@
 <!-- Waiter Pay Order Modal -->
 <div class="modal fade" id="waiterPayModal" tabindex="-1" role="dialog" aria-labelledby="waiterPayModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-sm" role="document">
-    <div class="modal-content">
+    <div class="modal-content whiteBg">
       <div class="modal-header py-2">
         <h6 class="modal-title mb-0" id="waiterPayModalLabel">
           {% if useri.langSet == 0 %}Lipa Order{% else %}Pay Order{% endif %}
@@ -295,7 +363,7 @@
 <!-- Print Confirmation Modal -->
 <div class="modal fade" id="waiterPrintConfirmModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
+    <div class="modal-content whiteBg">
       <div class="modal-header">
         <h5 class="modal-title">{% if useri.langSet == 0 %}Thibitisha Print{% else %}Confirm Print{% endif %}</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -315,10 +383,10 @@
 <!-- Loading Modal -->
 <div class="modal fade" id="loadMe" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
+    <div class="modal-content whiteBg">
       <div class="modal-body text-center">
         <div class="spinner-border" role="status">
-          <span class="sr-only">Loading...</span>
+          <span class="sr-only" style="color:rgb(63, 63, 63)" >Loading...</span>
         </div>
       </div>
     </div>
@@ -340,7 +408,7 @@
 <input type="hidden" id="entpCurrencii" value="{{ duka.currencii }}" name="entpCurrencii">
 
 
-<script src="{% static 'js/jQuery.js' %}"></script>
+<script src="{% static 'js/jquery.js' %}"></script>
 
 <script src="{% static 'js/bootstrap.min.js' %}"></script>
 <script src="{% static 'js/moment.min.js' %}"></script>

@@ -4,6 +4,8 @@ let WAITER_ITEM_IMG = []
 let WAITER_ITEM_CATEG = 0
 let WAITER_COUNTER_MODE = 'all'
 let WAITER_COUNTER_NAME = ''
+let WAITER_TABLE_AREAS = []
+let WAITER_SELECTED_AREA_ID = 0
 let WAITER_TAB = 'pending'
 let WAITER_PAYMENT_FILTER = 'all'
 let WAITER_SELECTED_ORDER = 0
@@ -165,6 +167,90 @@ function waiterImageMap() {
     }
   })
   return mp
+}
+
+function normalizeWaiterTableAreas(rawAreas) {
+  if (!Array.isArray(rawAreas)) return []
+
+  return rawAreas
+    .map(area => {
+      const areaId = Number(area && area.id ? area.id : 0)
+      const areaName = String(area && area.name ? area.name : '').trim()
+      const tables = Array.isArray(area && area.tables)
+        ? area.tables.map(tb => ({
+            id: Number(tb && tb.id ? tb.id : 0),
+            name: String(tb && tb.name ? tb.name : '').trim(),
+            area_id: Number(tb && tb.area_id ? tb.area_id : areaId),
+            area_name: String(tb && tb.area_name ? tb.area_name : areaName).trim(),
+          })).filter(tb => tb.id > 0 && tb.name)
+        : []
+
+      return {
+        id: areaId,
+        name: areaName,
+        tables,
+      }
+    })
+    .filter(area => area.id > 0 && area.name && area.tables.length > 0)
+}
+
+function setWaiterSelectedTable(tableObj) {
+  if (!tableObj) return
+  $('#place_where').val(String(tableObj.name || '').trim()).prop('readonly', false)
+  $('#the_table_id').val(Number(tableObj.id || 0))
+  renderWaiterTableGrid()
+}
+
+function renderWaiterTableGrid() {
+  const host = $('#waiterTableGrid')
+  if (!host.length) return
+
+  if (!WAITER_TABLE_AREAS.length) {
+    host.html(`<div class="small text-muted">${waiterLang('Hakuna meza zilizosajiliwa', 'No registered tables')}</div>`)
+    return
+  }
+
+  const selectedArea = WAITER_TABLE_AREAS.find(ar => Number(ar.id) === Number(WAITER_SELECTED_AREA_ID))
+  const selectedTableId = Number($('#the_table_id').val() || 0)
+
+  const areaHtml = WAITER_TABLE_AREAS.map(ar => `
+    <button
+      type="button"
+      class="btn btn-sm waiter-area-btn text-left waiter-device-area-btn ${Number(ar.id) === Number(WAITER_SELECTED_AREA_ID) ? 'btn-primary' : 'btn-light'}"
+      data-id="${ar.id}">
+      <div class="waiter-table-name">${ar.name}</div>
+      <div class="waiter-table-area smallerFont ${Number(ar.id) === Number(WAITER_SELECTED_AREA_ID) ? 'text-white-50' : 'text-muted'}">${ar.tables.length} ${waiterLang('meza', 'tables')}</div>
+    </button>
+  `).join('')
+
+  let tablePaneHtml = `<div class="small text-muted py-2">${waiterLang('Bonyeza sehemu kushoto kuona meza zake', 'Click a place on the left to see its tables')}</div>`
+  if (selectedArea) {
+    const tableHtml = selectedArea.tables.map(tb => `
+      <button
+        type="button"
+        class="waiter-table-btn btn btn-sm ${selectedTableId === Number(tb.id) ? 'btn-primary' : 'btn-light'}"
+        data-name="${tb.name}"
+        data-id="${tb.id}"
+        data-area-id="${selectedArea.id}"
+        data-area="${selectedArea.name}">
+        <div class="waiter-table-area smallerFont text-muted">${selectedArea.name}</div>
+        <div class="waiter-table-name">${tb.name}</div>
+      </button>
+    `).join('')
+
+    tablePaneHtml = tableHtml || `<div class="small text-muted py-2">${waiterLang('Hakuna meza kwenye sehemu hii', 'No tables in this place')}</div>`
+  }
+
+  host.html(`
+    <div class="row no-gutters waiter-device-table-layout">
+      <div class="col-4 pr-2">
+        <div class="waiter-device-area-list">${areaHtml}</div>
+      </div>
+      <div class="col-8 pl-2">
+        <div class="waiter-table-grid waiter-device-table-list">${tablePaneHtml}</div>
+      </div>
+    </div>
+  `)
 }
 
 function addWaiterItemToCart(id) {
@@ -601,7 +687,8 @@ function saveWaiterOrder() {
   $('#place_where').val('').prop('readonly', false)
   $('#the_cell').val('0')
   $('#the_table_id').val('0')
-  $('.waiter-table-btn').removeClass('btn-primary').addClass('btn-light')
+  WAITER_SELECTED_AREA_ID = 0
+  renderWaiterTableGrid()
   $('#waiterOrderModal').modal('show')
 }
 
@@ -620,10 +707,14 @@ function initializeWaiterItems() {
 
     WAITER_ITEMS = (resp.products || []).slice(0)
     WAITER_ITEM_IMG = (resp.img || []).slice(0)
+    WAITER_TABLE_AREAS = normalizeWaiterTableAreas(resp.table_areas || [])
+    console.log(resp.table_areas)
+    WAITER_SELECTED_AREA_ID = 0
 
     WAITER_COUNTER_MODE = String(resp.counter_mode || 'all')
     WAITER_COUNTER_NAME = String(resp.counter_name || '')
     renderActiveCounter(resp)
+    renderWaiterTableGrid()
     renderWaiterCategories()
     renderWaiterItems()
   })
@@ -790,10 +881,24 @@ $('body').on('change', '#waiterPayMethod', function() {
 $('body').on('click', '.waiter-table-btn', function() {
   const name = String($(this).data('name') || '').trim()
   const tableId = Number($(this).data('id') || 0)
-  $('#place_where').val(name).prop('readonly', false)
-  $('#the_table_id').val(tableId)
-  $('.waiter-table-btn').removeClass('btn-primary').addClass('btn-light')
-  $(this).removeClass('btn-light').addClass('btn-primary')
+  const areaId = Number($(this).data('area-id') || 0)
+  if (areaId) WAITER_SELECTED_AREA_ID = areaId
+  setWaiterSelectedTable({ id: tableId, name: name })
+  renderWaiterTableGrid()
+})
+
+$('body').on('click', '.waiter-area-btn', function() {
+  const areaId = Number($(this).data('id') || 0)
+  if (!areaId) return
+  WAITER_SELECTED_AREA_ID = areaId
+  $('#place_where').val('')
+  $('#the_table_id').val('0')
+  renderWaiterTableGrid()
+})
+
+$('body').on('click', '.waiter-table-back-btn', function() {
+  WAITER_SELECTED_AREA_ID = 0
+  renderWaiterTableGrid()
 })
 
 $('body').on('click', '#waiterSubmitOrderBtn', function() {

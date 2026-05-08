@@ -9,6 +9,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
 from management.models import UserExtend,Interprise_Rating,ForPrintingPupose,ChangedServiceFrom,invoice_desk,HudumaNyingine,ChangedServiceTo,ChangedService,Kanda,Workers,Notifications,deliveryAgents,productionList,deliveryBy,salePuMatch,manunuzi,remainedFromOda, manunuziList,order_from,order_to,bidhaa_aina,sale_return,user_customers,businessReg,sale_return_mauzo_fidia,sa_ret,sa_col_ret,sa_size_ret,picha_bidhaa,Cash_order_return,Interprise,toaCash,bei_za_bidhaa,bidhaa,Interprise_contacts,wekaCash,produ_size,color_produ,produ_colored,bidhaa_stoku,wateja,sales_color,sales_size,mauzoni,mauzoList,InterprisePermissions,PaymentAkaunts,customer_in_cell,waiterPayments,WaiterPosDeviceSession,waiter_clearing
+from management.models import customer_area
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
@@ -621,6 +622,20 @@ def waiter_items_data(request):
                         'bidhaa': im.bidhaa.id
                   })
 
+      # customer_table = customer_in_cell.objects.filter(area__Interprise=duka.id).order_by('area__name', 'name')
+      area_qs = customer_area.objects.filter(Interprise=duka.id).prefetch_related('customer_in_cell_set').order_by('name')
+      table_areas = []
+      for area in area_qs:
+            tables_in_area = list(area.customer_in_cell_set.values('id', 'name').order_by('name'))
+            for tb in tables_in_area:
+                  tb['area_id'] = area.id
+                  tb['area_name'] = area.name
+            table_areas.append({
+                  'id': area.id,
+                  'name': area.name,
+                  'tables': tables_in_area
+            })
+
       return JsonResponse({
             'success': True,
             'products': products,
@@ -632,6 +647,7 @@ def waiter_items_data(request):
             'counter_name': servicing_counter.Interprise.name if servicing_counter else '',
             'counter_staff': f"{servicing_counter.user.user.first_name} {servicing_counter.user.user.last_name}".strip() if servicing_counter else '',
             'counter_role': servicing_counter.cheo if servicing_counter else '',
+            'table_areas': table_areas,
       })
 
 
@@ -4715,7 +4731,7 @@ def waiter_device_dashboard(request):
 
             payaccs_waiter = PaymentAkaunts.objects.filter(Interprise=duka.id, onesha=True)
             customer_table = customer_in_cell.objects.filter(area__Interprise=duka.id).select_related('area').order_by('area__name', 'name')
-
+            customer_area = customer_table.distinct('area')
             class _UserLangObj:
                   langSet = 1
 
@@ -4724,6 +4740,7 @@ def waiter_device_dashboard(request):
                   'useri': _UserLangObj(),
                   'waiter_counter': counters,
                   'customer_table': customer_table,
+                  'customer_area': customer_area,
                   'payaccs_waiter': payaccs_waiter,
             }
 
