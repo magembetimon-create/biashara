@@ -100,6 +100,9 @@ USE_L10N = True
 USE_TZ = True
 
 # 8. Static & Media Files (GCP vs Local)
+# settings.py
+print(f"DEBUG IS: {os.getenv('DEBUG')}")
+print(f"HOSTS ARE: {os.getenv('ALLOWED_HOSTS')}")
 
 if DEBUG:
     # --- PRODUCTION (GCP BUCKET) ---
