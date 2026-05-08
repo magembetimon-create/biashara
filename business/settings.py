@@ -37,12 +37,10 @@ DEBUG = os.getenv('DEBUG', 'False').strip().lower() in ('1', 'true', 'yes', 'on'
 
 # ALLOWED_HOSTS = [os.getenv('HOST']
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS')
-
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://fanyabiashara.com','http://fanyabiashara.com','https://google.com', 'https://fanyabiashara-behqabgwdsh8dvb8.centralus-01.azurewebsites.net'
+    'https://fanyabiashara.com','http://fanyabiashara.com','https://google.com','104.197.123.120'
 ]
 
 # Application definition
@@ -94,18 +92,8 @@ WSGI_APPLICATION = 'business.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-if  DEBUG:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'biashara',
-            'USER': 'postgres',
-            'PASSWORD' : '1152',
-            'HOST' : 'localhost'
-        }
-    }
-else:
-   DATABASES = {
+
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('DB_NAME'),
@@ -114,8 +102,9 @@ else:
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
-
 }
+
+
 
 
 AUTH_PASSWORD_VALIDATORS = [
