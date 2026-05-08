@@ -101,7 +101,7 @@ USE_TZ = True
 
 # 8. Static & Media Files (GCP vs Local)
 
-if not DEBUG:
+if DEBUG:
     # --- PRODUCTION (GCP BUCKET) ---
     GS_BUCKET_NAME = 'fbiashara'
     
