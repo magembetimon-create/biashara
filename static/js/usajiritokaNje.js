@@ -3,7 +3,6 @@ var index=-1;
  // Clear the ul   
  let itmsi = StoreNje.data,
      itms=itmsi
-//  console.log(itms)
 
 
  let pos= $(this).data('pos')
@@ -118,12 +117,14 @@ function placedataI(itm_val){
           itm=items.find(x=>x.id==itm_val)
           
 
-       let   prod_val = itm.bidhaa,
+       let   prod_val = itm.bidhaa_id,
             name =  itm.bidhaaN,
             pj =  itm.vipimoJum,
             pr =  itm.vipimo,
             uwiano = Number( itm.uwiano),
             sup= itm.msambaji_id
+
+           
 
 
             
@@ -167,13 +168,13 @@ function placedataI(itm_val){
 //Place Image to its appropriate.................................//
 function showimg(prod){
     let imge=ItemImg.state,coount=0,im_sr='',trp=''
-                
+               
             for(let im in imge){
-                
+                 
                 if(imge[im].bidhaa==prod) {
 
                  coount+=1;
-                 im_sr=`<img src="/media/${imge[im].picha__picha}" height="80"  style="cursor:pointer">`
+                 im_sr=`<img src="${imge[im].picha__picha}" height="80"  style="cursor:pointer">`
                 }
             }
             
