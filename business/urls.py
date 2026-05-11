@@ -29,6 +29,7 @@ urlpatterns = [
     path('riport/', include('riport.urls')),
     path('ecommerce/', include('ecommarce.urls')),
     path('staffonly/', include('staffonly.urls')),
+    path('staff/', include('staff.urls')),
 
     
 ]

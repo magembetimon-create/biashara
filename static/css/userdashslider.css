@@ -453,8 +453,8 @@
     transition: all 0.5s ease-in-out;
   }
   .c-menu > ul .c-menu__item.is-active .c-menu__item__inner {
-    border-left-color: #5f9cfd;
-    background-color: var(--whiteBg);
+    border-left-color: #5391f5;
+    background-color: #5391f528;
     
   }
  

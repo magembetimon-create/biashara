@@ -4260,9 +4260,9 @@ def bidhaatransfer(request):
           transfer_str = '0' +str(transferno)    
     elif transferno >=10000:
           transfer_str =str(transferno) 
+    hamisha_kwenda = Interprise.objects.filter(owner=todo['duka'].owner.id,Interprise=True).exclude(pk=todo['duka'].id).values('id','name')
 
-
-    todo.update({'transfer': transfer_str})
+    todo.update({'transfer': transfer_str, 'hamisha_kwenda': hamisha_kwenda})
         
     
     
@@ -4540,7 +4540,7 @@ def addtranfer(request):
 						
                             updateOrder(itm) 
 
-                        itm_.idadi = float(itm_.idadi - idd)    
+                        itm_.idadi = float(float(itm_.idadi) - float(idd))    
                         itm_.save()
                        
                     last_produ =  bidhaa_stoku.objects.filter(Interprise=toentp,bidhaa=prd.bidhaa.id).exclude(pk=prd.id).last()
@@ -4575,6 +4575,7 @@ def addtranfer(request):
                 }
 
        except:
+            traceback.print_exc()
             data = {
                 'success':False,
                 'msg_swa' : 'Data za kurekodi uhamishaji wa bidhaa kutoka '+duka.name+' hazikufanikiwa kutokana na hitilafu tafadhari jaribu tena',

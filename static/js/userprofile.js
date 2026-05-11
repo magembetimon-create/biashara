@@ -712,6 +712,36 @@ $('body').on('click','.user_per', function () {
           </div>
           </span>
       </li>
+
+      <li class="robotoFont py-1 smallFont">${lang('Ruhusa ya kuchagua Cash deposit supervisor','Allow selecting Cash deposit supervisor')} <span style="float:right;margin-right:3%">
+          <div class="onoffswitch-t2">
+              <form data-toggle="validator" class="togleparentuso" data-value=${ud.id} data-change="cash_deposit_supervisor" action="/updatepermissions"  method="POST">
+                   <input type="checkbox"`
+                   if(ud.cash_deposit_supervisor) {us+=`checked `}
+                   us+=`name="onoffswitch-t2" class="onoffswitch-checkbox-t2 changePemit" id="cashdepositsupervisor${ud.id}" tabindex="0">
+                       <label class="onoffswitch-label-t2" for="cashdepositsupervisor${ud.id}">
+                      <span class="onoffswitch-inner-t2"></span>
+                      <span class="onoffswitch-switch-t2"></span>
+                  </label>
+              </form>
+          </div>
+          </span>
+      </li>
+
+      <li class="robotoFont py-1 smallFont">${lang('Ruhusa ya kuweka pesa kutoka cash kwenda supervisor/akaunti','Allow cash deposit to supervisor/account')} <span style="float:right;margin-right:3%">
+          <div class="onoffswitch-t2">
+              <form data-toggle="validator" class="togleparentuso" data-value=${ud.id} data-change="cash_deposit_record" action="/updatepermissions"  method="POST">
+                   <input type="checkbox"`
+                   if(ud.cash_deposit_record) {us+=`checked `}
+                   us+=`name="onoffswitch-t2" class="onoffswitch-checkbox-t2 changePemit" id="cashdepositrecord${ud.id}" tabindex="0">
+                       <label class="onoffswitch-label-t2" for="cashdepositrecord${ud.id}">
+                      <span class="onoffswitch-inner-t2"></span>
+                      <span class="onoffswitch-switch-t2"></span>
+                  </label>
+              </form>
+          </div>
+          </span>
+      </li>
      
 
       <li class="robotoFont py-1 smallFont">${lang('Onesha miamara ya siri','Show invisible cash transactions')} <span style="float:right;margin-right:3%">
@@ -977,29 +1007,29 @@ $('.userdetail').keyup(function(){
 $('body').on("change", '.changePemit', function(){
     //  $("#loadMe").modal('show');
          $('#permi-loader').show()
-        var csrfToken =   $('input[name=csrfmiddlewaretoken]').val()
-        post_url=$(this).parent('form').attr("action")
+       
+    const    url=$(this).parent('form').attr("action")
+   
 
     var data1={
-        csrfmiddlewaretoken: csrfToken,
-        value:$(this).parent('form').data("value"),
-        edit:$(this).parent('form').data("change"),
-        state:Number($(this).prop('checked'))
+       data:{
+            value:$(this).parent('form').data("value"),
+            edit:$(this).parent('form').data("change"),
+            state:Number($(this).prop('checked'))
+       },
+       url
+        
     }   
 
-    $.ajax({
-        type: "POST",
-        url: post_url,
-         data: data1,
-      }).done(function(data) {
-        $('#permi-loader').hide()
-         getstaffobj.allstaff()
-        if(data1.edit=="viewi"){
-          
-            isset.state=false
-
-        }
-
+const sendIt = POSTREQUEST(data1)
+sendIt.then(resp=>{
+    $('#permi-loader').hide()
+    if(resp.success){
+        toastr.success(lang('Ruhusa imebadilishwa','Permission changed'), lang('Imefanikiwa','Success'), {timeOut: 2000});
+        getstaffobj.allstaff()
+    }else{
+        toastr.error(lang('Ruhusa haijabadilishwa','Permission was not changed'), lang('Haikufanikiwa','Error'), {timeOut: 2000});
+    }
 })
 
 })

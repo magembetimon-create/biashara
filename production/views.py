@@ -1,5 +1,7 @@
 from math import prod
 from threading import activeCount
+import traceback
+import traceback
 from typing import ItemsView
 from django.shortcuts import render
 
@@ -1002,7 +1004,7 @@ def confirmProd(request):
             duka = todo['duka']
 
             prdxn=production.objects.get(pk=pr,Interprise=duka.id)
-            productionConfirm.objects.filter(prodxn=prdxn.id,user=todo['cheo']).update(comfirm=comf,date=datetime.datetime.now(tz=timezone.utc),desc=desc)
+            productionConfirm.objects.filter(prodxn=prdxn.id,user=todo['cheo']).update(comfirm=comf,date=timezone.now(),desc=desc)
             data={
                 'success':True,
                 'msg_swa':'Uhakiki umefanikiwa',
@@ -1210,7 +1212,7 @@ def addExpenses(request):
                     if acc.Amount >= expAmo and amoRem + expAmo  <= acc.Amount and len(exp)>0:
                         ztaree = matumiziTarehe()
                         ztaree.produxn = prodxn
-                        ztaree.date = datetime.datetime.now(tz=timezone.utc)
+                        ztaree.date = timezone.now()
                         ztaree.Na = todo['cheo']
                         ztaree.save()
 
@@ -1231,7 +1233,7 @@ def addExpenses(request):
                             tumizi.Interprise = duka
                             tumizi.matumizi = expense_n
                             tumizi.date = date.today()
-                            tumizi.tarehe = datetime.datetime.now(tz=timezone.utc)
+                            tumizi.tarehe = timezone.now()
                             tumizi.matumiziDeti = ztaree
                             
                             tumizi.kiasi = float(ex['amo'])
@@ -1258,7 +1260,7 @@ def addExpenses(request):
                                                 
                         toa.kwenda = "Production Expense"
                         toa.maelezo = 'BIL-<a class="ivoice_details" href="/production/productonExpenses?pr='+str(prodxn.id)+'" type="button"  data-id="'+str(prodxn.id)+'">'+prodxn.code+'</a>'
-                        toa.tarehe = datetime.datetime.now(tz=timezone.utc)
+                        toa.tarehe = timezone.now()
                         toa.by=todo['cheo']
                         toa.Interprise=duka
 
@@ -1363,7 +1365,7 @@ def addProducts(request):
 
                         prdDate=productionListDate()
                         prdDate.production = prodxn
-                        prdDate.date = datetime.datetime.now(tz=timezone.utc)
+                        prdDate.date = timezone.now()
                         prdDate.Na = todo['cheo']
                         prdDate.code = prdn_str
                         prdDate.code_num = prdn + 1
@@ -1596,7 +1598,7 @@ def addMaterial(request):
                         produxn.update(desc=desc)
                     else:
                         prdxn.Interprise = duka
-                        # prdxn.Recodeddate = datetime.datetime.now(tz=timezone.utc)
+                        # prdxn.Recodeddate = timezone.now()
                         prdxn.code = prdn_str
                         prdxn.code_num = prdn+1
                         prdxn.Na = todo['cheo']
@@ -1606,9 +1608,9 @@ def addMaterial(request):
                         if tare != '':
                            prdxn.Recodeddate =  tare
                         else:
-                           prdxn.Recodeddate = datetime.datetime.now(tz=timezone.utc)
+                           prdxn.Recodeddate = timezone.now()
                        
-                        prdxn.date = datetime.datetime.now(tz=timezone.utc)   
+                        prdxn.date = timezone.now()   
                         prdxn.save()
 
                   
@@ -1631,7 +1633,7 @@ def addMaterial(request):
                             adj_str =str(adjno)
 
                     adj.Interprise = duka        
-                    adj.date = datetime.datetime.now(tz=timezone.utc)        
+                    adj.date = timezone.now()        
                     adj.Recodeddate = date.today() 
                     adj.code_num = adjno + 1 
                     adj.Na = todo['cheo']
@@ -1721,6 +1723,7 @@ def addMaterial(request):
                             'msg_eng':'The operation was unsuccessfuly please activate payment after usage plan'
                         } 
         except:
+            traceback.print_exc()
             data={
                 'success':False,
                 'msg_swa':'Oparesheni haikufanikiwa kutokana na hitilafu tafadhari jaribu tena',
@@ -1753,7 +1756,7 @@ def addWorkers(request):
 
                 dateWork = productionWorkersDate()
                 dateWork.production = prdn
-                dateWork.date = datetime.datetime.now(tz=timezone.utc)
+                dateWork.date = timezone.now()
                 dateWork.Na = todo['cheo']
                 dateWork.save()
 
@@ -1784,6 +1787,7 @@ def addWorkers(request):
 
 
         except:
+            traceback.print_exc()
             data={
                 'success':False,
                 'msg_swa':'Kitendo hakikufanikiwa tafadhari jaribu tena',
@@ -1839,6 +1843,7 @@ def removeWorkerTask(request):
                 return JsonResponse(data)
 
         except:
+            traceback.print_exc()
             data={
                 'success':False,
                 'msg_swa':'Kitendo hakikufanikiwa tafadhari jaribu tena',

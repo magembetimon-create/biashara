@@ -77,7 +77,7 @@ $('body').on('focus','.suggest-holder input', function(){
    
 
       if(jina_namba.match(search)){
-          const itmImg = ItemImg.state.filter(im=>itms[i].bidhaa===im.bidhaa)[0]?.picha__picha
+          const itmImg = ItemImg.state.filter(im=>itm.bidhaa_id===im.bidhaa)[0]?.picha__picha
 
           var li=`<li data-value=${itm.id} data-valu=${itm.bidhaa_id} data-prod=${itm.bidhaa_id} data-pos=${pos}>
          <div class="col-2 col-md-1">

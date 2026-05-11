@@ -7,6 +7,7 @@
 
 {% block top-nav-Yield %} active text-primaryi {% endblock %}
 {% block active-Yield-menu %} text-primary weight700 {% endblock %}
+
 {% block Yield-icon %}
 <svg xmlns="http://www.w3.org/2000/svg" width="22"  height="22" viewBox="0 0 24 24" width="24px" fill="currentColor">
     <polygon points="12.16,3 11.84,3 9.21,8.25 14.79,8.25"/>
@@ -831,11 +832,18 @@
 
 
 {% block billmpya %}
+
 <script src="{% static 'js/production/addProducts.js' %}"></script>    
 
   <script>    
     $('#loadMe').modal('show')
   </script>
+{% endblock %}
+
+{% block forItems %}
+<script>
+  getStokuData('/stoku/getItems')
+</script>
 {% endblock %}
 
 

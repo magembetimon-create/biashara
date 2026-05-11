@@ -1,0 +1,139 @@
+{% extends 'userdash.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block nav-staff %}class="c-menu__item style-none is-active showingpop2"{% endblock %}
+{% block active-staff-shifts-menu %}class="btn-default btn btn-sm pop2_active_menu"{% endblock %}
+
+{% block Dashboard %}
+<div class="Analytical whiteBg p-2 px-md-5 pt-md-3" id="general-panel" style="min-height:100vh;">
+  {% include 'staff/staffnavigations.html' %}
+
+  <div class="row align-items-center py-3 border-bottom">
+    <div class="col-md-7">
+      <h5 class="mb-0">{% if useri.langSet == 0 %}Ongeza Shift Mpya{% else %}Create New Shift{% endif %}</h5>
+    </div>
+    <div class="col-md-5 text-md-right mt-2 mt-md-0">
+      <a href="/staff/shifts" class="btn btn-outline-secondary btn-sm">{% if useri.langSet == 0 %}Rudi Kwenye Shift{% else %}Back to Shifts{% endif %}</a>
+    </div>
+  </div>
+
+  <form method="POST" action="/staff/shifts/new" class="mt-3">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="smallFont">{% if useri.langSet == 0 %}Shift Start (Muda wa Kuanza){% else %}Shift Start{% endif %}</label>
+        <input type="datetime-local" name="shift_start" class="form-control" value="{{ shift_start_default }}" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="smallFont">{% if useri.langSet == 0 %}Mtumiaji wa Kurekodi{% else %}Access-To User{% endif %}</label>
+        <select name="access_to" class="form-control" required>
+          <option value="">{% if useri.langSet == 0 %}Chagua Mtumiaji{% else %}Select User{% endif %}</option>
+          {% for p in access_users %}
+            <option value="{{ p.id }}">
+              {% if p.fanyakazi %}{{ p.fanyakazi.jina }}{% else %}{{ p.user.user.get_full_name|default:p.user.user.username }}{% endif %}
+              ({{ p.cheo }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="smallFont">{% if useri.langSet == 0 %}Staff wa Shift{% else %}Shift Team{% endif %}</label>
+        <select name="staff_ids" class="form-control" multiple size="4">
+          {% for w in shift_team %}
+            <option value="{{ w.id }}">
+              {{ w.jina }}
+            </option>
+          {% endfor %}
+        </select>
+        <small class="text-muted">{% if useri.langSet == 0 %}Shikilia Ctrl kuchagua wengi{% else %}Hold Ctrl to select multiple{% endif %}</small>
+      </div>
+      <div class="col-12 mb-3">
+        <label class="smallFont">{% if useri.langSet == 0 %}Maelezo{% else %}Notes{% endif %}</label>
+        <textarea name="notes" class="form-control" rows="2"></textarea>
+      </div>
+      <div class="col-12 text-right">
+        <button type="submit" class="btn btn-primary btn-sm">{% if useri.langSet == 0 %}Hifadhi Shift{% else %}Save Shift{% endif %}</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="row mt-4">
+    <div class="col-12 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body py-3">
+          <h6 class="mb-1">{% if useri.langSet == 0 %}Cash Amount{% else %}Cash Amount{% endif %}</h6>
+          <h4 class="mb-0">{{ cash_amount_total | floatformat:2 | intcomma }}</h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body py-3">
+          <h6 class="mb-3">{% if useri.langSet == 0 %}Stock Summary{% else %}Stock Summary{% endif %}</h6>
+          <div class="row">
+            <div class="col-md-4 mb-2">
+              <div class="p-2 border rounded">
+                <small class="text-muted d-block">{% if useri.langSet == 0 %}Items Namba (Registered){% else %}Registered Items{% endif %}</small>
+                <strong>{{ registered_items | floatformat:2 | intcomma }}</strong>
+              </div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="p-2 border rounded">
+                <small class="text-muted d-block">{% if useri.langSet == 0 %}Jumla ya Thamani (Buy){% else %}Total Buying Value{% endif %}</small>
+                <strong>{{ total_buy_value | floatformat:2 | intcomma }}</strong>
+              </div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="p-2 border rounded">
+                <small class="text-muted d-block">{% if useri.langSet == 0 %}Tegemeo la Mauzo{% else %}Expected Sales{% endif %}</small>
+                <strong>{{ total_expected_sales | floatformat:2 | intcomma }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <h6>{% if useri.langSet == 0 %}Bidhaa Zote{% else %}All Items{% endif %}</h6>
+      <input type="text" class="form-control form-control-sm mb-2" id="stockSearch"
+        placeholder="{% if useri.langSet == 0 %}Tafuta bidhaa...{% else %}Search items...{% endif %}"
+        onkeyup="filterStockTable(this.value)">
+      <div class="table-responsive" style="max-height: 360px; overflow-y:auto;">
+        <table class="table table-sm table-hover" id="stockTable">
+          <thead>
+            <tr>
+              <th class="text-left" >{% if useri.langSet == 0 %}Item{% else %}Item{% endif %}</th>
+              <th class="text-left" >{% if useri.langSet == 0 %}Units{% else %}Units{% endif %}</th>
+              <th class="text-left" >{% if useri.langSet == 0 %}Qty{% else %}Qty{% endif %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in stock_items %}
+            <tr>
+              <td>{{ s.bidhaa.bidhaa_jina }}</td>
+              <td>{{ s.bidhaa.vipimo|default:'-' }}</td>
+              <td>{{ s.idadi }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-muted">No stock</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function filterStockTable(query) {
+  var q = query.toLowerCase();
+  var rows = document.querySelectorAll('#stockTable tbody tr');
+  rows.forEach(function(row) {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

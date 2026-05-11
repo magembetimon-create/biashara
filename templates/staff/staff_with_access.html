@@ -1,0 +1,94 @@
+{% extends 'userdash.html' %}
+{% load static %}
+
+{% block nav-staff %}class="c-menu__item has-submenu showingpop2 is-active"{% endblock %}
+{% block active-staff-access-menu %}class="btn-default btn btn-sm  pop2_active_menu"{% endblock %}
+
+{% block Dashboard %}
+<div class="Analytical whiteBg p-2 px-md-5 pt-md-3" id="general-panel" style="min-height:100vh;">
+  {% include 'staff/staffnavigations.html' %}
+
+  <div class="row align-items-center py-3 border-bottom">
+    <div class="col-md-7">
+      <h5 class="mb-0">
+        <svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+        </svg>
+        {% if useri.langSet == 0 %}Wafanyakazi Wanaoruhusiwa Kuingia{% else %}Staff with System Access{% endif %}
+      </h5>
+    </div>
+    <div class="col-md-5">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text bg-transparent border-right-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.114-.099zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+            </svg>
+          </span>
+        </div>
+        <input type="text" id="accessSearch" class="form-control border-left-0 smallFont"
+          placeholder="{% if useri.langSet == 0 %}Tafuta mtumiaji...{% else %}Search user...{% endif %}"
+          onkeyup="filterStaffTable(this.value,'accessTable')">
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="table-responsive mt-3">
+    <table class="table table-hover" id="accessTable">
+      <thead>
+        <tr>
+          <th class="text-left" >#</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Mtumiaji{% else %}User{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Mfanyakazi{% else %}Employee{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Cheo{% else %}Position{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Hali{% else %}Status{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for perm in permissions %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>
+            {{ perm.user.user.get_full_name|default:perm.user.user.username }}
+          </td>
+          <td>
+            {% if perm.fanyakazi %}
+              {{ perm.fanyakazi.jina }}
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>{{ perm.cheo }}</td>
+          <td>
+            {% if perm.Allow %}
+              <span class="badge badge-success">{% if useri.langSet == 0 %}Anaruhusiwa{% else %}Allowed{% endif %}</span>
+            {% endif %}
+            {% if perm.waiter_counter %}
+              <span class="badge badge-primary ml-1">{% if useri.langSet == 0 %}Mhudumu{% else %}Waiter{% endif %}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-muted py-4">
+            {% if useri.langSet == 0 %}Hakuna wafanyakazi wenye ruhusa ya kuingia mfumoni.{% else %}No staff with system access found.{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function filterStaffTable(query, tableId) {
+  var q = query.toLowerCase();
+  var rows = document.querySelectorAll('#' + tableId + ' tbody tr');
+  rows.forEach(function(row) {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

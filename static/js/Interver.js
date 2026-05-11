@@ -33,6 +33,8 @@ const MsgRead = document.getElementById('msgRead'),
     
         let x = data.online, y=$("#storeUseronline").text(), asum=$('#AkauntiChange').text(),anewsum=data.Asum?.Amount__sum
 // detect new logedin user
+
+
             if(x!=y && data.entp ){
                 getstaffobj.allstaff() 
             }  

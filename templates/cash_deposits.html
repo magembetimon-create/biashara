@@ -1,0 +1,148 @@
+{% extends 'userdash.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block akaunt %}
+{% include 'akaunting_nav.html' %}
+
+<div class="container-fluid px-2 py-2">
+
+  <!-- Summary Cards -->
+  <div class="row mb-3" id="summary-cards">
+    <div class="col-12 col-md-4 mb-2">
+      <div class="card shadow-sm border-left-primary h-100 cursor-pointer" data-period="today" onclick="loadDetail('today')">
+        <div class="card-body p-3">
+          <div class="smallFont text-muted robotoFont">{% if useri.langSet == 0 %}Leo{% else %}Today{% endif %}</div>
+          <h5 class="font-weight-bold latoFont mb-0" id="sum-today-amount">0</h5>
+          <small class="text-muted" id="sum-today-count">0 {% if useri.langSet == 0 %}rekodi{% else %}records{% endif %}</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4 mb-2">
+      <div class="card shadow-sm border-left-info h-100 cursor-pointer" data-period="week" onclick="loadDetail('week')">
+        <div class="card-body p-3">
+          <div class="smallFont text-muted robotoFont">{% if useri.langSet == 0 %}Wiki Hii{% else %}This Week{% endif %}</div>
+          <h5 class="font-weight-bold latoFont mb-0" id="sum-week-amount">0</h5>
+          <small class="text-muted" id="sum-week-count">0 {% if useri.langSet == 0 %}rekodi{% else %}records{% endif %}</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4 mb-2">
+      <div class="card shadow-sm border-left-success h-100 cursor-pointer" data-period="month" onclick="loadDetail('month')">
+        <div class="card-body p-3">
+          <div class="smallFont text-muted robotoFont">{% if useri.langSet == 0 %}Mwezi Huu{% else %}This Month{% endif %}</div>
+          <h5 class="font-weight-bold latoFont mb-0" id="sum-month-amount">0</h5>
+          <small class="text-muted" id="sum-month-count">0 {% if useri.langSet == 0 %}rekodi{% else %}records{% endif %}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-3 shadow-sm">
+    <div class="card-body p-2">
+      <div class="row align-items-end">
+        <div class="col-6 col-md-3 mb-2">
+          <label class="smallFont robotoFont mb-0">{% if useri.langSet == 0 %}Kipindi{% else %}Period{% endif %}</label>
+          <select id="period-select" class="form-control form-control-sm smallFont" onchange="onPeriodChange()">
+            <option value="today">{% if useri.langSet == 0 %}Leo{% else %}Today{% endif %}</option>
+            <option value="week">{% if useri.langSet == 0 %}Wiki Hii{% else %}This Week{% endif %}</option>
+            <option value="month">{% if useri.langSet == 0 %}Mwezi Huu{% else %}This Month{% endif %}</option>
+            <option value="custom">{% if useri.langSet == 0 %}Tarehe Maalum{% else %}Custom Date{% endif %}</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2 mb-2 d-none" id="date-from-wrap">
+          <label class="smallFont robotoFont mb-0">{% if useri.langSet == 0 %}Kutoka{% else %}From{% endif %}</label>
+          <input type="date" id="date-from" class="form-control form-control-sm smallFont">
+        </div>
+        <div class="col-6 col-md-2 mb-2 d-none" id="date-to-wrap">
+          <label class="smallFont robotoFont mb-0">{% if useri.langSet == 0 %}Hadi{% else %}To{% endif %}</label>
+          <input type="date" id="date-to" class="form-control form-control-sm smallFont">
+        </div>
+        <div class="col-6 col-md-3 mb-2">
+          <label class="smallFont robotoFont mb-0">{% if useri.langSet == 0 %}Mrekodi{% else %}Recorded By{% endif %}</label>
+          <select id="by-select" class="form-control form-control-sm smallFont">
+            <option value="">{% if useri.langSet == 0 %}Wote{% else %}All{% endif %}</option>
+            {% for r in recorders %}
+            <option value="{{ r.by__id }}">{{ r.by__user__user__first_name }} {{ r.by__user__user__last_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-md-2 mb-2">
+          <button class="btn btn-primary btn-sm w-100 robotoFont smallFont" onclick="applyFilter()">
+            {% if useri.langSet == 0 %}Tafuta{% else %}Search{% endif %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Table -->
+  <div class="card shadow-sm">
+    <div class="card-header p-2 d-flex justify-content-between align-items-center">
+      <span class="robotoFont smallFont font-weight-bold" id="detail-title">
+        {% if useri.langSet == 0 %}Mapato ya Fedha - Leo{% else %}Cash Deposits - Today{% endif %}
+      </span>
+      <span class="badge badge-primary smallerFont" id="detail-count">0</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 smallFont">
+          <thead class="thead-light">
+            <tr>
+              <th class="robotoFont">{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
+              <th class="robotoFont">{% if useri.langSet == 0 %}Mrekodi{% else %}By{% endif %}</th>
+              <th class="robotoFont">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+              <th class="robotoFont">{% if useri.langSet == 0 %}Akaunti Chanzo{% else %}From Account{% endif %}</th>
+              <th class="robotoFont">{% if useri.langSet == 0 %}Akaunti Lengwa{% else %}Deposit To{% endif %}</th>
+              <th class="robotoFont">{% if useri.langSet == 0 %}Hali{% else %}Status{% endif %}</th>
+              {% if cheo.owner or cheo.msaidizi %}
+              <th class="robotoFont">{% if useri.langSet == 0 %}Hatua{% else %}Action{% endif %}</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody id="detail-tbody">
+            <tr><td colspan="7" class="text-center text-muted py-3 robotoFont smallFont">
+              {% if useri.langSet == 0 %}Bonyeza kipindi kuona rekodi{% else %}Click a period card to load records{% endif %}
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block nav-akaunt %}
+class="c-menu__item style-none is-active"
+{% endblock %}
+
+{% block active-akaunti %}
+<svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-credit-card text-primary" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <path fill-rule="evenodd" d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7z"/>
+  <path d="M2 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1z"/>
+</svg>
+{% endblock %}
+
+{% block dash-mapper %}
+{% if useri.langSet == 0 %}Mapato ya Fedha{% else %}Cash Deposits{% endif %}
+{% endblock %}
+
+{% block akaunt-map %}
+<a href="{% url 'cash_deposits_page' %}" class="tab_show">
+  {% if useri.langSet == 0 %}Mapato ya Fedha{% else %}Cash Deposits{% endif %}
+</a>
+{% endblock %}
+
+{% block billmpya %}
+<script>
+  var DATA_URL = "{% url 'cash_deposits_data' %}";
+  var APPROVE_URL = "{% url 'approve_cash_deposit' %}";
+  var CURRENCY = "{{ duka.currencii }}";
+  var LANG = Number("{{ useri.langSet }}");
+  var CAN_APPROVE = Number("{% if cheo.owner or cheo.msaidizi %}1{% else %}0{% endif %}");
+
+</script>
+<script src="{% static 'js/cash_deposits.js' %}"></script>
+{% endblock %}

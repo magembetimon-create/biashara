@@ -1,0 +1,150 @@
+{% extends 'userdash.html' %}
+{% load static %}
+
+{% block Dashboard %}
+<link rel="stylesheet" href="{% static 'css/riports.css' %}">
+
+<div class="Analytical whiteBg tab_div p-md-4 p-2" style="min-height: 100vh;" id="general-panel">
+    <h5>{% if useri.langSet == 0 %}Ripoti ya Zamu{% else %}Shift Report{% endif %}</h5>
+    <hr>
+
+    <form style="display:none;">{% csrf_token %}</form>
+
+    <div class="row align-items-end">
+        <div class="col-md-3">
+            <label class="smallFont weight600">{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}</label>
+            <select class="custom-select latoFont darkblue weight600 smallFont" id="ShiftBranch">
+                <option value="{{duka.id}}" selected>{{duka.name|title}}</option>
+                {% for m in matawi %}
+                <option value="{{m.Interprise.id}}">{{m.Interprise.name|title}}</option>
+                {% endfor %}
+                {% if matawi %}
+                <option value="0">{% if useri.langSet == 0 %}Yote{% else %}All{% endif %}</option>
+                {% endif %}
+            </select>
+        </div>
+
+        <div class="col-md-3 mt-2 mt-md-0">
+            <label class="smallFont weight600">{% if useri.langSet == 0 %}Kuanzia{% else %}From{% endif %}</label>
+            <input type="date" class="form-control smallFont" id="ShiftFromDate">
+        </div>
+
+        <div class="col-md-3 mt-2 mt-md-0">
+            <label class="smallFont weight600">{% if useri.langSet == 0 %}Hadi{% else %}To{% endif %}</label>
+            <input type="date" class="form-control smallFont" id="ShiftToDate">
+        </div>
+
+        <div class="col-md-3 mt-2 mt-md-0 text-md-right">
+            <button class="btn btn-secondary btn-sm" id="ReloadShiftReport" type="button">{% if useri.langSet == 0 %}Onesha{% else %}Load{% endif %}</button>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <div class="classic_div p-2 mb-2 smallFont" id="ShiftSummary"></div>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        <div class="col-md-12">
+            <div class="table-responsive">
+                <table class="table table-sm" id="ShiftReportTable" style="min-width: 920px;">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}</th>
+                            <th>{% if useri.langSet == 0 %}Muda wa Kuanza{% else %}Started{% endif %}</th>
+                            <th>{% if useri.langSet == 0 %}Muda wa Kufunga{% else %}Closed{% endif %}</th>
+                            <th>{% if useri.langSet == 0 %}Hali{% else %}Status{% endif %}</th>
+                            <th>{% if useri.langSet == 0 %}Mauzo{% else %}Sales{% endif %}</th>
+                            <th>{% if useri.langSet == 0 %}Matumizi{% else %}Expenses{% endif %}</th>
+                            <th>{% if useri.langSet == 0 %}Deposit{% else %}Deposits{% endif %}</th>
+                            <th>{% if useri.langSet == 0 %}Tofauti{% else %}Variance{% endif %}</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ShiftReportRows"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3 border-top pt-3">
+        <div class="col-md-4">
+            <h6 class="weight600">{% if useri.langSet == 0 %}Fungua Zamu{% else %}Open Shift{% endif %}</h6>
+            {% if cheo.owner %}
+            <div class="mb-2">
+                <button class="btn btn-sm btn-outline-secondary" type="button" id="ToggleShiftFeatureBtn" data-enabled="0">
+                    {% if useri.langSet == 0 %}Washa/Zima mfumo wa zamu{% else %}Enable/Disable shift management{% endif %}
+                </button>
+                <div class="smallerFont mt-1" id="ShiftFeatureState"></div>
+            </div>
+            {% else %}
+            <div class="smallerFont text-muted mb-2" id="ShiftFeatureState"></div>
+            {% endif %}
+            <div class="form-group mb-2">
+                <label class="smallFont">{% if useri.langSet == 0 %}Aina ya Zamu{% else %}Shift Type{% endif %}</label>
+                <select class="custom-select smallFont" id="OpenShiftType">
+                    <option value="daily">{% if useri.langSet == 0 %}Kila siku{% else %}Daily{% endif %}</option>
+                    <option value="weekly">{% if useri.langSet == 0 %}Wiki{% else %}Weekly{% endif %}</option>
+                    <option value="monthly">{% if useri.langSet == 0 %}Mwezi{% else %}Monthly{% endif %}</option>
+                </select>
+            </div>
+            <div class="form-group mb-2">
+                <label class="smallFont">{% if useri.langSet == 0 %}Opening Cash (optional){% else %}Opening Cash (optional){% endif %}</label>
+                <input type="number" step="0.01" class="form-control smallFont" id="OpenShiftCash" placeholder="0">
+            </div>
+            <div class="form-group mb-2">
+                <label class="smallFont">{% if useri.langSet == 0 %}Maelezo{% else %}Notes{% endif %}</label>
+                <textarea class="form-control smallFont" id="OpenShiftNotes" rows="2"></textarea>
+            </div>
+            <button class="btn btn-primary btn-sm" type="button" id="OpenShiftBtn">{% if useri.langSet == 0 %}Fungua Zamu{% else %}Open Shift{% endif %}</button>
+        </div>
+
+        <div class="col-md-4 mt-3 mt-md-0">
+            <h6 class="weight600">{% if useri.langSet == 0 %}Funga Zamu{% else %}Close Shift{% endif %}</h6>
+            <div class="form-group mb-2">
+                <label class="smallFont">{% if useri.langSet == 0 %}Cash iliyohesabiwa{% else %}Actual Closing Cash{% endif %}</label>
+                <input type="number" step="0.01" class="form-control smallFont" id="CloseShiftCash" placeholder="0">
+            </div>
+            <div class="form-group mb-2">
+                <label class="smallFont">{% if useri.langSet == 0 %}Maelezo{% else %}Notes{% endif %}</label>
+                <textarea class="form-control smallFont" id="CloseShiftNotes" rows="2"></textarea>
+            </div>
+            <button class="btn btn-danger btn-sm" type="button" id="CloseShiftBtn">{% if useri.langSet == 0 %}Funga Zamu Inayoendelea{% else %}Close Active Shift{% endif %}</button>
+        </div>
+
+        <div class="col-md-4 mt-3 mt-md-0">
+            <h6 class="weight600">{% if useri.langSet == 0 %}Uhakiki{% else %}Verification{% endif %}</h6>
+            <div class="smallFont" id="CurrentShiftCard">-</div>
+        </div>
+    </div>
+
+</div>
+
+<input type="hidden" id="currencii" value="{{duka.currencii}}" data-currencii="{{duka.currencii}}" />
+<input type="hidden" id="ShiftOwner" value="{% if cheo.owner %}1{% else %}0{% endif %}" />
+
+{% endblock %}
+
+{% block billmpya %}
+<script src="{% static 'js/riports/payments/shiftReport.js' %}"></script>
+{% endblock %}
+
+{% block dash-mapper %}
+Dashboard
+{% endblock %}
+
+{% block nav-ripoti %}
+class="c-menu__item style-none is-active"
+{% endblock %}
+
+{% block active-riport %} class="bi bi-graph-up text-primary" {% endblock %}
+
+{% block dash-map %}
+<a href="/riport/riportPage">{% if useri.langSet == 0 %}Ripoti{% else %}Reports{% endif %}</a>
+<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+</svg>
+<a href="#">{% if useri.langSet == 0 %}Ripoti ya Zamu{% else %}Shift Report{% endif %}</a>
+{% endblock %}

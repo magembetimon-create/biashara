@@ -440,3 +440,174 @@ $('#ac_id').val(0)
 
 }
 
+
+function resetCashDepositModalFields() {
+  $('#cashDepositCashAccount').html(`<option value="0">-- ${lang('Chagua', 'Select')} --</option>`)
+  $('#cashDepositSupervisor').html(`<option value="0">-- ${lang('Chagua', 'Select')} --</option>`)
+  $('#cashDepositTargetAccount').html(`<option value="0">-- ${lang('Chagua', 'Select')} --</option>`)
+  $('#cashDepositAmount').val('').attr('data-cash', 0).attr('placeholder', '0')
+  $('#cashDepositTo').val('')
+  $('#cashDepositDesc').val('')
+  $('#cashDepositSupervisorWrap').hide()
+  $('#cashDepositAccountWrap').hide()
+}
+
+function getCashDepositData(callback) {
+  $.ajax({
+    type: 'POST',
+    url: '/akaunting/getdata',
+    data: { csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val() }
+  }).done(function (data) {
+    callback(data)
+  })
+}
+
+function populateCashDepositModal(data) {
+  let cashOpt = `<option value="0">-- ${lang('Chagua', 'Select')} --</option>`
+  let accountOpt = `<option value="0">-- ${lang('Chagua', 'Select')} --</option>`
+  let supervisorOpt = `<option value="0">-- ${lang('Chagua', 'Select')} --</option>`
+
+  const cashAccounts = data.cash_accounts || data.list.filter(a => String(a.aina).toLowerCase() === 'cash' && Number(a.duka) === Number(data.duka))
+  const nonCashAccounts = data.non_cash_accounts || data.list.filter(a => String(a.aina).toLowerCase() !== 'cash' && Number(a.duka) === Number(data.duka))
+  const supervisors = data.supervisors || []
+
+  cashAccounts.forEach(ac => {
+    cashOpt += `<option value="${ac.id}" data-cash="${ac.Amount}">${ac.Akaunt_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, '')} (${ac.aina})</option>`
+  })
+
+  nonCashAccounts.forEach(ac => {
+    accountOpt += `<option value="${ac.id}">${ac.Akaunt_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, '')} (${ac.aina})</option>`
+  })
+
+  supervisors.forEach(sp => {
+    const fullName = `${(sp.first_name || '').trim()} ${(sp.last_name || '').trim()}`.trim()
+    const displayName = fullName !== '' ? fullName : (sp.username || 'Supervisor')
+    supervisorOpt += `<option value="${sp.id}">${displayName}</option>`
+  })
+
+  $('#cashDepositCashAccount').html(cashOpt)
+  $('#cashDepositTargetAccount').html(accountOpt)
+  $('#cashDepositSupervisor').html(supervisorOpt)
+}
+
+$('#cashDepositModal').on('shown.bs.modal', function () {
+  resetCashDepositModalFields()
+  getCashDepositData(function (data) {
+    populateCashDepositModal(data)
+  })
+})
+
+$('body').on('change', '#cashDepositCashAccount', function () {
+  const cashAmount = Number($(this).find('option:selected').data('cash')) || 0
+  $('#cashDepositAmount')
+    .attr('data-cash', cashAmount)
+    .attr('placeholder', lang(`Amount yote ya Cash: ${floatValue(cashAmount)}`, `All Cash Amount: ${floatValue(cashAmount)}`))
+})
+
+function formatDepositAmountInput(rawValue) {
+  const cleaned = String(rawValue || '').replace(/,/g, '').replace(/[^0-9.]/g, '')
+  const parts = cleaned.split('.')
+  const intPart = (parts[0] || '').replace(/^0+(\d)/, '$1')
+  const decPart = parts.length > 1 ? parts.slice(1).join('').substring(0, 2) : ''
+  const grouped = intPart === '' ? '' : intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return decPart !== '' ? `${grouped}.${decPart}` : grouped
+}
+
+$('body').on('input', '#cashDepositAmount', function () {
+  const cursorAtEnd = this.selectionStart === this.value.length
+  const formatted = formatDepositAmountInput($(this).val())
+  $(this).val(formatted)
+  if (cursorAtEnd) {
+    this.setSelectionRange(this.value.length, this.value.length)
+  }
+})
+
+$('body').on('change', '#cashDepositTo', function () {
+  const target = $(this).val()
+  $('#cashDepositSupervisorWrap').hide()
+  $('#cashDepositAccountWrap').hide()
+  if (target === 'supervisor') {
+    $('#cashDepositSupervisorWrap').show()
+  }
+  if (target === 'account') {
+    $('#cashDepositAccountWrap').show()
+  }
+})
+
+$('#saveCashDepositForm').submit(function (e) {
+  e.preventDefault()
+
+  const cashAccount = Number($('#cashDepositCashAccount').val()) || 0
+  const depositTo = $('#cashDepositTo').val()
+  const dataCash = Number($('#cashDepositAmount').attr('data-cash')) || 0
+  const amountRawDisplay = $('#cashDepositAmount').val()
+  const amountRaw = String(amountRawDisplay || '').replace(/,/g, '')
+  let amount = Number(amountRaw)
+  if (amountRaw === '') {
+    amount = dataCash
+  }
+
+  const supervisorId = Number($('#cashDepositSupervisor').val()) || 0
+  const targetAccountId = Number($('#cashDepositTargetAccount').val()) || 0
+  const maelezo = $('#cashDepositDesc').val()
+
+  if (!cashAccount) {
+    redborder('#cashDepositCashAccount')
+    alert(lang('Tafadhari chagua Cash account', 'Please select a cash account'))
+    return
+  }
+
+  if (!depositTo) {
+    redborder('#cashDepositTo')
+    alert(lang('Tafadhari chagua Deposit to', 'Please select deposit destination'))
+    return
+  }
+
+  if (!(amount > 0)) {
+    redborder('#cashDepositAmount')
+    alert(lang('Tafadhari andika kiasi sahihi', 'Please provide a valid amount'))
+    return
+  }
+
+  if (depositTo === 'supervisor' && !supervisorId) {
+    redborder('#cashDepositSupervisor')
+    alert(lang('Tafadhari chagua supervisor', 'Please select a supervisor'))
+    return
+  }
+
+  if (depositTo === 'account' && !targetAccountId) {
+    redborder('#cashDepositTargetAccount')
+    alert(lang('Tafadhari chagua payment account', 'Please select a payment account'))
+    return
+  }
+
+  $('#cashDepositModal').modal('hide')
+  $('#loadMe').modal('show')
+
+  $.ajax({
+    type: 'POST',
+    url: $(this).attr('action'),
+    data: {
+      cash_account: cashAccount,
+      amount: amountRaw,
+      deposit_to: depositTo,
+      supervisor_id: supervisorId,
+      target_account_id: targetAccountId,
+      maelezo: maelezo,
+      csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+    }
+  }).done(function (respo) {
+    $('#loadMe').modal('hide')
+    hideLoading()
+    const msg = lang(respo.message_swa, respo.message_eng)
+    if (respo.success) {
+      toastr.success(msg, lang('Imefanikiwa', 'Success Alert'), { timeOut: 2000 })
+      if (typeof getAkaunts !== 'undefined' && getAkaunts && getAkaunts.getdata) {
+        getAkaunts.getdata()
+      }
+    } else {
+      toastr.error(msg, lang('Haikufanikiwa', 'Error Alert'), { timeOut: 2000 })
+    }
+  })
+})
+

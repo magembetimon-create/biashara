@@ -58,6 +58,15 @@ def riportMauzo(request):
   else:   
       return render(request,'ripotMauzo.html',todo)  
 
+
+@login_required(login_url='login')
+def shiftRiport(request):
+  todo = todoFunct(request)
+  if not todo['duka'].Interprise:
+    return redirect('/userdash')
+  else:
+    return render(request,'riportShift.html',todo)
+
 @login_required(login_url='login')
 def theInvo(request):
   try:

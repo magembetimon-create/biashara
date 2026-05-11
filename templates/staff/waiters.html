@@ -1,0 +1,110 @@
+{% extends 'userdash.html' %}
+{% load static %}
+
+{% block nav-staff %}class="c-menu__item has-submenu showingpop2 is-active"{% endblock %}
+{% block active-staff-waiters-menu %}class="btn-default btn btn-sm pop2_active_menu"{% endblock %}
+
+{% block Dashboard %}
+<div class="Analytical whiteBg p-2 px-md-5 pt-md-3" id="general-panel" style="min-height:100vh;">
+    {% include 'staff/staffnavigations.html' %}
+  <div class="row align-items-center py-3 border-bottom">
+    <div class="col-md-7">
+      <h5 class="mb-0">
+        <svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21,6H3C1.9,6,1,6.9,1,8v11c0,1.1,0.9,2,2,2h18c1.1,0,2-0.9,2-2V8C23,6.9,22.1,6,21,6z M21,19H3V8h18V19z M16,3H8 C7.45,3,7,3.45,7,4l0,0c0,0.55,0.45,1,1,1h8c0.55,0,1-0.45,1-1l0,0C17,3.45,16.55,3,16,3z"/>
+        </svg>
+        {% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}
+      </h5>
+    </div>
+    <div class="col-md-5">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text bg-transparent border-right-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.114-.099zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+            </svg>
+          </span>
+        </div>
+        <input type="text" id="waiterSearch" class="form-control border-left-0 smallFont"
+          placeholder="{% if useri.langSet == 0 %}Tafuta mhudumu...{% else %}Search waiter...{% endif %}"
+          onkeyup="filterStaffTable(this.value,'waiterTable')">
+      </div>
+    </div>
+  </div>
+
+
+  {% if not duka.waiter_counter %}
+  <div class="alert alert-warning">
+    {% if useri.langSet == 0 %}
+      Huduma ya wahudumu haijawashwa kwa duka hili.
+    {% else %}
+      Waiter counter service is not enabled for this business.
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="table-responsive mt-3">
+    <table class="table table-hover" id="waiterTable">
+      <thead>
+        <tr>
+          <th class="text-left" >#</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Mtumiaji{% else %}User{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Mfanyakazi{% else %}Employee{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Cheo{% else %}Position{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}PIN imewekwa{% else %}PIN Set{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Hali{% else %}Status{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for perm in waiter_perms %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>
+            {{ perm.user.user.get_full_name|default:perm.user.user.username }}
+          </td>
+          <td>
+            {% if perm.fanyakazi %}
+              {{ perm.fanyakazi.jina }}
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>{{ perm.cheo }}</td>
+          <td>
+            {% if perm.waiter_pin_set %}
+              <span class="badge badge-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                {% if useri.langSet == 0 %}Ndiyo{% else %}Yes{% endif %}
+              </span>
+            {% else %}
+              <span class="badge badge-secondary">{% if useri.langSet == 0 %}Hapana{% else %}No{% endif %}</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge badge-primary">{% if useri.langSet == 0 %}Mhudumu{% else %}Waiter{% endif %}</span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">
+            {% if useri.langSet == 0 %}Hakuna wahudumu waliosajiliwa bado.{% else %}No waiters registered yet.{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function filterStaffTable(query, tableId) {
+  var q = query.toLowerCase();
+  var rows = document.querySelectorAll('#' + tableId + ' tbody tr');
+  rows.forEach(function(row) {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

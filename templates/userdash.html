@@ -1299,13 +1299,60 @@ let shwCo = false
       </div>
      {% endif %}  
 
+<!-- SHOW ON HOVER OVER STAFF MANAGEMENT................................................................................. -->
+
+<div class="d-inlene  px-0 pop2 py-1 showingpop2 rounded mt-1 ml-3" id="staff_pop" data-showing="#staff_pop" data-the_id="#staff_menu" >
+  <ul class="list-unstyled p-0">
+    <li>
+      <a id="all-staff-list" {% block active-staff-all-menu %} class="btn-default btn btn-sm " {% endblock %} href="/staff/all">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people" viewBox="0 0 16 16">
+          <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8Zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002H7.022ZM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816ZM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0Zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/>
+        </svg>
+        <span class="pl-1">{% if useri.langSet == 0 %}Wafanyakazi Wote{% else %}All Staff{% endif %}</span>
+      </a>
+    </li>
+    <li>
+      <a id="staff-access-list" {% block active-staff-access-menu %} class="btn-default btn btn-sm " {% endblock %} href="/staff/with-access">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-check" viewBox="0 0 16 16">
+          <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm1.679-4.493-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.708l.547.548 1.17-1.951a.5.5 0 1 1 .858.514ZM11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/>
+          <path d="M8.256 14a4.474 4.474 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10c.26 0 .507.009.74.025.226-.341.496-.65.804-.918C9.077 9.038 8.564 9 8 9c-5 0-6 3-6 4s1 1 1 1h5.256Z"/>
+        </svg>
+        <span class="pl-1">{% if useri.langSet == 0 %}Wenye Ruhusa{% else %}With Access{% endif %}</span>
+      </a>
+    </li>
+    {% if duka.waiter_counter %}
+        <li>
+          <a id="staff-waiters-list" {% block active-staff-waiters-menu %} class="btn-default btn btn-sm " {% endblock %} href="/staff/waiters">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
+              <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5.002 5.002 0 0 1 13 6c0 .88.32 4.2 1.22 6z"/>
+            </svg>
+            <span class="pl-1">{% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}</span>
+          </a>
+        </li>
+    {% endif %}
+    {% if duka.shift_management_enabled %}
+      <li>
+        <a id="staff-shifts-list" {% block active-staff-shifts-menu %} class="btn-default btn btn-sm " {% endblock %} href="/staff/shifts">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock-history" viewBox="0 0 16 16">
+            <path d="M8.515 3.879a.5.5 0 0 0-1 0v3.856L5.354 9.896a.5.5 0 1 0 .708.708l2.293-2.293a.5.5 0 0 0 .146-.353V3.879z"/>
+            <path d="M8 1a7 7 0 1 0 4.546 12.303.5.5 0 1 0-.652-.758A6 6 0 1 1 14 8a.5.5 0 0 0 1 0A7 7 0 0 0 8 1z"/>
+            <path d="M8 0a.5.5 0 0 0-.5.5V2a.5.5 0 0 0 1 0V.5A.5.5 0 0 0 8 0z"/>
+          </svg>
+          <span class="pl-1">{% if useri.langSet == 0 %}Shift za Watumiaji{% else %}User Shifts{% endif %}</span>
+        </a>
+      </li>
+    {% endif %}
+  </ul>
+</div>
+
+
  {% if duka.Interprise %} 
     <div class=" l-sidebar  ">
         <div class="l-sidebar__content ">
 
           <nav class="c-menu js-menu">
             
-            <ul class="u-list list-unstyled mt-4 fixed-left">
+            <ul class="u-list list-unstyled mt-4 fixed-left" id="fixed_menu_list" >
 
               <li {% block nav-home %} class="c-menu__item style-none activate "{% endblock %}  data-toggle="tooltip" title="Dashboard">
                <a href="/userdash"  class="c-menu__item__inner ">
@@ -1448,6 +1495,17 @@ let shwCo = false
                   <div class="c-menu-item__title"><span>{% if useri.langSet == 0 %}Malipo  {% else %} Payments{% endif %}</span></div>
                 </a>
               </li>
+
+             
+              <li id="staff_menu" data-the_id="#staff_menu" data-showing="#staff_pop" {% block nav-staff %} class="c-menu__item has-submenu showingpop2" {% endblock %} >
+                <a class="c-menu__item__inner">
+                  <svg xmlns="http://www.w3.org/2000/svg" height="22" width="22" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                  </svg>
+                  <div class="c-menu-item__title"><span>{% if useri.langSet == 0 %}Usimamizi wa Wafanyakazi{% else %}Staff Management{% endif %}</span></div>
+                </a>
+              </li>
+            
 
            
               
@@ -2230,6 +2288,86 @@ $('.muamala-genu').click(function(){
 
           <button type="button" class="btn btn-light robotoFont smallFont" data-dismiss="modal">Close</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="cashDepositModal" tabindex="-1" role="dialog" aria-labelledby="cashDepositModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content border-0">
+        <form id="saveCashDepositForm" action="/akaunting/cashDepositFromCash" method="POST">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h6 class="modal-title" id="cashDepositModalLabel">
+              {% if useri.langSet == 0 %}Cash Deposit{% else %}Cash Deposit{% endif %}
+            </h6>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="smallFont text-danger" for="cashDepositCashAccount">
+                {% if useri.langSet == 0 %}Cash account{% else %}Cash account{% endif %}
+                <sup class="text-danger font-weight-bold">*</sup>
+              </label>
+              <select id="cashDepositCashAccount" class="form-control smallFont">
+                <option value="0">-- {% if useri.langSet == 0 %}Chagua{% else %}Select{% endif %} --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="smallFont text-danger" for="cashDepositAmount">
+                {% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}
+                <sup class="text-danger font-weight-bold">*</sup>
+              </label>
+              <input type="text" inputmode="decimal" id="cashDepositAmount" class="form-control weight700 smallFont" data-cash="0" placeholder="0" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+              <label class="smallFont text-danger" for="cashDepositTo">
+                {% if useri.langSet == 0 %}Deposit to{% else %}Deposit to{% endif %}
+                <sup class="text-danger font-weight-bold">*</sup>
+              </label>
+              <select id="cashDepositTo" class="form-control smallFont">
+                <option value="">-- {% if useri.langSet == 0 %}Chagua{% else %}Select{% endif %} --</option>
+                <option value="supervisor">{% if useri.langSet == 0 %}Supervisor{% else %}Supervisor{% endif %}</option>
+                <option value="account">{% if useri.langSet == 0 %}Payment account{% else %}Payment account{% endif %}</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="cashDepositSupervisorWrap" style="display:none;">
+              <label class="smallFont text-danger" for="cashDepositSupervisor">
+                {% if useri.langSet == 0 %}Supervisors{% else %}Supervisors{% endif %}
+                <sup class="text-danger font-weight-bold">*</sup>
+              </label>
+              <select id="cashDepositSupervisor" class="form-control smallFont">
+                <option value="0">-- {% if useri.langSet == 0 %}Chagua{% else %}Select{% endif %} --</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="cashDepositAccountWrap" style="display:none;">
+              <label class="smallFont text-danger" for="cashDepositTargetAccount">
+                {% if useri.langSet == 0 %}Payment accounts{% else %}Payment accounts{% endif %}
+                <sup class="text-danger font-weight-bold">*</sup>
+              </label>
+              <select id="cashDepositTargetAccount" class="form-control smallFont">
+                <option value="0">-- {% if useri.langSet == 0 %}Chagua{% else %}Select{% endif %} --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="smallFont" for="cashDepositDesc">
+                {% if useri.langSet == 0 %}Maelezo{% else %}Description{% endif %}
+              </label>
+              <textarea id="cashDepositDesc" class="form-control smallFont"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light smallFont" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary smallFont">Save</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -3339,6 +3477,16 @@ $('.muamala-genu').click(function(){
                   {% if useri.langSet == 0 %} Matumizi  {% else %} Expenses {% endif %}
                 
                 </a>
+                  <div class="dropdown-divider"></div>
+
+                  <a class="dropdown-item" href="#" data-toggle="modal" data-target="#cashDepositModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" class="bi bi-wallet2 mr-2" viewBox="0 0 16 16">
+                      <path d="M9 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                      <path d="M13 2a1 1 0 0 1 1 1v1H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8v1a1 1 0 0 1-1 1H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h10z"/>
+                      <path d="M14 5H6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1zm0 1v6H6V6h8z"/>
+                    </svg>
+                    {% if useri.langSet == 0 %} Cash Deposit {% else %} Cash Deposit {% endif %}
+                  </a>
                   <div class="dropdown-divider"></div>
 
                   <a href="/stoku/reduceItemQuantity" class="dropdown-item tab_show"   >

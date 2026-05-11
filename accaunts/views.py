@@ -53,6 +53,30 @@ def todoFunct(request):
   usr = Todos(request)
   return usr.todoF()
 
+def _check_admin_or_msaidizi(todo):
+    """
+    Check if user is admin (owner) or has msaidizi permission.
+    Returns (allowed: bool, response_obj: JsonResponse or None)
+    """
+    cheo = todo.get('cheo')
+    duka = todo.get('duka')
+    useri = todo.get('useri')
+    
+    # Check if user is owner (admin)
+    if duka and duka.owner and duka.owner == useri:
+        return True, None
+    
+    # Check if user has msaidizi permission
+    if cheo and getattr(cheo, 'msaidizi', False):
+        return True, None
+    
+    # Permission denied
+    return False, JsonResponse({
+        'success': False,
+        'msg_swa': 'Ninyi halisineweza kufanya hii operesheni. Inahtaji ruhusa ya msaidizi au kuwa mwenyeji.',
+        'msg_eng': 'You do not have permission to perform this operation. Admin or msaidizi access required.'
+    }, status=403)
+
 def AUDISIZE(request):
   todo = todoFunct(request)
   duka= todo['duka']
@@ -2083,10 +2107,15 @@ def addDeliveryAgent(request):
 
         data={}
 
-        try: 
-          agent= request.POST.get('agent',0) 
+        try:
+          # Permission check: admin or msaidizi only
           todo = todoFunct(request)
+          allowed, perm_response = _check_admin_or_msaidizi(todo)
+          if not allowed:
+              return perm_response
+          
           duka = todo['duka']
+          agent= request.POST.get('agent',0) 
           agnt=Workers.objects.get(pk=agent,Interprise__owner=duka.owner.id)
 
           available=deliveryAgents.objects.filter(agent=agnt.id,Interprise=duka.owner.id)
@@ -2136,11 +2165,16 @@ def addStaff_form(request):
             'msg_eng':'Member was  added successfully'
           }
 
-    try: 
+    try:
+      # Permission check: admin or msaidizi only
+      todo = todoFunct(request)
+      allowed, perm_response = _check_admin_or_msaidizi(todo)
+      if not allowed:
+          return perm_response
+      
       staff= request.POST.get('staff',"") 
       cheo= request.POST.get('staffcheo',"") 
 
-      todo = todoFunct(request)
       duka = todo['duka']
 
       usr=Workers.objects.get(pk=staff,Interprise__owner=duka.owner.id)
@@ -2230,7 +2264,7 @@ def getstaffdata(request):
     if todo['duka'].Interprise:
       entId = InterprisePermissions.objects.get(user__user=request.user.id,default=True).Interprise
       # admin = InterprisePermissions.objects.get(user__user=request.user.id,default=True).admin
-      users = InterprisePermissions.objects.filter(Interprise=entId).exclude(user__user = request.user.id).annotate(
+      users = InterprisePermissions.objects.filter(Interprise=entId,Allow=True).exclude(user__user = request.user.id).annotate(
          picha=F('user__picha'),
          sim1=F('user__user__username'),
          sim2=F('user__simu2'),
@@ -2241,7 +2275,7 @@ def getstaffdata(request):
          last_log=F('user__user__last_login'))
       
       # alldata= serializers.serialize("python", users)
-      assistantpresent = InterprisePermissions.objects.filter(admin=entId.owner.user.id,msaidizi=True).count()
+      assistantpresent = InterprisePermissions.objects.filter(admin=entId.owner.user.id,msaidizi=True,Allow=True).count()
       imgs = []
       if users.exists():
          for us in users:
@@ -2311,7 +2345,7 @@ def getWorkers(request):
         wote = int(request.POST.get('wote',0))
         todo = todoFunct(request)
         duka = todo['duka']
-
+        cheo = todo['cheo']
         allworkers = Workers.objects.filter(Interprise__owner=duka.owner.id).order_by("-pk")
         if not wote:
             allworkers = allworkers.filter(Interprise=duka.id)
@@ -2330,7 +2364,9 @@ def getWorkers(request):
         data = {
             'worker':list(allworkers.values()),
             'success':True,
-            'img':pichaZao
+            'img':pichaZao,
+            'isAdmin':cheo.owner,
+            'isHelper':cheo.msaidizi
         }
         return JsonResponse(data)
     else:
@@ -2564,35 +2600,38 @@ def updatepermissions(request):
       }
 
     try:
-      id= request.POST.get('value',"")
+      id= int(request.POST.get('value',0))
       edit= request.POST.get('edit',"")
       state= int(request.POST.get('state',""))
     
       todo = todoFunct(request)
       duka = todo['duka']
       cheo = todo['cheo']
+      # print(state,edit)
+      
+      # print("User Exists 1:", cheo.user.user.username)
+      print('user_id',id,'admin',cheo.admin,'Interprise',duka.id)
+      # if InterprisePermissions.objects.filter(pk=id,admin=cheo.admin,Interprise=duka.id).exists() :
+      # print("User Exists 2:", cheo.user.user.username)
+      if cheo.owner: 
+          allow=InterprisePermissions.objects.get(pk=id,admin=cheo.admin,Interprise=duka.id)
+      else:
+          allow=InterprisePermissions.objects.get(pk=id,admin=cheo.admin,owner=False,Interprise=duka.id)
+      # print("Allow object:", allow)  
+  
 
-      uo_g=InterprisePermissions.objects.filter(user__user=request.user).last()
-
-      if InterprisePermissions.objects.filter(pk=id,admin=uo_g.admin,Interprise=duka.id).exists() :
-          if cheo.owner: 
-             allow=InterprisePermissions.objects.get(pk=id,admin=uo_g.admin,Interprise=duka.id)
-          else:
-             allow=InterprisePermissions.objects.get(pk=id,admin=uo_g.admin,owner=False,Interprise=duka.id)
-            
-
-
-          setattr(allow,edit,state) 
-          allow.save()
-          
-          if not allow.Allow:
-            allow.default = False
-            allow.save()
+      setattr(allow,edit,state) 
+      allow.save()
+      
+      if not allow.Allow:
+        allow.default = False
+        allow.save()
 
           
 
 
     except:
+      traceback.print_exc()
       data={
         'success':False,
         'msg_swa':'Ruhusa Haukubadilishwa kutokana na hitilafu tafadhari jariu tena',
@@ -4902,7 +4941,7 @@ def traceChange(request):
         cheo.online=datetime.datetime.now(tz=timezone.utc)
         cheo.save()
       
-        users = InterprisePermissions.objects.filter(Interprise=entId).exclude(user__user = request.user.id)
+        users = InterprisePermissions.objects.filter(Interprise=entId,Allow=True).exclude(user__user = request.user.id)
         staffonline='none'
         allAkauntisum=0
 
@@ -4917,7 +4956,8 @@ def traceChange(request):
           
         for each in users:
             if UserExtend.objects.get(pk=each.user.id).picha !='':
-              staffonline+="picplaced"        
+              staffonline+="picplaced"     
+              # print('picplaced')   
             if (datetime.datetime.now(tz=timezone.utc) - each.online).seconds < 10:   
               staffonline+='1' 
             # if InterprisePermissions.objects.get(user__user=request.user.id,default=True).owner==True or (InterprisePermissions.objects.get(user__user=request.user.id,default=True).fullcontrol and not each.owner):

@@ -142,6 +142,7 @@ class Interprise(models.Model):
     produxn =  models.BooleanField(default=True)
     sales =  models.BooleanField(default=True)
     waiter_counter =  models.BooleanField(default=False)
+    shift_management_enabled = models.BooleanField(default=False)
     officeNo = models.CharField(max_length=200,blank=True)
     # tin_pic = models.ImageField(upload_to="pics",null=True,blank=True)
 
@@ -279,9 +280,80 @@ class InterprisePermissions(models.Model):
     waiter_check_up = models.BooleanField(default=False)
     waiter_delete_order = models.BooleanField(default=False)
     enable_print = models.BooleanField(default=False)
-
+    cash_deposit_supervisor = models.BooleanField(default=False)
+    cash_deposit_record = models.BooleanField(default=False)
+    staff_management = models.BooleanField(default=False)
+    add_staff = models.BooleanField(default=False)
     def __str__(self):
         return self.Allow
+
+
+class ShiftSession(models.Model):
+    Interprise = models.ForeignKey(Interprise, on_delete=models.CASCADE)
+    code = models.CharField(max_length=30, db_index=True)
+    shift_type = models.CharField(max_length=20, default='daily')
+    status = models.CharField(max_length=20, default='open')
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField(null=True, blank=True)
+    opening_cash = models.DecimalField(max_digits=20, decimal_places=4, default=0)
+    expected_closing_cash = models.DecimalField(max_digits=20, decimal_places=4, null=True, blank=True)
+    actual_closing_cash = models.DecimalField(max_digits=20, decimal_places=4, null=True, blank=True)
+    variance = models.DecimalField(max_digits=20, decimal_places=4, default=0)
+    notes = models.TextField(blank=True, null=True)
+    opened_by = models.ForeignKey(InterprisePermissions, on_delete=models.SET_NULL, null=True, blank=True, related_name='opened_shift_set')
+    closed_by = models.ForeignKey(InterprisePermissions, on_delete=models.SET_NULL, null=True, blank=True, related_name='closed_shift_set')
+    verified_by = models.ForeignKey(InterprisePermissions, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_shift_set')
+    verified_at = models.DateTimeField(null=True, blank=True)
+    locked = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['Interprise', 'status']),
+            models.Index(fields=['starts_at', 'ends_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.code} ({self.status})"
+
+
+class ShiftAssignment(models.Model):
+    shift = models.ForeignKey(ShiftSession, on_delete=models.CASCADE)
+    staff = models.ForeignKey(InterprisePermissions, on_delete=models.CASCADE)
+    role = models.CharField(max_length=40, default='recorder')
+    active = models.BooleanField(default=True)
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    assigned_by = models.ForeignKey(InterprisePermissions, on_delete=models.SET_NULL, null=True, blank=True, related_name='shift_assigner_set')
+
+    class Meta:
+        unique_together = ('shift', 'staff', 'role')
+        indexes = [
+            models.Index(fields=['shift', 'active']),
+            models.Index(fields=['staff', 'active']),
+        ]
+
+    def __str__(self):
+        return f"{self.shift.code} - {self.staff_id}"
+
+
+class ShiftActivity(models.Model):
+    shift = models.ForeignKey(ShiftSession, on_delete=models.CASCADE)
+    event_type = models.CharField(max_length=50)
+    amount = models.DecimalField(max_digits=20, decimal_places=4, default=0)
+    event_ref_id = models.IntegerField(null=True, blank=True)
+    details = models.TextField(blank=True, null=True)
+    by = models.ForeignKey(InterprisePermissions, on_delete=models.SET_NULL, null=True, blank=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['shift', 'event_type']),
+            models.Index(fields=['recorded_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.shift.code} - {self.event_type}"
  
 class WaiterPosDeviceSession(models.Model):
     Interprise = models.ForeignKey(Interprise, on_delete=models.CASCADE)
@@ -315,6 +387,7 @@ class PaymentAkaunts(models.Model):
     #   owner = models.ForeignKey(User,on_delete=models.CASCADE)
       addedDate = models.DateTimeField(null=True,blank=True)
       aina = models.CharField(max_length = 300)
+      supervisor_account = models.BooleanField(default=False)
 
 class makampuni(models.Model):
      Interprise = models.ForeignKey(Interprise,on_delete=models.CASCADE)
@@ -1174,7 +1247,8 @@ class wekaCash(models.Model):
     mtaji = models.BooleanField(default=False)
     huduma_nyingine = models.ForeignKey(HudumaNyingine,on_delete=models.SET_NULL,null=True)
     from_waiter_payments = models.ForeignKey(waiter_clearing,on_delete=models.SET_NULL,null=True)
-
+    admin_approve = models.BooleanField(default=False)
+    
 class  toaCash(models.Model):
     Interprise=models.ForeignKey(Interprise,on_delete=models.CASCADE)     
     tarehe = models.DateTimeField()  
@@ -1207,7 +1281,10 @@ class  toaCash(models.Model):
 #   INCASE OF SOLD OR ORDERED ITEM CASH REFUND.....//
     sale_fidia = models.BooleanField(default=False)
     oda_fidia = models.BooleanField(default=False)
+    supervisor_deposit = models.ForeignKey(InterprisePermissions,on_delete=models.SET_NULL,null=True,blank=True,related_name='supervisor_deposit_set')
     # rudi = models.ForeignKey(mauzoni,on_delete=models.SET_NULL,null=True)
+    deposit_to = models.ForeignKey(wekaCash,on_delete=models.SET_NULL,null=True,blank=True,related_name='deposit_to_set')
+    admin_approve = models.BooleanField(default=False)
 
 class sale_return_mauzo_fidia(models.Model):
     ivo = models.ForeignKey(mauzoni,on_delete=models.CASCADE,null=True)

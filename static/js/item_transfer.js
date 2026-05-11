@@ -77,37 +77,43 @@ $('body').on('focus','.suggest-holder input', function(){
 
 
       if(jina_namba.match(search)){
-          var li=`<li data-value=${itm.id} data-valu=${itm.bidhaa_id} data-prod=${itm.bidhaa_id} data-pos=${pos}>
-      
-          <div  class='suggest-name text-capitalize' data-value=${itm.id} data-valu=${itm.bidhaa_id} data-prod=${itm.bidhaa_id} data-pos=${pos} >${ itm.bidhaaN} </div> 
-          <div class="row mt-0 pt-0" style='padding:7px'>
-              <div class="col-6 ">
-                  <span class='suggest-description' style='float:left'>${itm.ainaN }</span>
-                  <span class='suggest-description' style='color:blue'> (${itm.vipimo} .<span class="brown weight600"> ${shelfQty.toFixed(FIXED_VALUE)})</span> </span>
+         const itmImg = ItemImg.state.filter(im=>itm.bidhaa_id===im.bidhaa)[0]?.picha__picha
+
+          let li=`<li class="row" data-value=${itm.id} data-valu=${itm.bidhaa_id} data-prod=${itm.bidhaa_id} data-pos=${pos}>
+              <div class="col-2 col-md-1">
+                  ${itmImg
+                      ? `<img alt="No image" style="max-width:60px;min-width:60px" src="${itmImg}">`
+                      : `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
+                           <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                           <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                         </svg>`}
               </div>
+              <div class="col-10 col-md-11">
+                  <div class='suggest-name text-capitalize' data-value=${itm.id} data-valu=${itm.bidhaa_id} data-prod=${itm.bidhaa_id} data-pos=${pos}>${itm.bidhaaN}</div>
+                  <div class="row mt-0 pt-0" style='padding:7px'>
+                      <div class="col-6">
+                          <span class='suggest-description' style='float:left'>${itm.ainaN}</span>
+                          <span class='suggest-description' style='color:blue'> (${itm.vipimo} .<span class="brown weight600"> ${shelfQty.toFixed(FIXED_VALUE)})</span> </span>
+                      </div>
 
-              <div class='suggest-description col-6 brown font-weight-bold text-right' > <span class="darkblue weight500"> ${itm.curenci}</span>. ${Number(itm.Bei_kuuza).toLocaleString()}/=<br/> <span class="text-primary weight400"> @${itm.vipimo}</span> </div>
-          
+                      <div class='suggest-description col-6 brown font-weight-bold text-right'><span class="darkblue weight500"> ${itm.curenci}</span>. ${Number(itm.Bei_kuuza).toLocaleString()}/=<br/> <span class="text-primary weight400"> @${itm.vipimo}</span></div>
+                  </div>
+
+                  <div class="row mt-0 pt-0" style="font-size:11px">
+                      <div class="text-primary col-8 robotoFont">
+                          ${coded?.pu?pu:''}
+                          ${coded?.trans?rc:''}
+                          ${coded?.prod?prodxn:''}
+                          ${coded?.adj?add:''}
+
+                          <span class="text-capitalize">
+                              ${coded?.trans?itm.RCFrom:coded?.adj?itm.stName:(itm.vendor || itm.stName)}
+                          </span>
+                      </div>
+
+                      <div class="col-4 text-right">${coded?.str}${coded?.code}</div>
+                  </div>
               </div>
-
-          <div class="row mt-0 pt-0" style="font-size:11px">
-          <div class="text-primary col-8 robotoFont" >
-                  ${coded?.pu?pu:''}
-                  ${coded?.trans?rc:''}
-                  ${coded?.prod?prodxn:''}
-                  ${coded?.adj?add:''}
-
-                  <span class="text-capitalize" >
-                      ${coded?.trans?itm.RCFrom:coded?.adj?itm.stName:(itm.vendor || itm.stName) }
-                  </span>
-          </div>
-
-          <div class="col-4 text-right">${coded?.str}${coded?.code} </div>
-          
-          </div>
-          
-          
-      
           </li>`;
           
           $(`.masaki${pos}`).append(li);
@@ -326,7 +332,7 @@ var OutstockSize = class Szs{
 
              }
          
-            showimgT(pos,it.bidhaa)
+            showimgT(pos,it.bidhaa_id)
              
 
          $(`#colored_items${pos}`).data('val',it.id);
@@ -403,9 +409,9 @@ function showimgT(pos,prod){
             for(let im in imge){
                 
                 if(imge[im].bidhaa==prod) {
-
+                  
                  coount+=1;
-                 im_sr=`<img src="/media/${imge[im].picha__picha}" width="40"  style="cursor:pointer">`
+                 im_sr=`<img src="${imge[im].picha__picha}" width="40"  style="cursor:pointer">`
                 }
             }
             
@@ -426,7 +432,7 @@ function showimgT(pos,prod){
 }
 
 
- //On clicking the color button........................................................................//
+ //On c-lickin`g the color button..................................+.................*.....................//
 $('body').off('click','.colored_items').on('click','.colored_items',function(){
     let val =$(this).data('val'),
          

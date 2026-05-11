@@ -1,0 +1,35 @@
+<!-- <div class="row mt-3 mb-2">
+  <div class="col-12">
+    <div class="d-flex flex-wrap">
+      <a href="/staff/all" class="btn btn-sm mr-2 mb-2 {% if staff_page == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+        {% if useri.langSet == 0 %}Wafanyakazi Wote{% else %}All Staff{% endif %}
+      </a>
+      <a href="/staff/with-access" class="btn btn-sm mr-2 mb-2 {% if staff_page == 'access' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+        {% if useri.langSet == 0 %}Wenye Ruhusa{% else %}With Access{% endif %}
+      </a>
+      <a href="/staff/waiters" class="btn btn-sm mr-2 mb-2 {% if staff_page == 'waiters' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+        {% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}
+      </a>
+    </div>
+  </div>
+</div> -->
+
+<ul class="nav nav-tabs smallFont mb-3">
+  <li class="nav-item">
+    <a class="nav-link {% if staff_page == 'all' %}active{% else %}btn-outline-primary{% endif %}" aria-current="page" href="/staff/all">
+        {% if useri.langSet == 0 %}Wafanyakazi Wote{% else %}All Staff{% endif %}
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if staff_page == 'access' %}active{% else %}btn-outline-primary{% endif %}" href="/staff/with-access">{% if useri.langSet == 0 %}Wenye Ruhusa{% else %}With Access{% endif %}</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if staff_page == 'waiters' %}active{% else %}btn-outline-primary{% endif %}" href="/staff/waiters">{% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}</a>
+  </li>
+  {% if duka.shift_management_enabled %}
+    <li class="nav-item">
+      <a class="nav-link {% if staff_page == 'shifts' %}active{% else %}btn-outline-primary{% endif %}" href="/staff/shifts">{% if useri.langSet == 0 %}Shift za Watumiaji{% else %}User Shifts{% endif %}</a>
+    </li>
+  {% endif %}
+
+</ul>

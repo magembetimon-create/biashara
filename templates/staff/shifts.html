@@ -1,0 +1,100 @@
+{% extends 'userdash.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block nav-staff %}class="c-menu__item style-none is-active showingpop2"{% endblock %}
+{% block active-staff-shifts-menu %}class="btn-default btn btn-sm pop2_active_menu"{% endblock %}
+
+{% block Dashboard %}
+<div class="Analytical whiteBg p-2 px-md-5 pt-md-3" id="general-panel" style="min-height:100vh;">
+  {% include 'staff/staffnavigations.html' %}
+
+  <div class="row align-items-center py-3 border-bottom">
+    <div class="col-md-7">
+      <h5 class="mb-0">{% if useri.langSet == 0 %}Shift za Watumiaji{% else %}User Shifts{% endif %}</h5>
+      <small class="text-muted">{% if useri.langSet == 0 %}Fuatilia shift zilizo wazi na zilizofungwa{% else %}Track open and closed staff shifts{% endif %}</small>
+    </div>
+    
+    {% if cheo.msaidizi or cheo.owner %}
+    <div class="col-md-5 text-md-right mt-2 mt-md-0">
+      {% if not has_open_shift %}
+      <a href="/staff/shifts/new" class="btn btn-primary btn-sm">
+        {% if useri.langSet == 0 %}Ongeza Shift{% else %}New Shift{% endif %}
+      </a>
+      {% else %}
+      <span class="text-muted small">
+        {% if useri.langSet == 0 %}Maliza shift inayoendelea kwanza{% else %}Finish the current open shift first{% endif %}
+      </span>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+
+  <div class="row align-items-center mt-3">
+    <div class="col-md-7"></div>
+    <div class="col-md-5">
+      <input type="text" class="form-control smallFont" id="shiftSearch"
+        placeholder="{% if useri.langSet == 0 %}Tafuta shift...{% else %}Search shifts...{% endif %}"
+        onkeyup="filterShiftTable(this.value)">
+    </div>
+  </div>
+
+  <div class="table-responsive mt-3">
+    <table class="table table-hover" id="shiftTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>{% if useri.langSet == 0 %}Msimbo{% else %}Code{% endif %}</th>
+          <th>{% if useri.langSet == 0 %}Aina{% else %}Type{% endif %}</th>
+          <th>{% if useri.langSet == 0 %}Hali{% else %}Status{% endif %}</th>
+          <th>{% if useri.langSet == 0 %}Imeanza{% else %}Started{% endif %}</th>
+          <th>{% if useri.langSet == 0 %}Imefungwa{% else %}Closed{% endif %}</th>
+          <th>{% if useri.langSet == 0 %}Cash ya Kuanza{% else %}Opening Cash{% endif %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in shifts %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ s.code }}</td>
+          <td>{{ s.shift_type }}</td>
+          <td>
+            {% if s.status == 'closed' %}
+              <span class="badge badge-secondary">{% if useri.langSet == 0 %}Imefungwa{% else %}Closed{% endif %}</span>
+            {% else %}
+              <span class="badge badge-success">{% if useri.langSet == 0 %}Wazi{% else %}Open{% endif %}</span>
+            {% endif %}
+          </td>
+          <td>{{ s.starts_at }}</td>
+          <td>{% if s.ends_at %}{{ s.ends_at }}{% else %}<span class="text-muted">-</span>{% endif %}</td>
+          <td>{{ s.opening_cash | floatformat:2 | intcomma }}</td>
+          <td>
+            <a href="/staff/shifts/view?sid={{ s.id }}" class="btn btn-outline-primary btn-sm">
+              {% if useri.langSet == 0 %}Tazama{% else %}View{% endif %}
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-4">
+            {% if useri.langSet == 0 %}Hakuna shift bado.{% else %}No shifts yet.{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function filterShiftTable(query) {
+  var q = query.toLowerCase();
+  var rows = document.querySelectorAll('#shiftTable tbody tr');
+  rows.forEach(function(row) {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

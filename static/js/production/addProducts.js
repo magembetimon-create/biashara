@@ -105,7 +105,7 @@ getColor_Size()
      let jina_namba = itms[i].bidhaa__bidhaa_jina + ' ' +itms[i].namba 
      if(jina_namba.match(search)){
         const itmImg = ItemImg.state.filter(im=>itms[i].bidhaa===im.bidhaa)[0]?.picha__picha
-
+          console.log({ittm:itms[i],img:ItemImg.state})
      var li=`<li class="row" data-value=${itms[i].id} data-valu=${itms[i].bidhaa} data-prod=${itms[i].bidhaa} data-pos=${pos}>
         <div class="col-2 col-md-1">
                 <img alt="${lang('Hakuna picha','No image')}" style="max-width:60px;min-width:60px"  src=${itmImg}  >
@@ -404,7 +404,7 @@ let = opt=''
 //Place Image to its appropriate.................................//
 function showimgAd(pos,prod){
     let imge=ItemImg.state,coount=0,im_sr='',trp=''
-                
+                console.log({imge,prod,img:ItemImg.state})
             for(let im in imge){
                 
                 if(imge[im].bidhaa==prod) {

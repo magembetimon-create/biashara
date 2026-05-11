@@ -93,8 +93,8 @@
           <div class="col-9">
               <select name="to_interprise"  id="to_interprise" class="form-control smallFont">
                   <option  data-value=0 >---{% if useri.langSet == 0 %}Chagua Tawi{% else %}Select Branch{% endif %}--- </option>
-                {% for ac in matawi %}
-                     <option  data-value={{ac.Interprise.id}} >{{ac.Interprise.name |title}} </option>
+                {% for ac in hamisha_kwenda %}
+                     <option  data-value={{ac.id}} >{{ac.name |title}} </option>
                   {% endfor %}
               </select>
 
