@@ -1,5 +1,4 @@
-// $(document).ready(function () {
-    // this will hold Items color for new bill
+ISBILL = 1 
 var col = class coloredbn{
     constructor(_state){
         this.stated=_state
@@ -15,6 +14,7 @@ var col = class coloredbn{
   
   }
  colorsb=[]
+//This is used to eliminate none supervisor account in payaccount selection for new bill, because they are not allowed to use it for payment
 var coloredItemb = new col(colorsb)
 
 

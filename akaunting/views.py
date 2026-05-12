@@ -385,7 +385,7 @@ def cashDepositFromCash(request):
             supervisor = None
 
             if deposit_to == 'supervisor':
-                supervisor = InterprisePermissions.objects.get(pk=supervisor_id, Interprise=duka)
+                supervisor = InterprisePermissions.objects.get(pk=supervisor_id, Interprise__owner=duka.owner.id)
                 if not (supervisor.cash_deposit_supervisor or supervisor.owner):
                     return JsonResponse({
                         'success': False,
@@ -394,7 +394,7 @@ def cashDepositFromCash(request):
                     })
 
                 destination_account = PaymentAkaunts.objects.filter(
-                    Interprise=duka,
+                    Interprise__owner=duka.owner.id,
                     supervisor_account=True
                 ).first()
 
@@ -412,7 +412,7 @@ def cashDepositFromCash(request):
                 kwenda = f"Supervisor - {supervisor.user.user.first_name} {supervisor.user.user.last_name}".strip()
 
             elif deposit_to == 'account':
-                destination_account = PaymentAkaunts.objects.get(pk=target_account_id, Interprise=duka)
+                destination_account = PaymentAkaunts.objects.get(pk=target_account_id, Interprise__owner=duka.owner.id)
                 if str(destination_account.aina).strip().lower() == 'cash':
                     return JsonResponse({
                         'success': False,
@@ -1063,14 +1063,15 @@ def getdata(request):
     else:
         Admin= False
 
-    akaunt = PaymentAkaunts.objects.filter(Interprise__owner = duka.owner)  
+    akaunt = PaymentAkaunts.objects.filter(Interprise__owner = duka.owner) 
+
     IntpAc = akaunt.filter(Interprise = duka)  
     cash_accounts = list(IntpAc.filter(aina__iexact='Cash').values('id', 'Akaunt_name', 'Amount', 'aina', 'onesha'))
     non_cash_accounts = list(
         IntpAc.exclude(aina__iexact='Cash').exclude(supervisor_account=True).values('id', 'Akaunt_name', 'Amount', 'aina', 'onesha')
     )
     supervisors = list(
-        InterprisePermissions.objects.filter(Interprise=duka).filter(
+        InterprisePermissions.objects.filter(Interprise__owner=duka.owner).filter(
             Q(cash_deposit_supervisor=True) | Q(owner=True)
         ).annotate(
             first_name=F('user__user__first_name'),
@@ -1079,10 +1080,35 @@ def getdata(request):
         ).values('id', 'first_name', 'last_name', 'username', 'owner', 'cash_deposit_supervisor')
     )
 
+    payaccs_ = PaymentAkaunts.objects.filter(
+            Interprise__owner=duka.owner,
+
+        ).exclude(aina__iexact='Cash') if duka else PaymentAkaunts.objects.none()
+
+    servCash_ = PaymentAkaunts.objects.filter(
+            Interprise=duka,
+            aina__iexact='Cash'
+        ) if duka else PaymentAkaunts.objects.none()
+
+
+    payaccs_ = payaccs_ | servCash_
+    
+    is_supervisor = InterprisePermissions.objects.filter(user=cheo.user,Interprise__owner=duka.owner, cash_deposit_supervisor=True).exists()
+    
+    if not (cheo.owner  or  cheo.akaunti) : 
+        payaccs_ = payaccs_.exclude(onesha=False)    
+
+    if not (cheo.owner or is_supervisor):
+        payaccs_ = payaccs_.exclude(supervisor_account=True)
+       
+
+
     if cheo.owner  or  cheo.akaunti :
         akauntisum = IntpAc.aggregate(Sum('Amount'))
         allAkauntisum = akaunt.aggregate(Sum('Amount'))
+        
         akauntilistForInt = list(PaymentAkaunts.objects.filter(Interprise__in = br).annotate(duka=F('Interprise')).values().order_by("-Amount"))
+        
         Allist = list(akaunt.annotate(duka=F('Interprise')).values().order_by("-Amount"))
         allistCounti = akaunt.exclude( Interprise=duka).count()
 
@@ -1093,7 +1119,7 @@ def getdata(request):
 
         data["sum"] = akauntisum
         data["allsum"] = allAkauntisum
-        data["list"] = akauntilistForInt
+        # data["list"] = akauntilistForInt
         data["alllist"] =Allist
         data["otherCount"] = allistCounti
         data["Count"] = count
@@ -1110,7 +1136,6 @@ def getdata(request):
             'starts_at': active_shift.starts_at,
         } if active_shift else None
       
-
 
     else:
         showAc = IntpAc.filter(onesha = True)
@@ -1134,7 +1159,7 @@ def getdata(request):
 
         data["sum"] = akauntisum
         data["allsum"] = akauntisum
-        data["list"] = akauntilistForInt
+        # data["list"] = akauntilistForInt
         data["alllist"] =Allist
         data["otherCount"] = allistCounti
         data["Count"] = count
@@ -1165,6 +1190,7 @@ def getdata(request):
 
         # data['kutoa'] =  list(toaCash.objects.filter(Interprise=InterprisePermissions.objects.get(user=request.user).Interprise))  
     data['duka'] = duka.id
+    data['list'] = list(payaccs_.order_by('-pk').annotate(duka=F('Interprise')).values().order_by("-Amount"))
     return JsonResponse(data)      
 
 # @login_required(login_url='login')
@@ -1428,7 +1454,7 @@ def cash_deposits_page(request):
 @login_required(login_url='login')
 def cash_deposits_data(request):
     todo = todoFunct(request)
-    duka = todo['duka'].Interprise
+    duka = todo['duka']
     cheo = todo['cheo']
 
     period = request.GET.get('period', 'today')   # today | week | month | custom
@@ -1458,14 +1484,16 @@ def cash_deposits_data(request):
         start = today
         end = today
 
-    print(start, end)    
+    # print(start, end)    
 
     qs = toaCash.objects.filter(
-        Interprise=duka,
+        Interprise=duka.id,
         deposit_to__isnull=False,
         tarehe__date__gte=start,
         tarehe__date__lte=end,
     )
+
+    # print(qs.exists())
     if by_id:
         qs = qs.filter(by__id=by_id)
 
@@ -1568,7 +1596,7 @@ def mobile_payments_page(request):
 @login_required(login_url='login')
 def mobile_payments_data(request):
     todo = todoFunct(request)
-    duka = todo['duka'].Interprise
+    duka = todo['duka']
 
     period = request.GET.get('period', 'today')
     date_from_str = request.GET.get('date_from', '')
@@ -1598,7 +1626,7 @@ def mobile_payments_data(request):
         end = today
 
     qs = wekaCash.objects.filter(
-        Interprise=duka,
+        Interprise=duka.id,
         tarehe__date__gte=start,
         tarehe__date__lte=end,
     ).exclude(Akaunt__aina__iexact='Cash')

@@ -1,9 +1,12 @@
 
 var ALLPAYACCOUNTS
+const is_bill = ISBILL
+
 class getAkaunting{
     constructor(){
     }
   
+
   getdata(){
     
   $.ajax({
@@ -11,7 +14,7 @@ class getAkaunting{
       url: "/akaunting/getdata",
     data: {csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},
   }).done(function(data){
-    
+    // console.log("is bill",is_bill)
     ALLPAYACCOUNTS = data.list
     //  $('#ac_sum').text(parseInt(data.sum.Amount__sum).toLocaleString())   
     $('#AkauntiChange').text(data.allsum.Amount__sum)
@@ -20,16 +23,16 @@ class getAkaunting{
     let rows = '',opt=`<option  data-value=0>--${lang('Chagua Akaunti','Select Account')}--</option>`,opt_any=`<option  data-amount=0  data-value=0>--${lang('Chagua Akaunti','Select Akount')}--</option>`,
           otherOpt = opt
 
-    
-    data.list.filter(d=>data.duka===d.duka).forEach(ac => {
+    const payAcc = is_bill?ALLPAYACCOUNTS:ALLPAYACCOUNTS.filter(d=>!d.supervisor_account)
+    payAcc.forEach(ac => {
 
-      opt+=`<option data-amount=${ac.Amount} data-value=${ac.id} >${ac.Akaunt_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} </option>`
-      opt_any+=`<option data-amount=${ac.Amount} data-subtext="(${ac.aina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")})" data-Malipo="${ac.aina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}" data-itumiwe="${ac.onesha}" data-value=${ac.id} >${ac.Akaunt_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} </option>`
+      opt+=`<option data-aina="${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}" data-amount=${ac.Amount} data-value=${ac.id} >${ac.Akaunt_name.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} </option>`
+      opt_any+=`<option data-aina="${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}" data-amount=${ac.Amount} data-subtext="(${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")})" data-Malipo="${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}" data-itumiwe="${ac.onesha}" data-value=${ac.id} >${ac.Akaunt_name.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} </option>`
 
     })
 
     data.list.filter(d=>data.duka!=d.duka).forEach(ac => {
-      otherOpt+=`<option data-amount=${ac.Amount} data-value=${ac.id} >${ac.Akaunt_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} </option>`
+      otherOpt+=`<option data-aina="${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}" data-amount=${ac.Amount} data-value=${ac.id} >${ac.Akaunt_name.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} </option>`
     })
 
 

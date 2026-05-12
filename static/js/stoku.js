@@ -1347,7 +1347,7 @@ function getInvoiceList(value){
 data.manunuzi.forEach(ac => {
     rowM+=`<tr>
              <th scope="row">${n}</th>
-             <td >${ac.kwa.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</td>
+             <td >${ac.kwa.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</td>
              <td>${parseInt(ac.kiasi).toLocaleString()}</td>
 
              <td><span class="smallerFont robotoFont text-primary">${ac.vipimo}</span>. <b>${ac.idadi}</b></td>
@@ -1373,7 +1373,7 @@ if(parseInt(data.matumizi_count)>0){
 
     rowM+=`<tr>
              <th scope="row">${n}</th>
-             <td >${ac.kwa.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</td>
+             <td >${ac.kwa.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</td>
              <td>---</td>
 
              <td>---</td>
@@ -1545,16 +1545,16 @@ function placingItmData(data){
 
        
             data.mahi.forEach(ac => {
-                opt+=`<option value=${ac.id} data-value=${ac.id} >${ac.mahitaji.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} </option>`
+                opt+=`<option value=${ac.id} data-value=${ac.id} >${ac.mahitaji.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} </option>`
             })
             data.kampuni.forEach(ac => {
-                opt_kampu+=`<option value=${ac.id} data-value=${ac.id} >${ac.kampuni_jina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} </option>`
+                opt_kampu+=`<option value=${ac.id} data-value=${ac.id} >${ac.kampuni_jina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} </option>`
             })
             data.aina.forEach(ac => {
-                opt_aina+=`<option value=${ac.id} data-value=${ac.id} >${ac.aina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} </option>`
+                opt_aina+=`<option value=${ac.id} data-value=${ac.id} >${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} </option>`
             })
             data.sambaza.forEach(ac => {
-                opt_sambaza+=`<option value=${ac.id} data-value=${ac.id} >${ac.jina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} </option>`
+                opt_sambaza+=`<option value=${ac.id} data-value=${ac.id} >${ac.jina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} </option>`
             })
 
 
@@ -1636,7 +1636,7 @@ function placingItmData(data){
    function otherStoku(data){
        if('other_stock' in data){
             data.other_stock.forEach(ac => {
-                opt_stocku+=`<option  data-value=${ac.id} >${ac.name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} </option>`
+                opt_stocku+=`<option  data-value=${ac.id} >${ac.name.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} </option>`
             })
        }
 
@@ -1648,9 +1648,9 @@ function placingItmData(data){
             st_liS+=`
             <li class="py-2 border-bottom"  data-value=${ac.Interprise} >
             <a href="/stoku/interpnavi/${ac.Interprise}">
-                <span  style="font-size:16px;color:#777">${titleCase(ac.Interprise__name).replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>
+                <span  style="font-size:16px;color:#777">${titleCase(ac.Interprise__name).replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</span>
                 <br/>
-                <span class="smallerFont">${ac.Interprise__mtaa} ${ac.Interprise__wilaya} ${ac.Interprise__mkoa} </span>
+                <span class="smallerFont">${ac.Interprise__mtaa.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} ${ac.Interprise__wilaya.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} ${ac.Interprise__mkoa.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} </span>
              </a> 
              </li>`
         })
@@ -2024,14 +2024,14 @@ function sizing(data_size,color,produ_id){
             tr+=`<tr><td>${ac.sized__size}</td>`
             tr+=`<td>`
         if(parseInt(ac.idadi)/parseInt(ac.bidhaa__bidhaa__idadi_jum)>=1){
-            tr+=`<span class="text-primary">${ac.bidhaa__bidhaa__vipimo_jum.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(ac.idadi)/parseInt(ac.bidhaa__bidhaa__idadi_jum))}</span>`
+            tr+=`<span class="text-primary">${ac.bidhaa__bidhaa__vipimo_jum.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(ac.idadi)/parseInt(ac.bidhaa__bidhaa__idadi_jum))}</span>`
            
             if(parseInt(ac.idadi)%parseInt(ac.bidhaa__bidhaa__idadi_jum) !=0){
-               tr+=`${lang('na ',' and')} <span class="text-primary"> ${ac.bidhaa__bidhaa__vipimo.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(ac.idadi))}</span>`
+               tr+=`${lang('na ',' and')} <span class="text-primary"> ${ac.bidhaa__bidhaa__vipimo.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(ac.idadi))}</span>`
             }
         
         }else{
-             tr+=`<span class="text-primary"> ${ac.bidhaa__bidhaa__vipimo.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(ac.idadi))}</span>`
+             tr+=`<span class="text-primary"> ${ac.bidhaa__bidhaa__vipimo.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(ac.idadi))}</span>`
         } 
             
            tr+=` </td>`
@@ -2084,14 +2084,14 @@ function sizing(data_size,color,produ_id){
         <td>
         `
         if(parseInt(diff)/parseInt(uwiano)>=1){
-            tr+=`<span class="text-primary">${vipimo_jum.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(diff)/parseInt(uwiano))}</span>`
+            tr+=`<span class="text-primary">${vipimo_jum.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(diff)/parseInt(uwiano))}</span>`
            
             if(parseInt(diff)%parseInt(uwiano) !=0){
-               tr+=`${lang('na ',' and')} <span class="text-primary"> ${vipimo_rej.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(diff))}</span>`
+               tr+=`${lang('na ',' and')} <span class="text-primary"> ${vipimo_rej.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(diff))}</span>`
             }
         
         }else{
-             tr+=`<span class="text-primary"> ${vipimo_rej.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(diff))}</span>`
+             tr+=`<span class="text-primary"> ${vipimo_rej.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</span>.<span class="text-danger">${parseInt(parseInt(diff))}</span>`
         } 
             
            tr+=` </td>`
@@ -2140,14 +2140,14 @@ $('#sizing-table').html(tr)
                                 
                                  <p>
                                     <button type="button" class="mr-1 rangi-editing" 
-                                    data-color=${ac.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")} 
-                                    data-color_name=${ac.color__color_name.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")} 
+                                    data-color=${ac.color__color_code.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} 
+                                    data-color_name=${ac.color__color_name.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} 
                                     data-idadi_jum=${ac.bidhaa__bidhaa__idadi_jum} 
                                     data-idadi_halisi=${ac.idadi} 
                                     data-valued=${ac.id}
                                     data-nick_name=${ac.color__nick_name} 
-                                    data-toggle="modal" data-target="#kuweka-rangi-model" style="height: 25px;width:40px;color:${ac.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
-                                        background:${ac.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
+                                    data-toggle="modal" data-target="#kuweka-rangi-model" style="height: 25px;width:40px;color:${ac.color__color_code.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")};
+                                        background:${ac.color__color_code.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")};
                                         cursor:pointer;
                                         border-radius:3px;
                                         -webkit-box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37); 
@@ -2158,7 +2158,7 @@ $('#sizing-table').html(tr)
                                        color
                                  </button>   
                                  
-                                 ${titleCase(ac.color__color_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, ""))}  
+                                 ${titleCase(ac.color__color_name.replace(/[&\/\\#,+$~%"*?<>{}`]/g, ""))}  
                                  
                               
 
@@ -2169,7 +2169,7 @@ $('#sizing-table').html(tr)
                                 coloredone+=`   <div class="row mb-2">
                                                 <div class="col-12">
                                                   <label class="smallerFont" for="dozen">
-                                                    <span class="text-primary smallFont">${ac.bidhaa__bidhaa__vipimo_jum.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>:
+                                                    <span class="text-primary smallFont">${ac.bidhaa__bidhaa__vipimo_jum.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</span>:
                                                     <span class="text-danger"> ${parseInt(parseInt(ac.idadi)/parseInt(ac.bidhaa__bidhaa__idadi_jum))}</span>
                                                   </label>
                                                 </div>
@@ -2199,8 +2199,8 @@ $('#sizing-table').html(tr)
                                  </div>                    
                                </div>
     
-                               <div id="Color${ac.id}" data-color=${ac.color} data-valued=${ac.id} data-color=true class="showingpop241 the_identify"  data-showing="#ona_rang${ac.id}" style="height: 25px;width:50px;color:${ac.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
-                               background:${ac.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
+                               <div id="Color${ac.id}" data-color=${ac.color} data-valued=${ac.id} data-color=true class="showingpop241 the_identify"  data-showing="#ona_rang${ac.id}" style="height: 25px;width:50px;color:${ac.color__color_code.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")};
+                               background:${ac.color__color_code.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")};
                                cursor:pointer;
                                border-radius:3px;
                                -webkit-box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37); 
@@ -2267,7 +2267,7 @@ $('#sizing-table').html(tr)
                                 coloredone+=`<div class="row mb-2">
                                             <div class="col-12">
                                                 <label class="smallerFont" for="dozen">
-                                                <span class="text-primary">${vipimo_jumla.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>:
+                                                <span class="text-primary">${vipimo_jumla.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</span>:
                                                 <span class="text-danger">${parseInt(idadi_nyingine)/parseInt(idadi_jumla)}</span>
                                             
                                             </label>

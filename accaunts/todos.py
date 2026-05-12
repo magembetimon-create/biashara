@@ -39,7 +39,26 @@ class Todos:
        
         ukomo = duka.Interprise and (duka.usage > 0 or duka.marketing > 0) and duka.bill_tobePaid < date.today()
         waiter_counter = InterprisePermissions.objects.filter(user=user.id,waiter_counter=True,Interprise__waiter_counter=True)
-        payaccs_waiter = PaymentAkaunts.objects.filter(Interprise__in=[wc.Interprise.id for wc in waiter_counter.filter(servicing=True)]) if waiter_counter.exists() else None
+        # payaccs_waiter = PaymentAkaunts.objects.filter(Interprise__in=[wc.Interprise.id for wc in waiter_counter.filter(servicing=True)]) if waiter_counter.exists() else None
+        waiter_duka = waiter_counter.first().Interprise if waiter_counter.exists() else None
+        payaccs_waiter = PaymentAkaunts.objects.filter(
+            Interprise__owner=waiter_duka.owner,
+            onesha=True,
+            supervisor_account=False
+        ).exclude(aina__iexact='Cash') if waiter_duka else PaymentAkaunts.objects.none()
+
+        # 2. Pata serving waiter
+        serving_waiter = waiter_counter.filter(servicing=True).first() if waiter_counter.exists() else None
+
+        # 3. Pata akaunti ya Cash ya duka husika
+        servCash_account = PaymentAkaunts.objects.filter(
+            Interprise=serving_waiter.Interprise,
+            aina__iexact='Cash'
+        ) if serving_waiter else PaymentAkaunts.objects.none()
+
+        # 4. COMBINE: Unganisha zote mbili kuwa moja
+        payaccs_waiter = payaccs_waiter | servCash_account
+        
         customer_table = customer_in_cell.objects.filter(area__Interprise__in=[wc.Interprise.id for wc in waiter_counter.filter(servicing=True)]) if waiter_counter.exists() else None
         waiter_uncleared_waiters_count = 0
         if duka and duka.Interprise and duka.waiter_counter:

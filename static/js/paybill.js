@@ -1,3 +1,4 @@
+ISBILL = 1 
 $('#lipabill_form').unbind('submit').submit(function (e) { 
     e.preventDefault();
     let val=$(this).data('val'),

@@ -234,7 +234,7 @@ def addBill(request):
 
          beforweka=0
          if bool(inalipwa):
-           toakwa= PaymentAkaunts.objects.get(pk=akaunt,Interprise=entp.Interprise)
+           toakwa= PaymentAkaunts.objects.get(pk=akaunt,Interprise__owner=entp.Interprise.owner)
            beforweka=toakwa.Amount
 
          billno = 1
@@ -537,7 +537,7 @@ def addBill(request):
 
          # LIPIA BILLI KAMA INALIPWA...........................................................//     
          if bool(inalipwa) and not bool(rudi):
-           toakwa= PaymentAkaunts.objects.get(pk=akaunt,Interprise=entp.Interprise)
+           toakwa= PaymentAkaunts.objects.get(pk=akaunt,Interprise__owner=entp.Interprise.owner)
            beforweka=toakwa.Amount 
 
            toa = toaCash()
@@ -1066,7 +1066,7 @@ def bill_Itm_return_data(request):
      
 
       msg={'is_added':True,'success':True,'swa':'Rekodi ya kurudisha bidhaa imefanikiwa kikamilifu','eng':'Sales Return saved successfully'}
-      ak=PaymentAkaunts.objects.filter(pk=ac,Interprise=duka.Interprise.id)
+      ak=PaymentAkaunts.objects.filter(pk=ac,Interprise__owner=duka.Interprise.owner)
 
       
       if paid_adv !='':
@@ -1080,8 +1080,8 @@ def bill_Itm_return_data(request):
 
       else:
          ac_amo__ = 0
-         if PaymentAkaunts.objects.filter(pk=ac,Interprise=duka.Interprise.id).exists():
-               ac_amo__ =   PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise.id).Amount
+         if PaymentAkaunts.objects.filter(pk=ac,Interprise__owner=duka.Interprise.owner).exists():
+               ac_amo__ =   PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner).Amount
          if (ac_amo__ >= paid_adv) or (ac==0 and kulipa is not None) or uzo.ilolipwa == 0:  
             invono = 1
             invo_str=''
@@ -1218,7 +1218,7 @@ def bill_Itm_return_data(request):
                         remain_set=True
                         baki = float(baki)
 
-                  wekakwa= PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise)
+                  wekakwa= PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)
                   beforweka=wekakwa.Amount    
                   weka = wekaCash()
                   weka.Akaunt = wekakwa
@@ -1296,7 +1296,7 @@ def payReturn(request):
 
 
 
-                  wekakwa= PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise)
+                  wekakwa= PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)
                   beforweka=wekakwa.Amount    
                   weka = wekaCash()
                   weka.Akaunt = wekakwa
@@ -1490,7 +1490,7 @@ def payManyBill(request):
 
          duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
          try:
-            toakwa = PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise)
+            toakwa = PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)
             beforweka=toakwa.Amount 
 
             tot = 0
@@ -1601,7 +1601,7 @@ def payBill(request):
                   bill.save()
 
 
-               toakwa= PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise)
+               toakwa= PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)
                beforweka=toakwa.Amount 
    
                toa = toaCash()
@@ -1793,10 +1793,10 @@ def addExpense(request):
                         rec.by = todo['cheo']
                         rec.maelezo = maelezo
                         rec.date = date.today()
-                        rec.akaunti=PaymentAkaunts.objects.get(pk=ac,Interprise=duka)
+                        rec.akaunti=PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.owner)
                         rec.save()
 
-                        toakwa= PaymentAkaunts.objects.get(pk=ac,Interprise=duka)
+                        toakwa= PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.owner)
                         beforweka=toakwa.Amount 
             
                         toa = toaCash()
@@ -3754,7 +3754,7 @@ def payBill2(request):
                   bill.save()
 
 
-               toakwa= PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise)
+               toakwa= PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner.id)
                beforweka=toakwa.Amount 
    
                toa = toaCash()

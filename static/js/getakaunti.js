@@ -27,13 +27,9 @@ class getAkaunting{
   
 
 
-    data.list.filter(d=>data.duka===d.duka).forEach(ac => {
-
-      opt+=`<option data-amount=${ac.Amount} data-value=${ac.id} data-subtext="(${ac.aina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")})" >${ac.Akaunt_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} </option>`
-      opt_any+=`<option data-amount=${ac.Amount} data-Malipo="${ac.aina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}" data-itumiwe="${ac.onesha}" data-value=${ac.id} >${ac.Akaunt_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} <sub class="text-primary">(${ac.aina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")})</sub></option>`
-
-
-
+    data.list.forEach(ac => {
+      opt+=`<option data-amount=${ac.Amount} data-value=${ac.id} data-subtext="(${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")})" >${ac.Akaunt_name.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} </option>`
+      opt_any+=`<option data-amount=${ac.Amount} data-Malipo="${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}" data-itumiwe="${ac.onesha}" data-value=${ac.id} >${ac.Akaunt_name.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} <sub class="text-primary">(${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")})</sub></option>`
         rows+=`
         
          <li class=" py-3"  style="border-bottom:1px solid #f2f2f2">
@@ -49,7 +45,7 @@ class getAkaunting{
         </span>
 
 
-          ${ac.Akaunt_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} <sub class="text-primary">(${ac.aina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")})</sub> </span> 
+          ${ac.Akaunt_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} <sub class="text-primary">(${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")})</sub> </span> 
             
             <label style="font-size:13px " class="float-right "><span class="smallerFont  helaForm"></span> <b>${floatValue(ac.Amount)}</b>`
             if(data.menu){
@@ -62,9 +58,9 @@ class getAkaunting{
                    
                    <span class="place" hidden data-place="#ac_id">${ac.id}</span>
                    <span class="place" hidden data-place="#ac_amaount">${ac.Amount}</span>
-                   <span class="place" hidden data-place="#Akaunt-name2">${ac.Akaunt_name.replace(/[/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>
-                   <span class="place" hidden data-place="#jina_la_akaumti">${ac.Akaunt_name.replace(/[/[&\/\\#,+()$~%"*?<>{}`]/g, "")}<sub class="text-primary">(${ac.aina.replace(/[/[&\/\\#,+()$~%"*?<>{}`]/g, "")})</sub></span>
-                   <span class="place" hidden data-place="#aina_ya_Akaunt2">${ac.aina.replace(/[/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>
+                   <span class="place" hidden data-place="#Akaunt-name2">${ac.Akaunt_name.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</span>
+                   <span class="place" hidden data-place="#jina_la_akaumti">${ac.Akaunt_name.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}<sub class="text-primary">(${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")})</sub></span>
+                   <span class="place" hidden data-place="#aina_ya_Akaunt2">${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")}</span>
                    <span class="place" hidden data-place="#Akaunt-amount2">${ac.Amount}</span>
                    <span class="place" hidden data-place="#ac_kiasi"><span class="smallerFont"></span> ${floatValue(ac.Amount)}</span>
                    <span class="place" hidden data-place="#amountCash">${ac.Amount}</span>
@@ -79,7 +75,7 @@ class getAkaunting{
        `
     })
       data.list.filter(d=>data.duka!=d.duka).forEach(ac => {
-      otherOpt+=`<option data-amount=${ac.Amount} data-value=${ac.id} >${ac.Akaunt_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")} <sub class="text-primary">(${ac.aina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")})</sub></option>`
+      otherOpt+=`<option data-amount=${ac.Amount} data-value=${ac.id} >${ac.Akaunt_name.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")} <sub class="text-primary">(${ac.aina.replace(/[&\/\\#,+$~%"*?<>{}`]/g, "")})</sub></option>`
     })
 
 

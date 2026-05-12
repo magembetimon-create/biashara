@@ -1,6 +1,6 @@
   
 const IMGFORM = new FormData()
-
+ var ISBILL = 0 //This is used to eliminate none supervisor account in payaccount selection for new bill, because they are not allowed to use it for payment
 let RELOAD = 0 // this is for uploading image if the page require reload after uloading
 let REPlACE_BANNER = 0 //This is to replace the banner location
 let GETIMAGEDATA = 0 //For richtext editor images reload

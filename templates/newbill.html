@@ -846,13 +846,15 @@
 </div>
 </div>
 
-{% block billmpya %}
-<script>
-    $('#loadMe').modal('show')
-</script>
-<script src="{% static 'js/newbill.js' %}"></script>
 
-{% endblock %}
+
+    {% block forbilljs %}
+      <script>
+          $('#loadMe').modal('show')
+      </script>
+       <script src="{% static 'js/newbill.js' %}"></script>
+    {% endblock %}    
+
 
 
 {% endblock %}

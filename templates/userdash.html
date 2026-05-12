@@ -5791,7 +5791,8 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     {% if duka.Interprise %}
     <script src="{% static 'js/akaunting.js' %}"></script>
 
-    
+    {% block forbilljs %}
+    {% endblock %}
 
     {% block load_data_script %}
        <script src="{% static 'js/akauntgeresha.js' %}"></script>

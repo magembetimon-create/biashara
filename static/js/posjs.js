@@ -1212,6 +1212,21 @@ $('#Checkout_btn').click(function(){
     
 })
 
+// Keep default customer unchecked for non-cash to-be-paid account.
+$('body').on('change', '#malipo-akaunti', function(){
+    if(!$('#bill_tobe_paid').prop('checked')) return
+
+    const aina = String($(this).find('option:selected').data('aina') || '').toLowerCase().trim()
+    if(aina && aina!='cash' && $('#default_custom').prop('checked')){
+        $('#default_custom').prop('checked', false)
+        toastr.warning(
+            lang('Kwa akaunti isiyo Cash chagua mteja halisi na namba ya simu','For non-cash account choose real customer and phone number'),
+            lang('Taarifa','Info'),
+            {timeOut: 2500}
+        )
+    }
+})
+
 
 
 
@@ -1319,6 +1334,8 @@ $('.save_pos_data').unbind("click").click(function(){
 
                     inalipiwa = $('#bill_tobe_paid').prop('checked') || false,
                     akaunt = ($('#malipo-akaunti').find('option:selected').data('value')) || 0,
+                    akauntAina = String($('#malipo-akaunti').find('option:selected').data('aina') || '').toLowerCase().trim(),
+                    isDefaultCustomer = $('#default_custom').prop('checked') || false,
                     due_date = $('#tarehe_kulipa').val(),
 
                     
@@ -1333,6 +1350,21 @@ $('.save_pos_data').unbind("click").click(function(){
 
                     
                   let amount_set = false, amount = Number($('#inayolipwa_invoice').data('pay')) || 0
+
+                    // Non-cash paid invoice cannot be saved with default customer code only.
+                    // Require a real customer name and phone number.
+                    if(inalipiwa && Number(akaunt)>=1 && akauntAina!='cash' && isDefaultCustomer){
+                        const nm = String(cusom_name || '').trim(),
+                              ph = String(simu || '').trim(),
+                              isDefaultName = /^customer\s*-/i.test(nm)
+
+                        if(nm.length<4 || isDefaultName || ph.length<6){
+                            alert(lang('Kwa akaunti isiyo Cash tafadhari andika jina halisi la mteja na namba ya simu','For non-cash account please enter real customer name and phone number'))
+                            redborder('#lim_num')
+                            redborder('#cust_phone')
+                            return
+                        }
+                    }
                       
 
                     

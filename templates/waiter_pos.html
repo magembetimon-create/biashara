@@ -9,32 +9,74 @@
   <style>
     * { box-sizing: border-box; }
     body {
-      background: #1a1a2e;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Segoe UI', sans-serif;
       color: #fff;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      {% if duka and duka.prof_pic %}
+        background-image: url('{{ duka.prof_pic.url }}');
+        background-attachment: fixed;
+        background-size: cover;
+        background-position: center;
+      {% else %}
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      {% endif %}
+      background-repeat: no-repeat;
+      z-index: -2;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(26, 26, 46, 0.75);
+      z-index: -1;
     }
     .pos-wrap {
       width: 100%;
-      max-width: 480px;
+      max-width: 65vw;
       padding: 24px 16px;
+      position: relative;
+      z-index: 1;
+      background: rgba(22, 33, 62, 0.92);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(233, 69, 96, 0.1);
+      backdrop-filter: blur(10px);
     }
     .pos-logo {
       text-align: center;
       margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(233, 69, 96, 0.2);
     }
     .pos-logo h4 {
       font-size: 1.4rem;
       font-weight: 700;
-      color: #e0e0e0;
+      color: #fff;
       margin: 0;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
     .pos-logo small {
-      color: #aaa;
+      color: #b0d4ff;
       font-size: 0.85rem;
+    }
+    .pos-logo img {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(233, 69, 96, 0.2);
     }
     /* Waiter grid */
     .waiter-grid {
@@ -44,24 +86,27 @@
       margin-bottom: 24px;
     }
     .waiter-btn {
-      background: #16213e;
+      background: rgba(15, 52, 96, 0.8);
       border: 2px solid #0f3460;
       border-radius: 12px;
       padding: 18px 8px 14px;
       text-align: center;
       cursor: pointer;
-      transition: border-color .2s, transform .1s;
+      transition: border-color .2s, transform .1s, background .2s;
       color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     .waiter-btn:hover, .waiter-btn.selected {
       border-color: #e94560;
       transform: scale(1.04);
+      background: rgba(233, 69, 96, 0.15);
+      box-shadow: 0 6px 20px rgba(233, 69, 96, 0.3);
     }
     .waiter-btn .avatar {
       width: 52px;
       height: 52px;
       border-radius: 50%;
-      background: #0f3460;
+      background: linear-gradient(135deg, #0f3460 0%, #1a4a8a 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -69,37 +114,46 @@
       font-weight: 700;
       margin: 0 auto 8px;
       color: #e94560;
+      box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3);
+      border: 2px solid rgba(233, 69, 96, 0.2);
     }
     .waiter-btn .wname {
       font-size: 0.82rem;
       font-weight: 600;
       word-break: break-word;
+      color: #fff;
     }
     .waiter-btn .wcheo {
       font-size: 0.72rem;
-      color: #aaa;
+      color: #b0d4ff;
     }
     .no-pin-badge {
       font-size: 0.65rem;
-      background: #e94560;
+      background: linear-gradient(135deg, #e94560 0%, #c9334a 100%);
       color: #fff;
       border-radius: 4px;
-      padding: 1px 4px;
+      padding: 2px 6px;
       margin-top: 4px;
       display: inline-block;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(233, 69, 96, 0.3);
     }
     /* PIN pad */
     #pinSection {
       display: none;
-      background: #16213e;
+      background: rgba(22, 33, 62, 0.95);
       border-radius: 16px;
       padding: 24px 20px;
+      border: 1px solid rgba(233, 69, 96, 0.2);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
     }
     #pinSection h6 {
       font-size: 1rem;
       margin-bottom: 16px;
       text-align: center;
-      color: #e0e0e0;
+      color: #fff;
+      font-weight: 500;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     .pin-dots {
       display: flex;
@@ -113,9 +167,13 @@
       border-radius: 50%;
       border: 2px solid #e94560;
       background: transparent;
-      transition: background .15s;
+      transition: background .15s, box-shadow .15s;
+      box-shadow: 0 0 8px rgba(233, 69, 96, 0.3);
     }
-    .pin-dot.filled { background: #e94560; }
+    .pin-dot.filled {
+      background: #e94560;
+      box-shadow: 0 0 12px rgba(233, 69, 96, 0.6);
+    }
     .pin-pad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -124,40 +182,101 @@
       margin: 0 auto 16px;
     }
     .pin-key {
-      background: #0f3460;
-      border: none;
+      background: linear-gradient(135deg, #0f3460 0%, #1a4a8a 100%);
+      border: 1px solid rgba(233, 69, 96, 0.2);
       border-radius: 10px;
       color: #fff;
       font-size: 1.3rem;
       font-weight: 600;
       padding: 14px 0;
       cursor: pointer;
-      transition: background .15s;
+      transition: background .15s, transform .1s, box-shadow .15s;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     }
-    .pin-key:hover { background: #1a4a8a; }
-    .pin-key.del { background: #2a1a2e; color: #e94560; font-size: 1rem; }
-    .pin-key.ok { background: #e94560; color: #fff; font-size: 1rem; grid-column: 2; }
+    .pin-key:hover {
+      background: linear-gradient(135deg, #1a4a8a 0%, #2a5ab5 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    }
+    .pin-key:active {
+      transform: translateY(0);
+    }
+    .pin-key.del {
+      background: linear-gradient(135deg, #3a2a3e 0%, #2a1a2e 100%);
+      color: #e94560;
+      font-size: 1rem;
+    }
+    .pin-key.del:hover {
+      background: linear-gradient(135deg, #4a3a5e 0%, #3a2a4e 100%);
+    }
+    .pin-key.ok {
+      background: linear-gradient(135deg, #e94560 0%, #c9334a 100%);
+      color: #fff;
+      font-size: 1rem;
+      grid-column: 2;
+    }
+    .pin-key.ok:hover {
+      background: linear-gradient(135deg, #f05070 0%, #d94360 100%);
+    }
     #pinError {
       text-align: center;
-      color: #e94560;
+      color: #ff6b7a;
       font-size: 0.85rem;
       min-height: 20px;
+      font-weight: 500;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     .back-btn {
       background: none;
       border: none;
-      color: #aaa;
+      color: #b0d4ff;
       font-size: 0.85rem;
       cursor: pointer;
       display: block;
       margin: 12px auto 0;
+      transition: color .2s, text-shadow .2s;
     }
-    .back-btn:hover { color: #fff; }
+    .back-btn:hover {
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
     /* No counters */
     .empty-msg {
       text-align: center;
-      color: #aaa;
+      color: #b0d4ff;
       padding: 20px 0;
+      font-size: 0.95rem;
+    }
+    /* Form improvements */
+    .form-control {
+      background: rgba(15, 52, 96, 0.6) !important;
+      border: 1px solid rgba(233, 69, 96, 0.3) !important;
+      color: #fff !important;
+      font-size: 0.95rem;
+    }
+    .form-control::placeholder {
+      color: #8fa3c4 !important;
+    }
+    .form-control:focus {
+      background: rgba(15, 52, 96, 0.8) !important;
+      border-color: #e94560 !important;
+      box-shadow: 0 0 0 0.2rem rgba(233, 69, 96, 0.25) !important;
+      color: #fff !important;
+    }
+    .btn-danger {
+      background: linear-gradient(135deg, #e94560 0%, #c9334a 100%) !important;
+      border: none !important;
+      box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3) !important;
+      font-weight: 600;
+      transition: transform .1s, box-shadow .1s;
+    }
+    .btn-danger:hover {
+      background: linear-gradient(135deg, #f05070 0%, #d94360 100%) !important;
+      box-shadow: 0 6px 16px rgba(233, 69, 96, 0.4) !important;
+      transform: translateY(-2px);
+    }
+    .btn-danger:active {
+      transform: translateY(0);
     }
   </style>
 </head>
@@ -166,7 +285,7 @@
   <div class="pos-logo">
     {% if duka %}
       {% if duka.logo %}
-        <img src="{{ duka.logo.url }}" style="height:48px;object-fit:contain;margin-bottom:8px;border-radius:8px;" alt="">
+        <img src="{{ duka.logo.url }}" style="height:48px;object-fit:contain;margin-bottom:8px;border-radius:8px;box-shadow:0 4px 12px rgba(0, 0, 0, 0.5);border:2px solid rgba(233, 69, 96, 0.2);" alt="">
       {% endif %}
       <h4>{{ duka.name }}</h4>
       <small>Waiter POS</small>
@@ -177,7 +296,7 @@
 
   {% if not duka %}
   <!-- No business selected — show simple form to enter business id -->
-  <div style="text-align:center;color:#aaa;font-size:.9rem;margin-bottom:16px;">
+  <div style="text-align:center;color:#b0d4ff;font-size:.9rem;margin-bottom:16px;text-shadow:0 1px 2px rgba(0, 0, 0, 0.3);">
     Ingiza ID ya biashara kuendelea
   </div>
   <form method="GET" action="/mauzo/waiter_pos" style="max-width:280px;margin:0 auto;">
@@ -192,7 +311,7 @@
 
   <!-- Waiter selection -->
   <div id="waiterSelectSection">
-    <p style="text-align:center;color:#aaa;font-size:.85rem;margin-bottom:14px;">
+    <p style="text-align:center;color:#b0d4ff;font-size:.85rem;margin-bottom:14px;text-shadow:0 1px 2px rgba(0, 0, 0, 0.3);">
       Chagua jina lako kuendelea
     </p>
     <div class="waiter-grid" id="waiterGrid">
@@ -240,6 +359,7 @@
 {% if duka and counters %}
 <script>
   const BIZ_ID = Number('{{ biz_id }}');
+  const DEVICE_ID = String('{{ device_id }}');
   let selectedCounterId = 0;
   let pinValue = '';
 
@@ -322,10 +442,11 @@
     const formData = new FormData();
     formData.append('counter', selectedCounterId);
     formData.append('biz', BIZ_ID);
+    formData.append('device_id', DEVICE_ID);
     formData.append('pin', pinValue);
     formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
 
-    fetch('/mauzo/waiter_pos?biz=' + BIZ_ID, {
+    fetch('/mauzo/waiter_pos?biz=' + BIZ_ID + '&device_id=' + DEVICE_ID, {
       method: 'POST',
       body: formData,
     })

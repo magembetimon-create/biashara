@@ -341,8 +341,6 @@ def _resolve_waiter_context(request):
 
             device_session = device_qs.order_by('-updated_at').first()
             if device_session and device_session.active_user and device_session.active_user.waiter_counter:
-                  request.session['waiter_pos_biz'] = device_session.Interprise.id
-                  request.session['waiter_pos_device'] = device_id
                   return {
                         'ok': True,
                         'source': 'device',
@@ -416,7 +414,7 @@ def waiter_order(request):
             table_obj = customer_in_cell.objects.filter(pk=table_id, area__Interprise=duka.id).last()
       else:
             table_obj = customer_in_cell.objects.filter(area__Interprise=duka.id, name=table_name).last()
-      pay_acc = PaymentAkaunts.objects.filter(pk=akaunt_id, Interprise=duka.id).last() if akaunt_id else None
+      pay_acc = PaymentAkaunts.objects.filter(pk=akaunt_id, Interprise__owner=duka.owner).last() if akaunt_id else None
 
       try:
             with transaction.atomic():
@@ -1737,6 +1735,7 @@ def  viewServing(request):
     try:
       todo = viewServ_funct(request)
       bil = todo['the_bill']
+      cheo = todo['cheo']
       if bil.service:  
            duka = todo['duka']
            starti = bil.servFrom < datetime.datetime.now(tz=timezone.utc) 
@@ -1758,8 +1757,28 @@ def  viewServing(request):
 
            chages = ChangedService.objects.filter(Q(from_serv=bil.id)|Q(to_serv__To=bil.id)|Q(From__From=bil.id))      
 
+           payaccs_ = PaymentAkaunts.objects.filter(
+                        Interprise__owner=duka.owner,
+                        supervisor_account = False
+                  ).exclude(aina__iexact='Cash') if duka else PaymentAkaunts.objects.none()
+
+           servCash_ = PaymentAkaunts.objects.filter(
+                        Interprise__owner=duka.owner,
+                        aina__iexact='Cash'
+                  ) if duka else PaymentAkaunts.objects.none()
+
+
+           payaccs_ = payaccs_ | servCash_
+            
+            
+           if not (cheo.owner  or  cheo.akaunti) : 
+                  payaccs_ = payaccs_.exclude(onesha=False)    
+
+       
+                  
+
            todo.update({
-                    'acs':PaymentAkaunts.objects.filter(Interprise=duka.id),
+                    'acs':payaccs_,
                     'ref':return_str,
                     'changed':chages.filter(from_serv=bil.id),
                     'changedFrom':chages.filter(From__From=bil.id),
@@ -1771,9 +1790,25 @@ def  viewServing(request):
               if bil.online and not bil.packed: 
 
                     return redirect('/mauzo/viewCustomOrder?ord='+str(bil.id))
-              else:    
+              else:   
+                  payaccs_ = PaymentAkaunts.objects.filter(
+                                    Interprise__owner=duka.owner,
+                                    supervisor_account = False
+                              ).exclude(aina__iexact='Cash') if duka else PaymentAkaunts.objects.none()
+
+                  servCash_ = PaymentAkaunts.objects.filter(
+                                    Interprise__owner=duka.owner,
+                                    aina__iexact='Cash'
+                              ) if duka else PaymentAkaunts.objects.none()
+
+
+                  payaccs_ = payaccs_ | servCash_
+                        
+                        
+                  if not (cheo.owner  or  cheo.akaunti) : 
+                              payaccs_ = payaccs_.exclude(onesha=False)   
                   todo.update({
-                        'acs':PaymentAkaunts.objects.filter(Interprise=duka.id),
+                        'acs':payaccs_,
                         'starting':starti,
                         'ref':return_str,
                         
@@ -1853,6 +1888,7 @@ def  endServs(request):
     try:
       todo = viewServ_funct(request)
       bil = todo['the_bill']
+      cheo = todo['cheo']
       if bil.service:  
            duka = todo['duka']
            if bil.order: 
@@ -1875,10 +1911,25 @@ def  endServs(request):
               elif sale_no >=10000 :
                     return_str =str(sale_no)
 
-      
+              payaccs_ = PaymentAkaunts.objects.filter(
+                        Interprise__owner=duka.owner,
+                        supervisor_account = False
+                  ).exclude(aina__iexact='Cash') if duka else PaymentAkaunts.objects.none()
+
+              servCash_ = PaymentAkaunts.objects.filter(
+                                    Interprise__owner=duka.owner,
+                                    aina__iexact='Cash'
+                              ) if duka else PaymentAkaunts.objects.none()
+
+
+              payaccs_ = payaccs_ | servCash_
+                        
+                        
+              if not (cheo.owner  or  cheo.akaunti) : 
+                              payaccs_ = payaccs_.exclude(onesha=False)  
   
               todo.update({
-                    'acs':PaymentAkaunts.objects.filter(Interprise=duka.id),
+                    'acs':payaccs_,
                     'starting':starti,
                    'ref':return_str,
                     
@@ -1919,6 +1970,7 @@ def  viewOda(request):
      
       todo=viewOda_funct(request)
       duka= todo['duka']
+      cheo = todo['cheo']
       sale_no = 1
       return_str=''
       if Cash_order_return.objects.filter(ivo__Interprise=duka).exists():
@@ -1936,10 +1988,26 @@ def  viewOda(request):
             return_str = '0' +str(sale_no)    
       elif sale_no >=10000 :
             return_str =str(sale_no)
+      
+      payaccs_ = PaymentAkaunts.objects.filter(
+                        Interprise__owner=duka.owner,
+                        supervisor_account = False
+                  ).exclude(aina__iexact='Cash') if duka else PaymentAkaunts.objects.none()
 
+      servCash_ = PaymentAkaunts.objects.filter(
+                        Interprise__owner=duka.owner,
+                        aina__iexact='Cash'
+                  ) if duka else PaymentAkaunts.objects.none()
+
+
+      payaccs_ = payaccs_ | servCash_
+            
+            
+      if not (cheo.owner  or  cheo.akaunti) : 
+                  payaccs_ = payaccs_.exclude(onesha=False)  
       
       acs =  {
-            'acs':PaymentAkaunts.objects.filter(Interprise=duka.id),
+            'acs':payaccs_,
               'ref':return_str         
             }
       
@@ -3438,9 +3506,10 @@ def waiter_orders_summary(request):
 
                   cash_default_amount = max(0, float(selected_waiter_orders_total_amount or 0) - float(non_cash_total or 0))
                   cash_account = PaymentAkaunts.objects.filter(
-                        Interprise=duka,
+                        Interprise__owner=duka.owner,
                         aina__iexact='Cash'
                   ).order_by('pk').last()
+
                   if cash_account:
                         selected_waiter_payment_accounts.append({
                               'account_id': cash_account.id,
@@ -3753,7 +3822,7 @@ def waiter_summary_clear_waiter_payments(request):
 
       pay_accounts = {
             x.id: x for x in PaymentAkaunts.objects.filter(
-                  Interprise=duka,
+                  Interprise__owner=duka.owner,
                   pk__in=list(posted_amount_by_account.keys())
             )
       }
@@ -4370,7 +4439,7 @@ def waiter_pay_order(request):
       duka = ctx['duka']
       cheo = ctx['cheo']
 
-      pay_acc = PaymentAkaunts.objects.filter(pk=akaunt_id, Interprise=duka.id).last()
+      pay_acc = PaymentAkaunts.objects.filter(pk=akaunt_id, Interprise__owner=duka.owner).last()
       if not pay_acc:
             return JsonResponse({'success': False, 'msg': 'Payment account not found'})
 
@@ -4499,9 +4568,6 @@ def waiter_pos_device_session(request):
             },
       )
 
-      request.session['waiter_pos_biz']    = duka.id
-      request.session['waiter_pos_device'] = device_id
-
       return JsonResponse({
             'success': True,
             'redirect': f'/mauzo/waiter_pos?biz={duka.id}&device_id={device_id}',
@@ -4531,9 +4597,6 @@ def waiter_device_exit_session(request):
             return JsonResponse({'success': False, 'msg': 'Device session not found', 'redirect': fallback})
 
       session_qs.update(active_user=None)
-
-      request.session['waiter_pos_biz'] = session_obj.Interprise.id
-      request.session['waiter_pos_device'] = device_id
 
       return JsonResponse({
             'success': True,
@@ -4588,9 +4651,9 @@ def waiter_pos(request):
                   device_id=device_id,
                   active=True,
             ).exists()
-            if device_session_ok:
-                  request.session['waiter_pos_biz'] = biz_id
-                  request.session['waiter_pos_device'] = device_id
+            # Do not write session on GET-only page load. If session is deleted
+            # concurrently (logout in another tab/device), Django can raise
+            # SessionInterrupted while saving response.
 
       if request.method == 'POST':
             counter_id = int(request.POST.get('counter', 0) or 0)
@@ -4621,10 +4684,6 @@ def waiter_pos(request):
                   waiter_counter=True,
             ).update(servicing=False)
             InterprisePermissions.objects.filter(pk=counter_id).update(servicing=True)
-
-            # Set session so the logged-in user (the device account) can proceed
-            request.session['waiter_pos_counter'] = counter_id
-            request.session['waiter_pos_biz'] = biz_id
 
             # Save active_user to device session
             WaiterPosDeviceSession.objects.filter(
@@ -4688,9 +4747,6 @@ def waiter_device_exit(request):
       ds.active_user = None
       ds.save(update_fields=['active_user', 'updated_at'])
 
-      request.session['waiter_pos_biz'] = ds.Interprise.id
-      request.session['waiter_pos_device'] = device_id
-
       return JsonResponse({
             'success': True,
             'redirect': f'/mauzo/waiter_pos?biz={ds.Interprise.id}&device_id={device_id}',
@@ -4729,7 +4785,24 @@ def waiter_device_dashboard(request):
                   waiter_counter=True,
             )
 
-            payaccs_waiter = PaymentAkaunts.objects.filter(Interprise=duka.id, onesha=True)
+            # payaccs_waiter = PaymentAkaunts.objects.filter(Interprise=duka.id, onesha=True)
+
+            payaccs_ = PaymentAkaunts.objects.filter(
+                        Interprise__owner=duka.owner,
+                        supervisor_account = False
+                  ).exclude(aina__iexact='Cash') if duka else PaymentAkaunts.objects.none()
+
+            servCash_ = PaymentAkaunts.objects.filter(
+                        Interprise__owner=duka.owner,
+                        aina__iexact='Cash'
+                  ) if duka else PaymentAkaunts.objects.none()
+
+
+            payaccs_ = payaccs_ | servCash_
+            
+            
+       
+
             customer_table = customer_in_cell.objects.filter(area__Interprise=duka.id).select_related('area').order_by('area__name', 'name')
             customer_area = customer_table.distinct('area')
             class _UserLangObj:
@@ -4741,7 +4814,7 @@ def waiter_device_dashboard(request):
                   'waiter_counter': counters,
                   'customer_table': customer_table,
                   'customer_area': customer_area,
-                  'payaccs_waiter': payaccs_waiter,
+                  'payaccs_waiter': payaccs_,
             }
 
             todo.update({
@@ -4930,7 +5003,7 @@ def  ReFprint(request):
 def lipia_(request,ac,paid,bal_set,bal,itm_val,Code):
                duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
       
-               toakwa= PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise)
+               toakwa= PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)
                beforweka=toakwa.Amount 
                rtn = sale_return.objects.get(pk=itm_val,Interprise=duka.Interprise)
    
@@ -5028,7 +5101,7 @@ def  Itm_return_data(request):
      
 
       msg={'success':True,'swa':'Rekodi ya kurudisha bidhaa imefanikiwa kikamilifu','eng':'Sales Return saved successfully'}
-      ak=PaymentAkaunts.objects.filter(pk=ac,Interprise=duka.Interprise.id)
+      ak=PaymentAkaunts.objects.filter(pk=ac,Interprise__owner=duka.Interprise.owner)
 
       # print(amo) 
       if paid_adv !='':
@@ -5043,8 +5116,8 @@ def  Itm_return_data(request):
 
       else:
          ac_amo__ = 0
-         if PaymentAkaunts.objects.filter(pk=ac,Interprise=duka.Interprise.id).exists():
-               ac_amo__ =   PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise.id).Amount
+         if PaymentAkaunts.objects.filter(pk=ac,Interprise__owner=duka.Interprise.owner).exists():
+               ac_amo__ =   PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner).Amount
          if (ac_amo__ >= paid_adv) or (ac==0 and kulipa is not None) or uzo.ilolipwa == 0:  
             invono = 1
             invo_str=''
@@ -5084,7 +5157,7 @@ def  Itm_return_data(request):
 
             if paid and ak.exists() :
                   rtrn.kulipa = date
-                  rtrn.akaunt =  PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise.id) 
+                  rtrn.akaunt =  PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner) 
                   rtrn.ilolipwa =paid_adv  
 
             else :
@@ -5244,7 +5317,7 @@ def payReturn(request):
                      return_.ilolipwa = return_.ilolipwa + paid
                if (paid+ilobaki) <= return_.amount :
 
-                  return_.akaunt = PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise)   
+                  return_.akaunt = PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)   
                   if return_.amount == ilobaki + paid:
                         return_.full_paid = True
                         return_.kulipa = pay_d
@@ -5253,7 +5326,7 @@ def payReturn(request):
             #    UPDATE TO THE SALES  
                mauzoni.objects.filter(pk=return_.ivo.id).update(ilolipwa=float(paid)) 
 
-               toakwa= PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise)
+               toakwa= PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)
                beforweka=toakwa.Amount 
    
                toa = toaCash()
@@ -5350,7 +5423,7 @@ def oda_refund(request):
 
                user = UserExtend.objects.get(user = request.user.id )
 
-               toakwa = PaymentAkaunts.objects.filter(pk=ac,Interprise=duka.Interprise)
+               toakwa = PaymentAkaunts.objects.filter(pk=ac,Interprise__owner=duka.Interprise.owner)
                 
            
 
@@ -5368,7 +5441,7 @@ def oda_refund(request):
                      paid = float(paid)     
 
                if toakwa.exists() and toakwa.last().Amount>=paid and billed.exists() :
-                     toakwa=PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise)
+                     toakwa=PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)
                      billed = billed.last()
 
 
@@ -5516,12 +5589,12 @@ def  lipaInvo(request):
             
                   
                   
-                  if  PaymentAkaunts.objects.filter(pk=ac,Interprise=duka.Interprise.id).exists():
+                  if  PaymentAkaunts.objects.filter(pk=ac,Interprise__owner=duka.Interprise.owner).exists():
                   
                         bill = mauzoni.objects.get(pk=value,Interprise=duka.Interprise.id)
                         ilobaki = bill.ilolipwa                
                         if (paid_amo+ilobaki) <= bill.amount :
-                              bill.akaunt = PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise.id)   
+                              bill.akaunt = PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)   
                               if bill.amount == ilobaki + paid_amo:
                                     bill.full_paid = True
 
@@ -5531,7 +5604,7 @@ def  lipaInvo(request):
                               bill.ilolipwa = bill.ilolipwa + paid_amo
                               bill.save()
 
-                              wekakwa= PaymentAkaunts.objects.get(pk=ac,Interprise=duka.Interprise)
+                              wekakwa= PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)
                               beforweka=wekakwa.Amount    
                               weka = wekaCash()
                               weka.Akaunt = wekakwa
@@ -5717,7 +5790,7 @@ def  addInvoice(request):
 
          beforweka=0
          if inalipwa and not edit:
-                  wekakwa= PaymentAkaunts.objects.get(pk=akaunt,Interprise=entp.Interprise)
+                  wekakwa= PaymentAkaunts.objects.get(pk=akaunt,Interprise__owner=entp.Interprise.owner)
                   beforweka=wekakwa.Amount
          invono = 1
          invo_str=''
@@ -6118,7 +6191,7 @@ def  addInvoice(request):
          }  
         # LIPIA BILLI KAMA INALIPWA...........................................................//     
          if inalipwa and not edit and not rudi:
-           wekakwa= PaymentAkaunts.objects.get(pk=akaunt,Interprise=entp.Interprise)
+           wekakwa= PaymentAkaunts.objects.get(pk=akaunt,Interprise__owner=entp.Interprise.owner)
            beforweka=float(wekakwa.Amount)
 
            weka = wekaCash()
@@ -6165,6 +6238,7 @@ def  addInvoice(request):
          return JsonResponse(data)
 
        except:
+         traceback.print_exc() 
          todo = todoFunct(request) 
          cheo = todo['cheo'] 
          duka = todo['duka']  
