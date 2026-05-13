@@ -38,7 +38,7 @@ from django.core.paginator import Paginator,EmptyPage
 # Create your views here.
 
 
-from accaunts.todos import Todos,updateOrder
+from accaunts.todos import Todos,updateOrder,shift_operation_block_payload
 # Create your views here.
 
 def todoFunct(request):
@@ -2087,6 +2087,9 @@ def Zipungue(request):
                 duka = todo['duka']
                 cheo = todo['cheo']
 
+                if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+                    return JsonResponse(shift_operation_block_payload(todo), status=403)
+
 
                 if len(itm)>0 and ((cheo.stokAdjs and not cheo.viewi) or cheo.user == duka.owner)  :
                     adj = stokAdjustment()
@@ -2263,6 +2266,9 @@ def Ziongezeke(request):
                 todo = todoFunct(request)
                 duka = todo['duka']
                 cheo = todo['cheo']
+
+                if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+                    return JsonResponse(shift_operation_block_payload(todo), status=403)
 
 
                 if len(itm)>0 and ((cheo.stokAdjs and not cheo.viewi) or cheo.user == duka.owner)  :
@@ -4309,9 +4315,12 @@ def bidhaaoda(request):
 def addtranfer(request):
     if request.method == "POST":
        try: 
-            used = request.user
-            dukap = InterprisePermissions.objects.get(user__user = used.id, default = True)
-            duka = dukap.Interprise
+            todo = todoFunct(request)
+            if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+                return JsonResponse(shift_operation_block_payload(todo), status=403)
+
+            dukap = todo['cheo']
+            duka = todo['duka']
 
             oda=int(request.POST.get('oda'))
             code = request.POST.get('code')
@@ -4383,7 +4392,7 @@ def addtranfer(request):
                 else:
                     notice.Incharge_reade = True
                     
-                notice.Incharge = todoFunct(request)['useri']    
+                notice.Incharge = todo['useri']    
                 notice.save()
                 
 
@@ -4407,7 +4416,7 @@ def addtranfer(request):
                 else:
                     notice.Incharge_reade = True
 
-                notice.Incharge = todoFunct(request)['useri']    
+                notice.Incharge = todo['useri']    
                 notice.save()
 
 

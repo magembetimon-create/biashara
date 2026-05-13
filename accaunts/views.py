@@ -2320,6 +2320,7 @@ def getstaffdata(request):
       userdetails["date"]=diff
       userdetails["assist"]=assistantpresent
       userdetails["waiter_counter"]=bool(todo['duka'].waiter_counter)
+      userdetails["shift_management_enabled"]=bool(todo['duka'].shift_management_enabled)
 
 
     
@@ -2333,6 +2334,7 @@ def getstaffdata(request):
          "date":None,
          "assist":None,
         "waiter_counter":False,
+        "shift_management_enabled":False,
       }
       return JsonResponse(data)  
   else:

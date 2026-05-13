@@ -1,4 +1,4 @@
-from management.models import Notifications,ainaMama,ainaBibi, UserExtend,Zones,Nchi,EmployeeAttachments,Kanda,Workers, customer_area, customer_in_cell,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji
+from management.models import Notifications,ainaMama,ainaBibi, UserExtend,Zones,Nchi,EmployeeAttachments,Kanda,Workers, customer_area, customer_in_cell,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji,ShiftSession,ShiftAssignment
 from django.utils import timezone
 from django.db.models import Q,F
 from datetime import date
@@ -12,9 +12,124 @@ from django.utils.html import strip_tags
 from django.conf import settings
 import requests, json
 
+
+def _shift_staff_name(staff_perm):
+  if not staff_perm:
+    return ''
+  if getattr(staff_perm, 'fanyakazi', None):
+    return str(staff_perm.fanyakazi.jina or '').strip()
+  user_extend = getattr(staff_perm, 'user', None)
+  user_obj = getattr(user_extend, 'user', None) if user_extend else None
+  if user_obj:
+    full_name = user_obj.get_full_name().strip()
+    return full_name or user_obj.username
+  return str(getattr(staff_perm, 'cheo', '') or '').strip()
+
+
+def shift_operation_block_payload(todo):
+  msg_swa = todo.get('shift_operation_block_reason_swa') or 'Operesheni hii inahitaji shift inayoendelea na assignment yako kwenye shift hiyo.'
+  msg_eng = todo.get('shift_operation_block_reason_eng') or 'This operation requires an active shift assigned to you.'
+  return {
+    'success': False,
+    'msg_swa': msg_swa,
+    'msg_eng': msg_eng,
+    'message_swa': msg_swa,
+    'message_eng': msg_eng,
+    'shift_management_enabled': bool(todo.get('shift_management_enabled')),
+    'has_active_shift': bool(todo.get('has_active_shift')),
+  }
+
 class Todos:
   def __init__(self,request):
       self.request = request 
+
+  def _shift_context(self, duka, dukap):
+    shift_data = {
+      'shift_management_enabled': False,
+      'active_shift': None,
+      'has_active_shift': False,
+      'active_shift_assigned_to': None,
+      'active_shift_assigned_name': '',
+      'is_assigned_to_active_shift': False,
+      'can_open_shift': False,
+      'can_close_shift': False,
+      'shift_operation_allowed': True,
+      'shift_status_swa': 'Usimamizi wa shift haujawezeshwa',
+      'shift_status_eng': 'Shift management is disabled',
+      'shift_operation_block_reason_swa': '',
+      'shift_operation_block_reason_eng': '',
+    }
+
+    if not duka or not getattr(duka, 'Interprise', False):
+      return shift_data
+
+    shift_enabled = bool(getattr(duka, 'shift_management_enabled', False))
+    shift_data['shift_management_enabled'] = shift_enabled
+    shift_data['can_open_shift'] = bool(dukap and (dukap.owner or dukap.open_own_shift))
+
+    if not shift_enabled:
+      shift_data['shift_status_swa'] = 'Usimamizi wa shift haujawezeshwa kwa biashara hii'
+      shift_data['shift_status_eng'] = 'Shift management is disabled for this business'
+      return shift_data
+
+    active_shift = ShiftSession.objects.filter(
+      Interprise=duka.id,
+      ends_at__isnull=True,
+    ).order_by('-starts_at', '-id').first()
+
+    shift_data['active_shift'] = active_shift
+    shift_data['has_active_shift'] = active_shift is not None
+
+    recorder_assignment = None
+    if active_shift:
+      recorder_assignment = ShiftAssignment.objects.filter(
+        shift=active_shift,
+        active=True,
+      ).filter(Q(role='recorder') | Q(role='all')).select_related('staff__user__user', 'staff__fanyakazi').order_by('-id').first()
+      if not recorder_assignment:
+        recorder_assignment = ShiftAssignment.objects.filter(
+          shift=active_shift,
+          active=True,
+        ).select_related('staff__user__user', 'staff__fanyakazi').order_by('-id').first()
+
+    assigned_staff = recorder_assignment.staff if recorder_assignment else None
+    shift_data['active_shift_assigned_to'] = assigned_staff
+    shift_data['active_shift_assigned_name'] = _shift_staff_name(assigned_staff)
+
+    is_assigned = False
+    if active_shift and dukap:
+      is_assigned = ShiftAssignment.objects.filter(
+        shift=active_shift,
+        staff=dukap,
+        active=True,
+      ).exists()
+
+    shift_data['is_assigned_to_active_shift'] = is_assigned
+    shift_data['can_close_shift'] = bool(
+      active_shift and dukap and is_assigned and (dukap.owner or dukap.close_own_shift)
+    )
+    shift_data['shift_operation_allowed'] = bool(active_shift and is_assigned)
+
+    if not active_shift:
+      shift_data['shift_status_swa'] = 'Hakuna shift inayoendelea kwa sasa'
+      shift_data['shift_status_eng'] = 'There is no active shift at the moment'
+      shift_data['shift_operation_block_reason_swa'] = 'Hakuna shift inayoendelea kwa sasa, hivyo operesheni hii hairuhusiwi hadi admin au mwenye ruhusa afungue shift.'
+      shift_data['shift_operation_block_reason_eng'] = 'There is no active shift right now, so this operation is blocked until an authorized user opens a shift.'
+    else:
+      shift_code = str(active_shift.code or active_shift.id)
+      assigned_name = shift_data['active_shift_assigned_name']
+      if assigned_name:
+        shift_data['shift_status_swa'] = f'Shift {shift_code} inaendelea, assigned to {assigned_name}'
+        shift_data['shift_status_eng'] = f'Shift {shift_code} is active and assigned to {assigned_name}'
+      else:
+        shift_data['shift_status_swa'] = f'Shift {shift_code} inaendelea'
+        shift_data['shift_status_eng'] = f'Shift {shift_code} is active'
+
+      if not is_assigned:
+        shift_data['shift_operation_block_reason_swa'] = 'Operesheni hii inaruhusiwa tu kwa mtumiaji aliyepangiwa shift inayoendelea.'
+        shift_data['shift_operation_block_reason_eng'] = 'This operation is only allowed for the user assigned to the active shift.'
+
+    return shift_data
       
 
   def todoF(self):  
@@ -68,6 +183,7 @@ class Todos:
             By__isnull=True,
             full_returned=False,
           ).values('waiter_order').distinct().count()
+        shift_data = self._shift_context(duka, dukap)
         todo = {
         'cheo':dukap,
         'duka':duka,
@@ -85,6 +201,7 @@ class Todos:
         'payaccs_waiter':payaccs_waiter,
         'customer_table':customer_table
         }
+        todo.update(shift_data)
 
 
 
@@ -101,7 +218,20 @@ class Todos:
             'matawi':None,
             'pent':None,
             'puO':None,
-            'waiter_uncleared_waiters_count':0       
+            'waiter_uncleared_waiters_count':0,
+            'shift_management_enabled':False,
+            'active_shift':None,
+            'has_active_shift':False,
+            'active_shift_assigned_to':None,
+            'active_shift_assigned_name':'',
+            'is_assigned_to_active_shift':False,
+            'can_open_shift':False,
+            'can_close_shift':False,
+            'shift_operation_allowed':True,
+            'shift_status_swa':'Usimamizi wa shift haujawezeshwa',
+            'shift_status_eng':'Shift management is disabled',
+            'shift_operation_block_reason_swa':'',
+            'shift_operation_block_reason_eng':''
         }
       return todo
 

@@ -31,7 +31,7 @@ import os
 timezone.now()
 from django.core.paginator import Paginator,EmptyPage
 
-from accaunts.todos import Todos,updateOrder
+from accaunts.todos import Todos,updateOrder,shift_operation_block_payload
 # Create your views here.
 
 
@@ -1197,6 +1197,9 @@ def addExpenses(request):
                 cheo = todo['cheo']
                 prdn = 1
 
+                if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+                    return JsonResponse(shift_operation_block_payload(todo), status=403)
+
                 data={
                         'success':True,
                         'msg_swa':'Bidhaa zilizozalishwa zimeongezwa stoku kikamilifu',
@@ -1334,6 +1337,9 @@ def addProducts(request):
                 duka = todo['duka']
                 cheo = todo['cheo']
                 prdn = 1
+
+                if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+                    return JsonResponse(shift_operation_block_payload(todo), status=403)
 
                 if (cheo.stokAdjs and not cheo.viewi) or cheo.user == duka.owner :
 
@@ -1570,6 +1576,9 @@ def addMaterial(request):
                 todo = todoFunct(request)
                 duka = todo['duka']
                 cheo = todo['cheo']
+
+                if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+                    return JsonResponse(shift_operation_block_payload(todo), status=403)
 
                 prdn = 1
                 prdn_str=''

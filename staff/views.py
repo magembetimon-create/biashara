@@ -355,10 +355,12 @@ def new_shift(request):
         cheo = todo['cheo']
 
         if request.method == 'POST':
-            # Permission check: admin or msaidizi only
-            allowed, perm_response = _check_admin_or_msaidizi(todo)
-            if not allowed:
-                return perm_response
+            if not todo.get('can_open_shift'):
+                return JsonResponse({
+                    'success': False,
+                    'msg_swa': 'Hauna ruhusa ya kufungua shift hii.',
+                    'msg_eng': 'You are not allowed to open this shift.'
+                }, status=403)
             access_to = int(request.POST.get('access_to', 0))
             notes = request.POST.get('notes', '')
             shift_start_raw = (request.POST.get('shift_start') or '').strip()
@@ -810,17 +812,20 @@ def close_shift(request):
 
         duka = todo['duka']
         cheo = todo['cheo']
-        
-        # Permission check: admin or msaidizi only
-        allowed, perm_response = _check_admin_or_msaidizi(todo)
-        if not allowed:
-            return perm_response
         sid = int(request.POST.get('sid', 0))
         actual = Decimal(request.POST.get('actual_closing_cash', '0') or '0')
 
         shift = ShiftSession.objects.get(pk=sid, Interprise=duka.id)
         if shift.status == 'closed':
             return JsonResponse({'success': False, 'msg': 'Shift already closed'})
+
+        is_assigned = ShiftAssignment.objects.filter(shift=shift, staff=cheo, active=True).exists()
+        if not (is_assigned and (cheo.owner or cheo.close_own_shift)):
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Hauna ruhusa ya kufunga shift hii.',
+                'msg_eng': 'You are not allowed to close this shift.'
+            }, status=403)
 
         period_end = timezone.now()
         expenses = toaCash.objects.filter(

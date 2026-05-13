@@ -573,6 +573,14 @@ $('body').on('click','.actionbtns',function(){
         url:theHref
       }
 
+  // Close/Cancel button in POS saved modal should reload the page.
+  // It should not trigger printing or open a blank tab.
+  if(!invo && !theHref){
+    $('#pos_saved_modal').modal('hide')
+    window.location.reload()
+    return
+  }
+
   $('#pos_saved_modal').hide()
 
   

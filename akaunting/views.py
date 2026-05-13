@@ -28,7 +28,7 @@ from django.db.models import Sum
 from django.forms.models import model_to_dict
 # Create your views here.
 
-from accaunts.todos import Todos
+from accaunts.todos import Todos, shift_operation_block_payload
 # Create your views here.
 
 def todoFunct(request):
@@ -350,6 +350,9 @@ def cashDepositFromCash(request):
             cheo = todo['cheo']
             duka = cheo.Interprise
 
+            if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+                return JsonResponse(shift_operation_block_payload(todo), status=403)
+
             if not (((useri == todo['duka'].owner) or (cheo.cash_deposit_record and not cheo.viewi)) and not cheo.user.company):
                 return JsonResponse({
                     'success': False,
@@ -547,7 +550,7 @@ def openShift(request):
                     'message_eng': 'Shift management is disabled by admin'
                 })
 
-            if not ((cheo.owner or (cheo.miamala_Rekodi and not cheo.viewi)) and not cheo.user.company):
+            if not todo.get('can_open_shift'):
                 return JsonResponse({
                     'success': False,
                     'message_swa': 'Hauna ruhusa ya kufungua zamu',
@@ -717,7 +720,8 @@ def closeShift(request):
                     'message_eng': 'Shift is already closed'
                 })
 
-            if not (cheo.owner or shift.opened_by_id == cheo.id or _shift_role_allowed(shift, cheo, 'supervisor')):
+            is_assigned = ShiftAssignment.objects.filter(shift=shift, staff=cheo, active=True).exists()
+            if not (is_assigned and (cheo.owner or cheo.close_own_shift)):
                 return JsonResponse({
                     'success': False,
                     'message_swa': 'Hauna ruhusa ya kufunga zamu hii',

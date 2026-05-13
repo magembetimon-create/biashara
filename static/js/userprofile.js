@@ -37,6 +37,7 @@ var PICHA = [],
     picha = id => PICHA.find(i=>i.id===id).picha
 
 let WAITER_COUNTER_ACTIVITY = false
+let SHIFT_MANAGEMENT_ENABLED = false
 
 
 $(document).ready(function () {  
@@ -194,6 +195,7 @@ class getstaff{
     }).done(function(data){
         PICHA =  data.images
         WAITER_COUNTER_ACTIVITY = Boolean(data.waiter_counter)
+        SHIFT_MANAGEMENT_ENABLED = Boolean(data.shift_management_enabled)
         
 
          let udt =``,
@@ -646,8 +648,70 @@ $('body').on('click','.user_per', function () {
           </span>
       </li>
 
+      <li class="robotoFont py-1 smallFont">${lang('Kuongeza wasambazaji (Vendor)','Add Vendor/Supplier')}  <span style="float:right;margin-right:3%">
+          <div class="onoffswitch-t2">
+              <form data-toggle="validator" class="togleparentuso" data-value=${ud.id} data-change="addsupplier" action="/updatepermissions"  method="POST">
+                 `
+                
+                    us+=`<input type="checkbox"`  
+                       if(ud.addsupplier){us+=`checked `} 
+                       us+=` name="onoffswitch-t2" class="onoffswitch-checkbox-t2 changePemit" id="addsupplier${ud.id}" tabindex="0">
+                            <label class="onoffswitch-label-t2" for="addsupplier${ud.id}">
+                            <span class="onoffswitch-inner-t2"></span>
+                            <span class="onoffswitch-switch-t2"></span>
+                  </label>
+              </form>
+          </div>
+          </span>
+      </li>
+
       </ul>
      <hr>
+
+      `
+      if(SHIFT_MANAGEMENT_ENABLED){
+      us+=`
+    <h6> ${lang('Shift Management','Shift Management')}</h6>
+      <ul class="list-unstyled stafflist px-1 px-md-3" data-view="${ud.viewi}" data-allowed="$${ud.Allow}" `
+      if(!ud.Allow || ud.viewi ){
+              us+=`style="opacity:0.3"`
+          }
+        us+=`>
+      <li class="robotoFont py-2 smallFont">${lang('Ruhusa ya kufungua shift yako','Allow opening own shift')} <span style="float:right;margin-right:3%">
+          <div class="onoffswitch-t2">
+              <form data-toggle="validator" class="togleparentuso" data-value=${ud.id} data-change="open_own_shift" action="/updatepermissions"  method="POST">
+                   <input type="checkbox"`
+                   if(ud.open_own_shift) {us+=`checked `}
+                   us+=`name="onoffswitch-t2" class="onoffswitch-checkbox-t2 changePemit" id="openownshift${ud.id}" tabindex="0">
+                       <label class="onoffswitch-label-t2" for="openownshift${ud.id}">
+                      <span class="onoffswitch-inner-t2"></span>
+                      <span class="onoffswitch-switch-t2"></span>
+                  </label>
+              </form>
+          </div>
+          </span>
+      </li>
+
+      <li class="robotoFont py-1 smallFont">${lang('Ruhusa ya kufunga shift yako','Allow closing own shift')} <span style="float:right;margin-right:3%">
+          <div class="onoffswitch-t2">
+              <form data-toggle="validator" class="togleparentuso" data-value=${ud.id} data-change="close_own_shift" action="/updatepermissions"  method="POST">
+                   <input type="checkbox"`
+                   if(ud.close_own_shift) {us+=`checked `}
+                   us+=`name="onoffswitch-t2" class="onoffswitch-checkbox-t2 changePemit" id="closeownshift${ud.id}" tabindex="0">
+                       <label class="onoffswitch-label-t2" for="closeownshift${ud.id}">
+                      <span class="onoffswitch-inner-t2"></span>
+                      <span class="onoffswitch-switch-t2"></span>
+                  </label>
+              </form>
+          </div>
+          </span>
+      </li>
+   </ul>
+   <hr>
+      `
+      }
+
+      us+=`
 
     <h6> ${lang('Wasifu wa Biashara','Interprise Plofile')}</h6> 
       <ul class="list-unstyled stafflist px-1 px-md-3" data-view="${ud.viewi}" data-allowed="$${ud.Allow}" `

@@ -123,13 +123,13 @@
           <div class="posts mx-md-3 text-center   ">
 
 
-            <div class="c-header-icon basket " >
-              <a href="/posts"  class="c-header-icon basket" title="{% if useri.langSet == 0 %} Machapisho ya kibiashara  {% else %} Business Posts {% endif %}" >
-                <!-- <svg  xmlns="http://www.w3.org/2000/svg" width="1.37em" height="1.37em" viewBox="0 0 20.167 28.167" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" >
-                  <rect x="0.75" y="0.75" width="18.667" height="26.667" rx="2.667" ry="2.667"/>
+            <div class="c-header-icon basket ">
+
+              {% if duka.Interprise and shift_operation_allowed %}
+              <a  href="{% url 'saleOda' %}?pend=1"  title=" {% if useri.langSet == 0 %}Oda zinazosubiri {% else %} Pending Order{% endif %}" class="c-header-icon basket">
                   <line x1="0.75" y1="5.083" x2="19.417" y2="5.083"/>
                   <line x1="0.75" y1="22.333" x2="19.417" y2="22.333"/>
-              </svg> -->
+              </svg> 
 
               <svg xmlns="http://www.w3.org/2000/svg" height="1.48em" fill="currentColor"  viewBox="0 -960 960 960" width="1.48em" stroke="currentColor" stroke-width=".1" >
                 <path d="M320-600v-80h320v80H320ZM280-40q-33 0-56.5-23.5T200-120v-720q0-33 23.5-56.5T280-920h400q33 0 56.5 23.5T760-840v720q0 33-23.5 56.5T680-40H280Zm0-120v40h400v-40H280Zm0-80h400v-480H280v480Zm0-560h400v-40H280v40Zm0 0v-40 40Zm0 640v40-40Z"/>
@@ -137,6 +137,7 @@
 
                     <span id="shakeForNewPosts" style="margin-left:17px;margin-top:1px;display:inline-block" hidden class="c-badge c-badge--header-icon2 animated shake"></span>
               </a>
+      {% endif %}
             </div>
 
             <div class="c-header-icon basket {% if duka.Interprise %}d-none d-md-inline{% endif %} " >
@@ -211,6 +212,8 @@
                 
 
                 <div class="dropdown searchDropdown open">
+
+                       
                  
                   <button class="btn btn-default btn-sm fontColor" type="button" id="triggerId" data-toggle="dropdown" aria-haspopup="true"
                       aria-expanded="false">
@@ -1008,7 +1011,8 @@ let shwCo = false
       
       
       
-           <li>
+            {% if shift_operation_allowed %}
+            <li>
               <a {% block active-stadjust-menu %}class="btn-default btn btn-sm "{% endblock %} href="/stoku/AllAdjs">
                   <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24"  fill="currentColor">
                     <path d="M0 0h24v24H0zm0 0h24v24H0z" fill="none"/>
@@ -1026,6 +1030,7 @@ let shwCo = false
                   <span class="pl-2"> {% if useri.langSet == 0 %} Bidhaa zilizohamishwa  {% else %}Transfered Items  {% endif %}</span>
               </a>
             </li>
+           {% endif %}
           <li>
       
             <a {% block active-receive-menu %}class="btn-default btn btn-sm "{% endblock %} href="/stoku/receiveNote">
@@ -1104,7 +1109,7 @@ let shwCo = false
       </div>
 
 <!-- SHOW ON HOVER OVER PRODUCTION................................................................................. -->
-     {% if duka.produxn %}
+  {% if duka.produxn and shift_operation_allowed %}
       <div class="d-inlene  px-0 py-2 pop2 showingpop2 rounded mt-1 ml-3"  id="uzalishaji_pop" data-showing="#uzalishaji_pop" data-the_id="#uzalishaji_menu" >
         <ul class="list-unstyled p-0">
           <li >
@@ -1164,7 +1169,7 @@ let shwCo = false
         </ul>
       
       </div>
-     {% endif %} 
+    {% endif %}            
 
 <!-- SHOW ON HOVER OVER SERVICE................................................................................. -->
  {% if duka.service %}   
@@ -1223,7 +1228,7 @@ let shwCo = false
   {% endif %}  
 
 <!-- SHOW ON HOVER OVER SALES................................................................................. -->
-     {% if duka.sales %}
+  {% if duka.sales and shift_operation_allowed %}
       <div class="d-inlene  px-0 pop2 py-1 showingpop2 rounded mt-1 ml-3" id="sales_pop" data-showing="#sales_pop" data-the_id="#sales_pop_menu" >
         <ul class="list-unstyled p-0">
         <li >
@@ -1297,7 +1302,7 @@ let shwCo = false
         </ul>
       
       </div>
-     {% endif %}  
+    {% endif %}
 
 <!-- SHOW ON HOVER OVER STAFF MANAGEMENT................................................................................. -->
 
@@ -1524,9 +1529,11 @@ let shwCo = false
 <div class="  pt-3 px-0 pb-4 pop rounded mt-1 ml-3" style="overflow-x: auto;" >
 
   <div class="row classic_div" style="min-width:750px" >
+    {% if shift_operation_allowed %}
     <div class="col-3">
       <h5 class="smallFont pl-2"><b>+</b>  {% if useri.langSet == 0 %} MIAMALA  {% else %} TRANSACTIONS {% endif %}</h5>
       <ul class="list-unstyled p-0">
+        {% if shift_operation_allowed %}
         <li>
           <a type="button" href="#" class="btn-default btn btn-sm " onclick="$('#matumizi_data').data({'with_bil':0,'bill':0});" data-toggle="modal" data-target="#recodiMatumizi"  >
             <svg id="wine" fill-rule="evenodd" class="wine svgmade mx-1"  width="0.95em" height="0.95em" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 404 497">
@@ -1539,6 +1546,7 @@ let shwCo = false
               <span class="pl-2"> {% if useri.langSet == 0 %} Kurekodi Matumizi  {% else %} Record Expenses {% endif %}</span>
             </a>
           </li>
+        {% endif %}
         {% if not dukap.viewi %}
 
         <li>
@@ -1551,6 +1559,7 @@ let shwCo = false
           </li>
 
         <li class="border-bottom">
+          {% if shift_operation_allowed %}
           <a type="button" href="#" class="btn-default btn btn-sm  muamala-genu " id="rekodi-muamala-kuweka" data-muamala="#customRadioInline1" data-shown="#saveMuamala"  data-toggle="modal" data-target="#editAkaunting">
             <svg width="0.95em" height="0.95em" viewBox="0 0 16 16" class="bi bi-arrow-90deg-right mx-1" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd" d="M14.854 4.854a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 4H3.5A2.5 2.5 0 0 0 1 6.5v8a.5.5 0 0 0 1 0v-8A1.5 1.5 0 0 1 3.5 5h9.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4z"/>
@@ -1559,6 +1568,7 @@ let shwCo = false
           </a>
 
           </li>
+          {% endif %}
     {% endif %}
 
 
@@ -1577,6 +1587,7 @@ let shwCo = false
 {% endif %}  
       </ul>
     </div>
+    {% endif %}
 
     <div class="col-3">
             <h5 class="smallFont pl-2 " ><b>+</b>  {% if useri.langSet == 0 %} STOKU  {% else %} STOCK {% endif %}</h5>
@@ -1726,6 +1737,30 @@ $('.muamala-genu').click(function(){
     <main class="l-main {% if duka.Interprise %} partialMain {% else %} full_main {% endif %}">
 
     <div class="content-wrapper content-wrapper--with-bg" >
+
+
+        {% if duka.Interprise and shift_management_enabled %}
+        <div class="row px-sm-3 px-2 pt-2">
+          <div class="col-12 pl-sm-0">
+            <div class="alert {% if has_active_shift and is_assigned_to_active_shift %}alert-success{% elif has_active_shift %}alert-warning{% else %}alert-danger{% endif %} mb-2 py-2 px-3 smallFont" role="alert">
+              <strong>
+                {% if useri.langSet == 0 %}Status ya Shift:{% else %}Shift Status:{% endif %}
+              </strong>
+              <span>{{ shift_status_swa }}</span>
+              {% if active_shift_assigned_name %}
+              <span class="ml-2">
+                {% if useri.langSet == 0 %}Mhudumu:{% else %}Assigned to:{% endif %} {{ active_shift_assigned_name }}
+              </span>
+              {% endif %}
+              {% if not shift_operation_allowed %}
+              <div class="mt-1">
+                {{ shift_operation_block_reason_swa }}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
 
 
     <div class="row p-sm-3 mt-2 p-0 ">
@@ -2292,6 +2327,7 @@ $('.muamala-genu').click(function(){
     </div>
   </div>
 
+  {% if shift_operation_allowed %}
   <div class="modal fade" id="cashDepositModal" tabindex="-1" role="dialog" aria-labelledby="cashDepositModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content border-0">
@@ -2371,6 +2407,7 @@ $('.muamala-genu').click(function(){
       </div>
     </div>
   </div>
+  {% endif %}
 
               
 <script>
@@ -3413,7 +3450,7 @@ $('.muamala-genu').click(function(){
                   {% if useri.langSet == 0 %} Kitendo {% else %}Action {% endif %}
               </a>
               <div id="QuickMenuDropDown" class="dropdown-menu whiteBg fontColor smallFont" aria-labelledby="dropdownMenuButton">
-
+               {% if shift_operation_allowed %}
                 <a class="dropdown-item" href="/mauzo/POStab">
                  <img src="{% static 'pics/pos-1.svg' %}" style="width: 1.6em;" alt="" srcset="">
                   POS {% if useri.langSet == 0 %} Mauzo {% else %}Sales {% endif %}
@@ -3421,6 +3458,8 @@ $('.muamala-genu').click(function(){
 
                 {% if duka.waiter_counter %}
                 <div class="dropdown-divider"></div>
+              
+
                 <a class="dropdown-item d-flex justify-content-between align-items-center" href="/mauzo/waiter_orders_summary" id="waiterOrdersNavLink">
                   <span>
                     <img src="{% static 'pics/pos-1.svg' %}" style="width: 1.6em;" alt="" srcset="">
@@ -3432,7 +3471,9 @@ $('.muamala-genu').click(function(){
 
                 <div class="dropdown-divider"></div>
 
-                {% if duka.service %}
+                {% endif %}
+
+                {% if duka.service and shift_operation_allowed %}
                 <a class="dropdown-item" href="/mauzo/POStab?s=1">
                  <img src="{% static 'pics/pos-1.svg' %}" style="width: 1.6em;" alt="" srcset="">
                   POS {% if useri.langSet == 0 %}Huduma  {% else %} Service{% endif %}
@@ -3441,6 +3482,7 @@ $('.muamala-genu').click(function(){
                 <div class="dropdown-divider"></div>
                 {% endif %}
 
+                {% if shift_operation_allowed %}
                 <a class="dropdown-item" href="/mauzo/newInvoice">
                   <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" class="bi bi-file-earmark-text mr-2" viewBox="0 0 16 16">
                     <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>
@@ -3449,6 +3491,7 @@ $('.muamala-genu').click(function(){
                   {% if useri.langSet == 0 %} Tengeneza Ankara {% else %} Create Invoice {% endif %}
                 </a>
                 <div class="dropdown-divider"></div>
+                {% endif %}
 
               <!-- <a class="dropdown-item" href="/mauzo/newsaleOda">
                   <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" fill="currentColor" class="bi bi-cart-plus mr-2" viewBox="0 0 16 16">
@@ -3459,7 +3502,7 @@ $('.muamala-genu').click(function(){
                 </a>
                 <div class="dropdown-divider"></div> -->
               
-                {% if duka.service %}
+                {% if duka.service and shift_operation_allowed %}
                 <a class="dropdown-item" href="/mauzo/newService">
                   <svg xmlns="http://www.w3.org/2000/svg" class="mr-2" height="1.5em" width="1.5em" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12.22,19.85c-0.18,0.18-0.5,0.21-0.71,0c-0.18-0.18-0.21-0.5,0-0.71l3.39-3.39l-1.41-1.41l-3.39,3.39 c-0.19,0.2-0.51,0.19-0.71,0c-0.21-0.21-0.18-0.53,0-0.71l3.39-3.39l-1.41-1.41l-3.39,3.39c-0.18,0.18-0.5,0.21-0.71,0 c-0.19-0.19-0.19-0.51,0-0.71l3.39-3.39L9.24,10.1l-3.39,3.39c-0.18,0.18-0.5,0.21-0.71,0c-0.19-0.2-0.19-0.51,0-0.71L9.52,8.4 l1.87,1.86c0.95,0.95,2.59,0.94,3.54,0c0.98-0.98,0.98-2.56,0-3.54l-1.86-1.86l0.28-0.28c0.78-0.78,2.05-0.78,2.83,0l4.24,4.24 c0.78,0.78,0.78,2.05,0,2.83L12.22,19.85z M21.83,13.07c1.56-1.56,1.56-4.09,0-5.66l-4.24-4.24c-1.56-1.56-4.09-1.56-5.66,0 l-0.28,0.28l-0.28-0.28c-1.56-1.56-4.09-1.56-5.66,0L2.17,6.71c-1.42,1.42-1.55,3.63-0.4,5.19l1.45-1.45 C2.83,9.7,2.96,8.75,3.59,8.12l3.54-3.54c0.78-0.78,2.05-0.78,2.83,0l3.56,3.56c0.18,0.18,0.21,0.5,0,0.71 c-0.21,0.21-0.53,0.18-0.71,0L9.52,5.57l-5.8,5.79c-0.98,0.97-0.98,2.56,0,3.54c0.39,0.39,0.89,0.63,1.42,0.7 c0.07,0.52,0.3,1.02,0.7,1.42c0.4,0.4,0.9,0.63,1.42,0.7c0.07,0.52,0.3,1.02,0.7,1.42c0.4,0.4,0.9,0.63,1.42,0.7 c0.07,0.54,0.31,1.03,0.7,1.42c0.47,0.47,1.1,0.73,1.77,0.73c0.67,0,1.3-0.26,1.77-0.73L21.83,13.07z"/>
@@ -3470,6 +3513,7 @@ $('.muamala-genu').click(function(){
                 {% endif %}
 
           
+                {% if shift_operation_allowed %}
                 <a class="dropdown-item" href="#" onclick="$('#matumizi_data').data({'with_bil':0,'bill':0});" data-toggle="modal" data-target="#recodiMatumizi" >
                    <svg xmlns="http://www.w3.org/2000/svg" height="1.7em" viewBox="0 -960 960 960" width="1.7em" fill="currentColor" class="bi bi-cash-coin mr-2" >
                        <path d="M320-120v-80h120v-164q-86-14-143-80t-57-156v-240h480v240q0 90-57 156t-143 80v164h120v80H320Zm258-354q42-34 56-86H326q14 52 56 86t98 34q56 0 98-34ZM320-640h320v-120H320v120Zm160 200Z"/>
@@ -3489,6 +3533,9 @@ $('.muamala-genu').click(function(){
                   </a>
                   <div class="dropdown-divider"></div>
 
+                  {% endif %}
+
+                  {% if shift_operation_allowed %}
                   <a href="/stoku/reduceItemQuantity" class="dropdown-item tab_show"   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="1.4em" height="1.4em" fill="currentColor" class="bi bi-file-earmark-diff" viewBox="0 0 16 16">
                       <path d="M8 5a.5.5 0 0 1 .5.5V7H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V8H6a.5.5 0 0 1 0-1h1.5V5.5A.5.5 0 0 1 8 5zm-2.5 6.5A.5.5 0 0 1 6 11h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>
@@ -3514,6 +3561,8 @@ $('.muamala-genu').click(function(){
                     </svg>  
                     {% if useri.langSet == 0 %}Uzalishaji Bidhaa   {% else %} Item Manufacturing {% endif %}
                 </a>
+
+                {% endif %}
 
                 
               

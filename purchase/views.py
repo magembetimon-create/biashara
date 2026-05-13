@@ -39,7 +39,7 @@ from django.template.defaultfilters import stringfilter
 
 register = template.Library()
 
-from accaunts.todos import Todos, updateOrder
+from accaunts.todos import Todos, updateOrder, shift_operation_block_payload
 # Create your views here.
 def todoFunct(request):
   usr = Todos(request)
@@ -1760,6 +1760,9 @@ def addExpense(request):
                   todo=todoFunct(request)
                   duka=todo['duka']
                   per = todo['cheo']
+
+                  if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+                        return JsonResponse(shift_operation_block_payload(todo), status=403)
 
                   paid = float(amo)
 

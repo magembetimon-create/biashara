@@ -32,7 +32,7 @@ from django.core.paginator import Paginator,EmptyPage
 
 
 
-from accaunts.todos import Todos , confirmMailF, updateOrder
+from accaunts.todos import Todos , confirmMailF, updateOrder, shift_operation_block_payload
 # Create your views here.
 
 def todoFunct(request):
@@ -384,6 +384,10 @@ def _resolve_waiter_context(request):
 def waiter_order(request):
       if request.method != 'POST':
             return JsonResponse({'success': False, 'message_swa': 'Njia si sahihi', 'message_eng': 'Invalid request method'})
+
+      todo = todoFunct(request)
+      if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+            return JsonResponse(shift_operation_block_payload(todo), status=403)
 
       try:
             raw_items = request.POST.get('itm_dt', '[]')
@@ -4418,6 +4422,10 @@ def waiter_pay_order(request):
       if request.method != 'POST':
             return JsonResponse({'success': False, 'msg': 'Invalid method'})
 
+      todo = todoFunct(request)
+      if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+            return JsonResponse(shift_operation_block_payload(todo), status=403)
+
       try:
             order_id = int(request.POST.get('order', 0))
             pay_amount = float(request.POST.get('amount', 0) or 0)
@@ -5567,6 +5575,10 @@ def  lipaInvo(request):
       
       if request.method == 'POST':
             try:
+                  todo = todoFunct(request)
+                  if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+                        return JsonResponse(shift_operation_block_payload(todo), status=403)
+
                   value=request.POST.get('invo_value')
                   ac=request.POST.get('invo_ac_id')
                   back = 'allInvo'
@@ -5578,7 +5590,7 @@ def  lipaInvo(request):
                   desc = request.POST.get('lipaElezo','')
                   #    print(paid_amo)
 
-                  duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+                  duka = todo['cheo']
                   
                   after={
                         'pay':True,  
@@ -5720,7 +5732,7 @@ def  newsaleOda(request):
 @login_required(login_url='login')
 def  addInvoice(request):
       if request.method == "POST":
-       try:     
+       try:
          sup=request.POST.get('sup')
          edit=int(request.POST.get('edit'))
          bil_val=request.POST.get('bill')
@@ -5761,6 +5773,8 @@ def  addInvoice(request):
          todo = todoFunct(request)
          duka = todo['duka']
 
+         if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+              return JsonResponse(shift_operation_block_payload(todo), status=403)
 
          entp = InterprisePermissions.objects.get((Q(user=duka.owner.id)|Q(viewi=False,mauzo_na_matumizi=True)),user__user = request.user, default = True)
          
