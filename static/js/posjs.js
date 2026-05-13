@@ -1,3 +1,16 @@
+var __tbStatic = window.__tbStatic || (function () {
+  var fallback = '/static/';
+  var src = '';
+  if (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) {
+    src = String(document.currentScript.src);
+  }
+  var idx = src.indexOf('/js/');
+  var base = idx > -1 ? src.substring(0, idx + 1) : fallback;
+  return function (path) {
+    return base + String(path || '').replace(/^\/+/, '');
+  };
+})();
+window.__tbStatic = __tbStatic;
 POSDATA = true 
 PAGERELOAD = true
 let selected = [],
@@ -315,7 +328,7 @@ function posItms(){
       const siz = pi.size_name!=null?`<i class="d-block" >Size:<strong class="brown text-uppercase" >${pi.size_name}</strong></i>`:'',
            color_nik = pi.color_nick!=''?`(${pi.color_nick})`:'',
            color = pi.color_name!=null?`<small> <i class="text-primary" >${pi.color_name}${color_nik}</i> </small> `:''  ,
-           picha =`<img src="${pi.picha?pi.picha:'/static/pics/img.svg'}" alt="${lang('Hakuna Picha','No Image')}">`,
+           picha =`<img src="${pi.picha ? pi.picha : __tbStatic('pics/img.svg')}" alt="${lang('Hakuna Picha','No Image')}">`,
            indx = `${pi.id}${pi.color_id}${pi.size_id}`,
            cart = POSCART.filter(itm=>itm.id===pi.id && itm.color===pi.color_id && itm.size===pi.size_id),
            cartqty = cart.length?cart[0].qty:0,
@@ -452,7 +465,7 @@ function viewSelItem(dt){
     const siz = pi.size_name!=null?`<i>Size:<strong class="brown text-uppercase" >${pi.size_name}</strong></i>`:'',
           color_nik = pi.color_nick!=''?`(${pi.color_nick})`:'',
           color = pi.color_name!=null?` <i class="text-primary text-capitalize" >${pi.color_name}${color_nik}</i>  `:''  ,
-          picha =`<img style="max-width: 100%;"  src="${pi.picha?pi.picha:'/static/pics/img.svg'}" alt="${lang('Hakuna Picha','No Image')}">`,
+          picha =`<img style="max-width: 100%;"  src="${pi.picha ? pi.picha : __tbStatic('pics/img.svg')}" alt="${lang('Hakuna Picha','No Image')}">`,
           
           cart = POSCART.filter(itm=>itm.id===pi.id && itm.color===pi.color_id && itm.size===pi.size_id),
           theSameItm = POSCART.filter(itm=>itm.id===pi.id)
@@ -871,7 +884,7 @@ function placeItm(data){
            dura = IS_SERVICE?servDura().dura.find(d=>d.value===pi.timely):{name:'',duration:1,opt:'',value:0},
            servT = IS_SERVICE?dura.duration:1,
            tms = IS_SERVICE&&pi.timely?`&times;<span>${dura.duration}</span><span class="text-primary">${dura.name}</span>`:'',
-           picha =`<img style="max-width: 40px;"  src="${pi.picha?pi.picha:'/static/pics/img.svg'}" alt="${lang('Hakuna Picha','No Image')}">`
+           picha =`<img style="max-width: 40px;"  src="${pi.picha ? pi.picha : __tbStatic('pics/img.svg')}" alt="${lang('Hakuna Picha','No Image')}">`
     const  li = `
                  <li class="d-flex border-bottom pb-2 itempos${data.pos}" id="itempos${data.pos}" >
                         <div class="d-flex pr-1 justify-content-center align-items-center" >

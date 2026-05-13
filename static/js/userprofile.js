@@ -1,3 +1,16 @@
+var __tbStatic = window.__tbStatic || (function () {
+  var fallback = '/static/';
+  var src = '';
+  if (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) {
+    src = String(document.currentScript.src);
+  }
+  var idx = src.indexOf('/js/');
+  var base = idx > -1 ? src.substring(0, idx + 1) : fallback;
+  return function (path) {
+    return base + String(path || '').replace(/^\/+/, '');
+  };
+})();
+window.__tbStatic = __tbStatic;
 
 // pwd strength
 
@@ -203,7 +216,7 @@ class getstaff{
              if(ud.picha!=''){
                 udt+=`<img src="${picha(ud.id)}" class="rounded-circle" alt="img" style="width:40px;height:40px;border:2px solid rgb(186, 191, 197);">`
              }else{
-               udt+='<img src="/static/pics/userlogo.png" alt="no piic" class="rounded-circle" style="width:30px;height:30px">' 
+               udt+='<img src="' + __tbStatic('pics/userlogo.png') + '" alt="no piic" class="rounded-circle" style="width:30px;height:30px">' 
              }
               
               if(di/1000 <=10 ) {
@@ -318,7 +331,7 @@ $('body').on('click','.user_per', function () {
                   if(ud.picha!=''){
                     us+=`<img src="${picha(ud.id)}" class="rounded-circle" style="width: 65px;height:65px;border:2px solid rgb(194, 211, 241)" alt="no image">`
                   }else{
-                    us+=`<img src="/static/pics/userlogo.png" class="rounded-circle" alt="no piic" style="width: 65px;height:65px;border:2px solid rgb(194, 211, 241)">`
+                    us+=`<img src="${__tbStatic('pics/userlogo.png')}" class="rounded-circle" alt="no piic" style="width: 65px;height:65px;border:2px solid rgb(194, 211, 241)">`
 
                   }
          us+=`</div>

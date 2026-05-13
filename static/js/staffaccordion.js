@@ -1,3 +1,16 @@
+var __tbStatic = window.__tbStatic || (function () {
+  var fallback = '/static/';
+  var src = '';
+  if (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) {
+    src = String(document.currentScript.src);
+  }
+  var idx = src.indexOf('/js/');
+  var base = idx > -1 ? src.substring(0, idx + 1) : fallback;
+  return function (path) {
+    return base + String(path || '').replace(/^\/+/, '');
+  };
+})();
+window.__tbStatic = __tbStatic;
 // var acc = document.getElementsByClassName("showtoopanel");
 // var i;
 
@@ -57,7 +70,7 @@ $('body').on('click','.showtoopanel',function(){
 
 var panel = document.getElementById($(this).attr('show'));
 if (panel.style.maxHeight) {
-    $(this).children('span').html('<img src="/static/pics/chevronup.svg">')
+    $(this).children('span').html('<img src="' + __tbStatic('pics/chevronup.svg') + '">')
  $($(this).data('panel')).removeClass('slide-top')
 isset.state=false
   panel.style.maxHeight = null;
@@ -65,7 +78,7 @@ isset.state=false
   panel.style.maxHeight = panel.scrollHeight + "px";
  $($(this).data('panel')).addClass('slide-top')
 topslider.top()
-  $(this).children('span').html('<img src="/static/pics/chevrondown.svg">')
+  $(this).children('span').html('<img src="' + __tbStatic('pics/chevrondown.svg') + '">')
 isset.state=true
   divvar=$(this).data('panel')
 } 
@@ -95,7 +108,7 @@ isset.state=true
           var panel = document.getElementById($('.slide-top').attr('show'));
 
          $('.slide-top').removeClass('slide-top')
-     $('.showtoopanel').children('span').html('<img src="/static/pics/chevronup.svg">')
+    $('.showtoopanel').children('span').html('<img src="' + __tbStatic('pics/chevronup.svg') + '">')
         panel.style.maxHeight = null;  
                 
       isset.state=false

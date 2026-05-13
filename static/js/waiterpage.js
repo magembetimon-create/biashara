@@ -1,3 +1,16 @@
+var __tbStatic = window.__tbStatic || (function () {
+  var fallback = '/static/';
+  var src = '';
+  if (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) {
+    src = String(document.currentScript.src);
+  }
+  var idx = src.indexOf('/js/');
+  var base = idx > -1 ? src.substring(0, idx + 1) : fallback;
+  return function (path) {
+    return base + String(path || '').replace(/^\/+/, '');
+  };
+})();
+window.__tbStatic = __tbStatic;
 let WAITER_ITEMS = []
 let WAITER_CART = []
 let WAITER_ITEM_IMG = []
@@ -363,7 +376,7 @@ function renderWaiterItems() {
 
   const html = list.map(it => {
     const price = Number(it.Bei_kuuza || 0)
-    const picha = imgMap[Number(it.bidhaa_id || 0)] || '/static/pics/img.svg'
+    const picha = imgMap[Number(it.bidhaa_id || 0)] || __tbStatic('pics/img.svg')
     const stockQty = Number(it.idadi || 0)
     const unit = String(it.vipimo || '')
     return `

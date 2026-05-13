@@ -1,3 +1,16 @@
+var __tbStatic = window.__tbStatic || (function () {
+  var fallback = '/static/';
+  var src = '';
+  if (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) {
+    src = String(document.currentScript.src);
+  }
+  var idx = src.indexOf('/js/');
+  var base = idx > -1 ? src.substring(0, idx + 1) : fallback;
+  return function (path) {
+    return base + String(path || '').replace(/^\/+/, '');
+  };
+})();
+window.__tbStatic = __tbStatic;
 
 // this will hold a value that detect whether the user has alreard selected a supllier by holding the state value
 class selected_supplier{
@@ -2688,7 +2701,7 @@ $('body').on('keyup','.jina-la_rangi',function () {
                     </div>
                         <div id="Color_img${pos.pos}"  style="overflow:hidden;width:170px;height: 170px;margin-top:-20px;z-index-2" >
                                 <div class="flex-direction-column  text-center "  >
-                                    <img src="/static/pics/addPic.svg" class="classic_div" style="width:130px;height:130px"  alt="" srcset="">
+                                    <img src="${__tbStatic('pics/addPic.svg')}" class="classic_div" style="width:130px;height:130px"  alt="" srcset="">
                                 </div>
                                 <div class="text-center pb-2" >${lang('Weka picha','Add Image')}  </div>
                         </div>

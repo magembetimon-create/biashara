@@ -1,3 +1,16 @@
+var __tbStatic = window.__tbStatic || (function () {
+  var fallback = '/static/';
+  var src = '';
+  if (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) {
+    src = String(document.currentScript.src);
+  }
+  var idx = src.indexOf('/js/');
+  var base = idx > -1 ? src.substring(0, idx + 1) : fallback;
+  return function (path) {
+    return base + String(path || '').replace(/^\/+/, '');
+  };
+})();
+window.__tbStatic = __tbStatic;
 ISBILL = 1 
 var col = class coloredbn{
     constructor(_state){
@@ -2103,7 +2116,7 @@ function tablerow(pos){
          <!-- Button trigger color modal -->
         <div class="text-center border input-group-append" id="is_colored_item${pos}"  style="display: none;">
             <button id="colored_items${pos}" title="${lang('Rangi','Color')}" class="btn btn-default btn-sm colored_items px-1" data-toggle="modal" data-pos=${pos} data-val=0 data-valu=0 data-target="#modal_color">
-                 <img  width="20" src="/static/pics/colors.svg"   />
+                 <img  width="20" src="${__tbStatic('pics/colors.svg')}"   />
             </button>
          </div>
       </div>      
