@@ -124,6 +124,22 @@
           <h6 class="mb-0">{% if useri.langSet == 0 %}Order Zangu{% else %}My Orders{% endif %}</h6>
           <button id="refreshWaiterOrders" class="btn btn-light btn-sm">{% if useri.langSet == 0 %}Refresh{% else %}Refresh{% endif %}</button>
         </div>
+        <div class="waiter-summary-panel mt-2">
+          <div class="waiter-summary-grid">
+            <div class="waiter-summary-card summary-printed">
+              <div class="label">{% if useri.langSet == 0 %}Total Printed{% else %}Total Printed{% endif %}</div>
+              <div class="value"><span class="text-primary">{{duka.currencii}}</span> <span id="waiterSummaryPrintedAmount">0</span></div>
+            </div>
+            <div class="waiter-summary-card summary-paid">
+              <div class="label">{% if useri.langSet == 0 %}Paid Amount{% else %}Paid Amount{% endif %}</div>
+              <div class="value"><span class="text-primary">{{duka.currencii}}</span> <span id="waiterSummaryPaidAmount">0</span></div>
+            </div>
+            <div class="waiter-summary-card summary-debt">
+              <div class="label">{% if useri.langSet == 0 %}Debt{% else %}Debt{% endif %}</div>
+              <div class="value"><span class="text-primary">{{duka.currencii}}</span> <span id="waiterSummaryDebtAmount">0</span></div>
+            </div>
+          </div>
+        </div>
         <div class="waiter-history-tabs mt-2">
           <button class="btn btn-sm btn-primary waiter-history-tab" data-tab="pending">{% if useri.langSet == 0 %}Pending{% else %}Pending{% endif %} <span class="badge badge-light waiter-tab-badge" id="waiterPendingCount">0</span></button>
           <button class="btn btn-sm btn-light waiter-history-tab" data-tab="printed">{% if useri.langSet == 0 %}Printed{% else %}Printed{% endif %} <span class="badge badge-secondary waiter-tab-badge" id="waiterPrintedCount">0</span></button>

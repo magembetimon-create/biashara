@@ -3401,7 +3401,7 @@ def waiter_orders_summary(request):
       can_clear_waiter_payments = bool(
             cheo and (
                   getattr(cheo, 'owner', False)
-                  or (getattr(cheo, 'waiter_check_up', False) and getattr(cheo, 'akaunti', False))
+                  or (getattr(cheo, 'waiter_check_up', False))
             )
       )
 
@@ -3761,7 +3761,7 @@ def waiter_summary_clear_waiter_payments(request):
       can_clear_waiter_payments = bool(
             cheo and (
                   getattr(cheo, 'owner', False)
-                  or (getattr(cheo, 'waiter_check_up', False) and getattr(cheo, 'akaunti', False))
+                  or (getattr(cheo, 'waiter_check_up', False))
             )
       )
       if not can_clear_waiter_payments:
@@ -4793,7 +4793,7 @@ def waiter_device_dashboard(request):
                   ).exclude(aina__iexact='Cash') if duka else PaymentAkaunts.objects.none()
 
             servCash_ = PaymentAkaunts.objects.filter(
-                        Interprise__owner=duka.owner,
+                        Interprise=duka,
                         aina__iexact='Cash'
                   ) if duka else PaymentAkaunts.objects.none()
 

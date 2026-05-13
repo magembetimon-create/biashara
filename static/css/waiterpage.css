@@ -195,6 +195,53 @@
   gap: 8px;
 }
 
+.waiter-summary-panel {
+  border: 1px solid #e7edf8;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f9fbff 0%, #f4f8ff 100%);
+  padding: 8px;
+}
+
+.waiter-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.waiter-summary-card {
+  border: 1px solid #deebff;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+  min-height: 62px;
+}
+
+.waiter-summary-card .label {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.waiter-summary-card .value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.waiter-summary-card.summary-printed .value {
+  color: #0f766e;
+}
+
+.waiter-summary-card.summary-paid .value {
+  color: #15803d;
+}
+
+.waiter-summary-card.summary-debt .value {
+  color: #b91c1c;
+}
+
 .waiter-tab-badge {
   margin-left: 6px;
   min-width: 20px;
@@ -276,6 +323,20 @@
     flex-wrap: wrap;
     gap: 5px;
   }
+
+  .waiter-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .waiter-summary-card {
+    min-height: auto;
+  }
+
+  .waiter-summary-card .value {
+    font-size: 0.95rem;
+  }
+
   .waiter-history-tabs .btn {
     flex: 1 1 auto;
     min-height: 36px;

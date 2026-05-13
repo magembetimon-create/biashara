@@ -55,6 +55,33 @@ function renderWaiterFilterCounts() {
   $('#waiterUnpaidCount').text(counts.unpaid)
 }
 
+function waiterOrdersAmountSummary() {
+  const pending = Array.isArray(WAITER_ORDERS.pending) ? WAITER_ORDERS.pending : []
+  const printed = Array.isArray(WAITER_ORDERS.printed) ? WAITER_ORDERS.printed : []
+  const allOrders = pending.concat(printed)
+
+  const printedTotal = allOrders.reduce((sum, od) => {
+    if (Number(od.printed_number || 0) <= 0) return sum
+    return sum + Number(od.amount || 0)
+  }, 0)
+
+  const paidTotal = allOrders.reduce((sum, od) => sum + Number(od.paid_amount || 0), 0)
+  const debtTotal = Math.max(0, printedTotal - paidTotal)
+
+  return {
+    printedTotal,
+    paidTotal,
+    debtTotal,
+  }
+}
+
+function renderWaiterOrdersAmountSummary() {
+  const summary = waiterOrdersAmountSummary()
+  $('#waiterSummaryPrintedAmount').text(Number(summary.printedTotal || 0).toLocaleString())
+  $('#waiterSummaryPaidAmount').text(Number(summary.paidTotal || 0).toLocaleString())
+  $('#waiterSummaryDebtAmount').text(Number(summary.debtTotal || 0).toLocaleString())
+}
+
 function updateWaiterMobileNavCounts() {
   const totalOrders = waiterSentOrdersCount()
   $('#waiterMobileCartCount').text(waiterCartItemsCount())
@@ -474,6 +501,7 @@ function loadWaiterOrders() {
       printed: resp.printed || [],
       items: resp.items || {}
     }
+    renderWaiterOrdersAmountSummary()
     updateWaiterMobileNavCounts()
     renderWaiterFilterCounts()
     renderWaiterHistory()

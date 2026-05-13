@@ -13,7 +13,15 @@
   <div class="row align-items-center py-3 border-bottom">
     <div class="col-md-7">
       <h5 class="mb-0">{% if useri.langSet == 0 %}Muhtasari wa Shift{% else %}Shift Summary{% endif %} - {{ shift.code }}</h5>
-      <small class="text-muted">{{ shift.starts_at }} {% if shift.ends_at %}- {{ shift.ends_at }}{% endif %}</small>
+      <small class="text-muted">
+        <script>
+            document.write(moment('{{ shift.starts_at|date:"r" }}').format('DD MMM YYYY HH:mm') + '</span>');
+        </script>
+       
+        
+        {% if shift.ends_at %}- <script>
+            document.write(moment('{{ shift.ends_at|date:"r" }}').format('DD MMM YYYY HH:mm') + '</span>');
+        </script> {% endif %}</small>
     </div>
     <div class="col-md-5 text-md-right mt-2 mt-md-0">
       <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openPrintModal('{{ shift.id }}')">
@@ -118,20 +126,25 @@
         <table class="table table-sm table-striped table-hover">
           <thead>
             <tr>
-              <th>{% if useri.langSet == 0 %}Wakati{% else %}Time{% endif %}</th>
-              <th>{% if useri.langSet == 0 %}Aina ya Akaunti{% else %}Payment Method{% endif %}</th>
-              <th>{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
-              <th>{% if useri.langSet == 0 %}Chanzo{% else %}Source{% endif %}</th>
-              <th>{% if useri.langSet == 0 %}Maelezo{% else %}Details{% endif %}</th>
-              <th>{% if useri.langSet == 0 %}Mtu{% else %}Recorded By{% endif %}</th>
+              <th class="text-left" >{% if useri.langSet == 0 %}Wakati{% else %}Time{% endif %}</th>
+              <th class="text-left" >{% if useri.langSet == 0 %}Aina ya Akaunti{% else %}Payment Method{% endif %}</th>
+              <th class="text-left" >{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+              <th class="text-left" >{% if useri.langSet == 0 %}Chanzo{% else %}Source{% endif %}</th>
+              <th class="text-left" >{% if useri.langSet == 0 %}Maelezo{% else %}Details{% endif %}</th>
+              <th class="text-left" >{% if useri.langSet == 0 %}Mtu{% else %}Recorded By{% endif %}</th>
             </tr>
           </thead>
           <tbody>
             {% for payment in mobile_payments %}
             <tr>
-              <td>{{ payment.tarehe }}</td>
+              <td>
+                <script>
+                    document.write(moment('{{ payment.tarehe|date:"r" }}').format('DD MMM YYYY HH:mm'));
+                </script>
+               
+              </td>
               <td><span class="badge badge-info">{{ payment.Akaunt.aina }}</span></td>
-              <td class="text-right font-weight-bold">{{ payment.Amount|floatformat:2|intcomma }}</td>
+              <td class=" font-weight-bold">{{ payment.Amount|floatformat:2|intcomma }}</td>
               <td>{{ payment.kutoka }}</td>
               <td>{{ payment.maelezo|default:'-' }}</td>
               <td>{{ payment.by.fanyakazi.jina|default:payment.by.user.user.get_full_name|default:'-' }}</td>
@@ -141,7 +154,7 @@
           <tfoot>
             <tr class="font-weight-bold">
               <td colspan="2">{% if useri.langSet == 0 %}Jumla ya Malipo ya Simu{% else %}Total Mobile Payments{% endif %}</td>
-              <td class="text-right">
+              <td >
                 {{ mobile_payments|length }} {% if useri.langSet == 0 %}malipo{% else %}payments{% endif %} |
                 {{ mobile_payments_total|floatformat:2|intcomma }}
               </td>

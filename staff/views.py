@@ -657,65 +657,115 @@ def shift_view(request):
             'current_value': Decimal('0'),
             'current_worth': Decimal('0'),
         }
+        # Group bidhaa_stoku by distinct bidhaa (product) – each product name appears only once
+        bidhaa_groups = {}
         for itm in stock_items_qs:
-            item_id = itm.id
-            item_name = itm.bidhaa.bidhaa_jina if itm.bidhaa else ''
-            units = itm.bidhaa.vipimo if itm.bidhaa else ''
+            bid = itm.bidhaa_id
+            if bid not in bidhaa_groups:
+                bidhaa_groups[bid] = []
+            bidhaa_groups[bid].append(itm)
 
-            buy_price = Decimal(itm.Bei_kununua or 0)
-            sales_price = Decimal(itm.Bei_kuuza or 0)
-            ratio = Decimal(itm.bidhaa.idadi_jum or 1)
+        for bid, items in sorted(bidhaa_groups.items(), key=lambda x: (x[1][0].bidhaa.bidhaa_jina or '').lower() if x[1][0].bidhaa else ''):
+            first_item = items[0]
+            item_name = first_item.bidhaa.bidhaa_jina if first_item.bidhaa else ''
+            units = first_item.bidhaa.vipimo if first_item.bidhaa else ''
 
-            before_qty = before_qty_map[item_id]
-            added_qty = added_qty_map[item_id]
-            sold_qty = sold_qty_map[item_id]
-            reduction_qty = reduction_qty_map[item_id]
-            transferred_qty = transferred_qty_map[item_id]
-            current_qty = Decimal(itm.idadi or 0)
+            current_qty = Decimal('0')
+            current_value = Decimal('0')
+            current_worth = Decimal('0')
+            before_qty = Decimal('0')
+            before_value = Decimal('0')
+            before_worth = Decimal('0')
+            added_qty = Decimal('0')
+            added_value = Decimal('0')
+            added_worth = Decimal('0')
+            sold_qty = Decimal('0')
+            sold_value = Decimal('0')
+            sold_worth = Decimal('0')
+            reduction_qty = Decimal('0')
+            reduction_value = Decimal('0')
+            reduction_worth = Decimal('0')
+            transferred_qty = Decimal('0')
+            transferred_value = Decimal('0')
+            transferred_worth = Decimal('0')
+
+            for itm in items:
+                ratio = Decimal(itm.bidhaa.idadi_jum or 1) if itm.bidhaa else Decimal('1')
+                buy_price = Decimal(itm.Bei_kununua or 0)
+                sales_price = Decimal(itm.Bei_kuuza or 0)
+                iid = itm.id
+
+                c_qty = Decimal(itm.idadi or 0)
+                current_qty += c_qty
+                current_value += c_qty * buy_price / ratio
+                current_worth += c_qty * sales_price
+
+                b_qty = before_qty_map[iid]
+                before_qty += b_qty
+                before_value += b_qty * buy_price / ratio
+                before_worth += b_qty * sales_price
+
+                a_qty = added_qty_map[iid]
+                added_qty += a_qty
+                added_value += a_qty * buy_price / ratio
+                added_worth += a_qty * sales_price
+
+                s_qty = sold_qty_map[iid]
+                sold_qty += s_qty
+                sold_value += s_qty * buy_price / ratio
+                sold_worth += s_qty * sales_price
+
+                r_qty = reduction_qty_map[iid]
+                reduction_qty += r_qty
+                reduction_value += r_qty * buy_price / ratio
+                reduction_worth += r_qty * sales_price
+
+                t_qty = transferred_qty_map[iid]
+                transferred_qty += t_qty
+                transferred_value += t_qty * buy_price / ratio
+                transferred_worth += t_qty * sales_price
 
             stock_value_rows.append({
                 'item_name': item_name,
                 'units': units,
                 'before_qty': before_qty,
-                'before_value': before_qty * buy_price / ratio,
-                'before_worth': before_qty * sales_price ,
+                'before_value': before_value,
+                'before_worth': before_worth,
                 'added_qty': added_qty,
-                'added_value': added_qty * buy_price / ratio,
-                'added_worth': added_qty * sales_price ,
+                'added_value': added_value,
+                'added_worth': added_worth,
                 'sold_qty': sold_qty,
-                'sold_value': sold_qty * buy_price / ratio,
-                'sold_worth': sold_qty * sales_price ,
+                'sold_value': sold_value,
+                'sold_worth': sold_worth,
                 'reduction_qty': reduction_qty,
-
-                'reduction_value': reduction_qty * buy_price / ratio,
-                'reduction_worth': reduction_qty * sales_price,
+                'reduction_value': reduction_value,
+                'reduction_worth': reduction_worth,
                 'transferred_qty': transferred_qty,
-
-                'transferred_value': transferred_qty * buy_price / ratio,
-                'transferred_worth': transferred_qty * sales_price,
+                'transferred_value': transferred_value,
+                'transferred_worth': transferred_worth,
                 'current_qty': current_qty,
-                'current_value': current_qty * buy_price / ratio,
-                'current_worth': current_qty * sales_price ,
+                'current_value': current_value,
+                'current_worth': current_worth,
             })
 
             stock_value_totals['before_qty'] += before_qty
-            stock_value_totals['before_value'] += before_qty * buy_price / ratio
-            stock_value_totals['before_worth'] += before_qty * sales_price 
+            stock_value_totals['before_value'] += before_value
+            stock_value_totals['before_worth'] += before_worth
             stock_value_totals['added_qty'] += added_qty
-            stock_value_totals['added_value'] += added_qty * buy_price / ratio
-            stock_value_totals['added_worth'] += added_qty * sales_price
+            stock_value_totals['added_value'] += added_value
+            stock_value_totals['added_worth'] += added_worth
             stock_value_totals['sold_qty'] += sold_qty
-            stock_value_totals['sold_value'] += sold_qty * buy_price / ratio
-            stock_value_totals['sold_worth'] += sold_qty * sales_price
+            stock_value_totals['sold_value'] += sold_value
+            stock_value_totals['sold_worth'] += sold_worth
             stock_value_totals['reduction_qty'] += reduction_qty
-            stock_value_totals['reduction_value'] += reduction_qty * buy_price / ratio
-            stock_value_totals['reduction_worth'] += reduction_qty * sales_price
+            stock_value_totals['reduction_value'] += reduction_value
+            stock_value_totals['reduction_worth'] += reduction_worth
             stock_value_totals['transferred_qty'] += transferred_qty
-            stock_value_totals['transferred_value'] += transferred_qty * buy_price / ratio
-            stock_value_totals['transferred_worth'] += transferred_qty * sales_price
+            stock_value_totals['transferred_value'] += transferred_value
+            stock_value_totals['transferred_worth'] += transferred_worth
             stock_value_totals['current_qty'] += current_qty
-            stock_value_totals['current_value'] += current_qty * buy_price / ratio
-            stock_value_totals['current_worth'] += current_qty * sales_price
+            stock_value_totals['current_value'] += current_value
+            stock_value_totals['current_worth'] += current_worth
 
         todo.update({
             'staff_page': 'shifts',
@@ -814,6 +864,7 @@ def print_shift(request):
         sid = request.GET.get('sid')
         lang = request.GET.get('lang', '0')
         items = request.GET.get('items', '1')
+        include_items = str(items or '1').strip().lower() not in ('0', 'false', 'no', 'off', '')
 
         if not sid:
             return JsonResponse({'success': False, 'msg': 'Invalid shift ID'}, status=400)
@@ -976,62 +1027,115 @@ def print_shift(request):
             'transferred_qty': Decimal('0'), 'transferred_value': Decimal('0'), 'transferred_worth': Decimal('0'),
             'current_qty': Decimal('0'), 'current_value': Decimal('0'), 'current_worth': Decimal('0'),
         }
+        # Group bidhaa_stoku by distinct bidhaa (product) – each product name appears only once
+        bidhaa_groups = {}
         for itm in stock_items_qs:
-            item_id = itm.id
-            item_name = itm.bidhaa.bidhaa_jina if itm.bidhaa else ''
-            units = itm.bidhaa.vipimo if itm.bidhaa else ''
-            buy_price = Decimal(itm.Bei_kununua or 0)
-            sales_price = Decimal(itm.Bei_kuuza or 0)
-            ratio = Decimal(itm.bidhaa.idadi_jum or 1)
+            bid = itm.bidhaa_id
+            if bid not in bidhaa_groups:
+                bidhaa_groups[bid] = []
+            bidhaa_groups[bid].append(itm)
 
-            before_qty = before_qty_map[item_id]
-            added_qty = added_qty_map[item_id]
-            sold_qty = sold_qty_map[item_id]
-            reduction_qty = reduction_qty_map[item_id]
-            transferred_qty = transferred_qty_map[item_id]
-            current_qty = Decimal(itm.idadi or 0)
+        for bid, items in sorted(bidhaa_groups.items(), key=lambda x: (x[1][0].bidhaa.bidhaa_jina or '').lower() if x[1][0].bidhaa else ''):
+            first_item = items[0]
+            item_name = first_item.bidhaa.bidhaa_jina if first_item.bidhaa else ''
+            units = first_item.bidhaa.vipimo if first_item.bidhaa else ''
+
+            current_qty = Decimal('0')
+            current_value = Decimal('0')
+            current_worth = Decimal('0')
+            before_qty = Decimal('0')
+            before_value = Decimal('0')
+            before_worth = Decimal('0')
+            added_qty = Decimal('0')
+            added_value = Decimal('0')
+            added_worth = Decimal('0')
+            sold_qty = Decimal('0')
+            sold_value = Decimal('0')
+            sold_worth = Decimal('0')
+            reduction_qty = Decimal('0')
+            reduction_value = Decimal('0')
+            reduction_worth = Decimal('0')
+            transferred_qty = Decimal('0')
+            transferred_value = Decimal('0')
+            transferred_worth = Decimal('0')
+
+            for itm in items:
+                ratio = Decimal(itm.bidhaa.idadi_jum or 1) if itm.bidhaa else Decimal('1')
+                buy_price = Decimal(itm.Bei_kununua or 0)
+                sales_price = Decimal(itm.Bei_kuuza or 0)
+                iid = itm.id
+
+                c_qty = Decimal(itm.idadi or 0)
+                current_qty += c_qty
+                current_value += c_qty * buy_price / ratio
+                current_worth += c_qty * sales_price
+
+                b_qty = before_qty_map[iid]
+                before_qty += b_qty
+                before_value += b_qty * buy_price / ratio
+                before_worth += b_qty * sales_price
+
+                a_qty = added_qty_map[iid]
+                added_qty += a_qty
+                added_value += a_qty * buy_price / ratio
+                added_worth += a_qty * sales_price
+
+                s_qty = sold_qty_map[iid]
+                sold_qty += s_qty
+                sold_value += s_qty * buy_price / ratio
+                sold_worth += s_qty * sales_price
+
+                r_qty = reduction_qty_map[iid]
+                reduction_qty += r_qty
+                reduction_value += r_qty * buy_price / ratio
+                reduction_worth += r_qty * sales_price
+
+                t_qty = transferred_qty_map[iid]
+                transferred_qty += t_qty
+                transferred_value += t_qty * buy_price / ratio
+                transferred_worth += t_qty * sales_price
 
             stock_value_rows.append({
                 'item_name': item_name,
                 'units': units,
                 'before_qty': before_qty,
-                'before_value': before_qty * buy_price / ratio,
-                'before_worth': before_qty * sales_price,
+                'before_value': before_value,
+                'before_worth': before_worth,
                 'added_qty': added_qty,
-                'added_value': added_qty * buy_price / ratio,
-                'added_worth': added_qty * sales_price,
+                'added_value': added_value,
+                'added_worth': added_worth,
                 'sold_qty': sold_qty,
-                'sold_value': sold_qty * buy_price / ratio,
-                'sold_worth': sold_qty * sales_price,
+                'sold_value': sold_value,
+                'sold_worth': sold_worth,
                 'reduction_qty': reduction_qty,
-                'reduction_value': reduction_qty * buy_price / ratio,
-                'reduction_worth': reduction_qty * sales_price,
+                'reduction_value': reduction_value,
+                'reduction_worth': reduction_worth,
                 'transferred_qty': transferred_qty,
-                'transferred_value': transferred_qty * buy_price / ratio,
-                'transferred_worth': transferred_qty * sales_price,
+                'transferred_value': transferred_value,
+                'transferred_worth': transferred_worth,
                 'current_qty': current_qty,
-                'current_value': current_qty * buy_price / ratio,
-                'current_worth': current_qty * sales_price,
+                'current_value': current_value,
+                'current_worth': current_worth,
             })
 
             stock_value_totals['before_qty'] += before_qty
-            stock_value_totals['before_value'] += before_qty * buy_price / ratio
-            stock_value_totals['before_worth'] += before_qty * sales_price
+            stock_value_totals['before_value'] += before_value
+            stock_value_totals['before_worth'] += before_worth
             stock_value_totals['added_qty'] += added_qty
-            stock_value_totals['added_value'] += added_qty * buy_price / ratio
-            stock_value_totals['added_worth'] += added_qty * sales_price
+            stock_value_totals['added_value'] += added_value
+            stock_value_totals['added_worth'] += added_worth
             stock_value_totals['sold_qty'] += sold_qty
-            stock_value_totals['sold_value'] += sold_qty * buy_price / ratio
-            stock_value_totals['sold_worth'] += sold_qty * sales_price
+            stock_value_totals['sold_value'] += sold_value
+            stock_value_totals['sold_worth'] += sold_worth
             stock_value_totals['reduction_qty'] += reduction_qty
-            stock_value_totals['reduction_value'] += reduction_qty * buy_price / ratio
-            stock_value_totals['reduction_worth'] += reduction_qty * sales_price
+            stock_value_totals['reduction_value'] += reduction_value
+            stock_value_totals['reduction_worth'] += reduction_worth
             stock_value_totals['transferred_qty'] += transferred_qty
-            stock_value_totals['transferred_value'] += transferred_qty * buy_price / ratio
-            stock_value_totals['transferred_worth'] += transferred_qty * sales_price
+            stock_value_totals['transferred_value'] += transferred_value
+            stock_value_totals['transferred_worth'] += transferred_worth
             stock_value_totals['current_qty'] += current_qty
-            stock_value_totals['current_value'] += current_qty * buy_price / ratio
-            stock_value_totals['current_worth'] += current_qty * sales_price
+            stock_value_totals['current_value'] += current_value
+            stock_value_totals['current_worth'] += current_worth
 
         context = {
             'shift': shift,
@@ -1056,7 +1160,7 @@ def print_shift(request):
             'stock_value_rows': stock_value_rows,
             'stock_value_totals': stock_value_totals,
             'useri': useri,
-            'include_items': items == '1',
+            'include_items': include_items,
             'lang': lang,
         }
 

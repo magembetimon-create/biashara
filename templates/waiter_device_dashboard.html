@@ -50,7 +50,47 @@
       overflow-y: auto;
     }
 
+    /* Bigger qty controls for device dashboard cart */
+    #deviceDashboardRoot .waiter-cart-item .meta .waiterQty {
+      min-width: 38px;
+      min-height: 38px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1;
+      padding: 0;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .waiterQty {
+      background-color: #007bff;
+      color: #fff;
+    }
+
+    
+
+    #deviceDashboardRoot .waiter-cart-item .meta strong {
+      min-width: 26px;
+      text-align: center;
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
     @media (max-width: 575px) {
+      #deviceDashboardRoot .waiter-cart-item .meta .waiterQty {
+        min-width: 36px;
+        min-height: 36px;
+        font-size: 1.05rem;
+    
+      }
+
+      #deviceDashboardRoot .waiter-cart-item .meta strong {
+        font-size: 1.1rem;
+      }
+
       #waiterTableGrid .waiter-device-table-layout > [class*="col-"] {
         padding-left: 0 !important;
         padding-right: 0 !important;
@@ -173,6 +213,22 @@
           <div class="d-flex justify-content-between align-items-center">
             <h6 class="mb-0">{% if useri.langSet == 0 %}Order Zangu{% else %}My Orders{% endif %}</h6>
             <button id="refreshWaiterOrders" class="btn btn-light btn-sm">{% if useri.langSet == 0 %}Refresh{% else %}Refresh{% endif %}</button>
+          </div>
+          <div class="waiter-summary-panel mt-2">
+            <div class="waiter-summary-grid">
+              <div class="waiter-summary-card summary-printed">
+                <div class="label">{% if useri.langSet == 0 %}Total Printed{% else %}Total Printed{% endif %}</div>
+                <div class="value"><span class="text-primary">{% if duka %}{{ duka.currencii }}{% endif %}</span> <span id="waiterSummaryPrintedAmount">0</span></div>
+              </div>
+              <div class="waiter-summary-card summary-paid">
+                <div class="label">{% if useri.langSet == 0 %}Paid Amount{% else %}Paid Amount{% endif %}</div>
+                <div class="value"><span class="text-primary">{% if duka %}{{ duka.currencii }}{% endif %}</span> <span id="waiterSummaryPaidAmount">0</span></div>
+              </div>
+              <div class="waiter-summary-card summary-debt">
+                <div class="label">{% if useri.langSet == 0 %}Debt{% else %}Debt{% endif %}</div>
+                <div class="value"><span class="text-primary">{% if duka %}{{ duka.currencii }}{% endif %}</span> <span id="waiterSummaryDebtAmount">0</span></div>
+              </div>
+            </div>
           </div>
           <div class="waiter-history-tabs mt-2">
             <button class="btn btn-sm btn-primary waiter-history-tab" data-tab="pending">{% if useri.langSet == 0 %}Pending{% else %}Pending{% endif %} <span class="badge badge-light waiter-tab-badge" id="waiterPendingCount">0</span></button>

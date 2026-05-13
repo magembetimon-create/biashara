@@ -71,11 +71,11 @@
           <table class="table table-hover mb-0">
             <thead class="thead-light">
               <tr>
-                <th scope="col">#</th>
-                <th scope="col">{% if useri.langSet == 0 %}Muhudumu{% else %}Waiter{% endif %}</th>
-                <th scope="col">{% if useri.langSet == 0 %}Cheo{% else %}Role{% endif %}</th>
-                <th scope="col" class="text-right">{% if useri.langSet == 0 %}Idadi ya oda{% else %}Orders{% endif %}</th>
-                <th scope="col" class="text-right">{% if useri.langSet == 0 %}Jumla ya pesa{% else %}Total amount{% endif %}</th>
+                <th scope="col" class="text-left">#</th>
+                <th scope="col" class="text-left">{% if useri.langSet == 0 %}Muhudumu{% else %}Waiter{% endif %}</th>
+                <th scope="col" class="text-left">{% if useri.langSet == 0 %}Cheo{% else %}Role{% endif %}</th>
+                <th scope="col" class="text-left">{% if useri.langSet == 0 %}Idadi ya oda{% else %}Orders{% endif %}</th>
+                <th scope="col" class="text-left">{% if useri.langSet == 0 %}Jumla ya pesa{% else %}Total amount{% endif %}</th>
               </tr>
             </thead>
             <tbody id="waiterSummaryTbody">
@@ -93,8 +93,8 @@
                   <div class="small text-muted">{{ row.waiter_code }}</div>
                 </td>
                 <td>{{ row.cheo }}</td>
-                <td class="text-right">{{ row.orders_count|intcomma }}</td>
-                <td class="text-right">{{ duka.currencii }} {{ row.total_amount|floatformat:0|intcomma }}</td>
+                <td>{{ row.orders_count|intcomma }}</td>
+                <td>{{ duka.currencii }} {{ row.total_amount|floatformat:0|intcomma }}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -164,12 +164,12 @@
           <table class="table table-sm mb-0">
             <thead class="thead-light">
               <tr>
-                <th>#</th>
-                <th>{% if useri.langSet == 0 %}Order{% else %}Order{% endif %}</th>
-                <th>{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}</th>
-                <th>{% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}</th>
-                <th>{% if useri.langSet == 0 %}Muda{% else %}Time{% endif %}</th>
-                <th class="text-right">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+                <th class="text-left" >#</th>
+                <th class="text-left" >{% if useri.langSet == 0 %}Order{% else %}Order{% endif %}</th>
+                <th class="text-left" >{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}</th>
+                <th class="text-left" >{% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}</th>
+                <th class="text-left" >{% if useri.langSet == 0 %}Muda{% else %}Time{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
               </tr>
             </thead>
             <tbody id="selectedWaiterOrdersTbody">
@@ -187,8 +187,12 @@
                 <td>{{ od.code }}</td>
                 <td>{{ od.table }}</td>
                 <td>{{ od.place }}</td>
-                <td>{{ od.date|date:'d/m/Y H:i' }}</td>
-                <td class="text-right">{{ duka.currencii }} {{ od.amount|floatformat:0|intcomma }}</td>
+                <td>
+                   <script>
+                      document.write(moment('{{ od.date|date:"r" }}').format('DD MMM YYYY HH:mm'));
+                   </script>  
+                </td>
+                <td>{{ duka.currencii }} {{ od.amount|floatformat:0|intcomma }}</td>
               </tr>
               {% endfor %}
             </tbody>
