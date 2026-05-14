@@ -27,7 +27,7 @@
       <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openPrintModal('{{ shift.id }}')">
         {% if useri.langSet == 0 %}Print Shift{% else %}Print Shift{% endif %}
       </button>
-      {% if cheo.owner or cheo.msaidizi %}
+      {% if cheo.owner or cheo.msaidizi or shift_operation_allowed %}
       {% if shift.status != 'closed' %}
       <button type="button" class="btn btn-danger btn-sm" onclick="openCloseShiftModal('{{ shift.id }}')">
         {% if useri.langSet == 0 %}Maliza Shift{% else %}Finish Shift{% endif %}
@@ -446,7 +446,8 @@ function submitCloseShift() {
   var form = new FormData();
   form.append('sid', shiftId);
   form.append('actual_closing_cash', parsed.toFixed(2));
-
+  $('#closeShiftModal').modal('hide');
+  $('#loadMe').modal('show');
   fetch('/staff/shifts/close', {
     method: 'POST',
     headers: {'X-CSRFToken': '{{ csrf_token }}'},
@@ -455,7 +456,8 @@ function submitCloseShift() {
     .then(function(resp) { return resp.json(); })
     .then(function(data) {
       if (data.success) {
-        $('#closeShiftModal').modal('hide');
+        $('#loadMe').modal('hide');
+        hideLoading();
         location.reload();
       } else {
         alert(data.msg || data.msg_swa || data.msg_eng || 'Failed to close shift');

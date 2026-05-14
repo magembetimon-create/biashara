@@ -15,7 +15,7 @@
       <small class="text-muted">{% if useri.langSet == 0 %}Fuatilia shift zilizo wazi na zilizofungwa{% else %}Track open and closed staff shifts{% endif %}</small>
     </div>
     
-    {% if cheo.msaidizi or cheo.owner %}
+    {% if cheo.open_own_shift or cheo.owner %}
     <div class="col-md-5 text-md-right mt-2 mt-md-0">
       {% if not has_open_shift %}
       <a href="/staff/shifts/new" class="btn btn-primary btn-sm">

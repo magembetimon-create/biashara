@@ -353,6 +353,16 @@ def new_shift(request):
 
         duka = todo['duka']
         cheo = todo['cheo']
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+        def _error_response(msg_swa, msg_eng, status=400):
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'msg_swa': msg_swa,
+                    'msg_eng': msg_eng,
+                }, status=status)
+            return render(request, 'errorpage.html', todoFunct(request))
 
         if request.method == 'POST':
             if not todo.get('can_open_shift'):
@@ -361,10 +371,22 @@ def new_shift(request):
                     'msg_swa': 'Hauna ruhusa ya kufungua shift hii.',
                     'msg_eng': 'You are not allowed to open this shift.'
                 }, status=403)
+
+            existing_shift = ShiftSession.objects.filter(
+                Interprise=duka.id,
+            ).exclude(status='closed').order_by('-created_at').first()
+            if existing_shift:
+                return _error_response(
+                    'Kuna shift nyingine ambayo bado haijafungwa. Funga hiyo kwanza kabla ya kufungua mpya.',
+                    'There is another shift that is not closed yet. Close it before opening a new one.',
+                    status=409,
+                )
+
             access_to = int(request.POST.get('access_to', 0))
             notes = request.POST.get('notes', '')
             shift_start_raw = (request.POST.get('shift_start') or '').strip()
-            staff_ids = [int(sid) for sid in request.POST.getlist('staff_ids') if str(sid).isdigit()]
+            raw_staff_ids = request.POST.getlist('staff_ids') or request.POST.getlist('staff_ids[]')
+            staff_ids = [int(sid) for sid in raw_staff_ids if str(sid).isdigit()]
 
             shift_start = timezone.now()
             if shift_start_raw:
@@ -386,7 +408,11 @@ def new_shift(request):
                 owner=False,
             ).first()
             if not access_user:
-                return render(request, 'errorpage.html', todoFunct(request))
+                return _error_response(
+                    'Mtumiaji wa kurekodi hajapatikana au haruhusiwi.',
+                    'Selected recorder user not found or not allowed.',
+                    status=400,
+                )
 
             shift = ShiftSession.objects.create(
                 Interprise=duka,
@@ -443,6 +469,14 @@ def new_shift(request):
                 details='Opening inventory snapshot saved',
                 by=cheo,
             )
+
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'redirect_url': f'/staff/shifts/view?sid={shift.id}',
+                    'msg_swa': 'Shift imehifadhiwa kikamilifu.',
+                    'msg_eng': 'Shift saved successfully.',
+                })
 
             return redirect(f'/staff/shifts/view?sid={shift.id}')
 
@@ -812,6 +846,7 @@ def close_shift(request):
 
         duka = todo['duka']
         cheo = todo['cheo']
+        shift_operation_allowed = todo['shift_operation_allowed']
         sid = int(request.POST.get('sid', 0))
         actual = Decimal(request.POST.get('actual_closing_cash', '0') or '0')
 
@@ -820,7 +855,7 @@ def close_shift(request):
             return JsonResponse({'success': False, 'msg': 'Shift already closed'})
 
         is_assigned = ShiftAssignment.objects.filter(shift=shift, staff=cheo, active=True).exists()
-        if not (is_assigned and (cheo.owner or cheo.close_own_shift)):
+        if not ((shift_operation_allowed and cheo.close_own_shift) or cheo.owner ):
             return JsonResponse({
                 'success': False,
                 'msg_swa': 'Hauna ruhusa ya kufunga shift hii.',

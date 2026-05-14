@@ -18,7 +18,7 @@
     </div>
   </div>
 
-  <form method="POST" action="/staff/shifts/new" class="mt-3">
+  <form method="POST" id="StartShiftForm" action="/staff/shifts/new" class="mt-3">
     {% csrf_token %}
     <div class="row">
       <div class="col-md-6 mb-3">
@@ -30,10 +30,19 @@
         <select name="access_to" class="form-control" required>
           <option value="">{% if useri.langSet == 0 %}Chagua Mtumiaji{% else %}Select User{% endif %}</option>
           {% for p in access_users %}
+          {% if not cheo.owner %}
+            {% if p.user == cheo.user %}
+              <option value="{{ p.id }}" selected>
+                {% if p.fanyakazi %}{{ p.fanyakazi.jina }}{% else %}{{ p.user.user.get_full_name|default:p.user.user.username }}{% endif %}
+                ({{ p.cheo }})
+              </option>
+              {% endif %}
+            {% else %}
             <option value="{{ p.id }}">
               {% if p.fanyakazi %}{{ p.fanyakazi.jina }}{% else %}{{ p.user.user.get_full_name|default:p.user.user.username }}{% endif %}
               ({{ p.cheo }})
             </option>
+            {% endif %}
           {% endfor %}
         </select>
       </div>
@@ -135,5 +144,63 @@ function filterStockTable(query) {
     row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
   });
 }
+
+$('#StartShiftForm').on('submit', function(e) {
+  e.preventDefault();
+
+  var form = this;
+  var $form = $(form);
+  var $submitBtn = $form.find('button[type="submit"]');
+
+  $('#loadMe').modal('show');
+  $submitBtn.prop('disabled', true);
+
+  var payload = {};
+  $form.serializeArray().forEach(function(field) {
+    if (Object.prototype.hasOwnProperty.call(payload, field.name)) {
+      if (!Array.isArray(payload[field.name])) {
+        payload[field.name] = [payload[field.name]];
+      }
+      payload[field.name].push(field.value);
+    } else {
+      payload[field.name] = field.value;
+    }
+  });
+
+  var requestData = {
+    url: $form.attr('action'),
+    data: payload,
+  };
+
+  POSTREQUEST(requestData)
+    .then(function(resp) {
+      if (resp.success) {
+        $('#loadMe').modal('hide');
+        hideLoading();
+        location.replace(resp.redirect_url || '/staff/shifts');
+        return;
+      }
+
+      $('#loadMe').modal('hide');
+      hideLoading();
+      toastr.error(
+        lang(resp.msg_swa || 'Shift haijahifadhiwa.', resp.msg_eng || 'Shift was not saved.'),
+        lang('Haikufanikiwa', 'Error'),
+        { timeOut: 3000 }
+      );
+    })
+    .catch(function() {
+      $('#loadMe').modal('hide');
+      hideLoading();
+      toastr.error(
+        lang('Kuna hitilafu wakati wa kuhifadhi shift.', 'An error occurred while saving the shift.'),
+        lang('Haikufanikiwa', 'Error'),
+        { timeOut: 3000 }
+      );
+    })
+    .always(function() {
+      $submitBtn.prop('disabled', false);
+    });
+});
 </script>
 {% endblock %}

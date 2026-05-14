@@ -227,7 +227,7 @@ class Todos:
             'is_assigned_to_active_shift':False,
             'can_open_shift':False,
             'can_close_shift':False,
-            'shift_operation_allowed':True,
+            'shift_operation_allowed':False,
             'shift_status_swa':'Usimamizi wa shift haujawezeshwa',
             'shift_status_eng':'Shift management is disabled',
             'shift_operation_block_reason_swa':'',
