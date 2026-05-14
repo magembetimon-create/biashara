@@ -3144,6 +3144,12 @@ def _deduct_stock_for_order(sale):
                   productionList.objects.filter(pk=l.produ.produced.id).update(qty=F('qty')+l.idadi)
             else:
                   bidhaa_stoku.objects.filter(pk=l.produ.id).update(idadi=F('idadi')-l.idadi)
+                  rem_qty = bidhaa_stoku.objects.filter(pk=l.produ.id).last().idadi
+                  other_st = bidhaa_stoku.objects.filter(bidhaa=l.produ.bidhaa.id,idadi__gt=0,Interprise=l.produ.Interprise).exclude(pk=l.produ.id)
+                  if rem_qty == 0 and other_st.exists():
+
+                        bidhaa_stoku.objects.filter(pk=l.produ.id).update(inapacha=True)
+                        other_st.last().update(inapacha=False)
 
             if sales_color.objects.filter(mauzo=l.id).exists():
                   sale_c = sales_color.objects.filter(mauzo=l.id)

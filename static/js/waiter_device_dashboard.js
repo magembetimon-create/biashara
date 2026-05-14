@@ -297,7 +297,20 @@ function addWaiterItemToCart(id) {
   const itm = WAITER_ITEMS.find(x => Number(x.id) === Number(id))
   if (!itm) return
 
+  const stockQty = Number(itm.idadi || 0)
+  const isNotSure = Number(itm.notsure || 0) === 1
   const inCart = WAITER_CART.find(x => Number(x.id) === Number(id))
+  const currentQty = Number(inCart?.qty || 0)
+
+  if (!isNotSure && (currentQty + 1) > stockQty) {
+    toastr.warning(
+      waiterLang('Idadi ya bidhaa haitoshi kwenye stoo.', 'Item quantity exceeds available stock.'),
+      waiterLang('Taarifa', 'Info'),
+      { timeOut: 2200 }
+    )
+    return
+  }
+
   if (inCart) {
     inCart.qty += 1
   } else {
@@ -313,6 +326,7 @@ function addWaiterItemToCart(id) {
   }
 
   renderWaiterCart()
+  renderWaiterItems()
   
   // Trigger animation on card
   const cardEl = $(`.waiter-item-card[data-id="${id}"]`)
@@ -388,6 +402,9 @@ function renderWaiterItems() {
     const price = Number(it.Bei_kuuza || 0)
     const picha = imgMap[Number(it.bidhaa_id || 0)] || __tbStatic('pics/img.svg')
     const stockQty = Number(it.idadi || 0)
+    const isNotSure = Number(it.notsure || 0) === 1
+    const cartQty = Number((WAITER_CART.find(x => Number(x.id) === Number(it.id)) || {}).qty || 0)
+    const canAddMore = isNotSure || cartQty < stockQty
     const unit = String(it.vipimo || '')
     return `
       <div class="waiter-item-card" data-id="${it.id}">
@@ -400,9 +417,12 @@ function renderWaiterItems() {
           <small class="text-primary"><i>${unit}</i></small>
           <small class="waiter-stock-value">${stockQty.toLocaleString()}</small>
         </div>
+        <div class="smallerFont ${canAddMore ? 'text-muted' : 'text-danger'}">
+          ${canAddMore ? '&nbsp;' : waiterLang('Imefika kikomo cha stock', 'Stock limit reached')}
+        </div>
         <div class="d-flex justify-content-between align-items-center mt-2">
           <div class="waiter-price">${CURRENCII} ${price.toLocaleString()}</div>
-          <button class="btn btn-sm btn-primary addWaiterItem" data-id="${it.id}" title="${waiterLang('Ongeza', 'Add')}" aria-label="${waiterLang('Ongeza', 'Add')}">+</button>
+          <button class="btn btn-sm btn-primary addWaiterItem" data-id="${it.id}" ${canAddMore ? '' : 'disabled'} title="${waiterLang('Ongeza', 'Add')}" aria-label="${waiterLang('Ongeza', 'Add')}">+</button>
         </div>
       </div>
     `
@@ -429,7 +449,7 @@ function renderWaiterCart() {
       <div class="meta">
         <button class="btn btn-light btn-sm waiterQty" data-act="minus" data-id="${it.id}">-</button>
         <strong>${it.qty}</strong>
-        <button class="btn btn-light btn-sm waiterQty" data-act="plus" data-id="${it.id}">+</button>
+        <button class="btn btn-light btn-sm waiterQty" data-act="plus" data-id="${it.id}" ${Number(it.notsure || 0) === 1 || Number(it.qty) < Number((WAITER_ITEMS.find(w => Number(w.id) === Number(it.id)) || {}).idadi || 0) ? '' : 'disabled'}>+</button>
       </div>
     </li>
   `).join('')
@@ -698,7 +718,8 @@ function submitWaiterOrder() {
     hideLoading()
 
     if (!resp.success) {
-      toastr.error(waiterLang(resp.message_swa || 'Haijafanikiwa', resp.message_eng || 'Failed'), 'Error', { timeOut: 3000 })
+      const msg = waiterLang(resp.message_swa || 'Haijafanikiwa', resp.message_eng || 'Failed')
+      toastr.error(msg, lang('Haikufanikiwa','Error'), {timeOut: 2000});
       return
     }
 
@@ -708,9 +729,15 @@ function submitWaiterOrder() {
       printWaiterOrder(orderId)
     }
 
-    toastr.success(waiterLang('Order imehifadhiwa', 'Order saved'), 'Success', { timeOut: 2000 })
+    const msg = waiterLang(resp.message_swa || 'Order imehifadhiwa', resp.message_eng || 'Order saved')
+    toastr.success(msg, lang('Imefanikiwa','Success'), {timeOut: 2000});
     clearCurrentCart()
     loadWaiterOrders()
+  }).catch(() => {
+    $('#loadMe').modal('hide')
+    hideLoading()
+    const msg = waiterLang('Haijafanikiwa', 'Failed')
+    toastr.error(msg, lang('Haikufanikiwa','Error'), {timeOut: 2000});
   })
 }
 
@@ -777,13 +804,27 @@ $('body').on('click', '.waiterQty', function() {
   const id = Number($(this).data('id'))
   const act = String($(this).data('act'))
   const target = WAITER_CART.find(x => Number(x.id) === id)
+  const itemDef = WAITER_ITEMS.find(x => Number(x.id) === id)
   if (!target) return
 
-  if (act === 'plus') target.qty += 1
+  if (act === 'plus') {
+    const stockQty = Number(itemDef?.idadi || 0)
+    const isNotSure = Number(target.notsure || itemDef?.notsure || 0) === 1
+    if (!isNotSure && (Number(target.qty) + 1) > stockQty) {
+      toastr.warning(
+        waiterLang('Idadi ya bidhaa haitoshi kwenye stoo.', 'Item quantity exceeds available stock.'),
+        waiterLang('Taarifa', 'Info'),
+        { timeOut: 2200 }
+      )
+      return
+    }
+    target.qty += 1
+  }
   if (act === 'minus') target.qty -= 1
 
   WAITER_CART = WAITER_CART.filter(x => x.qty > 0)
   renderWaiterCart()
+  renderWaiterItems()
 })
 
 $('body').on('click', '.waiter-categs-btn', function() {
