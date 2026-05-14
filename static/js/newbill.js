@@ -67,6 +67,87 @@ var bidhaa__ = class Bizaa{
   }
   //var n=false 
  var BillItems =new bidhaa__([]),PICHA = []
+ var NEWBILL_IMG_MAP = {}
+ var NEWBILL_SEARCH_TIMERS = {}
+ var NEWBILL_SEARCH_DEBOUNCE_MS = window.NEWBILL_SEARCH_DEBOUNCE_MS || 120
+ var NEWBILL_PERF_DEBUG = !!window.__TB_PERF_DEBUG
+
+ function tbPerfNowNewbill() {
+     return (window.performance && typeof window.performance.now === 'function') ? window.performance.now() : Date.now()
+ }
+
+ function tbPerfLogNewbill(label, start, meta) {
+     if (!NEWBILL_PERF_DEBUG) return
+     const ms = (tbPerfNowNewbill() - start).toFixed(1)
+     console.log('[TB-PERF]', label, ms + 'ms', meta || {})
+ }
+
+function buildNewbillImageMap() {
+    NEWBILL_IMG_MAP = {}
+    PICHA.forEach(im => {
+        if (!im || !im.bidhaa) return
+        if (!NEWBILL_IMG_MAP[Number(im.bidhaa)] && im.picha__picha) {
+            NEWBILL_IMG_MAP[Number(im.bidhaa)] = im.picha__picha
+        }
+    })
+}
+
+function renderNewbillSuggestions(pos, rawSearch) {
+    const __tbPerfStart = tbPerfNowNewbill()
+    const itms = BillItems.state
+    const container = $(`.masaki${pos}`)
+    container.empty()
+
+    var search = String(rawSearch || '')
+    var regrex = /[^a-z0-9 ]/gi
+    var cleaned = search.replace(regrex, '')
+    if (!cleaned.length) {
+        container.hide()
+        tbPerfLogNewbill('newbill.renderSuggestions', __tbPerfStart, { pos: Number(pos), inputLength: search.length, matches: 0 })
+        return
+    }
+
+    var searched = new RegExp(cleaned, 'i')
+
+    for (var i in itms) {
+        let jina_namba = itms[i].bidhaa__bidhaa_jina + ' ' + itms[i].namba
+        if (jina_namba.match(searched)) {
+            const itmImg = NEWBILL_IMG_MAP[Number(itms[i].bidhaa)] || __tbStatic('pics/img.svg')
+
+            var li = `<li class="row" data-value=${itms[i].id} data-valu=${itms[i].bidhaa} data-prod=${itms[i].bidhaa} data-pos=${pos}>
+        <div class="col-2 col-md-1">
+        <img alt="${lang('Hakuna picha','No image')}" style="max-width:60px;min-width:60px"  src=${itmImg}  >
+        </div>
+   <div class="col-10 col-md-11" >
+    <span  class='suggest-name ' data-value=${itms[i].id} data-valu=${itms[i].bidhaa} data-prod=${itms[i].bidhaa} data-pos=${pos} >${itms[i].bidhaa__bidhaa_jina} </span>
+   <a class="d-block" style='padding:7px'>
+       <span class='suggest-description text-danger font-weight-bold' style='float:right'>${titleCase(itms[i].curenci)}. ${parseInt(itms[i].Bei_kununua).toLocaleString()}/=</span>
+       <span class='suggest-description' style='float:left'>${itms[i].bidhaa__bidhaa_aina_id__aina}</span>
+       <span class='suggest-description' style='color:#47476b'></span>
+       <br/>
+    </a>
+    <a class="d-block">
+    <label class="text-primary pl-2 robotoFont" style="font-size:11px">
+    <svg width="1em" height="1.0625em" viewBox="0 0 16 17" class="bi bi-compass mx-1" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016zm6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+        <path d="M6.94 7.44l4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"/>
+    </svg>
+
+    ${itms[i].msambaji_id__jina}</label>
+
+    </a>
+
+    </div>
+
+   </li>`
+
+            container.append(li)
+        }
+    }
+
+    container.show()
+    tbPerfLogNewbill('newbill.renderSuggestions', __tbPerfStart, { pos: Number(pos), inputLength: search.length })
+}
  
 
  function getColor_Size(){
@@ -87,6 +168,7 @@ var bidhaa__ = class Bizaa{
 
         BillItems.state=data.bizaa || []
         PICHA = data.picha
+        buildNewbillImageMap()
 
     })
  }
@@ -105,63 +187,16 @@ var bidhaa__ = class Bizaa{
  //search product.............................................................................//
 var index=-1;	
 $('body').on('keyup','.suggest-holder input', function(){
-// Clear the ul   
+const pos = $(this).data('pos')
+const search = $(this).val()
 
-let itms = BillItems.state,
-    pos= $(this).data('pos')
-$(`.masaki${pos}`).empty();
-    
-// Cache the search term
-var search = $(this).val();
-
-// Search regular expression
-var regrex = /[^a-z0-9 ]/gi;
-search = new RegExp(search.replace(regrex,''), 'i');
-    var lin;
-
-// Loop through the array
-for(var i in itms ){
-    let jina_namba = itms[i].bidhaa__bidhaa_jina + ' ' +itms[i].namba 
-    if(jina_namba.match(search)){
-    const itmImg = PICHA.filter(im=>itms[i].bidhaa===im.bidhaa)[0]?.picha__picha
-   
-    var li=`<li class="row" data-value=${itms[i].id} data-valu=${itms[i].bidhaa} data-prod=${itms[i].bidhaa} data-pos=${$(this).data('pos')}>
-        <div class="col-2 col-md-1">
-        <img alt="${lang('Hakuna picha','No image')}" style="max-width:60px;min-width:60px"  src=${itmImg}  >
-        </div>
-   <div class="col-10 col-md-11" >
-    <span  class='suggest-name ' data-value=${itms[i].id} data-valu=${itms[i].bidhaa} data-prod=${itms[i].bidhaa} data-pos=${$(this).data('pos')} >${ itms[i].bidhaa__bidhaa_jina} </span> 
-   <a class="d-block" style='padding:7px'>
-       <span class='suggest-description text-danger font-weight-bold' style='float:right'>${titleCase(itms[i].curenci)}. ${parseInt(itms[i].Bei_kununua).toLocaleString()}/=</span>
-       <span class='suggest-description' style='float:left'>${itms[i].bidhaa__bidhaa_aina_id__aina }</span>
-       <span class='suggest-description' style='color:#47476b'></span>
-       <br/>
-    </a>
-    <a class="d-block">
-    <label class="text-primary pl-2 robotoFont" style="font-size:11px">
-    <svg width="1em" height="1.0625em" viewBox="0 0 16 17" class="bi bi-compass mx-1" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path fill-rule="evenodd" d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016zm6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
-        <path d="M6.94 7.44l4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"/>
-    </svg>
-    
-    ${itms[i].msambaji_id__jina}</label>
-    
-    </a>
-   
-    </div>
-
-   </li>`;
-   
-   $(`.masaki${pos}`).append(li);
-}
+if (NEWBILL_SEARCH_TIMERS[pos]) {
+    clearTimeout(NEWBILL_SEARCH_TIMERS[pos])
 }
 
-if($(this).val().length > 0){
-    $(`.masaki${pos}`).show();
-}else{
-    $(`.masaki${pos}`).hide();
-
-}
+NEWBILL_SEARCH_TIMERS[pos] = setTimeout(() => {
+    renderNewbillSuggestions(pos, search)
+}, NEWBILL_SEARCH_DEBOUNCE_MS)
 
 
 });
@@ -971,6 +1006,7 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
 
 //a function to check whether the item has color or size assosiated with it............................................................//
  function color_size(val,pos,colored,sized){
+    const __tbPerfStart = tbPerfNowNewbill()
     let coloredone='',
         number=0,
         color_check = $(`#colored_items${pos}`).data('color'),
@@ -986,7 +1022,34 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
         vipimo_jumla,
         vipimo_reja
 
-        const colered = colored.filter(c=>c.bidhaa === val  )
+        const colered = colored.filter(c=>c.bidhaa === val)
+        const selectedColorQty = {}
+        const selectedSizeQty = {}
+        const colorStockCount = {}
+        const sizesByColor = {}
+
+        if (Array.isArray(color_check)) {
+            color_check.forEach(clr => {
+                selectedColorQty[Number(clr.color)] = Number(clr.idadi || 0)
+            })
+        }
+
+        if (Array.isArray(size_check)) {
+            size_check.forEach(szd => {
+                selectedSizeQty[Number(szd.size)] = Number(szd.idadi || 0)
+            })
+        }
+
+        coloredItem.state.forEach(prod => {
+            const key = Number(prod.color)
+            colorStockCount[key] = Number(colorStockCount[key] || 0) + 1
+        })
+
+        sized.forEach(sz => {
+            const key = Number(sz.color)
+            if (!sizesByColor[key]) sizesByColor[key] = []
+            sizesByColor[key].push(sz)
+        })
     
     for (let l in colored) {
         // find the corresponding itemm bidhaa from items....................//
@@ -1012,11 +1075,7 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                             
                             >`
                     
-                            let prod_color = coloredItem.state,
-                                 filt= x=> x.color === colored[l].id
-                                //  reducer = (acc,curr) => acc + curr.idadi
-                                 const filtered_c = prod_color.filter(filt)
-                                 let sum = filtered_c.length
+                               let sum = Number(colorStockCount[Number(colored[l].id)] || 0)
 
                              
                 //   ADD REMOVE COLOR BTN WHEN QUANTITY FOR COLOR IS 0
@@ -1055,9 +1114,9 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                              `
 
           //if the item include size place the size input.............................//
-           let size=0 ,num=0
-           sized.forEach(sz=>{
-               if( sz.color == colored[l].id){
+                     let size=0 ,num=0
+                     const colorSizes = sizesByColor[Number(colored[l].id)] || []
+                     colorSizes.forEach(sz=>{
                    size+=1
                    num+=sz.idadi,
 
@@ -1065,27 +1124,12 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                      there_is=false
 
                 //Trace the quantity set for  size.......................//
-                    if(size_check!=undefined){
-                        const chck = sze => sze.size===sz.id,
-                               szed = size_check.filter(chck)
-                            //   console.log(szed)
-
-                               if(szed.length>0){
-                                 let  szz = szed[0]
-                                qty_set =szz.idadi
-                                selected+=szz.idadi
-                                 there_is=true
-                            }
-
-                      //  size_check.
-                //     size_check.forEach(szd=>{
-
-                //        if(szd.size==sz.id){
-
-                //        }
-                //    })
-
-                    }
+                                        const selectedSize = Number(selectedSizeQty[Number(sz.id)] || 0)
+                                        if(selectedSize>0){
+                                            qty_set = selectedSize
+                                            selected += selectedSize
+                                            there_is = true
+                                        }
 
                        
                    
@@ -1134,9 +1178,6 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                    </div>
                 </div>`
 
-            }
-
-            
            })
 
                //if size is not envolved then show the input for color quantity only.........
@@ -1147,21 +1188,12 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
 
 
                     //Trace the quantity set for  color.......................//
-                        if(color_check!=undefined){
-
-                            color_check.forEach(clr=>{
-
-                                // console.log({checked:clr.color,color:colored[l].id})
-                                
-
-                              if(clr.color==colored[l].id){
-                                   qty_set = clr.idadi
-                                    selected =clr.idadi
-                                    there_is=true
-                           }
-
-                       })
-                        }
+                                                const selectedColor = Number(selectedColorQty[Number(colored[l].id)] || 0)
+                                                if(selectedColor>0){
+                                                    qty_set = selectedColor
+                                                    selected = selectedColor
+                                                    there_is = true
+                                                }
 
 
             // IN CASE THE ITEM IS TO BE SOLD/PURCHASED IN WHOLESALE AND RETAIL include the wholesale input.................................//
@@ -1399,6 +1431,12 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
     if(colered.length>0){
         $('#modal_color').modal('show')
     }
+    tbPerfLogNewbill('newbill.color_size', __tbPerfStart, {
+        pos: Number(pos),
+        productId: Number(val),
+        colorRows: Array.isArray(colored) ? colored.length : 0,
+        sizeRows: Array.isArray(sized) ? sized.length : 0
+    })
      
  }
 

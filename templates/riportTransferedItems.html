@@ -1,0 +1,180 @@
+{% extends 'userdash.html' %}
+{% load static %}
+{% block Dashboard %}
+
+<link rel="stylesheet" href="{% static 'css/riports.css' %}">
+
+<div class="Analytical whiteBg tab_div p-md-4 p-2" style="min-height: 100vh;" id="general-panel">
+  <h5>{% if useri.langSet == 0 %}Ripoti ya Kuhamisha Bidhaa{% else %}Tranfered Items / Item Distribution Report{% endif %}</h5>
+  <hr>
+
+  <div class="my-3">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="form-group row">
+          <div class="col-3 text-right weight600">{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}</div>
+          <div class="col-9">
+            <select class="custom-select latoFont smallFont" id="BranchFilter" name="branch">
+              <option value="{{duka.id}}" selected>{{duka.name|title}}</option>
+              {% for m in matawi %}
+                {% if m.Interprise.id != duka.id %}
+                  <option value="{{m.Interprise.id}}">{{m.Interprise.name|title}}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 mt-2 mt-md-0">
+        <div class="form-group row">
+          <div class="col-3 text-right weight600">{% if useri.langSet == 0 %}Kwenda{% else %}Transfer To{% endif %}</div>
+          <div class="col-9">
+            <select class="custom-select latoFont smallFont" id="TransferToFilter" name="transfer_to">
+              <option value="0">{% if useri.langSet == 0 %}Matawi Yote{% else %}All Branches{% endif %}</option>
+              <option value="{{duka.id}}">{{duka.name|title}}</option>
+              {% for m in matawi %}
+                <option value="{{m.Interprise.id}}">{{m.Interprise.name|title}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 mt-2 mt-md-0 text-md-right">
+        <button class="btn btn-sm btn-primary" id="RunTransferReport" type="button">{% if useri.langSet == 0 %}Sasisha{% else %}Refresh{% endif %}</button>
+      </div>
+    </div>
+  </div>
+
+  {% csrf_token %}
+  <input type="hidden" id="TransferReportStart" value="{% if first %}{{first.tarehe|date:'c'}}{% endif %}">
+  <input type="hidden" id="TransferReportEnd" value="{% if last %}{{last.tarehe|date:'c'}}{% endif %}">
+  <input type="hidden" id="TransferCurrency" value="{{duka.currencii}}">
+
+  <div class="table-responsive PeriodTableData" id="PeriodTable">
+    <table class="table table-sm smallFont" style="min-width: 760px;">
+      <thead>
+        <tr>
+          <th class="text-left" >{% if useri.langSet == 0 %}Muda{% else %}Time{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Transfers{% else %}Transfers{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Qty{% else %}Qty{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Value{% else %}Value{% endif %} <span class="text-primary latoFont smallFont">({{duka.currencii}})</span></th>
+          <th class="text-right">{% if useri.langSet == 0 %}Worth{% else %}Worth{% endif %} <span class="text-primary latoFont smallFont">({{duka.currencii}})</span></th>
+          <th class="text-right">{% if useri.langSet == 0 %}Action{% else %}Action{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody id="TransferSummaryBody"></tbody>
+    </table>
+  </div>
+  <div class="row">
+      <div class="col-8"></div>
+        <div class="col-4 text-right">
+            <div class="input-group d-inline">
+                <span class="input-group-btn">
+                <button type="button" class="btn btn-secondary btn-sm latoFont smallFont dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    {% if useri.langSet == 0 %}Ongeza{% else %}Add{% endif %}
+                </button>
+                <div class="dropdown-menu smallFont">
+                    <a class="dropdown-item btn btn-default smallFont add-transfer-period" href="#" data-name-swa="Jana" data-name-eng="Yesterday" data-from="yesterday" data-to="yesterday">{% if useri.langSet == 0 %}Jana{% else %}Yesterday{% endif %}</a>
+                    <a class="dropdown-item btn btn-default smallFont add-transfer-period" href="#" data-name-swa="Wiki ilopita" data-name-eng="Last Week" data-from="lastWeek" data-to="lastWeek">{% if useri.langSet == 0 %}Wiki ilopita{% else %}Last Week{% endif %}</a>
+                    <a class="dropdown-item btn btn-default smallFont add-transfer-period" href="#" data-name-swa="Mwezi ulopita" data-name-eng="Last Month" data-from="lastMonth" data-to="lastMonth">{% if useri.langSet == 0 %}Mwezi ulopita{% else %}Last Month{% endif %}</a>
+                    <a class="dropdown-item btn btn-default smallFont add-transfer-period" href="#" data-name-swa="Mwaka huu" data-name-eng="This Year" data-from="thisYear" data-to="today">{% if useri.langSet == 0 %}Mwaka huu{% else %}This Year{% endif %}</a>
+                    <a class="dropdown-item btn btn-default smallFont add-transfer-period" href="#" data-name-swa="Mwaka jana" data-name-eng="Last Year" data-from="lastYear" data-to="lastYear">{% if useri.langSet == 0 %}Mwaka jana{% else %}Last Year{% endif %}</a>
+                </div>
+                </span>
+            </div>
+            </div>      
+  </div>
+
+
+  <div class="mt-4">
+    <h6 class="py-2 weight500" id="TransferDetailTitle"></h6>
+
+    <div class="table-responsive mb-3">
+      <div class="panel row classic_div mt-2" style="min-width: 290px;">
+        <div class="col-8">
+          <button type="button" class="btn btn-sm btn-outline-secondary mr-2" id="PrintTransferReport" title="{% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-printer"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            {% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}
+          </button>
+          <div class="btn-group" id="transferViewSwitch">
+            <button type="button" class="btn border-secondary btn-sm transfer-view-btn btn-secondary" data-r="0" title="{% if useri.langSet == 0 %}Orodha{% else %}List{% endif %}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+            </button>
+            <button type="button" class="btn border-secondary btn-sm transfer-view-btn btn-light" data-r="1" title="{% if useri.langSet == 0 %}Chati{% else %}Chart{% endif %}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bar-chart-2">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+      
+      </div>
+    </div>
+
+    <div id="TransferListPanel" class="table-responsive">
+      <table class="table table-sm table-hover smallFont" id="tranferedItemsDetailTable" style="min-width: 900px;">
+        <thead>
+          <tr>
+            <th>{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
+            <th>{% if useri.langSet == 0 %}Control No{% else %}Control No{% endif %}</th>
+            <th>{% if useri.langSet == 0 %}Kutoka{% else %}Branch{% endif %}</th>
+            <th>{% if useri.langSet == 0 %}Kwenda{% else %}Transfer To{% endif %}</th>
+            <th class="text-right">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
+            <th class="text-right">{% if useri.langSet == 0 %}Qty{% else %}Qty{% endif %}</th>
+            <th class="text-right">{% if useri.langSet == 0 %}Value{% else %}Value{% endif %} ({{duka.currencii}})</th>
+            <th class="text-right">{% if useri.langSet == 0 %}Worth{% else %}Worth{% endif %} ({{duka.currencii}})</th>
+          </tr>
+        </thead>
+        <tbody id="TransferedItemsTableBody"></tbody>
+        <tfoot>
+          <tr class="weight600 bg-light">
+            <td colspan="5">{% if useri.langSet == 0 %}Jumla{% else %}Totals{% endif %}</td>
+            <td class="text-right" id="TransferQtyTotal">0</td>
+            <td class="text-right" id="TransferValueTotal">0</td>
+            <td class="text-right" id="TransferWorthTotal">0</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div id="TransferChartPanel" class="table-responsive" style="display:none;">
+      <canvas id="TransferPeriodChart" style="max-height:70vh;"></canvas>
+    </div>
+  </div>
+</div>
+{% endblock Dashboard %}
+
+{% block billmpya %}
+  <script src="{% static 'js/receive.js' %}?v=2"></script>
+{% endblock %}
+
+{% block dash-mapper %}
+  Dashboard
+{% endblock %}
+
+{% block nav-ripoti %}
+class="c-menu__item style-none is-active"
+{% endblock %}
+
+{% block active-riport %} class="bi bi-graph-up text-primary" {% endblock %}
+
+{% block dash-map %}
+  <a href="/riport/riportPage">{% if useri.langSet == 0 %}Ripoti {% else %}Reports{% endif %}</a>
+  <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+  </svg>
+  <a href="#">{% if useri.langSet == 0 %}Ripoti ya Kuhamisha Bidhaa{% else %}Tranfered Items Report{% endif %}</a>
+{% endblock %}

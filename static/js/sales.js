@@ -90,6 +90,30 @@ var The_price =new prices([])
 var Servs =new services([])
 var ServsC =new servicesC([])
 var ServsS =new servicesS([])
+var SALES_SEARCH_TIMERS = {}
+var SALES_SEARCH_DEBOUNCE_MS = window.SALES_SEARCH_DEBOUNCE_MS || 120
+var SALES_PERF_DEBUG = !!window.__TB_PERF_DEBUG
+
+function tbPerfNowSales() {
+    return (window.performance && typeof window.performance.now === 'function') ? window.performance.now() : Date.now()
+}
+
+function tbPerfLogSales(label, start, meta) {
+    if (!SALES_PERF_DEBUG) return
+    const ms = (tbPerfNowSales() - start).toFixed(1)
+    console.log('[TB-PERF]', label, ms + 'ms', meta || {})
+}
+
+function buildSalesImageMap() {
+    const map = {}
+    ItemImg.state.forEach(im => {
+        if (!im || !im.bidhaa) return
+        if (!map[Number(im.bidhaa)] && im.picha__picha) {
+            map[Number(im.bidhaa)] = im.picha__picha
+        }
+    })
+    return map
+}
 
 
 // function getColor_Size(coloredItemb,ItemsSizeb){
@@ -189,8 +213,17 @@ var ServsS =new servicesS([])
  //search product.............................................................................//
  var index=-1;	
  $('body').on('keyup','.suggest-holder input', function(){
-      const pos= $(this).data('pos'),searchi = $(this).val()
-        if(searchi!='') filterInputData({searchi,pos})
+            const pos= $(this).data('pos'),searchi = $(this).val()
+            if (SALES_SEARCH_TIMERS[pos]) {
+                 clearTimeout(SALES_SEARCH_TIMERS[pos])
+            }
+            SALES_SEARCH_TIMERS[pos] = setTimeout(() => {
+                if(searchi!='') {
+                    filterInputData({searchi,pos})
+                } else {
+                    $(`.masaki${pos}`).hide().empty()
+                }
+            }, SALES_SEARCH_DEBOUNCE_MS)
  });
 
  
@@ -201,6 +234,7 @@ var ServsS =new servicesS([])
 
 
 function filterInputData(dt){
+    const __tbPerfStart = tbPerfNowSales()
       
 
       const {pos,searchi} = dt,itmsi = Items.state , 
@@ -219,6 +253,22 @@ function filterInputData(dt){
          itms = itms.filter(s=>s.timely==0)
      }
 
+     const imgMap = buildSalesImageMap()
+
+     let servedQtyByProdu = {}
+     if (service) {
+        let servFr = moment($('#serviceFrom').val()),
+            servTo = moment($('#ServiceTo').val()),
+            bil = $('#save_bill_data').data('bill')
+
+        Servs.state.forEach(p => {
+            if (servFr <= moment(p.to) && servTo >= moment(p.From) && Number(bil) != Number(p.bil)) {
+                const key = Number(p.produ)
+                servedQtyByProdu[key] = Number(servedQtyByProdu[key] || 0) + (Number(p.idadi) - Number(p.serviceReturn))
+            }
+        })
+     }
+
      
 
     var regrex = /[^a-z0-9 ]/gi,
@@ -227,7 +277,7 @@ function filterInputData(dt){
      var lin;
  
  // Loop through the array
-        itms.reverse().forEach(itm=>{
+        itms.slice().reverse().forEach(itm=>{
             const jina_namba = itm.bidhaaN + ' ' +itm.namba,
                 
 
@@ -257,21 +307,16 @@ function filterInputData(dt){
                         <path d="M6.94 7.44l4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"/>
                     </svg>`
 
-              let  shelfQty = Number(itm.idadi )
+                            let  shelfQty = Number(itm.idadi )
 
             //  incase its duration based service
             if(itm.timely>0){
-                let servFr = moment($('#serviceFrom').val()),
-                    servTo = moment($('#ServiceTo').val()), 
-                    bil = $('#save_bill_data').data('bill'),
-                    served=Servs.state.filter(p=>p.produ===itm.id && servFr <= moment(p.to) && servTo >= moment(p.From) && Number(bil) != Number(p.bil) ),
-                    servedQty = served.reduce((a,b)=> Number(a) + (Number(b.idadi)-Number(b.serviceReturn)),0)
-
-                    shelfQty = Number(shelfQty) - Number(servedQty)
+                                        const servedQty = Number(servedQtyByProdu[Number(itm.id)] || 0)
+                                        shelfQty = Number(shelfQty) - Number(servedQty)
             } 
 
         if(jina_namba.match(search) && Number(itm.Bei_kuuza)>0){
-            const itmImg = ItemImg.state.filter(im=>itm.bidhaa_id===im.bidhaa)[0]?.picha__picha
+                        const itmImg = imgMap[Number(itm.bidhaa_id)] || __tbStatic('pics/img.svg')
             var li=`<li class="row" data-value=${itm.id} data-valu=${itm.bidhaa_id} data-prod=${itm.bidhaa_id} data-pos=${pos}>
              <div class="col-2 col-md-1">
                <img alt="${lang('Hakuna picha','No image')}" style="max-width:60px;min-width:60px"  src=${itmImg}  >
@@ -319,6 +364,12 @@ function filterInputData(dt){
             $(`.masaki${pos}`).hide();
         
         }
+
+        tbPerfLogSales('sales.filterInputData', __tbPerfStart, {
+            pos: Number(pos),
+            inputLength: String(searchi || '').length,
+            service: Number(service)
+        })
 }
 
  
@@ -1098,6 +1149,7 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
 
 //a function to check whether the item has color or size assosiated with it............................................................//
  function color_size(val,pos,colored,sized){
+     const __tbPerfStart = tbPerfNowSales()
     let valu = $(`#is_colored_item${pos} button`).data('valu')
     const prs = The_price.state.filter(x=>x.item_id===valu)
       
@@ -1116,31 +1168,65 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
         idadi_jumla=0,
         vipimo_jumla,
         vipimo_reja
+
+        const productColors = colored.filter(c => Number(c.bidhaa) === Number(val) && Number(c.idadi)>0 && c.color__colored)
+        const selectedColorQty = {}
+        const selectedSizeQty = {}
+        const sizesByColor = {}
+        const service = Number($('#add_bill_item').data('service')) || 0
+        const itemServ = Items.state.find(i=>i.id==Number(val))
+        const servedByColor = {}
+        const servedBySize = {}
+
+        if (Array.isArray(color_check)) {
+            color_check.forEach(c => {
+                selectedColorQty[Number(c.color)] = Number(c.idadi || 0)
+            })
+        }
+
+        if (Array.isArray(size_check)) {
+            size_check.forEach(s => {
+                selectedSizeQty[Number(s.size)] = Number(s.idadi || 0)
+            })
+        }
+
+        sized.forEach(sz => {
+            if (Number(sz.bidhaa) !== Number(val)) return
+            const key = Number(sz.sized__color)
+            if (!sizesByColor[key]) sizesByColor[key] = []
+            sizesByColor[key].push(sz)
+        })
+
+        if(service && itemServ && itemServ.timely > 0){
+            const servFr = moment($('#serviceFrom').val())
+            const servTo = moment($('#ServiceTo').val())
+            const bil = $('#save_bill_data').data('bill')
+
+            ServsC.state.forEach(p => {
+                if (servFr <= moment(p.to) && servTo >= moment(p.From) && Number(bil)!=Number(p.bil)) {
+                    const key = Number(p.color)
+                    servedByColor[key] = Number(servedByColor[key] || 0) + (Number(p.idadi)-Number(p.serviceReturn))
+                }
+            })
+
+            ServsS.state.forEach(p => {
+                if (servFr <= moment(p.to) && servTo >= moment(p.From) && Number(bil)!=Number(p.bil)) {
+                    const key = Number(p.size)
+                    servedBySize[key] = Number(servedBySize[key] || 0) + (Number(p.idadi)-Number(p.serviceReturn))
+                }
+            })
+        }
     
-    for (let l in colored) {
+        for (let l in productColors) {
         // find the corresponding itemm bidhaa from items....................//
 
-
-
-        if(Number(colored[l].bidhaa)==Number(val) && Number(colored[l].idadi)>0 && colored[l].color__colored){
-
-            let service = Number($('#add_bill_item').data('service')) || 0,
-                Shelfidadi = colored[l].idadi
-                itemServ = Items.state.find(i=>i.id==Number(val))
+                const colorObj = productColors[l]
+                let Shelfidadi = colorObj.idadi
 
 
                 //Check qty for served color quantity
-            if(service && itemServ.timely > 0){
-                servFr = moment($('#serviceFrom').val()) ,
-                servTo = moment($('#ServiceTo').val()),
-                bil = $('#save_bill_data').data('bill'),
-                served=ServsC.state.filter(p=>p.color===colored[l].id && servFr <= moment(p.to) && servTo >= moment(p.From) && Number(bil)!=Number(p.bil) )
-
-                servedQty = served.reduce((a,b)=> Number(a) + (Number(b.idadi)-Number(b.serviceReturn)),0) 
-
-                 Shelfidadi = Number(Shelfidadi) - Number(servedQty)
-
-                
+                        if(service && itemServ && itemServ.timely > 0){
+                                 Shelfidadi = Number(Shelfidadi) - Number(servedByColor[Number(colorObj.id)] || 0)
             }     
 
             
@@ -1149,8 +1235,8 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
     
                total_colored+=1
            coloredone+=`
-                       <div class="column mb-2 the_color_itm" data-colored=true data-pos=${pos} data-rangi_names="${colored[l].color__nick_name} ${colored[l].color__color_name}" data-pima='${colored[l].bidhaa__bidhaa__vipimo.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}' data-pima_jum='${colored[l].bidhaa__bidhaa__vipimo_jum.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}'  data-valued=${colored[l].id} id='coloredone${colored[l].id}' data-jina=${colored[l].color__color_name} data-code="${colored[l].color__color_code}"  data-color=${colored[l].id}>
-                          <div class="position-absolute showingpop24 p-3 whiteBg" id="ona_rang${colored[l].id}" data-showing="#ona_rang${colored[l].id}"
+                              <div class="column mb-2 the_color_itm" data-colored=true data-pos=${pos} data-rangi_names="${colorObj.color__nick_name} ${colorObj.color__color_name}" data-pima='${colorObj.bidhaa__bidhaa__vipimo.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}' data-pima_jum='${colorObj.bidhaa__bidhaa__vipimo_jum.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}'  data-valued=${colorObj.id} id='coloredone${colorObj.id}' data-jina=${colorObj.color__color_name} data-code="${colorObj.color__color_code}"  data-color=${colorObj.id}>
+                                  <div class="position-absolute showingpop24 p-3 whiteBg" id="ona_rang${colorObj.id}" data-showing="#ona_rang${colorObj.id}"
                           style="border-radius:8px;
                             -webkit-box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37); 
                             box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37);
@@ -1163,12 +1249,12 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                             >
                              <p>
                                 <button type="button" class="mr-2 rangi-editing" 
-                                data-color=${colored[l].color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")} 
-                                data-color_name=${colored[l].color__color_name.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")} 
-                                data-idadi_jum=${colored[l].bidhaa__bidhaa__idadi_jum} 
-                                data-valued=${colored[l].id} 
-                                data-toggle="modal" data-target="#kuweka-rangi-model" style="height: 25px;width:40px;color:${colored[l].color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
-                                    background:${colored[l].color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
+                                data-color=${colorObj.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")} 
+                                data-color_name=${colorObj.color__color_name.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")} 
+                                data-idadi_jum=${colorObj.bidhaa__bidhaa__idadi_jum} 
+                                data-valued=${colorObj.id} 
+                                data-toggle="modal" data-target="#kuweka-rangi-model" style="height: 25px;width:40px;color:${colorObj.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
+                                    background:${colorObj.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
                                     cursor:pointer;
                                     border-radius:3px;
                                     -webkit-box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37); 
@@ -1178,28 +1264,20 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                                 ">
                                    color
                              </button>   
-                             <span class="smallerFont text-capitalize">${colored[l].color__color_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>
+                             <span class="smallerFont text-capitalize">${colorObj.color__color_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>
                              </p>
-                             <div class="coloredscene" data-show="#success${colored[l].id}" data-idadi=${Shelfidadi} data-uwiano=${colored[l].bidhaa__bidhaa__idadi_jum} data-valu=${colored[l].id}  data-colored=true data-class="inputColor${colored[l].id}">
+                             <div class="coloredscene" data-show="#success${colorObj.id}" data-idadi=${Shelfidadi} data-uwiano=${colorObj.bidhaa__bidhaa__idadi_jum} data-valu=${colorObj.id}  data-colored=true data-class="inputColor${colorObj.id}">
                              `
 
           //if the item include size place the size input.............................//
            let size=0 ,num=0
-           sized.forEach(sz=>{
-               if( sz.sized__color == colored[l].color && sz.bidhaa == colored[l].bidhaa){
+           const colorSizes = sizesByColor[Number(colorObj.color)] || []
+           colorSizes.forEach(sz=>{
                let ShelfidadiS = Number(sz.idadi)
                 
                     //Check qty for served color quantity
-                if(service && itemServ.timely > 0){
-                    servFr = moment($('#serviceFrom').val()) ,
-                    servTo = moment($('#ServiceTo').val()),
-                    bil = $('#save_bill_data').data('bill'),
-
-                    served=ServsS.state.filter(p=>p.size===sz.id && servFr <= moment(p.to) && servTo >= moment(p.From) && Number(bil)!=Number(p.bil) )
-
-                    servedQty = served.reduce((a,b)=> Number(a) + (Number(b.idadi)-Number(b.serviceReturn)),0) 
-
-                    ShelfidadiS = Number(ShelfidadiS) - Number(servedQty)
+                if(service && itemServ && itemServ.timely > 0){
+                    ShelfidadiS = Number(ShelfidadiS) - Number(servedBySize[Number(sz.id)] || 0)
 
                     
                 } 
@@ -1210,32 +1288,29 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                      there_is=false
 
                 //Trace the quantity set for  size.......................//
-                    if(size_check!=undefined){
-                    size_check.forEach(szd=>{
-                       if(szd.size==sz.id){
-                            qty_set =szd.idadi
-                                selected=szd.idadi
-                                there_is=true
-                       }
-                   })
-                    }
+                                        const selectedSize = Number(selectedSizeQty[Number(sz.id)] || 0)
+                                        if(selectedSize>0){
+                                            qty_set = selectedSize
+                                            selected = selectedSize
+                                            there_is = true
+                                        }
                    
 
                    coloredone+=`
-                   <div style="border-top:1px solid #ccc" data-valued=${sz.id} class="sizedscene mt-2 pt-2" data-idadi=${Number(ShelfidadiS)} data-uwiano=${colored[l].bidhaa__bidhaa__idadi_jum} data-valu=${colored[l].id}  data-show="#success${colored[l].id}" data-class="inputColor0${sz.id}" data-colored=false id="sizedone${sz.id}" data-color=${colored[l].sized__color} data-size="${sz.sized__size}" >
+                   <div style="border-top:1px solid #ccc" data-valued=${sz.id} class="sizedscene mt-2 pt-2" data-idadi=${Number(ShelfidadiS)} data-uwiano=${colorObj.bidhaa__bidhaa__idadi_jum} data-valu=${colorObj.id}  data-show="#success${colorObj.id}" data-class="inputColor0${sz.id}" data-colored=false id="sizedone${sz.id}" data-color=${colorObj.sized__color} data-size="${sz.sized__size}" >
                       <label class="d-block smallFont" for="">${sz.sized__size}</label>`
                 
-                if(Number(colored[l].bidhaa__bidhaa__idadi_jum)>1 && Number(ShelfidadiS)/Number(colored[l].bidhaa__bidhaa__idadi_jum)>=1 ){
+                if(Number(colorObj.bidhaa__bidhaa__idadi_jum)>1 && Number(ShelfidadiS)/Number(colorObj.bidhaa__bidhaa__idadi_jum)>=1 ){
                     coloredone+=`
                    <div class="row py-1">
                          <div class="col-4">
-                                <label class="text-primary smallerFont" for="jum">${colored[l].bidhaa__bidhaa__vipimo_jum}</label>
+                                <label class="text-primary smallerFont" for="jum">${colorObj.bidhaa__bidhaa__vipimo_jum}</label>
                         </div>                    
                         <div class="col-8">
-                            <input  data-valu=${colored[l].id} data-sized=${sz.id}   class="bill-inputColor form-control smallerFont inputColor0${sz.id}" data-uwiano=${Number(colored[l].bidhaa__bidhaa__idadi_jum)}   data-jum=true  type="number" `
+                            <input  data-valu=${colorObj.id} data-sized=${sz.id}   class="bill-inputColor form-control smallerFont inputColor0${sz.id}" data-uwiano=${Number(colorObj.bidhaa__bidhaa__idadi_jum)}   data-jum=true  type="number" `
                         //show the sat value if the user has alread sat the quantities for given size.....//
                         if(there_is){
-                          coloredone+=` value=${Number(qty_set/Number(colored[l].bidhaa__bidhaa__idadi_jum))} `
+                          coloredone+=` value=${Number(qty_set/Number(colorObj.bidhaa__bidhaa__idadi_jum))} `
                         }
                             
                          coloredone+=`>
@@ -1254,7 +1329,7 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                                 <label class="text-primary text-capitalize smallerFont" for="jum">${(pr.jina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, ""))}</label>
                         </div>                    
                         <div class="col-8">
-                            <input  data-valu=${colored[l].id} data-sized=${sz.id}   class="bill-inputColor form-control smallerFont inputColor0${sz.id}" data-uwiano=${Number(pr.qty).toFixed(FIXED_VALUE)}   data-jum=true  type="number" `
+                            <input  data-valu=${colorObj.id} data-sized=${sz.id}   class="bill-inputColor form-control smallerFont inputColor0${sz.id}" data-uwiano=${Number(pr.qty).toFixed(FIXED_VALUE)}   data-jum=true  type="number" `
                         //show the sat value if the user has alread sat the quantities for given size.....//
                         if(there_is){
                           coloredone+=` value=${Number(qty_set/Number(pr.qty))} `
@@ -1275,17 +1350,17 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                    coloredone+=`       
                      <div class="row py-1">
                      <div class="col-4">
-                            <label class="text-primary smallerFont" for="jum">${colored[l].bidhaa__bidhaa__vipimo}</label>
+                            <label class="text-primary smallerFont" for="jum">${colorObj.bidhaa__bidhaa__vipimo}</label>
                     </div>                    
                     <div class="col-8">
-                        <input data-show="#success${colored[l].id}" data-valu=${colored[l].id} data-sized=${sz.id}  data-color=false class="bill-inputColor form-control smallerFont inputColor0${sz.id}" data-uwiano=${Number(colored[l].bidhaa__bidhaa__idadi_jum)}   data-jum=false  type="number" `
+                        <input data-show="#success${colorObj.id}" data-valu=${colorObj.id} data-sized=${sz.id}  data-color=false class="bill-inputColor form-control smallerFont inputColor0${sz.id}" data-uwiano=${Number(colorObj.bidhaa__bidhaa__idadi_jum)}   data-jum=false  type="number" `
                         //show the sat value if the user has alread sat the quantities for given size.....//
                         if(there_is){
-                         if(colored[l].bidhaa__bidhaa__idadi_jum==1)  {
-                        coloredone+=` value=${Number(qty_set / Number(colored[l].bidhaa__bidhaa__idadi_jum))}` 
+                                 if(colorObj.bidhaa__bidhaa__idadi_jum==1)  {
+                                coloredone+=` value=${Number(qty_set / Number(colorObj.bidhaa__bidhaa__idadi_jum))}` 
 
                          } else{
-                            coloredone+=` value=${Number(qty_set % Number(colored[l].bidhaa__bidhaa__idadi_jum))}` 
+                                     coloredone+=` value=${Number(qty_set % Number(colorObj.bidhaa__bidhaa__idadi_jum))}` 
    
                          }
                         }
@@ -1295,7 +1370,7 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
 
                    <div class="py-1 classic_div row mt-2 bg-light" id="sizetotal${sz.id}" style="font-size:10px;">
                       <div class="col-7">
-                        ${colored[l].bidhaa__bidhaa__vipimo} :
+                        ${colorObj.bidhaa__bidhaa__vipimo} :
                       </div>
                       <div class="col-5">
                         <strong>${ShelfidadiS}</strong>
@@ -1303,10 +1378,9 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                    </div>
                 </div>`
 
-            }
+            })
 
             
-           })
 
                //if size is not envolved then show the input for color quantity only.........
                  if(size==0){
@@ -1314,19 +1388,12 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                    let qty_set=0,
                        there_is=false
                     //Trace the quantity set for  color.......................//
-                        if(color_check!=undefined){
-
-                            color_check.forEach(szd=>{
-
-                              if(szd.color==colored[l].id){
-
-                                   qty_set = szd.idadi
-                                    selected =szd.idadi
-                                    there_is=true
-                           }
-
-                       })
-                        }
+                                                const selectedColor = Number(selectedColorQty[Number(colorObj.id)] || 0)
+                                                if(selectedColor>0){
+                                                    qty_set = selectedColor
+                                                    selected = selectedColor
+                                                    there_is = true
+                                                }
 
 
             // IN CASE THE ITEM IS TO BE SOLD/PURCHASED IN WHOLESALE AND RETAIL include the wholesale input.................................//
@@ -1474,7 +1541,7 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                        </div>
                           `
                          
-         }}
+         }
 
 
 
@@ -1492,12 +1559,20 @@ if(total_colored>0){
 
     $('#bill_item_color').html(coloredone)
     $('#item_jina').html($(`#place_searched${pos} label`).text())
+
+    tbPerfLogSales('sales.color_size', __tbPerfStart, {
+        pos: Number(pos),
+        productId: Number(val),
+        colorRows: Array.isArray(colored) ? colored.length : 0,
+        sizeRows: Array.isArray(sized) ? sized.length : 0
+    })
      
- }
+ 
 
 
 
  
+}
 //setting color or size quntity  in the color/size input............................................................................................//
 $('body').on('keyup','.bill-inputColor',function(){
     let disp='',colors=0,tot =0 

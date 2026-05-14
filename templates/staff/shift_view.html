@@ -180,6 +180,7 @@
               <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Added{% else %}Added{% endif %}</th>
               <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Reduction{% else %}Reduction{% endif %}</th>
               <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Transferred Items{% else %}Transferred Items{% endif %}</th>
+              <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Bidhaa Zilizopokelewa{% else %}Item Received{% endif %}</th>
               
               <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Sold{% else %}Sold{% endif %}</th>
 
@@ -187,6 +188,9 @@
            
             </tr>
             <tr>
+              <th class="text-left">Qty</th>
+              <th class="text-left">Value</th>
+              <th class="text-left">Worth</th>
               <th class="text-left">Qty</th>
               <th class="text-left">Value</th>
               <th class="text-left">Worth</th>
@@ -228,6 +232,10 @@
               <td>{{ s.transferred_value|floatformat:2|intcomma }}</td>
               <td>{{ s.transferred_worth|floatformat:2|intcomma }}</td>    
 
+              <td>{{ s.received_qty|floatformat:2|intcomma }}</td>
+              <td>{{ s.received_value|floatformat:2|intcomma }}</td>
+              <td>{{ s.received_worth|floatformat:2|intcomma }}</td>
+
               <td>{{ s.sold_qty|floatformat:2|intcomma }}</td>
               <td>{{ s.sold_value|floatformat:2|intcomma }}</td>
               <td>{{ s.sold_worth|floatformat:2|intcomma }}</td>
@@ -238,7 +246,7 @@
               <td>{{ s.current_worth|floatformat:2|intcomma }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="20" class="text-muted">No stock data</td></tr>
+            <tr><td colspan="23" class="text-muted">No stock data</td></tr>
             {% endfor %}
           </tbody>
           <tfoot>
@@ -254,12 +262,15 @@
               <td>{{ stock_value_totals.reduction_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.reduction_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.reduction_worth|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.transferred_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.transferred_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.transferred_worth|floatformat:2|intcomma }}</td>
+              <td>{{ stock_value_totals.received_qty|floatformat:2|intcomma }}</td>
+              <td>{{ stock_value_totals.received_value|floatformat:2|intcomma }}</td>
+              <td>{{ stock_value_totals.received_worth|floatformat:2|intcomma }}</td>
+              <td>{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>
+              <td>{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>
+              <td>{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.current_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.current_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.current_worth|floatformat:2|intcomma }}</td>

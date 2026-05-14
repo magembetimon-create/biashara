@@ -26,38 +26,55 @@ function placedataTotable(data){
  <tbody id="products_list">`
  let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
      if(sambazia.state.length>0){ 
-         const itemsK = sambazia.state.map(i=>i.id),
-                all_item = data.products.filter(x=>(Number(x.Bei_kuuza)>0 || !x.material) && !x.service)
-                let items = itemsK.map(i=>getAllItm(i))
+                 const itemsK = sambazia.state.map(i=>i.id),
+                                all_item = data.products.filter(x=>(Number(x.Bei_kuuza)>0 || !x.material) && !x.service),
+                                groupedBySupplier = {},
+                                supplierById = {}
+
+                                sambazia.state.forEach(s => {
+                                    supplierById[Number(s.id)] = s
+                                })
+
+                                all_item.forEach(itm => {
+                                    const key = Number(itm.msambaji_id)
+                                    if (!groupedBySupplier[key]) groupedBySupplier[key] = []
+                                    groupedBySupplier[key].push(itm)
+                                })
+
+                                let items = itemsK.map(i=>getAllItm(i))
                 
                 function getAllItm(i){
-                    if(all_item.filter(itm=>itm.msambaji_id === i).length>0){
+                                        const grouped = groupedBySupplier[Number(i)] || []
+                                        const first = grouped[0]
+                                        const supplier = supplierById[Number(i)] || {}
+                                        if(grouped.length>0){
                          return {
                         id : i,
-                        jina: all_item.filter(itm=>itm.msambaji_id === i)[0].vendor,
-                        addres:sambazia.state.find(ni=>i==ni.id).address,
-                        code:sambazia.state.find(ni=>i==ni.id).code,
-                        simu1:sambazia.state.find(ni=>i==ni.id).simu1,
-                        simu2:sambazia.state.find(ni=>i==ni.id).simu2,
-                        aina:[... new Set(all_item.filter(itm=>itm.msambaji_id === i ).map(a=>a.aina))].length,
-                        idadi_jum: all_item.filter(itm=>itm.msambaji_id === i)[0].uwiano,
-                        thamani: all_item.filter(itm=>itm.msambaji_id === i).reduce((a,b)=> a + ((b.Bei_kununua/b.uwiano)*b.idadi),0),
-                        thamaniM: all_item.filter(itm=>itm.msambaji_id === i).reduce((a,b)=> a + (b.Bei_kuuza*b.idadi),0),
-                        zote: all_item.filter(itm=>itm.msambaji_id === i).length,
-                        idadi: all_item.filter(itm=>itm.msambaji_id === i).reduce((a,b)=> a +Number(b.idadi),0),
-                        vipimo: all_item.filter(itm=>itm.msambaji_id === i)[0].vipimo,
-                        vipimo_jum: all_item.filter(itm=>itm.msambaji_id === i)[0].vipimoJum,
+                                                jina: first.vendor,
+                                                addres:supplier.address,
+                                                code:supplier.code,
+                                                simu1:supplier.simu1,
+                                                simu2:supplier.simu2,
+                                                aina:[... new Set(grouped.map(a=>a.aina))].length,
+                                                idadi_jum: first.uwiano,
+                                                thamani: grouped.reduce((a,b)=> a + ((b.Bei_kununua/b.uwiano)*b.idadi),0),
+                                                thamaniM: grouped.reduce((a,b)=> a + (b.Bei_kuuza*b.idadi),0),
+                                                zote: grouped.length,
+                                                idadi: grouped.reduce((a,b)=> a +Number(b.idadi),0),
+                                                vipimo: first.vipimo,
+                                                vipimo_jum: first.vipimoJum,
                  
                     }
                     }else{
+                                                    const emptySupplier = supplierById[Number(i)] || {}
                           return {
                              id : i,
-                             jina: sambazia.state.find(itm=>itm.id === i).jina,
+                                                         jina: emptySupplier.jina,
                             
-                             addres:sambazia.state.find(n=>i==n.id).addres,
-                             code:sambazia.state.find(n=>i==n.id).code,
-                             simu1:sambazia.state.find(n=>i==n.id).simu1,
-                             simu2:sambazia.state.find(n=>i==n.id).simu2,
+                                                         addres:emptySupplier.addres,
+                                                         code:emptySupplier.code,
+                                                         simu1:emptySupplier.simu1,
+                                                         simu2:emptySupplier.simu2,
                              idadi_jum: 0,
                              thamani: 0,
                              thamaniM: 0,
@@ -75,7 +92,7 @@ function placedataTotable(data){
              if(flt>0){
                  items = items.filter(x=>Number(x.kundi_id)===Number(flt))
              }
- 
+
              if(bflt>0){
                  items = items.filter(x=>Number(x.brand)===Number(bflt))
              }

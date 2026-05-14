@@ -49,6 +49,8 @@ path('theBatch',views.theBatch, name='theBatch'),
 path('receivesRiport',views.receivesRiport, name='receivesRiport'),
 path('ReceivesData',views.ReceivesData, name='ReceivesData'),
 path('theReceive',views.theReceive, name='theReceive'),
+path('transferedItemsRiport',views.transferedItemsRiport, name='transferedItemsRiport'),
+path('TransferedItemsData',views.TransferedItemsData, name='TransferedItemsData'),
 
 # REDUCE ADJST RIPORT..................................................//
 path('ReduceAdj',views.ReduceAdj, name='ReduceAdj'),

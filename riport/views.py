@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
 # from graphene import NonNull
-from management.models import  UserExtend,stokAdjustment,ForPrintingPupose,InterpriseVisotrs,savedStockState,SaveAkauntState,ItemsState,ColorState,SizeState,production_color,toaCash,production_size, manunuziList,productionListDate,purchased_size,ColorChange,SizeChange,purchased_color,sale_return,productChangeRecord,transferList,rekodiMatumizi,SavedRiport,ChangedService,Cash_order_return,sale_return_mauzo_fidia,sa_col_ret,sa_size_ret,sa_ret,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wekaCash
+from management.models import  UserExtend,stokAdjustment,ForPrintingPupose,InterpriseVisotrs,savedStockState,SaveAkauntState,ItemsState,ColorState,SizeState,production_color,toaCash,production_size, manunuziList,productionListDate,purchased_size,ColorChange,SizeChange,purchased_color,sale_return,productChangeRecord,transferList,rekodiMatumizi,SavedRiport,ChangedService,Cash_order_return,sale_return_mauzo_fidia,sa_col_ret,sa_size_ret,sa_ret,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,receiveList,transfer,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wekaCash
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
@@ -1161,6 +1161,95 @@ def receivesRiport(request):
         return redirect('/userdash')
     else:       
         return render(request,'riportReceives.html',todo)
+
+@login_required(login_url='login')
+def transferedItemsRiport(request):
+  todo = todoFunct(request)
+  duka = todo['duka']
+  br = [duka.id]
+  for b in todo['matawi']:
+    br.append(b.Interprise.id)
+
+  trf = transfer.objects.filter(Interprise__in=br).order_by('id')
+  if trf.exists():
+    todo.update({
+      'last': trf.last(),
+      'first': trf.first()
+    })
+
+  if not duka.Interprise:
+    return redirect('/userdash')
+  else:
+    return render(request, 'riportTransferedItems.html', todo)
+
+
+@login_required(login_url='login')
+def TransferedItemsData(request):
+  if request.method == 'POST':
+    try:
+      todo = todoFunct(request)
+      tf = request.POST.get('tf')
+      tt = request.POST.get('tt')
+      branch = int(request.POST.get('branch', 0) or 0)
+      transfer_to = int(request.POST.get('transfer_to', 0) or 0)
+
+      duka = todo['duka']
+      br = [duka.id]
+      for b in todo['matawi']:
+        br.append(b.Interprise.id)
+
+      qs = receiveList.objects.filter(
+        receive__transfer__tarehe__gte=tf,
+        receive__transfer__tarehe__lte=tt,
+        receive__transfer__Interprise__in=br,
+        receive__Interprise__in=br,
+      )
+
+      if branch > 0:
+        qs = qs.filter(receive__transfer__Interprise=branch)
+
+      if transfer_to > 0:
+        qs = qs.filter(receive__Interprise=transfer_to)
+
+      rows = qs.annotate(
+        receive_id=F('receive'),
+        transfer_code=F('receive__transfer__code'),
+        from_branch_id=F('receive__transfer__Interprise'),
+        from_branch_name=F('receive__transfer__Interprise__name'),
+        to_branch_id=F('receive__Interprise'),
+        to_branch_name=F('receive__Interprise__name'),
+        tarehe=F('receive__transfer__tarehe'),
+        qty=F('qty'),
+        uwiano=F('uwiano'),
+        buy_price=F('bidhaa_stoku__Bei_kununua'),
+        sale_price=F('bidhaa_stoku__Bei_kuuza'),
+        item_id=F('bidhaa_stoku__bidhaa'),
+        item_name=F('bidhaa_stoku__bidhaa__bidhaa_jina'),
+      ).values(
+        'receive_id',
+        'transfer_code',
+        'from_branch_id',
+        'from_branch_name',
+        'to_branch_id',
+        'to_branch_name',
+        'tarehe',
+        'qty',
+        'uwiano',
+        'buy_price',
+        'sale_price',
+        'item_id',
+        'item_name',
+      )
+
+      data = {
+        'success': True,
+        'rows': list(rows),
+      }
+      return JsonResponse(data)
+    except:
+      return JsonResponse({'success': False, 'rows': []})
+  else:
+    return render(request,'pagenotFound.html',todoFunct(request))
 
 @login_required(login_url='login')
 def ReceivesData(request):

@@ -403,11 +403,13 @@
             <th colspan="1">{% if useri.langSet == 0 %}Added{% else %}Added{% endif %}</th>
             <th colspan="1">{% if useri.langSet == 0 %}Reduction{% else %}Reduction{% endif %}</th>
             <th colspan="1">{% if useri.langSet == 0 %}Transferred{% else %}Transferred{% endif %}</th>
+            <th colspan="1">{% if useri.langSet == 0 %}Item zilizopokelewa{% else %}Item Received{% endif %}</th>
             <th colspan="3">{% if useri.langSet == 0 %}Sold{% else %}Sold{% endif %}</th>
             <th colspan="3">{% if useri.langSet == 0 %}Current Stock{% else %}Current Stock{% endif %}</th>
           </tr>
           <tr>
             <th>Qty</th><th>Val</th><th>Worth</th>
+            <th>Qty</th>
             <th>Qty</th>
             <th>Qty</th>
             <th>Qty</th>
@@ -426,6 +428,7 @@
             <td>{{ s.added_qty|floatformat:2|intcomma }}</td>
             <td>{{ s.reduction_qty|floatformat:2|intcomma }}</td>
             <td>{{ s.transferred_qty|floatformat:2|intcomma }}</td>
+            <td>{{ s.received_qty|floatformat:2|intcomma }}</td>
             <td>{{ s.sold_qty|floatformat:2|intcomma }}</td>
             <td>{{ s.sold_value|floatformat:2|intcomma }}</td>
             <td>{{ s.sold_worth|floatformat:2|intcomma }}</td>
@@ -434,7 +437,7 @@
             <td>{{ s.current_worth|floatformat:2|intcomma }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="14" class="no-data">No stock data</td></tr>
+          <tr><td colspan="15" class="no-data">No stock data</td></tr>
           {% endfor %}
         </tbody>
         <tfoot>
@@ -447,6 +450,7 @@
             <td>{{ stock_value_totals.added_qty|floatformat:2|intcomma }}</td>
             <td>{{ stock_value_totals.reduction_qty|floatformat:2|intcomma }}</td>
             <td>{{ stock_value_totals.transferred_qty|floatformat:2|intcomma }}</td>
+            <td>{{ stock_value_totals.received_qty|floatformat:2|intcomma }}</td>
             <td>{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>
             <td>{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>
             <td>{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>

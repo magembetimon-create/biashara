@@ -672,6 +672,17 @@ def shift_view(request):
         for toka_id, qty in transferred_rows:
             transferred_qty_map[toka_id] += Decimal(qty or 0)
 
+        received_qty_map = defaultdict(lambda: Decimal('0'))
+        received_rows = bidhaa_stoku.objects.filter(
+            Interprise=duka.id,
+            uhamisho__isnull=False,
+            uhamisho__receive__transfer__order=False,
+            uhamisho__receive__transfer__tarehe__gte=shift.starts_at,
+            uhamisho__receive__transfer__tarehe__lte=period_end,
+        ).values_list('id', 'uhamisho__qty')
+        for prod_id, qty in received_rows:
+            received_qty_map[prod_id] += Decimal(qty or 0)
+
         stock_value_rows = []
         stock_value_totals = {
             'before_qty': Decimal('0'),
@@ -689,6 +700,9 @@ def shift_view(request):
             'transferred_qty': Decimal('0'),
             'transferred_value': Decimal('0'),
             'transferred_worth': Decimal('0'),
+            'received_qty': Decimal('0'),
+            'received_value': Decimal('0'),
+            'received_worth': Decimal('0'),
             'current_qty': Decimal('0'),
             'current_value': Decimal('0'),
             'current_worth': Decimal('0'),
@@ -724,6 +738,9 @@ def shift_view(request):
             transferred_qty = Decimal('0')
             transferred_value = Decimal('0')
             transferred_worth = Decimal('0')
+            received_qty = Decimal('0')
+            received_value = Decimal('0')
+            received_worth = Decimal('0')
 
             for itm in items:
                 ratio = Decimal(itm.bidhaa.idadi_jum or 1) if itm.bidhaa else Decimal('1')
@@ -761,6 +778,11 @@ def shift_view(request):
                 transferred_value += t_qty * buy_price / ratio
                 transferred_worth += t_qty * sales_price
 
+                rc_qty = received_qty_map[iid]
+                received_qty += rc_qty
+                received_value += rc_qty * buy_price / ratio
+                received_worth += rc_qty * sales_price
+
             stock_value_rows.append({
                 'item_name': item_name,
                 'units': units,
@@ -779,6 +801,9 @@ def shift_view(request):
                 'transferred_qty': transferred_qty,
                 'transferred_value': transferred_value,
                 'transferred_worth': transferred_worth,
+                'received_qty': received_qty,
+                'received_value': received_value,
+                'received_worth': received_worth,
                 'current_qty': current_qty,
                 'current_value': current_value,
                 'current_worth': current_worth,
@@ -799,6 +824,9 @@ def shift_view(request):
             stock_value_totals['transferred_qty'] += transferred_qty
             stock_value_totals['transferred_value'] += transferred_value
             stock_value_totals['transferred_worth'] += transferred_worth
+            stock_value_totals['received_qty'] += received_qty
+            stock_value_totals['received_value'] += received_value
+            stock_value_totals['received_worth'] += received_worth
             stock_value_totals['current_qty'] += current_qty
             stock_value_totals['current_value'] += current_value
             stock_value_totals['current_worth'] += current_worth
@@ -1058,6 +1086,17 @@ def print_shift(request):
         for toka_id, qty in transferred_rows:
             transferred_qty_map[toka_id] += Decimal(qty or 0)
 
+        received_qty_map = defaultdict(lambda: Decimal('0'))
+        received_rows = bidhaa_stoku.objects.filter(
+            Interprise=duka.id,
+            uhamisho__isnull=False,
+            uhamisho__receive__transfer__order=False,
+            uhamisho__receive__transfer__tarehe__gte=shift.starts_at,
+            uhamisho__receive__transfer__tarehe__lte=period_end,
+        ).values_list('id', 'uhamisho__qty')
+        for prod_id, qty in received_rows:
+            received_qty_map[prod_id] += Decimal(qty or 0)
+
         stock_value_rows = []
         stock_value_totals = {
             'before_qty': Decimal('0'), 'before_value': Decimal('0'), 'before_worth': Decimal('0'),
@@ -1065,6 +1104,7 @@ def print_shift(request):
             'sold_qty': Decimal('0'), 'sold_value': Decimal('0'), 'sold_worth': Decimal('0'),
             'reduction_qty': Decimal('0'), 'reduction_value': Decimal('0'), 'reduction_worth': Decimal('0'),
             'transferred_qty': Decimal('0'), 'transferred_value': Decimal('0'), 'transferred_worth': Decimal('0'),
+            'received_qty': Decimal('0'), 'received_value': Decimal('0'), 'received_worth': Decimal('0'),
             'current_qty': Decimal('0'), 'current_value': Decimal('0'), 'current_worth': Decimal('0'),
         }
         # Group bidhaa_stoku by distinct bidhaa (product) – each product name appears only once
@@ -1098,6 +1138,9 @@ def print_shift(request):
             transferred_qty = Decimal('0')
             transferred_value = Decimal('0')
             transferred_worth = Decimal('0')
+            received_qty = Decimal('0')
+            received_value = Decimal('0')
+            received_worth = Decimal('0')
 
             for itm in items:
                 ratio = Decimal(itm.bidhaa.idadi_jum or 1) if itm.bidhaa else Decimal('1')
@@ -1135,6 +1178,11 @@ def print_shift(request):
                 transferred_value += t_qty * buy_price / ratio
                 transferred_worth += t_qty * sales_price
 
+                rc_qty = received_qty_map[iid]
+                received_qty += rc_qty
+                received_value += rc_qty * buy_price / ratio
+                received_worth += rc_qty * sales_price
+
             stock_value_rows.append({
                 'item_name': item_name,
                 'units': units,
@@ -1153,6 +1201,9 @@ def print_shift(request):
                 'transferred_qty': transferred_qty,
                 'transferred_value': transferred_value,
                 'transferred_worth': transferred_worth,
+                'received_qty': received_qty,
+                'received_value': received_value,
+                'received_worth': received_worth,
                 'current_qty': current_qty,
                 'current_value': current_value,
                 'current_worth': current_worth,
@@ -1173,6 +1224,9 @@ def print_shift(request):
             stock_value_totals['transferred_qty'] += transferred_qty
             stock_value_totals['transferred_value'] += transferred_value
             stock_value_totals['transferred_worth'] += transferred_worth
+            stock_value_totals['received_qty'] += received_qty
+            stock_value_totals['received_value'] += received_value
+            stock_value_totals['received_worth'] += received_worth
             stock_value_totals['current_qty'] += current_qty
             stock_value_totals['current_value'] += current_value
             stock_value_totals['current_worth'] += current_worth

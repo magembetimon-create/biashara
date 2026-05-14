@@ -37,14 +37,21 @@ function placedataTotable(data){
                             all_item = all_item.filter(x=>Number(x.msambaji_id)===Number(supflt))
                         }
 
+                        const producedCostById = {}
+                        prdxnCost.state.forEach(p => {
+                          const key = Number(p.id)
+                          if (!producedCostById[key]) producedCostById[key] = Number(p.cost || 0)
+                        })
+
                         all_item.forEach(itm => {
                         idadi_item+=1
                     
-                        let produced = prdxnCost.state.filter(i=>i.id===itm.id),prC = 0,Coast = Number(itm.Bei_kununua/itm.uwiano)
-                            if(produced.length>0) {
-                                prC =  Number(produced[0].cost) * Number(itm.idadi)
-                                Coast = Number(produced[0].cost)
-                            }
+                        let prC = 0,Coast = Number(itm.Bei_kununua/itm.uwiano)
+                        const producedCost = Number(producedCostById[Number(itm.id)] || 0)
+                        if(producedCost>0) {
+                            prC = producedCost * Number(itm.idadi)
+                            Coast = producedCost
+                        }
                         
                         zilizopo+=Number(Number(itm.idadi))
                         thamani+=((Number(itm.Bei_kununua)/Number(itm.uwiano))*Number(itm.idadi)) + Number(prC)

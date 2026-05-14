@@ -24,26 +24,36 @@ let trp = `
 let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
 
     if(Categs.state.length>0){ 
-        const itemsK = [...new Set(data.products.map(i=>i.aina))],
-               all_item = data.products.filter(x=>(Number(x.Bei_kuuza)>0 || !x.material) && !x.service)
-               let items = itemsK.map(i=>getAllItm(i))
+                const itemsK = [...new Set(data.products.map(i=>i.aina))],
+                             all_item = data.products.filter(x=>(Number(x.Bei_kuuza)>0 || !x.material) && !x.service),
+                             groupedByAina = {}
+
+                             all_item.forEach(itm => {
+                                 const key = Number(itm.aina)
+                                 if (!groupedByAina[key]) groupedByAina[key] = []
+                                 groupedByAina[key].push(itm)
+                             })
+
+                             let items = itemsK.map(i=>getAllItm(i))
                function getAllItm(i){
-                   if(all_item.filter(itm=>itm.aina === i).length>0){
+                                     const grouped = groupedByAina[Number(i)] || []
+                                     const first = grouped[0]
+                                     if(grouped.length>0){
                         return {
                        id : i,
                        
-                       jina: all_item.filter(itm=>itm.aina === i)[0].ainaN,
-                       kundi: all_item.filter(itm=>itm.aina === i )[0].group_name,
-                       kundi_id: all_item.filter(itm=>itm.aina === i )[0].group,
-                       brands:[... new Set(all_item.filter(itm=>itm.aina === i ).map(br=>br.kampuni))].length,
-                       brand:all_item.filter(itm=>itm.aina === i)[0].kampuni,
-                       idadi_jum: all_item.filter(itm=>itm.aina === i)[0].uwiano,
-                       thamani: all_item.filter(itm=>itm.aina === i).reduce((a,b)=> a + Number((b.Bei_kununua/b.uwiano)*b.idadi),0),
-                       thamaniM: all_item.filter(itm=>itm.aina === i).reduce((a,b)=> a + Number(b.Bei_kuuza*b.idadi),0),
-                       zote: all_item.filter(itm=>itm.aina === i).length,
-                       idadi: all_item.filter(itm=>itm.aina === i).reduce((a,b)=> a +Number(b.idadi),0),
-                       vipimo: all_item.filter(itm=>itm.aina === i)[0].vipimo,
-                       vipimo_jum: all_item.filter(itm=>itm.aina === i)[0].vipimoJum,
+                                             jina: first.ainaN,
+                                             kundi: first.group_name,
+                                             kundi_id: first.group,
+                                             brands:[... new Set(grouped.map(br=>br.kampuni))].length,
+                                             brand:first.kampuni,
+                                             idadi_jum: first.uwiano,
+                                             thamani: grouped.reduce((a,b)=> a + Number((b.Bei_kununua/b.uwiano)*b.idadi),0),
+                                             thamaniM: grouped.reduce((a,b)=> a + Number(b.Bei_kuuza*b.idadi),0),
+                                             zote: grouped.length,
+                                             idadi: grouped.reduce((a,b)=> a +Number(b.idadi),0),
+                                             vipimo: first.vipimo,
+                                             vipimo_jum: first.vipimoJum,
                 
                    }
                    }else{
@@ -79,14 +89,21 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
                
         
 
-        items.forEach(itm => {
+                const producedCostByAina = {}
+                prdxnCost.state.forEach(p => {
+                    const key = Number(p.Aina)
+                    producedCostByAina[key] = Number(producedCostByAina[key] || 0) + ((Number(p.cost) || 0) * (Number(p.idadi) || 0))
+                })
+
+                items.forEach(itm => {
         idadi_item+=1
         
-        let produced = prdxnCost.state.filter(i=>i.Aina===itm.id),prC = 0,Coast = itm.thamani
-                            if(produced.length>0) {
-                                prC =  Number(produced.reduce((a,b)=> a + ((b.cost)*b.idadi),0))
-                                Coast = prC
-                            }
+                let prC = 0,Coast = itm.thamani
+                const producedTotal = Number(producedCostByAina[Number(itm.id)] || 0)
+                if(producedTotal>0) {
+                    prC = producedTotal
+                    Coast = producedTotal
+                }
 
         zilizopo+=Number(Number(itm.idadi))
         thamani+=Number(itm.thamani) + prC

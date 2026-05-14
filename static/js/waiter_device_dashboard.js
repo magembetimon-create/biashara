@@ -30,6 +30,11 @@ let WAITER_ORDERS = {
   printed: [],
   items: {}
 }
+const WAITER_INITIAL_RENDER_LIMIT = 24
+const WAITER_RENDER_CHUNK = 48
+const WAITER_SEARCH_DEBOUNCE_MS = 120
+let WAITER_RENDER_TICKET = 0
+let WAITER_SEARCH_TIMER = null
 
 const WAITER_DEVICE_ID = String($('#DEVICE_ID').val() || '').trim()
 const WAITER_DEVICE_BIZ = Number($('#DEVICE_BIZ_ID').val() || 0)
@@ -162,6 +167,29 @@ function waiterAmount() {
 
 function waiterSearchValue() {
   return String($('#waiterSearchInput').val() || '').trim()
+}
+
+function buildWaiterSearchIndex() {
+  WAITER_ITEMS.forEach(it => {
+    it.__search = String(`${it.bidhaaN || ''} ${it.namba || ''} ${it.ainaN || ''} ${it.brand || ''}`).toLowerCase()
+  })
+}
+
+function queueWaiterItemsRender() {
+  if (window.requestAnimationFrame) {
+    window.requestAnimationFrame(renderWaiterItems)
+    return
+  }
+  setTimeout(renderWaiterItems, 0)
+}
+
+function debounceWaiterItemsRender() {
+  if (WAITER_SEARCH_TIMER) {
+    clearTimeout(WAITER_SEARCH_TIMER)
+  }
+  WAITER_SEARCH_TIMER = setTimeout(() => {
+    queueWaiterItemsRender()
+  }, WAITER_SEARCH_DEBOUNCE_MS)
 }
 
 function waiterModeLabel(mode) {
@@ -326,7 +354,7 @@ function addWaiterItemToCart(id) {
   }
 
   renderWaiterCart()
-  renderWaiterItems()
+  queueWaiterItemsRender()
   
   // Trigger animation on card
   const cardEl = $(`.waiter-item-card[data-id="${id}"]`)
@@ -380,55 +408,92 @@ function waiterFilteredItems() {
 
   if (!q) return allItems
 
-  const cleaned = q.replace(/[^a-z0-9 ]/gi, '')
-  const searched = new RegExp(cleaned, 'i')
-  return allItems.filter(it => {
-    const srch = `${it.bidhaaN || ''} ${it.namba || ''} ${it.ainaN || ''} ${it.brand || ''}`
-    return srch.match(searched)
-  })
+  const cleaned = q.replace(/[^a-z0-9 ]/gi, '').toLowerCase()
+  if (!cleaned) return allItems
+
+  return allItems.filter(it => String(it.__search || '').includes(cleaned))
+}
+
+function waiterItemCardHtml(it, imgMap, cartQtyMap) {
+  const price = Number(it.Bei_kuuza || 0)
+  const picha = imgMap[Number(it.bidhaa_id || 0)] || __tbStatic('pics/img.svg')
+  const stockQty = Number(it.idadi || 0)
+  const isNotSure = Number(it.notsure || 0) === 1
+  const cartQty = Number(cartQtyMap[Number(it.id)] || 0)
+  const canAddMore = isNotSure || cartQty < stockQty
+  const unit = String(it.vipimo || '')
+
+  return `
+    <div class="waiter-item-card" data-id="${it.id}">
+      <figure class="waiter-item-figure mb-1">
+        <img src="${picha}" alt="${it.bidhaaN || ''}" loading="lazy" decoding="async">
+      </figure>
+      <div class="waiter-name text-capitalize">${it.bidhaaN}</div>
+      <div class="small text-muted">${it.ainaN || ''}</div>
+      <div class="waiter-stock-line">
+        <small class="text-primary"><i>${unit}</i></small>
+        <small class="waiter-stock-value">${stockQty.toLocaleString()}</small>
+      </div>
+      <div class="smallerFont ${canAddMore ? 'text-muted' : 'text-danger'}">
+        ${canAddMore ? '&nbsp;' : waiterLang('Imefika kikomo cha stock', 'Stock limit reached')}
+      </div>
+      <div class="d-flex justify-content-between align-items-center mt-2">
+        <div class="waiter-price">${CURRENCII} ${price.toLocaleString()}</div>
+        <button class="btn btn-sm btn-primary addWaiterItem" data-id="${it.id}" ${canAddMore ? '' : 'disabled'} title="${waiterLang('Ongeza', 'Add')}" aria-label="${waiterLang('Ongeza', 'Add')}">+</button>
+      </div>
+    </div>
+  `
 }
 
 function renderWaiterItems() {
+  const ticket = ++WAITER_RENDER_TICKET
   const list = waiterFilteredItems()
   const imgMap = waiterImageMap()
+  const cartQtyMap = {}
+  WAITER_CART.forEach(it => {
+    cartQtyMap[Number(it.id)] = Number(it.qty || 0)
+  })
+  const host = $('#waiterItemsList')
+
   $('#waiterItemsCount').text(list.length)
 
   if (!list.length) {
-    $('#waiterItemsList').html('<div class="waiter-empty">' + waiterLang('Hakuna bidhaa', 'No items') + '</div>')
+    host.html('<div class="waiter-empty">' + waiterLang('Hakuna bidhaa', 'No items') + '</div>')
     return
   }
 
-  const html = list.map(it => {
-    const price = Number(it.Bei_kuuza || 0)
-    const picha = imgMap[Number(it.bidhaa_id || 0)] || __tbStatic('pics/img.svg')
-    const stockQty = Number(it.idadi || 0)
-    const isNotSure = Number(it.notsure || 0) === 1
-    const cartQty = Number((WAITER_CART.find(x => Number(x.id) === Number(it.id)) || {}).qty || 0)
-    const canAddMore = isNotSure || cartQty < stockQty
-    const unit = String(it.vipimo || '')
-    return `
-      <div class="waiter-item-card" data-id="${it.id}">
-        <figure class="waiter-item-figure mb-1">
-          <img src="${picha}" alt="${it.bidhaaN || ''}">
-        </figure>
-        <div class="waiter-name text-capitalize">${it.bidhaaN}</div>
-        <div class="small text-muted">${it.ainaN || ''}</div>
-        <div class="waiter-stock-line">
-          <small class="text-primary"><i>${unit}</i></small>
-          <small class="waiter-stock-value">${stockQty.toLocaleString()}</small>
-        </div>
-        <div class="smallerFont ${canAddMore ? 'text-muted' : 'text-danger'}">
-          ${canAddMore ? '&nbsp;' : waiterLang('Imefika kikomo cha stock', 'Stock limit reached')}
-        </div>
-        <div class="d-flex justify-content-between align-items-center mt-2">
-          <div class="waiter-price">${CURRENCII} ${price.toLocaleString()}</div>
-          <button class="btn btn-sm btn-primary addWaiterItem" data-id="${it.id}" ${canAddMore ? '' : 'disabled'} title="${waiterLang('Ongeza', 'Add')}" aria-label="${waiterLang('Ongeza', 'Add')}">+</button>
-        </div>
-      </div>
-    `
-  }).join('')
+  const firstEnd = Math.min(WAITER_INITIAL_RENDER_LIMIT, list.length)
+  const firstHtml = list.slice(0, firstEnd).map(it => waiterItemCardHtml(it, imgMap, cartQtyMap)).join('')
+  host.html(firstHtml)
 
-  $('#waiterItemsList').html(html)
+  if (firstEnd >= list.length) return
+
+  let idx = firstEnd
+  const appendChunk = () => {
+    if (ticket !== WAITER_RENDER_TICKET) return
+
+    const nextEnd = Math.min(idx + WAITER_RENDER_CHUNK, list.length)
+    let chunkHtml = ''
+    for (let i = idx; i < nextEnd; i += 1) {
+      chunkHtml += waiterItemCardHtml(list[i], imgMap, cartQtyMap)
+    }
+    host.append(chunkHtml)
+    idx = nextEnd
+
+    if (idx < list.length) {
+      if (window.requestAnimationFrame) {
+        window.requestAnimationFrame(appendChunk)
+      } else {
+        setTimeout(appendChunk, 0)
+      }
+    }
+  }
+
+  if (window.requestAnimationFrame) {
+    window.requestAnimationFrame(appendChunk)
+  } else {
+    setTimeout(appendChunk, 0)
+  }
 }
 
 function renderWaiterCart() {
@@ -761,6 +826,8 @@ function saveWaiterOrder() {
 }
 
 function initializeWaiterItems() {
+  $('#waiterItemsList').html('<div class="waiter-empty">' + waiterLang('Inapakia bidhaa...', 'Loading items...') + '</div>')
+
   const data = {
     data: waiterDeviceRequest({}),
     url: '/mauzo/waiter_items_data'
@@ -774,9 +841,9 @@ function initializeWaiterItems() {
     }
 
     WAITER_ITEMS = (resp.products || []).slice(0)
+  buildWaiterSearchIndex()
     WAITER_ITEM_IMG = (resp.img || []).slice(0)
     WAITER_TABLE_AREAS = normalizeWaiterTableAreas(resp.table_areas || [])
-    console.log(resp.table_areas)
     WAITER_SELECTED_AREA_ID = 0
 
     WAITER_COUNTER_MODE = String(resp.counter_mode || 'all')
@@ -784,7 +851,7 @@ function initializeWaiterItems() {
     renderActiveCounter(resp)
     renderWaiterTableGrid()
     renderWaiterCategories()
-    renderWaiterItems()
+    queueWaiterItemsRender()
   })
 }
 
@@ -824,7 +891,7 @@ $('body').on('click', '.waiterQty', function() {
 
   WAITER_CART = WAITER_CART.filter(x => x.qty > 0)
   renderWaiterCart()
-  renderWaiterItems()
+  queueWaiterItemsRender()
 })
 
 $('body').on('click', '.waiter-categs-btn', function() {
@@ -834,7 +901,7 @@ $('body').on('click', '.waiter-categs-btn', function() {
     $(this).addClass('text-primary border-primary')
   }
   WAITER_ITEM_CATEG = ain
-  renderWaiterItems()
+  queueWaiterItemsRender()
 })
 
 $('body').on('click', '.waiter-history-tab', function() {
@@ -932,7 +999,7 @@ $('body').on('hidden.bs.modal', '#waiterPrintConfirmModal', function() {
 })
 
 $('#waiterSearchInput').on('keyup', function() {
-  renderWaiterItems()
+  debounceWaiterItemsRender()
 })
 
 $('#waiter_order_btn').on('click', function() {

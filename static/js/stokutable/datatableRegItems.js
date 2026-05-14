@@ -32,26 +32,36 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
             allItm = allItm.filter(x=>Number(x.msambaji_id)===Number(supflt))
         }
 
-        const all_item = allItm.filter(x=>(Number(x.Bei_kuuza)>0 || !x.material) && !x.service),
-               itemsK = [...new Set(all_item.map(i=>i.bidhaa_id))]
-              let items = itemsK.map(i=>getAllItm(i))
+                const all_item = allItm.filter(x=>(Number(x.Bei_kuuza)>0 || !x.material) && !x.service),
+                             itemsK = [...new Set(all_item.map(i=>i.bidhaa_id))],
+                             groupedByItem = {}
+
+                            all_item.forEach(itm => {
+                                const key = Number(itm.bidhaa_id)
+                                if (!groupedByItem[key]) groupedByItem[key] = []
+                                groupedByItem[key].push(itm)
+                            })
+
+                            let items = itemsK.map(i=>getAllItm(i))
 
                function getAllItm(i){
+                   const grouped = groupedByItem[Number(i)] || []
+                   const first = grouped[0]
                    return {
                        id : i,
-                       namba: all_item.filter(itm=>itm.bidhaa_id === i)[0]?.namba,
-                       jina: all_item.filter(itm=>itm.bidhaa_id === i)[0].bidhaaN,
-                       aina: all_item.filter(itm=>itm.bidhaa_id === i)[0].ainaN,
-                       aina_id: all_item.filter(itm=>itm.bidhaa_id === i)[0].aina,
-                       kampuni: all_item.filter(itm=>itm.bidhaa_id === i)[0].brand,
-                       kampuni_id: all_item.filter(itm=>itm.bidhaa_id === i)[0].kampuni,
-                       vipimo: all_item.filter(itm=>itm.bidhaa_id === i)[0].vipimo,
-                       vipimo_jum: all_item.filter(itm=>itm.bidhaa_id === i)[0].vipimoJum,
-                       idadi_jum: all_item.filter(itm=>itm.bidhaa_id === i)[0].uwiano,
-                       thamani: all_item.filter(itm=>itm.bidhaa_id === i).reduce((a,b)=> a + ((b.Bei_kununua/b.uwiano)*b.idadi),0),
-                       thamaniM: all_item.filter(itm=>itm.bidhaa_id === i).reduce((a,b)=> a + (b.Bei_kuuza*b.idadi),0),
-                       zote: all_item.filter(itm=>itm.bidhaa_id === i).length,
-                       idadi: all_item.filter(itm=>itm.bidhaa_id === i).reduce((a,b)=> a +Number( b.idadi),0),
+                       namba: first?.namba,
+                       jina: first.bidhaaN,
+                       aina: first.ainaN,
+                       aina_id: first.aina,
+                       kampuni: first.brand,
+                       kampuni_id: first.kampuni,
+                       vipimo: first.vipimo,
+                       vipimo_jum: first.vipimoJum,
+                       idadi_jum: first.uwiano,
+                       thamani: grouped.reduce((a,b)=> a + ((b.Bei_kununua/b.uwiano)*b.idadi),0),
+                       thamaniM: grouped.reduce((a,b)=> a + (b.Bei_kuuza*b.idadi),0),
+                       zote: grouped.length,
+                       idadi: grouped.reduce((a,b)=> a +Number( b.idadi),0),
 
                    }
                }
@@ -66,13 +76,20 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
                
   
 
-        items.forEach(itm => {
+                const producedCostByItem = {}
+                prdxnCost.state.forEach(p => {
+                    const key = Number(p.bidhaa)
+                    if (!producedCostByItem[key]) producedCostByItem[key] = Number(p.cost || 0)
+                })
+
+                items.forEach(itm => {
         idadi_item+=1
          
-        let produced = prdxnCost.state.filter(i=>i.bidhaa===itm.id),prC = 0,Coast = itm.thamani
-        if(produced.length>0) {
-            prC =  Number(produced[0].cost) * Number(itm.idadi)
-            Coast = Number(produced[0].cost) * Number(itm.idadi)
+                let prC = 0,Coast = itm.thamani
+                const producedCost = Number(producedCostByItem[Number(itm.id)] || 0)
+                if(producedCost>0) {
+                        prC = producedCost * Number(itm.idadi)
+                        Coast = producedCost * Number(itm.idadi)
         }
 
         

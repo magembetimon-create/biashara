@@ -27,6 +27,63 @@ let selected = [],
     ServsC = [],
     ServsS = []
 
+let POS_SEARCH_TIMER = null
+const POS_SEARCH_DEBOUNCE_MS = 120
+
+function normalizePosSearchText(value) {
+    return String(value || '').replace(/[^a-z0-9 ]/gi, '').toLowerCase().trim()
+}
+
+function buildPosSearchIndex() {
+    POS_ITMS.forEach(itm => {
+        itm.__search = normalizePosSearchText(`${itm.name || ''} ${itm.namba || ''} ${itm.color_name || ''} ${itm.size_name || ''} ${itm.color_nick || ''} ${itm.brand || ''}`)
+    })
+}
+
+function addServedQty(target, key, row) {
+    const lookupKey = Number(key || 0)
+    if (!lookupKey) return
+    target[lookupKey] = Number(target[lookupKey] || 0) + (Number(row.idadi || 0) - Number(row.serviceReturn || 0))
+}
+
+function getServedQtyMaps(dura) {
+    const qtyMap = { item: {}, color: {}, size: {} }
+    if (!IS_SERVICE || !(dura.servFrom && dura.servTo)) return qtyMap
+
+    const from = moment(dura.servFrom)
+    const to = moment(dura.servTo)
+
+    Servs.forEach(row => {
+        if (from <= moment(row.to) && to >= moment(row.From)) {
+            addServedQty(qtyMap.item, row.produ, row)
+        }
+    })
+
+    ServsC.forEach(row => {
+        if (from <= moment(row.to) && to >= moment(row.From)) {
+            addServedQty(qtyMap.color, row.color, row)
+        }
+    })
+
+    ServsS.forEach(row => {
+        if (from <= moment(row.to) && to >= moment(row.From)) {
+            addServedQty(qtyMap.size, row.size, row)
+        }
+    })
+
+    return qtyMap
+}
+
+function debouncePosItemsRender() {
+    if (POS_SEARCH_TIMER) {
+        clearTimeout(POS_SEARCH_TIMER)
+    }
+
+    POS_SEARCH_TIMER = setTimeout(() => {
+        posItms()
+    }, POS_SEARCH_DEBOUNCE_MS)
+}
+
 const vat_per = Number($('#vat_percent').val()),
       IS_SERVICE = Number($('#ItemListView').data('serv')),
       cartSvg = `
@@ -258,6 +315,7 @@ function posdata(c){
                          
 
                          POS_ITMS = itms_data
+                                                 buildPosSearchIndex()
                          posItms()
 
      }
@@ -277,74 +335,38 @@ function posItms(){
     
 
     if(search_itm()!=''){
-        const seV = search_itm(),
-        serchItms = []
-
-        allItms.forEach(itm=>{
-            var regrex = /[^a-z0-9 ]/gi,
-                searched = new RegExp(seV?.replace(regrex,''), 'i'),
-                srch = `${itm.name} ${itm.namba} ${itm.color_name} ${itm.size_name} ${itm.color_nick}  ${itm.brand}`
-
-            if(srch.match(searched)){
-                serchItms.push({
-                    'id':itm.id,
-                    'name':itm.name,
-                    'aina':itm.aina,
-                    'color_name':itm.color_name,
-                    'color_nick':itm.color_nick,
-                    'color_id':itm.color_id,
-                    'size_name':itm.size_name,
-                    'size_id':itm.size_id,
-                    'idadi':itm.idadi,
-                    'maelezo':itm.maelezo,
-                    'bei':itm.bei,
-                    'bei_jum':itm.bei_jum,
-                    'thamani':itm.thamani,
-                    'bidhaa':itm.bidhaa,
-                    'picha':itm.picha,
-                    'namba':itm.namba,
-                    'brand':itm.brand,
-                    'vipimo':itm.vipimo,
-                    'uwiano':itm.uwiano,
-                    'vipimo_jum':itm.vipimo_jum,
-                    'notsure':itm.notsure,
-                    'vat_included':itm.vat_included,
-                    'timely':itm.timely
-                   })
-               }
-
-
-         })
-
-         allItms = serchItms
+                const query = normalizePosSearchText(search_itm())
+                if (query) {
+                    allItms = allItms.filter(itm => {
+                        const baseSearch = itm.__search || normalizePosSearchText(`${itm.name || ''} ${itm.namba || ''} ${itm.color_name || ''} ${itm.size_name || ''} ${itm.color_nick || ''} ${itm.brand || ''}`)
+                        return baseSearch.includes(query)
+                    })
+                }
 
 
     }
 
     if(onlyCart)allItms = cartItms
+
+        const dura = servDura(),
+                    servedQtyMaps = getServedQtyMaps(dura)
      
     
     allItms.forEach(pi=>{
       const siz = pi.size_name!=null?`<i class="d-block" >Size:<strong class="brown text-uppercase" >${pi.size_name}</strong></i>`:'',
            color_nik = pi.color_nick!=''?`(${pi.color_nick})`:'',
            color = pi.color_name!=null?`<small> <i class="text-primary" >${pi.color_name}${color_nik}</i> </small> `:''  ,
-           picha =`<img src="${pi.picha ? pi.picha : __tbStatic('pics/img.svg')}" alt="${lang('Hakuna Picha','No Image')}">`,
+                     picha =`<img src="${pi.picha ? pi.picha : __tbStatic('pics/img.svg')}" alt="${lang('Hakuna Picha','No Image')}" loading="lazy" decoding="async">`,
            indx = `${pi.id}${pi.color_id}${pi.size_id}`,
            cart = POSCART.filter(itm=>itm.id===pi.id && itm.color===pi.color_id && itm.size===pi.size_id),
            cartqty = cart.length?cart[0].qty:0,
-           hidden = cartqty?'':'hidden',
-           dura = servDura(),
-           
-           //this is for Serving service...
-           servedI=Servs.filter(p=>p.produ===pi.id && moment(dura.servFrom||moment()) <= moment(p.to) && moment(dura.servTo||moment()) >= moment(p.From) ),
-           servedC=ServsC.filter(p=>p.color===pi.color_id && moment(dura.servFrom||moment()) <= moment(p.to) && moment(dura.servTo||moment()) >= moment(p.From) ),
-           servedS=ServsS.filter(p=>p.size===pi.size_id && moment(dura.servFrom||moment()) <= moment(p.to) && moment(dura.servTo||moment()) >= moment(p.From)  )
+           hidden = cartqty?'':'hidden'
            let svdQty = 0
 
-           if(dura.servFrom&&dura.servTo){
-            if(servedI.length)svdQty=servedI.reduce((a,b)=> Number(a) + (Number(b.idadi)-Number(b.serviceReturn)),0) 
-            if(servedC.length)svdQty=servedC.reduce((a,b)=> Number(a) + (Number(b.idadi)-Number(b.serviceReturn)),0) 
-            if(servedS.length)svdQty=servedS.reduce((a,b)=> Number(a) + (Number(b.idadi)-Number(b.serviceReturn)),0)   
+                     if(dura.servFrom&&dura.servTo){
+                        if(Number(servedQtyMaps.item[Number(pi.id)] || 0) > 0)svdQty=Number(servedQtyMaps.item[Number(pi.id)] || 0)
+                        if(Number(servedQtyMaps.color[Number(pi.color_id)] || 0) > 0)svdQty=Number(servedQtyMaps.color[Number(pi.color_id)] || 0)
+                        if(Number(servedQtyMaps.size[Number(pi.size_id)] || 0) > 0)svdQty=Number(servedQtyMaps.size[Number(pi.size_id)] || 0)
            }
           
 
@@ -1065,6 +1087,10 @@ $('#selected_items').click(function(){
     onlyCart = !onlyCart
     $('#cart_svg').html(onlyCart?cancelSvg:cartSvg)
     posItms()
+})
+
+$('#searchInputForItmm').on('input', function(){
+    debouncePosItemsRender()
 })
 
 
