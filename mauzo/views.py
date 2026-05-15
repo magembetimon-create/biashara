@@ -4657,92 +4657,99 @@ def waiter_pos_manage(request):
 
 
 def waiter_pos(request):
+      
       """
-      Public/shared POS computer page for waiter PIN login.
-      GET: Show all waiter counter users for a given business (by ?biz=<interprise_id>)
-           OR let user pick a business first.
-      POST: Verify PIN and set a session flag for the waiter, then redirect to waiterpage.
-      """
-      biz_id = int(request.GET.get('biz', 0) or request.POST.get('biz', 0) or 0)
-      device_id = str(request.GET.get('device_id', '') or request.POST.get('device_id', '') or request.session.get('waiter_pos_device', '') or '').strip()
-      duka = Interprise.objects.filter(pk=biz_id).first() if biz_id else None
-      device_session_ok = False
+            Public/shared POS computer page for waiter PIN login.
+            GET: Show all waiter counter users for a given business (by ?biz=<interprise_id>)
+            OR let user pick a business first.
+            POST: Verify PIN and set a session flag for the waiter, then redirect to waiterpage.
+            """
+      try:
+            biz_id = int(request.GET.get('biz', 0) or request.POST.get('biz', 0) or 0)
+            device_id = str(request.GET.get('device_id', '') or request.POST.get('device_id', '') or request.session.get('waiter_pos_device', '') or '').strip()
+            duka = Interprise.objects.filter(pk=biz_id).first() if biz_id else None
+            device_session_ok = False
 
-      if duka and device_id:
-            device_session_ok = WaiterPosDeviceSession.objects.filter(
-                  Interprise=duka,
-                  device_id=device_id,
-                  active=True,
-            ).exists()
-            # Do not write session on GET-only page load. If session is deleted
-            # concurrently (logout in another tab/device), Django can raise
-            # SessionInterrupted while saving response.
-
-      if request.method == 'POST':
-            counter_id = int(request.POST.get('counter', 0) or 0)
-            pin = str(request.POST.get('pin', '') or '').strip()
-
-            if not biz_id or not counter_id or not pin:
-                  return JsonResponse({'success': False, 'msg': 'Data haipo'})
-
-            if not device_id:
-                  return JsonResponse({'success': False, 'msg': 'Kifaa hakijatambulika'})
-
-            if not device_session_ok:
-                  return JsonResponse({'success': False, 'msg': 'Kifaa hakijasajiliwa kwa waiter POS'})
-
-            counter = InterprisePermissions.objects.filter(
-                  pk=counter_id,
-                  Interprise__id=biz_id,
-                  waiter_counter=True,
-                  waiter_pin=pin,
-            ).first()
-
-            if not counter:
-                  return JsonResponse({'success': False, 'msg': 'PIN si sahihi'})
-
-            # Mark this counter as servicing (deactivate others first)
-            InterprisePermissions.objects.filter(
-                  Interprise__id=biz_id,
-                  waiter_counter=True,
-            ).update(servicing=False)
-            InterprisePermissions.objects.filter(pk=counter_id).update(servicing=True)
-
-            # Save active_user to device session
-            WaiterPosDeviceSession.objects.filter(
-                  Interprise__id=biz_id,
-                  device_id=device_id,
-            ).update(active_user=counter)
-
-            return JsonResponse({'success': True, 'redirect': f'/mauzo/waiter_device_dashboard?biz={biz_id}&device_id={device_id}'})
-
-      # GET: load counters for selected business
-      counters = []
-      if duka:
-            counters = list(
-                  InterprisePermissions.objects.filter(
+            if duka and device_id:
+                  device_session_ok = WaiterPosDeviceSession.objects.filter(
                         Interprise=duka,
-                        waiter_counter=True,
-                  ).select_related('user__user').values(
-                        'id',
-                        'cheo',
-                        'user__user__first_name',
-                        'user__user__last_name',
-                        'waiter_pin',
-                        'user_entp__Interprise__Intp_code'
-                  )
-            )
-            # Only expose whether a PIN has been set, not the actual PIN
-            for c in counters:
-                  c['has_pin'] = bool(c.pop('waiter_pin', None))
+                        device_id=device_id,
+                        active=True,
+                  ).exists()
+                  # Do not write session on GET-only page load. If session is deleted
+                  # concurrently (logout in another tab/device), Django can raise
+                  # SessionInterrupted while saving response.
 
-      return render(request, 'waiter_pos.html', {
-            'duka': duka,
-            'biz_id': biz_id,
-            'device_id': device_id,
-            'device_session_ok': device_session_ok,
-            'counters': counters,
-      })
+            if request.method == 'POST':
+                  counter_id = int(request.POST.get('counter', 0) or 0)
+                  pin = str(request.POST.get('pin', '') or '').strip()
+
+                  if not biz_id or not counter_id or not pin:
+                        return JsonResponse({'success': False, 'msg': 'Data haipo'})
+
+                  if not device_id:
+                        return JsonResponse({'success': False, 'msg': 'Kifaa hakijatambulika'})
+
+                  if not device_session_ok:
+                        return JsonResponse({'success': False, 'msg': 'Kifaa hakijasajiliwa kwa waiter POS'})
+
+                  counter = InterprisePermissions.objects.filter(
+                        pk=counter_id,
+                        Interprise__id=biz_id,
+                        waiter_counter=True,
+                        waiter_pin=pin,
+                  ).first()
+
+                  if not counter:
+                        return JsonResponse({'success': False, 'msg': 'PIN si sahihi'})
+
+                  # Mark this counter as servicing (deactivate others first)
+                  InterprisePermissions.objects.filter(
+                        Interprise__id=biz_id,
+                        waiter_counter=True,
+                  ).update(servicing=False)
+                  InterprisePermissions.objects.filter(pk=counter_id).update(servicing=True)
+
+                  # Save active_user to device session
+                  WaiterPosDeviceSession.objects.filter(
+                        Interprise__id=biz_id,
+                        device_id=device_id,
+                  ).update(active_user=counter)
+
+                  return JsonResponse({'success': True, 'redirect': f'/mauzo/waiter_device_dashboard?biz={biz_id}&device_id={device_id}'})
+
+            # GET: load counters for selected business
+            counters = []
+            if duka:
+                  counters = list(
+                        InterprisePermissions.objects.filter(
+                              Interprise=duka,
+                              waiter_counter=True,
+                        ).select_related('user__user').values(
+                              'id',
+                              'cheo',
+                              'user__user__first_name',
+                              'user__user__last_name',
+                              'waiter_pin',
+                              'user_entp__Interprise__Intp_code'
+                        )
+                  )
+                  # Only expose whether a PIN has been set, not the actual PIN
+                  for c in counters:
+                        c['has_pin'] = bool(c.pop('waiter_pin', None))
+
+            return render(request, 'waiter_pos.html', {
+                  'duka': duka,
+                  'biz_id': biz_id,
+                  'device_id': device_id,
+                  'device_session_ok': device_session_ok,
+                  'counters': counters,
+            })
+
+      except:
+            traceback.print_exc()
+            return redirect('/mauzo/waiter_pos')
+
 
 
 def waiter_device_exit(request):
