@@ -12,6 +12,9 @@ var __tbStatic = window.__tbStatic || (function () {
 })();
 window.__tbStatic = __tbStatic;
 
+var transferSubmitInFlight = false;
+var activeTransferRequestId = null;
+
 //Product search for sales
  //search product.............................................................................//
  var index=-1;	
@@ -1364,6 +1367,9 @@ $('#hakiki_oda1').unbind('submit').submit(function (e) {
 //SAVE SAVETRANSFER DATA...........................................///
 $('#savetranfer').unbind('submit').submit(function (e) {
     e.preventDefault() 
+    if (transferSubmitInFlight) {
+        return false;
+    }
     let url=$(this).attr("action"),
       //  edit=$(this).data("edit"),
        // bill=$(this).data("bill"),
@@ -1484,6 +1490,7 @@ let data = {
         date:date,  
         to:to,   
         itm:JSON.stringify(itm_dt),
+        request_id: activeTransferRequestId || '',
         csrfmiddlewaretoken:csrfToken, 
     },
     url:url
@@ -1492,6 +1499,10 @@ let data = {
     if (Number(to)>0){
          if(zer==0 && kuzid == 0 ){
             if(!(size_exceed||color_exceed||itm_exceed)){
+            activeTransferRequestId = activeTransferRequestId || ('tr-' + Date.now() + '-' + Math.floor(Math.random() * 1000000));
+            data.data.request_id = activeTransferRequestId;
+            transferSubmitInFlight = true;
+            $('#savetranfer button[type="submit"]').prop('disabled', true);
             saveDt(data)
             }else{
                 alert(lang('Bidhaa zimejuridia kwa kuzidi tafadhari hakikisha idadi ya bidhaa haizidi idadi iliyopo stoku','Repeted items number, exceeded the item(s) quntity in stock, please make sure that items quatity is not exceeding stock quantity'))
@@ -1551,6 +1562,16 @@ function saveDt(data){
         $("#loadMe").modal('hide');
         hideLoading()
         
+    },
+    error: function () {
+        toastr.error(lang('Kitendo hakikufanikiwa tafadhari jaribu tena','Action failed, please try again'), 'Error Alert', {timeOut: 2000});
+    },
+    complete: function () {
+        transferSubmitInFlight = false;
+        activeTransferRequestId = null;
+        $('#savetranfer button[type="submit"]').prop('disabled', false);
+        $("#loadMe").modal('hide');
+        hideLoading();
     }
 });
 }

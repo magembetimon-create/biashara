@@ -35,6 +35,7 @@ from django.forms.models import model_to_dict
 import os
 
 from django.core.paginator import Paginator,EmptyPage
+from django.core.cache import cache
 # Create your views here.
 
 
@@ -408,7 +409,7 @@ def getItemsAssociate(request):
     mahi = list(mahitaji.objects.filter(Interprise=intp).values().order_by("-pk"))
     kampuni = list(makampuni.objects.filter(Interprise=intp).values().order_by("-pk"))
     sambazaji = list(wasambazaji.objects.filter(owner=intp.owner.user.id).values().order_by("-pk"))
-    matumiz = list(matumizi.objects.filter(owner=InterprisePermissions.objects.get(user__user=request.user,default=True).admin).values().order_by("-pk"))
+    matumiz = list(matumizi.objects.filter(owner=todoFunct(request)['cheo'].admin).values().order_by("-pk"))
     ainaMam = list(ainaMama.objects.all().annotate(aina_swa=F('aina__jina'),aina_eng=F('aina__name')).values())
     
     data = dict()
@@ -422,7 +423,9 @@ def getItemsAssociate(request):
 
 @login_required(login_url='login')
 def getStokuData(request):
-    intpn=InterprisePermissions.objects.get(user__user=request.user,default=True)
+    todo = todoFunct(request)
+    
+    intpn=todoFunct(request)['cheo']
     intp = intpn.Interprise
     stok = list(InterprisePermissions.objects.select_related('Interprise').filter(user__user=request.user,Allow=True,Interprise__owner=intp.owner).exclude(Interprise=intp.id).values('Interprise','Interprise__name','Interprise__mtaa','Interprise__wilaya','Interprise__mkoa').order_by("-pk"))
     other_stock = list(Interprise.objects.filter(owner=intp.owner.id,Interprise=True).exclude(pk=intp.id).values())
@@ -437,7 +440,7 @@ def getStokuData(request):
 @login_required(login_url='login')
 def OngezaMahitaji(request):
      if request.method == "POST":
-         entp=InterprisePermissions.objects.get(user__user=request.user,default=True)
+         entp=todoFunct(request)['cheo']
          try:
               if entp.owner or (entp.addproduct and not entp.viewi):  
                 name=request.POST.get('mahitaji')
@@ -500,7 +503,7 @@ def OngezaKampuni(request):
          name=request.POST.get('kampuni')
          edit=int(request.POST.get('edit',0))
          val=request.POST.get('val',0)
-         entp=InterprisePermissions.objects.get(user__user=request.user,default=True)
+         entp=todoFunct(request)['cheo']
          try:
              if entp.owner or (entp.addproduct and not entp.viewi):
                 kamp=makampuni()
@@ -550,7 +553,7 @@ def futaBrand(request):
      if request.method == "POST":
          
          val=request.POST.get('val',0)
-         entp=InterprisePermissions.objects.get(user__user=request.user,default=True)
+         entp=todoFunct(request)['cheo']
          try:
              if entp.owner or (entp.addproduct and not entp.viewi):
                    data={
@@ -843,7 +846,7 @@ def OngezaAina(request):
              todo = todoFunct(request)
              duka = todo['duka']
 
-             ent=InterprisePermissions.objects.get(user__user=request.user,default=True)
+             ent=todoFunct(request)['cheo']
              if ent.owner or ( ent.addproduct and not ent.viewi) :
                 aina=bidhaa_aina()
 
@@ -909,12 +912,12 @@ def OngezaAina(request):
 
 
 
-                aina.Interprise = InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise
+                aina.Interprise = todoFunct(request)['cheo'].Interprise
                 aina.aina = name
 
                 aina.mahi = Pcateg
               
-                if bidhaa_aina.objects.filter(aina=name,Interprise=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise).exists():
+                if bidhaa_aina.objects.filter(aina=name,Interprise=todoFunct(request)['cheo'].Interprise).exists():
                     data={
                         'success':False,
                         'swa':'Tayari kuna aina ya bidhaa yenye jina kama hili',
@@ -960,7 +963,7 @@ def futaAina(request):
                         'message_swa':'Aina ya  bidhaa imeongezwa kikamilifu',
                         'message_eng':'new Product category added successfully'                    
                     }
-             ent=InterprisePermissions.objects.get(user__user=request.user,default=True)
+             ent=todoFunct(request)['cheo']
              if ent.owner or ( ent.addproduct and not ent.viewi) :
                   ain = bidhaa_aina.objects.filter(pk=val,Interprise=duka.id) 
                   if  ain.exists():
@@ -1014,7 +1017,7 @@ def futaSup(request):
                         'message_swa':'Taarifa za msambazaji zimeongezwa kikamilifu',
                         'message_eng':'Supplier info was added successfully'                    
                     }
-             ent=InterprisePermissions.objects.get(user__user=request.user,default=True)
+             ent=todoFunct(request)['cheo']
              if ent.owner or ( ent.addproduct and not ent.viewi) :
                   sup = wasambazaji.objects.filter(pk=val,owner=duka.owner.user.id) 
                   if  sup.exists():
@@ -1149,7 +1152,7 @@ def sambazaji(request):
 def mteja(request):
      if request.method == "POST":
         try: 
-             intp= InterprisePermissions.objects.get(user__user=request.user,default=True)
+             intp= todoFunct(request)['cheo']
 
              if (intp.addsupplier and not intp.viewi) or intp.owner :  
 
@@ -1233,7 +1236,7 @@ def mteja(request):
 @login_required(login_url='login')
 def autocomplete(request):
     if  request.method=="GET":
-        intp=InterprisePermissions.objects.get(user__user=request.user.id, default=True)
+        intp=todoFunct(request)['cheo']
         sup=Interprise.objects.filter(Intp_code__istartswith=request.GET.get('term')).exclude(owner__user=intp.admin)
         cod=list()
         # data=dict()
@@ -1414,7 +1417,7 @@ def punguzaBidhaa(request):
     try:
         if request.method == "POST": 
             idk=request.POST.get('value')
-            entp=InterprisePermissions.objects.get(user__user=request.user.id, default=True)
+            entp=todoFunct(request)['cheo']
             duka = entp.Interprise
 
             if entp.owner or ( entp.proFduct_edit and not entp.viewi ):
@@ -1474,7 +1477,7 @@ def galamaManunuzi(request):
             name=request.POST.get('gharama')
             
             try:
-                if matumizi.objects.filter(matumizi=name,owner=InterprisePermissions.objects.get(user__user=request.user,default=True).user.user.id).exists():
+                if matumizi.objects.filter(matumizi=name,owner=todoFunct(request)['cheo'].user.user.id).exists():
                     swa='Jina la ghalama tayari lipo'
                     eng = 'Expese exists'
 
@@ -1485,7 +1488,7 @@ def galamaManunuzi(request):
                     }
                 else:
                     matum = matumizi()
-                    matum.owner = User.objects.get(pk=InterprisePermissions.objects.get(user__user=request.user,default=True).admin)  
+                    matum.owner = User.objects.get(pk=todoFunct(request)['cheo'].admin)  
                     matum.matumizi=name
                     matum.save()
             
@@ -3388,7 +3391,7 @@ def kuwekaPicha(request):
           size= picha.size
           colorin=None
           husiana=picha_bidhaa()
-          entp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise
+          entp=todoFunct(request)['cheo'].Interprise
           itm = bidhaa_stoku.objects.get(pk=idm,Interprise__owner=entp.owner.id)
           SIZES = picha_bidhaa.objects.filter(bidhaa=itm.bidhaa.id).aggregate(Sizes=Sum('picha__pic_size'))['Sizes'] or 0
           colorr = None
@@ -3522,7 +3525,7 @@ def ondoaPicha(request):
     if request.method == "POST":    
         try: 
             picha_link=request.POST.get('value')
-            # entp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise
+            # entp=todoFunct(request)['cheo'].Interprise
             todo = todoFunct(request) 
             duka = todo['duka'] 
             cheo = todo['cheo']
@@ -3593,7 +3596,7 @@ def ondoa_size(request):
       if request.method == "POST":
         size_id=request.POST.get('valued')
 
-        size_to_delete = produ_size.objects.get(pk=size_id , Interprise=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise)
+        size_to_delete = produ_size.objects.get(pk=size_id , Interprise=todoFunct(request)['cheo'].Interprise)
 
         size_to_delete.delete()
 
@@ -3629,7 +3632,7 @@ def ondoa_color(request):
 
       if request.method == "POST":
         rangi_id=request.POST.get('valued')
-        intp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise 
+        intp=todoFunct(request)['cheo'].Interprise 
 
 
         produ =produ_colored.objects.get(pk=rangi_id,Interprise=intp).bidhaa.id
@@ -3654,7 +3657,7 @@ def ondoa_color(request):
             rangi_produ.delete()
             
    
-        bidhaaRangi =list(produ_colored.objects.select_related('bidhaa_stoku','color_produ').filter(Interprise=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise,bidhaa=produ).values('id','bidhaa','color','idadi','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi').order_by("-pk"))  
+        bidhaaRangi =list(produ_colored.objects.select_related('bidhaa_stoku','color_produ').filter(Interprise=todoFunct(request)['cheo'].Interprise,bidhaa=produ).values('id','bidhaa','color','idadi','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi').order_by("-pk"))  
         data={
              'rangi':bidhaaRangi,
               'success':True,
@@ -3691,7 +3694,7 @@ def save_size(request):
          size_id=request.POST.get('size')
          idadi_jum=int(request.POST.get('idadi_jum'))
          idadi_reja=int(request.POST.get('idadi_reja'))
-         intp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise 
+         intp=todoFunct(request)['cheo'].Interprise 
          produ = bidhaa_stoku.objects.get(pk=name)
         
         
@@ -3864,7 +3867,7 @@ def addSize(request):
             name=request.POST.get('valued')
             size_name=request.POST.get('size_name')
             rangi_id=request.POST.get('rangi')
-            intp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise 
+            intp=todoFunct(request)['cheo'].Interprise 
           
 
             siz = sizes()
@@ -3900,7 +3903,7 @@ def addColor(request):
             color_name=request.POST.get('color_name')
             color_code=request.POST.get('color_code')
             nick_name=request.POST.get('other_name')
-            intp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise 
+            intp=todoFunct(request)['cheo'].Interprise 
 
             color =  color_produ()
             produ = bidhaa.objects.get(pk=name,owner=intp.owner.user)
@@ -3938,7 +3941,7 @@ def getSizeColor(request):
      if request.method == "POST":
 
         try: 
-            intp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise 
+            intp=todoFunct(request)['cheo'].Interprise 
             itemImg=[]
         
             pics = picha_bidhaa.objects.filter(picha__owner= intp.owner.user).annotate(rangi=F('color_produ'),size=F('picha__pic_size'))
@@ -3988,7 +3991,7 @@ def ondoa_sifa(request):
     try: 
        if request.method == "POST":
          name=request.POST.get('value')
-         intp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise
+         intp=todoFunct(request)['cheo'].Interprise
          sifa=bidhaa_sifa.objects.get(pk=name,owner=intp.owner.user.id) 
          sifa.delete() 
          sifia=list(bidhaa_sifa.objects.filter(owner=intp.owner.user).values('sifa','bidhaa','id'))
@@ -4020,7 +4023,7 @@ def ondoa_keficha(request):
     try: 
        if request.method == "POST":
          name=request.POST.get('value')
-         intp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise
+         intp=todoFunct(request)['cheo'].Interprise
          sifa=key_sifa.objects.get(pk=name,owner=intp.owner.user.id) 
          sifa.delete() 
          keySifa=list(key_sifa.objects.filter(owner=intp.owner.user).values('sifa','bidhaa','id','key'))
@@ -4055,7 +4058,7 @@ def maelezo_kina(request):
          elezo=request.POST.get('elezo')
          new=int(request.POST.get('new'))
          
-         intp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise
+         intp=todoFunct(request)['cheo'].Interprise
          produ=bidhaa.objects.get(pk=name,owner=intp.owner.user) 
          keyFicha= key_sifa()
        
@@ -4102,7 +4105,7 @@ def sifa_muhimu(request):
          idn=request.POST.get('value')
          new=int(request.POST.get('new'))
 
-         intp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise
+         intp=todoFunct(request)['cheo'].Interprise
          produ=bidhaa.objects.get(pk=name,owner=intp.owner.user)  
          sifa=bidhaa_sifa()
          if not new:
@@ -4153,7 +4156,7 @@ def save_color(request):
          idadi_jum=int(request.POST.get('idadi_jum'))
          idadi_reja=int(request.POST.get('idadi_reja'))
 
-         entp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise
+         entp=todoFunct(request)['cheo'].Interprise
          produ = bidhaa_stoku.objects.get(pk=name)
         #  Angalia kama kuna update ya rangi au ni rangi mpya inawekwa.................//
         #  print('mpya:',mpya)
@@ -4204,7 +4207,7 @@ def save_color(request):
                 rangi.save()
                 rangi_produ.save()
 
-                bidhaaRangi =list(produ_colored.objects.select_related('bidhaa_stoku','color_produ').filter(Interprise=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise,bidhaa=produ).values('id','bidhaa','color','idadi','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi'))  
+                bidhaaRangi =list(produ_colored.objects.select_related('bidhaa_stoku','color_produ').filter(Interprise=todoFunct(request)['cheo'].Interprise,bidhaa=produ).values('id','bidhaa','color','idadi','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi'))  
 
                 data={
                     'rangi':bidhaaRangi,
@@ -4328,6 +4331,7 @@ def addtranfer(request):
             to = int(request.POST.get('to'))
             reason = request.POST.get('reason')
             dt = json.loads(request.POST.get('itm'))
+            request_id = str(request.POST.get('request_id') or '').strip()
 
             data = {
                 'success':True,
@@ -4336,6 +4340,21 @@ def addtranfer(request):
             }
 
             if  Interprise.objects.filter(pk =to,owner=duka.owner.id).exists():
+
+                # Prevent duplicate processing of the same transfer request.
+                if request_id:
+                    lock_key = f"addtransfer-lock:{duka.id}:{request_id}"
+                    saved_key = f"addtransfer-saved:{duka.id}:{request_id}"
+                    already_saved = cache.get(saved_key)
+                    if already_saved:
+                        return JsonResponse(already_saved)
+
+                    if not cache.add(lock_key, 1, timeout=30):
+                        return JsonResponse({
+                            'success': False,
+                            'msg_swa': 'Muamala huu unaendelea kushughulikiwa, tafadhari subiri kidogo',
+                            'msg_eng': 'This transfer request is already being processed, please wait'
+                        })
 
                 toentp = Interprise.objects.get(pk=to)
                 if bool(oda):
@@ -4553,8 +4572,9 @@ def addtranfer(request):
                         itm_.save()
                        
                     last_produ =  bidhaa_stoku.objects.filter(Interprise=toentp,bidhaa=prd.bidhaa.id).exclude(pk=prd.id).last()
-                    last_produ.inapacha = True
-                    last_produ.save()
+                    if last_produ is not None:
+                        last_produ.inapacha = True
+                        last_produ.save()
                     
                 to_comfirm = InterprisePermissions.objects.filter(Interprise=toentp.id)
                 for tn in to_comfirm:
@@ -4571,6 +4591,10 @@ def addtranfer(request):
                      'bil':rc.id
                  })
 
+                if request_id:
+                    cache.set(saved_key, data, timeout=180)
+                    cache.delete(lock_key)
+
                
 
 
@@ -4585,6 +4609,13 @@ def addtranfer(request):
 
        except:
             traceback.print_exc()
+            if request.method == "POST":
+                try:
+                    request_id = str(request.POST.get('request_id') or '').strip()
+                    if request_id:
+                        cache.delete(f"addtransfer-lock:{todo['duka'].id}:{request_id}")
+                except:
+                    pass
             data = {
                 'success':False,
                 'msg_swa' : 'Data za kurekodi uhamishaji wa bidhaa kutoka '+duka.name+' hazikufanikiwa kutokana na hitilafu tafadhari jaribu tena',
@@ -5462,4 +5493,5 @@ def RemoveItemAudio(request):
 
     else:
            return render(request,'pagenotFound.html',todoFunct(request)) 
+
 

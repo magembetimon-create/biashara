@@ -699,7 +699,7 @@ def  newService(request):
 def  fidiahela(request):
 
      val= request.POST.get('the_value')
-     duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+     duka = todoFunct(request)['cheo']
 
      todo = newInvo_funct(request) 
      
@@ -1681,7 +1681,7 @@ def  ondoaInvo(request):
      value= request.GET.get('val','')
    
      try:
-            duka = InterprisePermissions.objects.get(user__user =request.user, default = True,Allow=True)
+            duka = todoFunct(request)['cheo']
 
            
             bill = mauzoni.objects.get(pk=value,Interprise=duka.Interprise.id)
@@ -3212,7 +3212,7 @@ def _parse_waiter_desc(desc):
 def  change_toInvo(request):
       intp= request.GET.get('item_valued',0)
       page_num= request.GET.get('page',1)
-      duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+      duka = todoFunct(request)['cheo']
       od =  mauzoni.objects.filter(pk=intp,Interprise=duka.Interprise.id,order=True)
       if od.exists() and od.last().ilolipwa <= od.last().amount :
             sale = mauzoni.objects.get(pk=intp,Interprise=duka.Interprise.id,order=True)
@@ -4940,7 +4940,7 @@ def  viewRtrn(request):
     else:
           msg={'pay':False}
 
-#     duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+#     duka = todoFunct(request)['cheo']
 
   #     back= request.POST.get('back_to')
     after = {
@@ -5015,7 +5015,7 @@ def  ReFprint(request):
 
 @login_required(login_url='login')
 def lipia_(request,ac,paid,bal_set,bal,itm_val,Code):
-               duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+               duka = todoFunct(request)['cheo']
       
                toakwa= PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)
                beforweka=toakwa.Amount 
@@ -5087,7 +5087,7 @@ def  Itm_return_data(request):
 
       date = request.POST.get('rudisha-date')
 
-      duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+      duka = todoFunct(request)['cheo']
 
       uzo = mauzoni.objects.get(pk=intp,Interprise=duka.Interprise.id)
  
@@ -5433,7 +5433,7 @@ def oda_refund(request):
 
                lis_t = request.POST.get('lis_t',1)   
 
-               duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+               duka = todoFunct(request)['cheo']
 
                user = UserExtend.objects.get(user = request.user.id )
 
@@ -5782,7 +5782,7 @@ def  addInvoice(request):
          if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
               return JsonResponse(shift_operation_block_payload(todo), status=403)
 
-         entp = InterprisePermissions.objects.get((Q(user=duka.owner.id)|Q(viewi=False,mauzo_na_matumizi=True)),user__user = request.user, default = True)
+         entp = todoFunct(request)['cheo']
          
          bill_str=bill_no_
 
@@ -6386,7 +6386,7 @@ def addUnits(request):
                   val=request.POST.get('val')   
                   edit=int(request.POST.get('edit'))   
 
-                  dukap = InterprisePermissions.objects.get(user__user = request.user.id, default = True)
+                  dukap = todoFunct(request)['cheo']
 
 
 
@@ -6468,7 +6468,7 @@ def removeUnit(request):
       #  try:     
          itm=request.POST.get('itm')
          val=request.POST.get('val')
-         dukap = InterprisePermissions.objects.get(user__user = request.user.id, default = True)
+         dukap = todoFunct(request)['cheo']
 
          if bei_za_bidhaa.objects.filter(pk=val,item__owner=dukap.Interprise.owner.user.id).exists():
 

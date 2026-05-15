@@ -220,7 +220,7 @@ def addBill(request):
          baki=request.POST.get('baki')
          baki_set=bool(int(request.POST.get('baki_set')))
          
-         entp = InterprisePermissions.objects.get(user__user = request.user, default = True)
+         entp = todoFunct(request)['cheo']
          bill_str=bill_no_
          manunu=manunuzi()
      
@@ -636,7 +636,7 @@ def getBilllist(request):
       if request.method == "POST":
          intp=request.POST.get('value')            
 
-         duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+         duka = todoFunct(request)['cheo']
          bill = manunuzi.objects.get(pk=intp,Interprise=duka.Interprise)
 
          list_manunu = bidhaa_stoku.objects.select_related('manunuziList','bidhaa').filter(manunuzi__manunuzi=bill.id).values('id','bidhaa','bidhaa__bidhaa_jina','bidhaa__idadi_jum','bidhaa__vipimo','bidhaa__vipimo_jum','bidhaa__maelezo','manunuzi__jum','manunuzi__idadi','manunuzi__vat_included','Bei_kununua','manunuzi__vat_set')
@@ -671,7 +671,7 @@ def getBilllist(request):
 
 def viewbill_funct(request,intp,back,lis_t):
       
-            duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+            duka = todoFunct(request)['cheo']
            
             bill = manunuzi.objects.get(pk=intp,Interprise=duka.Interprise)
 
@@ -760,7 +760,7 @@ def bili_return(request):
             if msg is not None:
                   msg = json.loads(msg)
 
-            duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+            duka = todoFunct(request)['cheo']
             sale_no = 1
             return_str=''
             if bil_return.objects.filter(bil__Interprise=duka.Interprise).exists():
@@ -952,7 +952,7 @@ def viewRetrn(request):
             msg={'pay':False}
 
       todo = todoFunct(request)
-      # duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+      # duka = todoFunct(request)['cheo']
 
       #     back= request.POST.get('back_to')
       after = {
@@ -1036,7 +1036,7 @@ def bill_Itm_return_data(request):
 
       date = request.GET.get('rudisha-date')
 
-      duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+      duka = todoFunct(request)['cheo']
 
 
       uzo = manunuzi.objects.get(pk=intp,Interprise=duka.Interprise.id)
@@ -1272,7 +1272,7 @@ def payReturn(request):
             #    bal_set=int(request.POST.get('bal_set'))
                pay_d = request.POST.get('pay_d')   
                lis_t = request.POST.get('lis_t')   
-               duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+               duka = todoFunct(request)['cheo']
                return_ = bil_return.objects.get(pk=value,bil__Interprise=duka.Interprise.id)
                # matum = rekodiMatumizi.objects.filter(manunuzi_id=return_.id,Interprise=duka.Interprise)
                user = UserExtend.objects.get(user = request.user.id )
@@ -1450,7 +1450,7 @@ def removebill(request):
 
       
             def delf(intp):
-                  duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+                  duka = todoFunct(request)['cheo']
                   bill = manunuzi.objects.get(pk=intp,Interprise=duka.Interprise)
                   list_manunu = manunuziList.objects.filter(manunuzi=bill.id)
 
@@ -1488,7 +1488,7 @@ def payManyBill(request):
          bal_set=int(request.POST.get('bal_set'))
          pay_d = request.POST.get('pay_d')   
 
-         duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+         duka = todoFunct(request)['cheo']
          try:
             toakwa = PaymentAkaunts.objects.get(pk=ac,Interprise__owner=duka.Interprise.owner)
             beforweka=toakwa.Amount 
@@ -1581,7 +1581,7 @@ def payBill(request):
          bal_set=int(request.POST.get('bal_set'))
          pay_d = request.POST.get('pay_d')   
 
-         duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+         duka = todoFunct(request)['cheo']
 
 
          try:
@@ -1935,7 +1935,7 @@ def color_rm(request):
       try:
         if request.method == "POST":
             rangi_id=request.POST.get('valued')
-            intp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise 
+            intp=todoFunct(request)['cheo'].Interprise 
       
             color=color_produ.objects.get(pk=rangi_id,bidhaa__owner=intp.owner.user)
             color.delete()
@@ -3736,7 +3736,7 @@ def payBill2(request):
                to_bil = int(request.POST.get('to_bill',0))   
 
 
-               duka = InterprisePermissions.objects.get(user__user =request.user, default = True)
+               duka = todoFunct(request)['cheo']
                bill = manunuzi.objects.get(pk=value,Interprise=duka.Interprise.id)
                matum = rekodiMatumizi.objects.filter(manunuzi_id=bill.id,Interprise=duka.Interprise)
                user = UserExtend.objects.get(user = request.user.id )
@@ -3860,5 +3860,6 @@ def purchaseRate(request):
                   return JsonResponse(data)      
       else:
             return render(request,'pagenotFound.html',todoFunct(request))   
+
 
 

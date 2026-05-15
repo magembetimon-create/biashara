@@ -2191,10 +2191,10 @@ def addStaff_form(request):
     
 
       
-      if InterprisePermissions.objects.get(user__user=request.user.id,default=True).owner and not exist:          
+      if todoFunct(request)['cheo'].owner and not exist:          
        
 
-          entId = InterprisePermissions.objects.get(user__user=request.user.id,default=True)
+          entId = todoFunct(request)['cheo']
 
           usrent=user_Interprise()
           usrent.Interprise = usr.diactive.where
@@ -2261,8 +2261,10 @@ def getstaffdata(request):
   if request.method == 'POST':
     # local_tz = pytz.timezone("Africa/Dar_es_Salaam")
     todo = todoFunct(request)
-    if todo['duka'].Interprise:
-      entId = InterprisePermissions.objects.get(user__user=request.user.id,default=True).Interprise
+    entId = todo['duka']
+    cheo = todo['cheo']
+    if entId.Interprise:
+      # entId = InterprisePermissions.objects.get(user__user=request.user.id,default=True).Interprise
       # admin = InterprisePermissions.objects.get(user__user=request.user.id,default=True).admin
       users = InterprisePermissions.objects.filter(Interprise=entId,Allow=True).exclude(user__user = request.user.id).annotate(
          picha=F('user__picha'),
@@ -2302,11 +2304,11 @@ def getstaffdata(request):
             if each.Allow:
                 dat+="allowed" 
     
-      d=InterprisePermissions.objects.get(user__user=request.user.id,default=True).online
+      d=cheo.online
       n=datetime.datetime.now(tz=timezone.utc)
       diff = {
         "now1":datetime.datetime.now(tz=timezone.utc),
-        "time":InterprisePermissions.objects.get(user__user=request.user.id,default=True).online,
+        "time":cheo.online,
         "diff":(n-d).seconds,
         #  "truetime":d.replace(tzinfo=pytz.utc).astimezone(local_tz).replace(tzinfo=None),
 
@@ -2579,7 +2581,7 @@ def deleteuser(request):
           try:
             id= request.POST.get('value',"") 
           
-            if(InterprisePermissions.objects.get(user__user=request.user.id,default=True).owner == True ):
+            if(todoFunct(request)['cheo'].owner == True ):
               staff =  InterprisePermissions.objects.get(pk=id, admin = request.user.id)
               staff.delete()
              

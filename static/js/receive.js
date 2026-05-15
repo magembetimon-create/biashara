@@ -74,6 +74,9 @@
           to_branch_name: row.to_branch_name || "-",
           tarehe: row.tarehe || null,
           item_map: {},
+          item_names: {},
+          unit_names: {},
+          item_qty_map: {},
           qty: 0,
           value: 0,
           worth: 0,
@@ -89,14 +92,29 @@
       grouped[key].worth += n(row.sale_price) * baseQty;
 
       if (n(row.item_id) > 0) {
-        grouped[key].item_map[n(row.item_id)] = true;
+        const itemId = n(row.item_id);
+        grouped[key].item_map[itemId] = true;
+        grouped[key].item_names[itemId] = row.item_name || "-";
+        const uwianoVal = n(row.uwiano) || 1;
+        const unitName = uwianoVal > 1 ? (row.item_pack_unit || row.item_unit || "-") : (row.item_unit || row.item_pack_unit || "-");
+        grouped[key].unit_names[itemId] = unitName;
+        grouped[key].item_qty_map[itemId] = (grouped[key].item_qty_map[itemId] || 0) + baseQty;
       }
     });
 
     return Object.values(grouped)
       .map(function (row) {
         row.items_count = Object.keys(row.item_map).length;
+        row.item_details_html = Object.keys(row.item_map).map(function (itemId) {
+          const name = row.item_names[itemId] || "-";
+          const qty = formatNumber(row.item_qty_map[itemId] || 0);
+          const unit = row.unit_names[itemId] || "-";
+          return `${name} (${qty} ${unit})`;
+        }).join("<br>") || "-";
         delete row.item_map;
+        delete row.item_names;
+        delete row.unit_names;
+        delete row.item_qty_map;
         return row;
       })
       .sort(function (a, b) {
@@ -252,9 +270,8 @@
       html += "<tr>";
       html += `<td>${toDateText(row.tarehe)}</td>`;
       html += `<td>${row.transfer_code}</td>`;
-      html += `<td>${row.from_branch_name}</td>`;
       html += `<td>${row.to_branch_name}</td>`;
-      html += `<td class="text-right">${formatNumber(row.items_count)}</td>`;
+      html += `<td>${row.item_details_html}</td>`;
       html += `<td class="text-right">${formatNumber(row.qty)}</td>`;
       html += `<td class="text-right">${formatNumber(row.value)}</td>`;
       html += `<td class="text-right">${formatNumber(row.worth)}</td>`;
@@ -262,7 +279,7 @@
     });
 
     if (!grouped.length) {
-      html = `<tr><td colspan="8" class="text-center text-muted py-3">${text("Hakuna taarifa kwenye muda huu", "No data in this period")}</td></tr>`;
+      html = `<tr><td colspan="7" class="text-center text-muted py-3">${text("Hakuna taarifa kwenye muda huu", "No data in this period")}</td></tr>`;
     }
 
     title.text(`${text("Maelezo ya", "Details for")} ${period.name}`);

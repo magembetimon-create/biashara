@@ -1929,7 +1929,7 @@ def removeExpense(request):
 def Workerautocomplete(request):
     if  request.method=="GET":
         try:
-            intp=InterprisePermissions.objects.get(user__user=request.user.id, default=True)
+            intp=todoFunct(request)['cheo']
             sup=Interprise.objects.filter(Intp_code__istartswith=request.GET.get('term'),Interprise=False).exclude(owner__user=intp.admin)
             cod=list()
             # data=dict()

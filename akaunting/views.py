@@ -161,7 +161,7 @@ def kuwekapesa(request):
 
             if ((useri == todo['duka'].owner) or (cheo.miamala_Rekodi and not cheo.viewi)) and not cheo.user.company :  
                 #  kuapdate inapoenda
-                entp=InterprisePermissions.objects.get(user__user=request.user,default=True).Interprise
+                entp=todoFunct(request)['cheo'].Interprise
                 wekakwa= PaymentAkaunts.objects.get(pk=acid,Interprise__owner=entp.owner.id)
                 beforweka=wekakwa.Amount
 
@@ -1205,7 +1205,7 @@ def getdata(request):
 #         show = strt*num  # multiply the number of how many data should the user show .......
 #         strt = num*(strt-1)
 
-#         per =  InterprisePermissions.objects.get(user__user=request.user,default=True)
+#         per =  todoFunct(request)['cheo']
 #         duka = per.Interprise 
 
 #         wekanum= wekaCash.objects.filter(Interprise=duka).count()
@@ -1219,7 +1219,7 @@ def getdata(request):
 #         ).order_by("-pk"))[strt:show] 
       
 
-#         if InterprisePermissions.objects.get(user__user=request.user,default=True).owner:
+#         if todoFunct(request)['cheo'].owner:
 #             Admin = True
 
 #         else:
@@ -1256,7 +1256,7 @@ def getdata(request):
 #         show = strt*num  
 #         strt = num*(strt-1)
      
-#         per =  InterprisePermissions.objects.get(user__user=request.user,default=True)
+#         per =  todoFunct(request)['cheo']
 #         duka = per.Interprise
 
 #         toanum= toaCash.objects.filter(Interprise=duka).count()
@@ -1303,7 +1303,7 @@ def getdata(request):
 #         month=int(request.POST.get('monthcode'))
 #         dt =request.POST.get('dt')
             
-#         per =  InterprisePermissions.objects.get(user__user=request.user,default=True)
+#         per =  todoFunct(request)['cheo']
 #         duka = per.Interprise
 #         toa_first = toaCash.objects.filter(Interprise=duka).first()
 #         weka_first =wekaCash.objects.filter(Interprise=duka).first()
@@ -1684,5 +1684,6 @@ def mobile_payments_data(request):
         'rows': rows,
         'summary': summary,
     })
+
 
 

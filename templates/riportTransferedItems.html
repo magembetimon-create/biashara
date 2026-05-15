@@ -130,9 +130,8 @@
           <tr>
             <th>{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
             <th>{% if useri.langSet == 0 %}Control No{% else %}Control No{% endif %}</th>
-            <th>{% if useri.langSet == 0 %}Kutoka{% else %}Branch{% endif %}</th>
             <th>{% if useri.langSet == 0 %}Kwenda{% else %}Transfer To{% endif %}</th>
-            <th class="text-right">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
+            <th>{% if useri.langSet == 0 %}Bidhaa (Kiasi + Vipimo){% else %}Item (Qty + Units){% endif %}</th>
             <th class="text-right">{% if useri.langSet == 0 %}Qty{% else %}Qty{% endif %}</th>
             <th class="text-right">{% if useri.langSet == 0 %}Value{% else %}Value{% endif %} ({{duka.currencii}})</th>
             <th class="text-right">{% if useri.langSet == 0 %}Worth{% else %}Worth{% endif %} ({{duka.currencii}})</th>
@@ -141,7 +140,7 @@
         <tbody id="TransferedItemsTableBody"></tbody>
         <tfoot>
           <tr class="weight600 bg-light">
-            <td colspan="5">{% if useri.langSet == 0 %}Jumla{% else %}Totals{% endif %}</td>
+            <td colspan="4">{% if useri.langSet == 0 %}Jumla{% else %}Totals{% endif %}</td>
             <td class="text-right" id="TransferQtyTotal">0</td>
             <td class="text-right" id="TransferValueTotal">0</td>
             <td class="text-right" id="TransferWorthTotal">0</td>

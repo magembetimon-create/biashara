@@ -1211,34 +1211,22 @@ def TransferedItemsData(request):
       if transfer_to > 0:
         qs = qs.filter(receive__Interprise=transfer_to)
 
-      rows = qs.annotate(
-        receive_id=F('receive'),
-        transfer_code=F('receive__transfer__code'),
-        from_branch_id=F('receive__transfer__Interprise'),
-        from_branch_name=F('receive__transfer__Interprise__name'),
-        to_branch_id=F('receive__Interprise'),
-        to_branch_name=F('receive__Interprise__name'),
-        tarehe=F('receive__transfer__tarehe'),
-        qty=F('qty'),
-        uwiano=F('uwiano'),
-        buy_price=F('bidhaa_stoku__Bei_kununua'),
-        sale_price=F('bidhaa_stoku__Bei_kuuza'),
-        item_id=F('bidhaa_stoku__bidhaa'),
-        item_name=F('bidhaa_stoku__bidhaa__bidhaa_jina'),
-      ).values(
+      rows = qs.values(
         'receive_id',
-        'transfer_code',
-        'from_branch_id',
-        'from_branch_name',
-        'to_branch_id',
-        'to_branch_name',
-        'tarehe',
         'qty',
         'uwiano',
-        'buy_price',
-        'sale_price',
-        'item_id',
-        'item_name',
+        transfer_code=F('receive__transfer__code'),
+        from_branch_id=F('receive__transfer__Interprise_id'),
+        from_branch_name=F('receive__transfer__Interprise__name'),
+        to_branch_id=F('receive__Interprise_id'),
+        to_branch_name=F('receive__Interprise__name'),
+        tarehe=F('receive__transfer__tarehe'),
+        buy_price=F('bidhaa_stoku__Bei_kununua'),
+        sale_price=F('bidhaa_stoku__Bei_kuuza'),
+        item_id=F('bidhaa_stoku__bidhaa_id'),
+        item_name=F('bidhaa_stoku__bidhaa__bidhaa_jina'),
+        item_unit=F('bidhaa_stoku__bidhaa__vipimo'),
+        item_pack_unit=F('bidhaa_stoku__bidhaa__vipimo_jum'),
       )
 
       data = {
