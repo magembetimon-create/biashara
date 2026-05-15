@@ -131,15 +131,15 @@ def all_staff(request):
                 diactive__isnull=False
             ).values_list('pk', flat=True)
         )
-        all_counters_with_pin_set = InterprisePermissions.objects.filter(
-            Interprise__owner=duka.owner.id,
-            waiter_counter = True,
-            waiter_pin_set = True,
+        # all_counters_with_pin_set = InterprisePermissions.objects.filter(
+        #     Interprise__owner=duka.owner.id,
+        #     waiter_counter = True,
+        #     waiter_pin_set = True,
 
-        )
+        # )
 
-        for wt in all_counters_with_pin_set:
-            InterprisePermissions.objects.filter(user=wt.user,admin=duka.owner.id,waiter_counter=True).exclude(pk=wt.pk).update(waiter_pin=wt.waiter_pin,waiter_pin_set=True)
+        # for wt in all_counters_with_pin_set:
+        #     InterprisePermissions.objects.filter(user=wt.user,admin=duka.owner.id,waiter_counter=True,waiter_pin_set=False).exclude(pk=wt.pk).update(waiter_pin=wt.waiter_pin,waiter_pin_set=True)
 
 
         todo.update({
