@@ -13,7 +13,7 @@ from management.models import customer_area
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
-from django.db.models import F,FloatField,Count
+from django.db.models import F,FloatField,Count,DecimalField,Sum
 from django.db import transaction
 from django.core import serializers
 from django.db.models import Q
@@ -3149,7 +3149,10 @@ def _deduct_stock_for_order(sale):
                   if rem_qty == 0 and other_st.exists():
 
                         bidhaa_stoku.objects.filter(pk=l.produ.id).update(inapacha=True)
-                        other_st.last().update(inapacha=False)
+                        other_st.update(inapacha=True)
+                        last_itm = other_st.last()
+                        last_itm.inapacha=False
+                        last_itm.save()
 
             if sales_color.objects.filter(mauzo=l.id).exists():
                   sale_c = sales_color.objects.filter(mauzo=l.id)
@@ -3480,6 +3483,13 @@ def waiter_orders_summary(request):
                         })
 
                   selected_sale_ids = [x.id for x in selected_qs]
+                  
+                  # Calculate remaining debt per sale
+                  total_remaining_debt = float(selected_qs.aggregate(
+                        debt=Sum(F('amount') - F('ilolipwa'), output_field=DecimalField())
+                  ).get('debt') or 0)
+                  
+                  # Get accounts used for previous non-cash payments
                   non_cash_groups = list(
                         waiterPayments.objects.filter(
                               waiter__id=selected_waiter_id,
@@ -3502,19 +3512,18 @@ def waiter_orders_summary(request):
                   if non_cash_groups:
                         selected_waiter_has_non_cash_payments = True
                         for row in non_cash_groups:
-                              acc_amount = float(row.get('amount') or 0)
-                              non_cash_total += acc_amount
+                              acc_id = int(row.get('account') or 0)
                               selected_waiter_payment_accounts.append({
-                                    'account_id': int(row.get('account') or 0),
+                                    'account_id': acc_id,
                                     'name': str(row.get('account__Akaunt_name') or '').strip() or '-',
                                     'type': str(row.get('account__aina') or '').strip() or '-',
-                                    'amount': acc_amount,
-                                    'default_amount': acc_amount,
+                                    'amount': float(row.get('amount') or 0),
+                                    'default_amount': 0,
                                     'records': int(row.get('records') or 0),
                                     'is_cash': False,
                               })
 
-                  cash_default_amount = max(0, float(selected_waiter_orders_total_amount or 0) - float(non_cash_total or 0))
+                  cash_default_amount = max(0, float(total_remaining_debt or 0))
                   cash_account = PaymentAkaunts.objects.filter(
                         Interprise__owner=duka.owner,
                         aina__iexact='Cash'
@@ -3909,8 +3918,8 @@ def waiter_summary_clear_waiter_payments(request):
                         paidAmo = 0
 
                   mauzoni.objects.filter(pk=od.id).update(
-                        ilolipwa=order_paid,
-                        waiter_pay=order_paid,
+                        ilolipwa=F('ilolipwa') + order_paid,
+                        waiter_pay=F('waiter_pay') + order_paid,
                         full_paid=new_full_paid,
                         By_id=new_by_id,
                         waiter_order_cleared_id=new_clear_id,

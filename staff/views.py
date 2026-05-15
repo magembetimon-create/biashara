@@ -7,8 +7,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Q
-from django.db.models import Sum
+from django.db.models import Q, Sum, F
 from django.utils import timezone
 import json
 
@@ -577,7 +576,7 @@ def shift_view(request):
             mauzo__tarehe__lte=period_end,
             mauzo__service=False,
             mauzo__order=False,
-        ).values_list('idadi', 'bei')
+        ).annotate(net_qty=F('idadi') - F('returned') - F('serviceReturn')).values_list('net_qty', 'bei')
         sales_amount = sum((row[0] or 0) * (row[1] or 0) for row in sales_rows)
 
         used_qty = productChangeRecord.objects.filter(
@@ -990,7 +989,7 @@ def print_shift(request):
             mauzo__tarehe__lte=period_end,
             mauzo__service=False,
             mauzo__order=False,
-        ).values_list('idadi', 'bei')
+        ).annotate(net_qty=F('idadi') - F('returned') - F('serviceReturn')).values_list('net_qty', 'bei')
         sales_amount = sum((row[0] or 0) * (row[1] or 0) for row in sales_rows)
 
         used_qty = productChangeRecord.objects.filter(

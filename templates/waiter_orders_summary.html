@@ -389,6 +389,35 @@
       waiterPaymentAccounts = [];
     }
 
+    function parseAmountValue(rawValue) {
+      var cleaned = String(rawValue == null ? '' : rawValue)
+        .replace(/,/g, '')
+        .replace(/[^0-9.\-]/g, '');
+      var amount = Number(cleaned);
+      return Number.isFinite(amount) ? amount : 0;
+    }
+
+    function formatAmountValue(rawValue) {
+      var raw = String(rawValue == null ? '' : rawValue)
+        .replace(/,/g, '')
+        .replace(/[^0-9.\-]/g, '');
+
+      if (!raw) return '';
+
+      var negative = raw.charAt(0) === '-';
+      var unsigned = negative ? raw.slice(1) : raw;
+      var parts = unsigned.split('.');
+      var intPart = (parts[0] || '').replace(/^0+(?=\d)/, '');
+      var decimalPart = parts.length > 1 ? parts.slice(1).join('') : '';
+      var formattedInt = (intPart || '0').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return (negative ? '-' : '') + formattedInt + (decimalPart ? '.' + decimalPart : '');
+    }
+
+    function formatAmountInput(inputEl) {
+      if (!inputEl) return;
+      inputEl.value = formatAmountValue(inputEl.value);
+    }
+
     function renderClearingRows(rows) {
       if (!clearAccountsBody) return;
       if (!rows || !rows.length) {
@@ -419,7 +448,7 @@
           html += '<td>' + accountName + '</td>';
         }
 
-        html += '<td class="text-right" style="max-width:180px;"><input type="number" min="0" step="0.01" class="form-control form-control-sm text-right waiter-clear-amount-input" data-account="' + accountId + '" value="' + amount + '" placeholder="Amount"></td>';
+        html += '<td class="text-right" style="max-width:180px;"><input type="text" inputmode="decimal" class="form-control form-control-sm text-right waiter-clear-amount-input" data-account="' + accountId + '" value="' + formatAmountValue(amount) + '" placeholder="Amount"></td>';
 
         html += '<td class="text-center"><input type="checkbox" class="waiter-clear-select" data-account="' + accountId + '"></td>';
         html += '</tr>';
@@ -443,7 +472,7 @@
         var aid = Number(cb.getAttribute('data-account') || 0);
         if (!aid) return;
         var input = clearAccountsBody.querySelector('.waiter-clear-amount-input[data-account="' + aid + '"]');
-        var amt = Number((input && input.value) || 0);
+        var amt = parseAmountValue((input && input.value) || 0);
         if (amt > 0) total += amt;
       });
       waiterSelectedTotalText.textContent = '{{ duka.currencii }} ' + total.toLocaleString();
@@ -501,7 +530,7 @@
       checked.forEach(function (cb) {
         var aid = Number(cb.getAttribute('data-account') || 0);
         var input = clearAccountsBody.querySelector('.waiter-clear-amount-input[data-account="' + aid + '"]');
-        var amt = Number((input && input.value) || 0);
+        var amt = parseAmountValue((input && input.value) || 0);
         if (aid && amt > 0) {
           payments.push({ account_id: aid, amount: amt });
           finalAmount += amt;
@@ -564,6 +593,7 @@
 
       clearAccountsBody.addEventListener('input', function (ev) {
         if (ev.target && ev.target.classList && ev.target.classList.contains('waiter-clear-amount-input')) {
+          formatAmountInput(ev.target);
           updateSelectedTotal();
         }
       });
