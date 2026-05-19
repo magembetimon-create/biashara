@@ -1960,7 +1960,11 @@ $('.save_bill_data').unbind('submit').submit(function (e) {
 
    let date= $('#mauzo-date').val(),
     inalipiwa = $('#bill_tobe_paid').prop('checked') || false,
-    akaunt = ($('#malipo-akaunti').find('option:selected').data('value')) || 0,
+    paymentSelection = window.getSelectedPaymentAccount ? window.getSelectedPaymentAccount() : {
+        id: Number($('#malipo-akaunti').find('option:selected').data('value')) || 0,
+        aina: String($('#malipo-akaunti').find('option:selected').data('aina') || '').toLowerCase().trim(),
+    },
+    akaunt = paymentSelection.id,
     due_date = $('#tarehe_kulipa').val(),
     amount = Number($('#inayolipwa_invoice').data('pay')) || 0,
     amount_set = false,
@@ -2304,7 +2308,8 @@ let hommany=document.getElementById("new-bill_tbody").childElementCount;
                 redborder('#tarehe_kulipa')
             }else if(inalipiwa && Number(akaunt)<1 ){
                 alert(lang('Tafadhari chagua akaunti ya malipo','Please select Payment account'))
-                 $('#malipo-akaunti').selectpicker('setStyle', 'border-danger');
+                $('#malipo-akaunti-cards').addClass('border-danger')
+                $('#malipo-akaunti').addClass('border-danger')
 
             }
         }

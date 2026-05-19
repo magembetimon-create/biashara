@@ -1288,19 +1288,38 @@ $('#Checkout_btn').click(function(){
     
 })
 
-// Keep default customer unchecked for non-cash to-be-paid account.
-$('body').on('change', '#malipo-akaunti', function(){
-    if(!$('#bill_tobe_paid').prop('checked')) return
-
-    const aina = String($(this).find('option:selected').data('aina') || '').toLowerCase().trim()
-    if(aina && aina!='cash' && $('#default_custom').prop('checked')){
-        $('#default_custom').prop('checked', false)
-        toastr.warning(
-            lang('Kwa akaunti isiyo Cash chagua mteja halisi na namba ya simu','For non-cash account choose real customer and phone number'),
-            lang('Taarifa','Info'),
-            {timeOut: 2500}
-        )
+function syncDefaultCustomerWithPaymentType(){
+    const billPaid = $('#bill_tobe_paid').prop('checked')
+    const selected = window.getSelectedPaymentAccount ? window.getSelectedPaymentAccount() : {
+        id: Number($('#malipo-akaunti').find('option:selected').data('value')) || 0,
+        aina: String($('#malipo-akaunti').find('option:selected').data('aina') || '').toLowerCase().trim()
     }
+    const aina = String(selected.aina || '').toLowerCase().trim()
+    const lockDefault = billPaid && Number(selected.id) > 0 && aina && aina != 'cash'
+
+    if(lockDefault){
+        if($('#default_custom').prop('checked')){
+            $('#default_custom').prop('checked', false)
+            const nm = String($('#lim_num').val() || '').trim()
+            if(/^customer\s*-/i.test(nm)){
+                $('#lim_num').val('')
+            }
+            toastr.warning(
+                lang('Kwa akaunti isiyo Cash andika jina halisi la mteja','For non-cash account write real customer name'),
+                lang('Taarifa','Info'),
+                {timeOut: 2500}
+            )
+        }
+        $('#default_custom').prop('disabled', true)
+        return
+    }
+
+    $('#default_custom').prop('disabled', false)
+}
+
+// Keep default customer unchecked and disabled for non-cash to-be-paid account.
+$('body').on('change', '#malipo-akaunti, input[name="malipo-akaunti-radio"], #bill_tobe_paid', function(){
+    syncDefaultCustomerWithPaymentType()
 })
 
 
@@ -1409,8 +1428,12 @@ $('.save_pos_data').unbind("click").click(function(){
                     lipaEleza = $('#lipaElezo').val(),
 
                     inalipiwa = $('#bill_tobe_paid').prop('checked') || false,
-                    akaunt = ($('#malipo-akaunti').find('option:selected').data('value')) || 0,
-                    akauntAina = String($('#malipo-akaunti').find('option:selected').data('aina') || '').toLowerCase().trim(),
+                    paymentSelection = window.getSelectedPaymentAccount ? window.getSelectedPaymentAccount() : {
+                        id: Number($('#malipo-akaunti').find('option:selected').data('value')) || 0,
+                        aina: String($('#malipo-akaunti').find('option:selected').data('aina') || '').toLowerCase().trim(),
+                    },
+                    akaunt = paymentSelection.id,
+                    akauntAina = paymentSelection.aina,
                     isDefaultCustomer = $('#default_custom').prop('checked') || false,
                     due_date = $('#tarehe_kulipa').val(),
 
@@ -1553,7 +1576,8 @@ $('.save_pos_data').unbind("click").click(function(){
 
                 if(inalipiwa && Number(akaunt)<1 ){
                     alert(lang('Tafadhari chagua akaunti ya malipo','Please select Payment account'))
-                     $('#malipo-akaunti').selectpicker('setStyle', 'border-danger');
+                    $('#malipo-akaunti-cards').addClass('border-danger')
+                    $('#malipo-akaunti').addClass('border-danger')
     
                 }
                

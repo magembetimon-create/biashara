@@ -175,11 +175,6 @@ text-primary weight700
           </div>
 
           <div class="form-group">
-            <label>{% if useri.langSet == 0 %}Bei ya Kununua{% else %}Buying Price{% endif %}</label>
-            <input type="text" inputmode="decimal" name="bei_kununua" id="grouped-buy-price" class="form-control weight600" value="0">
-          </div>
-
-          <div class="form-group">
             <label>{% if useri.langSet == 0 %}Bei ya Kuuza{% else %}Selling Price{% endif %}</label>
             <input type="text" inputmode="decimal" name="bei_kuuza" id="grouped-sell-price" class="form-control weight600" required>
           </div>
@@ -218,6 +213,7 @@ text-primary weight700
               {% for m in grouped_members_candidates_data %}
               <option
                 value="{{m.id}}"
+                data-category-id="{{m.category_id}}"
                 data-buy-wholesale="{{m.buy_wholesale}}"
                 data-buy-retail="{{m.buy_retail}}"
                 data-sell-wholesale="{{m.sell_wholesale}}"
@@ -317,7 +313,6 @@ function loadGroupedItemData(groupedId, mode){
         document.getElementById('grouped-id-field').value = item.id;
         document.getElementById('grouped-name').value = item.name || '';
         document.getElementById('grouped-category').value = item.category_id || '';
-        document.getElementById('grouped-buy-price').value = formatGroupedPrice(item.bei_kununua || '0');
         document.getElementById('grouped-sell-price').value = formatGroupedPrice(item.bei_kuuza || '0');
         document.getElementById('grouped-description').value = item.description || '';
 
@@ -418,7 +413,7 @@ function previewGroupedImage(input){
 
 // Apply member price filter
 function applyGroupedMemberPriceFilter(){
-  var buyInput = document.getElementById('grouped-buy-price');
+  var categoryInput = document.getElementById('grouped-category');
   var sellInput = document.getElementById('grouped-sell-price');
   var memberSelect = document.getElementById('grouped-member-select');
   var filterStatus = document.getElementById('grouped-filter-status');
@@ -447,53 +442,18 @@ function applyGroupedMemberPriceFilter(){
     return false;
   }
 
-  var buyVal = buyInput ? buyInput.value : '';
+  var categoryVal = categoryInput ? String(categoryInput.value || '').trim() : '';
   var sellVal = sellInput ? sellInput.value : '';
   var shown = 0;
   var options = memberSelect.options;
-  var selectedPricePairs = {};
-
-  function addSelectedPair(buyCandidate, sellCandidate){
-    var normalizedBuy = normalizeNumberText(buyCandidate);
-    var normalizedSell = normalizeNumberText(sellCandidate);
-    if(!normalizedBuy || !normalizedSell) return;
-    selectedPricePairs[normalizedBuy + '|' + normalizedSell] = true;
-  }
-
-  function optionMatchesSelectedPair(opt){
-    var optionPairs = [
-      [opt.getAttribute('data-buy-wholesale'), opt.getAttribute('data-sell-wholesale')],
-      [opt.getAttribute('data-buy-retail'), opt.getAttribute('data-sell-retail')],
-      [opt.getAttribute('data-buy-wholesale'), opt.getAttribute('data-sell-retail')],
-      [opt.getAttribute('data-buy-retail'), opt.getAttribute('data-sell-wholesale')]
-    ];
-
-    for(var pairIndex = 0; pairIndex < optionPairs.length; pairIndex++){
-      var pairBuy = normalizeNumberText(optionPairs[pairIndex][0]);
-      var pairSell = normalizeNumberText(optionPairs[pairIndex][1]);
-      if(pairBuy && pairSell && selectedPricePairs[pairBuy + '|' + pairSell]){
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  for(var selectedIndex = 0; selectedIndex < options.length; selectedIndex++){
-    var selectedOption = options[selectedIndex];
-    if(!selectedOption.selected) continue;
-    addSelectedPair(selectedOption.getAttribute('data-buy-wholesale'), selectedOption.getAttribute('data-sell-wholesale'));
-    addSelectedPair(selectedOption.getAttribute('data-buy-retail'), selectedOption.getAttribute('data-sell-retail'));
-    addSelectedPair(selectedOption.getAttribute('data-buy-wholesale'), selectedOption.getAttribute('data-sell-retail'));
-    addSelectedPair(selectedOption.getAttribute('data-buy-retail'), selectedOption.getAttribute('data-sell-wholesale'));
-  }
 
   for(var i = 0; i < options.length; i++){
     var opt = options[i];
-    var buyMatches = compareByInput(buyVal, opt.getAttribute('data-buy-wholesale')) || compareByInput(buyVal, opt.getAttribute('data-buy-retail'));
+    var optionCategory = String(opt.getAttribute('data-category-id') || '').trim();
+    var categoryMatches = !categoryVal || (optionCategory === categoryVal);
     var sellMatches = compareByInput(sellVal, opt.getAttribute('data-sell-wholesale')) || compareByInput(sellVal, opt.getAttribute('data-sell-retail'));
-    var matchesSelectedPair = GROUPED_MODAL_STATE.mode === 'edit' && optionMatchesSelectedPair(opt);
-    var visible = (buyMatches && sellMatches) || matchesSelectedPair;
+    var keepSelectedVisible = GROUPED_MODAL_STATE.mode === 'edit' && opt.selected;
+    var visible = (categoryMatches && sellMatches) || keepSelectedVisible;
     opt.hidden = !visible;
     if(!visible) opt.selected = false;
     if(visible) shown += 1;
@@ -510,13 +470,13 @@ function applyGroupedMemberPriceFilter(){
 // Update select all button state
 function updateGroupedSelectAllState(){
   var selectAllBtn = document.getElementById('grouped-select-all-btn');
-  var buyInput = document.getElementById('grouped-buy-price');
+  var categoryInput = document.getElementById('grouped-category');
   var sellInput = document.getElementById('grouped-sell-price');
 
   if(!selectAllBtn) return;
-  var buyFilled = !!(buyInput && String(buyInput.value || '').trim() !== '');
+  var categoryFilled = !!(categoryInput && String(categoryInput.value || '').trim() !== '');
   var sellFilled = !!(sellInput && String(sellInput.value || '').trim() !== '');
-  selectAllBtn.disabled = !(buyFilled && sellFilled);
+  selectAllBtn.disabled = !(categoryFilled && sellFilled);
 }
 
 // Format number with comma separators (e.g., 1000 -> 1,000)
@@ -530,17 +490,14 @@ function formatGroupedPrice(val) {
 
 // Add event listeners for price filters
 (function(){
-  var buyInput = document.getElementById('grouped-buy-price');
+  var categoryInput = document.getElementById('grouped-category');
   var sellInput = document.getElementById('grouped-sell-price');
   var selectAllBtn = document.getElementById('grouped-select-all-btn');
   var clearAllBtn = document.getElementById('grouped-clear-all-btn');
   var memberSelect = document.getElementById('grouped-member-select');
 
-  if(buyInput) {
-    buyInput.addEventListener('input', applyGroupedMemberPriceFilter);
-    buyInput.addEventListener('blur', function() {
-      this.value = formatGroupedPrice(this.value);
-    });
+  if(categoryInput) {
+    categoryInput.addEventListener('change', applyGroupedMemberPriceFilter);
   }
   if(sellInput) {
     sellInput.addEventListener('input', applyGroupedMemberPriceFilter);
@@ -607,9 +564,7 @@ document.getElementById('grouped-item-form').addEventListener('submit', function
   showGroupedInlineLoader();
   
   // Strip commas from prices before sending
-  var buyInput = document.getElementById('grouped-buy-price');
   var sellInput = document.getElementById('grouped-sell-price');
-  if (buyInput) buyInput.value = String(buyInput.value || '').replace(/,/g, '');
   if (sellInput) sellInput.value = String(sellInput.value || '').replace(/,/g, '');
 
   var mode = GROUPED_MODAL_STATE.mode;

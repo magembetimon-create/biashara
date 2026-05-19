@@ -544,4 +544,25 @@ main.l-main {
  
 }
 
+@media screen and (max-width: 991px) {
+  #dropdown_quick_menu #QuickMenuDropDown {
+    margin-top: 8px;
+  }
+}
+
+@media screen and (min-width: 767px) and (max-width: 991px) and (max-height: 760px) {
+  #dropdown_quick_menu {
+    position: relative;
+  }
+
+  #dropdown_quick_menu #QuickMenuDropDown {
+    top: calc(100% + 28px) !important;
+    left: 10vw !important;
+    /* right: 0 !important; */
+    transform: none !important;
+    max-height: calc(100vh - 130px);
+    overflow-y: auto;
+  }
+}
+
 

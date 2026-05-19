@@ -5191,7 +5191,7 @@ def groupedItemsPage(request):
 
     grouped_items = grouped_item.objects.filter(Interprise=duka).order_by('-id')
     category_options = list(
-        bidhaa_aina.objects.filter(Interprise=duka)
+        bidhaa_aina.objects.filter(Interprise__owner=duka.owner)
         .select_related('mahi')
         .order_by('aina')
     )
@@ -5224,6 +5224,7 @@ def groupedItemsPage(request):
         member_data = {
             'id': m.id,
             'bidhaa_id': bidhaa_id,
+            'category_id': m.bidhaa.bidhaa_aina_id,
             'name': m.bidhaa.bidhaa_jina,
             'stock_total': Decimal(str(m.idadi or 0)),
             'ratio': float(ratio),
@@ -6139,9 +6140,10 @@ def grouped_items_register(request):
 
     try:
         bei_kuuza = Decimal(str(request.POST.get('bei_kuuza', '0')).strip())
-        bei_kununua = Decimal(str(request.POST.get('bei_kununua', '0')).strip())
     except InvalidOperation:
         return JsonResponse({'success': False, 'msg': 'Bei imejazwa vibaya'})
+
+    bei_kununua = Decimal('0')
 
     if not name:
         return JsonResponse({'success': False, 'msg': 'Jina la grouped item linahitajika'})
@@ -6417,7 +6419,6 @@ def grouped_items_update(request):
     # Get form data
     name = request.POST.get('name', '').strip()
     category_id = request.POST.get('category_id', '').strip()
-    bei_kununua = request.POST.get('bei_kununua', '0')
     bei_kuuza = request.POST.get('bei_kuuza', '0')
     description = request.POST.get('description', '').strip()
     member_ids = request.POST.getlist('member_ids')
@@ -6429,7 +6430,7 @@ def grouped_items_update(request):
         return JsonResponse({'success': False, 'msg': 'Selling price must be > 0'})
 
     try:
-        bei_kununua = Decimal(bei_kununua) if bei_kununua else Decimal('0')
+        bei_kununua = Decimal('0')
         bei_kuuza = Decimal(bei_kuuza)
         category_id_int = int(category_id) if category_id else None
     except (ValueError, InvalidOperation):

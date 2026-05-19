@@ -161,6 +161,41 @@ function waiterLang(sw, en) {
   return lang(sw, en)
 }
 
+function waiterSelectedAccount(selectId) {
+  const selected = $(selectId).find('option:selected')
+  return {
+    id: Number(selected.val() || selected.data('value') || 0),
+    aina: String(selected.data('aina') || '').trim().toLowerCase()
+  }
+}
+
+function renderWaiterPaymentCards(selectId, cardsId, radioName) {
+  const cardsWrap = $(cardsId)
+  const selectEl = $(selectId)
+  if (!cardsWrap.length || !selectEl.length) return
+
+  const selectedId = Number(selectEl.val() || selectEl.find('option:selected').data('value') || 0)
+  let html = ''
+
+  selectEl.find('option').each(function() {
+    const accountId = Number($(this).val() || $(this).data('value') || 0)
+    if (!accountId) return
+
+    const aina = String($(this).data('aina') || '').trim()
+    const checked = accountId === selectedId ? 'checked' : ''
+    const active = accountId === selectedId ? 'active' : ''
+
+    html += `
+      <label class="pay-account-card ${active}">
+        <input type="radio" name="${radioName}" data-target="${selectId}" data-value="${accountId}" data-aina="${aina.toLowerCase()}" ${checked}>
+        <div class="pay-account-type">${aina || waiterLang('Akaunti', 'Account')}</div>
+      </label>
+    `
+  })
+
+  cardsWrap.html(html)
+}
+
 function waiterAmount() {
   return WAITER_CART.reduce((sum, x) => sum + (Number(x.qty) * Number(x.price)), 0)
 }
@@ -777,9 +812,9 @@ function printWaiterOrder(orderId, firstPrint) {
 function submitWaiterOrder() {
   const tableName = String($('#place_where').val() || '').trim()
   const isPaid = $('#waiterOrderPaid').prop('checked')
-  const akaunt = Number($('#waiterPayMethod').val() || 0)
-  const selectedAina = String($('#waiterPayMethod').find('option:selected').data('aina') || '').trim()
-  const isCash = selectedAina.toLowerCase() === 'cash'
+  const payMethod = waiterSelectedAccount('#waiterPayMethod')
+  const akaunt = Number(payMethod.id || 0)
+  const isCash = String(payMethod.aina || '') === 'cash'
   const customerName = String($('#waiterCustomerName').val() || '').trim()
 
   if (tableName.length < 1) {
@@ -794,7 +829,7 @@ function submitWaiterOrder() {
   }
 
   if (isPaid && !akaunt) {
-    redborder('#waiterPayMethod')
+    $('#waiterPayMethodCards').addClass('border-danger')
     toastr.warning(waiterLang('Chagua njia ya malipo', 'Select payment method'), waiterLang('Taarifa', 'Info'), { timeOut: 2500 })
     return
   }
@@ -1046,14 +1081,18 @@ $('body').on('change', '#waiterOrderPaid', function() {
     $('#waiterPayMethodWrap').show()
   } else {
     $('#waiterPayMethodWrap').hide()
-    $('#waiterPayMethod').val('')
+    $('#waiterPayMethod').val('').trigger('change')
     $('#waiterCustomerNameWrap').hide()
     $('#waiterCustomerName').val('')
   }
 })
 
 $('body').on('change', '#waiterPayMethod', function() {
-  const aina = String($(this).find('option:selected').data('aina') || '').trim()
+  $('#waiterPayMethodCards').removeClass('border-danger')
+  const aina = waiterSelectedAccount('#waiterPayMethod').aina
+
+  renderWaiterPaymentCards('#waiterPayMethod', '#waiterPayMethodCards', 'waiter-pay-method-radio')
+
   if (aina && aina.toLowerCase() !== 'cash') {
     $('#waiterCustomerNameWrap').show()
   } else {
@@ -1107,14 +1146,18 @@ $('body').on('click', '.waiterPayOrder', function(e) {
   $('#waiterPaySummaryPaid').text(Number(paid).toLocaleString())
   $('#waiterPaySummaryRemaining').text(Number(remaining).toLocaleString())
   $('#waiterPayAmountInput').val(remaining > 0 ? remaining : '')
-  $('#waiterPayAccSelect').val('')
+  $('#waiterPayAccSelect').val('').trigger('change')
   $('#waiterPayCustomerName').val('')
   $('#waiterPayCustomerWrap').hide()
   $('#waiterPayModal').modal('show')
 })
 
 $('body').on('change', '#waiterPayAccSelect', function() {
-  const aina = String($(this).find('option:selected').data('aina') || '').trim()
+  $('#waiterPayAccCards').removeClass('border-danger')
+  const aina = waiterSelectedAccount('#waiterPayAccSelect').aina
+
+  renderWaiterPaymentCards('#waiterPayAccSelect', '#waiterPayAccCards', 'waiter-pay-acc-radio')
+
   if (aina && aina.toLowerCase() !== 'cash') {
     $('#waiterPayCustomerWrap').show()
   } else {
@@ -1123,13 +1166,28 @@ $('body').on('change', '#waiterPayAccSelect', function() {
   }
 })
 
+$('body').on('change', 'input[name="waiter-pay-method-radio"]', function() {
+  const value = String($(this).data('value') || '')
+  $('#waiterPayMethod').val(value).trigger('change')
+  $('input[name="waiter-pay-method-radio"]').closest('.pay-account-card').removeClass('active')
+  $(this).closest('.pay-account-card').addClass('active')
+})
+
+$('body').on('change', 'input[name="waiter-pay-acc-radio"]', function() {
+  const value = String($(this).data('value') || '')
+  $('#waiterPayAccSelect').val(value).trigger('change')
+  $('input[name="waiter-pay-acc-radio"]').closest('.pay-account-card').removeClass('active')
+  $(this).closest('.pay-account-card').addClass('active')
+})
+
 $('body').on('click', '#waiterSubmitPayBtn', function() {
   submitWaiterPayment()
 })
 
 function submitWaiterPayment() {
   const amount = Number($('#waiterPayAmountInput').val() || 0)
-  const akaunt = Number($('#waiterPayAccSelect').val() || 0)
+  const payAcc = waiterSelectedAccount('#waiterPayAccSelect')
+  const akaunt = Number(payAcc.id || 0)
   const customerName = String($('#waiterPayCustomerName').val() || '').trim()
 
   if (amount <= 0) {
@@ -1137,6 +1195,7 @@ function submitWaiterPayment() {
     return
   }
   if (!akaunt) {
+    $('#waiterPayAccCards').addClass('border-danger')
     toastr.warning(waiterLang('Chagua njia ya malipo', 'Select payment method'), '', { timeOut: 3000 })
     return
   }
@@ -1169,6 +1228,8 @@ function submitWaiterPayment() {
 }
 
 $(document).ready(function() {
+  renderWaiterPaymentCards('#waiterPayMethod', '#waiterPayMethodCards', 'waiter-pay-method-radio')
+  renderWaiterPaymentCards('#waiterPayAccSelect', '#waiterPayAccCards', 'waiter-pay-acc-radio')
   switchWaiterRightPanel(waiterIsMobileLayout() ? 'items' : 'current')
   initializeWaiterItems()
   renderWaiterCart()

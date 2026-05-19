@@ -393,11 +393,63 @@
             </strong> 
           </div>
               <div class="col-md-7">
-                      <select name="malipo-akaunti" id="malipo-akaunti"  class="form-control machaguo-pesa smallFont selectpicker" data-live-search="true">
-                            <option value="" data-value=0 >{% if useri.langSet == 0 %}--Chagua Akaunti--{% else %}--Select Account--{% endif %}</option>
+                      <div id="malipo-akaunti-cards" class="pay-account-cards"></div>
+                      <select name="malipo-akaunti" id="malipo-akaunti" class="form-control machaguo-pesa smallFont selectpicker d-none" data-live-search="true">
+                            <option value="" data-value=0>{% if useri.langSet == 0 %}--Chagua Akaunti--{% else %}--Select Account--{% endif %}</option>
                       </select>
               </div>
           </div>
+
+<style>
+  .pay-account-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  @media screen and (max-width: 576px) {
+    .pay-account-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+  .pay-account-card {
+    border: 1px solid #d9d9d9;
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    background: #fff;
+    transition: all .15s ease;
+    position: relative;
+  }
+  .pay-account-card:hover {
+    border-color: #6f9cff;
+    box-shadow: 0 2px 8px rgba(25, 67, 145, 0.12);
+  }
+  .pay-account-card.active {
+    border-color: #1f6feb;
+    background: #eef5ff;
+  }
+  .pay-account-card input[type="radio"] {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+  .pay-account-card .pay-account-type {
+    font-weight: 700;
+    font-size: 12px;
+    color: #163a70;
+    text-transform: capitalize;
+  }
+  .pay-account-card .pay-account-balance {
+    font-size: 11px;
+    color: #6c757d;
+    margin-top: 3px;
+  }
+  #malipo-akaunti-cards.border-danger {
+    border: 1px solid #dc3545;
+    border-radius: 8px;
+    padding: 6px;
+  }
+</style>
 
           
  <div class="row mb-2 pt-2 classic_div chagua_akaunti_ya_kulipa_bill" style="display: none;max-width:450px" >

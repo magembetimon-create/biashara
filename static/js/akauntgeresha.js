@@ -2,6 +2,53 @@
 var ALLPAYACCOUNTS
 const is_bill = ISBILL
 
+function getSelectedPaymentAccount(){
+  var selectedRadio = $('input[name="malipo-akaunti-radio"]:checked')
+  if(selectedRadio.length){
+    return {
+      id: Number(selectedRadio.data('value')) || 0,
+      aina: String(selectedRadio.data('aina') || '').toLowerCase().trim(),
+      amount: Number(selectedRadio.data('amount')) || 0
+    }
+  }
+
+  var selectedOption = $('#malipo-akaunti').find('option:selected')
+  return {
+    id: Number(selectedOption.data('value')) || 0,
+    aina: String(selectedOption.data('aina') || '').toLowerCase().trim(),
+    amount: Number(selectedOption.data('amount')) || 0
+  }
+}
+
+function renderMalipoAkauntiCards(accounts){
+  var cardsWrap = $('#malipo-akaunti-cards')
+  if(!cardsWrap.length){
+    return
+  }
+
+  var current = getSelectedPaymentAccount().id
+  var html = ''
+
+  accounts.forEach(function(ac){
+    var aina = String(ac.aina || '').replace(/[&\/\\#,+$~%"*?<>{}`]/g, '')
+    var accountId = Number(ac.id) || 0
+    var amount = Number(ac.Amount) || 0
+    var checked = current === accountId ? 'checked' : ''
+    var active = current === accountId ? 'active' : ''
+
+    html += `
+      <label class="pay-account-card ${active}" data-id="${accountId}">
+        <input type="radio" name="malipo-akaunti-radio" data-value="${accountId}" data-aina="${aina}" data-amount="${amount}" ${checked}>
+        <div class="pay-account-type">${aina || lang('Haijatajwa','Not set')}</div>
+      </label>
+    `
+  })
+
+  cardsWrap.html(html)
+}
+
+window.getSelectedPaymentAccount = getSelectedPaymentAccount
+
 class getAkaunting{
     constructor(){
     }
@@ -44,6 +91,8 @@ class getAkaunting{
     $('#malipo-akaunti').html(opt_any)
     $('#kwenda_akaunti_zilizopo').html(opt_any)
     $('#kutoa_kwenda_Nje').html(otherOpt)
+
+    renderMalipoAkauntiCards(payAcc)
 
     
 
@@ -92,6 +141,29 @@ $('#ak_amounti').text(floatValue($(this).find("option:selected").data('amount'))
         $('.miamala-btn').prop("disabled",true)
 
   }
+})
+
+$('body').on('change', 'input[name="malipo-akaunti-radio"]', function(){
+  var $this = $(this)
+  var id = Number($this.data('value')) || 0
+
+  $('input[name="malipo-akaunti-radio"]').closest('.pay-account-card').removeClass('active')
+  $this.closest('.pay-account-card').addClass('active')
+  $('#malipo-akaunti-cards').removeClass('border-danger')
+
+  var selectEl = $('#malipo-akaunti')
+  if(selectEl.length){
+    selectEl.find('option').prop('selected', false)
+    selectEl.find(`option[data-value="${id}"]`).prop('selected', true)
+    try {
+      selectEl.selectpicker('refresh')
+    } catch (e) {}
+  }
+})
+
+$('body').on('change', '#malipo-akaunti', function(){
+  $('#malipo-akaunti-cards').removeClass('border-danger')
+  $('#malipo-akaunti').removeClass('border-danger')
 })
 
 
