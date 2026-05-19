@@ -220,7 +220,7 @@ text-primary weight700
                 data-sell-retail="{{m.sell_retail}}"
                 data-ratio="{{m.ratio}}"
                 data-has-jumla-reja="{{m.has_jumla_reja|yesno:'1,0'}}"
-              >{{m.name}} | BuyJ: {{m.buy_wholesale}} | BuyR: {{m.buy_retail}} | SellJ: {{m.sell_wholesale}} | SellR: {{m.sell_retail}} | Stock: {{m.stock}}</option>
+              >{{m.name}} | {{m.sell_retail|floatformat:2|intcomma}}</option>
               {% endfor %}
             </select>
             <small class="text-muted">{% if useri.langSet == 0 %}Shikilia Ctrl kuchagua zaidi ya moja{% else %}Hold Ctrl to select multiple members{% endif %}</small>
