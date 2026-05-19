@@ -78,6 +78,50 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
       border: 2px solid rgba(233, 69, 96, 0.2);
     }
+    .network-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 auto 18px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      border: 1px solid transparent;
+      transition: background .2s, border-color .2s, color .2s, box-shadow .2s;
+    }
+    .network-indicator .signal-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 12px currentColor;
+      flex-shrink: 0;
+    }
+    .network-indicator.good {
+      color: #7ef0a8;
+      background: rgba(18, 92, 45, 0.32);
+      border-color: rgba(126, 240, 168, 0.35);
+      box-shadow: 0 4px 14px rgba(18, 92, 45, 0.18);
+    }
+    .network-indicator.poor {
+      color: #ffd166;
+      background: rgba(120, 88, 12, 0.32);
+      border-color: rgba(255, 209, 102, 0.35);
+      box-shadow: 0 4px 14px rgba(120, 88, 12, 0.18);
+    }
+    .network-indicator.offline {
+      color: #ff8b98;
+      background: rgba(120, 22, 38, 0.32);
+      border-color: rgba(255, 139, 152, 0.35);
+      box-shadow: 0 4px 14px rgba(120, 22, 38, 0.18);
+    }
+    .network-indicator.checking {
+      color: #b0d4ff;
+      background: rgba(15, 52, 96, 0.32);
+      border-color: rgba(176, 212, 255, 0.28);
+    }
     /* Waiter grid */
     .waiter-grid {
       display: grid;
@@ -294,6 +338,11 @@
     {% endif %}
   </div>
 
+  <div id="networkIndicator" class="network-indicator checking" role="status" aria-live="polite">
+    <span class="signal-dot"></span>
+    <span id="networkIndicatorText">Inakagua mtandao...</span>
+  </div>
+
   {% if not duka %}
   <!-- No business selected — show simple form to enter business id -->
   <div style="text-align:center;color:#b0d4ff;font-size:.9rem;margin-bottom:16px;text-shadow:0 1px 2px rgba(0, 0, 0, 0.3);">
@@ -355,6 +404,172 @@
 
   {% endif %}
 </div>
+
+<script>
+  (function() {
+    var indicator = document.getElementById('networkIndicator');
+    var textNode = document.getElementById('networkIndicatorText');
+    if (!indicator || !textNode) return;
+
+    var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
+    var networkProbeTimer = null;
+    var networkProbeInFlight = false;
+    var probeUrl = window.location.pathname + window.location.search;
+
+    function setNetworkState(state, text) {
+      indicator.classList.remove('checking', 'good', 'poor', 'offline');
+      indicator.classList.add(state);
+      textNode.textContent = text;
+    }
+
+    function getConnectionHints() {
+      var hints = {
+        poor: false,
+      };
+
+      if (!connection) {
+        return hints;
+      }
+
+      var effectiveType = String(connection.effectiveType || '').toLowerCase();
+      var downlink = Number(connection.downlink || 0);
+      var rtt = Number(connection.rtt || 0);
+      var saveData = Boolean(connection.saveData);
+
+      hints.poor = saveData
+        || effectiveType === 'slow-2g'
+        || effectiveType === '2g'
+        || (downlink > 0 && downlink < 1)
+        || (rtt > 0 && rtt >= 700);
+
+      return hints;
+    }
+
+    function getBaseNetworkState() {
+      if (!navigator.onLine) {
+        return {
+          state: 'offline',
+          text: 'Hakuna mtandao'
+        };
+      }
+
+      if (getConnectionHints().poor) {
+        return {
+          state: 'poor',
+          text: 'Mtandao upo chini'
+        };
+      }
+
+      return {
+        state: 'good',
+        text: 'Mtandao upo vizuri'
+      };
+    }
+
+    function probeServerConnectivity() {
+      if (!navigator.onLine) {
+        return Promise.resolve({
+          ok: false,
+          duration: 0,
+          reason: 'offline'
+        });
+      }
+
+      var startedAt = Date.now();
+      var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var timeoutId = null;
+
+      if (controller) {
+        timeoutId = window.setTimeout(function() {
+          controller.abort();
+        }, 4500);
+      }
+
+      return fetch(probeUrl + (probeUrl.indexOf('?') === -1 ? '?' : '&') + '_network_probe=' + startedAt, {
+        method: 'HEAD',
+        cache: 'no-store',
+        credentials: 'same-origin',
+        signal: controller ? controller.signal : undefined,
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      }).then(function(response) {
+        if (timeoutId) {
+          window.clearTimeout(timeoutId);
+        }
+        return {
+          ok: response && response.ok,
+          duration: Date.now() - startedAt,
+          reason: response && response.ok ? 'ok' : 'http'
+        };
+      }).catch(function() {
+        if (timeoutId) {
+          window.clearTimeout(timeoutId);
+        }
+        return {
+          ok: false,
+          duration: Date.now() - startedAt,
+          reason: 'fetch_error'
+        };
+      });
+    }
+
+    function refreshNetworkIndicator() {
+      var baseState = getBaseNetworkState();
+      if (baseState.state === 'offline') {
+        setNetworkState(baseState.state, baseState.text);
+        return;
+      }
+
+      if (networkProbeInFlight) {
+        return;
+      }
+
+      setNetworkState('checking', 'Inakagua mtandao...');
+      networkProbeInFlight = true;
+
+      probeServerConnectivity().then(function(result) {
+        networkProbeInFlight = false;
+
+        if (!result.ok) {
+          setNetworkState('offline', 'Hakuna mtandao');
+          return;
+        }
+
+        var poorByProbe = result.duration >= 2500;
+        var poorByHints = getConnectionHints().poor;
+        if (poorByProbe || poorByHints) {
+          setNetworkState('poor', 'Mtandao upo chini');
+          return;
+        }
+
+        setNetworkState('good', 'Mtandao upo vizuri');
+      }).catch(function() {
+        networkProbeInFlight = false;
+        setNetworkState('offline', 'Hakuna mtandao');
+      });
+    }
+
+    function scheduleNetworkRefresh() {
+      if (networkProbeTimer) {
+        window.clearInterval(networkProbeTimer);
+      }
+      networkProbeTimer = window.setInterval(refreshNetworkIndicator, 15000);
+    }
+
+    window.addEventListener('online', refreshNetworkIndicator);
+    window.addEventListener('offline', refreshNetworkIndicator);
+    window.addEventListener('focus', refreshNetworkIndicator);
+
+    if (connection && typeof connection.addEventListener === 'function') {
+      connection.addEventListener('change', refreshNetworkIndicator);
+    }
+
+    scheduleNetworkRefresh();
+    refreshNetworkIndicator();
+  })();
+</script>
 
 {% if duka and counters %}
 <script>

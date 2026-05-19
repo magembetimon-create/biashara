@@ -20,11 +20,21 @@
       color: #000000;
       background: #fff;
     }
+
+    body.paper-thermal {
+      font-family: monospace;
+      font-size: 10px;
+    }
     
     .print-container {
       max-width: 1000px;
       margin: 0 auto;
       padding: 20px;
+    }
+
+    body.paper-thermal .print-container {
+      max-width: 58mm;
+      padding: 6px;
     }
     
     .header {
@@ -119,6 +129,10 @@
       gap: 20px;
       margin-bottom: 25px;
     }
+
+    body.paper-thermal .section-grid {
+      grid-template-columns: 1fr;
+    }
     
     .card {
       border: 1px solid #ddd;
@@ -142,6 +156,10 @@
       font-size: 10px;
       width: 100%;
       margin: 15px 0;
+    }
+
+    body.paper-thermal .stock-table {
+      font-size: 8px;
     }
     
     .stock-table th {
@@ -181,6 +199,36 @@
       font-size: 10px;
       color: #999;
     }
+
+    body.paper-thermal table th,
+    body.paper-thermal table td {
+      padding: 4px;
+      word-break: break-word;
+    }
+
+    body.paper-thermal .header {
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+    }
+
+    body.paper-thermal .header h1 {
+      font-size: 13px;
+    }
+
+    body.paper-thermal .header .subtitle,
+    body.paper-thermal .header div {
+      font-size: 9px !important;
+    }
+
+    body.paper-thermal .section {
+      margin-bottom: 12px;
+    }
+
+    body.paper-thermal .section-title,
+    body.paper-thermal .card-header {
+      font-size: 10px;
+      padding: 6px;
+    }
     
     @media print {
       body {
@@ -204,7 +252,7 @@
   </style>
   <script src="{% static 'js/momentlocale.js' %}"></script>
 </head>
-<body>
+<body class="{% if paper_size == 'thermal' %}paper-thermal{% else %}paper-large{% endif %}">
   <div class="print-container">
     <!-- Header -->
     <div class="header">
@@ -344,8 +392,42 @@
           </table>
         </div>
       </div>
-    </div>
 
+
+    </div>
+      <!-- Sales Breakdown Table -->
+      <div class="card mt-3">
+        <div class="card-header">{% if useri.langSet == 0 %}Mchanganuo wa Mauzo kwa Mhusika{% else %}Sales Breakdown per Staff{% endif %}</div>
+        <div class="card-body">
+          <table class="summary-table" id="mchanganuoTable" >
+            <thead>
+              <tr>
+                <th>{% if useri.langSet == 0 %}Mhusika{% else %}Staff{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Idadi ya Mauzo{% else %}Sales Count{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Total Amount{% else %}Total Amount{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sales_breakdown_rows %}
+              <tr>
+                <td>{{ row.name }}</td>
+                <td>{{ row.sales_count }}</td>
+                <td class="font-weight-bold">{{ row.total_amount|floatformat:2|intcomma }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="no-data">{% if useri.langSet == 0 %}Hakuna mauzo yaliyopatikana{% else %}No sales found{% endif %}</td></tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr style="background: #f8f8f8; font-weight: bold;">
+                <td>{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
+                <td>{{ sales_breakdown_totals.sales_count }}</td>
+                <td>{{ sales_breakdown_totals.total_amount|floatformat:2|intcomma }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
     <!-- Mobile Payments Section -->
     {% if mobile_payments %}
     <div class="section">
@@ -478,7 +560,11 @@
         <tbody>
           {% for act in activities %}
           <tr>
-            <td>{{ act.recorded_at }}</td>
+            <td>
+              <script>
+                document.write(moment('{{ act.recorded_at|date:"r" }}').format('DD MMM YYYY HH:mm'));
+               </script>
+            </td>
             <td>{{ act.event_type }}</td>
             <td style="text-align: right;">{{ act.amount|floatformat:2 }}</td>
             <td>{{ act.details }}</td>
@@ -497,6 +583,15 @@
   </div>
 
   <script>
+    (function () {
+      var isThermal = '{{ paper_size|default:"large" }}' === 'thermal';
+      var pageStyle = document.createElement('style');
+      pageStyle.textContent = isThermal
+        ? '@page { size: 58mm auto; margin: 0; }'
+        : '@page { size: A4; margin: 10mm; }';
+      document.head.appendChild(pageStyle);
+    })();
+
     document.getElementById('printTime').textContent = new Date().toLocaleString();
     window.onload = function() {
       setTimeout(function() {

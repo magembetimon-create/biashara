@@ -11,6 +11,7 @@ urlpatterns = [
     path('shifts', views.staff_shifts, name='staff_shifts'),
     path('shifts/new', views.new_shift, name='staff_new_shift'),
     path('shifts/view', views.shift_view, name='staff_shift_view'),
+    path('shifts/actor-sales', views.shift_actor_sales, name='staff_shift_actor_sales'),
     path('shifts/close', views.close_shift, name='staff_close_shift'),
     path('shifts/print', views.print_shift, name='staff_print_shift'),
     path('grant-role', views.grant_role, name='staff_grant_role'),

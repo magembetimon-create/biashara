@@ -58,7 +58,7 @@
         {% for s in shifts %}
         <tr>
           <td>{{ forloop.counter }}</td>
-          <td>{{ s.code }}</td>
+          <td> <a href="/staff/shifts/view?sid={{ s.id }}">{{ s.code }}</a> </td>
           <td>{{ s.shift_type }}</td>
           <td>
             {% if s.status == 'closed' %}
@@ -67,8 +67,13 @@
               <span class="badge badge-success">{% if useri.langSet == 0 %}Wazi{% else %}Open{% endif %}</span>
             {% endif %}
           </td>
-          <td>{{ s.starts_at }}</td>
-          <td>{% if s.ends_at %}{{ s.ends_at }}{% else %}<span class="text-muted">-</span>{% endif %}</td>
+          <td>
+            <script>
+                document.write(moment('{{ s.starts_at|date:"r" }}').format('DD MMM YYYY HH:mm') + '</span>');
+            </script> </td>
+          <td>{% if s.ends_at %}- <script>
+                document.write(moment('{{ s.ends_at|date:"r" }}').format('DD MMM YYYY HH:mm') + '</span>');
+            </script> {% else %}<span class="text-muted">-</span>{% endif %}</td>
           <td>{{ s.opening_cash | floatformat:2 | intcomma }}</td>
           <td>
             <a href="/staff/shifts/view?sid={{ s.id }}" class="btn btn-outline-primary btn-sm">

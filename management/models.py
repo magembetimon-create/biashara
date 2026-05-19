@@ -650,6 +650,12 @@ class bidhaa_stoku(models.Model):
     produced = models.ForeignKey(productionList,on_delete=models.CASCADE,null=True,blank=True)
     service =  models.BooleanField(default=False)
     timely = models.IntegerField(default=0)
+    
+    # Grouped items flag - if True, stock reduction deferred until reconciliation approval
+    is_grouped_item = models.BooleanField(default=False)
+    grouped_item_ref = models.OneToOneField('grouped_item',on_delete=models.SET_NULL,null=True,blank=True)
+    # grouped_item_qty_sold = models.DecimalField(max_digits=20,decimal_places=4,default=0)
+    partial_item_reduction_qty = models.DecimalField(max_digits=20,decimal_places=4,default=0)
 
     visted = models.IntegerField(default=0)
     showToVistors = models.BooleanField(default=True)
@@ -737,6 +743,59 @@ class waiter_clearing(models.Model):
     amount = models.DecimalField(max_digits=20,decimal_places=4)
     tarehe = models.DateTimeField()
     By = models.ForeignKey(InterprisePermissions,on_delete=models.SET_NULL,null=True,blank=True,related_name='waiter_clearing_by_set')
+
+
+class grouped_item(models.Model):
+    """Grouped items - e.g., Soda za 1000, Bia za 2000 (same buy/sell price, diff brands)"""
+    Interprise = models.ForeignKey(Interprise,on_delete=models.CASCADE)
+    name = models.CharField(max_length=200)  # e.g., "Soda za 1000"
+    description = models.TextField(blank=True,null=True)
+    Bei_kununua = models.DecimalField(max_digits=20,decimal_places=5,default=0)
+    Bei_kuuza = models.DecimalField(max_digits=15,decimal_places=4)
+    idadi = models.DecimalField(max_digits=10,decimal_places=3,default=0)  # Cumulative sold qty
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "grouped_items"
+
+    def __str__(self):
+        return f"{self.name} ({self.Interprise.name})"
+
+
+class grouped_item_member(models.Model):
+    """Links bidhaa_stoku to grouped_item (e.g., Fanta, Pepsi to Soda za 1000)"""
+    grouped = models.ForeignKey(grouped_item,on_delete=models.CASCADE,related_name='members')
+    bidhaa_stoku = models.ForeignKey('bidhaa_stoku',on_delete=models.CASCADE,null=True,blank=True)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('grouped','bidhaa_stoku')
+
+    def __str__(self):
+        return f"{self.grouped.name} - {self.bidhaa_stoku.bidhaa.bidhaa_jina if self.bidhaa_stoku else 'N/A'}"
+
+
+class grouped_item_reconciliation(models.Model):
+    """Tracks reconciliation/verification of grouped items at end of day/period"""
+    grouped = models.ForeignKey(grouped_item,on_delete=models.CASCADE)
+    Interprise = models.ForeignKey(Interprise,on_delete=models.CASCADE)
+    date = models.DateField()
+    recorded_qty = models.DecimalField(max_digits=10,decimal_places=3)  # Qty from sales
+    actual_qty = models.DecimalField(max_digits=10,decimal_places=3,null=True,blank=True)  # Verified qty
+    status = models.CharField(max_length=20,default='pending')  # pending, approved, rejected
+    by = models.ForeignKey(InterprisePermissions,on_delete=models.SET_NULL,null=True,blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True,blank=True)
+    notes = models.TextField(blank=True,null=True)
+
+    class Meta:
+        unique_together = ('grouped','Interprise','date')
+
+    def __str__(self):
+        return f"{self.grouped.name} - {self.date} ({self.status})"
 
 
 class mauzoni(models.Model):

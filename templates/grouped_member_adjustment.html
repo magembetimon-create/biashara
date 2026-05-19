@@ -1,0 +1,307 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+
+{% block mauzo %}
+<div class="whiteBg py-4 px-2 px-md-3" style="min-height: 80vh;">
+  <div class="classic_div px-1 px-md-2" style="max-width: 1200px; margin: 0 auto;">
+
+    {% include 'grouped_nav.html' %}
+
+    {% if grouped_adjustment_data %}
+
+    {# Summary stats #}
+    <div class="row mb-3">
+      <div class="col-6 col-md-3 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Grouped Items{% else %}Grouped Items{% endif %}</div>
+          <div class="h4 mb-0">{{ grouped_adjustment_total_groups|intcomma }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Jumla Iliyouzwa{% else %}Total Sold{% endif %}</div>
+          <div class="h4 mb-0">{{ grouped_adjustment_grand_total_sold|floatformat:2|intcomma }}</div>
+        </div>
+      </div>
+    </div>
+
+    {# Per-grouped-item adjustment sections #}
+    {% for g in grouped_adjustment_data %}
+    <div class="grouped-section card border-0 shadow-sm mb-3"
+         data-grouped-id="{{ g.grouped_id }}"
+         data-total-sold="{{ g.total_sold }}">
+      <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center py-2">
+        <div>
+          <strong>{{ g.grouped_name }}</strong>
+          <span class="text-muted small ml-2">
+            {% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}: {{ duka.currencii }} {{ g.bei_kuuza|floatformat:0|intcomma }}
+          </span>
+        </div>
+        <div class="text-right mt-1 mt-md-0">
+          <span class="badge badge-primary px-2 py-1">
+            {% if useri.langSet == 0 %}Iliyouzwa{% else %}Sold{% endif %}: <strong>{{ g.total_sold|floatformat:2|intcomma }}</strong>
+          </span>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive px-2 py-2">
+          <table class="table table-sm mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th>{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Kipimo{% else %}Units{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Stoku Iliyopo{% else %}Current Stock{% endif %}</th>
+                <th class="text-right" style="min-width:140px;">
+                  {% if useri.langSet == 0 %}Iliyopo Shelfu{% else %}On Shelf{% endif %}
+                  <sup class="text-danger font-weight-bold">*</sup>
+                </th>
+                <th class="text-right">{% if useri.langSet == 0 %}Iliyouzwa{% else %}Sold{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in g.members %}
+              <tr data-stock-id="{{ m.stock_id }}" data-idadi="{{ m.idadi }}">
+                <td>{{ m.name }}</td>
+                <td class="text-muted small">{{ m.vipimo }}</td>
+                <td class="text-right">{{ m.idadi|floatformat:2|intcomma }}</td>
+                <td class="text-right">
+                  <input type="number"
+                         class="form-control form-control-sm text-right onshelf-input"
+                         data-stock-id="{{ m.stock_id }}"
+                         data-grouped-id="{{ g.grouped_id }}"
+                         data-idadi="{{ m.idadi }}"
+                         value=""
+                         placeholder="{{ m.idadi|floatformat:3 }}"
+                         min="0"
+                         step="0.001"
+                         oninput="calcSold(this)">
+                </td>
+                <td class="text-right">
+                  <span class="sold-display text-muted">—</span>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-3">
+                  {% if useri.langSet == 0 %}Hakuna wanachama wa grouped item hii.{% else %}No members for this grouped item.{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            {% if g.members %}
+            <tfoot class="border-top">
+              <tr>
+                <td colspan="4" class="text-right small text-muted pr-2">
+                  {% if useri.langSet == 0 %}Jumla ya Members Iliyouzwa:{% else %}Total Member Sold:{% endif %}
+                </td>
+                <td class="text-right"><strong class="member-total-sold text-muted">—</strong></td>
+              </tr>
+            </tfoot>
+            {% endif %}
+          </table>
+        </div>
+        <div class="px-3 pb-2">
+          <div class="validation-msg d-none small mt-1"></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    {# Save button #}
+    <div class="text-right mt-3 pb-3">
+      <button id="saveAdjBtn" type="button" class="btn btn-primary px-4" onclick="saveAdjustments()">
+        {% if useri.langSet == 0 %}Hifadhi Marekebisho{% else %}Save Adjustments{% endif %}
+      </button>
+    </div>
+
+    {% else %}
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center py-5 text-muted">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-inbox mb-3 d-block mx-auto text-muted" viewBox="0 0 16 16">
+          <path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4H4.98zm9.954 5H10.45a2.5 2.5 0 0 1-4.9 0H1.066l.32 2.814A.5.5 0 0 0 1.88 12h12.24a.5.5 0 0 0 .497-.686L14.933 9zM3.809 3.563A1.5 1.5 0 0 1 4.981 3h6.038a1.5 1.5 0 0 1 1.172.563l3.7 4.625a.5.5 0 0 1 .105.374l-.39 3.124A1.5 1.5 0 0 1 14.117 13H1.883a1.5 1.5 0 0 1-1.489-1.314l-.39-3.124a.5.5 0 0 1 .106-.374l3.7-4.625z"/>
+        </svg>
+        {% if useri.langSet == 0 %}
+          Hakuna mauzo ya grouped items kwa tarehe hii.
+        {% else %}
+          No grouped item sales found for this date.
+        {% endif %}
+      </div>
+    </div>
+
+    {% endif %}
+
+  </div>
+</div>
+
+{# Hidden CSRF form #}
+<form id="csrfForm" style="display:none">{% csrf_token %}</form>
+
+<script>
+var useri_lang = Number('{{ useri.langSet|default:0 }}');
+var adj_selected_date = '{{ selected_date }}';
+
+function calcSold(input) {
+  var row = input.closest('tr');
+  var idadi = parseFloat(row.getAttribute('data-idadi')) || 0;
+  var onShelf = parseFloat(input.value);
+  var soldDisplay = row.querySelector('.sold-display');
+
+  if (input.value === '' || isNaN(onShelf)) {
+    soldDisplay.textContent = '—';
+    soldDisplay.className = 'sold-display text-muted';
+  } else {
+    var sold = idadi - onShelf;
+    soldDisplay.textContent = sold.toFixed(2);
+    if (sold < 0) {
+      soldDisplay.className = 'sold-display text-danger font-weight-bold';
+    } else {
+      soldDisplay.className = 'sold-display text-success';
+    }
+  }
+
+  validateSection(input.closest('.grouped-section'));
+}
+
+function validateSection(section) {
+  if (!section) return;
+  var totalSold = parseFloat(section.getAttribute('data-total-sold')) || 0;
+  var inputs = section.querySelectorAll('.onshelf-input');
+  var validationEl = section.querySelector('.validation-msg');
+  var memberTotalEl = section.querySelector('.member-total-sold');
+
+  var allFilled = true;
+  var sumSold = 0;
+  var hasNegative = false;
+
+  inputs.forEach(function(inp) {
+    if (inp.value === '') {
+      allFilled = false;
+      return;
+    }
+    var idadi = parseFloat(inp.closest('tr').getAttribute('data-idadi')) || 0;
+    var onShelf = parseFloat(inp.value) || 0;
+    var sold = idadi - onShelf;
+    if (sold < -0.001) hasNegative = true;
+    sumSold += sold;
+  });
+
+  if (!allFilled) {
+    memberTotalEl.textContent = '—';
+    memberTotalEl.className = 'member-total-sold text-muted';
+    validationEl.classList.add('d-none');
+    return;
+  }
+
+  memberTotalEl.textContent = sumSold.toFixed(2);
+  validationEl.classList.remove('d-none');
+
+  if (hasNegative) {
+    memberTotalEl.className = 'member-total-sold text-danger';
+    validationEl.textContent = '⚠ ' + (useri_lang == 0
+      ? 'Idadi ya shelfu inazidi stoku iliyopo'
+      : 'On-shelf qty exceeds current stock');
+    validationEl.className = 'validation-msg small text-danger mt-1';
+  } else if (Math.abs(sumSold - totalSold) > 0.01) {
+    memberTotalEl.className = 'member-total-sold text-warning';
+    validationEl.textContent = '⚠ ' + (useri_lang == 0
+      ? 'Jumla ya sold (' + sumSold.toFixed(2) + ') haifanani na grouped total (' + totalSold.toFixed(2) + ')'
+      : 'Member total sold (' + sumSold.toFixed(2) + ') does not match grouped total (' + totalSold.toFixed(2) + ')');
+    validationEl.className = 'validation-msg small text-danger mt-1';
+  } else {
+    memberTotalEl.className = 'member-total-sold text-success';
+    validationEl.textContent = '✓ ' + (useri_lang == 0 ? 'Jumla inafanana' : 'Totals match');
+    validationEl.className = 'validation-msg small text-success mt-1';
+  }
+}
+
+function isSectionValid(section) {
+  var validationEl = section.querySelector('.validation-msg');
+  return validationEl && validationEl.classList.contains('text-success');
+}
+
+function saveAdjustments() {
+  var sections = document.querySelectorAll('.grouped-section');
+  if (sections.length === 0) return;
+
+  var adjustments = [];
+  var allValid = true;
+
+  sections.forEach(function(section) {
+    if (!isSectionValid(section)) {
+      allValid = false;
+      return;
+    }
+    var groupedId = parseInt(section.getAttribute('data-grouped-id'));
+    var members = [];
+
+    section.querySelectorAll('.onshelf-input').forEach(function(inp) {
+      members.push({
+        stock_id: parseInt(inp.getAttribute('data-stock-id')),
+        on_shelf_qty: parseFloat(inp.value) || 0
+      });
+    });
+
+    if (members.length > 0) {
+      adjustments.push({ grouped_id: groupedId, members: members });
+    }
+  });
+
+  if (!allValid) {
+    if (typeof toastr !== 'undefined') {
+      toastr.error(useri_lang == 0 ? 'Sahihisha makosa kabla ya kuhifadhi' : 'Fix validation errors before saving');
+    } else {
+      alert(useri_lang == 0 ? 'Sahihisha makosa kabla ya kuhifadhi' : 'Fix validation errors before saving');
+    }
+    return;
+  }
+
+  if (adjustments.length === 0) {
+    if (typeof toastr !== 'undefined') {
+      toastr.warning(useri_lang == 0 ? 'Jaza idadi zote kwanza' : 'Fill all quantities first');
+    }
+    return;
+  }
+
+  var saveBtn = document.getElementById('saveAdjBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = useri_lang == 0 ? 'Inahifadhi...' : 'Saving...';
+
+  var csrfToken = document.querySelector('#csrfForm [name=csrfmiddlewaretoken]');
+  csrfToken = csrfToken ? csrfToken.value : '';
+
+  fetch('/stoku/grouped_items_member_adjustment', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify({ date: adj_selected_date, adjustments: adjustments })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      if (typeof toastr !== 'undefined') {
+        toastr.success(data.msg || (useri_lang == 0 ? 'Imehifadhiwa' : 'Saved'));
+      }
+      setTimeout(function() { location.reload(); }, 1500);
+    } else {
+      if (typeof toastr !== 'undefined') {
+        toastr.error(data.msg || 'Error');
+      } else {
+        alert(data.msg || 'Error');
+      }
+      saveBtn.disabled = false;
+      saveBtn.textContent = useri_lang == 0 ? 'Hifadhi Marekebisho' : 'Save Adjustments';
+    }
+  })
+  .catch(function(err) {
+    if (typeof toastr !== 'undefined') {
+      toastr.error('Network error');
+    }
+    saveBtn.disabled = false;
+    saveBtn.textContent = useri_lang == 0 ? 'Hifadhi Marekebisho' : 'Save Adjustments';
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,368 @@
+{% load humanize %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="{% if useri.langSet == 0 %}sw{% else %}en{% endif %}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if useri.langSet == 0 %}Bidhaa Zilizouzwa na Mhusika{% else %}Sold Items by Staff{% endif %}</title>
+  {% if paper_size == 'thermal' %}
+  <link rel="stylesheet" href="{% static 'css/minRecept.css' %}">
+  {% endif %}
+  <style>
+    .btn {
+      display: inline-block;
+      cursor: pointer;
+      text-decoration: none;
+      border: 1px solid #0b5ed7;
+      background: #0d6efd;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-right: 6px;
+    }
+    .btn.alt {
+      background: #fff;
+      color: #0d6efd;
+    }
+
+    .paper-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .paper-modal.show {
+      display: flex;
+    }
+
+    .paper-modal-card {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      padding: 14px;
+    }
+
+    .paper-modal-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .paper-select {
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+
+    .paper-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    {% if paper_size != 'thermal' %}
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 20px;
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    h4 {
+      margin: 0 0 8px;
+    }
+
+    .meta {
+      color: #555;
+      margin-bottom: 14px;
+      font-size: 13px;
+    }
+
+    .actions {
+      margin-bottom: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background: #f0f0f0;
+    }
+
+    tfoot td {
+      font-weight: bold;
+      background: #fafafa;
+    }
+
+    .right {
+      text-align: right;
+    }
+    {% endif %}
+
+    {% if paper_size == 'thermal' %}
+    body {
+      background: #fff;
+      margin: 0;
+      padding: 6px;
+    }
+
+    .actions {
+      width: var(--thermal-width-screen);
+      margin: 0 auto 8px;
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .actions .btn {
+      padding: 5px 8px;
+      font-size: 11px;
+      margin-right: 0;
+    }
+
+    #invoice-POS h4 {
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    #invoice-POS .receipt-title {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    #invoice-POS .meta-line {
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    #invoice-POS .summary-strong {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    @page {
+      size: 58mm auto;
+      margin: 0;
+    }
+    {% else %}
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
+    {% endif %}
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+
+      .container {
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        max-width: 100%;
+      }
+
+      .actions {
+        display: none;
+      }
+
+      .paper-modal {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  {% if paper_size == 'thermal' %}
+  <div class="actions">
+    <a class="btn alt" href="javascript:window.close();">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</a>
+    <button type="button" class="btn" onclick="openPaperPrintModal()">{% if useri.langSet == 0 %}Print{% else %}Print{% endif %}</button>
+  </div>
+
+  <div id="invoice-POS">
+    <center id="top">
+      <h4>{{ shift.Interprise.name }}</h4>
+      <div class="the_address"><strong>{{ shift.Interprise.Intp_code }}</strong></div>
+      <div class="receipt-title">{% if useri.langSet == 0 %}Bidhaa Zilizouzwa na Mhusika{% else %}Sold Items by Staff{% endif %}</div>
+    </center>
+
+    <div id="mid">
+      <div class="receipt-line meta-line">
+        <span>{% if useri.langSet == 0 %}Mhusika{% else %}Staff{% endif %}:</span>
+        <span class="right">{{ actor_name }}{% if actor_code %} ({{ actor_code }}){% endif %}</span>
+      </div>
+      <div class="receipt-line meta-line">
+        <span>{% if useri.langSet == 0 %}Shift{% else %}Shift{% endif %}:</span>
+        <span class="right">{{ shift.code }}</span>
+      </div>
+      <div class="receipt-line meta-line">
+        <span>{% if useri.langSet == 0 %}Mauzo{% else %}Sales{% endif %}:</span>
+        <span class="right">{{ totals.sales_count }}</span>
+      </div>
+      <hr>
+    </div>
+
+    <div id="bot">
+      <ul id="itm_list">
+        {% for row in item_rows %}
+        <li>
+          <div class="receipt-item-wrap">
+            <div class="receipt-item-index"><strong>{{ forloop.counter }}.</strong></div>
+            <div class="receipt-item-body">
+              <div class="receipt-item-name text-capitalize">{{ row.item_name }}</div>
+              <div class="receipt-item-meta">
+                <div class="receipt-item-desc-line">{{ row.qty|floatformat:2|intcomma }} {{ row.units|default:'-' }}</div>
+                <div class="receipt-item-total">
+                  <span><strong>{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</strong></span>
+                  <span class="right"><strong>{{ row.amount|floatformat:2|intcomma }}</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </li>
+        {% empty %}
+        <li>
+          <div class="the_address">{% if useri.langSet == 0 %}Hakuna bidhaa zilizopatikana{% else %}No items found{% endif %}</div>
+        </li>
+        {% endfor %}
+      </ul>
+
+      <div id="totalSumartion">
+        <div class="receipt-summary-line border-top">
+          <span>{% if useri.langSet == 0 %}Jumla Qty{% else %}Total Qty{% endif %}</span>
+          <span class="right">{{ totals.qty|floatformat:2|intcomma }}</span>
+        </div>
+        <div class="receipt-summary-grand">
+          <span>{% if useri.langSet == 0 %}Jumla Amount{% else %}Total Amount{% endif %}</span>
+          <span class="right summary-strong">{{ totals.amount|floatformat:2|intcomma }}</span>
+        </div>
+        <hr>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="container">
+    <h4>{% if useri.langSet == 0 %}Bidhaa Zilizouzwa na Mhusika{% else %}Sold Items by Staff{% endif %}</h4>
+    <div class="meta">
+      <strong>{% if useri.langSet == 0 %}Mhusika{% else %}Staff{% endif %}:</strong> {{ actor_name }}{% if actor_code %} ({{ actor_code }}){% endif %}
+      | <strong>{% if useri.langSet == 0 %}Shift{% else %}Shift{% endif %}:</strong> {{ shift.code }}
+      | <strong>{% if useri.langSet == 0 %}Mauzo{% else %}Sales{% endif %}:</strong> {{ totals.sales_count }}
+    </div>
+
+    <div class="actions">
+      <a class="btn alt" href="javascript:window.close();">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</a>
+      <button type="button" class="btn" onclick="openPaperPrintModal()">{% if useri.langSet == 0 %}Print{% else %}Print{% endif %}</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
+          <th>{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
+          <th class="right">{% if useri.langSet == 0 %}Qty{% else %}Qty{% endif %}</th>
+          <th class="right">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in item_rows %}
+        <tr>
+          <td>{{ row.item_name }}</td>
+          <td>{{ row.units|default:'-' }}</td>
+          <td class="right">{{ row.qty|floatformat:2|intcomma }}</td>
+          <td class="right">{{ row.amount|floatformat:2|intcomma }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="right">{% if useri.langSet == 0 %}Hakuna bidhaa zilizopatikana{% else %}No items found{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
+          <td class="right">{{ totals.qty|floatformat:2|intcomma }}</td>
+          <td class="right">{{ totals.amount|floatformat:2|intcomma }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  {% endif %}
+
+  <div id="paperPrintModal" class="paper-modal" aria-hidden="true">
+    <div class="paper-modal-card">
+      <div class="paper-modal-title">
+        {% if useri.langSet == 0 %}Chagua Aina ya Karatasi{% else %}Select Paper Size{% endif %}
+      </div>
+      <select id="paperSizeSelect" class="paper-select">
+        <option value="large" {% if paper_size != 'thermal' %}selected{% endif %}>{% if useri.langSet == 0 %}Karatasi Kubwa (A4){% else %}Large Paper (A4){% endif %}</option>
+        <option value="thermal" {% if paper_size == 'thermal' %}selected{% endif %}>{% if useri.langSet == 0 %}Thermal Ndogo (58mm){% else %}Small Thermal (58mm){% endif %}</option>
+      </select>
+      <div class="paper-modal-actions">
+        <button type="button" class="btn alt" onclick="closePaperPrintModal()">{% if useri.langSet == 0 %}Ghairi{% else %}Cancel{% endif %}</button>
+        <button type="button" class="btn" onclick="submitPaperPrint()">{% if useri.langSet == 0 %}Print{% else %}Print{% endif %}</button>
+      </div>
+    </div>
+  </div>
+
+  {% if should_print %}
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.print();
+      }, 200);
+    };
+  </script>
+  {% endif %}
+  <script>
+    function openPaperPrintModal() {
+      document.getElementById('paperPrintModal').classList.add('show');
+    }
+
+    function closePaperPrintModal() {
+      document.getElementById('paperPrintModal').classList.remove('show');
+    }
+
+    function submitPaperPrint() {
+      var paper = document.getElementById('paperSizeSelect').value || 'large';
+      var url = '/staff/shifts/actor-sales?sid={{ shift.id }}&actor={{ actor_id }}&print=1&paper=' + encodeURIComponent(paper);
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>

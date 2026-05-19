@@ -988,6 +988,15 @@ let shwCo = false
             <span class="pl-2">  {% if useri.langSet == 0 %} Makundi ya bidhaa  {% else %} Items Group {% endif %}</span>
             </a>
             </li>
+
+          <li>
+            <a {% block active-groupedItem-menu %}class="btn-default btn btn-sm "{% endblock %} href="/stoku/bidhaapanel">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-grid-3x2-gap-fill" viewBox="0 0 16 16">
+                <path d="M1 2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2zm8 0a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V2zM1 10a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm8 0a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-3z"/>
+              </svg>
+            <span class="pl-2">  {% if useri.langSet == 0 %} Bidhaa za Makundi  {% else %} Grouped Items {% endif %}</span>
+            </a>
+            </li>
       
           <li>
             <a {% block active-chapa-menu %} class="btn-default btn btn-sm "{% endblock %} href="/stoku/chapa" >
@@ -1335,7 +1344,7 @@ let shwCo = false
           </a>
         </li>
     {% endif %}
-    {% if duka.shift_management_enabled %}
+   
       <li>
         <a id="staff-shifts-list" {% block active-staff-shifts-menu %} class="btn-default btn btn-sm " {% endblock %} href="/staff/shifts">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock-history" viewBox="0 0 16 16">
@@ -1346,7 +1355,7 @@ let shwCo = false
           <span class="pl-1">{% if useri.langSet == 0 %}Shift za Watumiaji{% else %}User Shifts{% endif %}</span>
         </a>
       </li>
-    {% endif %}
+  
   </ul>
 </div>
 
@@ -1742,6 +1751,7 @@ $('.muamala-genu').click(function(){
         {% if duka.Interprise and shift_management_enabled %}
         <div class="row px-sm-3 px-2 pt-2">
           <div class="col-12 pl-sm-0">
+            <a href="{% if has_active_shift and is_assigned_to_active_shift and active_shift %}/staff/shifts/view?sid={{ active_shift.id }}{% else %}/staff/shifts{% endif %}" class="d-block text-reset" style="text-decoration:none;">
             <div class="alert {% if has_active_shift and is_assigned_to_active_shift %}alert-success{% elif has_active_shift %}alert-warning{% else %}alert-danger{% endif %} mb-2 py-2 px-3 smallFont" role="alert">
               <strong>
                 {% if useri.langSet == 0 %}Status ya Shift:{% else %}Shift Status:{% endif %}
@@ -1758,6 +1768,7 @@ $('.muamala-genu').click(function(){
               </div>
               {% endif %}
             </div>
+            </a>
           </div>
         </div>
         {% endif %}
@@ -3468,10 +3479,23 @@ $('.muamala-genu').click(function(){
                   <span id="waiterOrdersNavBadge" class="badge badge-danger{% if not waiter_uncleared_waiters_count %} d-none{% endif %}">{{ waiter_uncleared_waiters_count }}</span>
                 </a>
                 {% endif %}
+                 <div class="dropdown-divider"></div>
+
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'grouped_items_sales_track' %}" id="groupedSalesTrackNavLink">
+                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="currentColor" class="bi bi-grid-3x2-gap-fill mr-2" viewBox="0 0 16 16">
+                      <path d="M1 2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2zm8 0a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V2zM1 10a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm8 0a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-3z"/>
+                    </svg>
+                    {% if useri.langSet == 0 %} Mauzo ya Grouped Items {% else %} Grouped Sales Track {% endif %}
+                  </span>
+                  <span id="groupedSalesTrackNavBadge" class="badge badge-danger{% if not grouped_sales_track_count %} d-none{% endif %}">{{ grouped_sales_track_count }}</span>
+                </a>
 
                 <div class="dropdown-divider"></div>
 
                 {% endif %}
+
+
 
                 {% if duka.service and shift_operation_allowed %}
                 <a class="dropdown-item" href="/mauzo/POStab?s=1">

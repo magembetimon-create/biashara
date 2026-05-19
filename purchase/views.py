@@ -28,6 +28,7 @@ from datetime import datetime,timezone
 import time  
 import pytz
 import datetime
+import traceback
 import re
 import json
 from django.db.models import Sum,Avg
@@ -795,7 +796,7 @@ def bili_return(request):
             else: 
                 return render(request,'bil_return.html',todo)
       except:
-            
+            traceback.print_exc()
             return render(request,'pagenotFound.html',todoFunct(request))
 
 

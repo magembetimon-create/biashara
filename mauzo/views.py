@@ -27,12 +27,19 @@ import time
 import pytz
 import datetime
 import re
+from decimal import Decimal
 from django.db.models import Sum
 from django.core.paginator import Paginator,EmptyPage
 
 
 
 from accaunts.todos import Todos , confirmMailF, updateOrder, shift_operation_block_payload
+from stoku.grouped_items_utils import (
+      build_grouped_member_bidhaa_map,
+      get_grouped_stock_display_qty,
+      reduce_grouped_members_stock,
+      restore_grouped_members_stock,
+)
 # Create your views here.
 
 def todoFunct(request):
@@ -254,7 +261,10 @@ def  newInvoice(request):
 def  POStab(request):
     serv = int(request.GET.get('s',0)) 
     todo = newInvo_funct(request) 
+#     bidhaa_stoku.objects.filter(partial_item_reduction_qty__gt=0).update(partial_item_reduction_qty=0)
+   
     if not todo['duka'].Interprise:
+        
         return redirect('/userdash')
     else:     
        todo.update({
@@ -462,6 +472,11 @@ def waiter_order(request):
                         # if not _waiter_mode_accepts(counter_mode, bidhaa_obj):
                         #       raise ValueError('ITEM_NOT_ALLOWED_FOR_COUNTER')
 
+                        if getattr(bidhaa_obj, 'is_grouped_item', False):
+                              available_qty = get_grouped_stock_display_qty(bidhaa_obj)
+                              if Decimal(str(qty)) > available_qty:
+                                    raise ValueError('ITEM_OUT_OF_STOCK')
+
                         bei = float(bidhaa_obj.Bei_kuuza or 0)
                         if bei <= 0:
                               raise ValueError('ITEM_PRICE_INVALID')
@@ -489,6 +504,7 @@ def waiter_order(request):
                         wp.customerName = table_name
                         wp.save()
 
+                  saved_lines = 0
                   for bidhaa_obj, qty, bei, vat_included, vat_set, match_id in pending_lines:
                         ln = mauzoList()
                         ln.mauzo = sale
@@ -501,13 +517,21 @@ def waiter_order(request):
                         if match_id and salePuMatch.objects.filter(pk=match_id).exists():
                               ln.match = salePuMatch.objects.get(pk=match_id)
                         ln.save()
+                        saved_lines += 1
+
+                  if saved_lines <= 0:
+                        raise ValueError('NO_ORDER_LINES_SAVED')
 
       except ValueError as er:
             code = str(er)
+            if code == 'NO_ORDER_LINES_SAVED':
+                  return JsonResponse({'success': False, 'message_swa': 'Order haikuhifadhi items', 'message_eng': 'Order items were not saved'})
             if code == 'ITEM_NOT_ALLOWED_FOR_COUNTER':
                   return JsonResponse({'success': False, 'message_swa': 'Baadhi ya bidhaa haziruhusiwi kwa counter hii', 'message_eng': 'Some items are not allowed for this waiter counter'})
             if code == 'ITEM_NOT_FOUND':
                   return JsonResponse({'success': False, 'message_swa': 'Kuna item haijapatikana', 'message_eng': 'One or more items were not found'})
+            if code == 'ITEM_OUT_OF_STOCK':
+                  return JsonResponse({'success': False, 'message_swa': 'Idadi ya grouped item haitoshi', 'message_eng': 'Grouped item quantity exceeds available member stock'})
             if code == 'ITEM_PRICE_INVALID':
                   return JsonResponse({'success': False, 'message_swa': 'Bei ya item sio sahihi', 'message_eng': 'Invalid item price found'})
             return JsonResponse({'success': False, 'message_swa': 'Data sio sahihi', 'message_eng': 'Invalid data'})
@@ -562,6 +586,8 @@ def waiter_items_data(request):
       ).values().order_by('-pk')
 
       products = list(products_qs)
+      grouped_members_map = build_grouped_member_bidhaa_map(duka.id)
+
       if mode == 'drinks':
             products = [x for x in products if re.search(r'(kinywaji|drink|beverage|bar|juice|soda)', str(x.get('ainaN', '')).lower())]
       elif mode == 'kitchen':
@@ -641,6 +667,7 @@ def waiter_items_data(request):
       return JsonResponse({
             'success': True,
             'products': products,
+            'grouped_members_map': grouped_members_map,
             'bidhaa_Rangi': bidhaaRangi,
             'sized': sized,
             'img': itemImg,
@@ -2632,15 +2659,17 @@ def setPack(request):
                    
                   if ss.exists():
                         ls=ss.last()
-                        if not uzo.service:
-                              if p:
-                                    produ_size.objects.filter(pk=ls.size.id).update(idadi=F('idadi')-ls.idadi) 
-                                    produ_colored.objects.filter(pk=ls.color.color.id).update(idadi=F('idadi')-ls.idadi) 
-                                    itm=bidhaa_stoku.objects.filter(pk=ls.mauzo.produ.id).update(idadi=F('idadi')-ls.idadi) 
-                              else:
-                                    produ_size.objects.filter(pk=ls.size.id).update(idadi=F('idadi')+ls.idadi) 
-                                    produ_colored.objects.filter(pk=ls.color.color.id).update(idadi=F('idadi')+ls.idadi) 
-                                    bidhaa_stoku.objects.filter(pk=ls.mauzo.produ.id).update(idadi=F('idadi')+ls.idadi) 
+                        # Skip stock reduction for grouped items (deferred until reconciliation)
+                        if ls.mauzo.produ and not getattr(ls.mauzo.produ, 'is_grouped_item', False):
+                              if not uzo.service:
+                                    if p:
+                                          produ_size.objects.filter(pk=ls.size.id).update(idadi=F('idadi')-ls.idadi) 
+                                          produ_colored.objects.filter(pk=ls.color.color.id).update(idadi=F('idadi')-ls.idadi) 
+                                          itm=bidhaa_stoku.objects.filter(pk=ls.mauzo.produ.id).update(idadi=F('idadi')-ls.idadi) 
+                                    else:
+                                          produ_size.objects.filter(pk=ls.size.id).update(idadi=F('idadi')+ls.idadi) 
+                                          produ_colored.objects.filter(pk=ls.color.color.id).update(idadi=F('idadi')+ls.idadi) 
+                                          bidhaa_stoku.objects.filter(pk=ls.mauzo.produ.id).update(idadi=F('idadi')+ls.idadi) 
 
                         ss.update(packed=p)
                         unp=sales_size.objects.filter(color=ls.color.id).exclude(pk=ls.id,packed=bool(p))
@@ -2655,14 +2684,16 @@ def setPack(request):
                               sales_color.objects.filter(pk=ls.color.id).update(packed=False)
 
                   if sc.exists():
-                        lc = sc.last() 
-                        if not uzo.service:
-                              if p:
-                                    produ_colored.objects.filter(pk=lc.color.id).update(idadi=F('idadi')-lc.idadi) 
-                                    bidhaa_stoku.objects.filter(pk=lc.mauzo.produ.id).update(idadi=F('idadi')-lc.idadi) 
-                              else:
-                                    produ_colored.objects.filter(pk=lc.color.id).update(idadi=F('idadi')+lc.idadi) 
-                                    bidhaa_stoku.objects.filter(pk=lc.mauzo.produ.id).update(idadi=F('idadi')+lc.idadi) 
+                        lc = sc.last()
+                        # Skip stock reduction for grouped items (deferred until reconciliation)
+                        if lc.mauzo.produ and not getattr(lc.mauzo.produ, 'is_grouped_item', False):
+                              if not uzo.service:
+                                    if p:
+                                          produ_colored.objects.filter(pk=lc.color.id).update(idadi=F('idadi')-lc.idadi) 
+                                          bidhaa_stoku.objects.filter(pk=lc.mauzo.produ.id).update(idadi=F('idadi')-lc.idadi) 
+                                    else:
+                                          produ_colored.objects.filter(pk=lc.color.id).update(idadi=F('idadi')+lc.idadi) 
+                                          bidhaa_stoku.objects.filter(pk=lc.mauzo.produ.id).update(idadi=F('idadi')+lc.idadi) 
                         
                         sc.update(packed=p)
                         unpc_ = sales_color.objects.filter(mauzo=lc.mauzo.id).exclude(packed=bool(p))
@@ -2674,18 +2705,20 @@ def setPack(request):
 
                   if  it.exists() and not sc.exists() and not ss.exists():
                         lit =  it.last()
-                        if not uzo.service:
-                              if p:
-                                    if notSure:
-                                          productionList.objects.filter(pk=lit.produ.produced.id).update(qty=F('qty')+lit.idadi)
+                        # Skip stock reduction for grouped items (deferred until reconciliation)
+                        if lit.produ and not getattr(lit.produ, 'is_grouped_item', False):
+                              if not uzo.service:
+                                    if p:
+                                          if notSure:
+                                                productionList.objects.filter(pk=lit.produ.produced.id).update(qty=F('qty')+lit.idadi)
+                                          else:
+                                                bidhaa_stoku.objects.filter(pk=lit.produ.id).update(idadi=F('idadi')-lit.idadi)          
                                     else:
-                                          bidhaa_stoku.objects.filter(pk=lit.produ.id).update(idadi=F('idadi')-lit.idadi)          
-                              else:
-                                    if notSure:
-                                          productionList.objects.filter(pk=lit.produ.produced.id).update(qty=F('qty')-lit.idadi)
+                                          if notSure:
+                                                productionList.objects.filter(pk=lit.produ.produced.id).update(qty=F('qty')-lit.idadi)
 
-                                    else:
-                                          bidhaa_stoku.objects.filter(pk=lit.produ.id).update(idadi=F('idadi')+lit.idadi)
+                                          else:
+                                                bidhaa_stoku.objects.filter(pk=lit.produ.id).update(idadi=F('idadi')+lit.idadi)
 
                         it.update(packed=p) 
                   if p and it.exists():
@@ -3140,6 +3173,12 @@ def _deduct_stock_for_order(sale):
 
       the_list = mauzoList.objects.filter(mauzo=sale)
       for l in the_list:
+            if l.produ and getattr(l.produ, 'is_grouped_item', False):
+                  grouped_result = reduce_grouped_members_stock(l.produ, l.idadi)
+                  if not grouped_result.get('success'):
+                        raise ValueError(grouped_result.get('msg') or 'Grouped stock reduction failed')
+                  continue
+            
             if l.produ.produced and l.produ.produced.notsure:
                   productionList.objects.filter(pk=l.produ.produced.id).update(qty=F('qty')+l.idadi)
             else:
@@ -3171,6 +3210,12 @@ def _restore_stock_for_order(sale):
 
       the_list = mauzoList.objects.filter(mauzo=sale)
       for l in the_list:
+            if l.produ and getattr(l.produ, 'is_grouped_item', False):
+                  grouped_restore = restore_grouped_members_stock(l.produ, l.idadi)
+                  if not grouped_restore.get('success'):
+                        raise ValueError(grouped_restore.get('msg') or 'Grouped stock restore failed')
+                  continue
+            
             if l.produ.produced and l.produ.produced.notsure:
                   productionList.objects.filter(pk=l.produ.produced.id).update(qty=F('qty')-l.idadi)
             else:
@@ -3925,6 +3970,12 @@ def waiter_summary_clear_waiter_payments(request):
                         waiter_order_cleared_id=new_clear_id,
                   )
 
+                  clearOda = mauzoni.objects.get(pk=od.id)
+                  clearOda.By = None if clearOda.amount > clearOda.ilolipwa else cheo
+                  clearOda.save()
+
+
+
                   if paidAmo <= 0 and order_paid < order_amount:
                         break
 
@@ -4370,7 +4421,10 @@ def waiter_print_order(request):
             first_print = int(sale.printed_number or 0) <= 0
 
             if first_print:
-                  _deduct_stock_for_order(sale)
+                  try:
+                        _deduct_stock_for_order(sale)
+                  except Exception as reduce_error:
+                        return JsonResponse({'success': False, 'msg': str(reduce_error) or 'Stock deduction failed'})
 
             sale.order = False
             sale.receved = True
@@ -5223,7 +5277,12 @@ def  Itm_return_data(request):
 
                         retn.save()     
 
-                  bidhaa_stoku.objects.filter(pk=retnd.produ.id).update(idadi=F('idadi')+float(z['retn']))
+                  if retnd.produ and getattr(retnd.produ, 'is_grouped_item', False):
+                        grouped_restore = restore_grouped_members_stock(retnd.produ, float(z['retn']))
+                        if not grouped_restore.get('success'):
+                              raise ValueError(grouped_restore.get('msg') or 'Grouped return restore failed')
+                  else:
+                        bidhaa_stoku.objects.filter(pk=retnd.produ.id).update(idadi=F('idadi')+float(z['retn']))
 
                   if sales_color.objects.filter(pk=z['color'],mauzo=retnd.id).exists():
                         cl__ = sales_color.objects.get(pk=z['color'],mauzo=retnd.id)
@@ -5753,8 +5812,8 @@ def  newsaleOda(request):
 
 @login_required(login_url='login')
 def  addInvoice(request):
-      if request.method == "POST":
-       try:
+    if request.method == "POST":
+      try:
          sup=request.POST.get('sup')
          edit=int(request.POST.get('edit'))
          bil_val=request.POST.get('bill')
@@ -6077,6 +6136,7 @@ def  addInvoice(request):
   
          
          
+         saved_lines = 0
          for bil in bill:
             #  SAVE BILL LIST..............................//
               produ_details = bidhaa_stoku.objects.get(pk=bil['value'],Interprise=entp.Interprise)
@@ -6110,44 +6170,61 @@ def  addInvoice(request):
               list_mauzo.vat_set=bil['vat_set']
 
               NOTSURE = False
+              is_grouped_repr = bool(getattr(produ_details, 'is_grouped_item', False) and getattr(produ_details, 'grouped_item_ref_id', None))
+              grouped_available_qty = get_grouped_stock_display_qty(produ_details) if is_grouped_repr else Decimal('0')
+
               if produ_details.produced is not None:
-                  NOTSURE = produ_details.produced.notsure
-              
-             
-              if (produ_details.idadi >= the_qty or NOTSURE ) or bool(oda):
-                 
-                 list_mauzo.save() 
+                    NOTSURE = produ_details.produced.notsure
 
-                 if not bool(oda):
-                      if not bil['notsure'] and not produ_details.service: 
-                        produ_details.idadi = float(produ_details.idadi) - float(list_mauzo.idadi)
-                        
-                        produ_details.save()
-                        if produ_details.idadi == 0:
-                             inapacha_ = bidhaa_stoku.objects.filter(bidhaa=produ_details.bidhaa.id,idadi__gt=0).exclude(pk=produ_details.id)
-                             if inapacha_.exists():
-                                   inapa = inapacha_.last()
-                                   inapa.inapacha = False
-                                   inapa.save() 
-                                   itm={
-                                          "itm":produ_details,
-                                          "request":request,
-                                          "out":True,
-                                          "other":inapa
-                                          }
-                                   updateOrder(itm)
+              can_save_line = False
+              if is_grouped_repr:
+                    can_save_line = (grouped_available_qty >= Decimal(str(the_qty))) or bool(oda)
+              elif produ_details.produced is not None:
+                    can_save_line = ((produ_details.idadi >= the_qty or NOTSURE) or bool(oda))
+              elif produ_details.service:
+                    can_save_line = True
+              else:
+                    can_save_line = (Decimal(str(produ_details.idadi or 0)) >= Decimal(str(the_qty))) or bool(oda)
 
-                                   produ_details.inapacha = True
-                                   produ_details.save()
-                      elif bil['notsure']:
-                          productionList.objects.filter(pk=produ_details.produced.id).update(qty=F('qty')+list_mauzo.idadi)    
+              if not can_save_line:
+                    raise ValueError('ITEM_OUT_OF_STOCK')
+
+              list_mauzo.save()
+              saved_lines += 1
+
+              if not bool(oda):
+                    if is_grouped_repr:
+                          grouped_result = reduce_grouped_members_stock(produ_details, list_mauzo.idadi)
+                          if not grouped_result.get('success'):
+                                raise ValueError(grouped_result.get('msg') or 'Grouped stock reduction failed')
+                    elif not bil['notsure'] and not produ_details.service:
+                          produ_details.idadi = float(produ_details.idadi) - float(list_mauzo.idadi)
+                          produ_details.save()
+                          if produ_details.idadi == 0:
+                                inapacha_ = bidhaa_stoku.objects.filter(bidhaa=produ_details.bidhaa.id,idadi__gt=0).exclude(pk=produ_details.id)
+                                if inapacha_.exists():
+                                      inapa = inapacha_.last()
+                                      inapa.inapacha = False
+                                      inapa.save()
+                                      itm={
+                                            "itm":produ_details,
+                                            "request":request,
+                                            "out":True,
+                                            "other":inapa
+                                      }
+                                      updateOrder(itm)
+
+                                      produ_details.inapacha = True
+                                      produ_details.save()
+                    elif produ_details.produced is not None and bil['notsure']:
+                          productionList.objects.filter(pk=produ_details.produced.id).update(qty=F('qty')+list_mauzo.idadi)
             #      fordit_col= sales_color.objects.filter(mauzo=list_mauzo)      
             #      if fordit_col.exists():
             #            fordit_col.delete()
 
  
                   
-                 if len(bil['color'])>=1 :
+              if len(bil['color'])>=1 :
                           for set_r in bil['color']:
                                 rangi = produ_colored.objects.get(pk=set_r['color'],Interprise=entp.Interprise)
                                 if not bool(oda) and not produ_details.service:
@@ -6170,7 +6247,7 @@ def  addInvoice(request):
   
   
                                             
-                 if len(bil['size'])>=1 :
+              if len(bil['size'])>=1 :
   
                                 for sz in bil['size']:
                                       # s = sizes.objects.get(pk=sz['size'],color__bidhaa__owner=entp.admin)
@@ -6203,6 +6280,9 @@ def  addInvoice(request):
   
 
                  
+         if saved_lines <= 0:
+               raise ValueError('NO_SALE_LINES_SAVED')
+
          invo_no2 = mauzoni.objects.filter(Interprise=entp.Interprise).last()
          
          invono = invo_no2.Invo_no
@@ -6264,37 +6344,57 @@ def  addInvoice(request):
            weka.save()
 
          if bool(rudi):
-             rec =   sale_return_mauzo_fidia()
+             rec = sale_return_mauzo_fidia()
              rec.ivo = mauzi
              rec.re_am = rudi_am
              rec.fidia = True
-             rec.sale_rtn = sale_return.objects.get(pk=rudi_val,Interprise=entp.Interprise)
+             rec.sale_rtn = sale_return.objects.get(pk=rudi_val, Interprise=entp.Interprise)
              rec.save()
 
          return JsonResponse(data)
 
-       except:
-         traceback.print_exc() 
-         todo = todoFunct(request) 
-         cheo = todo['cheo'] 
-         duka = todo['duka']  
+      except ValueError as er:
+         code = str(er)
+         if code == 'NO_SALE_LINES_SAVED':
+               return JsonResponse({
+                     'success': False,
+                     'message_swa': 'Ankara haikuhifadhi bidhaa zozote',
+                     'message_eng': 'Invoice items were not saved'
+               })
+         if code == 'ITEM_OUT_OF_STOCK':
+               return JsonResponse({
+                     'success': False,
+                     'message_swa': 'Baadhi ya bidhaa hazina stock ya kutosha',
+                     'message_eng': 'One or more items are out of stock'
+               })
+         return JsonResponse({
+               'success': False,
+               'message_swa': code,
+               'message_eng': code
+         })
 
-         data={
-               'success':False,
-               'message_swa':"Taarifa za Ankara hazijafanikiwa tafadhari jaribu tena kwa usahihi",
-               'message_eng':"Invoice  data not saved please try again correctly"  
-                 }
+      except:
+         traceback.print_exc()
+         todo = todoFunct(request)
+         cheo = todo['cheo']
+         duka = todo['duka']
+
+         data = {
+               'success': False,
+               'message_swa': "Taarifa za Ankara hazijafanikiwa tafadhari jaribu tena kwa usahihi",
+               'message_eng': "Invoice  data not saved please try again correctly"
+         }
 
          if (cheo.viewi or not cheo.mauzo_na_matumizi) and not cheo.user == duka.owner:
-               data ={
-                     'success':False,
-                     'message_swa':"Hauna ruhusa ya kurekodi mauzo tafadhari wasiliana na uongozi",
-                     'message_eng':"You have no permission to record sales invoice please contact admin" 
+               data = {
+                     'success': False,
+                     'message_swa': "Hauna ruhusa ya kurekodi mauzo tafadhari wasiliana na uongozi",
+                     'message_eng': "You have no permission to record sales invoice please contact admin"
                }
 
          return JsonResponse(data)
-      else:
-       return render(request,'pagenotFound.html',todoFunct(request))      
+    else:
+      return render(request, 'pagenotFound.html', todoFunct(request))
 
 
 @login_required(login_url='login')
@@ -6304,7 +6404,7 @@ def  customer(request):
         return redirect('/userdash')
     else:     
        return render(request,'watejapanel.html',todo)
-       
+
 @login_required(login_url='login')
 def  getCustomers(request):
     used = request.user

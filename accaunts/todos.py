@@ -183,6 +183,14 @@ class Todos:
             By__isnull=True,
             full_returned=False,
           ).values('waiter_order').distinct().count()
+        grouped_sales_track_count = 0
+        if duka and duka.Interprise:
+          grouped_sales_track_count = mauzoList.objects.filter(
+            mauzo__Interprise=duka,
+            mauzo__date=date.today(),
+            produ__is_grouped_item=True,
+            produ__grouped_item_ref__isnull=False,
+          ).values('mauzo_id').distinct().count()
         shift_data = self._shift_context(duka, dukap)
         todo = {
         'cheo':dukap,
@@ -198,6 +206,7 @@ class Todos:
         'ukomo':ukomo,
         'waiter_counter':waiter_counter,
         'waiter_uncleared_waiters_count':waiter_uncleared_waiters_count,
+        'grouped_sales_track_count':grouped_sales_track_count,
         'payaccs_waiter':payaccs_waiter,
         'customer_table':customer_table
         }
@@ -219,6 +228,7 @@ class Todos:
             'pent':None,
             'puO':None,
             'waiter_uncleared_waiters_count':0,
+            'grouped_sales_track_count':0,
             'shift_management_enabled':False,
             'active_shift':None,
             'has_active_shift':False,

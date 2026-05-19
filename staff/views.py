@@ -30,6 +30,7 @@ from management.models import (
     ShiftSession,
     ShiftAssignment,
     ShiftActivity,
+    mauzoni,
     mauzoList,
     productChangeRecord,
     toaCash,
@@ -335,8 +336,9 @@ def waiters(request):
 def staff_shifts(request):
     try:
         todo = todoFunct(request)
+        cheo = todo['cheo']
         ok, resp = _shift_enabled_or_redirect(todo)
-        if not ok:
+        if not (ok or cheo.admin):
             return resp
 
         duka = todo['duka']
@@ -841,6 +843,75 @@ def shift_view(request):
             stock_value_totals['current_value'] += current_value
             stock_value_totals['current_worth'] += current_worth
 
+        # --- Sales breakdown per staff (waiter orders + direct recorder sales) ---
+        from management.models import mauzoni
+        sales_qs = mauzoni.objects.filter(
+            Interprise=duka.id,
+            tarehe__gte=shift.starts_at,
+            tarehe__lte=period_end,
+            service=False,
+            returned=False,
+            ignore=False,
+        ).select_related(
+            'waiter_order__user__user',
+            'waiter_order__user_entp__Interprise',
+            'By__user__user',
+            'By__user_entp__Interprise',
+        )
+
+        def _staff_display_name(staff_perm):
+            if not staff_perm:
+                return 'Unknown'
+            user_extend = getattr(staff_perm, 'user', None)
+            auth_user = getattr(user_extend, 'user', None) if user_extend else None
+            first_name = (getattr(auth_user, 'first_name', '') or '').strip() if auth_user else ''
+            last_name = (getattr(auth_user, 'last_name', '') or '').strip() if auth_user else ''
+            full_name = (f"{first_name} {last_name}").strip()
+            if not full_name:
+                full_name = (
+                    auth_user.get_full_name().strip()
+                    if auth_user and hasattr(auth_user, 'get_full_name') and auth_user.get_full_name()
+                    else (auth_user.username if auth_user else '')
+                )
+            if not full_name and getattr(staff_perm, 'fanyakazi', None):
+                full_name = (staff_perm.fanyakazi.jina or '').strip()
+
+            entp_code = ''
+            user_entp = getattr(staff_perm, 'user_entp', None)
+            if user_entp and getattr(user_entp, 'Interprise', None):
+                entp_code = (user_entp.Interprise.Intp_code or '').strip()
+
+            if full_name and entp_code:
+                return f"{full_name} ({entp_code})"
+            if full_name:
+                return full_name
+            if entp_code:
+                return entp_code
+            return 'Unknown'
+
+        breakdown = {}
+        for sale in sales_qs:
+            actor = sale.waiter_order if sale.waiter_order_id else sale.By
+            key = actor.id if actor else 0
+            if key not in breakdown:
+                breakdown[key] = {
+                    'actor_id': actor.id if actor else None,
+                    'name': _staff_display_name(actor),
+                    'sales_count': 0,
+                    'total_amount': Decimal('0'),
+                }
+            breakdown[key]['sales_count'] += 1
+            breakdown[key]['total_amount'] += Decimal(sale.amount or 0)
+
+        sales_breakdown_rows = sorted(
+            breakdown.values(),
+            key=lambda x: (x['name'] or '').lower(),
+        )
+        sales_breakdown_totals = {
+            'sales_count': sum(row['sales_count'] for row in sales_breakdown_rows),
+            'total_amount': sum((row['total_amount'] for row in sales_breakdown_rows), Decimal('0')),
+        }
+
         todo.update({
             'staff_page': 'shifts',
             'shift': shift,
@@ -865,6 +936,8 @@ def shift_view(request):
             'mobile_payments_total': mobile_payments_total,
             'stock_value_rows': stock_value_rows,
             'stock_value_totals': stock_value_totals,
+            'sales_breakdown_rows': sales_breakdown_rows,
+            'sales_breakdown_totals': sales_breakdown_totals,
         })
         return render(request, 'staff/shift_view.html', todo)
     except Exception:
@@ -942,6 +1015,8 @@ def print_shift(request):
         sid = request.GET.get('sid')
         lang = request.GET.get('lang', '0')
         items = request.GET.get('items', '1')
+        paper = str(request.GET.get('paper', 'large') or 'large').strip().lower()
+        paper_size = 'thermal' if paper in ('thermal', 'mini', 'small', '58mm') else 'large'
         include_items = str(items or '1').strip().lower() not in ('0', 'false', 'no', 'off', '')
 
         if not sid:
@@ -1241,6 +1316,75 @@ def print_shift(request):
             stock_value_totals['current_value'] += current_value
             stock_value_totals['current_worth'] += current_worth
 
+        # --- Sales breakdown per staff (waiter orders + direct recorder sales) ---
+        from management.models import mauzoni
+        sales_qs = mauzoni.objects.filter(
+            Interprise=duka.id,
+            tarehe__gte=shift.starts_at,
+            tarehe__lte=period_end,
+            service=False,
+            returned=False,
+            ignore=False,
+        ).select_related(
+            'waiter_order__user__user',
+            'waiter_order__user_entp__Interprise',
+            'By__user__user',
+            'By__user_entp__Interprise',
+        )
+
+        def _staff_display_name(staff_perm):
+            if not staff_perm:
+                return 'Unknown'
+            user_extend = getattr(staff_perm, 'user', None)
+            auth_user = getattr(user_extend, 'user', None) if user_extend else None
+            first_name = (getattr(auth_user, 'first_name', '') or '').strip() if auth_user else ''
+            last_name = (getattr(auth_user, 'last_name', '') or '').strip() if auth_user else ''
+            full_name = (f"{first_name} {last_name}").strip()
+            if not full_name:
+                full_name = (
+                    auth_user.get_full_name().strip()
+                    if auth_user and hasattr(auth_user, 'get_full_name') and auth_user.get_full_name()
+                    else (auth_user.username if auth_user else '')
+                )
+            if not full_name and getattr(staff_perm, 'fanyakazi', None):
+                full_name = (staff_perm.fanyakazi.jina or '').strip()
+
+            entp_code = ''
+            user_entp = getattr(staff_perm, 'user_entp', None)
+            if user_entp and getattr(user_entp, 'Interprise', None):
+                entp_code = (user_entp.Interprise.Intp_code or '').strip()
+
+            if full_name and entp_code:
+                return f"{full_name} ({entp_code})"
+            if full_name:
+                return full_name
+            if entp_code:
+                return entp_code
+            return 'Unknown'
+
+        breakdown = {}
+        for sale in sales_qs:
+            actor = sale.waiter_order if sale.waiter_order_id else sale.By
+            key = actor.id if actor else 0
+            if key not in breakdown:
+                breakdown[key] = {
+                    'actor_id': actor.id if actor else None,
+                    'name': _staff_display_name(actor),
+                    'sales_count': 0,
+                    'total_amount': Decimal('0'),
+                }
+            breakdown[key]['sales_count'] += 1
+            breakdown[key]['total_amount'] += Decimal(sale.amount or 0)
+
+        sales_breakdown_rows = sorted(
+            breakdown.values(),
+            key=lambda x: (x['name'] or '').lower(),
+        )
+        sales_breakdown_totals = {
+            'sales_count': sum(row['sales_count'] for row in sales_breakdown_rows),
+            'total_amount': sum((row['total_amount'] for row in sales_breakdown_rows), Decimal('0')),
+        }
+
         context = {
             'shift': shift,
             'shift_team_rows': shift_team_rows,
@@ -1266,9 +1410,124 @@ def print_shift(request):
             'useri': useri,
             'include_items': include_items,
             'lang': lang,
+            'paper_size': paper_size,
+            'sales_breakdown_rows': sales_breakdown_rows,
+            'sales_breakdown_totals': sales_breakdown_totals,
         }
 
         return render(request, 'staff/print_shift.html', context)
+
+    except ShiftSession.DoesNotExist:
+        return JsonResponse({'success': False, 'msg': 'Shift not found'}, status=404)
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'msg': str(e)}, status=500)
+
+
+@login_required(login_url='login')
+def shift_actor_sales(request):
+    """View/print sold item list by a specific staff actor within a shift."""
+    try:
+        todo = todoFunct(request)
+        ok, resp = _shift_enabled_or_redirect(todo)
+        if not ok:
+            return resp
+
+        sid = int(request.GET.get('sid', 0) or 0)
+        actor_id = int(request.GET.get('actor', 0) or 0)
+        should_print = str(request.GET.get('print', '0')).strip().lower() in ('1', 'true', 'yes', 'on')
+        paper = str(request.GET.get('paper', 'large') or 'large').strip().lower()
+        paper_size = 'thermal' if paper in ('thermal', 'mini', 'small', '58mm') else 'large'
+
+        duka = todo.get('duka')
+        if not duka or sid <= 0 or actor_id <= 0:
+            return JsonResponse({'success': False, 'msg': 'Invalid parameters'}, status=400)
+
+        shift = ShiftSession.objects.get(pk=sid, Interprise=duka.id)
+        period_end = shift.ends_at or timezone.now()
+
+        actor = InterprisePermissions.objects.filter(pk=actor_id, Interprise=duka.id).select_related(
+            'user__user', 'fanyakazi', 'user_entp__Interprise'
+        ).first()
+        if not actor:
+            return JsonResponse({'success': False, 'msg': 'Staff actor not found'}, status=404)
+
+        first_name = (actor.user.user.first_name or '').strip() if actor.user and actor.user.user else ''
+        last_name = (actor.user.user.last_name or '').strip() if actor.user and actor.user.user else ''
+        actor_name = (f"{first_name} {last_name}").strip()
+        if not actor_name:
+            actor_name = (
+                actor.user.user.get_full_name().strip()
+                if actor.user and actor.user.user and actor.user.user.get_full_name()
+                else ''
+            )
+        if not actor_name and actor.fanyakazi:
+            actor_name = (actor.fanyakazi.jina or '').strip()
+        if not actor_name:
+            actor_name = 'Unknown'
+
+        actor_code = ''
+        if actor.user_entp and actor.user_entp.Interprise:
+            actor_code = (actor.user_entp.Interprise.Intp_code or '').strip()
+
+        actor_sales = mauzoni.objects.filter(
+            Interprise=duka.id,
+            tarehe__gte=shift.starts_at,
+            tarehe__lte=period_end,
+            service=False,
+            returned=False,
+            ignore=False,
+        ).filter(
+            Q(waiter_order_id=actor_id) |
+            (Q(waiter_order__isnull=True) & Q(By_id=actor_id))
+        )
+
+        item_buckets = {}
+        sold_lines = mauzoList.objects.filter(
+            mauzo_id__in=actor_sales.values_list('id', flat=True)
+        ).select_related('produ__bidhaa')
+
+        for line in sold_lines:
+            net_qty = Decimal(line.idadi or 0) - Decimal(line.returned or 0) - Decimal(line.serviceReturn or 0)
+            if net_qty <= 0:
+                continue
+
+            bidhaa_obj = line.produ.bidhaa if line.produ and line.produ.bidhaa else None
+            bidhaa_id = bidhaa_obj.id if bidhaa_obj else (line.produ_id or 0)
+            item_name = bidhaa_obj.bidhaa_jina if bidhaa_obj else f"Item #{line.produ_id}"
+            item_units = bidhaa_obj.vipimo if bidhaa_obj else '-'
+            key = (bidhaa_id, item_name, item_units)
+
+            if key not in item_buckets:
+                item_buckets[key] = {
+                    'item_name': item_name,
+                    'units': item_units,
+                    'qty': Decimal('0'),
+                    'amount': Decimal('0'),
+                }
+
+            amount = net_qty * Decimal(line.bei or 0)
+            item_buckets[key]['qty'] += net_qty
+            item_buckets[key]['amount'] += amount
+
+        item_rows = sorted(item_buckets.values(), key=lambda x: (x['item_name'] or '').lower())
+        totals = {
+            'qty': sum((row['qty'] for row in item_rows), Decimal('0')),
+            'amount': sum((row['amount'] for row in item_rows), Decimal('0')),
+            'sales_count': actor_sales.count(),
+        }
+
+        todo.update({
+            'shift': shift,
+            'actor_name': actor_name,
+            'actor_code': actor_code,
+            'actor_id': actor_id,
+            'item_rows': item_rows,
+            'totals': totals,
+            'should_print': should_print,
+            'paper_size': paper_size,
+        })
+        return render(request, 'staff/shift_actor_sales.html', todo)
 
     except ShiftSession.DoesNotExist:
         return JsonResponse({'success': False, 'msg': 'Shift not found'}, status=404)

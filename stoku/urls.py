@@ -75,6 +75,7 @@ urlpatterns=[
     path('bidhaaReg',views.bidhaaReg, name='bidhaaReg'),
     path('aina',views.bidhaaAina, name='aina'),
     path('kundi',views.bidhaaKundi, name='kundi'),
+    path('groupedItems',views.groupedItemsPage, name='groupedItems'),
     path('chapa',views.bidhaaChapa, name='chapa'),
 
 # Services   
@@ -109,7 +110,19 @@ urlpatterns=[
     path('autocomplete',views.autocomplete, name='autocomplete'),
     path('getVendor',views.getVendor, name='getVendor'),
     path('allowFractions',views.allowFractions, name='allowFractions'),
-    path('interpnavi/<int:intp>',views.interpnavi, name='interpnavi')
+    path('interpnavi/<int:intp>',views.interpnavi, name='interpnavi'),
 
+    # Grouped items endpoints
+    path('grouped_items_list',views.grouped_items_list, name='grouped_items_list'),
+    path('grouped_items_members',views.grouped_items_members, name='grouped_items_members'),
+    path('grouped_items_register',views.grouped_items_register, name='grouped_items_register'),
+    path('grouped_items_detail',views.grouped_items_detail, name='grouped_items_detail'),
+    path('grouped_items_update',views.grouped_items_update, name='grouped_items_update'),
+    path('grouped_items_delete',views.grouped_items_delete, name='grouped_items_delete'),
+    path('grouped_items_sales_track',views.grouped_items_sales_track, name='grouped_items_sales_track'),
+    path('grouped_items_member_adjustment',views.grouped_items_member_adjustment, name='grouped_items_member_adjustment'),
+    path('grouped_items_reconciliation_list',views.grouped_items_reconciliation_list, name='grouped_items_reconciliation_list'),
+    path('grouped_items_reconciliation_detail',views.grouped_items_reconciliation_detail, name='grouped_items_reconciliation_detail'),
+    path('grouped_items_approve_reconciliation',views.grouped_items_approve_reconciliation, name='grouped_items_approve_reconciliation'),
 
 ]

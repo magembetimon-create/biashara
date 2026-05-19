@@ -1,0 +1,82 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+
+{% block mauzo %}
+<div class="whiteBg py-4 px-2 px-md-3" style="min-height: 80vh;">
+  <div class="classic_div px-1 px-md-2" style="max-width: 1200px; margin: 0 auto;">
+
+    {% include 'grouped_nav.html' %}
+
+    <div class="row mb-3">
+      <div class="col-md-3 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Mauzo{% else %}Sales{% endif %}</div>
+          <div class="h4 mb-0">{{ grouped_sales_sales_count|intcomma }}</div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Mistari{% else %}Lines{% endif %}</div>
+          <div class="h4 mb-0">{{ grouped_sales_lines_count|intcomma }}</div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Jumla ya Idadi{% else %}Total Qty{% endif %}</div>
+          <div class="h4 mb-0">{{ grouped_sales_total_qty|floatformat:2|intcomma }}</div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Jumla ya Amount{% else %}Total Amount{% endif %}</div>
+          <div class="h4 mb-0">{{ duka.currencii }} {{ grouped_sales_total_amount|floatformat:0|intcomma }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mt-2">
+      <div class="card-body p-0">
+        {% if grouped_sales_rows %}
+        <div class="table-responsive px-2 px-md-3 py-2">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th>#</th>
+                <th>{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}No ya Mauzo{% else %}Sale No{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Grouped Item{% else %}Grouped Item{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in grouped_sales_rows %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ row.date|date:'Y-m-d H:i' }}</td>
+                <td>
+                  <a href="/mauzo/viewInvo?item_valued={{ row.sale_id }}">{{ row.sale_code|default:'-' }}</a>
+                </td>
+                <td>
+                  <div class="font-weight-bold">{{ row.grouped_name }}</div>
+                  <div class="small text-muted">ID: {{ row.grouped_id }}</div>
+                </td>
+                <td class="text-right">{{ row.qty|floatformat:2|intcomma }}</td>
+                <td class="text-right">{{ duka.currencii }} {{ row.unit_price|floatformat:0|intcomma }}</td>
+                <td class="text-right">{{ duka.currencii }} {{ row.amount|floatformat:0|intcomma }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+          {% if useri.langSet == 0 %}Hakuna mauzo ya grouped items kwa tarehe hii.{% else %}No grouped item sales found for this date.{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

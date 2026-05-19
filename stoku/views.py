@@ -10,11 +10,12 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
 from business import settings
-from management.models import HudumaNyingine, Notifications,ainaBibi,ainaMama,Kata,Mitaa,Wilaya,Zones,Mikoa,wateja_active,productionList,now_categ,now_group,bidhaaA_edit,stokAdjustment,bidhaa_edit,stockAdjst_confirm, UserExtend,Kanda,bei_za_bidhaa,user_Interprise,ColorChange,SizeChange,staff_akaunt_permissions,wateja,receive,receiveList,transferList,received_confirm,transfered_size,received_size,transfered_color,received_color,transfer,sizes,mauzoList,Interprise,bidhaa_sifa,key_sifa,picha_yenyewe,productChangeRecord,InterprisePermissions,PaymentAkaunts,toaCash,wekaCash,mahitaji,bidhaa_aina,makampuni,bidhaa,wasambazaji,manunuzi,manunuziList,matumizi,rekodiMatumizi,bidhaa_stoku,color_produ,produ_colored,picha_bidhaa,produ_size
+from management.models import HudumaNyingine, Notifications,ainaBibi,ainaMama,Kata,Mitaa,Wilaya,Zones,Mikoa,wateja_active,productionList,now_categ,now_group,bidhaaA_edit,stokAdjustment,bidhaa_edit,stockAdjst_confirm, UserExtend,Kanda,bei_za_bidhaa,user_Interprise,ColorChange,SizeChange,staff_akaunt_permissions,wateja,receive,receiveList,transferList,received_confirm,transfered_size,received_size,transfered_color,received_color,transfer,sizes,mauzoList,Interprise,bidhaa_sifa,key_sifa,picha_yenyewe,productChangeRecord,InterprisePermissions,PaymentAkaunts,toaCash,wekaCash,mahitaji,bidhaa_aina,makampuni,bidhaa,wasambazaji,manunuzi,manunuziList,matumizi,rekodiMatumizi,bidhaa_stoku,color_produ,produ_colored,picha_bidhaa,produ_size,grouped_item,grouped_item_member,grouped_item_reconciliation
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
 from django.db.models import F,FloatField
+from django.db import transaction
 from django.core import paginator, serializers
 from django.db.models import Q
 from storages.backends.gcloud import GoogleCloudStorage
@@ -30,6 +31,7 @@ import time
 import pytz
 import datetime
 import re
+from decimal import Decimal, InvalidOperation
 from django.db.models import Sum
 from django.forms.models import model_to_dict
 import os
@@ -40,6 +42,14 @@ from django.core.cache import cache
 
 
 from accaunts.todos import Todos,updateOrder,shift_operation_block_payload
+from .grouped_items_utils import (
+    should_reduce_stock_for_mauzolist,
+    get_grouped_items_for_duka,
+    create_reconciliation_from_sales,
+    approve_grouped_item_reconciliation,
+    get_grouped_item_members,
+    build_grouped_member_bidhaa_map,
+)
 # Create your views here.
 
 def todoFunct(request):
@@ -48,139 +58,144 @@ def todoFunct(request):
 
 @login_required(login_url='login')
 def getItems(request):
-    todo = todoFunct(request)
-    intpn = todo['cheo']
-    intp = intpn.Interprise
-    itmI= bidhaa_stoku.objects.filter(Q(idadi__gt=0)|Q(inapacha=False)|Q(produced__notsure=True),Interprise__owner=intp.owner.id).annotate(
-            complete=F('produced__production__production__complete'),
-            notsure=F('produced__notsure'),
-            pr=F('produced__production__production__id'),
-            st=F('Interprise'),stName=F('Interprise__name'),
-            group_name=F('bidhaa__bidhaa_aina__mahi__mahitaji'),
-            group=F('bidhaa__bidhaa_aina__mahi__id'),
-            kampuni=F('bidhaa__kampuni__id'),
-            aina=F('bidhaa__bidhaa_aina__id'),
-            namba=F('bidhaa__namba'),
-            material=F('bidhaa__material'),
-            curenci=F('Interprise__currencii'),
-            vat=F('Interprise__vatper'),
-            vat_allow=F('Interprise__vat_allow'),
-            user_sup=F('msambaji__where'),
+    try:
+        todo = todoFunct(request)
+        intpn = todo['cheo']
+        intp = intpn.Interprise
+        itmI= bidhaa_stoku.objects.filter(Q(idadi__gt=0)|Q(inapacha=False)|Q(produced__notsure=True),Interprise__owner=intp.owner.id).annotate(
+                complete=F('produced__production__production__complete'),
+                notsure=F('produced__notsure'),
+                pr=F('produced__production__production__id'),
+                st=F('Interprise'),stName=F('Interprise__name'),
+                group_name=F('bidhaa__bidhaa_aina__mahi__mahitaji'),
+                group=F('bidhaa__bidhaa_aina__mahi__id'),
+                kampuni=F('bidhaa__kampuni__id'),
+                aina=F('bidhaa__bidhaa_aina__id'),
+                namba=F('bidhaa__namba'),
+                material=F('bidhaa__material'),
+                curenci=F('Interprise__currencii'),
+                vat=F('Interprise__vatper'),
+                vat_allow=F('Interprise__vat_allow'),
+                user_sup=F('msambaji__where'),
 
-            group_aina = F('bidhaa__bidhaa_aina__mahi__aina'),
+                group_aina = F('bidhaa__bidhaa_aina__mahi__aina'),
 
-            puCode=F('manunuzi__manunuzi__code'),
-            TransCode=F('uhamisho__receive__transfer__code'),
-            RCFrom=F('uhamisho__receive__transfer__Interprise__name'),
-            ProdCode=F('produced__production__code'),
-            addCode=F('ongezwa__code'),
-           
-            brand=F('bidhaa__kampuni_id__kampuni_jina'),
-            ainaN=F('bidhaa__bidhaa_aina_id__aina'),
-            vendor=F('msambaji_id__jina'),
-            bidhaaN=F('bidhaa__bidhaa_jina'),
-            maelezo=F('bidhaa__maelezo'),
-            brandId=F('bidhaa__kampuni'),
-        
-            taxInclusive=F('bidhaa__saletaxInluded'),
-            putaxInclusive=F('bidhaa__purchtaxInluded'),
-            itmChangeDate=F('bidhaa__change_date'),
-            vipimo=F('bidhaa__vipimo'),
-            uwiano=F('bidhaa__idadi_jum'),
-            vipimoJum=F('bidhaa__vipimo_jum')
-            )
+                puCode=F('manunuzi__manunuzi__code'),
+                TransCode=F('uhamisho__receive__transfer__code'),
+                RCFrom=F('uhamisho__receive__transfer__Interprise__name'),
+                ProdCode=F('produced__production__code'),
+                addCode=F('ongezwa__code'),
+            
+                brand=F('bidhaa__kampuni_id__kampuni_jina'),
+                ainaN=F('bidhaa__bidhaa_aina_id__aina'),
+                vendor=F('msambaji_id__jina'),
+                bidhaaN=F('bidhaa__bidhaa_jina'),
+                maelezo=F('bidhaa__maelezo'),
+                brandId=F('bidhaa__kampuni'),
+            
+                taxInclusive=F('bidhaa__saletaxInluded'),
+                putaxInclusive=F('bidhaa__purchtaxInluded'),
+                itmChangeDate=F('bidhaa__change_date'),
+                vipimo=F('bidhaa__vipimo'),
+                uwiano=F('bidhaa__idadi_jum'),
+                vipimoJum=F('bidhaa__vipimo_jum')
+                )
 
 
-    itms = itmI.values().order_by("-pk")    
+        itms = itmI.values().order_by("-pk")    
 
-    products = list(itms.filter(st=intp.id))
+        products = list(itms.filter(st=intp.id))
+        grouped_members_map = build_grouped_member_bidhaa_map(intp.id)
 
-    produced = itmI.filter(produced__production__production__Interprise=intp.id)
-    custom = list(wateja.objects.filter(Interprise__owner=intpn.Interprise.owner.id).annotate(duka=F('Interprise'),duka_jina=F('Interprise__name')).values())
+        produced = itmI.filter(produced__production__production__Interprise=intp.id)
+        custom = list(wateja.objects.filter(Interprise__owner=intpn.Interprise.owner.id).annotate(duka=F('Interprise'),duka_jina=F('Interprise__name')).values())
 
-    produced_cost = []
-    if produced.exists():
-        for li in produced:
-                    itm_cost = 0
-                
-                    pdcd = bidhaa_stoku.objects.filter(produced__production__production=li.produced.production.production.id)
+        produced_cost = []
+        if produced.exists():
+            for li in produced:
+                        itm_cost = 0
                     
-                    # prices sum for all produced on this produced
-                    prices_sum = pdcd.annotate(idd=F('produced__qty')).aggregate(sum=Sum(F('Bei_kuuza')*F('idd')))['sum']
+                        pdcd = bidhaa_stoku.objects.filter(produced__production__production=li.produced.production.production.id)
+                        
+                        # prices sum for all produced on this produced
+                        prices_sum = pdcd.annotate(idd=F('produced__qty')).aggregate(sum=Sum(F('Bei_kuuza')*F('idd')))['sum']
 
-                    # cost of items used for production.....
-                    mat_cost = productChangeRecord.objects.filter(adjst__production=li.produced.production.production.id).annotate(thamani=F('prod__Bei_kununua'),uwiano=F('prod__bidhaa__idadi_jum')).aggregate(sum=Sum(F('thamani')*F('qty')/F('uwiano')))['sum']
-                    
-                    #Other expenses .........................//
-                    exp = toaCash.objects.filter(produxn__produxn=li.produced.production.production.id).aggregate(sum=Sum(F('Amount')))['sum']
-                    
-                    prod_sumu = float(mat_cost)
+                        # cost of items used for production.....
+                        mat_cost = productChangeRecord.objects.filter(adjst__production=li.produced.production.production.id).annotate(thamani=F('prod__Bei_kununua'),uwiano=F('prod__bidhaa__idadi_jum')).aggregate(sum=Sum(F('thamani')*F('qty')/F('uwiano')))['sum']
+                        
+                        #Other expenses .........................//
+                        exp = toaCash.objects.filter(produxn__produxn=li.produced.production.production.id).aggregate(sum=Sum(F('Amount')))['sum']
+                        
+                        prod_sumu = float(mat_cost)
 
-                    if exp:
-                        prod_sumu += float(exp)  
+                        if exp:
+                            prod_sumu += float(exp)  
 
-                    if prices_sum > 0:
-                        prc = li.Bei_kuuza * li.produced.qty
-                        pr_ratio = prc/prices_sum
-                        prQty = float(li.produced.qty)
-                        if prQty == 0 :
-                            itm_cost = 0
-                        else:    
-                            itm_cost = (float(pr_ratio) * float(prod_sumu)  ) / float(li.produced.qty)
-                          
-                    else:
-                        qtysm = pdcd.aggregate(sum=Sum('produced__qty'))['sum']
-                        if qtysm == 0:
-                            qtysm = len(pdcd)
-                        itm_cost = float(prod_sumu)/float(qtysm)
-
-
-                    
-                    produced_cost.append({
-                        'id':li.id,
-                        'cost':itm_cost,
-                        'idadi':li.idadi,
-                        'qty':li.produced.qty,
-                        'pr':li.produced.production.production.id,
-                        'code':li.produced.production.production.code,
-                        'sales':li.Bei_kuuza,
-                        'material':li.bidhaa.material,
-                        'bidhaa':li.bidhaa.id,
-                        'Aina':li.bidhaa.bidhaa_aina.id,
-                        'kundi':li.bidhaa.bidhaa_aina.mahi.id,
-                        'brand':li.bidhaa.kampuni.id
-                    })
-    bidhaaRangi = list(produ_colored.objects.select_related('color_produ,bidhaa_stoku').filter(Interprise=intp,color__colored=True).exclude(bidhaa__inapacha=True,idadi=0).values('id','bidhaa','color','idadi','color__nick_name','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi'))  
-    sized=list(produ_size.objects.select_related('sizes').filter(Interprise=intp).exclude(bidhaa__inapacha=True,idadi=0).values('id','sized__color','sized__size','bidhaa','idadi','bidhaa__bidhaa__idadi_jum','bidhaa__idadi','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum'))
-    itemImg=[]
-   
-    pics = picha_bidhaa.objects.filter(picha__owner= intp.owner.user).annotate(rangi=F('color_produ'),size=F('picha__pic_size'))
-    if pics.exists():
-        for im in pics:
-            itemImg.append({
-                'picha__picha':im.picha.picha.url,
-                'picha':im.picha.id,
-                'id':im.id,
-                'color_produ':im.rangi,
-                'bidhaa':im.bidhaa.id
-
-            }) 
+                        if prices_sum > 0:
+                            prc = li.Bei_kuuza * li.produced.qty
+                            pr_ratio = prc/prices_sum
+                            prQty = float(li.produced.qty)
+                            if prQty == 0 :
+                                itm_cost = 0
+                            else:    
+                                itm_cost = (float(pr_ratio) * float(prod_sumu)  ) / float(li.produced.qty)
+                            
+                        else:
+                            qtysm = pdcd.aggregate(sum=Sum('produced__qty'))['sum']
+                            if qtysm == 0:
+                                qtysm = len(pdcd)
+                            itm_cost = float(prod_sumu)/float(qtysm)
 
 
-    ImgSiZe = picha_yenyewe.objects.filter(owner= intpn.admin).aggregate(Sum('pic_size'))
-    data = dict()
-  
-  
-    data['wateja']=custom
-    data['prdxnCost']=produced_cost
-    data["products"]=products
-    data['bidhaa_Rangi']=bidhaaRangi
-    data['sized']=sized  
-    data['img']=itemImg
-    # data['Imgsize']=ImgSiZe
-        
-    return JsonResponse(data)
+                        
+                        produced_cost.append({
+                            'id':li.id,
+                            'cost':itm_cost,
+                            'idadi':li.idadi,
+                            'qty':li.produced.qty,
+                            'pr':li.produced.production.production.id,
+                            'code':li.produced.production.production.code,
+                            'sales':li.Bei_kuuza,
+                            'material':li.bidhaa.material,
+                            'bidhaa':li.bidhaa.id,
+                            'Aina':li.bidhaa.bidhaa_aina.id,
+                            'kundi':li.bidhaa.bidhaa_aina.mahi.id,
+                            'brand':li.bidhaa.kampuni.id
+                        })
+        bidhaaRangi = list(produ_colored.objects.select_related('color_produ,bidhaa_stoku').filter(Interprise=intp,color__colored=True).exclude(bidhaa__inapacha=True,idadi=0).values('id','bidhaa','color','idadi','color__nick_name','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi'))  
+        sized=list(produ_size.objects.select_related('sizes').filter(Interprise=intp).exclude(bidhaa__inapacha=True,idadi=0).values('id','sized__color','sized__size','bidhaa','idadi','bidhaa__bidhaa__idadi_jum','bidhaa__idadi','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum'))
+        itemImg=[]
+    
+        pics = picha_bidhaa.objects.filter(picha__owner= intp.owner.user).annotate(rangi=F('color_produ'),size=F('picha__pic_size'))
+        if pics.exists():
+            for im in pics:
+                itemImg.append({
+                    'picha__picha':im.picha.picha.url,
+                    'picha':im.picha.id,
+                    'id':im.id,
+                    'color_produ':im.rangi,
+                    'bidhaa':im.bidhaa.id
 
+                }) 
+
+
+        ImgSiZe = picha_yenyewe.objects.filter(owner= intpn.admin).aggregate(Sum('pic_size'))
+        data = dict()
+    
+    
+        data['wateja']=custom
+        data['prdxnCost']=produced_cost
+        data["products"]=products
+        data['grouped_members_map'] = grouped_members_map
+        data['bidhaa_Rangi']=bidhaaRangi
+        data['sized']=sized  
+        data['img']=itemImg
+        # data['Imgsize']=ImgSiZe
+            
+        return JsonResponse(data)
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'error': 'An error occurred while fetching items.'}, status=500)
 @login_required(login_url='login')
 def OutStock(request):
     todo = todoFunct(request)
@@ -301,6 +316,7 @@ def getItemsAll(request):
     itms = itmI.values().order_by("-pk")    
 
     products = list(itms.filter(st=intp.id))
+    grouped_members_map = build_grouped_member_bidhaa_map(intp.id)
 
     produced = itmI.filter(produced__production__production__Interprise=intp.id)
     
@@ -387,6 +403,7 @@ def getItemsAll(request):
     data = dict()
     data['prdxnCost']=produced_cost
     data["products"]=products
+    data['grouped_members_map'] = grouped_members_map
     data['bidhaa_Rangi']=bidhaaRangi
     data['sized']=sized  
     data['img']=itemImg
@@ -1420,7 +1437,7 @@ def punguzaBidhaa(request):
             entp=todoFunct(request)['cheo']
             duka = entp.Interprise
 
-            if entp.owner or ( entp.proFduct_edit and not entp.viewi ):
+            if entp.owner or ( entp.product_edit and not entp.viewi ):
                 
                  
                 produ=bidhaa_stoku.objects.get(pk=idk,Interprise = duka )
@@ -1429,6 +1446,7 @@ def punguzaBidhaa(request):
                 # check wether item is accompanied with sales transactions ..........................//
                 if mauzoList.objects.filter(produ=produ.id).exists() or productChangeRecord.objects.filter(prod=produ.id).exists() or transferList.objects.filter(toka=produ.id).exists():
                     produ.inapacha =True
+                    print('here')
                     produ.save()
                     
                    
@@ -1461,6 +1479,7 @@ def punguzaBidhaa(request):
           return render(request,'pagenotFound.html',todoFunct(request))     
     
     except:
+        traceback.print_exc()
         data = {
             'success':False,
              'message_swa':'Bidhaa haikuondolewa kutokana na hitilafu',
@@ -5164,6 +5183,72 @@ def bidhaaKundi(request):
        return render(request,'parentCategories.html',todo)
 
 @login_required(login_url='login')
+def groupedItemsPage(request):
+    todo = todoFunct(request)
+    duka = todo['duka']
+    if not duka.Interprise:
+        return redirect('/userdash')
+
+    grouped_items = grouped_item.objects.filter(Interprise=duka).order_by('-id')
+    category_options = list(
+        bidhaa_aina.objects.filter(Interprise=duka)
+        .select_related('mahi')
+        .order_by('aina')
+    )
+    member_candidates = bidhaa_stoku.objects.filter(
+        Interprise=duka,
+        service=False,
+        is_grouped_item=False
+    ).select_related('bidhaa').order_by('bidhaa__bidhaa_jina', '-id')
+
+    grouped_members_candidates_data = []
+    seen_bidhaa = {}
+    for m in member_candidates:
+        bidhaa_id = m.bidhaa.id
+        if bidhaa_id in seen_bidhaa:
+            seen_bidhaa[bidhaa_id]['stock_total'] += Decimal(str(m.idadi or 0))
+            continue
+
+        try:
+            ratio = Decimal(str(m.bidhaa.idadi_jum or 1))
+            if ratio <= 0:
+                ratio = Decimal('1')
+        except Exception:
+            ratio = Decimal('1')
+
+        buy_wholesale = Decimal(str(m.Bei_kununua or 0))
+        buy_retail = buy_wholesale / ratio
+        sell_retail = Decimal(str(m.Bei_kuuza or 0))
+        sell_wholesale = Decimal(str(m.Bei_kuuza_jum or 0))
+
+        member_data = {
+            'id': m.id,
+            'bidhaa_id': bidhaa_id,
+            'name': m.bidhaa.bidhaa_jina,
+            'stock_total': Decimal(str(m.idadi or 0)),
+            'ratio': float(ratio),
+            'has_jumla_reja': bool(ratio != 1),
+            'buy_wholesale': float(buy_wholesale),
+            'buy_retail': float(buy_retail),
+            'sell_wholesale': float(sell_wholesale),
+            'sell_retail': float(sell_retail),
+        }
+        grouped_members_candidates_data.append(member_data)
+        seen_bidhaa[bidhaa_id] = member_data
+
+    for row in grouped_members_candidates_data:
+        row['stock'] = float(row['stock_total'])
+        del row['stock_total']
+
+    todo.update({
+        'grouped_items_data': grouped_items,
+        'grouped_members_candidates': member_candidates,
+        'grouped_members_candidates_data': grouped_members_candidates_data,
+        'grouped_category_options': category_options,
+    })
+    return render(request, 'groupedItems.html', todo)
+
+@login_required(login_url='login')
 def bidhaaChapa(request):  
     f = request.GET.get('f',0)
     todo =todoFunct(request)
@@ -5495,3 +5580,1016 @@ def RemoveItemAudio(request):
            return render(request,'pagenotFound.html',todoFunct(request)) 
 
 
+# ============== GROUPED ITEMS ENDPOINTS ==============
+
+@login_required(login_url='login')
+def grouped_items_list(request):
+    """List grouped items for a duka"""
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    
+    if not duka:
+        return JsonResponse({'success': False, 'msg': 'Duka not found'})
+    
+    try:
+        from datetime import date
+        selected_date = request.GET.get('date', str(date.today()))
+        
+        items = get_grouped_items_for_duka(duka.id, date=selected_date)
+        return JsonResponse({
+            'success': True,
+            'items': items,
+            'date': selected_date
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'msg': f'Error: {str(e)}'})
+
+
+@login_required(login_url='login')
+def grouped_items_members(request):
+    """Get members of a grouped item"""
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    grouped_id = request.GET.get('grouped_id', 0)
+    
+    try:
+        grouped_id = int(grouped_id)
+        if not grouped_item.objects.filter(id=grouped_id, Interprise=duka).exists():
+            return JsonResponse({'success': False, 'msg': 'Grouped item not found'})
+        members = get_grouped_item_members(grouped_id)
+        return JsonResponse({
+            'success': True,
+            'members': members
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'msg': f'Error: {str(e)}'})
+
+
+def _redistribute_ml_entries(ml_entries, rep_stock, alloc_queue):
+    """
+    Reassign mauzoList entries from rep_stock to actual member stocks.
+    alloc_queue: list of (bidhaa_stoku, sold_qty, on_shelf_qty) — members with sold_qty > 0.
+    Splits entries as needed to match member allocations exactly.
+    """
+    # Build working list: [(entry, remaining_qty_to_assign)]
+    remaining_entries = [(e, Decimal(str(e.idadi))) for e in ml_entries]
+
+    for member_stock, sold_qty, _on_shelf in alloc_queue:
+        if sold_qty <= Decimal('0.001'):
+            continue
+        remaining_to_assign = sold_qty
+
+        while remaining_to_assign > Decimal('0.001') and remaining_entries:
+            entry, entry_remaining = remaining_entries[0]
+            take = min(entry_remaining, remaining_to_assign)
+
+            if abs(entry_remaining - take) < Decimal('0.001'):
+                # Assign the whole entry to this member
+                entry.produ = member_stock
+                entry.save(update_fields=['produ'])
+                remaining_entries.pop(0)
+            else:
+                # Split: assign `take` to this member, leave leftover for next member
+                leftover = entry_remaining - take
+                entry.idadi = take
+                entry.produ = member_stock
+                entry.save(update_fields=['idadi', 'produ'])
+
+                # Create a new entry for the leftover (will be processed by next member)
+                new_entry = mauzoList(
+                    mauzo=entry.mauzo,
+                    idadi=leftover,
+                    vat_included=entry.vat_included,
+                    vat_set=entry.vat_set,
+                    jum=entry.jum,
+                    bei=entry.bei,
+                    bei_og=entry.bei_og,
+                    produ=rep_stock,
+                    serial=entry.serial,
+                    returned=Decimal('0'),
+                    packed=entry.packed,
+                    match=entry.match,
+                    saveT=entry.saveT,
+                    serviceReturn=Decimal('0'),
+                )
+                new_entry.save()
+                remaining_entries[0] = (new_entry, leftover)
+
+            remaining_to_assign -= take
+
+
+@login_required(login_url='login')
+def grouped_items_member_adjustment(request):
+    """
+    GET:  Show per-member adjustment form for grouped item sales.
+    POST: Receive JSON with on-shelf quantities, replace mauzoList.produ entries
+          with actual member bidhaa_stoku, reduce member stock, and clear
+          partial_item_reduction_qty.
+    """
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+
+    if not duka:
+        return render(request, 'pagenotFound.html', todo)
+
+    # ── POST: process adjustment ──────────────────────────────────────────────
+    if request.method == 'POST':
+        errors = []
+        try:
+            payload = json.loads(request.body)
+            adj_date = payload.get('date', str(date.today()))
+            # Validate date format
+            try:
+                import datetime as _dt
+                _dt.datetime.strptime(adj_date, '%Y-%m-%d')
+            except ValueError:
+                adj_date = str(date.today())
+
+            adjustments = payload.get('adjustments', [])
+
+            with transaction.atomic():
+                for adj in adjustments:
+                    grouped_id = adj.get('grouped_id')
+                    members_input = adj.get('members', [])
+
+                    try:
+                        gi = grouped_item.objects.get(id=grouped_id, Interprise=duka)
+                    except grouped_item.DoesNotExist:
+                        errors.append(f'Grouped item {grouped_id} not found')
+                        raise ValueError('stop')
+
+                    # Representative bidhaa_stoku for this grouped_item
+                    rep_stock = bidhaa_stoku.objects.filter(
+                        is_grouped_item=True,
+                        grouped_item_ref=gi,
+                        Interprise=duka,
+                    ).first()
+
+                    if not rep_stock:
+                        errors.append(
+                            f'{"Stoku ya representative haipatikani kwa" if True else "Representative stock not found for"} {gi.name}'
+                        )
+                        raise ValueError('stop')
+
+                    # Total sold for this grouped item on adj_date
+                    total_sold_agg = mauzoList.objects.filter(
+                        mauzo__Interprise=duka,
+                        mauzo__date=adj_date,
+                        produ=rep_stock,
+                    ).aggregate(total=Sum('idadi'))
+                    total_sold = total_sold_agg['total'] or Decimal('0')
+
+                    # Get grouped member bidhaa IDs first
+                    member_stock_ids = list(
+                        grouped_item_member.objects.filter(
+                            grouped=gi,
+                            active=True,
+                            bidhaa_stoku__isnull=False,
+                        ).values_list('bidhaa_stoku_id', flat=True)
+                    )
+
+                    member_bidhaa_ids = list(
+                        bidhaa_stoku.objects.filter(
+                            id__in=member_stock_ids,
+                            Interprise=duka,
+                        ).exclude(bidhaa_id__isnull=True).values_list('bidhaa_id', flat=True).distinct()
+                    )
+
+                    locked_member_stocks = list(
+                        bidhaa_stoku.objects.select_for_update().filter(
+                            Interprise=duka,
+                            bidhaa_id__in=member_bidhaa_ids,
+                            is_grouped_item=False,
+                            service=False,
+                        ).select_related('bidhaa').order_by('id')
+                    )
+
+                    stock_by_id = {s.id: s for s in locked_member_stocks}
+                    stocks_by_bidhaa = {}
+                    for s in locked_member_stocks:
+                        if not s.bidhaa_id:
+                            continue
+                        stocks_by_bidhaa.setdefault(s.bidhaa_id, []).append(s)
+
+                    # Build allocation queue from user input
+                    alloc_queue = []
+                    total_member_sold = Decimal('0')
+                    processed_bidhaa_ids = set()
+                    member_sold_debug_rows = []
+
+                    for m_input in members_input:
+                        try:
+                            stock_id = int(m_input.get('stock_id') or m_input.get('item_id'))
+                        except (TypeError, ValueError):
+                            errors.append('stock_id si sahihi kwenye payload')
+                            raise ValueError('stop')
+                        on_shelf_raw = m_input.get('on_shelf_qty', 0)
+                        on_shelf = Decimal(str(on_shelf_raw))
+                        if on_shelf < Decimal('0'):
+                            errors.append('On shelf qty haiwezi kuwa chini ya 0')
+                            raise ValueError('stop')
+
+                        member_stock = stock_by_id.get(stock_id)
+                        if not member_stock:
+                            errors.append(f'Member stock {stock_id} not found')
+                            raise ValueError('stop')
+
+                        bidhaa_id = member_stock.bidhaa.id
+                        if not bidhaa_id:
+                            errors.append(f'Bidhaa haipo kwa member stock {stock_id}')
+                            raise ValueError('stop')
+
+                        if bidhaa_id in processed_bidhaa_ids:
+                            errors.append('Bidhaa moja imewekwa mara mbili kwenye adjustment')
+                            raise ValueError('stop')
+                        processed_bidhaa_ids.add(bidhaa_id)
+
+                        related_stocks = stocks_by_bidhaa.get(bidhaa_id, [])
+                        if not related_stocks:
+                            errors.append(f'Hakuna member stocks kwa bidhaa {bidhaa_id}')
+                            raise ValueError('stop')
+
+                        total_before = sum((Decimal(str(s.idadi or 0)) for s in related_stocks), Decimal('0'))
+                        sold_total = total_before - on_shelf
+                        if sold_total < Decimal('-0.001'):
+                            name = member_stock.bidhaa.bidhaa_jina if member_stock.bidhaa else str(stock_id)
+                            errors.append(
+                                f'Idadi ya shelfu ya "{name}" inazidi stoku iliyopo ({total_before})'
+                            )
+                            raise ValueError('stop')
+
+                        sold_total = max(sold_total, Decimal('0'))
+                        total_member_sold += sold_total
+
+                        member_name = member_stock.bidhaa.bidhaa_jina if member_stock.bidhaa else str(bidhaa_id)
+                        member_sold_debug_rows.append({
+                            'bidhaa_id': bidhaa_id,
+                            'name': member_name,
+                            'input_stock_id': stock_id,
+                            'total_before': total_before,
+                            'on_shelf': on_shelf,
+                            'sold_total': sold_total,
+                        })
+
+                        # Distribute sold total across all rows with same bidhaa_id (FIFO by stock id)
+                        remaining_sold = sold_total
+                        for rel_stock in related_stocks:
+                            rel_before = Decimal(str(rel_stock.idadi or 0))
+                            sold_qty = min(rel_before, remaining_sold)
+                            keep_qty = rel_before - sold_qty
+                            alloc_queue.append((rel_stock, sold_qty, keep_qty))
+                            remaining_sold -= sold_qty
+
+                    # remove possible duplicates while preserving first result
+                    dedup_alloc = {}
+                    for rel_stock, sold_qty, keep_qty in alloc_queue:
+                        dedup_alloc[rel_stock.id] = (rel_stock, sold_qty, keep_qty)
+                    alloc_queue = list(dedup_alloc.values())
+
+                    print(
+                        f"[GROUPED ADJ DEBUG] grouped_id={gi.id} grouped_name={gi.name} "
+                        f"date={adj_date} total_grouped_sold={total_sold} total_member_sold={total_member_sold}"
+                    )
+                    for row in member_sold_debug_rows:
+                        print(
+                            f"[GROUPED ADJ MEMBER SOLD] grouped_id={gi.id} bidhaa_id={row['bidhaa_id']} "
+                            f"name={row['name']} input_stock_id={row['input_stock_id']} "
+                            f"total_before={row['total_before']} on_shelf={row['on_shelf']} sold={row['sold_total']}"
+                        )
+
+                    # Validate that member totals match grouped total
+                    if total_sold > Decimal('0') and abs(total_member_sold - total_sold) > Decimal('0.01'):
+                        print(
+                            f"[GROUPED ADJ MISMATCH] grouped_id={gi.id} grouped_name={gi.name} "
+                            f"total_member_sold={total_member_sold} total_grouped_sold={total_sold}"
+                        )
+                        errors.append(
+                            f'Jumla ya member sold ({total_member_sold}) haifanani na grouped total ({total_sold}) kwa {gi.name}'
+                        )
+                        raise ValueError('stop')
+
+                    # Redistribute mauzoList entries to actual member stocks
+                    if total_sold > Decimal('0'):
+                        ml_entries = list(
+                            mauzoList.objects.filter(
+                                mauzo__Interprise=duka,
+                                mauzo__date=adj_date,
+                                produ=rep_stock,
+                            ).order_by('id')
+                        )
+                        _redistribute_ml_entries(ml_entries, rep_stock, alloc_queue)
+
+                    # Reduce actual member stock and clear partial_item_reduction_qty
+                    for member_stock, sold, on_shelf in alloc_queue:
+                        member_stock.idadi = on_shelf
+                        member_stock.partial_item_reduction_qty = Decimal('0')
+                        member_stock.save(update_fields=['idadi', 'partial_item_reduction_qty'])
+
+                    # Clear representative stock partial_item_reduction_qty
+                    rep_stock.partial_item_reduction_qty = Decimal('0')
+                    rep_stock.save(update_fields=['partial_item_reduction_qty'])
+
+            return JsonResponse({'success': True, 'msg': 'Imehifadhiwa' if True else 'Saved'})
+
+        except ValueError:
+            return JsonResponse({'success': False, 'msg': errors[0] if errors else 'Validation error'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'msg': f'Error: {str(e)}'})
+
+    # ── GET: build adjustment form data ──────────────────────────────────────
+    try:
+        selected_date = request.GET.get('date', str(date.today()))
+        try:
+            import datetime as _dt
+            _dt.datetime.strptime(selected_date, '%Y-%m-%d')
+        except ValueError:
+            selected_date = str(date.today())
+
+        grouped_sales_qs = mauzoList.objects.filter(
+            mauzo__Interprise=duka,
+            mauzo__date=selected_date,
+            produ__is_grouped_item=True,
+            produ__grouped_item_ref__isnull=False,
+        ).select_related('produ__grouped_item_ref')
+
+        # Aggregate total sold per grouped_item
+        gi_totals = {}
+        for entry in grouped_sales_qs:
+            gi = entry.produ.grouped_item_ref
+            if gi.id not in gi_totals:
+                gi_totals[gi.id] = {
+                    'grouped_id': gi.id,
+                    'grouped_name': gi.name,
+                    'bei_kuuza': float(gi.Bei_kuuza),
+                    'total_sold': Decimal('0'),
+                }
+            gi_totals[gi.id]['total_sold'] += Decimal(str(entry.idadi or 0))
+
+        grouped_data = []
+        grand_total_sold = Decimal('0')
+
+        for gi_id, data in gi_totals.items():
+            members_qs = grouped_item_member.objects.filter(
+                grouped_id=gi_id,
+                active=True,
+                bidhaa_stoku__isnull=False,
+            ).select_related('bidhaa_stoku__bidhaa')
+
+            # Adjustment page must show actual on-hand stock, not grouped POS display qty.
+            member_bidhaa_ids = set()
+            bidhaa_member_meta = {}
+            for m in members_qs:
+                stock = m.bidhaa_stoku
+                if not stock or not stock.bidhaa_id:
+                    continue
+                member_bidhaa_ids.add(stock.bidhaa_id)
+                if stock.bidhaa_id not in bidhaa_member_meta:
+                    bidhaa_member_meta[stock.bidhaa_id] = {
+                        'stock_id': stock.id,
+                        'name': stock.bidhaa.bidhaa_jina if stock.bidhaa else '-',
+                        'vipimo': stock.bidhaa.vipimo if stock.bidhaa else '',
+                    }
+
+            bidhaa_qty_map = {}
+            if member_bidhaa_ids:
+                for s in bidhaa_stoku.objects.filter(
+                    Interprise=duka,
+                    service=False,
+                    is_grouped_item=False,
+                    bidhaa_id__in=member_bidhaa_ids,
+                ):
+                    actual_qty = Decimal(str(s.idadi or 0))
+                    bidhaa_qty_map[s.bidhaa_id] = bidhaa_qty_map.get(s.bidhaa_id, Decimal('0')) + actual_qty
+
+            members = []
+            for bidhaa_id, meta in bidhaa_member_meta.items():
+                members.append({
+                    'stock_id': meta['stock_id'],
+                    'name': meta['name'],
+                    'vipimo': meta['vipimo'],
+                    'idadi': float(bidhaa_qty_map.get(bidhaa_id, Decimal('0'))),
+                })
+
+            data['members'] = members
+            grand_total_sold += data['total_sold']
+            data['total_sold'] = float(data['total_sold'])
+            grouped_data.append(data)
+
+        todo.update({
+            'selected_date': selected_date,
+            'grouped_nav_active': 'adjust',
+            'grouped_nav_date': selected_date,
+            'grouped_adjustment_data': grouped_data,
+            'grouped_adjustment_total_groups': len(grouped_data),
+            'grouped_adjustment_grand_total_sold': float(grand_total_sold),
+        })
+        return render(request, 'grouped_member_adjustment.html', todo)
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'msg': f'Error: {str(e)}'})
+
+
+@login_required(login_url='login')
+def grouped_items_reconciliation_list(request):
+    """List pending reconciliations for grouped items"""
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    
+    if not duka:
+        return JsonResponse({'success': False, 'msg': 'Duka not found'})
+    
+    try:
+        from datetime import date
+        selected_date = request.GET.get('date', str(date.today()))
+        
+        reconciliations = grouped_item_reconciliation.objects.filter(
+            Interprise=duka,
+            date=selected_date
+        ).select_related('grouped','by').values(
+            'id', 'grouped__id', 'grouped__name', 'recorded_qty', 'actual_qty', 'status'
+        )
+        
+        data = []
+        for r in reconciliations:
+            data.append({
+                'id': r['id'],
+                'grouped_id': r['grouped__id'],
+                'grouped_name': r['grouped__name'],
+                'recorded_qty': float(r['recorded_qty']),
+                'actual_qty': float(r['actual_qty']) if r['actual_qty'] else None,
+                'status': r['status']
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'reconciliations': data,
+            'date': selected_date
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'msg': f'Error: {str(e)}'})
+
+
+@login_required(login_url='login')
+def grouped_items_sales_track(request):
+    """Render grouped item sales tracking page."""
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+
+    if not duka:
+        return render(request, 'pagenotFound.html', todo)
+
+    try:
+        selected_date = request.GET.get('date', str(date.today()))
+        grouped_sales_qs = mauzoList.objects.filter(
+            mauzo__Interprise=duka,
+            mauzo__date=selected_date,
+            produ__is_grouped_item=True,
+            produ__grouped_item_ref__isnull=False,
+        ).select_related(
+            'mauzo',
+            'produ',
+            'produ__grouped_item_ref',
+        ).order_by('-mauzo__tarehe', '-id')
+
+        rows = []
+        total_qty = Decimal('0')
+        total_amount = Decimal('0')
+        sale_ids = set()
+
+        for entry in grouped_sales_qs:
+            qty = Decimal(str(entry.idadi or 0))
+            price = Decimal(str(entry.bei or 0))
+            amount = qty * price
+            sale_ids.add(entry.mauzo_id)
+            total_qty += qty
+            total_amount += amount
+            rows.append({
+                'sale_id': entry.mauzo_id,
+                'sale_code': entry.mauzo.code if entry.mauzo else '',
+                'invoice_no': entry.mauzo.Invo_no if entry.mauzo else '',
+                'date': entry.mauzo.tarehe if entry.mauzo else None,
+                'grouped_id': entry.produ.grouped_item_ref_id if entry.produ else None,
+                'grouped_name': entry.produ.grouped_item_ref.name if entry.produ and entry.produ.grouped_item_ref else (entry.produ.bidhaa.bidhaa_jina if entry.produ else ''),
+                'qty': qty,
+                'unit_price': price,
+                'amount': amount,
+            })
+
+        todo.update({
+            'selected_date': selected_date,
+            'grouped_nav_active': 'track',
+            'grouped_nav_date': selected_date,
+            'grouped_sales_rows': rows,
+            'grouped_sales_sales_count': len(sale_ids),
+            'grouped_sales_lines_count': len(rows),
+            'grouped_sales_total_qty': total_qty,
+            'grouped_sales_total_amount': total_amount,
+        })
+        return render(request, 'grouped_sales_track.html', todo)
+    except Exception as e:
+        return JsonResponse({'success': False, 'msg': f'Error: {str(e)}'})
+
+
+@login_required(login_url='login')
+def grouped_items_approve_reconciliation(request):
+    """Approve grouped item reconciliation and reduce stock"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'msg': 'Invalid method'})
+    
+    todo = todoFunct(request)
+    cheo = todo.get('cheo')
+    
+    if not cheo:
+        return JsonResponse({'success': False, 'msg': 'Permission denied'})
+    
+    try:
+        recon_id = int(request.POST.get('recon_id', 0))
+        actual_qty = float(request.POST.get('actual_qty', 0))
+        
+        if not recon_id or actual_qty < 0:
+            return JsonResponse({'success': False, 'msg': 'Invalid data'})
+        
+        result = approve_grouped_item_reconciliation(recon_id, actual_qty, cheo)
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({'success': False, 'msg': f'Error: {str(e)}'})
+
+
+@login_required(login_url='login')
+def grouped_items_register(request):
+    """Register grouped item and attach existing bidhaa_stoku members."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    cheo = todo.get('cheo')
+
+    if not duka or not cheo:
+        return JsonResponse({'success': False, 'msg': 'Permission denied'})
+
+    if not (cheo.owner or (cheo.product_edit and not cheo.viewi)):
+        return JsonResponse({'success': False, 'msg': 'No permission to register grouped items'})
+
+    name = (request.POST.get('name') or '').strip()
+    description = (request.POST.get('description') or '').strip()
+    category_id = int(request.POST.get('category_id', 0) or 0)
+    member_ids = request.POST.getlist('member_ids')
+    image_file = request.FILES.get('image')
+
+    try:
+        bei_kuuza = Decimal(str(request.POST.get('bei_kuuza', '0')).strip())
+        bei_kununua = Decimal(str(request.POST.get('bei_kununua', '0')).strip())
+    except InvalidOperation:
+        return JsonResponse({'success': False, 'msg': 'Bei imejazwa vibaya'})
+
+    if not name:
+        return JsonResponse({'success': False, 'msg': 'Jina la grouped item linahitajika'})
+    if category_id <= 0:
+        return JsonResponse({'success': False, 'msg': 'Chagua category ya grouped item'})
+    if bei_kuuza <= 0:
+        return JsonResponse({'success': False, 'msg': 'Bei ya kuuza inatakiwa kuwa zaidi ya 0'})
+    if not member_ids:
+        return JsonResponse({'success': False, 'msg': 'Chagua angalau bidhaa moja ya kuunganisha'})
+
+    try:
+        selected_category = bidhaa_aina.objects.filter(id=category_id, Interprise=duka).select_related('mahi').last()
+        if not selected_category:
+            return JsonResponse({'success': False, 'msg': 'Category uliyochagua haipo'})
+
+        grouped_name_exists = grouped_item.objects.filter(Interprise=duka, name__iexact=name).exists()
+        if grouped_name_exists:
+            return JsonResponse({'success': False, 'msg': 'Grouped item yenye jina hili tayari ipo'})
+
+        with transaction.atomic():
+            grouped = grouped_item.objects.create(
+                Interprise=duka,
+                name=name,
+                description=description,
+                Bei_kununua=bei_kununua,
+                Bei_kuuza=bei_kuuza,
+            )
+
+            valid_members = bidhaa_stoku.objects.filter(
+                id__in=member_ids,
+                Interprise=duka,
+                service=False,
+                is_grouped_item=False
+            )
+
+            if not valid_members.exists():
+                raise ValueError('Hakuna bidhaa halali zilizopatikana kwa grouped item')
+
+            members_total_qty = valid_members.aggregate(sum_qty=Sum('idadi'))['sum_qty'] or Decimal('0')
+
+            grouped_item_member.objects.bulk_create([
+                grouped_item_member(grouped=grouped, bidhaa_stoku=member)
+                for member in valid_members
+            ])
+
+            brand_name = (duka.name or '').strip()
+            if not brand_name:
+                owner_name = ''
+                if duka.owner and getattr(duka.owner, 'user', None):
+                    owner_name = (duka.owner.user.get_full_name() or duka.owner.user.username or '').strip()
+                brand_name = owner_name or 'Grouped Items'
+
+            brand = makampuni.objects.filter(
+                Interprise=duka,
+                kampuni_jina__iexact=brand_name,
+            ).last()
+
+            if not brand:
+                brand = makampuni.objects.filter(
+                    Interprise__owner=duka.owner,
+                    kampuni_jina__iexact=brand_name,
+                ).order_by('id').last()
+
+            if not brand or brand.Interprise_id != duka.id:
+                brand = makampuni.objects.create(
+                    Interprise=duka,
+                    kampuni_jina=brand_name,
+                )
+
+            grouped_product = bidhaa.objects.create(
+                owner=duka.owner.user,
+                bidhaa_jina=name,
+                kampuni=brand,
+                bidhaa_aina=selected_category,
+                idadi_jum=Decimal('1'),
+                vipimo='pc',
+                vipimo_jum='pc',
+                Mahi=selected_category.mahi,
+                change_date=datetime.datetime.now(tz=timezone.utc),
+                maelezo=description or 'Grouped item',
+                saletaxInluded=False,
+                purchtaxInluded=False,
+                material=False,
+                fractions=False,
+                namba=f'GRP-{grouped.id}',
+            )
+
+            grouped_stock = bidhaa_stoku.objects.create(
+                bidhaa=grouped_product,
+                Interprise=duka,
+                idadi=Decimal('0'),
+                Bei_kununua=float(0),
+                Bei_kuuza=bei_kuuza,
+                Bei_kuuza_jum=bei_kuuza,
+                op_name=duka.owner,
+                service=False,
+                is_grouped_item=True,
+                grouped_item_ref=grouped,
+            )
+
+            if image_file:
+                gcs_storage = default_storage
+                if not settings.DEBUG:
+                    gcs_storage = settings.GCS_STORAGE_INSTANCE
+
+                ext = image_file.name.split('.')[-1]
+                filename = f"products/grouped_{duka.id}_{int(time.time())}.{ext}"
+                path = gcs_storage.save(filename, image_file)
+
+                saved_photo = picha_yenyewe.objects.create(
+                    picha=path,
+                    pic_size=image_file.size,
+                    owner=duka.owner.user,
+                )
+
+                no_color = color_produ.objects.filter(bidhaa=grouped_product, colored=False).last()
+                if not no_color:
+                    no_color = color_produ.objects.create(
+                        color_code='#ffffff',
+                        color_name='none',
+                        colored=False,
+                        bidhaa=grouped_product,
+                    )
+
+                if not produ_colored.objects.filter(bidhaa=grouped_stock, color=no_color).exists():
+                    produ_colored.objects.create(
+                        bidhaa=grouped_stock,
+                        color=no_color,
+                        Interprise=duka,
+                        idadi=Decimal('0'),
+                        owner=duka.owner.user,
+                    )
+
+                picha_bidhaa.objects.create(
+                    color_produ=no_color,
+                    picha=saved_photo,
+                    bidhaa=grouped_product,
+                )
+
+        display_qty = members_total_qty
+        return JsonResponse({
+            'success': True,
+            'msg': 'Grouped item imesajiliwa kikamilifu',
+            'grouped_id': grouped.id,
+            'stock_id': grouped_stock.id,
+            'representative_stock_idadi': 0,
+            'display_quantity': float(display_qty),
+            'members_count': len(member_ids),
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'msg': f'Error: {str(e)}'})
+
+
+@login_required(login_url='login')
+def grouped_items_reconciliation_detail(request):
+    """Get grouped item detail plus members and reconciliation data."""
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    try:
+        grouped_id = int(request.GET.get('grouped_id', 0))
+    except (TypeError, ValueError):
+        return JsonResponse({'success': False, 'msg': 'Invalid grouped_id'})
+    selected_date = request.GET.get('date', str(date.today()))
+
+    try:
+        grouped = grouped_item.objects.get(id=grouped_id, Interprise=duka)
+    except grouped_item.DoesNotExist:
+        return JsonResponse({'success': False, 'msg': 'Grouped item not found'})
+
+    members = get_grouped_item_members(grouped.id)
+    recon = grouped_item_reconciliation.objects.filter(
+        grouped=grouped,
+        Interprise=duka,
+        date=selected_date
+    ).values('id', 'recorded_qty', 'actual_qty', 'status').last()
+
+    return JsonResponse({
+        'success': True,
+        'grouped_item': {
+            'id': grouped.id,
+            'name': grouped.name,
+            'description': grouped.description,
+            'bei_kununua': float(grouped.Bei_kununua),
+            'bei_kuuza': float(grouped.Bei_kuuza),
+            'idadi': float(grouped.idadi),
+        },
+        'members': members,
+        'reconciliation': recon
+    })
+
+
+@login_required(login_url='login')
+def grouped_items_detail(request):
+    """Get grouped item details for viewing/editing."""
+    try:
+        todo = todoFunct(request)
+        duka = todo.get('duka')
+        
+        if not duka:
+            return JsonResponse({'success': False, 'msg': 'Duka not found'})
+        
+        try:
+            grouped_id = int(request.GET.get('grouped_id', 0))
+        except (TypeError, ValueError):
+            return JsonResponse({'success': False, 'msg': 'Invalid grouped_id'})
+
+        try:
+            grouped = grouped_item.objects.get(id=grouped_id, Interprise=duka)
+        except grouped_item.DoesNotExist:
+            return JsonResponse({'success': False, 'msg': 'Grouped item not found'})
+
+        grouped_stock = bidhaa_stoku.objects.select_related('bidhaa').filter(
+            grouped_item_ref=grouped,
+            Interprise=duka,
+            is_grouped_item=True,
+        ).last()
+
+        grouped_product = grouped_stock.bidhaa if grouped_stock else None
+
+        # Get image URL if exists
+        image_url = None
+        if grouped_product:
+            try:
+                picha_entry = picha_bidhaa.objects.filter(
+                    bidhaa=grouped_product
+                ).select_related('picha').last()
+
+                if picha_entry and picha_entry.picha and picha_entry.picha.picha:
+                    image_url = picha_entry.picha.picha.url
+            except Exception:
+                pass
+
+        members = get_grouped_item_members(grouped.id)
+        
+        return JsonResponse({
+            'success': True,
+            'grouped_item': {
+                'id': grouped.id,
+                'name': grouped.name,
+                'description': grouped.description,
+                'category_id': grouped_product.bidhaa_aina_id if grouped_product and grouped_product.bidhaa_aina_id else 0,
+                'bei_kununua': float(grouped.Bei_kununua),
+                'bei_kuuza': float(grouped.Bei_kuuza),
+                'image_url': image_url,
+            },
+            'members': [m['id'] for m in members]
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'msg': f'Server error: {str(e)}'})
+
+
+@login_required(login_url='login')
+def grouped_items_update(request):
+    """Update grouped item details."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'msg': 'Method not allowed'})
+    
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    
+    try:
+        grouped_id = int(request.POST.get('grouped_id', 0))
+    except (TypeError, ValueError):
+        return JsonResponse({'success': False, 'msg': 'Invalid grouped_id'})
+
+    try:
+        grouped = grouped_item.objects.get(id=grouped_id, Interprise=duka)
+    except grouped_item.DoesNotExist:
+        return JsonResponse({'success': False, 'msg': 'Grouped item not found'})
+
+    # Get form data
+    name = request.POST.get('name', '').strip()
+    category_id = request.POST.get('category_id', '').strip()
+    bei_kununua = request.POST.get('bei_kununua', '0')
+    bei_kuuza = request.POST.get('bei_kuuza', '0')
+    description = request.POST.get('description', '').strip()
+    member_ids = request.POST.getlist('member_ids')
+
+    # Validate
+    if not name:
+        return JsonResponse({'success': False, 'msg': 'Name is required'})
+    if not bei_kuuza or Decimal(bei_kuuza) <= 0:
+        return JsonResponse({'success': False, 'msg': 'Selling price must be > 0'})
+
+    try:
+        bei_kununua = Decimal(bei_kununua) if bei_kununua else Decimal('0')
+        bei_kuuza = Decimal(bei_kuuza)
+        category_id_int = int(category_id) if category_id else None
+    except (ValueError, InvalidOperation):
+        return JsonResponse({'success': False, 'msg': 'Invalid price format'})
+
+    try:
+        grouped_stock = bidhaa_stoku.objects.select_related('bidhaa').filter(
+            grouped_item_ref=grouped,
+            Interprise=duka,
+            is_grouped_item=True,
+        ).last()
+        grouped_product = grouped_stock.bidhaa if grouped_stock else None
+
+        # Update grouped item
+        grouped.name = name
+        grouped.Bei_kununua = bei_kununua
+        grouped.Bei_kuuza = bei_kuuza
+        grouped.description = description
+        grouped.save()
+
+        # Update product if exists
+        if grouped_product:
+            grouped_product.bidhaa_jina = name
+            grouped_product.maelezo = description
+            if category_id_int:
+                grouped_product.bidhaa_aina_id = category_id_int
+            grouped_product.save()
+
+        if grouped_stock:
+            grouped_stock.idadi = Decimal('0')
+            grouped_stock.Bei_kununua = bei_kununua
+            grouped_stock.Bei_kuuza = bei_kuuza
+            grouped_stock.Bei_kuuza_jum = bei_kuuza
+            grouped_stock.save(update_fields=['idadi', 'Bei_kununua', 'Bei_kuuza', 'Bei_kuuza_jum'])
+
+        # Handle image upload if present
+        image_file = request.FILES.get('image')
+        if image_file:
+            try:
+                ext = image_file.name.split('.')[-1].lower()
+                gcs_storage = default_storage
+                filename = f"products/grouped_{duka.id}_{int(time.time())}.{ext}"
+                path = gcs_storage.save(filename, image_file)
+                
+                saved_photo = picha_yenyewe.objects.create(
+                    picha=path,
+                    pic_size=image_file.size,
+                    owner=duka.owner.user
+                )
+
+                if not grouped_product:
+                    return JsonResponse({'success': False, 'msg': 'Grouped product not found for image upload'})
+                
+                # Get or create color produ entry
+                try:
+                    color_entry = color_produ.objects.filter(bidhaa=grouped_product, colored=False).last()
+                    if not color_entry:
+                        color_entry = color_produ.objects.create(
+                            color_code='#ffffff',
+                            color_name='none',
+                            colored=False,
+                            bidhaa=grouped_product,
+                        )
+                except color_produ.DoesNotExist:
+                    color_entry = color_produ.objects.create(
+                        color_code='#ffffff',
+                        color_name='none',
+                        colored=False,
+                        bidhaa=grouped_product,
+                    )
+                
+                # Link via picha_bidhaa
+                picha_bidhaa.objects.filter(bidhaa=grouped_product).delete()
+                picha_bidhaa.objects.create(
+                    bidhaa=grouped_product,
+                    picha=saved_photo,
+                    color_produ=color_entry
+                )
+            except Exception as e:
+                return JsonResponse({'success': False, 'msg': f'Image upload error: {str(e)}'})
+
+        # Update members from submitted multi-select values
+        try:
+            member_ids = [int(member_id) for member_id in member_ids if member_id]
+        except (ValueError, TypeError):
+            return JsonResponse({'success': False, 'msg': 'Invalid member selection'})
+
+        grouped_item_member.objects.filter(grouped=grouped).delete()
+        for member_id in member_ids:
+            try:
+                member_bidhaa = bidhaa_stoku.objects.get(
+                    id=member_id,
+                    Interprise=duka,
+                    is_grouped_item=False,
+                )
+                grouped_item_member.objects.create(
+                    grouped=grouped,
+                    bidhaa_stoku=member_bidhaa
+                )
+            except bidhaa_stoku.DoesNotExist:
+                pass
+
+        return JsonResponse({
+            'success': True,
+            'msg': 'Grouped item updated successfully',
+            'grouped_id': grouped.id,
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'msg': f'Error: {str(e)}'})
+
+
+@login_required(login_url='login')
+def grouped_items_delete(request):
+    """Delete grouped item - check for pending sales before deletion."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'msg': 'Method not allowed'})
+    
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    
+    try:
+        grouped_id = int(request.POST.get('grouped_id', 0))
+    except (TypeError, ValueError):
+        return JsonResponse({'success': False, 'msg': 'Invalid grouped_id'})
+
+    try:
+        grouped = grouped_item.objects.get(id=grouped_id, Interprise=duka)
+    except grouped_item.DoesNotExist:
+        return JsonResponse({'success': False, 'msg': 'Grouped item not found'})
+
+    try:
+        # Find representative stock row (the one marking this group)
+        representative_stock = bidhaa_stoku.objects.filter(
+            grouped_item_ref=grouped,
+            is_grouped_item=True,
+            Interprise=duka
+        ).first()
+        
+        if representative_stock:
+            # Check if there are pending mauzoList entries linked to representative stock
+            pending_sales = mauzoList.objects.filter(produ=representative_stock).exists()
+            if pending_sales:
+                return JsonResponse({
+                    'success': False,
+                    'msg': 'Cannot delete grouped item with pending sales. Please clear/reconcile sales first.'
+                })
+        
+        # Safe to delete - remove members, reconciliations, representative stock
+        grouped_item_member.objects.filter(grouped=grouped).delete()
+        grouped_item_reconciliation.objects.filter(grouped=grouped).delete()
+        
+        if representative_stock:
+            representative_stock.delete()
+        
+        # Delete grouped item
+        grouped.delete()
+
+        return JsonResponse({
+            'success': True,
+            'msg': 'Grouped item and representative stock deleted successfully',
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'msg': f'Error: {str(e)}'})

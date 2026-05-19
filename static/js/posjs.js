@@ -40,6 +40,38 @@ function buildPosSearchIndex() {
     })
 }
 
+function applyPosGroupedRepresentativeQty(items, groupedMembersMap) {
+    if (!Array.isArray(items) || !items.length || !groupedMembersMap || typeof groupedMembersMap !== 'object') {
+        return items
+    }
+
+    const bidhaaQtyMap = {}
+    items.forEach(itm => {
+        if (Number(itm.is_grouped_item || 0) === 1) return
+        const bidhaaId = Number(itm.bidhaa_id || 0)
+        if (!bidhaaId) return
+        const netQty = Math.max(0, Number(itm.idadi || 0) - Number(itm.partial_item_reduction_qty || 0))
+        bidhaaQtyMap[bidhaaId] = Number(bidhaaQtyMap[bidhaaId] || 0) + netQty
+    })
+
+    return items.map(itm => {
+        if (Number(itm.is_grouped_item || 0) !== 1) return itm
+
+        const groupedId = String(itm.grouped_item_ref_id || '')
+        const memberBidhaaIds = Array.isArray(groupedMembersMap[groupedId]) ? groupedMembersMap[groupedId] : []
+        if (!memberBidhaaIds.length) return itm
+
+        const summedQty = memberBidhaaIds.reduce((sum, bidhaaId) => {
+            return sum + Number(bidhaaQtyMap[Number(bidhaaId) || 0] || 0)
+        }, 0)
+
+        return {
+            ...itm,
+            idadi: summedQty,
+        }
+    })
+}
+
 function addServedQty(target, key, row) {
     const lookupKey = Number(key || 0)
     if (!lookupKey) return
@@ -150,6 +182,11 @@ const vat_per = Number($('#vat_percent').val()),
 
 
 function posdata(c){
+
+ const groupedMembersMap = window.__tbGroupedMembersMap || {}
+ if (Items.state?.length) {
+     Items.state = applyPosGroupedRepresentativeQty(Items.state, groupedMembersMap)
+ }
 
  let categ_butn = `
    <li  class="py-1">

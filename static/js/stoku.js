@@ -1431,6 +1431,10 @@ function getStokuData(url){
         Items.state = data.products
         }
 
+        if ('grouped_members_map' in data) {
+            window.__tbGroupedMembersMap = data.grouped_members_map || {}
+        }
+
         //store item costs
         prdxnCost.state=data.prdxnCost
 
@@ -1523,8 +1527,8 @@ function placeMatumizitu(data){
         //$('#chagua-matumizi-adjst').html(optM)
         $('#chagua-matumizi-manunuzini').selectpicker('refresh');
       //  $('#chagua-matumizi-adjst').selectpicker('refresh');
-
 }
+
 
 
 

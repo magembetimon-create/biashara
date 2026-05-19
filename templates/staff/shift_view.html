@@ -29,9 +29,13 @@
       </button>
       {% if cheo.owner or cheo.msaidizi or shift_operation_allowed %}
       {% if shift.status != 'closed' %}
-      <button type="button" class="btn btn-danger btn-sm" onclick="openCloseShiftModal('{{ shift.id }}')">
+       <button type="button" class="btn btn-danger btn-sm" onclick="openCloseShiftModal('{{ shift.id }}')">
         {% if useri.langSet == 0 %}Maliza Shift{% else %}Finish Shift{% endif %}
       </button>
+      {% else %}
+            <a href="/staff/shifts/new" class="btn btn-primary btn-sm">
+               {% if useri.langSet == 0 %}Ongeza Shift{% else %}New Shift{% endif %}
+            </a>
       {% endif %}
       {% endif %}
     </div>
@@ -70,26 +74,30 @@
 
   <div class="row mt-2">
     <div class="col-md-6">
-      <h6>{% if useri.langSet == 0 %}Wahusika wa Shift{% else %}Shift Team{% endif %}</h6>
-      <div class="table-responsive">
-        <table class="table table-sm table-hover">
-          <thead>
-            <tr>
-              <th class="text-left" >{% if useri.langSet == 0 %}Jina{% else %}Name{% endif %}</th>
-              <th class="text-left" >{% if useri.langSet == 0 %}Kazi{% else %}Role{% endif %}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for p in shift_team_rows %}
-            <tr>
-              <td>{{ p.name }}</td>
-              <td>{{ p.role }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="2" class="text-muted">No workers</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="card">
+        <div class="card-header py-2"><strong>{% if useri.langSet == 0 %}Wahusika wa Shift{% else %}Shift Team{% endif %}</strong></div>
+        <div class="card-body py-2">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0" id="shiftTeamTable" style="table-layout:fixed; width:100%;"> 
+              <thead>
+                <tr>
+                  <th class="text-left" >{% if useri.langSet == 0 %}Jina{% else %}Name{% endif %}</th>
+                  <th class="text-left" >{% if useri.langSet == 0 %}Kazi{% else %}Role{% endif %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in shift_team_rows %}
+                <tr>
+                  <td style="word-break:break-word; white-space:normal;">{{ p.name }}</td>
+                  <td style="word-break:break-word; white-space:normal;">{{ p.role }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" class="text-muted">No workers</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -115,9 +123,57 @@
           </tbody>
         </table>
       </div>
+
+
     </div>
   </div>
-
+      <!-- Sales Breakdown Table -->
+      <div class="mt-4">
+        <h6>{% if useri.langSet == 0 %}Mchanganuo wa Mauzo kwa Mhusika{% else %}Sales Breakdown per Staff{% endif %}</h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered table-striped" id="mchanganuoTable" >
+            <thead>
+              <tr>
+                <th class="text-left" >{% if useri.langSet == 0 %}Mhusika{% else %}Staff{% endif %}</th>
+                <th class="text-left" >{% if useri.langSet == 0 %}Idadi ya Mauzo{% else %}Sales Count{% endif %}</th>
+                <th class="text-left" >{% if useri.langSet == 0 %}Total Amount{% else %}Total Amount{% endif %}</th>
+                <th class="text-left" >{% if useri.langSet == 0 %}Vitendo{% else %}Actions{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sales_breakdown_rows %}
+              <tr>
+                <td>{{ row.name }}</td>
+                <td>{{ row.sales_count }}</td>
+                <td class="font-weight-bold">{{ row.total_amount|floatformat:2|intcomma }}</td>
+                <td>
+                  {% if row.actor_id %}
+                  <a href="/staff/shifts/actor-sales?sid={{ shift.id }}&actor={{ row.actor_id }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                    {% if useri.langSet == 0 %}Angalia{% else %}View{% endif %}
+                  </a>
+                  <button type="button" class="btn btn-sm btn-primary" onclick="openActorSalesPrintModal('{{ row.actor_id }}')">
+                    {% if useri.langSet == 0 %}Print{% else %}Print{% endif %}
+                  </button>
+                  {% else %}
+                  <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-muted">{% if useri.langSet == 0 %}Hakuna mauzo yaliyopatikana{% else %}No sales found{% endif %}</td></tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr class="font-weight-bold">
+                <td>{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
+                <td>{{ sales_breakdown_totals.sales_count }}</td>
+                <td>{{ sales_breakdown_totals.total_amount|floatformat:2|intcomma }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
   {% if mobile_payments %}
   <div class="row mt-2">
     <div class="col-12">
@@ -298,7 +354,9 @@
       <tbody>
         {% for act in activities %}
         <tr>
-          <td>{{ act.recorded_at }}</td>
+          <td><script>
+            document.write(moment('{{ act.recorded_at|date:"r" }}').format('DD MMM YYYY HH:mm'));
+          </script></td>
           <td>{{ act.event_type }}</td>
           <td>{{ act.amount }}</td>
           <td>{{ act.details }}</td>
@@ -392,6 +450,41 @@
   </div>
 </div>
 
+<div class="modal fade" id="actorSalesPrintModal" tabindex="-1" role="dialog" aria-labelledby="actorSalesPrintModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="actorSalesPrintModalLabel">
+          {% if useri.langSet == 0 %}Chagua Aina ya Karatasi{% else %}Select Paper Size{% endif %}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="actorSalesPrintActorId" value="">
+        <div class="form-group mb-0">
+          <label for="actorSalesPrintPaperSize" class="mb-2">
+            {% if useri.langSet == 0 %}Aina ya Karatasi{% else %}Paper Size{% endif %}
+          </label>
+          <select id="actorSalesPrintPaperSize" class="form-control">
+            <option value="large" selected>{% if useri.langSet == 0 %}Karatasi Kubwa (A4){% else %}Large Paper (A4){% endif %}</option>
+            <option value="thermal">{% if useri.langSet == 0 %}Thermal Ndogo (58mm){% else %}Small Thermal (58mm){% endif %}</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          {% if useri.langSet == 0 %}Ghairi{% else %}Cancel{% endif %}
+        </button>
+        <button type="button" class="btn btn-primary" onclick="submitActorSalesPrint()">
+          {% if useri.langSet == 0 %}Chapa{% else %}Print{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 var defaultClosingCash = '{{ payments.current_cash|floatformat:2 }}';
 
@@ -420,6 +513,24 @@ function submitPrint() {
   var url = '/staff/shifts/print?sid=' + shiftId + '&lang=' + lang + '&items=' + includeItems;
   window.open(url, '_blank');
   $('#printOptionsModal').modal('hide');
+}
+
+function openActorSalesPrintModal(actorId) {
+  document.getElementById('actorSalesPrintActorId').value = actorId || '';
+  document.getElementById('actorSalesPrintPaperSize').value = 'large';
+  $('#actorSalesPrintModal').modal('show');
+}
+
+function submitActorSalesPrint() {
+  var actorId = document.getElementById('actorSalesPrintActorId').value;
+  var paper = document.getElementById('actorSalesPrintPaperSize').value || 'large';
+  if (!actorId) {
+    return;
+  }
+
+  var url = '/staff/shifts/actor-sales?sid={{ shift.id }}&actor=' + encodeURIComponent(actorId) + '&print=1&paper=' + encodeURIComponent(paper);
+  window.open(url, '_blank');
+  $('#actorSalesPrintModal').modal('hide');
 }
 
 function openCloseShiftModal(shiftId) {

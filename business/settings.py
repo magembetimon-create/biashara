@@ -227,12 +227,23 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GCP_JSON_KEY_PATH
 
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'fanyabiasharaapp@gmail.com'
-EMAIL_HOST_PASSWORD = 'whrzddczljnprbyy'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_USE_TLS = True
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = 'fanyabiasharaapp@gmail.com'
+# EMAIL_HOST_PASSWORD = 'whrzddczljnprbyy'
+
+# Mipangilio ya Email ya Namecheap
+EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST='mail.privateemail.com'
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER='service@fanyabiashara.com'
+EMAIL_HOST_PASSWORD='Biashara@2026'
+
+# Hii inafanya email ionekane imetoka kwa jina la App yako badala ya email tupu
+DEFAULT_FROM_EMAIL='FanyaBiashara <service@fanyabiashara.com>'
 
 
 from django.contrib.messages import constants as message_constants

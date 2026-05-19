@@ -175,6 +175,38 @@ function buildWaiterSearchIndex() {
   })
 }
 
+function applyWaiterGroupedRepresentativeQty(items, groupedMembersMap) {
+  if (!Array.isArray(items) || !items.length || !groupedMembersMap || typeof groupedMembersMap !== 'object') {
+    return items
+  }
+
+  const bidhaaQtyMap = {}
+  items.forEach(it => {
+    if (Number(it.is_grouped_item || 0) === 1) return
+    const bidhaaId = Number(it.bidhaa_id || 0)
+    if (!bidhaaId) return
+    const netQty = Math.max(0, Number(it.idadi || 0) - Number(it.partial_item_reduction_qty || 0))
+    bidhaaQtyMap[bidhaaId] = Number(bidhaaQtyMap[bidhaaId] || 0) + netQty
+  })
+
+  return items.map(it => {
+    if (Number(it.is_grouped_item || 0) !== 1) return it
+
+    const groupedId = String(it.grouped_item_ref_id || '')
+    const memberBidhaaIds = Array.isArray(groupedMembersMap[groupedId]) ? groupedMembersMap[groupedId] : []
+    if (!memberBidhaaIds.length) return it
+
+    const summedQty = memberBidhaaIds.reduce((sum, bidhaaId) => {
+      return sum + Number(bidhaaQtyMap[Number(bidhaaId) || 0] || 0)
+    }, 0)
+
+    return {
+      ...it,
+      idadi: summedQty,
+    }
+  })
+}
+
 function queueWaiterItemsRender() {
   if (window.requestAnimationFrame) {
     window.requestAnimationFrame(renderWaiterItems)
@@ -840,8 +872,11 @@ function initializeWaiterItems() {
       return
     }
 
-    WAITER_ITEMS = (resp.products || []).slice(0)
-  buildWaiterSearchIndex()
+    WAITER_ITEMS = applyWaiterGroupedRepresentativeQty(
+      (resp.products || []).slice(0),
+      resp.grouped_members_map || {}
+    )
+    buildWaiterSearchIndex()
     WAITER_ITEM_IMG = (resp.img || []).slice(0)
     WAITER_TABLE_AREAS = normalizeWaiterTableAreas(resp.table_areas || [])
     WAITER_SELECTED_AREA_ID = 0
