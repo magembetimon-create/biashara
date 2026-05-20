@@ -6155,7 +6155,7 @@ def grouped_items_register(request):
         return JsonResponse({'success': False, 'msg': 'Chagua angalau bidhaa moja ya kuunganisha'})
 
     try:
-        selected_category = bidhaa_aina.objects.filter(id=category_id, Interprise=duka).select_related('mahi').last()
+        selected_category = bidhaa_aina.objects.filter(id=category_id, Interprise__owner=duka.owner).select_related('mahi').last()
         if not selected_category:
             return JsonResponse({'success': False, 'msg': 'Category uliyochagua haipo'})
 

@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 import requests, json
+import traceback
 
 
 def _shift_staff_name(staff_perm):
@@ -177,12 +178,21 @@ class Todos:
         customer_table = customer_in_cell.objects.filter(area__Interprise__in=[wc.Interprise.id for wc in waiter_counter.filter(servicing=True)]) if waiter_counter.exists() else None
         waiter_uncleared_waiters_count = 0
         if duka and duka.Interprise and duka.waiter_counter:
-          waiter_uncleared_waiters_count = mauzoni.objects.filter(
+          waiter_uncleared_waiters_coun = mauzoni.objects.filter(
             Interprise=duka,
             waiter_order__isnull=False,
             By__isnull=True,
             full_returned=False,
-          ).values('waiter_order').distinct().count()
+               
+                  printed_number__gt=0,
+          )
+          # if waiter_uncleared_waiters_coun.exists():
+             
+          #   print(waiter_uncleared_waiters_coun.first().amount,waiter_uncleared_waiters_coun.first().ilolipwa)  
+
+          waiter_uncleared_waiters_count = waiter_uncleared_waiters_coun.values('waiter_order').distinct().count()
+          # print(waiter_uncleared_waiters_count)
+          # print(duka.id)
         grouped_sales_track_count = 0
         if duka and duka.Interprise:
           grouped_sales_track_count = mauzoList.objects.filter(
@@ -216,6 +226,7 @@ class Todos:
 
 
       except:
+        traceback.print_exc()
         todo={
               'cheo':None,
             'duka':None,

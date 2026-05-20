@@ -12,7 +12,7 @@ const MsgRead = document.getElementById('msgRead'),
         data: {csrfmiddlewaretoken:csrfToken},
     }).done(function(data){
         $('#network_').fadeOut(100)
-        setTimeout(function(){ IntervaFunct(); }, 5000);
+        setTimeout(function(){ IntervaFunct(); }, 30000);
          $('#ShowNewBanners').prop('hidden',data.newPosts == 0)     
          $('#shakeForNewPosts').prop('hidden',data.newPosts == 0)     
          $('#newBanner').text(data.newPosts)   

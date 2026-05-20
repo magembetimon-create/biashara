@@ -4734,8 +4734,8 @@ def traceChange(request):
       # import os
       # print(os.getenv("COMPANY_TOKEN"))
 
-      notice = Notifications.objects.filter(Q(admin_read=False,Interprise__owner__user=request.user.id)|Q(Incharge=todo['useri'].id,Incharge_reade=False)|Q(admin_read=False,AnyUser_read=False,Incharge_reade=False),Interprise__in=[entId,pent])
-      chalst = chats.objects.filter(Q(to__to__owner=todo['useri'].id,admin_read=False)|Q(Anyuser_read=False),to__to__in=[duka.id,pent.id]).annotate(
+      notice = Notifications.objects.filter(Q(admin_read=False,Interprise__owner__user=request.user.id)|Q(Incharge=todo['useri'].id,Incharge_reade=False)|Q(admin_read=False,AnyUser_read=False,Incharge_reade=False),Interprise__in=[entId,pent]).select_related('Incharge__user','Incharge__fanyakazi')
+      chalst = chats.objects.filter(Q(to__to__owner=todo['useri'].id,admin_read=False)|Q(Anyuser_read=False),to__to__in=[duka.id,pent.id]).select_related('By__picha','From__logo','By__user').annotate(
          f_name=F('By__user__first_name'),
         #  imgBy=F('By__picha'),
         #  imgEntp=F('From__logo'),
@@ -4786,7 +4786,28 @@ def traceChange(request):
 
       if notice.exists():
         try:   
-          for nt in notice:
+          # Pre-load related objects to avoid N+1 queries
+          notice_list = list(notice)
+          puO_ids = [nt.puO_map.id for nt in notice_list if nt.puO and hasattr(nt, 'puO_map') and nt.puO_map]
+          itmTr_ids = [nt.itmTr_map.id for nt in notice_list if nt.itmTr and hasattr(nt, 'itmTr_map') and nt.itmTr_map]
+          itmRcv_ids = [nt.itmRcv_map.id for nt in notice_list if nt.itmRcv and hasattr(nt, 'itmRcv_map') and nt.itmRcv_map]
+          
+          # Batch load mauzoni objects
+          puO_map = {}
+          if puO_ids:
+            puO_map = {m.id: m for m in mauzoni.objects.filter(bill_kwa__in=puO_ids).select_related('user_customer__tr__user__owner__user','bill_kwa__risiti','Interprise')}
+          
+          # Batch load receive objects
+          receive_map = {}
+          if itmTr_ids or itmRcv_ids:
+            all_receive = receive.objects.filter(Q(transfer__in=itmTr_ids) | Q(pk__in=itmRcv_ids)).select_related('Interprise','transfer__Interprise')
+            for r in all_receive:
+              if r.transfer_id in itmTr_ids:
+                receive_map[('transfer', r.transfer_id)] = r
+              if r.pk in itmRcv_ids:
+                receive_map[('pk', r.pk)] = r
+          
+          for nt in notice_list:
             msg_swa=''
             msg_eng='' 
             
@@ -4832,47 +4853,53 @@ def traceChange(request):
               
 
             if nt.itmTr:
-              msg_swa='Bidhaa zimepunguzwa stoku na kupelekwa <span class="text-primary text-capitalize">'+ receive.objects.get(transfer=nt.itmTr_map.id).Interprise.name +'</span>'
-              msg_eng='Items sent to<span class="text-primary text-capitalize">'+ receive.objects.get(transfer=nt.itmTr_map.id).Interprise.name +'</span>' 
+              rcv = receive_map.get(('transfer', nt.itmTr_map.id))
+              if rcv:
+                msg_swa='Bidhaa zimepunguzwa stoku na kupelekwa <span class="text-primary text-capitalize">'+ rcv.Interprise.name +'</span>'
+                msg_eng='Items sent to<span class="text-primary text-capitalize">'+ rcv.Interprise.name +'</span>'
               
 
 
             if nt.itmRcv:
-              msg_swa='Bidhaa zimeongezwa stoku kutoka <span class="text-primary text-capitalize">'+ receive.objects.get(pk=nt.itmRcv_map.id).transfer.Interprise.name +'</span>'
-              msg_eng='Items added to stock from <span class="text-primary text-capitalize">'+ receive.objects.get(pk=nt.itmRcv_map.id).transfer.Interprise.name +'</span>' 
+              rcv = receive_map.get(('pk', nt.itmRcv_map.id))
+              if rcv:
+                msg_swa='Bidhaa zimeongezwa stoku kutoka <span class="text-primary text-capitalize">'+ rcv.transfer.Interprise.name +'</span>'
+                msg_eng='Items added to stock from <span class="text-primary text-capitalize">'+ rcv.transfer.Interprise.name +'</span>'
             
             if nt.puO:
-              puo=mauzoni.objects.get(bill_kwa=nt.puO_map.id)
-              deri_date = nt.date
-              rec_date = nt.date
+              puo = puO_map.get(nt.puO_map.id)
+              if puo:
+                deri_date = nt.date
+                rec_date = nt.date
 
-              
-              
-              if puo.user_customer.tr :
-                if puo.user_customer.tr.muda:
-                  deri_date = puo.user_customer.tr.muda
-              if puo.bill_kwa.risiti:
-                if puo.bill_kwa.risiti.date:
-                  rec_date = puo.bill_kwa.risiti.date
+                
+                
+                if puo.user_customer and puo.user_customer.tr :
+                  if puo.user_customer.tr.muda:
+                    deri_date = puo.user_customer.tr.muda
+                if puo.bill_kwa and puo.bill_kwa.risiti:
+                  if puo.bill_kwa.risiti.date:
+                    rec_date = puo.bill_kwa.risiti.date
 
-              
+                
 
-              if puo.Packed_at <= nt.date and nt.date <= deri_date:
-                  if puo.service:
+                if puo.Packed_at and puo.Packed_at <= nt.date and nt.date <= deri_date:
+                    if puo.service:
 
-                      msg_swa='Oda ya Huduma  no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> imeshaandaliwa'
-                      msg_eng='Service Booking no.<span class="text-danger text-capitalize">'+ puo.code +'</span> from <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> has  Prepeared' 
-                  else:
-                      msg_swa='Oda ya manunuzi  no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> tayari imeshafungwa'
-                      msg_eng='Purchase Order no.<span class="text-danger text-capitalize">'+ puo.code +'</span> from <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> has already Packed' 
-                  
-              elif deri_date <= nt.date and nt.date <= rec_date :
-                  msg_swa='Mzigo wa Oda ya manunuzi  no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span>  umekabidhiwa kwa <span class="text-primary text-capitalize">' + puo.user_customer.tr.user.owner.user.first_name +' '+ puo.user_customer.tr.user.owner.user.last_name +'</span>'
-                  msg_eng='Purchase Order no.<span class="text-danger text-capitalize">'+ puo.code +'</span> from <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> Package has given to <span class="text-primary text-capitalize">' + puo.user_customer.tr.user.owner.user.first_name + ' '+ puo.user_customer.tr.user.owner.user.last_name +'</span>' 
-              
-              else:
-                  msg_swa='Mzigo wa Oda ya manunuzi  no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span>umehakikiwa na kupokelewa na <span class="text-primary text-capitalize">' + nt.Incharge.user.first_name + ' '+ nt.Incharge.user.last_name +'</span>'
-                  msg_eng='Purchase Order no.<span class="text-danger text-capitalize">'+ puo.code +'</span> from <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> Package has been received by <span class="text-primary text-capitalize">' + nt.Incharge.user.first_name + ' '+ nt.Incharge.user.last_name +'</span>' 
+                        msg_swa='Oda ya Huduma  no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> imeshaandaliwa'
+                        msg_eng='Service Booking no.<span class="text-danger text-capitalize">'+ puo.code +'</span> from <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> has  Prepeared' 
+                    else:
+                        msg_swa='Oda ya manunuzi  no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> tayari imeshafungwa'
+                        msg_eng='Purchase Order no.<span class="text-danger text-capitalize">'+ puo.code +'</span> from <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> has already Packed' 
+                    
+                elif deri_date <= nt.date and nt.date <= rec_date :
+                    if puo.user_customer and puo.user_customer.tr and puo.user_customer.tr.user and puo.user_customer.tr.user.owner:
+                      msg_swa='Mzigo wa Oda ya manunuzi  no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span>  umekabidhiwa kwa <span class="text-primary text-capitalize">' + puo.user_customer.tr.user.owner.user.first_name +' '+ puo.user_customer.tr.user.owner.user.last_name +'</span>'
+                      msg_eng='Purchase Order no.<span class="text-danger text-capitalize">'+ puo.code +'</span> from <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> Package has given to <span class="text-primary text-capitalize">' + puo.user_customer.tr.user.owner.user.first_name + ' '+ puo.user_customer.tr.user.owner.user.last_name +'</span>'
+                
+                else:
+                    msg_swa='Mzigo wa Oda ya manunuzi  no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span>umehakikiwa na kupokelewa na <span class="text-primary text-capitalize">' + nt.Incharge.user.first_name + ' '+ nt.Incharge.user.last_name +'</span>'
+                    msg_eng='Purchase Order no.<span class="text-danger text-capitalize">'+ puo.code +'</span> from <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> Package has been received by <span class="text-primary text-capitalize">' + nt.Incharge.user.first_name + ' '+ nt.Incharge.user.last_name +'</span>'
               
 
             if nt.bilRtn :
@@ -4917,7 +4944,9 @@ def traceChange(request):
             
             })
 
-        except:
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
             notify=[] 
              
       
