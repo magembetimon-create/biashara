@@ -16,4 +16,5 @@ urlpatterns = [
     path('shifts/print', views.print_shift, name='staff_print_shift'),
     path('grant-role', views.grant_role, name='staff_grant_role'),
     path('general-permissions', views.update_general_permissions, name='staff_general_permissions'),
+    path('disable-waiter', views.disable_waiter, name='staff_disable_waiter'),
 ]

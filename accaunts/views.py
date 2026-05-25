@@ -1230,7 +1230,7 @@ def biz_prof(request):
   busi_reg = businessReg.objects.filter(Interprise=duka.id)
   kifedha = Huduma_za_kifedha.objects.all()
   Hdm = HudumaNyingine.objects.filter(Interprise=duka.id)
-  members = InterprisePermissions.objects.filter(Interprise=duka.id)
+  members = InterprisePermissions.objects.filter(Interprise=duka.id,Allow=True)
  
   
   
@@ -3500,7 +3500,7 @@ def Risiti_Settings(request):
   duka = todo['duka']
 
   reg = businessReg.objects.filter(Interprise=duka.id)
-  usrs = InterprisePermissions.objects.filter(Interprise=duka.id)
+  usrs = InterprisePermissions.objects.filter(Interprise=duka.id,Allow=True)
   desc = invoice_desk.objects.filter(Interprise=duka.id)
   desk = None
   desc_exists = 0

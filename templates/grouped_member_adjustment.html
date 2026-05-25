@@ -139,7 +139,6 @@
 
 <script>
 var useri_lang = Number('{{ useri.langSet|default:0 }}');
-var adj_selected_date = '{{ selected_date }}';
 
 function calcSold(input) {
   var row = input.closest('tr');
@@ -276,7 +275,7 @@ function saveAdjustments() {
       'Content-Type': 'application/json',
       'X-CSRFToken': csrfToken
     },
-    body: JSON.stringify({ date: adj_selected_date, adjustments: adjustments })
+    body: JSON.stringify({ adjustments: adjustments })
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {

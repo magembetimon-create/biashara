@@ -2207,7 +2207,7 @@ def Zipungue(request):
                                                 adj_sz.save()
                                                 szd.idadi=float(szd.idadi) - float(sz['idadi'])
                                                 szd.save()
-                    to_comfirm = InterprisePermissions.objects.filter(Interprise=duka.id)
+                    to_comfirm = InterprisePermissions.objects.filter(Interprise=duka.id,Allow=True)
                     if to_comfirm.exists():
                         for tn in to_comfirm:
                             comf = stockAdjst_confirm()
@@ -2412,7 +2412,7 @@ def Ziongezeke(request):
                                                 adj_sz.save()
 
                                          
-                    to_comfirm = InterprisePermissions.objects.filter(Interprise=duka.id)
+                    to_comfirm = InterprisePermissions.objects.filter(Interprise=duka.id,Allow=True)
                    
                     if to_comfirm.exists():
                         for tn in to_comfirm:
@@ -2492,7 +2492,7 @@ def Ziruditena(request):
 
 
                                          
-                    to_comfirm = InterprisePermissions.objects.filter(Interprise=duka.id)
+                    to_comfirm = InterprisePermissions.objects.filter(Interprise=duka.id,Allow=True)
                    
                     if to_comfirm.exists():
                         for tn in to_comfirm:
@@ -5899,16 +5899,8 @@ def grouped_items_member_adjustment(request):
 
     # ── GET: build adjustment form data ──────────────────────────────────────
     try:
-        selected_date = request.GET.get('date', str(date.today()))
-        try:
-            import datetime as _dt
-            _dt.datetime.strptime(selected_date, '%Y-%m-%d')
-        except ValueError:
-            selected_date = str(date.today())
-
         grouped_sales_qs = mauzoList.objects.filter(
             mauzo__Interprise=duka,
-            mauzo__date=selected_date,
             produ__is_grouped_item=True,
             produ__grouped_item_ref__isnull=False,
         ).select_related('produ__grouped_item_ref')
@@ -5977,9 +5969,7 @@ def grouped_items_member_adjustment(request):
             grouped_data.append(data)
 
         todo.update({
-            'selected_date': selected_date,
             'grouped_nav_active': 'adjust',
-            'grouped_nav_date': selected_date,
             'grouped_adjustment_data': grouped_data,
             'grouped_adjustment_total_groups': len(grouped_data),
             'grouped_adjustment_grand_total_sold': float(grand_total_sold),
@@ -6040,10 +6030,8 @@ def grouped_items_sales_track(request):
         return render(request, 'pagenotFound.html', todo)
 
     try:
-        selected_date = request.GET.get('date', str(date.today()))
         grouped_sales_qs = mauzoList.objects.filter(
             mauzo__Interprise=duka,
-            mauzo__date=selected_date,
             produ__is_grouped_item=True,
             produ__grouped_item_ref__isnull=False,
         ).select_related(
@@ -6077,9 +6065,7 @@ def grouped_items_sales_track(request):
             })
 
         todo.update({
-            'selected_date': selected_date,
             'grouped_nav_active': 'track',
-            'grouped_nav_date': selected_date,
             'grouped_sales_rows': rows,
             'grouped_sales_sales_count': len(sale_ids),
             'grouped_sales_lines_count': len(rows),

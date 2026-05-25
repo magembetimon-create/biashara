@@ -3298,7 +3298,7 @@ def waiter_orders_data(request):
             full_returned=False,
             order=True,
             # desc__startswith='WAITER|'
-      ).select_related('customer_in__area').order_by('-pk')[:50]
+      ).select_related('customer_in__area').order_by('-pk')
 
       printed_qs = mauzoni.objects.filter(
             waiter_scope,
@@ -3308,7 +3308,7 @@ def waiter_orders_data(request):
             order=False,
             receved=True,
             # desc__startswith='WAITER|'
-      ).select_related('customer_in__area').order_by('-pk')[:50]
+      ).select_related('customer_in__area').order_by('-pk')
 
       pending_ids = [x.id for x in pending_qs]
       printed_ids = [x.id for x in printed_qs]

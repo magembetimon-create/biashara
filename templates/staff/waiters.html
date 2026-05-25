@@ -52,6 +52,7 @@
           <th class="text-left" >{% if useri.langSet == 0 %}Cheo{% else %}Position{% endif %}</th>
           <th class="text-left" >{% if useri.langSet == 0 %}PIN imewekwa{% else %}PIN Set{% endif %}</th>
           <th class="text-left" >{% if useri.langSet == 0 %}Hali{% else %}Status{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Kitendo{% else %}Action{% endif %}</th>
         </tr>
       </thead>
       <tbody>
@@ -84,10 +85,15 @@
           <td>
             <span class="badge badge-primary">{% if useri.langSet == 0 %}Mhudumu{% else %}Waiter{% endif %}</span>
           </td>
+          <td>
+            <button type="button" class="btn btn-sm smallerFont btn-outline-danger" onclick="confirmDisableWaiter(Number('{{ perm.id }}'), '{{ perm.user.user.get_full_name|default:perm.user.user.username|escapejs }}')">
+              {% if useri.langSet == 0 %}Mzimie{% else %}Disable{% endif %}
+            </button>
+          </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" class="text-center text-muted py-4">
+          <td colspan="7" class="text-center text-muted py-4">
             {% if useri.langSet == 0 %}Hakuna wahudumu waliosajiliwa bado.{% else %}No waiters registered yet.{% endif %}
           </td>
         </tr>
@@ -98,7 +104,66 @@
   {% endif %}
 </div>
 
+<form id="disableWaiterCsrfForm" style="display:none">{% csrf_token %}</form>
+
+<div class="modal fade" id="disableWaiterModal" tabindex="-1" role="dialog" aria-labelledby="disableWaiterModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="disableWaiterModalLabel">{% if useri.langSet == 0 %}Thibitisha{% else %}Confirm{% endif %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="disableWaiterModalMessage"></p>
+        <input type="hidden" id="disableWaiterPermId" value="0">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-dismiss="modal">{% if useri.langSet == 0 %}Ghairi{% else %}Cancel{% endif %}</button>
+        <button type="button" class="btn btn-danger" id="disableWaiterConfirmBtn" onclick="disableWaiter()">{% if useri.langSet == 0 %}Thibitisha{% else %}Confirm{% endif %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+function confirmDisableWaiter(permId, userName) {
+  document.getElementById('disableWaiterPermId').value = permId;
+  document.getElementById('disableWaiterModalMessage').textContent =
+    '{% if useri.langSet == 0 %}Una hakika unataka kumzimia mhudumu\u00a0{% else %}Are you sure you want to disable waiter\u00a0{% endif %}' + userName + '?';
+  $('#disableWaiterModal').modal('show');
+}
+
+function disableWaiter() {
+  var permId = Number(document.getElementById('disableWaiterPermId').value);
+  if (!permId) return;
+
+  var csrfToken = document.querySelector('#disableWaiterCsrfForm [name=csrfmiddlewaretoken]');
+  csrfToken = csrfToken ? csrfToken.value : '';
+
+  fetch('{% url "staff_disable_waiter" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken,
+    },
+    body: JSON.stringify({ perm_id: permId }),
+  })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data.success) {
+        $('#disableWaiterModal').modal('hide');
+        location.reload();
+      } else {
+        alert(data.msg || '{% if useri.langSet == 0 %}Kuna hitilafu{% else %}Error occurred{% endif %}');
+      }
+    })
+    .catch(function () {
+      alert('{% if useri.langSet == 0 %}Kuna hitilafu ya mtandao{% else %}Network error occurred{% endif %}');
+    });
+}
+
 function filterStaffTable(query, tableId) {
   var q = query.toLowerCase();
   var rows = document.querySelectorAll('#' + tableId + ' tbody tr');

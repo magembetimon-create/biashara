@@ -197,7 +197,6 @@ class Todos:
         if duka and duka.Interprise:
           grouped_sales_track_count = mauzoList.objects.filter(
             mauzo__Interprise=duka,
-            mauzo__date=date.today(),
             produ__is_grouped_item=True,
             produ__grouped_item_ref__isnull=False,
           ).values('mauzo_id').distinct().count()

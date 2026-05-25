@@ -1074,15 +1074,23 @@ def getdata(request):
     non_cash_accounts = list(
         IntpAc.exclude(aina__iexact='Cash').exclude(supervisor_account=True).values('id', 'Akaunt_name', 'Amount', 'aina', 'onesha')
     )
-    supervisors = list(
-        InterprisePermissions.objects.filter(Interprise__owner=duka.owner).filter(
-            Q(cash_deposit_supervisor=True) | Q(owner=True)
-        ).annotate(
-            first_name=F('user__user__first_name'),
-            last_name=F('user__user__last_name'),
-            username=F('user__user__username')
-        ).values('id', 'first_name', 'last_name', 'username', 'owner', 'cash_deposit_supervisor')
-    )
+    # Get distinct supervisors - avoid showing same user multiple times
+    supervisors_qs = InterprisePermissions.objects.filter(Interprise__owner=duka.owner).filter(
+        Q(cash_deposit_supervisor=True) | Q(owner=True)
+    ).annotate(
+        first_name=F('user__user__first_name'),
+        last_name=F('user__user__last_name'),
+        username=F('user__user__username'),
+        auth_user_id=F('user__user__id')
+    ).values('id', 'first_name', 'last_name', 'username', 'owner', 'cash_deposit_supervisor', 'auth_user_id')
+    
+    # Deduplicate supervisors by auth_user_id to ensure each user appears only once
+    seen_users = set()
+    supervisors = []
+    for sup in supervisors_qs:
+        if sup['auth_user_id'] not in seen_users:
+            seen_users.add(sup['auth_user_id'])
+            supervisors.append(sup)
 
     payaccs_ = PaymentAkaunts.objects.filter(
             Interprise__owner=duka.owner,

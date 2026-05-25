@@ -3,7 +3,7 @@
     <ul class="nav nav-tabs smallFont mb-0">
       <li class="nav-item">
         <a class="nav-link {% if grouped_nav_active == 'track' %}active{% endif %}"
-           href="{% url 'grouped_items_sales_track' %}{% if grouped_nav_date %}?date={{ grouped_nav_date }}{% endif %}">
+           href="{% url 'grouped_items_sales_track' %}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-bar-chart-line mr-1" viewBox="0 0 16 16">
             <path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1V2zm1 12h2V2h-2v12zm-3 0V7H7v7h2zm-5 0v-3H2v3h2z"/>
           </svg>
@@ -12,7 +12,7 @@
       </li>
       <li class="nav-item">
         <a class="nav-link {% if grouped_nav_active == 'adjust' %}active{% endif %}"
-           href="{% url 'grouped_items_member_adjustment' %}{% if grouped_nav_date %}?date={{ grouped_nav_date }}{% endif %}">
+           href="{% url 'grouped_items_member_adjustment' %}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-sliders mr-1" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3h9.05zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8h2.05zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1h9.05z"/>
           </svg>
@@ -20,10 +20,6 @@
         </a>
       </li>
     </ul>
-    <form method="get" action="." class="d-flex align-items-center mb-1" style="gap:6px;">
-      <input type="date" name="date" value="{{ grouped_nav_date }}" class="form-control form-control-sm"
-             style="width:148px;" onchange="this.form.submit()">
-    </form>
   </div>
   <hr class="mt-0 mb-3">
 </div>

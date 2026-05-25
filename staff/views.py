@@ -320,7 +320,7 @@ def waiters(request):
         waiter_perms = InterprisePermissions.objects.filter(
             Interprise=duka.id,
             owner=False,
-            Allow=True,
+           
             waiter_counter=True,
         ).select_related('user__user', 'fanyakazi').order_by('cheo')
         todo.update({
@@ -1666,6 +1666,49 @@ def update_general_permissions(request):
             'msg_swa': 'Ruhusa zimehifadhiwa kikamilifu.',
             'msg_eng': 'Permissions updated successfully.',
         })
+    except Exception as e:
+        return JsonResponse({'success': False, 'msg': str(e)}, status=500)
+
+
+@login_required(login_url='login')
+@csrf_exempt
+def disable_waiter(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'msg': 'Invalid method'}, status=405)
+
+    try:
+        todo = todoFunct(request)
+        duka = todo['duka']
+        allowed, perm_response = _check_admin_or_msaidizi(todo)
+        if not allowed:
+            return perm_response
+
+        data = json.loads(request.body)
+        perm_id = int(data.get('perm_id', 0))
+
+        perm = InterprisePermissions.objects.filter(
+            pk=perm_id,
+            Interprise=duka.id,
+            waiter_counter=True,
+        ).first()
+        if not perm:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Mhudumu huyo hayupo au tayari amezimwa.',
+                'msg_eng': 'Waiter not found or already disabled.',
+            }, status=404)
+
+        perm.waiter_counter = False
+        perm.save(update_fields=['waiter_counter'])
+
+        return JsonResponse({
+            'success': True,
+            'msg_swa': 'Mhudumu ameondolewa kwa mafanikio.',
+            'msg_eng': 'Waiter disabled successfully.',
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'msg': str(e)}, status=500)
+
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({'success': False, 'msg': str(e)}, status=500)
