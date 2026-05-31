@@ -230,6 +230,7 @@
         <table class="table table-sm table-hover table-bordered" id="stockValueTable">
           <thead>
             <tr>
+              <th rowspan="2" class="text-left" >#</th>
               <th class="text-left" rowspan="2">{% if useri.langSet == 0 %}Bidhaa{% else %}Item name{% endif %}</th>
               <th class="text-left" rowspan="2">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
               <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Stock Before{% else %}Stock Before{% endif %}</th>
@@ -270,6 +271,7 @@
           <tbody>
             {% for s in stock_value_rows %}
             <tr>
+              <td>{{ forloop.counter }}</td>
               <td>{{ s.item_name }}</td>
               <td>{{ s.units|default:'-' }}</td>
               <td>{{ s.before_qty|floatformat:2|intcomma }}</td>

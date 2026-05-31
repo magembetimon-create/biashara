@@ -479,6 +479,7 @@
       <table class="stock-table" id="shift_table" >
         <thead>
           <tr>
+            <th rowspan="2">#</th>
             <th rowspan="2">{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
             <th rowspan="2">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
             <th colspan="3">{% if useri.langSet == 0 %}Stock Before{% else %}Stock Before{% endif %}</th>
@@ -502,6 +503,7 @@
         <tbody>
           {% for s in stock_value_rows %}
           <tr>
+            <td>{{ forloop.counter }}</td>
             <td>{{ s.item_name }}</td>
             <td>{{ s.units|default:'-' }}</td>
             <td>{{ s.before_qty|floatformat:2|intcomma }}</td>
