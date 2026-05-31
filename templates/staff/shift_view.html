@@ -311,24 +311,31 @@
             <tr class="font-weight-bold">
               <td class="text-left">{% if useri.langSet == 0 %}Jumla{% else %}Totals{% endif %}</td>
               <td></td>
+              <td></td>
               <td>{{ stock_value_totals.before_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.before_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.before_worth|floatformat:2|intcomma }}</td>
+             
               <td>{{ stock_value_totals.added_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.added_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.added_worth|floatformat:2|intcomma }}</td>
+             
               <td>{{ stock_value_totals.reduction_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.reduction_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.reduction_worth|floatformat:2|intcomma }}</td>
+             
               <td>{{ stock_value_totals.transferred_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.transferred_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.transferred_worth|floatformat:2|intcomma }}</td>
+             
               <td>{{ stock_value_totals.received_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.received_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.received_worth|floatformat:2|intcomma }}</td>
+             
               <td>{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>
+              
               <td>{{ stock_value_totals.current_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.current_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.current_worth|floatformat:2|intcomma }}</td>
