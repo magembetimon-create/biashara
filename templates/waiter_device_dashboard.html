@@ -11,6 +11,100 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
   
   <style>
+    body.theme-dark { background: #10182f; color: #e5e9ff; }
+    body.theme-dark a { color: #c5d1ff; }
+    body.theme-dark .btn-link { color: #c5d1ff; }
+    body.theme-dark .btn-outline-secondary { color: #d9e3ff; border-color: #4b5e8d; }
+    body.theme-dark .btn-outline-secondary:hover { background: rgba(255,255,255,0.06); }
+    body.theme-dark .whiteBg { background: #1c2850 !important; color: #e5e9ff; }
+    body.theme-dark .device-card, body.theme-dark .classic_div { background: #18224d; border-color: #394c82; }
+    body.theme-dark #deviceDashboardRoot { min-height: 100vh; background: #10182f; }
+    body.theme-dark .device-waiter-badge {
+      background: #3f71f1;
+      color: white;
+    }
+    body.theme-dark .device-logout-btn { background: #d93951; color: white; }
+    body.theme-dark .device-logout-btn:hover { background: #c52f48; }
+    body.theme-dark .waiter-item-card {
+      background: #17254b;
+      border: 1px solid #3f4f7c;
+      color: #e5e9ff;
+    }
+    body.theme-dark .waiter-item-card .waiter-name,
+    body.theme-dark .waiter-item-card .small,
+    body.theme-dark .waiter-item-card .waiter-stock-line small,
+    body.theme-dark .waiter-item-card .smallerFont {
+      color: #d7e0ff;
+    }
+    body.theme-dark .waiter-item-card .waiter-price {
+      color: #a8c3ff;
+    }
+    body.theme-dark .waiter-item-card .btn-primary {
+      background: #4f75f0;
+      border-color: #4f75f0;
+      color: #fff;
+    }
+    body.theme-dark .waiter-item-card .btn-primary:hover {
+      background: #4066d5;
+      border-color: #4066d5;
+    }
+    body.theme-dark .waiter-summary-panel {
+      background: #11172f;
+      border: 1px solid #2f416f;
+    }
+    body.theme-dark .waiter-summary-card {
+      background: #17254b;
+      border: 1px solid #394d7d;
+      color: #e5e9ff;
+    }
+    body.theme-dark .waiter-summary-card .label {
+      color: #b8c5ff;
+    }
+    body.theme-dark .waiter-summary-card .value {
+      color: #f4f7ff;
+    }
+    body.theme-dark .btn-light {
+      background: #202e5f !important;
+      border-color: #3b4f86 !important;
+      color: #e2e9ff !important;
+    }
+    body.theme-dark .btn-light:hover,
+    body.theme-dark .btn-light:focus {
+      background: #2b3b76 !important;
+      color: #fff !important;
+    }
+    body.theme-dark .waiter-panel-tab.btn-light,
+    body.theme-dark .waiter-history-tab.btn-light,
+    body.theme-dark .waiter-payment-tab.btn-light,
+    body.theme-dark #refreshWaiterOrders.btn-light {
+      background: #1f2e5b !important;
+      border-color: #354878 !important;
+      color: #e7ecff !important;
+    }
+    body.theme-dark .waiter-counter-nav li button {
+      background: #18234a;
+      color: #d4defc;
+      border-color: #415192;
+    }
+    body.theme-dark .waiter-counter-nav li button:hover,
+    body.theme-dark .waiter-counter-nav li button.active {
+      background: #364ea0;
+      color: #ffffff;
+    }
+    body.theme-dark .waiter-search-input-wrap .form-control {
+      background: #111c43;
+      color: #e6ecff;
+      border-color: #354776;
+    }
+    body.theme-dark .waiter-cart-item {
+      background: #16204c;
+      border: 1px solid #2f4173;
+    }
+    body.theme-dark .waiter-cart-item .waiterQty.btn-light {
+      background: #2e426f;
+      border-color: #4d5fa1;
+      color: #f1f5ff;
+    }
     #deviceDashboardRoot { min-height: 100vh; background: #f5f5f5; }
     .device-waiter-badge {
       background: #007bff;
@@ -151,7 +245,7 @@
     }
   </style>
 </head>
-<body>
+<body class="{% if active_waiter.dashboard_theme == 'dark' %}theme-dark{% else %}theme-light{% endif %}">
 <div id="deviceDashboardRoot" class="whiteBg py-2 waiter-shell">
   <div class="container-fluid">
     <!-- Active Waiter Badge & Logout -->
@@ -181,14 +275,21 @@
       <div class="col-6">
         <div class="row justify-content-md-end align-items-end">
           <div class="col-auto">
-            <div class="btn-group">
-              <button type="button" class="btn btn-sm btn-outline-primary" disabled>
+            <div class="btn-group" id="exit_button" >
+                <button type="button" class="btn btn-sm btn-outline-primary" disabled>
                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <rect x="3" y="4" width="18" height="16" rx="2"></rect>
                   <path d="M9 4v16"></path>
                 </svg>
                 {% if duka %}{{ duka.name | title }}{% endif %}
               </button>
+                <!-- Settings link: open PIN settings for device active user -->
+                <a href="/mauzo/waiter_device_settings?biz={{ biz_id }}&device_id={{ device_id }}" class="btn btn-sm btn-outline-secondary ml-2" title="Settings" id="settPIN" >
+                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-settings">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                </a>
             </div>
           </div>
         </div>

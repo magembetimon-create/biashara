@@ -4592,6 +4592,159 @@ def waiter_set_pin(request):
       return render(request, 'waiter_set_pin.html', todo)
 
 
+def waiter_set_pin_device(request):
+      """Allow setting/changing waiter PIN from a device session (no user login required).
+      Authenticates via device_id + biz_id parameters only (WaiterPosDeviceSession).
+      No @login_required - operates on device session, not user session.
+      """
+      try:
+            biz_id = int(request.GET.get('biz', 0) or request.POST.get('biz', 0) or 0)
+            device_id = str(request.GET.get('device_id', '') or request.POST.get('device_id', '') or '').strip()
+            
+            if not biz_id or not device_id:
+                  print('is getting here')
+                  return redirect('/mauzo/waiter_pos')
+                  
+
+            # duka = Interprise.objects.filter(pk=biz_id, waiter_counter=True).first()
+            # if not duka:
+            #       return redirect('/mauzo/waiter_pos')
+
+            # Find device session (no user login required, device-based auth only)
+            session = WaiterPosDeviceSession.objects.filter(
+                  active_user__Interprise__id=biz_id,
+                  device_id=device_id,
+                  active=True,
+            ).first()
+
+            duka = session.active_user.Interprise if session else None
+
+            # if not session or not session.active_user:
+            #       return redirect(f'/mauzo/waiter_pos?biz={biz_id}')
+
+            # Get the device's active user and their counters
+            device_user = session.active_user.user
+            counters = InterprisePermissions.objects.filter(
+                  # Interprise=duka,
+                  waiter_counter=True,
+                  user=device_user,
+            )
+
+          
+
+            if request.method == 'POST':
+                  
+                  pin = str(request.POST.get('pin', '') or '').strip()
+                  pin_confirm = str(request.POST.get('pin_confirm', '') or '').strip()
+                  counter_id = request.POST.get('counter_id', '') or ''
+                  useri  = device_user
+                  if len(pin) < 4 or not pin.isdigit():
+                        return render(request, 'waiter_device_set_pin.html', {
+                              'error': 'PIN lazima iwe nambari za 4 hadi 10' if useri.langSet == 0 else 'The PIN must be 4 to 10 digits',
+                              'useri': device_user,
+                              'counters': counters,
+                              'form_action': f'/mauzo/waiter_set_pin_device?biz={biz_id}&device_id={device_id}',
+                        })
+
+                  if pin != pin_confirm:
+                        return render(request, 'waiter_device_set_pin.html', {
+                              'error': 'PIN hazifanani' if useri.langSet == 0 else 'The PINs do not match',
+                              'useri': device_user,
+                              'counters': counters,
+                              'form_action': f'/mauzo/waiter_set_pin_device?biz={biz_id}&device_id={device_id}',
+                        })
+
+                  # Update PIN on selected counter or all counters
+                  if counter_id:
+                        try:
+                              cobj = counters.filter(pk=int(counter_id)).first()
+                              if cobj:
+                                    cobj.waiter_pin = pin
+                                    cobj.waiter_pin_set = True
+                                    cobj.save(update_fields=['waiter_pin', 'waiter_pin_set'])
+                        except:
+                              pass
+                  else:
+                        counters.update(waiter_pin=pin, waiter_pin_set=True)
+
+                  return render(request, 'waiter_device_set_pin.html', {
+                        'success': True,
+                        'useri': device_user,
+                        'counters': counters,
+                        'form_action': f'/mauzo/waiter_set_pin_device?biz={biz_id}&device_id={device_id}',
+                        'biz_id': biz_id,
+                        'device_id': device_id,
+                  })
+
+            return render(request, 'waiter_device_set_pin.html', {
+                  'useri': device_user,
+                  'counters': counters,
+                  'form_action': f'/mauzo/waiter_set_pin_device?biz={biz_id}&device_id={device_id}',
+                  'biz_id': biz_id,
+                  'device_id': device_id,
+            })
+
+      except:
+            traceback.print_exc()
+            return redirect('/mauzo/waiter_pos')
+
+
+def waiter_device_settings(request):
+      """Device-specific settings page for waiter device dashboard.
+      Shows links to Set PIN and allows choosing dashboard theme (light/dark) stored on InterprisePermissions.
+      Auth via device session only (biz + device_id).
+      """
+      try:
+            biz_id = int(request.GET.get('biz', 0) or request.POST.get('biz', 0) or 0)
+            device_id = str(request.GET.get('device_id', '') or request.POST.get('device_id', '') or '').strip()
+            if not biz_id or not device_id:
+                  return redirect('/mauzo/waiter_pos')
+
+            session = WaiterPosDeviceSession.objects.filter(
+                  active=True,
+                  device_id=device_id,
+                  Interprise__id=biz_id,
+            ).first()
+
+            if not session or not session.active_user:
+                  return redirect(f'/mauzo/waiter_pos?biz={biz_id}&device_id={device_id}')
+
+            perm = session.active_user  # InterprisePermissions
+            useri_obj = perm.user if getattr(perm, 'user', None) else None
+
+            if request.method == 'POST':
+                  theme = str(request.POST.get('dashboard_theme', 'light') or 'light')
+                  if theme not in ('light', 'dark'):
+                        theme = 'light'
+                  perm.dashboard_theme = theme
+                  perm.save(update_fields=['dashboard_theme'])
+
+                  return render(request, 'waiter_device_settings.html', {
+                        'success': True,
+                        'device_user': perm,
+                        'useri': useri_obj,
+                        'form_action': f'/mauzo/waiter_device_settings?biz={biz_id}&device_id={device_id}',
+                        'biz_id': biz_id,
+                        'device_id': device_id,
+                        'current_theme': theme,
+                        'theme_action': f'/mauzo/waiter_device_settings?biz={biz_id}&device_id={device_id}',
+                  })
+
+            return render(request, 'waiter_device_settings.html', {
+                  'device_user': perm,
+                  'useri': useri_obj,
+                  'form_action': f'/mauzo/waiter_device_settings?biz={biz_id}&device_id={device_id}',
+                  'biz_id': biz_id,
+                  'device_id': device_id,
+                  'current_theme': perm.dashboard_theme,
+                  'theme_action': f'/mauzo/waiter_device_settings?biz={biz_id}&device_id={device_id}',
+            })
+
+      except:
+            traceback.print_exc()
+            return redirect('/mauzo/waiter_pos')
+
+
 @login_required(login_url='login')
 def waiter_settings(request):
       """Settings list page for waiter counter: set PIN and print mode toggle."""

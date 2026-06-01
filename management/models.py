@@ -277,6 +277,7 @@ class InterprisePermissions(models.Model):
     servicing = models.BooleanField(default=False)
     waiter_pin = models.CharField(max_length=10, null=True, blank=True)
     waiter_pin_set = models.BooleanField(default=False)
+    dashboard_theme = models.CharField(max_length=10, choices=(('light','Light'),('dark','Dark')), default='light')
     waiter_check_up = models.BooleanField(default=False)
     waiter_delete_order = models.BooleanField(default=False)
     enable_print = models.BooleanField(default=False)
@@ -287,7 +288,11 @@ class InterprisePermissions(models.Model):
     open_own_shift = models.BooleanField(default=False)
     close_own_shift = models.BooleanField(default=False)
     def __str__(self):
-        return self.Allow
+        if self.fanyakazi:
+            return str(self.fanyakazi.jina)
+        if self.user and getattr(self.user, 'user', None):
+            return str(self.user.user.get_full_name() or self.user.user.username)
+        return f'Permission #{self.pk}'
 
 
 class ShiftSession(models.Model):
