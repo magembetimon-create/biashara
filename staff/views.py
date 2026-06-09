@@ -123,14 +123,20 @@ def all_staff(request):
     try:
         todo = todoFunct(request)
         duka = todo['duka']
-        workers = Workers.objects.filter(Interprise=duka.id).order_by('jina')
+        cheo = todo.get('cheo')
+        workers = Workers.objects.filter(Interprise__owner=duka.owner.id).order_by('jina')
         # Annotate each worker with whether they have a system account
+        # print("here is reachin")
+        if not cheo.owner:
+            workers = workers.filter(Interprise=duka.id).order_by('jina')
+               
         worker_ids_with_account = set(
-            Workers.objects.filter(
-                Interprise=duka.id,
+            workers.filter(
                 diactive__isnull=False
             ).values_list('pk', flat=True)
         )
+
+
         # all_counters_with_pin_set = InterprisePermissions.objects.filter(
         #     Interprise__owner=duka.owner.id,
         #     waiter_counter = True,
@@ -239,6 +245,79 @@ def add_staff(request):
         return JsonResponse({'success': False, 'msg': str(e)})
 
 
+def _get_linked_user_for_worker(worker):
+    if not worker or worker.diactive is None:
+        return None
+    return getattr(worker.diactive.where, 'owner', None)
+
+
+def _ensure_interprise_permission(worker, branch, linked_user, *, allow_state=False, waiter_state=False, role='allow', admin_user=None, added):
+    if not worker or not branch or not linked_user:
+        return None
+
+    # if not added:
+    #     InterprisePermissions.objects.filter(
+    #         Interprise=branch,
+    #         user=linked_user,
+    #         fanyakazi=worker,
+    #     ).delete()
+    #     return None
+
+    perm = InterprisePermissions.objects.filter(
+        Interprise=branch,
+        user=linked_user,
+    ).order_by('pk').first()
+    is_worker = Workers.objects.filter(diactive__where=worker.diactive.where, Interprise=branch.id)
+    # print(f"is Worker exists {is_worker} ")
+    if not is_worker.exists() and added:
+        # create a new worker for this branch if the linked user doesn't have one
+        worker = Workers.objects.create(
+            Interprise=branch,
+            jina=worker.jina,
+            kazi=worker.kazi,
+            address = worker.address,
+            code = worker.code,
+            simu1 = worker.simu1,
+            simu2 = worker.simu2,
+            diactive=worker.diactive,
+            active = True,
+
+        )
+
+    if perm is None:
+        # print(f'Creating new permission {branch.name}  - {worker.jina}')
+        perm = InterprisePermissions.objects.create(
+            Interprise=branch,
+            user=linked_user,
+            owner=False,
+            Allow=False,
+            discount=False,
+            addsupplier=False,
+            addproduct=False,
+            profile=False,
+            cheo=(worker.kazi or '')[:100],
+            admin=admin_user.id if admin_user else 0,
+            fanyakazi=worker,
+        )
+    else:
+        # print(f"Updating existing permission from {perm.Interprise.name} to {branch.name} for {worker.jina}")
+        perm.fanyakazi = is_worker.first() if is_worker else worker
+        perm.save() 
+
+    # perm.admin = admin_user.id if admin_user else (perm.admin or 0)
+    # perm.cheo = (worker.kazi or '')[:100]
+
+    # if role == 'allow':
+    #     perm.Allow = bool(allow_state)
+    # elif role == 'waiter':
+    #     perm.waiter_counter = bool(waiter_state)
+    #     if bool(waiter_state):
+    #         perm.Allow = True
+
+    # perm.save()
+    return perm
+
+
 @login_required(login_url='login')
 def view_staff(request):
     try:
@@ -258,9 +337,9 @@ def view_staff(request):
 
         has_user = False
         is_delivery_agent = False
+        linked_user = _get_linked_user_for_worker(worker)
 
-        if worker.diactive is not None:
-            linked_user = worker.diactive.where.owner
+        if linked_user is not None:
             has_user = InterprisePermissions.objects.filter(
                 user=linked_user.id,
                 Interprise=duka.id,
@@ -271,10 +350,28 @@ def view_staff(request):
             ).exists()
 
         perm = InterprisePermissions.objects.filter(fanyakazi=worker.id, Interprise=duka.id).first()
-
+        # print(f'perm exists {perm is not None}')
         viewer_can_manage = bool(
             duka.owner == todo.get('useri') or (cheo and cheo.fullcontrol)
         )
+
+        branches = Interprise.objects.filter(owner=duka.owner,Interprise=True).order_by('name') if duka.owner else Interprise.objects.none()
+        branch_permission_options = []
+        for branch in branches:
+            branch_perm = None
+            if linked_user is not None:
+                branch_perm = InterprisePermissions.objects.filter(
+                    Interprise=branch,
+                    user=linked_user,
+                    # fanyakazi=worker,
+                ).first()
+            branch_permission_options.append({
+                'enterprise': branch,
+                'perm': branch_perm,
+                'is_added': branch_perm is not None,
+                'is_allowed': bool(branch_perm and branch_perm.Allow) if branch_perm else False,
+                'is_waiter': bool(branch_perm and branch_perm.waiter_counter) if branch_perm else False,
+            })
         
         todo.update({
             'worker': worker,
@@ -284,6 +381,8 @@ def view_staff(request):
             'perm': perm,
             'viewer_can_manage': viewer_can_manage,
             'staff_page': 'all',
+            'branch_permission_options': branch_permission_options,
+            'linked_user': linked_user,
         })
         return render(request, 'staff/view_staff.html', todo)
     except Exception:
@@ -1637,29 +1736,97 @@ def update_general_permissions(request):
         allow = str(request.POST.get('allow', '0')).lower() in ['1', 'true', 'yes', 'on']
         waiter_counter = str(request.POST.get('waiter_counter', '0')).lower() in ['1', 'true', 'yes', 'on']
         cash_deposit_supervisor = str(request.POST.get('cash_deposit_supervisor', '0')).lower() in ['1', 'true', 'yes', 'on']
+        branch_permissions_json = request.POST.get('branch_permissions', '{}')
 
-        worker = Workers.objects.filter(pk=worker_id, Interprise=duka.id).first()
+        worker = Workers.objects.filter(pk=worker_id, Interprise__owner=duka.owner.id).first()
         if not worker:
             return JsonResponse({'success': False, 'msg': 'Worker not found'}, status=404)
 
-        perm = InterprisePermissions.objects.filter(
-            Interprise=duka.id,
-            fanyakazi=worker.id,
-        ).first()
-
-        # Operations 3/4/5 are only allowed after operation 1 (Add User) has been done.
-        if not perm:
+        linked_user = _get_linked_user_for_worker(worker)
+        if not linked_user:
             return JsonResponse({
                 'success': False,
                 'msg_swa': 'Ongeza mtumiaji kwanza kabla ya kuweka ruhusa hizi.',
                 'msg_eng': 'Add user first before assigning these permissions.',
             })
 
-        perm.Allow = allow
-        perm.waiter_counter = waiter_counter
-        perm.cash_deposit_supervisor = cash_deposit_supervisor
-        perm.fanyakazi = worker
-        perm.save()
+        perm = InterprisePermissions.objects.filter(
+            Interprise=duka.id,
+            fanyakazi=worker.id,
+        ).first()
+
+        if not perm:
+            perm = _ensure_interprise_permission(
+                worker,
+                duka,
+                linked_user,
+                allow_state=allow,
+                waiter_state=waiter_counter,
+                role='allow',
+                admin_user=request.user,
+                added = added
+            )
+        if perm is not None:
+            perm.Allow = allow
+            perm.waiter_counter = waiter_counter
+            perm.cash_deposit_supervisor = cash_deposit_supervisor
+            perm.fanyakazi = worker
+            perm.save(update_fields=['Allow', 'waiter_counter', 'cash_deposit_supervisor', 'fanyakazi'])
+
+        branch_updates = {}
+        try:
+            branch_updates = json.loads(branch_permissions_json or '{}') or {}
+        except Exception:
+            branch_updates = {}
+
+        if isinstance(branch_updates, dict):
+            allow_updates = branch_updates.get('allow', {}) or {}
+            waiter_updates = branch_updates.get('waiter', {}) or {}
+
+            for branch_id, payload in allow_updates.items():
+                try:
+                    branch = Interprise.objects.filter(pk=int(branch_id), owner=duka.owner).first()
+                except (TypeError, ValueError):
+                    continue
+                if not branch:
+                    continue
+                added = bool(payload.get('added')) if isinstance(payload, dict) else False
+                allowed = bool(payload.get('allowed')) if isinstance(payload, dict) else False
+                # print(f"Processing allow update for branch id-{branch_id} name-{branch.name}: allowed={allowed}, added={added}")
+                perm = _ensure_interprise_permission(
+                    worker,
+                    branch,
+                    linked_user,
+                    allow_state=allowed,
+                    waiter_state=False,
+                    role='allow',
+                    admin_user=request.user,
+                    added = added
+                )
+                perm.Allow = allowed
+                perm.save()
+
+            for branch_id, payload in waiter_updates.items():
+                try:
+                    branch = Interprise.objects.filter(pk=int(branch_id), owner=duka.owner).first()
+                except (TypeError, ValueError):
+                    continue
+                if not branch:
+                    continue
+                added = bool(payload.get('added')) if isinstance(payload, dict) else False
+                allowed = bool(payload.get('allowed')) if isinstance(payload, dict) else False
+                perm = _ensure_interprise_permission(
+                    worker,
+                    branch,
+                    linked_user,
+                    allow_state=allowed,
+                    waiter_state=allowed,
+                    role='waiter',
+                    admin_user=request.user,
+                    added = added
+                )
+                perm.waiter_counter = allowed 
+                perm.save()
 
         return JsonResponse({
             'success': True,
@@ -1667,6 +1834,7 @@ def update_general_permissions(request):
             'msg_eng': 'Permissions updated successfully.',
         })
     except Exception as e:
+        traceback.print_exc()
         return JsonResponse({'success': False, 'msg': str(e)}, status=500)
 
 

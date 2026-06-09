@@ -85,12 +85,58 @@
     <form id="generalPermissionsForm" class="row">
       {% csrf_token %}
       <input type="hidden" name="worker_id" value="{{ worker.id }}">
+      <input type="hidden" name="branch_permissions" id="branchPermissionsHidden" value="{}">
 
       <div class="col-md-4 mb-2">
         <div class="custom-control custom-switch cursor-pointer">
           <input type="checkbox" class="custom-control-input cursor-pointer" id="permAllow" name="allow" {% if perm and perm.Allow %}checked{% endif %} {% if not theUser %}disabled{% endif %}>
           <label class="custom-control-label cursor-pointer" for="permAllow">Add user complete required, then Grant access</label>
         </div>
+        {% if viewer_can_manage and branch_permission_options %}
+        <button type="button" class="btn btn-link btn-sm p-0 mt-2" data-toggle="collapse" data-target="#branchPermissionsAllow" aria-expanded="false" aria-controls="branchPermissionsAllow">
+          {% if useri.langSet == 0 %}Onyesha matawi{% else %}Show branches{% endif %}
+        </button>
+        <div id="branchPermissionsAllow" class="collapse mt-2">
+          <div class="border rounded p-2">
+            <small class="text-muted d-block mb-2">
+              {% if useri.langSet == 0 %}Chagua matawi ya biashara na uweke ruhusa ya Grant access kwenye kila moja kwa wakati mmoja.{% else %}Select business branches and apply Grant access to each of them at once.{% endif %}
+            </small>
+            {% if not linked_user %}
+            <small class="text-danger d-block mb-2">{% if useri.langSet == 0 %}Kwanza fanya operation 1 (Add User).{% else %}Complete operation 1 (Add User) first.{% endif %}</small>
+            {% endif %}
+            <div class="table-responsive">
+              <table class="table table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th>{% if useri.langSet == 0 %}Biashara{% else %}Branch{% endif %}</th>
+                    <th>{% if useri.langSet == 0 %}User Added{% else %}User added{% endif %}</th>
+                    <th>{% if useri.langSet == 0 %}Allowed{% else %}Allowed{% endif %}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for branch in branch_permission_options %}
+                  <tr class="branch-permission-row" data-branch="{{ branch.enterprise.id }}" data-permission="allow">
+                    <td>{{ branch.enterprise.name }}</td>
+                    <td>
+                      <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input branch-added-checkbox" id="branchAllowAdded{{ branch.enterprise.id }}" {% if branch.is_added %}checked{% endif %} {% if not linked_user or not viewer_can_manage %}disabled{% endif %}>
+                        <label class="custom-control-label" for="branchAllowAdded{{ branch.enterprise.id }}"></label>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input branch-allowed-checkbox" id="branchAllowAllowed{{ branch.enterprise.id }}" {% if branch.is_allowed %}checked{% endif %} {% if not branch.is_added or not linked_user or not viewer_can_manage %}disabled{% endif %}>
+                        <label class="custom-control-label" for="branchAllowAllowed{{ branch.enterprise.id }}"></label>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        {% endif %}
       </div>
 
       <div class="col-md-4 mb-2">
@@ -98,6 +144,51 @@
           <input type="checkbox" class="custom-control-input cursor-pointer" id="permWaiter" name="waiter_counter" {% if perm and perm.waiter_counter %}checked{% endif %} {% if not theUser %}disabled{% endif %}>
           <label class="custom-control-label cursor-pointer" for="permWaiter">Waiter</label>
         </div>
+        {% if viewer_can_manage and branch_permission_options %}
+        <button type="button" class="btn btn-link btn-sm p-0 mt-2" data-toggle="collapse" data-target="#branchPermissionsWaiter" aria-expanded="false" aria-controls="branchPermissionsWaiter">
+          {% if useri.langSet == 0 %}Onyesha matawi{% else %}Show branches{% endif %}
+        </button>
+        <div id="branchPermissionsWaiter" class="collapse mt-2">
+          <div class="border rounded p-2">
+            <small class="text-muted d-block mb-2">
+              {% if useri.langSet == 0 %}Chagua matawi ya biashara na uweke ruhusa ya Waiter kwenye kila moja kwa wakati mmoja.{% else %}Select business branches and apply Waiter access to each of them at once.{% endif %}
+            </small>
+            {% if not linked_user %}
+            <small class="text-danger d-block mb-2">{% if useri.langSet == 0 %}Kwanza fanya operation 1 (Add User).{% else %}Complete operation 1 (Add User) first.{% endif %}</small>
+            {% endif %}
+            <div class="table-responsive">
+              <table class="table table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th>{% if useri.langSet == 0 %}Biashara{% else %}Branch{% endif %}</th>
+                    <th>{% if useri.langSet == 0 %}User Added{% else %}User added{% endif %}</th>
+                    <th>{% if useri.langSet == 0 %}Allowed{% else %}Allowed{% endif %}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for branch in branch_permission_options %}
+                  <tr class="branch-permission-row" data-branch="{{ branch.enterprise.id }}" data-permission="waiter">
+                    <td>{{ branch.enterprise.name }}</td>
+                    <td>
+                      <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input branch-added-checkbox" id="branchWaiterAdded{{ branch.enterprise.id }}" {% if branch.is_added %}checked{% endif %} {% if not linked_user or not viewer_can_manage %}disabled{% endif %}>
+                        <label class="custom-control-label" for="branchWaiterAdded{{ branch.enterprise.id }}"></label>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input branch-allowed-checkbox" id="branchWaiterAllowed{{ branch.enterprise.id }}" {% if branch.is_waiter %}checked{% endif %} {% if not branch.is_added or not linked_user or not viewer_can_manage %}disabled{% endif %}>
+                        <label class="custom-control-label" for="branchWaiterAllowed{{ branch.enterprise.id }}"></label>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        {% endif %}
       </div>
 
       <div class="col-md-4 mb-2">
@@ -300,10 +391,44 @@ $('body').on('submit', '#saveDAgent_form', function(e) {
   });
 });
 
+function updateBranchPermissionRow(row) {
+  const added = row.find('.branch-added-checkbox').is(':checked');
+  const allowedInput = row.find('.branch-allowed-checkbox');
+  allowedInput.prop('disabled', !added);
+  if (!added) {
+    allowedInput.prop('checked', false);
+  }
+}
+
+$('.branch-permission-row').each(function() {
+  updateBranchPermissionRow($(this));
+});
+
+$('body').on('change', '.branch-added-checkbox', function() {
+  updateBranchPermissionRow($(this).closest('.branch-permission-row'));
+});
+
 $('#generalPermissionsForm').submit(function(e) {
   e.preventDefault();
   const form = $(this);
   const csrfToken = $('input[name=csrfmiddlewaretoken]').first().val();
+  const branchPermissionPayload = { allow: {}, waiter: {} };
+
+  $('.branch-permission-row').each(function() {
+    const row = $(this);
+    const branchId = row.data('branch');
+    const permissionType = row.data('permission');
+    if (!branchId || !permissionType) {
+      return;
+    }
+    branchPermissionPayload[permissionType][branchId] = {
+      added: row.find('.branch-added-checkbox').is(':checked') ? 1 : 0,
+      allowed: row.find('.branch-allowed-checkbox').is(':checked') ? 1 : 0
+    };
+  });
+
+  $('#branchPermissionsHidden').val(JSON.stringify(branchPermissionPayload));
+
   $.ajax({
     type: 'POST',
     url: '/staff/general-permissions',
@@ -312,7 +437,8 @@ $('#generalPermissionsForm').submit(function(e) {
       worker_id: form.find('[name=worker_id]').val(),
       allow: form.find('[name=allow]').is(':checked') ? 1 : 0,
       waiter_counter: form.find('[name=waiter_counter]').is(':checked') ? 1 : 0,
-      cash_deposit_supervisor: form.find('[name=cash_deposit_supervisor]').is(':checked') ? 1 : 0
+      cash_deposit_supervisor: form.find('[name=cash_deposit_supervisor]').is(':checked') ? 1 : 0,
+      branch_permissions: $('#branchPermissionsHidden').val()
     }
   }).done(function(data) {
     if (data.success) {
