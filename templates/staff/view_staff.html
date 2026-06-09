@@ -93,8 +93,8 @@
           <label class="custom-control-label cursor-pointer" for="permAllow">Add user complete required, then Grant access</label>
         </div>
         {% if viewer_can_manage and branch_permission_options %}
-        <button type="button" class="btn btn-link btn-sm p-0 mt-2" data-toggle="collapse" data-target="#branchPermissionsAllow" aria-expanded="false" aria-controls="branchPermissionsAllow">
-          {% if useri.langSet == 0 %}Onyesha matawi{% else %}Show branches{% endif %}
+        <button type="button" class="btn btn-link btn-sm p-0 smallFont mt-2" data-toggle="collapse" data-target="#branchPermissionsAllow" aria-expanded="false" aria-controls="branchPermissionsAllow">
+          {% if useri.langSet == 0 %}Onyesha matawi mengine{% else %}Show Other branches{% endif %}
         </button>
         <div id="branchPermissionsAllow" class="collapse mt-2">
           <div class="border rounded p-2">
@@ -108,9 +108,9 @@
               <table class="table table-sm mb-0">
                 <thead>
                   <tr>
-                    <th>{% if useri.langSet == 0 %}Biashara{% else %}Branch{% endif %}</th>
-                    <th>{% if useri.langSet == 0 %}User Added{% else %}User added{% endif %}</th>
-                    <th>{% if useri.langSet == 0 %}Allowed{% else %}Allowed{% endif %}</th>
+                    <th class="text-left" >{% if useri.langSet == 0 %}Biashara{% else %}Branch{% endif %}</th>
+                    <th class="text-left" >{% if useri.langSet == 0 %}User Added{% else %}User added{% endif %}</th>
+                    <th class="text-left" >{% if useri.langSet == 0 %}Allowed{% else %}Allowed{% endif %}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -145,8 +145,8 @@
           <label class="custom-control-label cursor-pointer" for="permWaiter">Waiter</label>
         </div>
         {% if viewer_can_manage and branch_permission_options %}
-        <button type="button" class="btn btn-link btn-sm p-0 mt-2" data-toggle="collapse" data-target="#branchPermissionsWaiter" aria-expanded="false" aria-controls="branchPermissionsWaiter">
-          {% if useri.langSet == 0 %}Onyesha matawi{% else %}Show branches{% endif %}
+        <button type="button" class="btn btn-link btn-sm p-0 smallFont mt-2" data-toggle="collapse" data-target="#branchPermissionsWaiter" aria-expanded="false" aria-controls="branchPermissionsWaiter">
+          {% if useri.langSet == 0 %}Onyesha matawi mengine{% else %}Show Other branches{% endif %}
         </button>
         <div id="branchPermissionsWaiter" class="collapse mt-2">
           <div class="border rounded p-2">
@@ -160,13 +160,14 @@
               <table class="table table-sm mb-0">
                 <thead>
                   <tr>
-                    <th>{% if useri.langSet == 0 %}Biashara{% else %}Branch{% endif %}</th>
-                    <th>{% if useri.langSet == 0 %}User Added{% else %}User added{% endif %}</th>
-                    <th>{% if useri.langSet == 0 %}Allowed{% else %}Allowed{% endif %}</th>
+                    <th class="text-left" >{% if useri.langSet == 0 %}Biashara{% else %}Branch{% endif %}</th>
+                    <th class="text-left" >{% if useri.langSet == 0 %}User Added{% else %}User added{% endif %}</th>
+                    <th class="text-left" >{% if useri.langSet == 0 %}Allowed{% else %}Allowed{% endif %}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for branch in branch_permission_options %}
+                  {% if branch.enterprise.waiter_counter %}
                   <tr class="branch-permission-row" data-branch="{{ branch.enterprise.id }}" data-permission="waiter">
                     <td>{{ branch.enterprise.name }}</td>
                     <td>
@@ -182,6 +183,7 @@
                       </div>
                     </td>
                   </tr>
+                  {% endif %}
                   {% endfor %}
                 </tbody>
               </table>

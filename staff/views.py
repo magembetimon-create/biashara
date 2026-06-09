@@ -355,7 +355,7 @@ def view_staff(request):
             duka.owner == todo.get('useri') or (cheo and cheo.fullcontrol)
         )
 
-        branches = Interprise.objects.filter(owner=duka.owner,Interprise=True).order_by('name') if duka.owner else Interprise.objects.none()
+        branches = Interprise.objects.filter(owner=duka.owner,Interprise=True).exclude(id=duka.id).order_by('name') if duka.owner else Interprise.objects.none()
         branch_permission_options = []
         for branch in branches:
             branch_perm = None
