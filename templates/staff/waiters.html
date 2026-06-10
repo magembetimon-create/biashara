@@ -1,6 +1,10 @@
 {% extends 'userdash.html' %}
 {% load static %}
 
+{% block billcss %}
+<link rel="stylesheet" href="{% static 'css/waiterpage.css' %}">
+{% endblock %}
+
 {% block nav-staff %}class="c-menu__item has-submenu showingpop2 is-active"{% endblock %}
 {% block active-staff-waiters-menu %}class="btn-default btn btn-sm pop2_active_menu"{% endblock %}
 
@@ -8,13 +12,18 @@
 <div class="Analytical whiteBg p-2 px-md-5 pt-md-3" id="general-panel" style="min-height:100vh;">
     {% include 'staff/staffnavigations.html' %}
   <div class="row align-items-center py-3 border-bottom">
-    <div class="col-md-7">
+    <div class="col-md-7 d-flex align-items-center">
       <h5 class="mb-0">
         <svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 0 24 24" fill="currentColor">
           <path d="M21,6H3C1.9,6,1,6.9,1,8v11c0,1.1,0.9,2,2,2h18c1.1,0,2-0.9,2-2V8C23,6.9,22.1,6,21,6z M21,19H3V8h18V19z M16,3H8 C7.45,3,7,3.45,7,4l0,0c0,0.55,0.45,1,1,1h8c0.55,0,1-0.45,1-1l0,0C17,3.45,16.55,3,16,3z"/>
         </svg>
         {% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}
       </h5>
+      {% if duka.owner == useri or cheo and cheo.msaidizi %}
+      <button type="button" class="btn btn-sm btn-primary ml-3" onclick="openAddWaitersModal()">
+        {% if useri.langSet == 0 %}Ongeza wahudumu{% else %}Add waiters{% endif %}
+      </button>
+      {% endif %}
     </div>
     <div class="col-md-5">
       <div class="input-group">
@@ -106,6 +115,91 @@
 
 <form id="disableWaiterCsrfForm" style="display:none">{% csrf_token %}</form>
 
+<div class="modal fade" id="addWaitersModal" tabindex="-1" role="dialog" aria-labelledby="addWaitersModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addWaitersModalLabel">{% if useri.langSet == 0 %}Ongeza wahudumu kwa mkupuo{% else %}Bulk add waiters{% endif %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body bulk-add-panel">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="form-group mb-2">
+              <label>{% if useri.langSet == 0 %}Tafuta worker{% else %}Search worker{% endif %}</label>
+              <div class="search-with-filter d-flex align-items-center">
+                <input type="text" id="candidateSearch" class="form-control" placeholder="{% if useri.langSet == 0 %}Tafuta...{% else %}Search...{% endif %}" onkeyup="filterWaiterCandidates()">
+                <select id="waiterTypeFilter" class="form-control ml-2" onchange="filterWaiterCandidates()" style="max-width: 140px; min-width: 120px;">
+                  <option value="all">{% if useri.langSet == 0 %}Wote{% else %}All{% endif %}</option>
+                  <option value="waiters">{% if useri.langSet == 0 %}Wahudumu tu{% else %}Waiters only{% endif %}</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{% if useri.langSet == 0 %}Enterprises{% else %}Enterprises{% endif %}</label>
+              <select id="branchFilter" class="form-control" multiple size="6" onchange="filterWaiterCandidates()">
+                <option value="all" selected>{% if useri.langSet == 0 %}Kila enterprise{% else %}All enterprises{% endif %}</option>
+                {% for branch in branch_options %}
+                <option value="{{ branch.id }}">{{ branch.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <!-- <div class="form-group">
+              <label>{% if useri.langSet == 0 %}Aina ya workers{% else %}Worker type{% endif %}</label>
+              <select id="waiterTypeFilter" class="form-control" onchange="filterWaiterCandidates()">
+                <option value="all">{% if useri.langSet == 0 %}Wote{% else %}All{% endif %}</option>
+                <option value="waiters">{% if useri.langSet == 0 %}Wahudumu tu{% else %}Waiters only{% endif %}</option>
+              </select>
+            </div> -->
+            <div class="form-group">
+              <label>{% if useri.langSet == 0 %}Available staff{% else %}Available staff{% endif %}</label>
+              <select id="availableWaiters" class="form-control" multiple size="16">
+                {% for worker in candidate_workers %}
+                <option value="{{ worker.user_id }}" data-branch-ids="{{ worker.branch_ids|join:'|' }}" data-waiter-anywhere="{{ worker.is_waiter_anywhere|yesno:'1,0' }}">
+                  {{ worker.display_name }}{% if worker.job_title %} — {{ worker.job_title }}{% endif %} {% if worker.branch_names %}({{ worker.branch_names|join:', ' }}){% endif %}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="col-md-4 d-flex flex-column align-items-center justify-content-center">
+            <button type="button" class="btn btn-sm btn-outline-primary mb-2" onclick="addSelectedWaiters()">&raquo;</button>
+            <button type="button" class="btn btn-sm btn-outline-primary mb-2" onclick="addAllWaiters()">&raquo;&raquo;</button>
+            <button type="button" class="btn btn-sm btn-outline-danger mb-2" onclick="removeSelectedWaiters()">&laquo;</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAllWaiters()">&laquo;&laquo;</button>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>{% if useri.langSet == 0 %}Wahudumu waliopo{% else %}Selected waiters{% endif %}</label>
+              <select id="selectedWaiters" class="form-control" multiple size="20">
+                {% for perm in waiter_perms %}
+                <option value="{{ perm.user.id }}" data-branch-ids="{{ perm.Interprise.id }}" data-waiter-anywhere="1">
+                  {% if perm.user and perm.user.user %}
+                    {{ perm.user.user.get_full_name|default:perm.user.user.username }}
+                  {% elif perm.fanyakazi %}
+                    {{ perm.fanyakazi.jina }}
+                  {% else %}
+                    Unknown
+                  {% endif %}
+                  {% if perm.cheo %} — {{ perm.cheo }}{% endif %}
+                  ({% if perm.Interprise %}{{ perm.Interprise.name }}{% endif %})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-dismiss="modal">{% if useri.langSet == 0 %}Ghairi{% else %}Cancel{% endif %}</button>
+        <button type="button" class="btn btn-primary" onclick="saveSelectedWaiters()">{% if useri.langSet == 0 %}Hifadhi{% else %}Save{% endif %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="disableWaiterModal" tabindex="-1" role="dialog" aria-labelledby="disableWaiterModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -154,6 +248,89 @@ function disableWaiter() {
     .then(function (data) {
       if (data.success) {
         $('#disableWaiterModal').modal('hide');
+        location.reload();
+      } else {
+        alert(data.msg || '{% if useri.langSet == 0 %}Kuna hitilafu{% else %}Error occurred{% endif %}');
+      }
+    })
+    .catch(function () {
+      alert('{% if useri.langSet == 0 %}Kuna hitilafu ya mtandao{% else %}Network error occurred{% endif %}');
+    });
+}
+
+function openAddWaitersModal() {
+  $('#addWaitersModal').modal('show');
+  filterWaiterCandidates();
+}
+
+function filterWaiterCandidates() {
+  var searchQuery = (document.getElementById('candidateSearch').value || '').toLowerCase();
+  var branchFilter = Array.from(document.getElementById('branchFilter').selectedOptions).map(function (opt) { return opt.value; });
+  var waiterType = document.getElementById('waiterTypeFilter').value;
+  var available = document.getElementById('availableWaiters');
+
+  Array.from(available.options).forEach(function (option) {
+    var name = (option.textContent || '').toLowerCase();
+    var branchIds = (option.dataset.branchIds || '').split('|').filter(Boolean);
+    var waiterAny = option.dataset.waiterAnywhere === '1';
+    var matchesSearch = !searchQuery || name.indexOf(searchQuery) !== -1;
+    var matchesBranch = branchFilter.length === 0 || branchFilter.indexOf('all') !== -1 || branchIds.some(function (id) { return branchFilter.indexOf(id) !== -1; });
+    var matchesWaiterType = waiterType !== 'waiters' || waiterAny;
+    option.hidden = !(matchesSearch && matchesBranch && matchesWaiterType);
+  });
+}
+
+function moveOptions(sourceId, targetId, onlySelected) {
+  var source = document.getElementById(sourceId);
+  var target = document.getElementById(targetId);
+  var options = Array.from(source.options);
+  options.forEach(function (option) {
+    if (!onlySelected || option.selected) {
+      if (option.hidden && sourceId === 'availableWaiters') {
+        option.hidden = false;
+      }
+      target.appendChild(option);
+    }
+  });
+}
+
+function addSelectedWaiters() {
+  moveOptions('availableWaiters', 'selectedWaiters', true);
+}
+
+function addAllWaiters() {
+  moveOptions('availableWaiters', 'selectedWaiters', false);
+}
+
+function removeSelectedWaiters() {
+  moveOptions('selectedWaiters', 'availableWaiters', true);
+  filterWaiterCandidates();
+}
+
+function removeAllWaiters() {
+  moveOptions('selectedWaiters', 'availableWaiters', false);
+  filterWaiterCandidates();
+}
+
+function saveSelectedWaiters() {
+  var selected = Array.from(document.getElementById('selectedWaiters').options).map(function (option) {
+    return option.value;
+  });
+  var csrfToken = document.querySelector('#disableWaiterCsrfForm [name=csrfmiddlewaretoken]');
+  csrfToken = csrfToken ? csrfToken.value : '';
+
+  fetch('{% url "staff_save_waiters" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken,
+    },
+    body: JSON.stringify({ user_ids: selected }),
+  })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data.success) {
+        $('#addWaitersModal').modal('hide');
         location.reload();
       } else {
         alert(data.msg || '{% if useri.langSet == 0 %}Kuna hitilafu{% else %}Error occurred{% endif %}');

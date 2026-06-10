@@ -456,3 +456,142 @@
     color: #0f62fe;
   }
 }
+
+/* Waiters modal and bulk add list styling */
+#addWaitersModal .modal-dialog {
+  max-width: 980px;
+}
+
+#addWaitersModal .modal-content {
+  border-radius: 18px;
+  border: 1px solid rgba(35, 54, 90, 0.08);
+  box-shadow: 0 22px 48px rgba(24, 40, 75, 0.12);
+}
+
+#addWaitersModal .modal-header,
+#addWaitersModal .modal-footer {
+  background: #f8fafc;
+  border-color: #e4e9f2;
+}
+
+#addWaitersModal .modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2a44;
+}
+
+#addWaitersModal .form-group label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2c3d5a;
+}
+
+#addWaitersModal .search-with-filter {
+  gap: 8px;
+}
+
+#addWaitersModal .search-with-filter .form-control {
+  min-height: 40px;
+}
+
+#addWaitersModal .search-with-filter #waiterTypeFilter {
+  max-width: 140px;
+  min-width: 120px;
+}
+
+#addWaitersModal .form-control,
+#addWaitersModal select {
+  border-radius: 10px;
+  border: 1px solid #d6dee9;
+  min-height: 44px;
+  background: #fff;
+}
+
+#addWaitersModal .form-control:focus,
+#addWaitersModal select:focus {
+  border-color: #6d95ff;
+  box-shadow: 0 0 0 0.15rem rgba(109, 149, 255, 0.18);
+}
+
+#addWaitersModal .bulk-add-panel {
+  border: 1px solid #dfe6f1;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+#addWaitersModal .bulk-add-panel .row > .col-md-4 {
+  margin-bottom: 1rem;
+}
+
+#addWaitersModal #candidateWaiters,
+#addWaitersModal #selectedWaiters {
+  min-height: 430px;
+  padding: 8px;
+  background: #fbfcff;
+  border: 1px solid #d9e2ee;
+}
+
+#addWaitersModal #candidateWaiters option,
+#addWaitersModal #selectedWaiters option {
+  padding: 0.45rem 0.5rem;
+}
+
+#addWaitersModal .btn {
+  border-radius: 10px;
+}
+
+#addWaitersModal .bulk-add-panel .btn {
+  min-width: 110px;
+  font-weight: 600;
+}
+
+#addWaitersModal .bulk-add-panel .col-md-4.d-flex .btn {
+  min-width: 40px;
+  width: auto;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.9rem;
+}
+
+#addWaitersModal .bulk-add-panel .col-md-4:first-child,
+#addWaitersModal .bulk-add-panel .col-md-4:last-child {
+  flex: 0 0 42%;
+  max-width: 42%;
+}
+
+#addWaitersModal .bulk-add-panel .col-md-4.d-flex {
+  flex: 0 0 8%;
+  max-width: 8%;
+  min-width: 64px;
+}
+
+#addWaitersModal .btn-outline-primary,
+#addWaitersModal .btn-outline-danger {
+  min-width: 110px;
+  font-weight: 600;
+}
+
+#addWaitersModal .btn-outline-primary:hover,
+#addWaitersModal .btn-outline-danger:hover {
+  color: #ffffff;
+}
+
+#addWaitersModal .modal-body {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+#addWaitersModal .form-text {
+  color: #637089;
+}
+
+@media (max-width: 991px) {
+  #addWaitersModal .modal-dialog {
+    max-width: 100%;
+    margin: 1.5rem;
+  }
+  #addWaitersModal #candidateWaiters,
+  #addWaitersModal #selectedWaiters {
+    min-height: 300px;
+  }
+}

@@ -14,6 +14,7 @@ import json
 from management.models import (
     Interprise,
     Workers,
+    UserExtend,
     InterprisePermissions,
     EmployeeAttachments,
     deliveryAgents,
@@ -251,15 +252,14 @@ def _get_linked_user_for_worker(worker):
     return getattr(worker.diactive.where, 'owner', None)
 
 
-def _ensure_interprise_permission(worker, branch, linked_user, *, allow_state=False, waiter_state=False, role='allow', admin_user=None, added):
-    if not worker or not branch or not linked_user:
+def _ensure_interprise_permission(worker, branch, linked_user, *, allow_state=False, waiter_state=False, role='allow', admin_user=None, added=False):
+    if not branch or not linked_user:
         return None
 
     # if not added:
     #     InterprisePermissions.objects.filter(
     #         Interprise=branch,
     #         user=linked_user,
-    #         fanyakazi=worker,
     #     ).delete()
     #     return None
 
@@ -267,54 +267,55 @@ def _ensure_interprise_permission(worker, branch, linked_user, *, allow_state=Fa
         Interprise=branch,
         user=linked_user,
     ).order_by('pk').first()
-    is_worker = Workers.objects.filter(diactive__where=worker.diactive.where, Interprise=branch.id)
-    # print(f"is Worker exists {is_worker} ")
-    if not is_worker.exists() and added:
-        # create a new worker for this branch if the linked user doesn't have one
-        worker = Workers.objects.create(
-            Interprise=branch,
-            jina=worker.jina,
-            kazi=worker.kazi,
-            address = worker.address,
-            code = worker.code,
-            simu1 = worker.simu1,
-            simu2 = worker.simu2,
-            diactive=worker.diactive,
-            active = True,
 
-        )
+    target_worker = None
+    if worker and worker.diactive and worker.diactive.where:
+        is_worker = Workers.objects.filter(diactive__where=worker.diactive.where, Interprise=branch.id)
+        if not is_worker.exists():
+            target_worker = Workers.objects.create(
+                Interprise=branch,
+                jina=worker.jina,
+                kazi=worker.kazi,
+                address=worker.address,
+                code=worker.code,
+                simu1=worker.simu1,
+                simu2=worker.simu2,
+                diactive=worker.diactive,
+                active=True,
+            )
+        else:
+            target_worker = is_worker.first()
+    else:
+        target_worker = worker
 
     if perm is None:
-        # print(f'Creating new permission {branch.name}  - {worker.jina}')
         perm = InterprisePermissions.objects.create(
             Interprise=branch,
             user=linked_user,
             owner=False,
-            Allow=False,
+            Allow=bool(allow_state) or bool(waiter_state),
             discount=False,
             addsupplier=False,
             addproduct=False,
             profile=False,
-            cheo=(worker.kazi or '')[:100],
+            cheo=(target_worker.kazi or '')[:100] if target_worker else '',
             admin=admin_user.id if admin_user else 0,
-            fanyakazi=worker,
+            fanyakazi=target_worker,
+            waiter_counter=bool(waiter_state),
         )
     else:
-        # print(f"Updating existing permission from {perm.Interprise.name} to {branch.name} for {worker.jina}")
-        perm.fanyakazi = is_worker.first() if is_worker else worker
-        perm.save() 
+        perm.fanyakazi = target_worker or perm.fanyakazi
+        if role == 'allow':
+            perm.Allow = bool(allow_state)
+        elif role == 'waiter':
+            perm.waiter_counter = bool(waiter_state)
+            if perm.waiter_counter:
+                perm.Allow = True
+        else:
+            perm.Allow = bool(allow_state)
+            perm.waiter_counter = bool(waiter_state)
+        perm.save()
 
-    # perm.admin = admin_user.id if admin_user else (perm.admin or 0)
-    # perm.cheo = (worker.kazi or '')[:100]
-
-    # if role == 'allow':
-    #     perm.Allow = bool(allow_state)
-    # elif role == 'waiter':
-    #     perm.waiter_counter = bool(waiter_state)
-    #     if bool(waiter_state):
-    #         perm.Allow = True
-
-    # perm.save()
     return perm
 
 
@@ -415,20 +416,169 @@ def waiters(request):
     try:
         todo = todoFunct(request)
         duka = todo['duka']
-        # Waiters: users with waiter_counter=True
+        # Waiters: users with waiter_counter=True for this enterprise
         waiter_perms = InterprisePermissions.objects.filter(
             Interprise=duka.id,
             owner=False,
-           
             waiter_counter=True,
         ).select_related('user__user', 'fanyakazi').order_by('cheo')
+
+        current_waiter_user_ids = set(waiter_perms.values_list('user_id', flat=True))
+
+        branch_perms = InterprisePermissions.objects.filter(
+            Interprise__owner=duka.owner,
+            owner=False,
+        ).select_related('user__user', 'fanyakazi', 'Interprise').order_by('user_id')
+
+        candidate_by_user = {}
+        for perm in branch_perms:
+            uid = perm.user_id
+            if uid not in candidate_by_user:
+                full_name = ''
+                if perm.user and getattr(perm.user, 'user', None):
+                    full_name = (perm.user.user.get_full_name() or perm.user.user.username).strip()
+                if not full_name and perm.fanyakazi:
+                    full_name = perm.fanyakazi.jina
+                candidate_by_user[uid] = {
+                    'user_id': uid,
+                    'display_name': full_name or 'Unknown',
+                    'job_title': perm.cheo or '',
+                    'branch_names': set(),
+                    'branch_ids': set(),
+                    'is_waiter_anywhere': False,
+                    'is_current_waiter': uid in current_waiter_user_ids,
+                }
+            candidate_by_user[uid]['branch_names'].add(str(perm.Interprise.name or ''))
+            candidate_by_user[uid]['branch_ids'].add(str(perm.Interprise.id))
+            if perm.waiter_counter:
+                candidate_by_user[uid]['is_waiter_anywhere'] = True
+
+        candidate_workers = [
+            {
+                'user_id': entry['user_id'],
+                'display_name': entry['display_name'],
+                'job_title': entry['job_title'],
+                'branch_names': sorted(entry['branch_names']),
+                'branch_ids': sorted(entry['branch_ids']),
+                'is_waiter_anywhere': entry['is_waiter_anywhere'],
+            }
+            for entry in candidate_by_user.values()
+            if not entry['is_current_waiter']
+        ]
+
+        branch_options = Interprise.objects.filter(owner=duka.owner,Interprise=True).order_by('name')
+
         todo.update({
             'waiter_perms': waiter_perms,
+            'candidate_workers': candidate_workers,
+            'branch_options': branch_options,
             'staff_page': 'waiters',
         })
         return render(request, 'staff/waiters.html', todo)
     except Exception:
+        traceback.print_exc()
         return render(request, 'errorpage.html', todoFunct(request))
+
+
+@login_required(login_url='login')
+@csrf_exempt
+def save_waiters(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'msg': 'Invalid method'}, status=405)
+
+    try:
+        todo = todoFunct(request)
+        duka = todo['duka']
+        allowed, perm_response = _check_admin_or_msaidizi(todo)
+        if not allowed:
+            return perm_response
+
+        payload = json.loads(request.body or '{}')
+        user_ids = payload.get('user_ids', []) or []
+        selected_user_ids = set()
+        for uid in user_ids:
+            try:
+                selected_user_ids.add(int(uid))
+            except (TypeError, ValueError):
+                continue
+
+        current_waiters = InterprisePermissions.objects.filter(
+            Interprise=duka.id,
+            owner=False,
+            waiter_counter=True,
+        )
+        if current_waiters.exists():
+            current_waiters.exclude(user_id__in=selected_user_ids).update(waiter_counter=False)
+
+        if selected_user_ids:
+            linked_users = {
+                u.id: u
+                for u in UserExtend.objects.filter(pk__in=selected_user_ids)
+            }
+
+            source_perms = InterprisePermissions.objects.filter(
+                user_id__in=selected_user_ids,
+                Interprise__owner=duka.owner,
+            ).select_related('fanyakazi', 'user')
+            source_workers = {}
+            for perm in source_perms:
+                if perm.user_id not in source_workers and perm.fanyakazi:
+                    source_workers[perm.user_id] = perm.fanyakazi
+
+            for user_id in selected_user_ids:
+                linked_user = linked_users.get(user_id)
+                if not linked_user:
+                    continue
+
+                current_worker = Workers.objects.filter(
+                    Interprise=duka,
+                    diactive__where__owner=linked_user,
+                ).first()
+                source_worker = current_worker or source_workers.get(user_id)
+                if not current_worker and source_worker:
+                    current_worker = Workers.objects.create(
+                        Interprise=duka,
+                        jina=source_worker.jina,
+                        address=source_worker.address,
+                        code=source_worker.code,
+                        simu1=source_worker.simu1,
+                        simu2=source_worker.simu2,
+                        kazi=source_worker.kazi,
+                        active=source_worker.active,
+                        diactive=source_worker.diactive,
+                        picha=source_worker.picha,
+                    )
+
+                perm = InterprisePermissions.objects.filter(
+                    Interprise=duka,
+                    user=linked_user,
+                ).first()
+                if perm:
+                    perm.Allow = True
+                    perm.waiter_counter = True
+                    if current_worker:
+                        perm.fanyakazi = current_worker
+                    perm.save(update_fields=['Allow', 'waiter_counter', 'fanyakazi'])
+                else:
+                    _ensure_interprise_permission(
+                        current_worker or source_worker,
+                        duka,
+                        linked_user,
+                        allow_state=True,
+                        waiter_state=True,
+                        role='waiter',
+                        admin_user=request.user,
+                        added=True,
+                    )
+
+        return JsonResponse({
+            'success': True,
+            'msg_swa': 'Wahudumu wamehifadhiwa kwa mafanikio.',
+            'msg_eng': 'Waiters saved successfully.',
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'msg': str(e)}, status=500)
 
 
 @login_required(login_url='login')
@@ -1803,6 +1953,7 @@ def update_general_permissions(request):
                     admin_user=request.user,
                     added = added
                 )
+
                 perm.Allow = allowed
                 perm.save()
 
