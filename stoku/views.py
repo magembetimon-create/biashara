@@ -1,6 +1,7 @@
 # from asyncio.windows_events import NULL
 # from email.policy import default
 
+
 import traceback
 from xml.dom.expatbuilder import makeBuilder
 from django.shortcuts import render
@@ -1419,7 +1420,8 @@ def EditBidhaa(request):
                     'message_eng':'You have no permission to edit item. Please contact the admin'
                 } 
                 return JsonResponse(data)       
-        except:   
+        except: 
+            traceback.print_exc()
             data={
                 'success':False,
                 'message_swa':'Vielelezo vya bidhaa havijabadirishwa kutokana na hitilafu Tafadhari jaribu tena kwa usahihi',

@@ -465,8 +465,8 @@ class HudumaNyingine(models.Model):
 class bidhaa(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE,null=True)
     bidhaa_jina = models.CharField(max_length=300)
-    kampuni = models.ForeignKey(makampuni,on_delete=models.CASCADE)
-    bidhaa_aina = models.ForeignKey(bidhaa_aina,on_delete=models.CASCADE)
+    kampuni = models.ForeignKey(makampuni,on_delete=models.CASCADE,null=True)
+    bidhaa_aina = models.ForeignKey(bidhaa_aina,on_delete=models.CASCADE,null=True)
     idadi_jum = models.DecimalField(max_digits=10,decimal_places=3,default=1)
     vipimo = models.CharField(max_length=100)
     vipimo_jum = models.CharField(max_length=100)
