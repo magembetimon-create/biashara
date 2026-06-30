@@ -1385,11 +1385,16 @@ def EditBidhaa(request):
                     notice.Incharge = todoFunct(request)['useri']    
                     notice.save()
 
-
+                item_brand  = makampuni.objects.filter(pk=Chapa)
+                brand_itm = None
+                if item_brand.exists():
+                    brand_itm = item_brand.last()
+                else:
+                     brand_itm = item.last().kampuni   
 
 
                 item.update(bidhaa_jina = name,bidhaa_aina = bidhaa_aina.objects.get(pk=produaina),
-                    kampuni  =makampuni.objects.get(pk=Chapa),vipimo_jum  =vipimo_jum,vipimo  =vipimo_reja,
+                    kampuni  =brand_itm if brand_itm else None,vipimo_jum  =vipimo_jum,vipimo  =vipimo_reja,
                     maelezo =maelezo,namba=namba,material = material
                     )
 
@@ -1399,6 +1404,8 @@ def EditBidhaa(request):
                 produ.sirio  = sirio
                 produ.Bei_kuuza  =Bei_reja
                 produ.save()
+
+                bidhaa_stoku.objects.filter(bidhaa=item.last().id,idadi__gt=0).update(Bei_kuuza=Bei_reja,sirio=sirio,Bei_kuuza_jum=Bei)
 
 
                     
