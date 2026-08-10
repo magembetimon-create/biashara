@@ -16,6 +16,7 @@ from django.conf import settings
 # from graphql import visit
 from business import settings
 from management.models import Notifications,VistorsSavedItems,customer_in_cell,customer_area,Activator,invoice_desk,Activated,marketPlace,VistedBanners,marketBanner,deliveryBy,KulipaPI,PhoneMailConfirm,bidhaa,Zones,Mikoa,Mitaa,Wilaya,Kata,mahitaji,Interprise_Rating, UserExtend,EmployeeAttachments,InterpriseVisotrs, makampuni,savedStockState,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive, stokAdjustment,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji
+from purchase.expense_receipt_utils import count_pending_mandatory_expense_receipts
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
@@ -38,6 +39,7 @@ import time
 # import pytz
 import datetime
 import re
+from stoku.variant_utils import variant_is_color_mode
 import socket
 import json
 from django.db.models import Sum,Avg
@@ -2746,6 +2748,7 @@ def displayProfItems(request):
   try:
     value = request.GET.get('value',0)
     aina = request.GET.get('a',0)
+    uncat = int(request.GET.get('uncat', 0) or 0)
     kampuni = request.GET.get('k',0)
     mahitaji = request.GET.get('m',0)
     byi = None
@@ -2753,27 +2756,39 @@ def displayProfItems(request):
     dk = Interprise.objects.filter(pk=value)
     if dk.exists():
         duka=dk.last()
-        prod = bidhaa_stoku.objects.filter(Q(inapacha=False)|Q(idadi__gt=0),Bei_kuuza__gt=0,bidhaa__bidhaa_aina=aina,Interprise=duka.id)
+        if uncat:
+          prod = bidhaa_stoku.objects.filter(
+            Q(inapacha=False)|Q(idadi__gt=0),
+            Bei_kuuza__gt=0,
+            bidhaa__bidhaa_aina__isnull=True,
+            Interprise=duka.id,
+          )
+          ain = True
+          brand = False
+          kundi = False
+          by = 'Bila Aina' if todo['useri'].langSet == 0 else 'Uncategorized'
+        else:
+          prod = bidhaa_stoku.objects.filter(Q(inapacha=False)|Q(idadi__gt=0),Bei_kuuza__gt=0,bidhaa__bidhaa_aina=aina,Interprise=duka.id)
        
-        ain = True
-        brand = False
-        kundi = False
-        if not prod.exists():
-          prod = bidhaa_stoku.objects.filter(Q(inapacha=False)|Q(idadi__gt=0),Bei_kuuza__gt=0,bidhaa__kampuni=kampuni,Interprise=duka.id)
-          if prod.exists():
-            ain = False
-            byi = prod.last().bidhaa.kampuni
-            by = byi.kampuni_jina
-            brand= True
+          ain = True
+          brand = False
+          kundi = False
+          if not prod.exists():
+            prod = bidhaa_stoku.objects.filter(Q(inapacha=False)|Q(idadi__gt=0),Bei_kuuza__gt=0,bidhaa__kampuni=kampuni,Interprise=duka.id)
+            if prod.exists():
+              ain = False
+              byi = prod.last().bidhaa.kampuni
+              by = byi.kampuni_jina
+              brand= True
            
-          else:
-             prod = bidhaa_stoku.objects.filter(Q(inapacha=False)|Q(idadi__gt=0),Bei_kuuza__gt=0,bidhaa__bidhaa_aina__mahi=mahitaji,Interprise=duka.id)
-             byi = prod.last().bidhaa.bidhaa_aina.mahi
-             by = byi.mahitaji
-             kundi = True
-        else: 
-             byi = prod.last().bidhaa.bidhaa_aina
-             by = byi.aina
+            else:
+              prod = bidhaa_stoku.objects.filter(Q(inapacha=False)|Q(idadi__gt=0),Bei_kuuza__gt=0,bidhaa__bidhaa_aina__mahi=mahitaji,Interprise=duka.id)
+              byi = prod.last().bidhaa.bidhaa_aina.mahi
+              by = byi.mahitaji
+              kundi = True
+          else: 
+            byi = prod.last().bidhaa.bidhaa_aina
+            by = byi.aina
 
 
         itms=[]
@@ -2947,10 +2962,30 @@ def displaySelItem(request):
         if userLoged:
            match=order_from.objects.filter(bidhaa__owner=todo['duka'].owner.user.id,orderto__bidhaa=prod.bidhaa.id)
         
-        produ = bidhaa_stoku.objects.filter(Q(inapacha=False)|Q(idadi__gt=0),Bei_kuuza__gt=0,bidhaa__bidhaa_aina=prod.bidhaa.bidhaa_aina.id,Interprise=duka.id).exclude(pk=prod.id)
-        produ = produ.filter(Q(Interprise=dukaId)|Q(showToVistors=True))
+        related_base = bidhaa_stoku.objects.filter(
+          Q(inapacha=False)|Q(idadi__gt=0),
+          Bei_kuuza__gt=0,
+          Interprise=duka.id,
+        ).exclude(pk=prod.id)
+        related_base = related_base.filter(Q(Interprise=dukaId)|Q(showToVistors=True))
 
+        item_aina = prod.bidhaa.bidhaa_aina
         by_a = True
+        if item_aina:
+          produ = related_base.filter(bidhaa__bidhaa_aina=item_aina.id)
+          if produ.count() == 0 and item_aina.mahi_id:
+            produ = related_base.filter(bidhaa__bidhaa_aina__mahi=item_aina.mahi_id)
+            by_a = False
+        elif prod.bidhaa.Mahi_id:
+          produ = related_base.filter(bidhaa__bidhaa_aina__mahi=prod.bidhaa.Mahi_id)
+          by_a = False
+        elif prod.bidhaa.kampuni_id:
+          produ = related_base.filter(bidhaa__kampuni=prod.bidhaa.kampuni_id)
+          by_a = False
+        else:
+          produ = related_base.filter(bidhaa__bidhaa_aina__isnull=True)
+          by_a = True
+
         qz = []
         maswari = chats.objects.filter(qzTo__qzto=prod.bidhaa.id)
         if maswari.exists():
@@ -2960,12 +2995,7 @@ def displaySelItem(request):
               'majibu':chats.objects.filter(ansTo__aswTo=q.qzTo.id)
             })
         qzLen = len(qz)
-        
-        if produ.count() == 0:
-             produ = bidhaa_stoku.objects.filter(Q(inapacha=False)|Q(idadi__gt=0),Bei_kuuza__gt=0,bidhaa__bidhaa_aina__mahi=prod.bidhaa.bidhaa_aina.mahi.id,Interprise=duka.id).exclude(pk=prod.id)
-             by_a = False 
 
-                
         itms=[]
         itms_with=[]
         with_= mauzoList.objects.filter(produ__bidhaa=prod.bidhaa.id,mauzo__Interprise=duka.id)
@@ -3047,6 +3077,7 @@ def displaySelItem(request):
           'picha':picha,
           'rangi':color,
           'size':size,
+          'variant_is_color_mode': variant_is_color_mode(prod.bidhaa.colorAttr),
           'keySifa':keysifa,
           'bidhaaSifa':bidhaaSifa,
           'bei':bei,
@@ -3216,7 +3247,9 @@ def buzinessProfile(request):
 
         ain = []
         for a in aina:
-          prod = produ.filter(bidhaa__bidhaa_aina=a.bidhaa.bidhaa_aina.id).order_by('-id') 
+          if not a.bidhaa.bidhaa_aina:
+            continue
+          prod = produ.filter(bidhaa__bidhaa_aina=a.bidhaa.bidhaa_aina.id).order_by('-id')
           itm_num = prod.count()
 
           prod = prod[:10]
@@ -3255,6 +3288,38 @@ def buzinessProfile(request):
 
           ain.append(ai)
 
+        uncat_prod = produ.filter(bidhaa__bidhaa_aina__isnull=True).order_by('-id')
+        if uncat_prod.exists():
+          itm_num = uncat_prod.count()
+          itms = []
+          for p in uncat_prod[:10]:
+            img_url = None
+            img = picha_bidhaa.objects.filter(bidhaa=p.bidhaa)
+            if img.exists():
+              img_url = img.last().picha.picha
+            dt={
+              'id':p.id,
+              'name':p.bidhaa.bidhaa_jina,
+              'aina':0,
+              'img':img_url,
+              'bei':p.Bei_kuuza,
+            }
+            if todo['duka'] is not None:
+              dt.update({
+                'agizwa':mauzoList.objects.filter(produ=p.id,mauzo__order=True,mauzo__receved=False,mauzo__user_customer__enteprise=todo['duka'].id)
+              })
+              todo.update({
+                'kapu':mauzoList.objects.filter(mauzo__order=True,mauzo__Interprise=duka.id,mauzo__cart=True,mauzo__user_customer__enteprise__in=[todo['duka'].id,todo['pent'].id],mauzo__user_customer__by=todo['useri'].id)
+              })
+            itms.append(dt)
+          ain.append({
+            'id': type('UncategorizedRef', (), {'id': 0})(),
+            'aina': '',
+            'uncategorized': True,
+            'bidhaa': itms,
+            'itms': itm_num,
+          })
+
         # NEW ITEMS .............................//
 
         
@@ -3273,7 +3338,7 @@ def buzinessProfile(request):
             dtN={
               'id':p.id,
               'name':p.bidhaa.bidhaa_jina,
-              'aina':a.bidhaa.bidhaa_aina.id,
+              'aina': p.bidhaa.bidhaa_aina_id or 0,
               'img':img_url,
               'bei':p.Bei_kuuza,
 
@@ -3553,8 +3618,11 @@ def setInVoFormat(request):
   if request.method == "POST":
       try:
         cheo = todo['cheo']
-        minInv = int(request.POST.get('min'))
-        cheo.mnRecipt = minInv
+        from mauzo.receipt_format import normalize_receipt_paper, sync_legacy_mn_receipt
+
+        paper_raw = request.POST.get('paper', request.POST.get('min', 0))
+        cheo.receiptPaper = normalize_receipt_paper(paper_raw)
+        sync_legacy_mn_receipt(cheo)
         cheo.save()
         
 
@@ -4621,6 +4689,7 @@ def notificationing(request):
       'rt':rt,
       'rd':rd,
       'a':a,
+      'pending_expense_receipt_count': count_pending_mandatory_expense_receipts(duka),
 
       
     })
@@ -4957,8 +5026,8 @@ def traceChange(request):
         "entp":duka.Interprise,
         'duka':duka.id,
         'pickup':pickup,
-        'newPosts':len(banners)
-
+        'newPosts':len(banners),
+        'pendingExpenseReceipts': count_pending_mandatory_expense_receipts(duka),
       }
 
 

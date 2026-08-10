@@ -36,6 +36,13 @@ urlpatterns=[
     path('expenseList',views.expenseList, name='expenseList'),
     path('editMatumizi',views.editMatumizi, name='editMatumizi'),
     path('removeExpenses',views.removeExpenses, name='removeExpenses'),
+    path('expenseRecords', views.expenseRecords, name='expenseRecords'),
+    path('getExpData', views.getExpData, name='getExpData'),
+    path('addExpenseGroup', views.addExpenseGroup, name='addExpenseGroup'),
+    path('expenseReceiptsPending', views.expenseReceiptsPending, name='expenseReceiptsPending'),
+    path('expenseReceiptAttachments', views.expenseReceiptAttachments, name='expenseReceiptAttachments'),
+    path('uploadExpenseReceipt', views.uploadExpenseReceipt, name='uploadExpenseReceipt'),
+    path('removeExpenseReceipt', views.removeExpenseReceipt, name='removeExpenseReceipt'),
 
 
      # ADD ONLINE ITEM ORDER OR TO CART............................................//

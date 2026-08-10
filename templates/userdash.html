@@ -446,11 +446,9 @@
             {% if duka.Interprise %}
             <a  href="{% url 'saleOda' %}?pend=1"  title=" {% if useri.langSet == 0 %}Oda zinazosubiri {% else %} Pending Order{% endif %}" class="c-header-icon basket">
               <span id="saOda_shake" class="c-badge c-badge--header-icon animated shake"></span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="1.38em" height="1.38em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-shopping-cart">
-                  <circle cx="9" cy="21" r="1"></circle>
-                  <circle cx="20" cy="21" r="1"></circle>
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-              </svg>   
+              <svg xmlns="http://www.w3.org/2000/svg" height="30" viewBox="0 -960 960 960" width="30" fill="currentColor">
+                <path d="M223.5-103.5Q200-127 200-160t23.5-56.5Q247-240 280-240t56.5 23.5Q360-193 360-160t-23.5 56.5Q313-80 280-80t-56.5-23.5Zm400 0Q600-127 600-160t23.5-56.5Q647-240 680-240t56.5 23.5Q760-193 760-160t-23.5 56.5Q713-80 680-80t-56.5-23.5ZM246-720l96 200h280l110-200H246Zm-38-80h590q23 0 35 20.5t1 41.5L692-482q-11 20-29.5 31T622-440H324l-44 80h480v80H280q-45 0-68-39.5t-2-78.5l54-98-144-304H40v-80h130l38 80Zm134 280h280-280Z"/>
+                </svg>  
             </a>
             {% else %}
                 <a href="/purchase/puOrder?en=1" title=" {% if useri.langSet == 0 %}Oda za Manunuzi {% else %} Purchase Order{% endif %}"  class="c-header-icon basket">
@@ -481,12 +479,9 @@
           <div class="c-header-icon basket  toggle-chat-panel" >
             <span id="chats_shake" class="c-badge c-badge--header-icon animated shake"></span>
 
-            <svg xmlns="http://www.w3.org/2000/svg" width="1.38em" height="1.38em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              <circle cx="9" cy="10" r="1" fill="currentColor"></circle>
-              <circle cx="13" cy="10" r="1" fill="currentColor"></circle>
-              <circle cx="17" cy="10" r="1" fill="currentColor"></circle>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" height="30" viewBox="0 -960 960 960" width="30" fill="currentColor">
+              <path d="m480-80-10-120h-10q-142 0-241-99t-99-241q0-142 99-241t241-99q71 0 132.5 26.5t108 73q46.5 46.5 73 108T800-540q0 75-24.5 144t-67 128q-42.5 59-101 107T480-80Zm80-146q71-60 115.5-140.5T720-540q0-109-75.5-184.5T460-800q-109 0-184.5 75.5T200-540q0 109 75.5 184.5T460-280h100v54Zm-72-107q12-12 12-29t-12-29q-12-12-29-12t-29 12q-12 12-12 29t12 29q12 12 29 12t29-12Zm-58-115h60q0-30 6-42t38-44q18-18 30-39t12-45q0-51-34.5-76.5T460-720q-44 0-74 24.5T344-636l56 22q5-17 19-33.5t41-16.5q27 0 40.5 15t13.5 33q0 17-10 30.5T480-558q-35 30-42.5 47.5T430-448Zm30-65Z"/>
+              </svg>
           </div>
          <div class="c-header-icon basket  " >
           <a href="{% url 'notificationing' %}" class="c-header-icon basket">
@@ -499,10 +494,9 @@
          </div>
           <div class="c-header-icon basket "  >
             <a class="btn btn-default toggle-setting-panel">
-              <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-settings">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" height="30" viewBox="0 -960 960 960" width="30" fill="currentColor">
+                <path d="m387.69-100-15.23-121.85q-16.07-5.38-32.96-15.07-16.88-9.7-30.19-20.77L196.46-210l-92.3-160 97.61-73.77q-1.38-8.92-1.96-17.92-.58-9-.58-17.93 0-8.53.58-17.34t1.96-19.27L104.16-590l92.3-159.23 112.46 47.31q14.47-11.46 30.89-20.96t32.27-15.27L387.69-860h184.62l15.23 122.23q18 6.54 32.57 15.27 14.58 8.73 29.43 20.58l114-47.31L855.84-590l-99.15 74.92q2.15 9.69 2.35 18.12.19 8.42.19 16.96 0 8.15-.39 16.58-.38 8.42-2.76 19.27L854.46-370l-92.31 160-112.61-48.08q-14.85 11.85-30.31 20.96-15.46 9.12-31.69 14.89L572.31-100H387.69ZM440-160h78.62L533-267.15q30.62-8 55.96-22.73 25.35-14.74 48.89-37.89L737.23-286l39.39-68-86.77-65.38q5-15.54 6.8-30.47 1.81-14.92 1.81-30.15 0-15.62-1.81-30.15-1.8-14.54-6.8-29.7L777.38-606 738-674l-100.54 42.38q-20.08-21.46-48.11-37.92-28.04-16.46-56.73-23.31L520-800h-79.38l-13.24 106.77q-30.61 7.23-56.53 22.15-25.93 14.93-49.47 38.46L222-674l-39.38 68L269-541.62q-5 14.24-7 29.62t-2 32.38q0 15.62 2 30.62 2 15 6.62 29.62l-86 65.38L222-286l99-42q22.77 23.38 48.69 38.31 25.93 14.92 57.31 22.92L440-160Zm40.46-200q49.92 0 84.96-35.04 35.04-35.04 35.04-84.96 0-49.92-35.04-84.96Q530.38-600 480.46-600q-50.54 0-85.27 35.04T360.46-480q0 49.92 34.73 84.96Q429.92-360 480.46-360ZM480-480Z"/>
+                </svg>
           </a>
           </div>
     
@@ -589,7 +583,7 @@ let shwCo = false
       
     
           
-            <div class="c-header-icon logout p-3" style="overflow:hidden">
+            <div class="c-header-icon logout" style="overflow:hidden">
               {% if useri.picha.url is not null %}
                     
 
@@ -1544,7 +1538,7 @@ let shwCo = false
       <ul class="list-unstyled p-0">
         {% if shift_operation_allowed %}
         <li>
-          <a type="button" href="#" class="btn-default btn btn-sm " onclick="$('#matumizi_data').data({'with_bil':0,'bill':0});" data-toggle="modal" data-target="#recodiMatumizi"  >
+          <a type="button" href="{% url 'expenseRecords' %}" class="btn-default btn btn-sm ">
             <svg id="wine" fill-rule="evenodd" class="wine svgmade mx-1"  width="0.95em" height="0.95em" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 404 497">
               <path d="M132-228.5v86A131.53,131.53,0,0,1,93.06-48.94,131.53,131.53,0,0,1-.5-10h-99a131.53,131.53,0,0,1-93.56-38.94A131.53,131.53,0,0,1-232-142.5v-86H132m19-20H-251a151.58,151.58,0,0,0-1,17v89C-252-58.62-183.38,10-99.5,10h99C83.38,10,152-58.62,152-142.5v-89a151.58,151.58,0,0,0-1-17Z" transform="translate(252 248.5)"/>
               <line x1="7.5" y1="90" x2="392.5" y2="90" fill="none" stroke="#000" stroke-miterlimit="10" stroke-width="30"/>
@@ -2551,7 +2545,7 @@ $('.muamala-genu').click(function(){
             </label>
             <div class="input-group">
                 <input type="number" placeholder=0 id="idadi_jum_jum" data-color=0 class="form-control"  aria-describedby="helpId">
-              <button type="button" data-jum="1" class="input-group-append border colored_items btn btn-light btn-sm" title="{% if useri.langSet == 0 %}Rangi{% else %}Color{% endif %}" data-toggle="modal" data-pos=1  data-target="#modal_color4">
+              <button type="button" data-jum="1" class="input-group-append border colored_items btn btn-light btn-sm" title="{% if useri.langSet == 0 %}Rangi / Model{% else %}Color / Variant{% endif %}" data-toggle="modal" data-pos=1  data-target="#modal_color4">
                 <img  width="20" src="{{baseUrl}}/{{'colors.svg'}}" />
               </button>
             </div>
@@ -2731,9 +2725,9 @@ $('.muamala-genu').click(function(){
                 
                   <div class="row">
                     <div class="col-8">
-                           <label class="brown" for="produ_campuni">
+                           <label  for="produ_campuni">
                             {% if useri.langSet == 0 %}Chapa {% else %}  Brand {% endif %}
-                             <sup class="text-danger font-weight-bold">*</sup></label>
+                            <span class="text-muted smallerFont font-weight-normal">({% if useri.langSet == 0 %}si lazima{% else %}optional{% endif %})</span>
 
                     </div>
                     <div class="col-4 text-right">
@@ -2743,7 +2737,7 @@ $('.muamala-genu').click(function(){
                     </div>
                   </div>
                
-                <select name="produ_campuni" id="produ_campuni"  data-width="100%" data-style="btn-light" class="form-control rega selectpicker robotoFont  muhimu-b" data-live-search="true" onchange=" if($(this).find('option:selected').data('value')!='0'){ $(this).selectpicker('setStyle', 'restore-border');$(this).selectpicker('setStyle', 'btn-light');}">
+                <select name="produ_campuni" id="produ_campuni"  data-width="100%" data-style="btn-light" class="form-control rega selectpicker robotoFont" data-live-search="true" onchange=" if($(this).find('option:selected').data('value')!='0'){ $(this).selectpicker('setStyle', 'restore-border');$(this).selectpicker('setStyle', 'btn-light');}">
                   <option value=0 >{% if useri.langSet == 0 %}Chagua Chapa   {% else %} select Brand {% endif %}</option>
                 </select>
                 
@@ -2753,7 +2747,8 @@ $('.muamala-genu').click(function(){
                  
                  <div class="row">
                   <div class="col-8">
-                        <label for="produ_sambazaji">{% if useri.langSet == 0 %}Msambazaji   {% else %} Supplier {% endif %} </label>
+                        <label for="produ_sambazaji">{% if useri.langSet == 0 %}Msambazaji   {% else %} Supplier {% endif %}
+                          <span class="text-muted smallerFont font-weight-normal">({% if useri.langSet == 0 %}si lazima{% else %}optional{% endif %})</span> </label>
 
                   </div>
                   <div class="col-4 text-right">
@@ -2778,7 +2773,7 @@ $('.muamala-genu').click(function(){
 
                 <div class="row">
                   <div class="col-8">
-                      <label class="brown" for="prodAina">{% if useri.langSet == 0 %}Aina   {% else %} Item Category {% endif %} <sup class="text-danger font-weight-bold">*</sup></label>
+                      <label  for="prodAina">{% if useri.langSet == 0 %}Aina   {% else %} Item Category {% endif %} <span class="text-muted smallerFont font-weight-normal">({% if useri.langSet == 0 %}si lazima{% else %}optional{% endif %})</span></label>
                   </div>
                   <div class="col-4 text-right">
                     <a href="#" data-toggle="modal" data-target="#aina-modal" class="smallerFont" type="button" >
@@ -2787,9 +2782,10 @@ $('.muamala-genu').click(function(){
                  </div>
                   
                 </div>
+                <small class="form-text text-muted mb-1">{% if useri.langSet == 0 %}Unaweza kuweka baadaye wakati wa kuhariri bidhaa.{% else %}You can assign a category later when editing the item.{% endif %}</small>
                 
-                <select onchange=" if($(this).find('option:selected').data('value')!='0'){ $(this).selectpicker('setStyle', 'restore-border');$(this).selectpicker('setStyle', 'btn-light');}" name="prodAina" id="prodAina" data-width="100%" class="form-control selectpicker rega muhimu-b smallFont robotoFont " data-live-search="true">
-                  <option value=0 > {% if useri.langSet == 0 %} Chagua Aina  {% else %} Select Category {% endif %}</option>
+                <select onchange=" if($(this).find('option:selected').data('value')!='0'){ $(this).selectpicker('setStyle', 'restore-border');$(this).selectpicker('setStyle', 'btn-light');}" name="prodAina" id="prodAina" data-width="100%" class="form-control selectpicker rega smallFont robotoFont " data-live-search="true">
+                  <option value=0 > {% if useri.langSet == 0 %} Chagua Aina (si lazima)  {% else %} Select Category (optional) {% endif %}</option>
                 </select>
               </div>
              
@@ -3221,23 +3217,53 @@ $('.muamala-genu').click(function(){
   </div>
 </div>
 
-<!-- QR-CODE SCANNER -->
-<div class="modal fade" id="livestream__qr_scanner" data-pos=0  tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+<!-- QR-CODE / BARCODE SESSION SCANNER -->
+<div class="modal fade" id="livestream__qr_scanner" data-pos="0" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">QR-CODE/Barcode Scanner</h5>
-          <button type="button" class="close stop_qr" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+      <div class="modal-header py-2">
+        <h5 class="modal-title">{% if useri.langSet == 0 %}Barcode Scanner{% else %}Barcode Scanner{% endif %}</h5>
+        <button type="button" class="close stop_qr" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
-      <div class="modal-body">
-        <div id="qr_reader" class="viewport"></div>
-        <div id="qr_error" class="error"></div>
+      <div class="modal-body p-0">
+        <div class="tb-scan-session-body">
+          <div class="tb-scan-top">
+            <div id="qr_reader" class="tb-scan-camera viewport"></div>
+            <div id="tb-scan-hid-panel" class="tb-scan-hid-panel" hidden>
+              <div class="tb-scan-hid-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/>
+                  <path d="M2 4.5a.5.5 0 0 1 .5-.5h1v8h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 .5-.5h1v8h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 .5-.5h.5v8H8.5a.5.5 0 0 1-.5-.5v-7zm2.5 0a.5.5 0 0 1 .5-.5h1v8h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 .5-.5h1v8h-1a.5.5 0 0 1-.5-.5v-7z"/>
+                </svg>
+              </div>
+              <p class="tb-scan-hid-hint mb-0" id="tb-scan-hid-hint">
+                {% if useri.langSet == 0 %}Tumia barcode scanner au kamera kuskani bidhaa{% else %}Use a barcode scanner or camera to scan items{% endif %}
+              </p>
+            </div>
+            <div class="tb-scan-last-code">
+              <span class="tb-scan-last-label" id="tb-scan-last-label">{% if useri.langSet == 0 %}Barcode:{% else %}Barcode:{% endif %}</span>
+              <strong id="tb-scan-last-code">—</strong>
+            </div>
+            <div id="qr_error" class="error tb-scan-error"></div>
+          </div>
+          <div class="tb-scan-bottom">
+            <div class="tb-scan-bottom-head d-flex justify-content-between align-items-center">
+              <strong id="tb-scan-bottom-title">{% if useri.langSet == 0 %}Bidhaa zilizoskaniwa{% else %}Scanned items{% endif %}</strong>
+              <span class="text-muted small" id="tb-scan-session-count">0</span>
+            </div>
+            <ul id="tb-scan-session-list" class="list-unstyled mb-0 tb-scan-session-list"></ul>
+            <div id="tb-scan-session-empty" class="text-muted text-center py-3 small">
+              {% if useri.langSet == 0 %}Bado hakuna bidhaa. Skani barcode...{% else %}No items yet. Scan a barcode...{% endif %}
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="modal-footer">
-       
-        <button type="button" class="btn btn-secondary stop_qr" data-dismiss="modal">Close</button>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-primary stop_qr" data-dismiss="modal">
+          {% if useri.langSet == 0 %}Maliza / Funga{% else %}Done / Close{% endif %}
+        </button>
       </div>
     </div>
   </div>
@@ -3251,7 +3277,7 @@ $('.muamala-genu').click(function(){
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"><img  width="30" src="{{baseUrl}}/{{'colors.svg'}}" />
-          {% if useri.langSet == 0 %} Weka Rangi/Kielelezo {% else %} Set Color/Key word{% endif %}
+          {% if useri.langSet == 0 %} Weka Rangi / Kielelezo / Model {% else %} Set Color / Variant / Model{% endif %}
         </h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
@@ -3263,14 +3289,35 @@ $('.muamala-genu').click(function(){
       <div class="modal-body pb-5">
         <div class="form-group">
           <label for="attr_name">{% if useri.langSet == 0 %} Kielelezo {% else %} Key Word{% endif %}</label>
-          <input type="text"  name="attr_name" id="attr_name" class="form-control" placeholder="{% if useri.langSet == 0 %}Rangi{% else %}Color{% endif %}" aria-describedby="helpId">
-          
-        </div>
-        <div class="color-display_ container-fluid pr-5 mt-3"  id="color_alena" >
-      
-
+          <input type="text"  name="attr_name" id="attr_name" class="form-control" placeholder="{% if useri.langSet == 0 %}Rangi au Model{% else %}Color or Model{% endif %}" aria-describedby="helpId">
+          <small class="text-muted smallerFont">{% if useri.langSet == 0 %}Mfano: Rangi, Model, Version{% else %}e.g. Color, Model, Version{% endif %}</small>
         </div>
 
+        <div class="custom-control custom-checkbox mb-3">
+          <input type="checkbox" class="custom-control-input" id="variant_non_color" autocomplete="off">
+          <label class="custom-control-label smallerFont" for="variant_non_color">
+            {% if useri.langSet == 0 %}Hii si rangi — kielelezo cha maandishi tu (Model, Version, nk.){% else %}Not a color — text-only variant (Model, Version, etc.){% endif %}
+          </label>
+        </div>
+
+        <div id="variant_non_color_panel" class="border rounded p-3 mb-3 bg-light" style="display:none;">
+          <p class="smallerFont text-muted mb-2">
+            {% if useri.langSet == 0 %}Andika kielelezo hapo juu (mf. Model), kisha ongeza kila variant hapa chini.{% else %}Set the label above (e.g. Model), then add each variant below.{% endif %}
+          </p>
+          <div class="form-group mb-2">
+            <label for="variant_text_name" data-variant-inline-name-label>{% if useri.langSet == 0 %}Jina la kielelezo{% else %}Variant name{% endif %}</label>
+            <input type="text" id="variant_text_name" class="form-control smallerFont" placeholder="AC-2015">
+          </div>
+          <div class="form-group mb-2">
+            <label for="variant_text_other">{% if useri.langSet == 0 %}Majina Mengine{% else %}Other names{% endif %}</label>
+            <textarea rows="2" id="variant_text_other" class="form-control smallerFont" placeholder="{% if useri.langSet == 0 %}Maelezo ya ziada{% else %}Extra details{% endif %}"></textarea>
+          </div>
+          <button type="button" id="variant_text_add_btn" class="btn btn-primary btn-sm latoFont">
+            {% if useri.langSet == 0 %}Ongeza kielelezo{% else %}Add variant{% endif %}
+          </button>
+        </div>
+
+        <div id="variant_color_add_section">
         <div class="addcolorbtn">
                
         <div class="column mb-2" data-valued=0  data-color=0>
@@ -3286,8 +3333,7 @@ $('.muamala-genu').click(function(){
               >
             
               <div class="form-group mb-2">
-                  <label for="bill-set_colorI"  >  
-                    {% if useri.langSet == 0 %} Weka Rangi{% else %} Set Color{% endif %}
+                  <label for="bill-set_colorI" data-variant-add-label>{% if useri.langSet == 0 %} Weka Rangi{% else %} Set Color{% endif %}
                   </label>
                 <div class="text-right">
                   <input type="color" data-jina="#jina-la_rangiI" id="bill-set_colorI" value="#ffffff" class="form-control custom-color bill-set_color" >
@@ -3297,7 +3343,7 @@ $('.muamala-genu').click(function(){
                   
                   <div class="form-group">
                       
-                      <label  for="dozen">{% if useri.langSet == 0 %} Jina {% else %} Name{% endif %}</label>
+                      <label data-variant-name-label for="dozen">{% if useri.langSet == 0 %} Jina {% else %} Name{% endif %}</label>
                       
                       
                       <input type="text" data-rangi="#bill-set_colorI" id="jina-la_rangiI" placeholder="white" class="form-control bill-inputColor jina-la_rangi smallerFont">
@@ -3379,6 +3425,9 @@ $('.muamala-genu').click(function(){
         </div>
         </div>
         </div>
+        </div><!-- /variant_color_add_section -->
+
+        <div class="color-display_ container-fluid pr-5 mt-3" id="color_alena"></div>
 
       </div>
     
@@ -3539,7 +3588,7 @@ $('.muamala-genu').click(function(){
 
             
                   {% if shift_operation_allowed %}
-                  <a class="dropdown-item" href="#" onclick="$('#matumizi_data').data({'with_bil':0,'bill':0});" data-toggle="modal" data-target="#recodiMatumizi" >
+                  <a class="dropdown-item" href="{% url 'expenseRecords' %}">
                     <svg xmlns="http://www.w3.org/2000/svg" height="1.7em" viewBox="0 -960 960 960" width="1.7em" fill="currentColor" class="bi bi-cash-coin mr-2" >
                         <path d="M320-120v-80h120v-164q-86-14-143-80t-57-156v-240h480v240q0 90-57 156t-143 80v164h120v80H320Zm258-354q42-34 56-86H326q14 52 56 86t98 34q56 0 98-34ZM320-640h320v-120H320v120Zm160 200Z"/>
                     </svg>
@@ -4732,6 +4781,14 @@ $('.muamala-genu').click(function(){
           </script>
 
           <div class="row py-3">
+            <div class="col-12">
+             <label class="smallFont brown weight600">{% if useri.langSet == 0 %}Matawi mteja anaonekana{% else %}Branches where customer appears{% endif %}</label>
+             <div id="mteja-branches-list" class="border rounded p-2 mt-1" style="max-height:160px;overflow-y:auto;"></div>
+             <small class="text-muted smallerFont">{% if useri.langSet == 0 %}Chagua matawi unayoruhusiwa kuendesha{% else %}Select from branches you are allowed to operate{% endif %}</small>
+            </div>
+          </div>
+
+          <div class="row py-3">
             <div class="col-4">
              <label for="mteja-mail" class="smallFont"> {% if useri.langSet == 0 %} Barua pepe(email)  {% else %} Email Address {% endif %}:  </label>
             </div>
@@ -5893,6 +5950,8 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     {% endblock %}
 
     {% if duka.Interprise %}
+      <script src="{% static 'js/variant_utils.js' %}"></script>
+      <script src="{% static 'js/customer_branches.js' %}"></script>
       <script src="{% static 'js/stoku.js' %}"></script>
     {% endif %}  
 
@@ -5911,6 +5970,7 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     <script src="{% static 'js/html5-qrcode.min.js' %}"></script>
     <script src="{% static 'js/qrcode.min.js' %}"></script>
     <script src="{% static 'js/barcode_process.js' %}"></script>
+    <script src="{% static 'js/tb_barcode.js' %}"></script>
 
     <script src="{% static 'js/audiorecord.js' %}"></script>
 

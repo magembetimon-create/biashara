@@ -538,12 +538,13 @@ $('.receipt_options').click(function(){
     $(this).addClass('text-primary')
     $(this).addClass('bluebox')
     
-   const min = Number($(this).data('min')),
+   const paper = Number($(this).data('paper')),
          data = {
-              data:{min},
+              data:{paper, min: paper},
               url:"/setInVoFormat"
          }
-      $('#print_mini').data('active',min)
+      $('#receipt_paper_active').val(paper)
+      $('#print_mini').data('active', paper)
 
       const sendIt = POSTREQUEST(data)
    
@@ -553,7 +554,7 @@ $('.receipt_options').click(function(){
 $('body').on('click','.actionbtns',function(){
   const invo = Number($(this).data('invo')) || 0,
         lugha= Number($(this).data('lang')),
-        min = Number($('#print_mini').data('active')),
+        min = Number($('#receipt_paper_active').val() || $('#print_mini').data('active') || 0),
         pu = Number($(this).data('pu'))||0,
         theHref = $(this).data('href'),
 

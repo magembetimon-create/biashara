@@ -33,7 +33,7 @@
       {% if matawi > 0 and duka.owner == useri %}
       <p class="text-right py-2">
         <label for="this_entp" class="weight600"> {% if useri.langSet == 0 %}Tawi:{% else %}Branch{% endif %}</label>
-        <select name="this_entp" class="made-input latoFont" id="this_entp" onchange="placedataTotable({wateja:[]})" >
+        <select name="this_entp" class="made-input latoFont" id="this_entp" onchange="getCustomData()" >
           <option value="{{duka.id}}" > {% if useri.langSet == 0 %}Tawi hili tu {% else %}Only this Branch{% endif %}</option>
           <option value=0 > {% if useri.langSet == 0 %}Matawi yote{% else %}All Branches{% endif %}</option>
         </select>

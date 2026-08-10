@@ -9,7 +9,7 @@ $('#form-worker').submit(function(e){
         simu1=$('#worker-simu').val(),
         simu2=$('#worker-simu2').val(),
         kazi=$('#worker-mail').val(),
-        kazi=$('#worker-mail').val(),
+        tin=($('#worker-tin').val() || '').trim(),
         namba = $('#worker-Id').val(),
         edit = $(this).data('edit'),
         value = $(this).data('valued')
@@ -33,6 +33,7 @@ $('#form-worker').submit(function(e){
              namba:namba,
              value:$(this).data('worker_value'),
              kazi:kazi,
+             tin:tin,
             csrfmiddlewaretoken:csrfToken, 
         } ,    
             url:url,
@@ -109,6 +110,7 @@ function saveWorkData(data){
             $('#worker-simu').val('')
             $('#worker-simu2').val('')
             $('#worker-mail').val('')
+            $('#worker-tin').val('')
 
             
 
@@ -185,6 +187,7 @@ function getWorkers(wote){
                            data-simu1="${w.simu1}" 
                            data-simu2="${w.simu2}" 
                            data-kazi="${w.kazi}" 
+                           data-tin="${w.tin || ''}" 
                            title="${lang('Hariri','Edit')}"
                            class="btn btn-light  workerEdit btn-sm latoFont smallerFont mr-1">
                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit">
@@ -228,6 +231,7 @@ $('body').on('click','.workerEdit',function(){
    $('#worker-simu').val($(this).data('simu1'))
    $('#worker-simu2').val($(this).data('simu2'))
    $('#worker-mail').val($(this).data('kazi'))
+   $('#worker-tin').val($(this).data('tin') || '')
    $('#form-worker').data('valued',$(this).data('value'))
    $('#form-worker').data('edit',1)
 

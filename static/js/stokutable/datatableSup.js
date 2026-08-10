@@ -1,3 +1,8 @@
+function tbSafeText(val, fallback) {
+    const text = (val == null || val === '') ? (fallback || '') : String(val)
+    return text.replace(/[&\/\\#,+=$~%"*?<>{}`]/g, '')
+}
+
 function placedataTotable(data){
     let flt = Number($('#itemsKey').val()) || 0 ,
         bflt = Number($('#brandFilter').val()) || 0 
@@ -112,7 +117,7 @@ function placedataTotable(data){
          num+=1
              trp+=`<tr>
              <td>${num}</td>
-             <td class="text-capitalize" >${itm.jina.replace(/[&\/\\#,+=$~%"*?<>{}`]/g, "")}</td>
+             <td class="text-capitalize" >${tbSafeText(itm.jina)}</td>
              <td class="text-capitalize" >${itm.addres}</a></td>
              <td>+${itm.code} ${Number(itm.simu1)} </td>
              <td> `

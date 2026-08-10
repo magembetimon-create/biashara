@@ -152,18 +152,27 @@ $('body').on('click','.item_sized_',function(){
 })
 
 $('body').on('mouseenter','.the_identify',function(){
-  let other = $(this).data('other') || ''
+  applyVariantIdentify($(this))
+})
+
+$('body').on('click','#penye-rangi .the_identify',function(){
+  applyVariantIdentify($(this))
+})
+
+function applyVariantIdentify($el) {
+  let other = $el.data('other') || ''
   if(other != 'None' ) {
     other =  `<small class="text-primary"> (${other.replace(/[/[&\/\\#,+()$~%"*?<>{}`]/g, "")})</small>`
   }else{
     other = ''
   }
 
-  $('#hold-color-id').val($(this).data('val'));
-  $('#color_text').html($(this).attr('title')+other);
-  $(this).siblings('.the_identify').removeClass('redbox');
-  $(this).addClass('redbox')
-  val = $(this).data('rangi')
+  $('#hold-color-id').val($el.data('val'));
+  const titleText = $el.attr('title') || $el.data('jina') || $el.text().trim()
+  $('#color_text').html(titleText + other);
+  $el.siblings('.the_identify').removeClass('redbox');
+  $el.addClass('redbox')
+  val = $el.data('rangi')
   placeImg(ItemPicha,val)
   
   let size_length = $(`.item_sized_${val}`).length
@@ -184,13 +193,7 @@ $('body').on('mouseenter','.the_identify',function(){
   let qty =$('.bluebox').data('qty') || $('.redbox').data('qty')
                 $('#item_idadi').val(Number(qty)/Number(uwiano))
                 $('#price_select').val(uwiano)
-              
-
-
-              
-                
-
-})
+}
 
 //Sum quantities function
   function sum_q(bei){

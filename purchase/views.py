@@ -11,7 +11,7 @@ from django.shortcuts import render
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
-from management.models import UserExtend,Kanda,Risiti,deliveryBy,ForPrintingPupose,customer_in_cell,invoice_desk,Interprise_Rating,mahitaji,Notifications,businessReg,wateja,salePuMatch,deliveryAgents,order_from,makampuni,bidhaa,sales_size,sales_color,order_to,bidhaa_aina,Interprise,HudumaNyingine,user_customers,bei_za_bidhaa,mauzoni,pu_ret,pu_col_ret,pu_size_ret,bill_return_pu_fidia,wekaCash,color_produ,bil_return,sizes,mauzoList,produ_colored,purchased_size,purchased_color,produ_size,toaCash,wasambazaji,picha_bidhaa,matumizi,rekodiMatumizi,productChangeRecord,manunuziList,manunuzi,bidhaa_stoku,InterprisePermissions,PaymentAkaunts
+from management.models import UserExtend,Kanda,Risiti,deliveryBy,ForPrintingPupose,customer_in_cell,invoice_desk,Interprise_Rating,mahitaji,Notifications,businessReg,wateja,salePuMatch,deliveryAgents,order_from,makampuni,bidhaa,sales_size,sales_color,order_to,bidhaa_aina,Interprise,HudumaNyingine,user_customers,bei_za_bidhaa,mauzoni,pu_ret,pu_col_ret,pu_size_ret,bill_return_pu_fidia,wekaCash,color_produ,bil_return,sizes,mauzoList,produ_colored,purchased_size,purchased_color,produ_size,toaCash,wasambazaji,picha_bidhaa,matumizi,ExpenseTaxGroup,rekodiMatumizi,MatumiziReceiptAttachment,productChangeRecord,manunuziList,manunuzi,bidhaa_stoku,InterprisePermissions,PaymentAkaunts,Workers,stokAdjustment,stockAdjst_confirm,productionList
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse,HttpResponseNotFound
@@ -31,6 +31,9 @@ import datetime
 import traceback
 import re
 import json
+from decimal import Decimal, InvalidOperation
+from django.db import transaction
+from django.utils.dateparse import parse_datetime
 from django.db.models import Sum,Avg
 from django.core.paginator import Paginator,EmptyPage
 
@@ -41,6 +44,10 @@ from django.template.defaultfilters import stringfilter
 register = template.Library()
 
 from accaunts.todos import Todos, updateOrder, shift_operation_block_payload
+from purchase.expense_receipt_utils import (
+    count_pending_mandatory_expense_receipts,
+    pending_mandatory_expense_receipts_list,
+)
 # Create your views here.
 def todoFunct(request):
   usr = Todos(request)
@@ -1679,6 +1686,706 @@ def payBill(request):
             return render(request,'pagenotFound.html',todoFunct(request))
 
 @login_required(login_url='login')
+def expenseRecords(request):
+    try:
+        todo = todoFunct(request)
+        if not todo['duka'].Interprise:
+            return redirect('/userdash')
+        todo['expense_page'] = 'record'
+        if not _expense_can_record(todo):
+            messages.warning(request, 'Hauna ruhusa ya kurekodi matumizi' if todo.get('useri') and getattr(todo.get('useri'), 'langSet', 0) == 0 else 'No permission to record expenses')
+            return redirect('/purchase/expenses')
+        owner_user = todo['duka'].owner.user if todo['duka'].owner else None
+        todo['exp_tax_groups'] = ExpenseTaxGroup.objects.filter(owner=owner_user).order_by('name') if owner_user else []
+        return render(request, 'expense_records.html', todo)
+    except Exception:
+        traceback.print_exc()
+        return render(request, 'pagenotFound.html', todoFunct(request))
+
+
+@login_required(login_url='login')
+def expenseReceiptsPending(request):
+    try:
+        todo = todoFunct(request)
+        if not todo['duka'].Interprise:
+            return redirect('/userdash')
+        if not _expense_can_record(todo):
+            return redirect('/purchase/expenses')
+        rows = []
+        for rec in pending_mandatory_expense_receipts_list(todo['duka']):
+            att_objs = MatumiziReceiptAttachment.objects.filter(
+                rekodi_matumizi=rec.id,
+                Interprise=todo['duka'],
+            ).order_by('-pk')
+            att = [{'id': a.id, 'url': request.build_absolute_uri(a.image.url)} for a in att_objs if a.image]
+            by_name = ''
+            if rec.by and rec.by.user and rec.by.user.user:
+                u = rec.by.user.user
+                by_name = f'{(u.first_name or "")} {(u.last_name or "")}'.strip()
+            rows.append({
+                'id': rec.id,
+                'name': rec.matumizi.matumizi if rec.matumizi_id else '',
+                'amount': rec.kiasi,
+                'date': rec.date,
+                'tarehe': rec.tarehe,
+                'maelezo': rec.maelezo or '',
+                'by': by_name.strip(),
+                'attachments': att,
+            })
+        todo['expense_receipt_rows'] = rows
+        todo['pending_receipt_count'] = len(rows)
+        todo['expense_page'] = 'receipts'
+        return render(request, 'expense_receipts_pending.html', todo)
+    except Exception:
+        traceback.print_exc()
+        return render(request, 'pagenotFound.html', todoFunct(request))
+
+
+@login_required(login_url='login')
+def expenseReceiptAttachments(request):
+    try:
+        todo = todoFunct(request)
+        if not todo['duka'].Interprise:
+            return redirect('/userdash')
+        if not _expense_can_record(todo):
+            return redirect('/purchase/expenses')
+        duka = todo['duka']
+        qs = MatumiziReceiptAttachment.objects.filter(Interprise=duka).select_related(
+            'rekodi_matumizi__matumizi',
+            'manunuzi',
+            'uploaded_by__user__user',
+        ).order_by('-uploaded_at', '-pk')
+        att_num = qs.count()
+        paginator = Paginator(qs, 15)
+        page_num = request.GET.get('page', 1)
+        try:
+            page = paginator.page(page_num)
+        except EmptyPage:
+            page = paginator.page(1)
+        rows = []
+        for att in page.object_list:
+            label = ''
+            amount = None
+            exp_date = att.uploaded_at
+            ref = ''
+            if att.rekodi_matumizi_id:
+                rec = att.rekodi_matumizi
+                label = rec.matumizi.matumizi if rec.matumizi_id else ''
+                amount = rec.kiasi
+                exp_date = rec.tarehe or rec.date
+                ref = f'EXP-{rec.id}'
+            elif att.manunuzi_id:
+                pu = att.manunuzi
+                label = f'Manunuzi BI-{pu.code}' if todo.get('useri') and getattr(todo['useri'], 'langSet', 0) == 0 else f'Purchase BI-{pu.code}'
+                amount = pu.amount
+                exp_date = pu.tarehe or pu.date
+                ref = f'BI-{pu.code}'
+            uploader = ''
+            if att.uploaded_by and att.uploaded_by.user and att.uploaded_by.user.user:
+                u = att.uploaded_by.user.user
+                uploader = f'{(u.first_name or "")} {(u.last_name or "")}'.strip()
+            rows.append({
+                'id': att.id,
+                'url': request.build_absolute_uri(att.image.url) if att.image else '',
+                'label': label,
+                'amount': amount,
+                'exp_date': exp_date,
+                'uploaded_at': att.uploaded_at,
+                'ref': ref,
+                'uploader': uploader,
+            })
+        todo.update({
+            'expense_page': 'attachments',
+            'attachment_rows': rows,
+            'attachments_page': page,
+            'att_num': att_num,
+            'pages': paginator.num_pages,
+            'p_num': page.number,
+        })
+        return render(request, 'expense_receipt_attachments.html', todo)
+    except Exception:
+        traceback.print_exc()
+        return render(request, 'pagenotFound.html', todoFunct(request))
+
+
+@login_required(login_url='login')
+def uploadExpenseReceipt(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    try:
+        todo = todoFunct(request)
+        if not _expense_can_record(todo):
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Hauna ruhusa',
+                'message_eng': 'No permission',
+            })
+        duka = todo['duka']
+        cheo = todo['cheo']
+        rec_id = int(request.POST.get('rekodi_id') or 0)
+        man_id = int(request.POST.get('manunuzi_id') or 0)
+        files = request.FILES.getlist('images') or request.FILES.getlist('image')
+        if not files:
+            one = request.FILES.get('image')
+            if one:
+                files = [one]
+        if not files:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Chagua picha ya risiti',
+                'message_eng': 'Select receipt image(s)',
+            })
+
+        if rec_id:
+            rec = rekodiMatumizi.objects.select_related('matumizi').get(pk=rec_id, Interprise=duka)
+            if not rec.matumizi.attach_receipt:
+                return JsonResponse({
+                    'success': False,
+                    'message_swa': 'Matumizi haya hayahitaji risiti',
+                    'message_eng': 'Receipt not required for this expense',
+                })
+            parent_kw = {'rekodi_matumizi': rec}
+        elif man_id:
+            pu = manunuzi.objects.get(pk=man_id, Interprise=duka)
+            parent_kw = {'manunuzi': pu}
+        else:
+            return JsonResponse({'success': False, 'message_swa': 'Hitilafu', 'message_eng': 'Invalid request'})
+
+        saved = []
+        for f in files[:20]:
+            if not f or not getattr(f, 'size', 0):
+                continue
+            att = MatumiziReceiptAttachment(
+                Interprise=duka,
+                uploaded_by=cheo,
+                image=f,
+                **parent_kw,
+            )
+            att.save()
+            saved.append({
+                'id': att.id,
+                'url': request.build_absolute_uri(att.image.url) if att.image else '',
+            })
+
+        if not saved:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Chagua picha ya risiti',
+                'message_eng': 'Select receipt image(s)',
+            })
+
+        return JsonResponse({
+            'success': True,
+            'message_swa': 'Risiti imepakiwa',
+            'message_eng': 'Receipt uploaded',
+            'attachments': saved,
+            'pending_count': count_pending_mandatory_expense_receipts(duka),
+        })
+    except rekodiMatumizi.DoesNotExist:
+        return JsonResponse({'success': False, 'message_swa': 'Haipatikani', 'message_eng': 'Not found'})
+    except manunuzi.DoesNotExist:
+        return JsonResponse({'success': False, 'message_swa': 'Haipatikani', 'message_eng': 'Not found'})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'message_swa': 'Hitilafu', 'message_eng': 'Upload failed'})
+
+
+@login_required(login_url='login')
+def removeExpenseReceipt(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    try:
+        todo = todoFunct(request)
+        if not _expense_can_record(todo):
+            return JsonResponse({'success': False, 'message_swa': 'Hauna ruhusa', 'message_eng': 'No permission'})
+        att_id = int(request.POST.get('attachment_id') or 0)
+        att = MatumiziReceiptAttachment.objects.get(pk=att_id, Interprise=todo['duka'])
+        att.image.delete(save=False)
+        att.delete()
+        return JsonResponse({
+            'success': True,
+            'message_swa': 'Imefutwa',
+            'message_eng': 'Removed',
+            'pending_count': count_pending_mandatory_expense_receipts(todo['duka']),
+        })
+    except MatumiziReceiptAttachment.DoesNotExist:
+        return JsonResponse({'success': False, 'message_swa': 'Haipatikani', 'message_eng': 'Not found'})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'message_swa': 'Hitilafu', 'message_eng': 'Error'})
+
+
+def _expense_can_record(todo):
+    per = todo.get('cheo')
+    if not per:
+        return False
+    return bool(per.expenses or per.owner or per.fullcontrol) and not per.user.company
+
+
+def _expense_payment_accounts(todo):
+    duka = todo['duka']
+    qs = PaymentAkaunts.objects.filter(Interprise__owner=duka.owner.id)
+    if duka.Interprise:
+        qs = qs.filter(Interprise=duka.id)
+    return qs.order_by('Akaunt_name')
+
+
+def _save_cash_expense(todo, matum, amount, account_id, rec_datetime, maelezo, kabidhiwa='', worker_id=None, tin_number='', expense_kind=''):
+    duka = todo['duka']
+    per = todo['cheo']
+    paid = Decimal(str(amount))
+    if paid <= 0:
+        raise ValueError('Amount must be greater than zero')
+
+    toakwa = PaymentAkaunts.objects.get(pk=int(account_id), Interprise__owner=duka.owner.id)
+    if duka.Interprise and toakwa.Interprise_id != duka.id:
+        raise ValueError('Invalid payment account')
+
+    beforweka = Decimal(str(toakwa.Amount or 0))
+    if paid > beforweka:
+        raise ValueError('Insufficient account balance')
+
+    desk = f"{matum.matumizi}({maelezo})" if maelezo else matum.matumizi
+
+    rec = rekodiMatumizi()
+    rec.Interprise = duka
+    rec.matumizi = matum
+    rec.tarehe = rec_datetime
+    rec.kiasi = paid
+    rec.by = per
+    rec.maelezo = maelezo or ''
+    rec.date = rec_datetime.date() if hasattr(rec_datetime, 'date') else date.today()
+    rec.akaunti = toakwa
+    rec.kabidhiwa = (kabidhiwa or '')[:500]
+    rec.tin_number = (tin_number or '')[:50]
+    rec.expense_kind = (expense_kind or '')[:40]
+    if worker_id:
+        wk = Workers.objects.filter(pk=int(worker_id), Interprise=duka.id).first()
+        if not wk and duka.owner:
+            wk = Workers.objects.filter(pk=int(worker_id), Interprise__owner=duka.owner.id).first()
+        rec.worker_recipient = wk
+    if matum.tax_group_id:
+        rec.tax_group_id = matum.tax_group_id
+    rec.save()
+
+    toa = toaCash()
+    toa.Akaunt = toakwa
+    toa.Amount = paid
+    toa.matumizi = rec
+    toa.before = beforweka
+    toa.After = beforweka - paid
+    toa.makato = Decimal('0')
+    toa.kwenda = matum.matumizi
+    toa.maelezo = desk
+    toa.tarehe = rec_datetime
+    toa.by = per
+    toa.Interprise = duka
+    toa.pu = True
+    if not toakwa.onesha:
+        toa.usiri = True
+
+    toakwa.Amount = beforweka - paid
+    toakwa.save()
+    toa.save()
+    return rec
+
+
+def _next_stock_adj_code(duka):
+    adjno = 1
+    if stokAdjustment.objects.filter(Interprise=duka.id).exists():
+        adj_no = stokAdjustment.objects.filter(Interprise=duka.id).last()
+        adjno = adj_no.code_num
+    if adjno < 10:
+        adj_str = '000' + str(adjno)
+    elif adjno < 100:
+        adj_str = '00' + str(adjno)
+    elif adjno < 1000:
+        adj_str = '0' + str(adjno)
+    else:
+        adj_str = str(adjno)
+    return adj_str, adjno
+
+
+def _save_product_expense(todo, matum, stock_item_id, quantity, rec_datetime, maelezo):
+    duka = todo['duka']
+    cheo = todo['cheo']
+    qty = float(quantity)
+    if qty <= 0:
+        raise ValueError('Quantity must be positive')
+    if not matum.bidhaa_matumizi:
+        raise ValueError('Expense category is not for product usage')
+
+    if not ((cheo.stokAdjs and not cheo.viewi) or cheo.user == duka.owner):
+        raise ValueError('No permission for stock adjustment')
+
+    pr = bidhaa_stoku.objects.filter(pk=int(stock_item_id), Interprise=duka.id)
+    if not pr.exists():
+        raise ValueError('Stock item not found')
+    prod = pr.last()
+    notsure = bool(getattr(getattr(prod, 'produced', None), 'notsure', False))
+    if float(prod.idadi or 0) < qty and not notsure:
+        raise ValueError('Insufficient stock quantity')
+
+    adj_str, adjno = _next_stock_adj_code(duka)
+    adj = stokAdjustment()
+    adj.Interprise = duka
+    adj.date = datetime.datetime.now(tz=timezone.utc)
+    adj.Recodeddate = rec_datetime.date() if hasattr(rec_datetime, 'date') else date.today()
+    adj.code_num = adjno + 1
+    adj.Na = cheo
+    adj.desc = maelezo or ''
+    adj.tumika = True
+    adj.op = True
+    adj.code = adj_str
+    adj.save()
+
+    if prod.produced:
+        if notsure:
+            productionList.objects.filter(pk=prod.produced.id).update(qty=F('qty') + qty)
+        else:
+            pr.update(idadi=F('idadi') - qty)
+    else:
+        pr.update(idadi=F('idadi') - qty)
+        any_other = bidhaa_stoku.objects.filter(
+            bidhaa=prod.bidhaa, idadi__gt=0, inapacha=True,
+        ).exclude(pk=prod.id)
+        prod.refresh_from_db()
+        if prod.idadi == 0 and any_other.exists():
+            pr.update(inapacha=True)
+            lany = any_other.last()
+            lany.inapacha = False
+            lany.save()
+            updateOrder({
+                'itm': prod,
+                'request': None,
+                'out': True,
+                'other': lany,
+            })
+
+    prc = productChangeRecord()
+    prc.prod = bidhaa_stoku.objects.get(pk=prod.id)
+    prc.qty = qty
+    prc.adjst = adj
+    prc.save()
+
+    to_comfirm = InterprisePermissions.objects.filter(Interprise=duka.id, Allow=True)
+    for tn in to_comfirm:
+        comf = stockAdjst_confirm()
+        comf.userP = tn
+        comf.adjs = adj
+        comf.save()
+    stockAdjst_confirm.objects.filter(userP=cheo.id).update(
+        confirmed=True, tarehe=datetime.datetime.now(tz=timezone.utc),
+    )
+
+    amo = productChangeRecord.objects.filter(adjst=adj.id).aggregate(
+        sumi=Sum(F('qty') * F('prod__Bei_kununua') / F('prod__bidhaa__idadi_jum'), output_field=FloatField()),
+    )['sumi']
+
+    rec = rekodiMatumizi()
+    rec.Interprise = duka
+    rec.matumizi = matum
+    rec.tarehe = rec_datetime
+    rec.date = rec_datetime.date() if hasattr(rec_datetime, 'date') else date.today()
+    rec.kiasi = Decimal(str(float(amo or 0)))
+    rec.by = cheo
+    rec.maelezo = maelezo or ''
+    rec.adjst = adj
+    rec.expense_kind = 'product'
+    if matum.tax_group_id:
+        rec.tax_group_id = matum.tax_group_id
+    rec.save()
+    return rec
+
+
+@login_required(login_url='login')
+def getExpData(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    try:
+        todo = todoFunct(request)
+        duka = todo['duka']
+        owner_user = duka.owner.user if duka.owner else None
+        if not owner_user:
+            return JsonResponse({'success': False, 'message_swa': 'Hitilafu', 'message_eng': 'Business not found'})
+
+        expenses_qs = matumizi.objects.filter(owner=owner_user).annotate(name=F('matumizi'))
+        expenses_data = list(expenses_qs.values(
+            'id', 'name', 'for_supplies', 'bidhaa_matumizi', 'posho', 'bili', 'discount',
+            'bill_amount', 'bill_fixed', 'attach_receipt', 'tax_group_id',
+        ))
+
+        tax_groups = list(
+            ExpenseTaxGroup.objects.filter(owner=owner_user).order_by('name').values('id', 'name', 'rate')
+        )
+
+        payacc = _expense_payment_accounts(todo)
+        payacc_data = list(payacc.annotate(name=F('Akaunt_name')).values('id', 'name', 'Amount', 'aina'))
+
+        workers_qs = Workers.objects.filter(Interprise=duka.id).order_by('jina')
+        if not workers_qs.exists() and duka.owner:
+            workers_qs = Workers.objects.filter(Interprise__owner=duka.owner.id).order_by('jina')
+        staff_data = [{'id': w.id, 'name': w.jina, 'tin': w.tin or ''} for w in workers_qs[:500]]
+
+        stock_items = list(
+            bidhaa_stoku.objects.filter(Interprise=duka.id)
+            .annotate(
+                name=F('bidhaa__bidhaa_jina'),
+                uwiano=F('bidhaa__idadi_jum'),
+            )
+            .values('id', 'name', 'idadi', 'Bei_kununua', 'uwiano')
+            .order_by('name')[:3000]
+        )
+
+        return JsonResponse({
+            'success': True,
+            'expenses': expenses_data,
+            'payment_accounts': payacc_data,
+            'staff': staff_data,
+            'tax_groups': tax_groups,
+            'currency': duka.currencii or '',
+            'stock_items': stock_items,
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message_eng': 'Failed to retrieve expense data',
+            'message_swa': 'Imeshindikana kupata taarifa za matumizi',
+        })
+
+
+@login_required(login_url='login')
+def addExpenseGroup(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    try:
+        todo = todoFunct(request)
+        if not _expense_can_record(todo):
+            return JsonResponse({
+                'success': False,
+                'message_eng': 'No permission',
+                'message_swa': 'Hauna ruhusa',
+            })
+        duka = todo['duka']
+        owner_user = duka.owner.user
+        name = (request.POST.get('groupName') or request.POST.get('matumizi') or '').strip()
+        if not name:
+            return JsonResponse({'success': False, 'message_swa': 'Andika jina la matumizi', 'message_eng': 'Expense name required'})
+
+        edit_id = int(request.POST.get('edit') or request.POST.get('exp_id') or 0)
+        exp_type = (request.POST.get('expType') or '').strip().lower()
+        is_supplies = exp_type == 'supplies' or bool(int(request.POST.get('isSupplies') or 0))
+        is_allowance = exp_type == 'allowance' or bool(int(request.POST.get('isAllowance') or 0))
+        is_bill = exp_type == 'bills' or bool(int(request.POST.get('isBills') or 0))
+        if exp_type in ('supplies', 'allowance', 'bills'):
+            is_supplies = exp_type == 'supplies'
+            is_allowance = exp_type == 'allowance'
+            is_bill = exp_type == 'bills'
+        if not (is_supplies or is_allowance or is_bill):
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Chagua aina ya matumizi',
+                'message_eng': 'Select expense type',
+            })
+
+        attach_receipt = bool(int(request.POST.get('attachReceipt') or request.POST.get('compulsoryReceipt') or 0))
+        bill_depends = bool(int(request.POST.get('isRecurringAmount') or 0))
+        try:
+            bill_amount = Decimal(str(request.POST.get('billAmount') or 0))
+        except InvalidOperation:
+            bill_amount = Decimal('0')
+
+        bill_period = (request.POST.get('billPeriodType') or 'daily').strip().lower()
+        bill_period_count = int(request.POST.get('billPeriodCount') or 0)
+        last_payment = request.POST.get('lastPaymentDate') or None
+
+        new_tax = bool(int(request.POST.get('newTaxGroup') or 0))
+        tax_group_id = int(request.POST.get('taxGroup') or 0)
+        tax_name = (request.POST.get('TaxGroupName') or request.POST.get('taxName') or '').strip()
+        try:
+            tax_rate = Decimal(str(request.POST.get('TaxGroupRate') or request.POST.get('taxRate') or 0))
+        except InvalidOperation:
+            tax_rate = Decimal('0')
+
+        if new_tax:
+            if not tax_name:
+                return JsonResponse({'success': False, 'message_swa': 'Andika jina la kundi la kodi', 'message_eng': 'Tax group name required'})
+            tg = ExpenseTaxGroup.objects.create(owner=owner_user, name=tax_name, rate=tax_rate)
+            tax_group_id = tg.id
+        elif tax_group_id:
+            if not ExpenseTaxGroup.objects.filter(pk=tax_group_id, owner=owner_user).exists():
+                tax_group_id = 0
+
+        if not edit_id and matumizi.objects.filter(owner=owner_user, matumizi__iexact=name).exists():
+            return JsonResponse({
+                'success': False,
+                'message_eng': 'Expense name already exists',
+                'message_swa': 'Jina la matumizi tayari lipo',
+            })
+
+        if is_bill:
+            if bill_period_count <= 0:
+                return JsonResponse({'success': False, 'message_swa': 'Weka muda wa billi', 'message_eng': 'Bill period count required'})
+            if not last_payment:
+                return JsonResponse({'success': False, 'message_swa': 'Chagua tarehe ya mwisho kulipa', 'message_eng': 'Last payment date required'})
+
+        if edit_id:
+            matum = matumizi.objects.get(pk=edit_id, owner=owner_user)
+        else:
+            matum = matumizi(owner=owner_user)
+
+        matum.matumizi = name
+        matum.for_supplies = is_supplies
+        matum.posho = is_allowance
+        matum.bili = is_bill
+        matum.bidhaa_matumizi = False
+        matum.discount = False
+        matum.attach_receipt = attach_receipt
+        matum.tax_group_id = tax_group_id or None
+
+        matum.bill_daily = bill_period == 'daily'
+        matum.bill_weekly = bill_period == 'weekly'
+        matum.bill_monthly = bill_period == 'monthly'
+        matum.bill_yearly = bill_period == 'yearly'
+        matum.bill_duration = bill_period_count if is_bill else 0
+        matum.bill_last_paid = last_payment if is_bill else None
+        matum.bill_amount = bill_amount if (is_bill and not bill_depends) else None
+        matum.bill_fixed = is_bill and not bill_depends and bill_amount > 0
+        matum.save()
+
+        return JsonResponse({
+            'success': True,
+            'message_eng': 'Expense saved successfully',
+            'message_swa': 'Matumizi yamehifadhiwa kikamilifu',
+            'id': matum.id,
+        })
+    except matumizi.DoesNotExist:
+        return JsonResponse({'success': False, 'message_swa': 'Haipatikani', 'message_eng': 'Not found'})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'message_swa': 'Hitilafu', 'message_eng': 'Error'})
+
+
+def _add_expense_batch(request, todo):
+    if not _expense_can_record(todo):
+        return JsonResponse({
+            'success': False,
+            'message_eng': 'You have no permission to add expenses',
+            'message_swa': 'Hauna ruhusa ya kuongeza matumizi',
+        })
+
+    if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+        return JsonResponse(shift_operation_block_payload(todo), status=403)
+
+    raw = request.POST.get('expenses_json') or '[]'
+    entries = json.loads(raw)
+    if not isinstance(entries, list) or not entries:
+        return JsonResponse({
+            'success': False,
+            'message_eng': 'No expense rows',
+            'message_swa': 'Hakuna mistari ya matumizi',
+        })
+
+    duka = todo['duka']
+    owner_user = duka.owner.user
+    rec_datetime = datetime.datetime.now(tz=timezone.utc)
+    exp_date = request.POST.get('expDate') or ''
+    if exp_date:
+        parsed = parse_datetime(str(exp_date).replace('Z', '+00:00'))
+        if parsed:
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            rec_datetime = parsed
+
+    try:
+        with transaction.atomic():
+            for exp in entries:
+                if not isinstance(exp, dict):
+                    raise ValueError('Invalid row')
+
+                category = str(exp.get('category') or '').strip().lower()
+                if category == 'customer_discounts':
+                    matum = matumizi.objects.filter(owner=owner_user, discount=True).order_by('pk').first()
+                    if not matum:
+                        matum = matumizi.objects.create(
+                            owner=owner_user,
+                            matumizi='Discount',
+                            discount=True,
+                            for_supplies=False,
+                        )
+                else:
+                    gid = exp.get('expense_group_id') or exp.get('group_id')
+                    if not gid:
+                        raise ValueError('Expense item required')
+                    matum = matumizi.objects.get(pk=int(gid), owner=owner_user)
+
+                maelezo = str(exp.get('remarks') or exp.get('desc') or '').strip()
+
+                if category == 'product':
+                    stock_item_id = exp.get('stock_item_id')
+                    try:
+                        quantity = float(exp.get('quantity') or 0)
+                    except (TypeError, ValueError):
+                        raise ValueError('Invalid quantity')
+                    if not stock_item_id:
+                        raise ValueError('Stock item required')
+                    if quantity <= 0:
+                        raise ValueError('Quantity must be positive')
+                    _save_product_expense(
+                        todo, matum, stock_item_id, quantity, rec_datetime, maelezo,
+                    )
+                    continue
+
+                try:
+                    amount = Decimal(str(exp.get('amount') or 0))
+                except InvalidOperation:
+                    raise ValueError('Invalid amount')
+                if amount <= 0:
+                    raise ValueError('Amount must be positive')
+
+                source = exp.get('source_details') if isinstance(exp.get('source_details'), dict) else {}
+                account_id = source.get('account_id') or exp.get('account_id')
+                if not account_id:
+                    raise ValueError('Payment account required')
+
+                kabidhiwa = str(exp.get('receiver_name') or exp.get('recipient') or exp.get('customer_name') or '').strip()
+                tin_number = str(exp.get('tin_number') or '').strip()
+                worker_id = exp.get('staff_id') or exp.get('worker_id')
+
+                if category == 'customer_discounts' and not kabidhiwa:
+                    raise ValueError('Customer name required')
+
+                recipient_type = str(exp.get('recipient_type') or '').lower()
+                if category not in ('customer_discounts',) and recipient_type == 'staff':
+                    if not worker_id:
+                        raise ValueError('Staff recipient required')
+
+                _save_cash_expense(
+                    todo, matum, amount, account_id, rec_datetime, maelezo,
+                    kabidhiwa=kabidhiwa, worker_id=worker_id, tin_number=tin_number,
+                    expense_kind=category,
+                )
+
+        return JsonResponse({
+            'success': True,
+            'message_eng': 'Expenses saved successfully',
+            'message_swa': 'Matumizi yamerekodiwa kikamilifu',
+        })
+    except matumizi.DoesNotExist:
+        return JsonResponse({'success': False, 'message_swa': 'Aina ya matumizi haipo', 'message_eng': 'Expense type not found'})
+    except ValueError as err:
+        return JsonResponse({'success': False, 'message_eng': str(err), 'message_swa': str(err)})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message_eng': 'Expense was not saved',
+            'message_swa': 'Matumizi hayakurekodiwa',
+        })
+
+
+@login_required(login_url='login')
 def expenses(request):
       try:
             todo = todoFunct(request)
@@ -1701,7 +2408,8 @@ def expenses(request):
             todo.update({
             'pages':pg_number,
             'bil_num':num,
-            'bili':page, 
+            'bili':page,
+            'expense_page': 'list',
             })
             if not todo['duka'].Interprise:
                   return redirect('/userdash')
@@ -1728,7 +2436,8 @@ def expenseList(request):
 
             todo.update({
             'bili':matlst, 
-            'len':len(matlst)
+            'len':len(matlst),
+            'expense_page': 'catalog',
             })
             if not todo['duka'].Interprise:
                   return redirect('/userdash')
@@ -1741,6 +2450,13 @@ def expenseList(request):
 @login_required(login_url='login')
 def addExpense(request):
       if request.method == "POST":
+            if request.POST.get('expenses_json'):
+                  try:
+                        todo = todoFunct(request)
+                        return _add_expense_batch(request, todo)
+                  except Exception:
+                        traceback.print_exc()
+                        return JsonResponse({'success': False, 'message_swa': 'Hitilafu', 'message_eng': 'Error'})
             data={
                               'success':True,
                               'message_eng':'Expense was saved successfully',

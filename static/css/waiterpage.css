@@ -2,18 +2,203 @@
   min-height: 100vh;
 }
 
+.waiter-content-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.waiter-categ-panel {
+  border: 1px solid #e8eaef;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+}
+
 .waiter-counter-nav {
   overflow-x: auto;
 }
 
-.waiter-counter-nav li {
+.waiter-counter-nav.is-horizontal {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: none;
+}
+
+.waiter-counter-nav.is-horizontal li {
   display: inline-block;
   text-wrap: nowrap;
   margin-right: 6px;
+  margin-bottom: 0;
+  width: auto;
+  vertical-align: top;
+}
+
+.waiter-counter-nav.is-horizontal .waiter-categs-btn,
+.waiter-counter-nav.is-horizontal .waiter-categ-orient-btn {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.waiter-counter-nav.is-vertical {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: min(78vh, 720px);
+  padding-right: 4px;
+}
+
+.waiter-counter-nav.is-vertical li {
+  display: block;
+  width: 100%;
+  margin-right: 0;
+  margin-bottom: 6px;
+  text-wrap: normal;
+}
+
+.waiter-counter-nav.is-vertical .waiter-categs-btn,
+.waiter-counter-nav.is-vertical .waiter-categ-orient-btn {
+  width: 100%;
+  text-align: left;
 }
 
 .waiter-counter-nav .btn {
   border-radius: 6px;
+}
+
+.waiter-categ-orient-btn {
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  padding: 0.375rem 0.6rem;
+  line-height: 1;
+}
+
+/* Hide orient toggle on small screens; keep same list flow as categories on desktop */
+.waiter-categ-orient-row {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .waiter-counter-nav.is-horizontal .waiter-categ-orient-row {
+    display: inline-block !important;
+    width: auto;
+  }
+
+  .waiter-counter-nav.is-vertical .waiter-categ-orient-row {
+    display: block !important;
+    width: 100%;
+  }
+}
+
+.waiter-search-input-wrap #waiterSearchClear {
+  min-width: 2.25rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 600;
+}
+
+/* Desktop: horizontal = full-width top row inside content row */
+@media (min-width: 768px) {
+  .waiter-shell.waiter-categ-horizontal #waiterCategoriesSection {
+    flex: 0 0 100%;
+    max-width: 100%;
+    order: -1;
+  }
+
+  .waiter-shell.waiter-categ-horizontal #waiterItemsColumn {
+    flex: 0 0 66.666667%;
+    max-width: 66.666667%;
+  }
+
+  .waiter-shell.waiter-categ-horizontal #waiterSideColumn {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+  }
+
+  /* Desktop: vertical = left sidebar col-md-2 */
+  .waiter-shell.waiter-categ-vertical #waiterCategoriesSection {
+    flex: 0 0 16.666667%;
+    max-width: 16.666667%;
+    order: 0;
+  }
+
+  .waiter-shell.waiter-categ-vertical #waiterItemsColumn {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .waiter-shell.waiter-categ-vertical #waiterSideColumn {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+  }
+
+  .waiter-shell.waiter-categ-vertical .waiter-categ-panel {
+    min-height: 90vh;
+  }
+}
+
+/* Mobile: categories as popup overlay (no layout push) */
+@media (max-width: 767.98px) {
+  #waiterCategoriesSection {
+    display: none !important;
+  }
+
+  #waiterCategoriesSection.waiter-categ-popup-open {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    z-index: 2050;
+    margin: 0 !important;
+    padding: 0;
+    flex: none !important;
+    max-width: none !important;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.45);
+  }
+
+  #waiterCategoriesSection.waiter-categ-popup-open .waiter-categ-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: min(78vh, 560px);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 28px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #waiterCategoriesSection.waiter-categ-popup-open .waiter-counter-nav {
+    flex-direction: column !important;
+    overflow-y: auto;
+    max-height: min(62vh, 460px);
+    padding-bottom: 12px;
+  }
+
+  #waiterCategoriesSection.waiter-categ-popup-open .waiter-counter-nav li {
+    display: block;
+    width: 100%;
+    margin: 0 0 6px;
+  }
+
+  #waiterCategoriesSection.waiter-categ-popup-open .waiter-counter-nav .btn {
+    width: 100%;
+    text-align: left;
+  }
+
+  .waiter-categ-popup-trigger {
+    white-space: nowrap;
+  }
+
+  body.waiter-categ-popup-active {
+    overflow: hidden;
+  }
 }
 
 .waiter-items-wrap,
@@ -22,8 +207,12 @@
   border: 1px solid #e8eaef;
   border-radius: 10px;
   padding: 10px;
-  min-width: min(90vh, 100%);
-  min-height: 90vh;
+  width: 100%;
+}
+
+.waiter-items-wrap {
+  max-height: 90vh;
+  overflow: hidden;
 }
 
 .waiter-search-input-wrap .input-group-text {
@@ -39,9 +228,13 @@
 .waiter-items-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  grid-auto-rows: auto;
+  align-content: start;
   gap: 10px;
-  min-height: 80vh;
+  max-height: calc(90vh - 52px);
+  overflow-x: hidden;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes waiterCardPulse {
@@ -90,6 +283,9 @@
   box-sizing: border-box;
   overflow: hidden;
   min-width: 0;
+  min-height: 220px;
+  height: auto;
+  align-self: start;
   transition: border-color .15s, box-shadow .15s, transform .15s;
   position: relative;
 }
@@ -133,6 +329,8 @@
 .waiter-item-figure {
   width: 100%;
   height: 112px;
+  min-height: 112px;
+  flex-shrink: 0;
   margin: 0 0 0.25rem 0;
   box-sizing: border-box;
   display: block;
@@ -280,7 +478,7 @@
 @media (max-width: 991px) {
   .waiter-items-grid {
     grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
-    max-height: 45vh;
+    max-height: min(calc(90vh - 52px), calc(100vh - 180px));
   }
   .waiter-history-list {
     max-height: 34vh;
@@ -304,13 +502,18 @@
   .waiter-history-wrap {
     padding: 8px;
     border-radius: 8px;
-    min-width: 100%;
-    min-height: auto;
+    width: 100%;
+  }
+  .waiter-items-wrap {
+    max-height: min(90vh, calc(100vh - 140px));
   }
   .waiter-items-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    max-height: 44vh;
+    max-height: min(calc(90vh - 48px), calc(100vh - 200px));
+  }
+  .waiter-item-card {
+    min-height: 200px;
   }
   .waiter-item-figure {
     height: 96px;

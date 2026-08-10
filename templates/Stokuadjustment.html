@@ -321,7 +321,7 @@
                            
                             {% if useri.langSet == 0 %}
 
-                            Rangi za <span style="color:rgb(108, 39, 236)" id="item_jina"></span> {% else %} <span style="color:rgb(108, 39, 236)" id="item_jina"></span> color  {% endif %}
+                            Rangi/Vielelezo kwa <span style="color:rgb(108, 39, 236)" id="item_jina"></span> {% else %} Variants for <span style="color:rgb(108, 39, 236)" id="item_jina"></span> {% endif %}
                         </h6>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
@@ -335,7 +335,7 @@
                     <div class="col-7">
                         <div class="input-group">
                             <div class="input-group-prepend">
-                                <label for="input" class="pt-2 px-2 smallFont">{% if useri.langSet == 0 %}Tafuta Rangi{% else %} Filter color {% endif %}:</label>                            </div>
+                                <label for="input" data-variant-filter-label class="pt-2 px-2 smallFont">{% if useri.langSet == 0 %}Tafuta Rangi/Vielelezo{% else %} Filter variant {% endif %}:</label>                            </div>
                             <input type="text" id="filter_itm_color" class="form-control smallerFont">
                         </div>
                     </div>

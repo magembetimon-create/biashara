@@ -53,7 +53,11 @@ urlpatterns=[
  
     path('customer',views.customer, name='customer'),
     path('getCustomers',views.getCustomers, name='getCustomers'),
+    path('customer-branch-options',views.customer_branch_options, name='customer_branch_options'),
     path('CustomerSales',views.CustomerSales, name='CustomerSales'),
+    path('CustomerSales/statement-data',views.customer_sales_statement_data, name='customer_sales_statement_data'),
+    path('CustomerSales/unpaid-invoices',views.customer_sales_unpaid_invoices, name='customer_sales_unpaid_invoices'),
+    path('CustomerSales/record-payment',views.customer_sales_record_payment, name='customer_sales_record_payment'),
     
     # path('getInvo',views.getInvo, name='getInvo'),
     path('addInvoice',views.addInvoice, name='addInvoice'),

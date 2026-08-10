@@ -647,6 +647,7 @@ $('#form-mteja').submit(function(e){
              mail:mail,
              edit:edit,
              valued:valued,
+             branches: typeof selectedMtejaBranchIds === 'function' ? selectedMtejaBranchIds() : [],
             csrfmiddlewaretoken:csrfToken, 
         } ,    
             url:url,
@@ -658,8 +659,11 @@ $('#form-mteja').submit(function(e){
 
 
         if(simu2=='' || simu2.length==9){
-            // supplier_selected.state=false
-
+            const branchPick = typeof selectedMtejaBranchIds === 'function' ? selectedMtejaBranchIds() : []
+            if (!branchPick.length) {
+                toastr.warning(lang('Chagua angalau tawi moja', 'Select at least one branch'), lang('Taarifa', 'Info'), { timeOut: 2500 })
+                return
+            }
             saveStokuData(data)
 
             $(this).data('customer_value',0)
@@ -727,8 +731,10 @@ var url=form.attr("action"),
    service=Number(form.find('#ServiceItem').prop('checked'))
    paidTime=Number(form.find('#paidTimely').prop('checked'))
    timeP=Number(form.find('#payPerTime').val())
-   colorAttr = form.find('#attr_name').val()
-   thereIsColorAttr = Number(colorAttr != '')
+   colorAttr = ($('#attr_name').val() || '').trim()
+   const hasVariants = $('#color_alena .coloredscene_').length > 0
+   const nonColorVariant = $('#variant_non_color').prop('checked') === true
+   thereIsColorAttr = Number(colorAttr !== '')
 
 
  if(parseInt(form.find('#idadi_bidhaa').val())>0){
@@ -775,8 +781,8 @@ var url=form.attr("action"),
 
 
    let rangi = []
-   if(Number(form.find('#idadi_bidhaa').data('colored'))){
-       $('.coloredscene_').each(function(){
+   if(hasVariants){
+       $('#color_alena .coloredscene_').each(function(){
            let szd = $(this).children('.sizedscene_').length || 0,
                sz=[]
 
@@ -884,8 +890,16 @@ form.find('.muhimu-b').each(function(){
 })
 
 
-if(!aina){form.find('#prodAina').selectpicker('setStyle', 'border-danger');isvalid+=1}
-if(!kampuni){form.find('#produ_campuni').selectpicker('setStyle', 'border-danger');isvalid+=1}
+if (nonColorVariant && hasVariants && !colorAttr) {
+  isvalid += 1
+  redborder('#attr_name')
+  toastr.warning(
+    lang('Andika kielelezo (mf. Model) kwenye modal ya variant', 'Enter the variant label (e.g. Model) in the variant modal'),
+    lang('Taarifa', 'Notice'),
+    { timeOut: 2500 }
+  )
+  $('#modal_color4').modal('show')
+}
 
 // validate the form if user select that there is wholesaling and retail
 var isvalidrej=0
@@ -954,6 +968,11 @@ if(isvalid==0){
 
                form.find('#idadi_bidhaa').data('colored',0)
                $('#color_alena').html('')
+               $('#attr_name').val('')
+               $('#variant_non_color').prop('checked', false)
+               $('#variant_text_name').val('')
+               $('#variant_text_other').val('')
+               if (window.VariantUtils) VariantUtils.updateRegistrationModalUI()
                        
                 goTo('#nunua-panel')
               }else{
@@ -1429,6 +1448,9 @@ function getStokuData(url){
         //store data into a items class
         if('products' in data){
         Items.state = data.products
+        if (window.VariantUtils) {
+            VariantUtils.registerFromProducts(data.products)
+        }
         }
 
         if ('grouped_members_map' in data) {
@@ -1452,11 +1474,17 @@ function getStokuData(url){
         //Store products colors features
         if('bidhaa_Rangi' in data){
             coloredItem.state=data.bidhaa_Rangi
+            if (window.VariantUtils) {
+                VariantUtils.registerFromColorRows(data.bidhaa_Rangi)
+            }
         }
 
         //store stoku  color
         if('stokuRangi' in data){
             stokucolor.state=data.stokuRangi
+            if (window.VariantUtils) {
+                VariantUtils.registerFromColorRows(data.stokuRangi)
+            }
         }
 
         //store stoku size
@@ -1717,11 +1745,16 @@ function produAdjstsSizeColor(color,sized,val,stoku,place,frm,inp){
          if((c.bidhaa==val) || (stk!=0 && (val==c.addedfromprodu || c.bidhaa==datafrom ))){
 
              if(c.color__colored!=false){
+               const vAttr = c.bidhaa__bidhaa__colorAttr || (window.VariantUtils ? VariantUtils.getVariantAttr(c.bidhaa, null) : null)
+               const isColor = window.VariantUtils ? VariantUtils.isColorMode(vAttr) : true
+               const variantLabel = c.color__color_name || ''
+               const tileInner = isColor
+                 ? `<div type="button" style="background:${c.color__color_code};color:${c.color__color_code};">${variantLabel}</div>`
+                 : `<div type="button" class="btn btn-light border text-danger text-capitalize smallerFont font-weight-bold px-2 py-1" style="min-width:52px;background:#f8f9fa;">${variantLabel}</div>`
        colored+=`
            <div class=" m-1 column  color_specify" style=";border-radius:2px;width:80px;border:1px solid #000">
       
-           <div type="button" style="background:${c.color__color_code};color:${c.color__color_code};">
-           ${c.color__color_name}
+           ${tileInner}
 
            <div class=" position-absolute  " id="success${c.id}"  style="display:none;margin-left:60px;margin-top:-19px;height:19px;width:17px;border-radius:50%;color:#fff;background:rgba(2, 167, 2, 0.842);border:1px solid #fff">
             <span style="top:-1px;left:-1px;position:absolute;">
@@ -2473,10 +2506,35 @@ $('body').on('keyup','.jina-la_rangi',function () {
     const jum_ = Number($(this).data('jum'))
     $(`#submit-bill-colorI`).data('jum_click',jum_)
       $('.input_rej').prop('hidden',jum_)
-   })   
+   })
+
+   $(document).on('input change', '#attr_name', function () {
+     if (window.VariantUtils) VariantUtils.updateRegistrationModalUI()
+   })
+   $(document).on('change', '#variant_non_color', function () {
+     if (window.VariantUtils) VariantUtils.updateRegistrationModalUI()
+   })
+   $('#modal_color4').on('show.bs.modal', function () {
+     if (window.VariantUtils) VariantUtils.updateRegistrationModalUI()
+   })
+
+   $('body').on('click', '#variant_text_add_btn', function () {
+     const name = ($('#variant_text_name').val() || '').trim()
+     if (!name) {
+       $('#variant_text_name').focus()
+       toastr.warning(lang('Andika jina la kielelezo', 'Enter the variant name'), lang('Taarifa', 'Notice'), { timeOut: 2000 })
+       return
+     }
+     const other = ($('#variant_text_other').val() || '').trim()
+     const pos = $('#color_alena').children().last().data('pos') || 0
+     $('#color_alena').append(Adding_color(name, '#e9ecef', pos + 1, other, true))
+     $('#variant_text_name').val('')
+     $('#variant_text_other').val('')
+   })
     
 
- function Adding_color(cv,cc,pos,ot){
+ function Adding_color(cv,cc,pos,ot,textOnly){
+     textOnly = textOnly || (window.VariantUtils && VariantUtils.isRegistrationNonColorMode())
      let pj=$('#vipimo-vya-bidhaa').val()|| lang('vipimo jumla','Wholesale Measure'),pr=$('#pimo-reja').val()|| lang('vipimo reja','Retail Measure'),uwiano=1
          const jum_ = Number($(`#submit-bill-colorI`).data('jum_click'))
      if($("#fromOtherStocku").data('bs.modal')?._isShown ){
@@ -2485,15 +2543,33 @@ $('body').on('keyup','.jina-la_rangi',function () {
           uwiano = $('#fetch_item').data('uwiano')
      }
 
-   
-
-    
-
-     color_img({pos,color:cv})
+     if (!textOnly) {
+       color_img({pos,color:cv})
+     }
      checkColor()
 
+     const headerInner = textOnly
+       ? `<span class="badge badge-secondary border px-2 py-1 smallerFont font-weight-bold text-capitalize">${cv}</span>`
+       : `<button type="button" class="mr-2 rangi-editing" 
+       data-color=0 data-color_name='' data-idadi_jum=0 data-valued=0 
+       data-toggle="modal" data-target="#kuweka-rangi-model" style="height: 25px;width:40px;color:${cc};
+           background:${cc};cursor:pointer;border-radius:3px;
+           box-shadow:0px 3px 10px -3px rgba(0,0,0,0.37);border:0;">color</button>   
+       <span class="smallerFont">${cv}</span>`
+
+     const tileStyle = textOnly
+       ? `min-width:52px;max-width:120px;height:auto;min-height:25px;padding:2px 8px;cursor:pointer;
+          background:#f8f9fa;border:1px solid #dee2e6;border-radius:4px;
+          box-shadow:0px 3px 10px -3px rgba(0,0,0,0.37);`
+       : `height: 25px;width:40px;background-color:${cc};cursor:pointer;
+          box-shadow:0px 3px 10px -3px rgba(0,0,0,0.37);`
+
+     const tileInner = textOnly
+       ? `<span class="smallerFont font-weight-bold text-capitalize d-block text-truncate" style="max-width:110px">${cv}</span>`
+       : ''
+
       return `
-      <div class="column mb-2" id="color_${pos}" data-code=${cc} data-other="${ot}" data-pos=${pos}  data-color=${cv}>
+      <div class="column mb-2" id="color_${pos}" data-code=${cc} data-other="${ot}" data-pos=${pos}  data-color=${cv} ${textOnly ? 'data-text-variant=true' : ''}>
         <div class="position-absolute showingpop24 p-3 whiteBg" id="ona_rang0${pos}" data-add=true data-showing="#ona_rang0"
            style="border-radius:8px;
            -webkit-box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37); 
@@ -2507,24 +2583,8 @@ $('body').on('keyup','.jina-la_rangi',function () {
            >
    
    
-     <p class="d-flex">
-       <button type="button" class="mr-2 rangi-editing" 
-       data-color=0
-       data-color_name='' 
-       data-idadi_jum=0
-       data-valued=0 
-       data-toggle="modal" data-target="#kuweka-rangi-model" style="height: 25px;width:40px;color:${cc};
-           background:${cc};
-           cursor:pointer;
-           border-radius:3px;
-           -webkit-box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37); 
-           box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37);
-           border:0;
-
-       ">
-          color
-    </button>   
-    <span class="smallerFont">${cv}</span>
+     <p class="d-flex align-items-center flex-wrap">
+       ${headerInner}
 
     <!-- REMOVE COLOR BUTTON...............................  -->
   
@@ -2589,13 +2649,8 @@ $('body').on('keyup','.jina-la_rangi',function () {
 
 
       <div class="showingpop241 "  data-showing="#ona_rang0${pos}" data-color=false 
-       style="height: 25px;width:40px;
-           background-color:${cc};
-           cursor:pointer;
-           -webkit-box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37); 
-           box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37);
-           ">
-     
+       style="${tileStyle}">
+     ${tileInner}
      <div class=" position-absolute  " id="success0${pos}"  
            style="margin-left:21px;
            margin-top:-18px;

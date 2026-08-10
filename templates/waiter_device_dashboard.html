@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/sales.css' %}">
   <link rel="stylesheet" href="{% static 'css/waiterpage.css' %}">
+  <link rel="stylesheet" href="{% static 'css/barcode_stream.css' %}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
   
   <style>
@@ -300,30 +301,50 @@
     {% csrf_token %}
 
 
-    <div id="waiterCategoriesSection" class="row classic_div mb-2">
-      <div class="col-12">
-        <ul id="waiterCounterNav" class="waiter-counter-nav list-unstyled d-flex pt-2 mb-0"></ul>
-      </div>
-    </div>
-
     <div class="row classic_div mb-2 waiter-search-row">
       <div class="col-12">
-        <div class="input-group waiter-search-input-wrap">
-          <input type="text" id="waiterSearchInput" class="form-control" placeholder="{% if useri.langSet == 0 %}Tafuta Bidhaa{% else %}Search Item{% endif %}">
-          <div class="input-group-append">
-            <span class="input-group-text">
-              <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </span>
+        <div class="d-flex align-items-stretch waiter-search-bar">
+          <button type="button" id="waiterOpenCategPopup" class="btn btn-outline-primary mr-2 d-md-none waiter-categ-popup-trigger" title="{% if useri.langSet == 0 %}Aina{% else %}Categories{% endif %}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+              <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+            </svg>
+            <span class="ml-1">{% if useri.langSet == 0 %}Aina{% else %}Cats{% endif %}</span>
+          </button>
+          <div class="input-group waiter-search-input-wrap tb-barcode-allow-input flex-grow-1">
+            <input type="text" id="waiterSearchInput" class="form-control" placeholder="{% if useri.langSet == 0 %}Tafuta Bidhaa / Barcode{% else %}Search Item / Barcode{% endif %}">
+            <div class="input-group-append">
+              <button type="button" id="waiterSearchClear" class="btn btn-outline-secondary" style="display:none;" title="{% if useri.langSet == 0 %}Futa tafuta{% else %}Clear search{% endif %}">
+                &times;
+              </button>
+              <button type="button" class="btn btn-outline-secondary tb-open-barcode-camera" title="{% if useri.langSet == 0 %}Skani barcode{% else %}Scan barcode{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upc-scan" viewBox="0 0 16 16">
+                  <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5zM.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5zM3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7z"/>
+                </svg>
+              </button>
+              <span class="input-group-text">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </span>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="row">
-      <div id="waiterItemsColumn" class="col-lg-7 mb-3">
+    <div class="row waiter-content-row" id="waiterContentRow">
+      <div id="waiterCategoriesSection" class="col-12 mb-3">
+        <div class="classic_div waiter-categ-panel">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <small class="text-muted">{% if useri.langSet == 0 %}Aina{% else %}Categories{% endif %}</small>
+            <button type="button" class="btn btn-sm btn-light d-md-none" id="waiterCloseCategPopup" aria-label="Close">&times;</button>
+          </div>
+          <ul id="waiterCounterNav" class="waiter-counter-nav list-unstyled d-flex pt-1 mb-0 is-horizontal"></ul>
+        </div>
+      </div>
+
+      <div id="waiterItemsColumn" class="col-lg-8 mb-3">
         <div class="classic_div waiter-items-wrap">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h6 class="mb-0">{% if useri.langSet == 0 %}Bidhaa{% else %}Items{% endif %}</h6>
@@ -333,7 +354,7 @@
         </div>
       </div>
 
-      <div id="waiterSideColumn" class="col-lg-5 mb-3">
+      <div id="waiterSideColumn" class="col-lg-4 mb-3">
         <div class="classic_div mb-2 waiter-desktop-panel-toggle">
           <div class="btn-group btn-group-sm d-flex" role="group" aria-label="Waiter Panels">
             <button type="button" class="btn btn-primary waiter-panel-tab" data-panel="current">
@@ -613,8 +634,10 @@
      data-count-eng="times" 
      style="display:none;"></div>
 
+<input type="hidden" id="waiter_receipt_paper" value="{{ waiter_receipt_paper|default:1 }}">
 <input type="hidden" id="DEVICE_ID" value="{{ device_id }}">
 <input type="hidden" id="DEVICE_BIZ_ID" value="{{ duka.id }}">
+<input type="hidden" id="ACTIVE_WAITER_ID" value="{% if active_waiter %}{{ active_waiter.id }}{% endif %}">
 <input type="hidden" id="FORCE_ENABLE_PRINT" value="1">
 <input type="hidden" id="luga" value="{{ useri.langSet }}" name="luga">
 <input type="hidden" id="entpCurrencii" value="{{ duka.currencii }}" name="entpCurrencii">
@@ -627,7 +650,82 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script src="{% static 'js/lugha.js' %}"></script>
 <script src="{% static 'js/loadCells.js' %}"></script>
-
+<script src="{% static 'js/quagga.js' %}"></script>
+<script src="{% static 'js/html5-qrcode.min.js' %}"></script>
+<script src="{% static 'js/tb_barcode.js' %}"></script>
 <script src="{% static 'js/waiter_device_dashboard.js' %}"></script>
+
+<div class="beep_audio" hidden>
+  <audio id="beep_audio" preload="auto">
+    <source src="{% static 'audio/beep.wav' %}" type="audio/wav">
+  </audio>
+</div>
+
+<div class="modal fade" id="livestream_scanner" data-pos="0" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Barcode Scanner</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div id="interactive" class="viewport"></div>
+        <div class="error"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="livestream__qr_scanner" data-pos="0" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h5 class="modal-title">{% if useri.langSet == 0 %}Barcode Scanner{% else %}Barcode Scanner{% endif %}</h5>
+        <button type="button" class="close stop_qr" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="tb-scan-session-body">
+          <div class="tb-scan-top">
+            <div id="qr_reader" class="tb-scan-camera viewport"></div>
+            <div id="tb-scan-hid-panel" class="tb-scan-hid-panel" hidden>
+              <div class="tb-scan-hid-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/>
+                  <path d="M2 4.5a.5.5 0 0 1 .5-.5h1v8h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 .5-.5h1v8h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 .5-.5h.5v8H8.5a.5.5 0 0 1-.5-.5v-7zm2.5 0a.5.5 0 0 1 .5-.5h1v8h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 .5-.5h1v8h-1a.5.5 0 0 1-.5-.5v-7z"/>
+                </svg>
+              </div>
+              <p class="tb-scan-hid-hint mb-0" id="tb-scan-hid-hint">
+                {% if useri.langSet == 0 %}Tumia barcode scanner au kamera kuskani bidhaa{% else %}Use a barcode scanner or camera to scan items{% endif %}
+              </p>
+            </div>
+            <div class="tb-scan-last-code">
+              <span class="tb-scan-last-label" id="tb-scan-last-label">Barcode:</span>
+              <strong id="tb-scan-last-code">—</strong>
+            </div>
+            <div id="qr_error" class="error tb-scan-error"></div>
+          </div>
+          <div class="tb-scan-bottom">
+            <div class="tb-scan-bottom-head d-flex justify-content-between align-items-center">
+              <strong id="tb-scan-bottom-title">{% if useri.langSet == 0 %}Bidhaa zilizoskaniwa{% else %}Scanned items{% endif %}</strong>
+              <span class="text-muted small" id="tb-scan-session-count">0</span>
+            </div>
+            <ul id="tb-scan-session-list" class="list-unstyled mb-0 tb-scan-session-list"></ul>
+            <div id="tb-scan-session-empty" class="text-muted text-center py-3 small">
+              {% if useri.langSet == 0 %}Bado hakuna bidhaa. Skani barcode...{% else %}No items yet. Scan a barcode...{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-primary stop_qr" data-dismiss="modal">
+          {% if useri.langSet == 0 %}Maliza / Funga{% else %}Done / Close{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

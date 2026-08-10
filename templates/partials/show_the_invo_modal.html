@@ -1,0 +1,99 @@
+{% load static %}
+<!-- Invoice preview modal (shared: customer statement, reports) -->
+<div class="modal fade" id="ShowTheInvo" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h5 class="modal-title">{% if useri.langSet == 0 %}Ankara{% else %}Invoice{% endif %}</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" style="min-height: 310px;">
+        <div id="Invo_loader" style="display:none;">
+          <div class="classic_div d-flex justify-content-center align-items-center py-5">
+            <div class="row classic_div whiteBg pb-2" style="min-width:200px;">
+              <div class="lds-ring col-3"><div></div><div></div><div></div><div></div></div>
+              <div class="col-9 pt-2 smallFont">{% if useri.langSet == 0 %}Tafadhari subiri…{% else %}Please wait…{% endif %}</div>
+            </div>
+          </div>
+        </div>
+        <div id="Invo_notFound" style="display:none;">
+          <div class="text-center py-5 text-muted">
+            {% if useri.langSet == 0 %}Hakuna ankara iliyopatikana{% else %}No invoice found{% endif %}
+          </div>
+        </div>
+        <div class="classic_div mt-sm-2 pt-3 pb-2 px-1 whiteBg the_invo_page" style="display: none;" id="the_invo_page">
+          <div id="theInvoAddress"></div>
+          <div id="niAnkara">
+            <div class="table-responsive">
+              <table id="prod_table" class="table-bordered table table-sm" data-row="1">
+                <tr class="bg-light smallFont">
+                  <th>#</th>
+                  <th>{% if useri.langSet == 0 %}Bidhaa/Huduma{% else %}Item(s){% endif %}</th>
+                  <th id="ifcolor">{% if useri.langSet == 0 %}Rangi{% else %}Color{% endif %}</th>
+                  <th id="ifSize">Size</th>
+                  <th>{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
+                  <th>{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}</th>
+                  <th>{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                  <th>{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</th>
+                </tr>
+                <tbody id="view-invo_tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-5"></div>
+            <div class="col-md-7 row border py-2 text-right latoFont invo_sumary" style="margin-top: -9px;">
+              <div class="row classic_div border-bottom" id="when_discount" style="display: none;">
+                <div class="py-1 col-5">{% if useri.langSet == 0 %}Jumla kwa Bei{% else %}Actual Total{% endif %}:</div>
+                <div class="col-7"><span style="color:blue">{{ duka.currencii }}</span>. <span id="bei_halisi"></span></div>
+                <div class="py-1 col-5">{% if useri.langSet == 0 %}Punguzo{% else %}Discount{% endif %}:</div>
+                <div class="col-7"><span style="color:blue">{{ duka.currencii }}</span>. <span id="punguzo_tu"></span></div>
+              </div>
+              <div class="row classic_div col-12 m-0 p-0" id="show_vat_if" style="display: none;">
+                <div class="py-1 col-5">{% if useri.langSet == 0 %}Jumla kwa Mauzo{% else %}Sub Total{% endif %}:</div>
+                <div class="col-7"><span style="color:blue">{{ duka.currencii }}</span>. <span id="bei_bila_vat"></span></div>
+                <div class="py-1 col-5 bg-light">VAT(<span id="vatp"></span>%):</div>
+                <div class="col-7 bg-light text-right"><span style="color:blue">{{ duka.currencii }}</span>. <span id="the_invo_vat"></span></div>
+              </div>
+              <div class="col-5 py-1 border-top"><strong>{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</strong>:</div>
+              <div class="col-7 py-1 border-top"><span style="color:blue">{{ duka.currencii }}</span>. <strong class="text-danger" id="TheInvoPage"></strong></div>
+            </div>
+          </div>
+          <hr>
+          <div class="row classic_div">
+            <p class="col-12">{% if useri.langSet == 0 %}Imehakikiwa na{% else %}Confirmed by{% endif %}: <strong id="TheInvoBy" class="text-capitalize"></strong></p>
+          </div>
+          <div id="ifFidia"></div>
+        </div>
+        <div class="table-responsive" id="IfPaid" style="display:none;">
+          <div class="classic_div" style="max-width:100%;">
+            <h5 class="mt-3">{% if useri.langSet == 0 %}Malipo{% else %}Payments{% endif %}:</h5>
+            <div class="d-flex classic_div">
+              <div class="px-2"><div class="text-center" style="height:50px;width:50px;font-size:40px;border:1px solid #f2f2f2;border-radius:50%;">$</div></div>
+              <div style="border-left:2px solid #f2f2f2;"><ul class="list-unstyled" id="TheMalipoLi"></ul></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer d-flex flex-wrap justify-content-between align-items-center">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</button>
+        <div class="btn-group show-invo-print-group" role="group">
+          <button type="button" class="btn btn-light actionbtns btn-sm smallFont show-invo-print-main" data-invo="0" data-lang="{% if useri.langSet == 0 %}0{% else %}1{% endif %}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16"><path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/><path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/></svg>
+            {% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}
+          </button>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-light btn-sm dropdown-toggle" data-toggle="dropdown"></button>
+            <div class="dropdown-menu dropdown-menu-right">
+              <button type="button" class="dropdown-item actionbtns show-invo-print-lang" data-invo="0" data-lang="0">Swahili</button>
+              <button type="button" class="dropdown-item actionbtns show-invo-print-lang" data-invo="0" data-lang="1">English</button>
+              <div class="dropdown-divider"></div>
+              <button type="button" class="dropdown-item" data-toggle="modal" data-target="#IvoSettingModal">{% if useri.langSet == 0 %}Rekebisha ukubwa{% else %}Print settings{% endif %}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<input type="hidden" id="currencii" value="{{ duka.currencii }}" data-currencii="{{ duka.currencii }}" />

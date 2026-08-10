@@ -1,0 +1,96 @@
+.exp-record-panel {
+  max-width: 1200px;
+}
+
+.exp-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.exp-desc-row {
+  width: 100%;
+  max-width: 100%;
+}
+
+.exp-desc-textarea {
+  width: 100%;
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.exp-ac-list {
+  position: absolute;
+  z-index: 50;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.exp-ac-list.hidden {
+  display: none;
+}
+
+.exp-ac-list div {
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.exp-ac-list div:hover {
+  background: #f1f5f9;
+}
+
+#expenseItemWrapper,
+#staffWrapper,
+#productStockWrapper {
+  position: relative;
+}
+
+.exp-records-page .exp-recycle-wrap {
+  margin-top: 4px;
+  line-height: 1;
+}
+
+.exp-records-page .recylebtn {
+  padding: 0 !important;
+  height: 20px;
+  width: 20px;
+  border-radius: 30%;
+  align-items: center;
+  justify-content: center;
+  display: inline-flex;
+  transition: background-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #6c757d;
+}
+
+.exp-records-page .recylebtn:hover {
+  color: #495057;
+}
+
+.exp-records-page .recylebtn.activeRecyle {
+  background-color: rgb(228, 167, 0);
+}
+
+.exp-records-page .exp-amount-field {
+  color: #212529;
+  font-weight: 700;
+}
+
+.exp-records-page .hidden {
+  display: none !important;
+}
+
+#expenseDefineModal .exp-define-bills-panel.d-none,
+#expenseDefineModal .exp-define-tax-panel.d-none {
+  display: none !important;
+}

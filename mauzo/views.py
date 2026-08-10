@@ -8,7 +8,7 @@ import json
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
-from management.models import UserExtend,Interprise_Rating,ForPrintingPupose,ChangedServiceFrom,invoice_desk,HudumaNyingine,ChangedServiceTo,ChangedService,Kanda,Workers,Notifications,deliveryAgents,productionList,deliveryBy,salePuMatch,manunuzi,remainedFromOda, manunuziList,order_from,order_to,bidhaa_aina,sale_return,user_customers,businessReg,sale_return_mauzo_fidia,sa_ret,sa_col_ret,sa_size_ret,picha_bidhaa,Cash_order_return,Interprise,toaCash,bei_za_bidhaa,bidhaa,Interprise_contacts,wekaCash,produ_size,color_produ,produ_colored,bidhaa_stoku,wateja,sales_color,sales_size,mauzoni,mauzoList,InterprisePermissions,PaymentAkaunts,customer_in_cell,waiterPayments,WaiterPosDeviceSession,waiter_clearing
+from management.models import UserExtend,Interprise_Rating,ForPrintingPupose,ChangedServiceFrom,invoice_desk,HudumaNyingine,ChangedServiceTo,ChangedService,Kanda,Workers,Notifications,deliveryAgents,productionList,deliveryBy,salePuMatch,manunuzi,remainedFromOda, manunuziList,order_from,order_to,bidhaa_aina,sale_return,user_customers,businessReg,sale_return_mauzo_fidia,sa_ret,sa_col_ret,sa_size_ret,picha_bidhaa,Cash_order_return,Interprise,toaCash,bei_za_bidhaa,bidhaa,Interprise_contacts,wekaCash,produ_size,color_produ,produ_colored,bidhaa_stoku,wateja,customer_Interprise,sales_color,sales_size,mauzoni,mauzoList,InterprisePermissions,PaymentAkaunts,customer_in_cell,waiterPayments,WaiterPosDeviceSession,waiter_clearing
 from management.models import customer_area
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
@@ -19,6 +19,8 @@ from django.core import serializers
 from django.db.models import Q
 # from datetime import datetime
 from django.utils import timezone
+from django.utils import timezone as dj_timezone
+from django.utils.dateparse import parse_datetime
 timezone.now()
 from datetime import date, timedelta,tzinfo,timezone
 
@@ -40,7 +42,12 @@ from stoku.grouped_items_utils import (
       reduce_grouped_members_stock,
       restore_grouped_members_stock,
 )
-# Create your views here.
+from .receipt_format import receipt_template_for_paper
+from stoku.customer_branch_utils import (
+    assignable_branches_qs,
+    customer_visible_on_branch,
+    customers_for_branch_list,
+)
 
 def todoFunct(request):
   usr = Todos(request)
@@ -286,6 +293,9 @@ def waiterpage(request):
            
             servicing=True
       )
+
+      from .receipt_format import waiter_receipt_paper_from_interprise
+      todo.update({'waiter_receipt_paper': waiter_receipt_paper_from_interprise(todo.get('duka'))})
 
       if servicing_counter.exists():
             todo.update({'servicing_counter': servicing_counter.last()})
@@ -582,7 +592,7 @@ def waiter_items_data(request):
             vipimo=F('bidhaa__vipimo'),
             uwiano=F('bidhaa__idadi_jum'),
             vipimoJum=F('bidhaa__vipimo_jum'),
-            # bidhaa_id=F('bidhaa__id')
+            colorAttr=F('bidhaa__colorAttr'),
       ).values().order_by('-pk')
 
       products = list(products_qs)
@@ -612,7 +622,8 @@ def waiter_items_data(request):
                   'bidhaa__bidhaa__vipimo',
                   'bidhaa__bidhaa__vipimo_jum',
                   'bidhaa__bidhaa__idadi_jum',
-                  'bidhaa__idadi'
+                  'bidhaa__idadi',
+                  'bidhaa__bidhaa__colorAttr',
             )
       )
 
@@ -4842,24 +4853,35 @@ def waiter_pos_manage(request):
       if not duka or not duka.waiter_counter:
             return redirect('/userdash')
 
+      interprise = duka
+
       if request.method == 'POST':
             action    = request.POST.get('action', '')
             device_id = str(request.POST.get('device_id', '') or '').strip()
             if action == 'deactivate' and device_id:
                   WaiterPosDeviceSession.objects.filter(
-                        Interprise=duka.Interprise, device_id=device_id
+                        Interprise=interprise, device_id=device_id
                   ).update(active=False)
             elif action == 'delete' and device_id:
                   WaiterPosDeviceSession.objects.filter(
-                        Interprise=duka.Interprise, device_id=device_id
+                        Interprise=interprise, device_id=device_id
                   ).delete()
+            elif action == 'save_receipt_paper':
+                  from .receipt_format import normalize_waiter_receipt_paper
+                  paper = normalize_waiter_receipt_paper(request.POST.get('waiter_receipt_paper', 1))
+                  interprise.waiter_receipt_paper = paper
+                  interprise.save(update_fields=['waiter_receipt_paper'])
             return redirect('/mauzo/waiter_pos_manage')
 
       devices = WaiterPosDeviceSession.objects.filter(
-            Interprise=duka.Interprise
+            Interprise=interprise
       ).order_by('-updated_at')
 
-      todo.update({'devices': devices})
+      from .receipt_format import waiter_receipt_paper_from_interprise
+      todo.update({
+            'devices': devices,
+            'waiter_receipt_paper': waiter_receipt_paper_from_interprise(interprise),
+      })
       return render(request, 'waiter_pos_manage.html', todo)
 
 
@@ -5054,12 +5076,14 @@ def waiter_device_dashboard(request):
                   'payaccs_waiter': payaccs_,
             }
 
+            from .receipt_format import waiter_receipt_paper_from_interprise
             todo.update({
                   'waiter_counters': counters,
                   'active_waiter': active_counter,
                   'device_id': device_id,
                   'biz_id': biz_id,
                   'force_enable_print': True,  # Force print button visible
+                  'waiter_receipt_paper': waiter_receipt_paper_from_interprise(duka),
             })
 
             return render(request, 'waiter_device_dashboard.html', todo)
@@ -5073,8 +5097,11 @@ def waiter_Invoprint(request):
       """Waiter-only print view, separate from Invoprint."""
       try:
             print_todo = viewWaiterInvo_funct(request)
-            m = int(request.GET.get('m', 0))
-            goto = 'minRecept.html' if m else 'invo.html'
+            from .receipt_format import receipt_template_for_paper, waiter_receipt_paper_from_interprise
+            # Always use admin waiter POS print setting (waiter_pos_manage), not URL/cheo.
+            duka = print_todo.get('duka')
+            paper = waiter_receipt_paper_from_interprise(duka)
+            goto = receipt_template_for_paper(paper)
             return render(request, goto, print_todo)
       except ValueError as er:
             code = str(er)
@@ -5091,12 +5118,10 @@ def  Invoprint(request):
       
       try:
             todo = viewInvo_funct(request)
-            m=int(request.GET.get('m',0))
+            m = request.GET.get('m', 0)
            
             bil = todo['the_bill']
-            goto = 'invo.html'
-            if m:
-               goto = 'minRecept.html'
+            goto = receipt_template_for_paper(m)
             if bil.order:  
                   if not todo['duka'].Interprise:
                         return redirect('/userdash')
@@ -6099,8 +6124,8 @@ def  addInvoice(request):
              mauzi.mail = mauzi.mail
             
          else:      
-            if  wateja.objects.filter(pk=sup,Interprise=entp.Interprise.id).exists() and not toLabor:
-                watj = wateja.objects.get(pk=sup,Interprise=entp.Interprise.id)  
+            if  wateja.objects.filter(pk=sup,Interprise__owner=entp.Interprise.owner.id).exists() and not toLabor:
+                watj = wateja.objects.get(pk=sup,Interprise__owner=entp.Interprise.owner.id)  
                 mauzi.customer_id = watj
                 mauzi.saved_custom =True
                 if watj.active:
@@ -6561,58 +6586,553 @@ def  customer(request):
 @login_required(login_url='login')
 def  getCustomers(request):
     used = request.user
-    dukap = InterprisePermissions.objects.get(user__user = used.id, default = True)
-    custom = list(wateja.objects.filter(Interprise__owner=dukap.Interprise.owner.id).annotate(duka=F('Interprise'),duka_jina=F('Interprise__name')).values())
-    
-    data=dict()
-    data['wateja']=custom     
+    dukap = InterprisePermissions.objects.get(user__user=used.id, default=True)
+    branch_param = int(request.POST.get('branch', -1) if request.method == 'POST' else request.GET.get('branch', -1) or -1)
+    all_branches = branch_param == 0 and dukap.owner
+    branch_id = None if all_branches else (branch_param if branch_param > 0 else dukap.Interprise_id)
+    custom = customers_for_branch_list(dukap, branch_id=branch_id, all_branches=all_branches)
+    data = dict()
+    data['wateja'] = custom
     data['watejatu'] = 1
     return JsonResponse(data)
+
+
+@login_required(login_url='login')
+def customer_branch_options(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    try:
+        todo = todoFunct(request)
+        cheo = todo.get('cheo')
+        if not cheo:
+            return JsonResponse({'success': False})
+        cust_id = int(request.POST.get('cust', 0) or 0)
+        branches = list(assignable_branches_qs(cheo).values('id', 'name'))
+        allowed_ids = {b['id'] for b in branches}
+        selected = []
+        if cust_id:
+            selected = list(
+                customer_Interprise.objects.filter(mteja_id=cust_id, branch_id__in=allowed_ids).values_list(
+                    'branch_id', flat=True
+                )
+            )
+        elif cheo.Interprise_id in allowed_ids:
+            selected = [cheo.Interprise_id]
+        return JsonResponse({'success': True, 'branches': branches, 'selected': selected})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False})
+
+def _cs_parse_dt(value):
+    if not value:
+        return None
+    if isinstance(value, datetime.datetime):
+        dt = value
+    else:
+        dt = parse_datetime(str(value))
+        if dt is None:
+            try:
+                dt = datetime.datetime.fromisoformat(str(value).replace('Z', '+00:00'))
+            except ValueError:
+                return None
+    if dj_timezone.is_naive(dt):
+        dt = dj_timezone.make_aware(dt, dj_timezone.get_current_timezone())
+    return dt
+
+
+def _cs_customer_invoices(todo, customer_id):
+    duka = todo['duka']
+    return mauzoni.objects.filter(
+        customer_id=customer_id,
+        Interprise__owner=duka.owner.id,
+    ).exclude(full_returned=True)
+
+
+def _cs_balance_invoices_qs(invoices_qs):
+    """Invoices that affect customer debt / running balance (exclude undelivered orders)."""
+    return invoices_qs.exclude(order=True, derivered=False)
+
+
+def _cs_is_pending_order(inv):
+    return bool(inv.get('order')) and not bool(inv.get('derivered'))
+
+
+def _cs_line_qty_debt(line):
+    qty = float(line.get('idadi') or 0) - float(line.get('returned') or 0)
+    if qty < 0:
+        qty = 0.0
+    price = float(line.get('bei') or 0)
+    return qty, price, round(qty * price, 2)
+
+
+def _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt):
+    invoices_qs = _cs_customer_invoices(todo, customer_id)
+    balance_qs = _cs_balance_invoices_qs(invoices_qs)
+
+    debt_agg = balance_qs.filter(amount__gt=F('ilolipwa')).aggregate(
+        debt=Sum(F('amount') - F('ilolipwa'), output_field=DecimalField())
+    )
+    total_debt = float(debt_agg['debt'] or 0)
+
+    prepaid_qs = invoices_qs.filter(order=True, derivered=False)
+    prepaid_agg = prepaid_qs.aggregate(c=Sum('ilolipwa'))
+    customer_credit = round(float(prepaid_agg['c'] or 0), 2)
+
+    totals = invoices_qs.aggregate(
+        total_invoices=Count('id'),
+        total_purchase=Sum('amount'),
+    )
+    sales_before = balance_qs.filter(tarehe__lt=t_fr_dt).aggregate(s=Sum('amount'))['s'] or Decimal('0')
+    payments_regular_before = wekaCash.objects.filter(
+        invo__in=balance_qs,
+        tarehe__lt=t_fr_dt,
+    ).aggregate(s=Sum('Amount'))['s'] or Decimal('0')
+    payments_prepaid_before = wekaCash.objects.filter(
+        invo__in=prepaid_qs,
+        tarehe__lt=t_fr_dt,
+    ).aggregate(s=Sum('Amount'))['s'] or Decimal('0')
+    # Positive = prepaid credit; negative = customer owes (delivered sales minus payments)
+    opening_signed = float(payments_regular_before + payments_prepaid_before - sales_before)
+
+    period_invoices = list(
+        invoices_qs.filter(tarehe__gte=t_fr_dt, tarehe__lte=t_to_dt)
+        .annotate(
+            BFname=F('By__user__user__first_name'),
+            BLname=F('By__user__user__last_name'),
+        )
+        .values(
+            'id', 'code', 'amount', 'ilolipwa', 'tarehe', 'date',
+            'order', 'derivered', 'service', 'desc', 'BFname', 'BLname',
+        )
+    )
+    period_payments = list(
+        wekaCash.objects.filter(
+            invo__customer_id=customer_id,
+            invo__Interprise__owner=todo['duka'].owner.id,
+            tarehe__gte=t_fr_dt,
+            tarehe__lte=t_to_dt,
+        )
+        .annotate(
+            invo_code=F('invo__code'),
+            invo_order=F('invo__order'),
+            invo_derivered=F('invo__derivered'),
+            BFname=F('by__user__user__first_name'),
+            BLname=F('by__user__user__last_name'),
+        )
+        .values(
+            'id', 'Amount', 'tarehe', 'maelezo', 'kutoka', 'invo_id', 'invo_code',
+            'invo_order', 'invo_derivered', 'BFname', 'BLname',
+        )
+    )
+
+    period_purchase = sum(float(r['amount'] or 0) for r in period_invoices)
+    period_payments_total = sum(float(r['Amount'] or 0) for r in period_payments)
+
+    inv_by_id = {inv['id']: inv for inv in period_invoices}
+    period_ids = list(inv_by_id.keys())
+
+    line_rows = []
+    if period_ids:
+        lines = list(
+            mauzoList.objects.filter(mauzo_id__in=period_ids)
+            .annotate(
+                item_name=F('produ__bidhaa__bidhaa_jina'),
+                vipimo=F('produ__bidhaa__vipimo'),
+                vipimo_jum=F('produ__bidhaa__vipimo_jum'),
+                invo_tarehe=F('mauzo__tarehe'),
+                invo_date=F('mauzo__date'),
+            )
+            .values(
+                'id', 'mauzo_id', 'idadi', 'returned', 'bei', 'jum',
+                'item_name', 'vipimo', 'vipimo_jum', 'invo_tarehe', 'invo_date',
+            )
+        )
+        inv_ids_with_lines = set()
+        for line in lines:
+            inv = inv_by_id.get(line['mauzo_id'])
+            if not inv:
+                continue
+            inv_ids_with_lines.add(line['mauzo_id'])
+            dt = inv['tarehe'] or line['invo_tarehe']
+            pending = _cs_is_pending_order(inv)
+            qty, price, line_debt = _cs_line_qty_debt(line)
+            units = (line.get('vipimo_jum') or '') if line.get('jum') else (line.get('vipimo') or '')
+            if not str(units).strip():
+                units = line.get('vipimo_jum') or line.get('vipimo') or ''
+            kind = 'order' if pending else 'line'
+            line_rows.append({
+                'sort': dt.isoformat() if dt else '',
+                'sort_sub': 1,
+                'kind': kind,
+                'id': line['id'],
+                'invo_id': inv['id'],
+                'date': inv['date'].isoformat() if inv.get('date') else (dt.date().isoformat() if dt else ''),
+                'datetime': dt.isoformat() if dt else '',
+                'item': str(line.get('item_name') or '').strip() or '—',
+                'units': str(units).strip(),
+                'price': price,
+                'qty': qty,
+                'debt': 0.0 if pending else line_debt,
+                'credit': 0.0,
+                'affects_balance': not pending,
+                'balance_delta': -line_debt if not pending else 0.0,
+            })
+
+        for inv in period_invoices:
+            if inv['id'] in inv_ids_with_lines:
+                continue
+            dt = inv['tarehe']
+            pending = _cs_is_pending_order(inv)
+            amt = float(inv['amount'] or 0)
+            if inv.get('service') and inv.get('desc'):
+                item_label = str(inv['desc']).strip()[:200]
+            elif inv.get('service'):
+                item_label = 'Service'
+            else:
+                item_label = f"INVO-{inv['code']}"
+            kind = 'order' if pending else 'line'
+            line_rows.append({
+                'sort': dt.isoformat() if dt else '',
+                'sort_sub': 1,
+                'kind': kind,
+                'id': inv['id'],
+                'invo_id': inv['id'],
+                'date': inv['date'].isoformat() if inv.get('date') else (dt.date().isoformat() if dt else ''),
+                'datetime': dt.isoformat() if dt else '',
+                'item': item_label,
+                'units': '',
+                'price': amt,
+                'qty': 1.0,
+                'debt': 0.0 if pending else round(amt, 2),
+                'credit': 0.0,
+                'affects_balance': not pending,
+                'balance_delta': -round(amt, 2) if not pending else 0.0,
+            })
+
+    pay_rows = []
+    for pay in period_payments:
+        dt = pay['tarehe']
+        desc = (pay.get('maelezo') or pay.get('kutoka') or '').strip()
+        if not desc and pay.get('invo_code'):
+            desc = f"INVO-{pay['invo_code']}"
+        credit = float(pay['Amount'] or 0)
+        pending_invo = bool(pay.get('invo_order')) and not bool(pay.get('invo_derivered'))
+        kind = 'prepaid' if pending_invo else 'payment'
+        if pending_invo and (not desc or (pay.get('invo_code') and desc == f"INVO-{pay['invo_code']}")):
+            desc = f"Agizo INVO-{pay['invo_code']}" if pay.get('invo_code') else 'Malipo agizo'
+        pay_rows.append({
+            'sort': dt.isoformat() if dt else '',
+            'sort_sub': 2,
+            'kind': kind,
+            'id': pay['id'],
+            'invo_id': pay.get('invo_id'),
+            'date': dt.date().isoformat() if dt else '',
+            'datetime': dt.isoformat() if dt else '',
+            'item': desc or '—',
+            'units': '',
+            'price': 0.0,
+            'qty': 0.0,
+            'debt': 0.0,
+            'credit': credit,
+            'affects_balance': True,
+            'balance_delta': credit,
+        })
+
+    rows = line_rows + pay_rows
+    rows.sort(key=lambda x: (x['sort'], x['sort_sub'], x.get('id', 0)))
+
+    transactions = []
+    balance = opening_signed
+    if abs(opening_signed) >= 0.005:
+        transactions.append({
+            'kind': 'opening',
+            'date': t_fr_dt.date().isoformat(),
+            'datetime': t_fr_dt.date().isoformat(),
+            'item': '',
+            'units': '',
+            'price': 0.0,
+            'qty': 0.0,
+            'debt': 0.0,
+            'credit': 0.0,
+            'balance': round(opening_signed, 2),
+            'affects_balance': False,
+        })
+
+    for row in rows:
+        if row.get('affects_balance'):
+            balance += row.get('balance_delta') or 0.0
+        bal_display = round(balance, 2)
+        if abs(bal_display) < 0.005:
+            bal_display = 0.0
+        transactions.append({
+            'kind': row['kind'],
+            'id': row['id'],
+            'invo_id': row.get('invo_id'),
+            'date': row['date'],
+            'datetime': row['datetime'],
+            'item': row['item'],
+            'units': row.get('units', ''),
+            'price': row['price'],
+            'qty': row['qty'],
+            'debt': row['debt'],
+            'credit': row['credit'],
+            'balance': bal_display,
+            'affects_balance': row.get('affects_balance', True),
+        })
+
+    closing = round(balance, 2)
+    if abs(closing) < 0.005:
+        closing = 0.0
+
+    return {
+        'summary': {
+            'total_debt': round(total_debt, 2),
+            'customer_credit': customer_credit,
+            'total_invoices': totals['total_invoices'] or 0,
+            'total_purchase': float(totals['total_purchase'] or 0),
+            'period_invoices': len(period_invoices),
+            'period_purchase': round(period_purchase, 2),
+            'period_payments': round(period_payments_total, 2),
+            'opening_balance': round(opening_signed, 2),
+            'closing_balance': closing,
+        },
+        'transactions': transactions,
+    }
+
+
+@login_required(login_url='login')
+@csrf_exempt
+def customer_sales_statement_data(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad Request'})
+    try:
+        todo = todoFunct(request)
+        if not todo.get('duka') or not todo['duka'].Interprise:
+            return JsonResponse({'success': False, 'swa': 'Hakuna ruhusa', 'eng': 'Not allowed'})
+        customer_id = int(request.POST.get('cust', 0) or 0)
+        if not customer_id:
+            return JsonResponse({'success': False, 'swa': 'Chagua mteja', 'eng': 'Customer required'})
+        wateja.objects.get(pk=customer_id, Interprise__owner=todo['duka'].owner.id)
+        t_fr_dt = _cs_parse_dt(request.POST.get('tFr'))
+        t_to_dt = _cs_parse_dt(request.POST.get('tTo'))
+        if not t_fr_dt or not t_to_dt:
+            return JsonResponse({'success': False, 'swa': 'Tarehe hazipo', 'eng': 'Dates are required'})
+        payload = _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt)
+        return JsonResponse({'success': True, **payload})
+    except wateja.DoesNotExist:
+        return JsonResponse({'success': False, 'swa': 'Mteja hajapatikana', 'eng': 'Customer not found'})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'swa': 'Hitilafu', 'eng': 'Something went wrong'})
+
+
+def _cs_unpaid_invoices_qs(todo, customer_id):
+    owner_id = todo['duka'].owner.id
+    return (
+        mauzoni.objects.filter(
+            customer_id=customer_id,
+            Interprise__owner_id=owner_id,
+        )
+        .exclude(full_returned=True)
+        .filter(amount__gt=F('ilolipwa'))
+        .order_by('tarehe', 'pk')
+    )
+
+
+def _apply_mauzo_payment(cheo, bill, wekakwa, paid_amo, pay_d, desc):
+    paid_amo = Decimal(str(paid_amo))
+    if paid_amo <= 0:
+        return False
+    ilobaki = bill.ilolipwa
+    if (paid_amo + ilobaki) > bill.amount:
+        return False
+    bill.akaunt = wekakwa
+    if bill.amount == ilobaki + paid_amo:
+        bill.full_paid = True
+    if (paid_amo + ilobaki) == bill.amount and pay_d:
+        bill.kulipa = pay_d
+    bill.ilolipwa = ilobaki + paid_amo
+    bill.save()
+
+    beforweka = wekakwa.Amount
+    weka = wekaCash()
+    weka.Akaunt = wekakwa
+    weka.Amount = paid_amo
+    weka.before = beforweka
+    weka.After = beforweka + paid_amo
+    weka.kutoka = 'Goods Sales'
+    weka.maelezo = desc or ''
+    weka.tarehe = datetime.datetime.now(tz=timezone.utc)
+    weka.by = cheo
+    weka.Interprise = bill.Interprise
+    weka.mauzo = True
+    weka.invo = bill
+    if not wekakwa.onesha:
+        weka.usiri = True
+    wekakwa.Amount = wekakwa.Amount + paid_amo
+    wekakwa.save()
+    weka.save()
+    return True
+
+
+@login_required(login_url='login')
+@csrf_exempt
+def customer_sales_unpaid_invoices(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    try:
+        todo = todoFunct(request)
+        customer_id = int(request.POST.get('cust', 0) or 0)
+        wateja.objects.get(pk=customer_id, Interprise__owner=todo['duka'].owner.id)
+        rows = []
+        total = Decimal('0')
+        for inv in _cs_unpaid_invoices_qs(todo, customer_id):
+            debt = inv.amount - inv.ilolipwa
+            total += debt
+            rows.append({
+                'id': inv.id,
+                'code': inv.code,
+                'amount': float(inv.amount),
+                'paid': float(inv.ilolipwa),
+                'debt': float(debt),
+                'date': inv.date.isoformat() if inv.date else (inv.tarehe.date().isoformat() if inv.tarehe else ''),
+            })
+        return JsonResponse({
+            'success': True,
+            'invoices': rows,
+            'total_debt': float(total),
+        })
+    except wateja.DoesNotExist:
+        return JsonResponse({'success': False, 'swa': 'Mteja hajapatikana', 'eng': 'Customer not found'})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'swa': 'Hitilafu', 'eng': 'Something went wrong'})
+
+
+@login_required(login_url='login')
+@csrf_exempt
+def customer_sales_record_payment(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad request'})
+    try:
+        todo = todoFunct(request)
+        if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+            return JsonResponse(shift_operation_block_payload(todo), status=403)
+        cheo = todo['cheo']
+        customer_id = int(request.POST.get('cust', 0) or 0)
+        wateja.objects.get(pk=customer_id, Interprise__owner=todo['duka'].owner.id)
+        ac_id = int(request.POST.get('invo_ac_id', 0) or 0)
+        paid_amo = Decimal(str(request.POST.get('invo_amo', 0) or 0))
+        pay_d = request.POST.get('pay_d')
+        desc = request.POST.get('lipaElezo', '') or ''
+
+        if paid_amo <= 0:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Weka kiasi sahihi cha malipo',
+                'msg_eng': 'Enter a valid payment amount',
+            })
+
+        if not PaymentAkaunts.objects.filter(pk=ac_id, Interprise__owner=cheo.Interprise.owner).exists():
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Akaunti ya malipo haijatambulika',
+                'msg_eng': 'Payment account not found',
+            })
+
+        wekakwa = PaymentAkaunts.objects.get(pk=ac_id, Interprise__owner=cheo.Interprise.owner)
+        invoices = list(_cs_unpaid_invoices_qs(todo, customer_id))
+        if not invoices:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Hakuna ankara zenye deni',
+                'msg_eng': 'No unpaid invoices',
+            })
+
+        total_debt = sum((inv.amount - inv.ilolipwa for inv in invoices), Decimal('0'))
+        if paid_amo > total_debt:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Kiasi kinazidi jumla ya deni la mteja',
+                'msg_eng': 'Amount exceeds total customer debt',
+            })
+
+        allocations = []
+        with transaction.atomic():
+            remaining = paid_amo
+            for bill in invoices:
+                if remaining <= 0:
+                    break
+                owed = bill.amount - bill.ilolipwa
+                pay_this = min(remaining, owed)
+                if not _apply_mauzo_payment(cheo, bill, wekakwa, pay_this, pay_d, desc):
+                    raise ValueError('payment_failed')
+                remaining -= pay_this
+                allocations.append({
+                    'id': bill.id,
+                    'code': bill.code,
+                    'paid': float(pay_this),
+                })
+
+        return JsonResponse({
+            'success': True,
+            'pay': True,
+            'msg_swa': 'Malipo yamehifadhiwa na ankara zimefungwa kadri ya kiasi',
+            'msg_eng': 'Payment recorded and applied to invoice(s)',
+            'allocations': allocations,
+        })
+    except wateja.DoesNotExist:
+        return JsonResponse({'success': False, 'msg_swa': 'Mteja hajapatikana', 'msg_eng': 'Customer not found'})
+    except ValueError:
+        return JsonResponse({
+            'success': False,
+            'msg_swa': 'Malipo hayajahifadhiwa kutokana na hitilafu',
+            'msg_eng': 'Payment could not be recorded',
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'msg_swa': 'Oparesheni haikufanikiwa',
+            'msg_eng': 'Something went wrong',
+        })
+
 
 # CUSTOMERS & SALES
 @login_required(login_url='login')
 def CustomerSales(request):
     try:
         todo = todoFunct(request)
-        wrk = request.GET.get('cst',0)
+        wrk = request.GET.get('cst', 0)
         duka = todo['duka']
+        cheo = todo.get('cheo')
 
-        mteja = wateja.objects.get(pk=wrk,Interprise=duka.id)
-        uzia = mauzoni.objects.filter(customer_id=mteja.id)
-        
-        
-        num = uzia.count()
-        task = uzia.order_by("-pk")
+        mteja = wateja.objects.get(pk=wrk, Interprise__owner=duka.owner.id)
+        if cheo and not cheo.owner:
+            if not customer_visible_on_branch(mteja.id, duka.id, duka.owner.id):
+                return render(request, 'errorpage.html', todo)
+        num = _cs_customer_invoices(todo, mteja.id).count()
+        can_edit_customer = bool(cheo and cheo.owner)
 
-        
-        p=Paginator(task,15)
-        page_num =request.GET.get('page',1)
-
-
-    
-        try:
-            page = p.page(page_num)
-
-        except EmptyPage:
-            page= p.page(1)
-
-        pg_number = p.num_pages
-
-
+        branch_names = ', '.join(
+            customer_Interprise.objects.filter(mteja=mteja)
+            .select_related('branch')
+            .order_by('branch__name')
+            .values_list('branch__name', flat=True)
+        )
 
         todo.update({
-            'mteja':mteja,
-            'p_num':page_num,
-            'pages':pg_number,
-            'num':num,
-            'page':page,
+            'mteja': mteja,
+            'num': num,
+            'customer_id': mteja.id,
+            'can_edit_customer': can_edit_customer,
+            'customer_branch_names': branch_names,
         })
         if not duka.Interprise:
             return redirect('/userdash')
-        else:         
-           return render(request,'SalesCustomer.html',todo)
-    except:
-        return render(request,'errorpage.html',todoFunct(request))
+        return render(request, 'SalesCustomer.html', todo)
+    except Exception:
+        return render(request, 'errorpage.html', todoFunct(request))
 
 
 # @login_required(login_url='login')
@@ -6781,7 +7301,7 @@ def Bei_tu(request):
     
     bei = list(bei_za_bidhaa.objects.filter(item__owner=dukap.Interprise.owner.user.id).values())
     Stokusized=list(produ_size.objects.select_related('sizes').filter(owner=intp.owner.user).exclude(Interprise=intp).values('id','sized__color','sized__size','bidhaa','idadi','bidhaa__bidhaa__idadi_jum','bidhaa__idadi','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__expire_date'))
-    StokubidhaaRangi =list(produ_colored.objects.select_related('color_produ,bidhaa_stoku').filter(owner=intp.owner.user,color__colored=True).exclude(Interprise=intp).annotate(prod=F('bidhaa__bidhaa')).values('id','prod','bidhaa','color','idadi','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi').order_by("-pk"))  
+    StokubidhaaRangi =list(produ_colored.objects.select_related('color_produ,bidhaa_stoku').filter(owner=intp.owner.user,color__colored=True).exclude(Interprise=intp).annotate(prod=F('bidhaa__bidhaa')).values('id','prod','bidhaa','color','idadi','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi','bidhaa__bidhaa__colorAttr').order_by("-pk"))  
  
     data=dict()
     data['stokuRangi']=StokubidhaaRangi

@@ -1,3 +1,8 @@
+function tbSafeText(val, fallback) {
+    const text = (val == null || val === '') ? (fallback || '') : String(val)
+    return text.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, '')
+}
+
 function placedataTotable(data){
     let flt = Number($('#itemsKey').val()) || 0 ,
         bflt = Number($('#brandFilter').val()) || 0 ,
@@ -122,11 +127,11 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
             }
         
         trp+=`   </td> 
-            <td>${itm.namba.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "") || lang('Hakuna','None') }</td>
-            <td>${itm.jina.replace(/[&\/\\#,+=$~%"*?<>{}`]/g, "")}</td>
+            <td>${tbSafeText(itm.namba, lang('Hakuna','None'))}</td>
+            <td>${tbSafeText(itm.jina)}</td>
             <td>${itm.zote}</td>
-            <td><a  href="/stoku/bidhaaReg?f=${itm.aina_id}"> ${itm.aina.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</a></td>
-            <td><a  href="/stoku/bidhaaReg?bf=${itm.kampuni_id}"> ${itm.kampuni.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</a></td>`
+            <td>${itm.aina_id ? `<a href="/stoku/bidhaaReg?f=${itm.aina_id}">${tbSafeText(itm.aina, lang('Bila Aina', 'Uncategorized'))}</a>` : `<span>${tbSafeText(itm.aina, lang('Bila Aina', 'Uncategorized'))}</span>`}</td>
+            <td><a  href="/stoku/bidhaaReg?bf=${itm.kampuni_id}"> ${tbSafeText(itm.kampuni)}</a></td>`
             if(Number(Number(itm.idadi)/Number(itm.idadi_jum))>1){
 
                 trp+=`  <td><span class="smallerFont text-primary">${itm.vipimo_jum} </span></td>

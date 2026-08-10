@@ -1,3 +1,12 @@
+function tbSafeText(val, fallback) {
+    const text = (val == null || val === '') ? (fallback || '') : String(val)
+    return text.replace(/[&\/\\#,+=$~%"*?<>{}`]/g, '')
+}
+
+function tbGroupKey(itm) {
+    return (itm.group != null && itm.group !== '') ? Number(itm.group) : '__uncategorized__'
+}
+
 function placedataTotable(data){
     
     
@@ -22,15 +31,15 @@ let trp = `
 
 let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
 
-    if(pcategs.state.length>0){ 
+    if(pcategs.state.length>0 || data.products.some(p => p.group == null || p.group === '')){ 
 
                 const all_item = data.products.filter(x=>(Number(x.Bei_kuuza)>0 || !x.material) && !x.service),
-                             itemsK = [...new Set(all_item.map(i=>i.group))],
+                             itemsK = [...new Set(all_item.map(i=>tbGroupKey(i)))],
                              groupedByGroup = {},
                              categoriesCountByGroup = {}
 
                              all_item.forEach(itm => {
-                                 const key = Number(itm.group)
+                                 const key = tbGroupKey(itm)
                                  if (!groupedByGroup[key]) groupedByGroup[key] = []
                                  groupedByGroup[key].push(itm)
                              })
@@ -43,6 +52,23 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
                              const items = itemsK.map(i=>getAllItm(i))
 
                function getAllItm(i){
+                   if (i === '__uncategorized__') {
+                       const grouped = groupedByGroup[i] || []
+                       return {
+                           id: i,
+                           jina: lang('Bila Aina', 'Uncategorized'),
+                           g_aina: '',
+                           kundi_id: '',
+                           aina: 0,
+                           idadi_jum: grouped[0]?.uwiano || 0,
+                           thamani: grouped.reduce((a,b)=> a + ((b.Bei_kununua/b.uwiano)*b.idadi),0),
+                           thamaniM: grouped.reduce((a,b)=> a + (b.Bei_kuuza*b.idadi),0),
+                           zote: grouped.length,
+                           idadi: grouped.reduce((a,b)=> a + Number(b.idadi),0),
+                           vipimo: grouped[0]?.vipimo || '',
+                           vipimo_jum: grouped[0]?.vipimoJum || '',
+                       }
+                   }
                    const grouped = groupedByGroup[Number(i)] || []
                    const first = grouped[0]
                    if(grouped.length > 0){
@@ -61,9 +87,10 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
                        vipimo_jum: first.vipimoJum,
                    }
                 }else{
+                    const groupMeta = pcategs.state.find(itm=>Number(itm.id) === Number(i)) || {}
                     return{
                         id : i,
-                        jina: pcategs.state.find(itm=>Number(itm.id) === i).mahitaji,
+                        jina: groupMeta.mahitaji,
                         kundi_id: i,
                         aina: Number(categoriesCountByGroup[Number(i)] || 0),
                         idadi_jum: 0,
@@ -86,6 +113,7 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
 
                 const producedCostByGroup = {}
                 prdxnCost.state.forEach(p => {
+                    if (p.kundi == null || p.kundi === '') return
                     const key = Number(p.kundi)
                     producedCostByGroup[key] = Number(producedCostByGroup[key] || 0) + ((Number(p.cost) || 0) * (Number(p.idadi) || 0))
                 })
@@ -93,7 +121,9 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
                 items.forEach(itm => {
         idadi_item+=1
                 let prC = 0,Coast = itm.thamani
-                const producedTotal = Number(producedCostByGroup[Number(itm.id)] || 0)
+                const producedTotal = itm.id === '__uncategorized__'
+                    ? 0
+                    : Number(producedCostByGroup[Number(itm.id)] || 0)
                 if(producedTotal>0) {
                         prC = producedTotal
                         Coast = producedTotal
@@ -106,7 +136,7 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
         num+=1
             trp+=`<tr>
             <td>${num}</td>
-            <td class="text-capitalize" >${itm.jina.replace(/[&\/\\#,+=$~%"*?<>{}`]/g, "")}</td>
+            <td class="text-capitalize" >${tbSafeText(itm.jina, lang('Bila Aina', 'Uncategorized'))}</td>
             <td class="text-capitalize" >${itm.aina}</td>
             <td>${itm.zote}</td>
             `
@@ -125,14 +155,14 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
 
 
              
-                <a href="/stoku/aina?f=${itm.id}"  class="btn btn-default text-primary btn-sm  " > 
+                <a href="${itm.id === '__uncategorized__' ? '/stoku/bidhaaReg?uncat=1' : `/stoku/aina?f=${itm.id}`}"  class="btn btn-default text-primary btn-sm  " > 
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
                         <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
                         <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
                     </svg>  
                 </a>      
                 
-                <button data-id=${itm.id} data-aina=${itm.g_aina} data-toggle="modal" data-target="#kundi-modal"  data-name="${itm.jina.replace(/[&\/\\#,+=$~%"*?<>{}`]/g, "")}" class="btn edit_group btn-default text-primary btn-sm" >
+                <button data-id="${itm.id === '__uncategorized__' ? '' : itm.id}" data-aina="${itm.g_aina || ''}" data-toggle="modal" data-target="#kundi-modal"  data-name="${tbSafeText(itm.jina, lang('Bila Aina', 'Uncategorized'))}" class="btn edit_group btn-default text-primary btn-sm${itm.id === '__uncategorized__' ? ' d-none' : ''}" >
                     <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>

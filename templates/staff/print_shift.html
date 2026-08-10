@@ -21,7 +21,9 @@
       background: #fff;
     }
 
-    body.paper-thermal {
+    body.paper-thermal58,
+    body.paper-thermal,
+    body.paper-thermal80 {
       font-family: monospace;
       font-size: 10px;
     }
@@ -32,9 +34,19 @@
       padding: 20px;
     }
 
+    body.paper-thermal58 .print-container,
     body.paper-thermal .print-container {
       max-width: 58mm;
       padding: 6px;
+    }
+
+    body.paper-thermal80 {
+      font-size: 11px;
+    }
+
+    body.paper-thermal80 .print-container {
+      max-width: 80mm;
+      padding: 8px;
     }
     
     .header {
@@ -130,7 +142,9 @@
       margin-bottom: 25px;
     }
 
-    body.paper-thermal .section-grid {
+    body.paper-thermal58 .section-grid,
+    body.paper-thermal .section-grid,
+    body.paper-thermal80 .section-grid {
       grid-template-columns: 1fr;
     }
     
@@ -158,7 +172,9 @@
       margin: 15px 0;
     }
 
-    body.paper-thermal .stock-table {
+    body.paper-thermal58 .stock-table,
+    body.paper-thermal .stock-table,
+    body.paper-thermal80 .stock-table {
       font-size: 8px;
     }
     
@@ -200,32 +216,50 @@
       color: #999;
     }
 
+    body.paper-thermal58 table th,
+    body.paper-thermal58 table td,
     body.paper-thermal table th,
-    body.paper-thermal table td {
+    body.paper-thermal table td,
+    body.paper-thermal80 table th,
+    body.paper-thermal80 table td {
       padding: 4px;
       word-break: break-word;
     }
 
-    body.paper-thermal .header {
+    body.paper-thermal58 .header,
+    body.paper-thermal .header,
+    body.paper-thermal80 .header {
       margin-bottom: 10px;
       padding-bottom: 8px;
     }
 
-    body.paper-thermal .header h1 {
+    body.paper-thermal58 .header h1,
+    body.paper-thermal .header h1,
+    body.paper-thermal80 .header h1 {
       font-size: 13px;
     }
 
+    body.paper-thermal58 .header .subtitle,
+    body.paper-thermal58 .header div,
     body.paper-thermal .header .subtitle,
-    body.paper-thermal .header div {
+    body.paper-thermal .header div,
+    body.paper-thermal80 .header .subtitle,
+    body.paper-thermal80 .header div {
       font-size: 9px !important;
     }
 
-    body.paper-thermal .section {
+    body.paper-thermal58 .section,
+    body.paper-thermal .section,
+    body.paper-thermal80 .section {
       margin-bottom: 12px;
     }
 
+    body.paper-thermal58 .section-title,
+    body.paper-thermal58 .card-header,
     body.paper-thermal .section-title,
-    body.paper-thermal .card-header {
+    body.paper-thermal .card-header,
+    body.paper-thermal80 .section-title,
+    body.paper-thermal80 .card-header {
       font-size: 10px;
       padding: 6px;
     }
@@ -252,7 +286,7 @@
   </style>
   <script src="{% static 'js/momentlocale.js' %}"></script>
 </head>
-<body class="{% if paper_size == 'thermal' %}paper-thermal{% else %}paper-large{% endif %}">
+<body class="paper-{{ paper_size|default:'large' }}">
   <div class="print-container">
     <!-- Header -->
     <div class="header">
@@ -587,11 +621,15 @@
 
   <script>
     (function () {
-      var isThermal = '{{ paper_size|default:"large" }}' === 'thermal';
+      var paper = '{{ paper_size|default:"large" }}';
       var pageStyle = document.createElement('style');
-      pageStyle.textContent = isThermal
-        ? '@page { size: 58mm auto; margin: 0; }'
-        : '@page { size: A4; margin: 10mm; }';
+      if (paper === 'thermal58' || paper === 'thermal') {
+        pageStyle.textContent = '@page { size: 58mm auto; margin: 0; }';
+      } else if (paper === 'thermal80') {
+        pageStyle.textContent = '@page { size: 80mm auto; margin: 0; }';
+      } else {
+        pageStyle.textContent = '@page { size: A4; margin: 10mm; }';
+      }
       document.head.appendChild(pageStyle);
     })();
 

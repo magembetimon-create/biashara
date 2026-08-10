@@ -1,0 +1,70 @@
+{% extends 'userdash.html' %}
+{% load static %}
+
+{% block active-matumizi-menu %}class="btn-default btn btn-sm pop2_active_menu"{% endblock %}
+
+{% block all-bills %}
+<div class="whiteBg py-2 px-2 px-md-3 exp-receipts-page" style="margin-top:-15px; min-height:90vh;">
+  <h5 class="pb-2 border-bottom mb-3">
+    {% if useri.langSet == 0 %}Risiti za Matumizi Zinazosubiri{% else %}Pending expense receipts{% endif %}
+    <span class="text-muted small">({{ duka.currencii }})</span>
+  </h5>
+
+  {% include 'partials/expense_nav.html' %}
+
+  {% csrf_token %}
+
+  {% if pending_receipt_count == 0 %}
+  <p class="text-muted smallFont mb-0">
+    {% if useri.langSet == 0 %}Hakuna matumizi yanayosubiri risiti kwa sasa.{% else %}No expenses waiting for receipts.{% endif %}
+  </p>
+  {% else %}
+  <p class="text-muted smallFont">
+    {% if useri.langSet == 0 %}Pakia picha za risiti (unaweza zaidi ya moja kwa kila matumizi).{% else %}Upload receipt images (multiple allowed per expense).{% endif %}
+  </p>
+
+  <div id="expReceiptCards">
+    {% for row in expense_receipt_rows %}
+    <div class="exp-receipt-card card mb-3" data-rekodi-id="{{ row.id }}">
+      <div class="card-body smallFont">
+        <div class="d-flex flex-wrap justify-content-between align-items-start mb-2">
+          <div>
+            <strong class="text-primary">{{ row.name }}</strong>
+            <div class="text-muted">{{ row.date }} · {{ row.by }}</div>
+          </div>
+          <div class="text-right font-weight-bold">{{ row.amount|floatformat:2 }} {{ duka.currencii }}</div>
+        </div>
+        {% if row.maelezo %}
+        <p class="mb-2 text-muted">{{ row.maelezo }}</p>
+        {% endif %}
+
+        <div class="exp-receipt-preview d-flex flex-wrap gap-2 mb-2">
+          {% for att in row.attachments %}
+          <div class="exp-receipt-thumb-wrap" data-attachment-id="{{ att.id }}">
+            <a href="{{ att.url }}" target="_blank" rel="noopener"><img src="{{ att.url }}" alt="" class="exp-receipt-thumb"></a>
+          </div>
+          {% empty %}
+          <span class="text-danger small">{% if useri.langSet == 0 %}Hakuna risiti{% else %}No receipt yet{% endif %}</span>
+          {% endfor %}
+        </div>
+
+        <label class="btn btn-sm btn-outline-primary mb-0">
+          {% if useri.langSet == 0 %}+ Pakia risiti{% else %}+ Upload receipt{% endif %}
+          <input type="file" class="exp-receipt-file-input d-none" accept="image/*" multiple data-rekodi-id="{{ row.id }}">
+        </label>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<link rel="stylesheet" href="{% static 'css/expense_receipts_pending.css' %}">
+<script>
+  window.EXP_RECEIPT_URLS = {
+    upload: "{% url 'uploadExpenseReceipt' %}",
+    remove: "{% url 'removeExpenseReceipt' %}",
+  };
+</script>
+<script src="{% static 'js/expense_receipts_pending.js' %}"></script>
+{% endblock %}

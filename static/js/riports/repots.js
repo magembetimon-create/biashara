@@ -132,6 +132,7 @@ let val = $(this).data('val'),
 
            $('#the_invo_page').show()
            $('#niAnkara').show()
+           $('#ShowTheInvo [data-invo]').attr('data-invo', val)
        }else{
            $('#Invo_notFound').show()
 

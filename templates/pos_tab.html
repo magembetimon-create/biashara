@@ -42,9 +42,9 @@
                             
                                  <input type="text" data-shop="{{shop.id}}" id="searchInputForItmm"
                                  
-                                 onkeyup="posItms()"
-                                 placeholder="{% if serv %}{% if useri.langSet == 0 %}Tafuta Huduma {% else %}Search Service  {% endif %} {% else %}{% if useri.langSet == 0 %}Tafuta Bidhaa {% else %}Search Item  {% endif %}{% endif %} " 
-                                 class="form-control searchInputForAll smallerFont" style="height:20px;margin:5px auto;border:0;border-right:1px solid #ccc;border-radius:0 " >
+                                 onkeyup="debouncePosItemsRender()"
+                                 placeholder="{% if serv %}{% if useri.langSet == 0 %}Tafuta Huduma {% else %}Search Service  {% endif %} {% else %}{% if useri.langSet == 0 %}Tafuta Bidhaa / Barcode {% else %}Search Item / Barcode  {% endif %}{% endif %} " 
+                                 class="form-control searchInputForAll smallerFont tb-barcode-allow-input" style="height:20px;margin:5px auto;border:0;border-right:1px solid #ccc;border-radius:0 " >
                             
                                 
                                
@@ -57,6 +57,13 @@
                               
                               </button>
 
+                              <button class="btn btn-default fontColor px-2 lagerFont latoFont btn-sm tb-open-barcode-camera" type="button" title="{% if useri.langSet == 0 %}Skani barcode (kamera){% else %}Scan barcode (camera){% endif %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upc-scan" viewBox="0 0 16 16">
+                                    <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5zM.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5zM3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7z"/>
+                                  </svg>
+                               </button>
+
+                              <!-- legacy camera modal trigger kept for other pages -->
                               <!-- <button title="{% if useri.lagset == 0 %}Kuskani bakodi{% else %}Scan Barcode{% endif %}" data-pos=1 class="btn btn-default fontColor btn-sm smallFont live_code_scanner" data-toggle="modal" data-target="#livestream_scanner">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upc-scan" viewBox="0 0 16 16">
                                     <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5zM.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5zM3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7z"/>
@@ -652,19 +659,7 @@
                   {% if useri.langSet == 0 %}Aina ya Risiti {% else %}Print Options{% endif %}
 
                  </h6>
-                 <div class="d-flex">
-                       <button id="print_mini" class="btn btn-light  receipt_options{% if cheo.mnRecipt %} text-primary bluebox {% endif %}" data-min="1" data-active="{% if cheo.mnRecipt %}1{% else %}0{% endif %}">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px" fill="currentColor"><path d="M120-80v-800l60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60v800l-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60Zm120-200h480v-80H240v80Zm0-160h480v-80H240v80Zm0-160h480v-80H240v80Zm-40 404h560v-568H200v568Zm0-568v568-568Z"/>
-                            </svg>
-                            {% if useri.langSet == 0 %}Risiti Ndogo {% else %}Min Invoice{% endif %}
-                        </button>
-
-                        <button class="btn btn-light receipt_options {% if not cheo.mnRecipt %}text-primary  bluebox {% endif %} " data-min="0">
-                          <svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h360l200 200v520q0 33-23.5 56.5T720-80H240Zm0-80h480v-480H560v-160H240v640Zm240-40q67 0 113.5-47T640-360v-160h-80v160q0 33-23 56.5T480-280q-33 0-56.5-23.5T400-360v-220q0-9 6-14.5t14-5.5q9 0 14.5 5.5T440-580v220h80v-220q0-42-29-71t-71-29q-42 0-71 29t-29 71v220q0 66 47 113t113 47ZM240-800v160-160 640-640Z"/></svg>
-                          {% if useri.langSet == 0 %}Risiti Kubwa {% else %}Paper Invoice{% endif %}
-                        </button>                  
-                 </div>
-              
+                 {% include "partials/receipt_format_buttons.html" %}
               </div>
         </div>
       </div>

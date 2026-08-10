@@ -1,3 +1,33 @@
+function tbSafeText(val, fallback) {
+    const fb = fallback == null ? '' : String(fallback)
+    const text = (val == null || val === '') ? fb : String(val)
+    return String(text).replace(/[&\/\\#,+=$~%"*?<>{}`]/g, '')
+}
+
+function tbAttrText(val, fallback) {
+    return tbSafeText(val, fallback).replace(/'/g, "\\'")
+}
+
+function tbResolveCategName(ainaId, productAinaN) {
+    if (productAinaN != null && productAinaN !== '') return productAinaN
+    if (ainaId == null || ainaId === '' || ainaId === '__uncategorized__') {
+        return lang('Bila Aina', 'Uncategorized')
+    }
+    const meta = (Categs.state || []).find(c => Number(c.id) === Number(ainaId))
+    return (meta && meta.aina) || lang('Bila Aina', 'Uncategorized')
+}
+
+function tbResolveGroupName(kundiId, productGroupName) {
+    if (productGroupName != null && productGroupName !== '') return productGroupName
+    if (kundiId == null || kundiId === '') return ''
+    const meta = (pcategs.state || []).find(c => Number(c.id) === Number(kundiId))
+    return (meta && meta.mahitaji) || ''
+}
+
+function tbAinaKey(itm) {
+    return (itm.aina != null && itm.aina !== '') ? Number(itm.aina) : '__uncategorized__'
+}
+
 function placedataTotable(data){
    let flt = Number($('#itemsKey').val()) || 0 ,
        bflt = Number($('#brandFilter').val()) || 0 ,
@@ -23,28 +53,46 @@ let trp = `
 <tbody id="products_list">`
 let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
 
-    if(Categs.state.length>0){ 
-                const itemsK = [...new Set(data.products.map(i=>i.aina))],
-                             all_item = data.products.filter(x=>(Number(x.Bei_kuuza)>0 || !x.material) && !x.service),
+    if(Categs.state.length>0 || data.products.some(p => p.aina == null || p.aina === '')){ 
+                const all_item = data.products.filter(x=>(Number(x.Bei_kuuza)>0 || !x.material) && !x.service),
+                             itemsK = [...new Set(all_item.map(i=>tbAinaKey(i)))],
                              groupedByAina = {}
 
                              all_item.forEach(itm => {
-                                 const key = Number(itm.aina)
+                                 const key = tbAinaKey(itm)
                                  if (!groupedByAina[key]) groupedByAina[key] = []
                                  groupedByAina[key].push(itm)
                              })
 
                              let items = itemsK.map(i=>getAllItm(i))
                function getAllItm(i){
+                                     if (i === '__uncategorized__') {
+                                         const grouped = groupedByAina[i] || []
+                                         return {
+                                             id: i,
+                                             jina: lang('Bila Aina', 'Uncategorized'),
+                                             kundi: '',
+                                             kundi_id: '',
+                                             brands: [...new Set(grouped.map(br=>br.kampuni))].length,
+                                             brand: grouped[0]?.kampuni || 0,
+                                             idadi_jum: grouped[0]?.uwiano || 0,
+                                             thamani: grouped.reduce((a,b)=> a + Number((b.Bei_kununua/b.uwiano)*b.idadi),0),
+                                             thamaniM: grouped.reduce((a,b)=> a + Number(b.Bei_kuuza*b.idadi),0),
+                                             zote: grouped.length,
+                                             idadi: grouped.reduce((a,b)=> a + Number(b.idadi),0),
+                                             vipimo: grouped[0]?.vipimo || '',
+                                             vipimo_jum: grouped[0]?.vipimoJum || '',
+                                         }
+                                     }
                                      const grouped = groupedByAina[Number(i)] || []
                                      const first = grouped[0]
                                      if(grouped.length>0){
                         return {
                        id : i,
                        
-                                             jina: first.ainaN,
-                                             kundi: first.group_name,
-                                             kundi_id: first.group,
+                                             jina: tbResolveCategName(i, first.ainaN),
+                                             kundi: tbResolveGroupName(first.group, first.group_name),
+                                             kundi_id: first.group || '',
                                              brands:[... new Set(grouped.map(br=>br.kampuni))].length,
                                              brand:first.kampuni,
                                              idadi_jum: first.uwiano,
@@ -57,11 +105,12 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
                 
                    }
                    }else{
+                         const categMeta = Categs.state.find(itm=>Number(itm.id) === Number(i)) || {}
                          return {
                             id : i,
-                            jina: Categs.state.find(itm=>itm.id === i).aina,
-                            kundi: Categs.state.find(itm=>itm.id === i ).mahitaji,
-                            kundi_id:  Categs.state.filter(itm=>itm.id === i )[0].mahi_id,
+                            jina: tbResolveCategName(i, categMeta.aina),
+                            kundi: tbResolveGroupName(categMeta.mahi_id, categMeta.mahitaji),
+                            kundi_id:  categMeta.mahi_id || '',
                             idadi_jum: 0,
                             thamani: 0,
                             thamaniM: 0,
@@ -91,6 +140,7 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
 
                 const producedCostByAina = {}
                 prdxnCost.state.forEach(p => {
+                    if (p.Aina == null || p.Aina === '') return
                     const key = Number(p.Aina)
                     producedCostByAina[key] = Number(producedCostByAina[key] || 0) + ((Number(p.cost) || 0) * (Number(p.idadi) || 0))
                 })
@@ -99,7 +149,9 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
         idadi_item+=1
         
                 let prC = 0,Coast = itm.thamani
-                const producedTotal = Number(producedCostByAina[Number(itm.id)] || 0)
+                const producedTotal = itm.id === '__uncategorized__'
+                    ? 0
+                    : Number(producedCostByAina[Number(itm.id)] || 0)
                 if(producedTotal>0) {
                     prC = producedTotal
                     Coast = producedTotal
@@ -112,8 +164,8 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
         num+=1
             trp+=`<tr>
             <td>${num}</td>
-            <td class="text-capitalize" >${itm.jina.replace(/[&\/\\#,+=$~%"*?<>{}`]/g, "")}</td>
-            <td class="text-capitalize" > <a href="/stoku/aina?f=${itm.kundi_id}"> ${itm.kundi}</a></td>
+            <td class="text-capitalize" >${tbSafeText(itm.jina, lang('Bila Aina', 'Uncategorized'))}</td>
+            <td class="text-capitalize" > ${itm.kundi_id ? `<a href="/stoku/aina?f=${itm.kundi_id}">${tbSafeText(itm.kundi)}</a>` : '—'}</td>
             <td> <a class="btn btn-default smallFont text-primary" href="/stoku/chapa?f=${itm.id}" >${itm.brands}</a></td>
             <td>${itm.zote}</td>
             `
@@ -130,7 +182,7 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
             <td >
             <div class="d-flex">
 
-                <button data-target="#aina-modal" data-toggle="modal" onclick="$('#aina-form').data({edit:1,value:${itm.id}});$('#aina-name').val('${itm.jina}');$('#mahi-data').selectpicker('val','${itm.kundi_id}')" data-id=${itm.id} class="btn btn-default btn-sm">
+                <button data-target="#aina-modal" data-toggle="modal" onclick="$('#aina-form').data({edit:1,value:${itm.id === '__uncategorized__' ? 0 : itm.id}});$('#aina-name').val('${tbAttrText(itm.jina, lang('Bila Aina', 'Uncategorized'))}');$('#mahi-data').selectpicker('val','${itm.kundi_id || 0}')" data-id="${itm.id === '__uncategorized__' ? '' : itm.id}" class="btn btn-default btn-sm${itm.id === '__uncategorized__' ? ' d-none' : ''}">
                      <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-pencil-square" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                             <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456l-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
                             <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
@@ -156,7 +208,7 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
                     </svg>
                  </button>
              
-                <a href="/stoku/bidhaaReg?f=${itm.id}"  class="btn btn-default text-primary btn-sm  " > 
+                <a href="${itm.id === '__uncategorized__' ? '/stoku/bidhaaReg?uncat=1' : `/stoku/bidhaaReg?f=${itm.id}`}"  class="btn btn-default text-primary btn-sm  " > 
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
                         <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
                         <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>

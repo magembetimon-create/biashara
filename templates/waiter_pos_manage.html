@@ -69,6 +69,33 @@
     padding: 13px 0;
   }
   .manage-actions form { display: inline; }
+  .print-setting-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    background: #f8f9fa;
+  }
+  .print-option-btn {
+    flex: 1;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px 8px;
+    background: #fff;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.85em;
+    transition: border-color .15s, background .15s;
+  }
+  .print-option-btn.active {
+    border-color: #0d6efd;
+    background: #e7f1ff;
+    font-weight: 600;
+  }
+  .print-option-row {
+    display: flex;
+    gap: 10px;
+  }
 </style>
 {% endblock %}
 
@@ -90,7 +117,7 @@
 
     <!-- ── OPEN SHARED POS BUTTON ── -->
     <div class="d-flex justify-content-center mb-4">
-      <button id="openSharedPosBtn" class="btn btn-primary" data-biz="{{ duka.Interprise.id }}">
+      <button id="openSharedPosBtn" class="btn btn-primary" data-biz="{{ duka.id }}">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
           <path d="M6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zM11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
           <path d="M4.5 0A2.5 2.5 0 0 0 2 2.5V14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2.5A2.5 2.5 0 0 0 11.5 0h-7zM3 2.5A1.5 1.5 0 0 1 4.5 1h7A1.5 1.5 0 0 1 13 2.5v10.795a4.2 4.2 0 0 0-.776-.492C11.392 12.387 10.063 12 8 12s-3.392.387-4.224.803a4.2 4.2 0 0 0-.776.492V2.5z"/>
@@ -109,6 +136,35 @@
       <small class="text-muted" style="font-size:.76em;">
         {% if useri.langSet == 0 %}Jina litakasaidia kutambua kifaa hiki kwenye orodha.{% else %}A name to help identify this device in the list.{% endif %}
       </small>
+    </div>
+
+    <!-- ── Waiter Print Settings ── -->
+    <div class="print-setting-card">
+      <h6 class="mb-2" style="font-weight:700;">
+        {% if useri.langSet == 0 %}Mipangilio ya Print (Waiter){% else %}Waiter Print Settings{% endif %}
+      </h6>
+      <p class="text-muted mb-3" style="font-size:.78em;">
+        {% if useri.langSet == 0 %}
+          Chagua aina ya printer ya thermal inayotumika kwenye waiterpage na waiter device dashboard.
+        {% else %}
+          Choose the thermal printer type used on waiterpage and waiter device dashboard.
+        {% endif %}
+      </p>
+      <form method="post" action="/mauzo/waiter_pos_manage" id="waiterPrintSettingForm">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_receipt_paper">
+        <input type="hidden" name="waiter_receipt_paper" id="waiterReceiptPaperInput" value="{{ waiter_receipt_paper|default:1 }}">
+        <div class="print-option-row">
+          <button type="button" class="print-option-btn{% if waiter_receipt_paper|default:1 == 1 %} active{% endif %}" data-paper="1">
+            {% if useri.langSet == 0 %}Thermal 58mm{% else %}Thermal 58mm{% endif %}
+            <div class="text-muted" style="font-size:.72em;">{% if useri.langSet == 0 %}Chaguo-msingi{% else %}Default{% endif %}</div>
+          </button>
+          <button type="button" class="print-option-btn{% if waiter_receipt_paper == 2 %} active{% endif %}" data-paper="2">
+            {% if useri.langSet == 0 %}POS 80mm{% else %}POS 80mm{% endif %}
+            <div class="text-muted" style="font-size:.72em;">{% if useri.langSet == 0 %}Printer kubwa{% else %}Wide POS{% endif %}</div>
+          </button>
+        </div>
+      </form>
     </div>
 
     <hr>
@@ -184,6 +240,19 @@
 
 <script>
 (function () {
+  var printBtns = document.querySelectorAll('.print-option-btn')
+  var printInput = document.getElementById('waiterReceiptPaperInput')
+  var printForm = document.getElementById('waiterPrintSettingForm')
+  printBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var paper = btn.getAttribute('data-paper') || '1'
+      if (printInput) printInput.value = paper
+      printBtns.forEach(function (b) { b.classList.remove('active') })
+      btn.classList.add('active')
+      if (printForm) printForm.submit()
+    })
+  })
+
   var btn = document.getElementById('openSharedPosBtn')
   if (!btn) return
 

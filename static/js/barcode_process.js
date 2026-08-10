@@ -88,6 +88,19 @@ $(function() {
     Quagga.onDetected(function(result) {    
         beep_play()		
         if (result.codeResult.code){
+            const code = result.codeResult.code
+            if (window.POSDATA && typeof posHandleBarcodeScan === 'function') {
+                posHandleBarcodeScan(code)
+                Quagga.stop()
+                setTimeout(function(){ $('#livestream_scanner').modal('hide');$('#livestream_scanner').data('pos',0) }, 100)
+                return
+            }
+            if ((document.getElementById('waiterPageRoot') || document.getElementById('deviceDashboardRoot')) && typeof waiterHandleBarcodeScan === 'function') {
+                waiterHandleBarcodeScan(code)
+                Quagga.stop()
+                setTimeout(function(){ $('#livestream_scanner').modal('hide');$('#livestream_scanner').data('pos',0) }, 100)
+                return
+            }
             //if the itme edit modal is shown......................//   
             if(SEARCH_ITM_BY_BARCODE){
                 searchBarCode(result)
@@ -125,69 +138,113 @@ $(function() {
 
 function getItemsForItems(result){
         const pos = $('#livestream_scanner').data('pos'),
-              codeqb = result?.codeResult?.code || result
-        // console.log(pos);
+              codeqb = String(result?.codeResult?.code || result || '').trim()
+        if (!codeqb) return
+
+        // About Item (edit) — fill barcode field
         if($("#Item_editModal").data('bs.modal')?._isShown){
             $('#bar_code_place').val(codeqb);
-
-        }else{
-                if(!pos){
-                if($("#fromOtherStocku").data('bs.modal')?._isShown){
-                    let bidh = StoreNje.data,
-                    matchi=[]
-                    
-                    matchi = bidh.filter(x=>x.sirio===codeqb)
-
-
-                    if(matchi.length>0){
-                    let prdc = matchi[0].id
-                        
-                            placedataI(prdc)
-                    
-                
-                    }else{
-                        $('#add-products').modal('show')             
-                        $('#code-ya-bidhaa').val(codeqb);
-
-                    }
-                
-            }else{
-                $('#code-ya-bidhaa').val(codeqb);
-                
-            }
-            
-        }else{
-            let bidh = Items.data,
-                matchi=[]
-                
-                matchi = bidh.filter(x=>x.sirio===codeqb)
-
-
-                if(matchi.length>0){
-                    let prdc = matchi[0].id,
-                        val = matchi[0].bidhaa
-
-                    placedata(pos,prdc)
-                    color_size(prdc,pos,coloredItem.state,ItemsSize.state) 
-                    
-                
-                }else{
-                    $('#add-products').modal('show')             
-                    $('#code-ya-bidhaa').val(codeqb);
-
-                }
+            return
         }
 
+        // Register item from other branch — search & fill form
+        if($("#fromOtherStocku").data('bs.modal')?._isShown){
+            const bidh = (typeof StoreNje !== 'undefined' && StoreNje.data) ? StoreNje.data : []
+            const matchi = bidh.filter(x => String(x.sirio || '').trim() === codeqb)
+
+            if(matchi.length > 0){
+                placedataI(matchi[0].id)
+            } else {
+                toastr.warning(
+                    typeof lang === 'function'
+                        ? lang('Barcode haijapatikana kwenye matawi', 'Barcode not found in other branches')
+                        : 'Barcode not found',
+                    '',
+                    { timeOut: 2500 }
+                )
+                $('#fetch_item').val(codeqb)
+            }
+            return
+        }
+
+        // Item/Service Register — fill Bar Code field
+        if($("#add-products").data('bs.modal')?._isShown || $('#code-ya-bidhaa').length){
+            if(!pos){
+                $('#code-ya-bidhaa').val(codeqb);
+                return
+            }
+        }
+
+        if(!pos){
+            $('#code-ya-bidhaa').val(codeqb);
+            return
+        }
+
+        // POS cart row barcode lookup (legacy)
+        let bidh = Items.data,
+            matchi = bidh.filter(x => String(x.sirio || '').trim() === codeqb)
+
+        if(matchi.length > 0){
+            let prdc = matchi[0].id
+            placedata(pos, prdc)
+            color_size(prdc, pos, coloredItem.state, ItemsSize.state)
+        } else {
+            $('#add-products').modal('show')
+            $('#code-ya-bidhaa').val(codeqb);
         }
 }
 
 
 function qr_success(result){
   
-     $("#livestream__qr_scanner").modal('hide');
+     const sessionOpen = window.TbBarcode && typeof TbBarcode.isSessionOpen === 'function' && TbBarcode.isSessionOpen()
+     const fieldCapture = window.TbBarcode && typeof TbBarcode.isFieldCaptureOpen === 'function' && TbBarcode.isFieldCaptureOpen()
+     if (!sessionOpen) {
+       $("#livestream__qr_scanner").modal('hide');
+     }
      const url = window.location.host,
            isbar = Number(result) || 0
+     const code = String(result || '').trim()
 
+    // Field capture for register/edit/other-branch is handled by TbBarcode.openFieldCapture.
+    if (fieldCapture) {
+        SEARCH_ITM_BY_BARCODE = 0
+        return
+    }
+
+    // Continuous POS/waiter session
+    if (sessionOpen && window.POSDATA && typeof posHandleBarcodeScan === 'function' && code) {
+        posHandleBarcodeScan(code)
+        SEARCH_ITM_BY_BARCODE = 0
+        return
+    }
+    if (sessionOpen && (document.getElementById('waiterPageRoot') || document.getElementById('deviceDashboardRoot')) && typeof waiterHandleBarcodeScan === 'function' && code) {
+        waiterHandleBarcodeScan(code)
+        SEARCH_ITM_BY_BARCODE = 0
+        return
+    }
+
+    // Register / edit / other-branch (one-shot via barcode_process scanner)
+    if (
+        $("#Item_editModal").data('bs.modal')?._isShown ||
+        $("#fromOtherStocku").data('bs.modal')?._isShown ||
+        $("#add-products").data('bs.modal')?._isShown
+    ) {
+        getItemsForItems(code || result)
+        SEARCH_ITM_BY_BARCODE = 0
+        return
+    }
+
+    if (window.POSDATA && typeof posHandleBarcodeScan === 'function' && code) {
+        posHandleBarcodeScan(code)
+        SEARCH_ITM_BY_BARCODE = 0
+        return
+    }
+    if ((document.getElementById('waiterPageRoot') || document.getElementById('deviceDashboardRoot')) && typeof waiterHandleBarcodeScan === 'function' && code) {
+        waiterHandleBarcodeScan(code)
+        SEARCH_ITM_BY_BARCODE = 0
+        return
+    }
            
            
     //   console.log({result,SCANCELL})
@@ -246,6 +303,8 @@ function qr_success(result){
   
   const QR_R = ISMOBILE && $("#livestream_scanner").data('bs.modal')?._isShown ? 'interactive':"qr_reader",
     scanner = new Html5Qrcode(/* element id */ QR_R);
+  let barcodeProcessRunning = false
+  let barcodeProcessStopping = false
   
   $('.scan_qr').click(function (e) { 
        const pos = Number($(this).data('pos')) || 0
@@ -256,7 +315,25 @@ function qr_success(result){
   });
 
 
-  $('body').on('click','.ScanBarCode',function(){
+  $('body').on('click','.ScanBarCode',function(e){
+    e.preventDefault()
+    // One-shot: fill register/edit field or search other-branch item, then close.
+    // Do NOT open the continuous POS session modal here.
+    SEARCH_ITM_BY_BARCODE = 0
+    if (window.TbBarcode && typeof window.TbBarcode.openFieldCapture === 'function') {
+      window.TbBarcode.openFieldCapture({
+        onCode: function (code) {
+          if (typeof getItemsForItems === 'function') {
+            getItemsForItems(code)
+          } else if ($("#Item_editModal").data('bs.modal')?._isShown) {
+            $('#bar_code_place').val(code)
+          } else {
+            $('#code-ya-bidhaa').val(code)
+          }
+        }
+      })
+      return
+    }
     if(ISMOBILE){
         start_can()
     }else{
@@ -294,6 +371,7 @@ function qr_success(result){
   }
   
   function startIt(dt){
+  if (barcodeProcessRunning || barcodeProcessStopping) return
   const qrCodeSuccessCallback = (decodedText, decodedResult) => {
       /* handle success */
        beep_play()
@@ -302,8 +380,21 @@ function qr_success(result){
   
   };
   const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-  
-  dt.len>1?scanner.start({ facingMode: { exact: "environment"} }, config, qrCodeSuccessCallback):scanner.start({ facingMode: { exact: "user"} }, config, qrCodeSuccessCallback);
+  const startPromise = dt.len>1
+    ? scanner.start({ facingMode: { exact: "environment"} }, config, qrCodeSuccessCallback)
+    : scanner.start({ facingMode: { exact: "user"} }, config, qrCodeSuccessCallback);
+
+  if (startPromise && typeof startPromise.then === 'function') {
+    startPromise.then(function () {
+      barcodeProcessRunning = true
+      barcodeProcessStopping = false
+    }).catch(function () {
+      barcodeProcessRunning = false
+      barcodeProcessStopping = false
+    })
+  } else {
+    barcodeProcessRunning = true
+  }
   
   }
   
@@ -311,19 +402,33 @@ function qr_success(result){
   
   // stop scanning if is got
   function stop_sanning(){
-      scanner.stop().then((ignore) => {
-          // QR Code scanning is stopped.
-        }).catch((err) => {
-          // Stop failed, handle it.
-        });
+      if (!scanner || !barcodeProcessRunning || barcodeProcessStopping) return
+      barcodeProcessStopping = true
+      barcodeProcessRunning = false
+      try {
+        const stopped = scanner.stop()
+        if (stopped && typeof stopped.then === 'function') {
+          stopped.then(function () {
+            barcodeProcessStopping = false
+          }).catch(function () {
+            barcodeProcessStopping = false
+          })
+        } else {
+          barcodeProcessStopping = false
+        }
+      } catch (err) {
+        barcodeProcessStopping = false
+      }
   }
   
   
   
-    // // Stop qr-code scanner in any case, when the modal is closed
-    $('.stop_qr').on('click', function(){
-         stop_sanning()
-    });
+    // Stop once on modal hide (Close buttons use data-dismiss — avoid double stop on click).
+    $('#livestream__qr_scanner')
+      .off('hide.bs.modal.barcodeprocess')
+      .on('hide.bs.modal.barcodeprocess', function () {
+        stop_sanning()
+      });
 
 
 //Play the scan audio on catchup

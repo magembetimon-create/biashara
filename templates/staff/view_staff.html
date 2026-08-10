@@ -50,6 +50,9 @@
           <h6 class="text-capitalize classic_div row"><span class="col-4 latoFont weight600">{% if useri.langSet == 0 %}Kazi{% else %}Task{% endif %}</span><span class="brown col-8">{{ worker.kazi }}</span></h6>
           <h6 class="text-capitalize classic_div smallFont latoFont row"><span class="col-4 weight600">{% if useri.langSet == 0 %}Anwani{% else %}Address{% endif %}</span><span class="col-8">{{ worker.address }}</span></h6>
           <h6 class="text-capitalize classic_div smallFont latoFont row"><span class="col-4 weight600">{% if useri.langSet == 0 %}SIMU 1{% else %}PHONE 1{% endif %}</span><span class="col-8">{{ worker.simu1 }}</span></h6>
+          {% if worker.tin %}
+          <h6 class="classic_div smallFont latoFont row"><span class="col-4 weight600">{% if useri.langSet == 0 %}TIN{% else %}TIN{% endif %}</span><span class="col-8">{{ worker.tin }}</span></h6>
+          {% endif %}
           {% if worker.simu2 %}
           <h6 class="text-capitalize classic_div smallFont latoFont row"><span class="col-4 weight600">{% if useri.langSet == 0 %}SIMU 2{% else %}PHONE 2{% endif %}</span><span class="col-8">{{ worker.simu2 }}</span></h6>
           {% endif %}

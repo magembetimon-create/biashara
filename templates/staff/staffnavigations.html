@@ -26,10 +26,8 @@
   <li class="nav-item">
     <a class="nav-link {% if staff_page == 'waiters' %}active{% else %}btn-outline-primary{% endif %}" href="/staff/waiters">{% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}</a>
   </li>
-  {% if duka.shift_management_enabled %}
-    <li class="nav-item">
-      <a class="nav-link {% if staff_page == 'shifts' %}active{% else %}btn-outline-primary{% endif %}" href="/staff/shifts">{% if useri.langSet == 0 %}Shift za Watumiaji{% else %}User Shifts{% endif %}</a>
-    </li>
-  {% endif %}
+  <li class="nav-item">
+    <a class="nav-link {% if staff_page == 'shifts' %}active{% else %}btn-outline-primary{% endif %}" href="/staff/shifts">{% if useri.langSet == 0 %}Shift za Watumiaji{% else %}User Shifts{% endif %}</a>
+  </li>
 
 </ul>

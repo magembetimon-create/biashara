@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Sum, F
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 import json
 
@@ -106,11 +107,15 @@ def _save_opening_snapshot(duka, opener_perm, desc=''):
 
 
 def _shift_enabled_or_redirect(todo):
+    """Allow shift pages (view/open/close) regardless of shift_management_enabled.
+
+    shift_management_enabled only controls operation blocking elsewhere
+    (sales/stock/etc). Shift list/view/open/close stay available for
+    users with open/close permissions or shift assignment.
+    """
     duka = todo.get('duka')
     if not duka or not duka.Interprise:
         return False, redirect('/userdash')
-    if not duka.shift_management_enabled:
-        return False, redirect('/staff/all')
     return True, None
 
 
@@ -280,6 +285,7 @@ def _ensure_interprise_permission(worker, branch, linked_user, *, allow_state=Fa
                 code=worker.code,
                 simu1=worker.simu1,
                 simu2=worker.simu2,
+                tin=worker.tin or '',
                 diactive=worker.diactive,
                 active=True,
             )
@@ -544,6 +550,7 @@ def save_waiters(request):
                         simu1=source_worker.simu1,
                         simu2=source_worker.simu2,
                         kazi=source_worker.kazi,
+                        tin=source_worker.tin or '',
                         active=source_worker.active,
                         diactive=source_worker.diactive,
                         picha=source_worker.picha,
@@ -585,17 +592,37 @@ def save_waiters(request):
 def staff_shifts(request):
     try:
         todo = todoFunct(request)
-        cheo = todo['cheo']
         ok, resp = _shift_enabled_or_redirect(todo)
-        if not (ok or cheo.admin):
+        if not ok:
             return resp
 
         duka = todo['duka']
-        shifts = ShiftSession.objects.filter(Interprise=duka.id).order_by('-created_at')
-        has_open_shift = shifts.filter(status='open').exists()
+        shifts_qs = ShiftSession.objects.filter(Interprise=duka.id).order_by('-created_at')
+        has_open_shift = shifts_qs.filter(status='open').exists()
+
+        search_q = (request.GET.get('q') or '').strip()
+        if search_q:
+            shifts_qs = shifts_qs.filter(
+                Q(code__icontains=search_q)
+                | Q(shift_type__icontains=search_q)
+                | Q(status__icontains=search_q)
+            )
+
+        paginator = Paginator(shifts_qs, 15)
+        page_num = request.GET.get('page', 1)
+        try:
+            page_obj = paginator.page(page_num)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+
         todo.update({
             'staff_page': 'shifts',
-            'shifts': shifts,
+            'shifts': page_obj,
+            'page_obj': page_obj,
+            'paginator': paginator,
+            'search_q': search_q,
             'has_open_shift': has_open_shift,
         })
         return render(request, 'staff/shifts.html', todo)
@@ -1202,11 +1229,10 @@ def close_shift(request):
         todo = todoFunct(request)
         ok, resp = _shift_enabled_or_redirect(todo)
         if not ok:
-            return JsonResponse({'success': False, 'msg': 'Shift management disabled'}, status=403)
+            return JsonResponse({'success': False, 'msg': 'Invalid business context'}, status=403)
 
         duka = todo['duka']
         cheo = todo['cheo']
-        shift_operation_allowed = todo['shift_operation_allowed']
         sid = int(request.POST.get('sid', 0))
         actual = Decimal(request.POST.get('actual_closing_cash', '0') or '0')
 
@@ -1215,7 +1241,7 @@ def close_shift(request):
             return JsonResponse({'success': False, 'msg': 'Shift already closed'})
 
         is_assigned = ShiftAssignment.objects.filter(shift=shift, staff=cheo, active=True).exists()
-        if not ((shift_operation_allowed and cheo.close_own_shift) or cheo.owner ):
+        if not (cheo.owner or (is_assigned and cheo.close_own_shift)):
             return JsonResponse({
                 'success': False,
                 'msg_swa': 'Hauna ruhusa ya kufunga shift hii.',
@@ -1265,7 +1291,8 @@ def print_shift(request):
         lang = request.GET.get('lang', '0')
         items = request.GET.get('items', '1')
         paper = str(request.GET.get('paper', 'large') or 'large').strip().lower()
-        paper_size = 'thermal' if paper in ('thermal', 'mini', 'small', '58mm') else 'large'
+        from mauzo.receipt_format import shift_paper_class
+        paper_size = shift_paper_class(paper)
         include_items = str(items or '1').strip().lower() not in ('0', 'false', 'no', 'off', '')
 
         if not sid:
@@ -1686,7 +1713,8 @@ def shift_actor_sales(request):
         actor_id = int(request.GET.get('actor', 0) or 0)
         should_print = str(request.GET.get('print', '0')).strip().lower() in ('1', 'true', 'yes', 'on')
         paper = str(request.GET.get('paper', 'large') or 'large').strip().lower()
-        paper_size = 'thermal' if paper in ('thermal', 'mini', 'small', '58mm') else 'large'
+        from mauzo.receipt_format import shift_paper_class
+        paper_size = shift_paper_class(paper)
 
         duka = todo.get('duka')
         if not duka or sid <= 0 or actor_id <= 0:

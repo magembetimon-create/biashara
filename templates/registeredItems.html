@@ -3,6 +3,22 @@
 
 {% load static %}
 
+{% block items-excel-tools %}
+{% include 'partials/items_excel_tools.html' %}
+{% endblock %}
+
+{% block items-excel-scripts %}
+<script src="{% static 'js/itemsExcel.js' %}"></script>
+<script>
+  $(function () {
+    $('#items-excel-template-link').on('click', function (e) {
+      e.preventDefault();
+      if (window.ItemsExcel) ItemsExcel.downloadTemplate();
+    });
+  });
+</script>
+{% endblock %}
+
 {% block descriptions %}
 {% if aina.count > 0 %}
 <h5 class="pb-2" ><i class="text-primary text-capitalize" >{{aina.last.aina}} </i> {% if useri.langSet == 0 %} Bidhaa Zilizosajiliwa{% else %} Registered Items{% endif %}</h5> 

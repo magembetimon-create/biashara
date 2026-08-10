@@ -1,0 +1,88 @@
+{% extends 'userdash.html' %}
+{% load static humanize %}
+
+{% block active-matumizi-menu %}class="btn-default btn btn-sm pop2_active_menu"{% endblock %}
+
+{% block all-bills %}
+<div class="whiteBg py-2 px-2 px-md-3" style="margin-top:-15px; min-height:90vh;">
+  {% include 'partials/expense_nav.html' %}
+
+  <h5 class="py-2 mb-2 border-bottom smallFont">
+    {% if useri.langSet == 0 %}Risiti zilizopakiwa{% else %}Uploaded receipt attachments{% endif %}
+    <span class="text-primary">({{ duka.currencii }})</span>
+  </h5>
+
+  {% if att_num > 0 %}
+  <div class="table-responsive pb-4">
+    <table class="table table-sm table-hover smallFont">
+      <thead class="thead-light">
+        <tr>
+          <th class="text-left">{% if useri.langSet == 0 %}Picha{% else %}Image{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Rejea{% else %}Ref{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Matumizi{% else %}Expense{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Imepakiwa na{% else %}Uploaded by{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in attachment_rows %}
+        <tr>
+          <td>
+            {% if row.url %}
+            <a href="{{ row.url }}" target="_blank" rel="noopener">
+              <img src="{{ row.url }}" alt="" class="exp-att-list-thumb">
+            </a>
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ row.ref }}</td>
+          <td class="text-primary">{{ row.label }}</td>
+
+          <td>
+            {% if row.exp_date %}
+            <script>document.write(moment('{{ row.exp_date|date:"r" }}').format('MMM DD YYYY, HH:mm'))</script>
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ row.uploader|default:"—" }}</td>
+          <td class="text-right font-weight-bold" style="color:rgb(122, 55, 28);">
+            {% if row.amount != None %}{{ row.amount|floatformat:"-2"|intcomma }}{% else %}—{% endif %}
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="p-3 border-top mb-0">
+    {% if attachments_page.has_previous %}
+    <a href="{% url 'expenseReceiptAttachments' %}?page=1" class="btn btn-light border0" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.354 1.646a.5.5 0 0 1 0 .708L2.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/><path fill-rule="evenodd" d="M12.354 1.646a.5.5 0 0 1 0 .708L6.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+    </a>
+    <a href="{% url 'expenseReceiptAttachments' %}?page={{ attachments_page.previous_page_number }}" class="btn btn-light border0" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+    </a>
+    {% endif %}
+    {% if attachments_page.has_next %}
+    <a href="{% url 'expenseReceiptAttachments' %}?page={{ attachments_page.next_page_number }}" class="btn btn-light border0" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+    </a>
+    <a href="{% url 'expenseReceiptAttachments' %}?page={{ pages }}" class="btn btn-light border0" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M3.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L9.293 8 3.646 2.354a.5.5 0 0 1 0-.708z"/><path fill-rule="evenodd" d="M7.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L13.293 8 7.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+    </a>
+    {% endif %}
+    <label class="mb-0 ml-2">
+      {% if useri.langSet == 0 %}Ukurasa wa {{ p_num }} kati ya {{ pages }}{% else %}Page {{ p_num }} of {{ pages }}{% endif %}
+    </label>
+  </p>
+  {% else %}
+  <p class="text-muted text-center py-5 smallFont">
+    {% if useri.langSet == 0 %}Hakuna risiti zilizopakiwa bado.{% else %}No uploaded receipts yet.{% endif %}
+  </p>
+  {% endif %}
+</div>
+
+<link rel="stylesheet" href="{% static 'css/expense_receipts_pending.css' %}">
+<style>.exp-att-list-thumb{width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6;}</style>
+{% endblock %}

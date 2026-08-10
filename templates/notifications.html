@@ -79,6 +79,21 @@
          Notifications{% endif %}
   </h5>
 
+  {% if pending_expense_receipt_count %}
+  <a href="{% url 'expenseReceiptsPending' %}" id="expReceiptPendingBanner" class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between mb-3 smallFont text-dark text-decoration-none">
+    <span>
+      {% if useri.langSet == 0 %}
+        <strong>{{ pending_expense_receipt_count }}</strong> matumizi yanahitaji risiti ambazo bado hazijapakiwa.
+      {% else %}
+        <strong>{{ pending_expense_receipt_count }}</strong> expense(s) require receipt upload(s).
+      {% endif %}
+    </span>
+    <span class="btn btn-sm btn-warning font-weight-bold mt-2 mt-md-0">
+      {% if useri.langSet == 0 %}Pakia risiti{% else %}Upload receipts{% endif %}
+    </span>
+  </a>
+  {% endif %}
+
   <div class="produ-opt-panel py-0 table-responsive" style="padding: 0;" >
       <ul style="min-width: 1350px;" class="list-unstyled d-none  smallerFont d-md-flex border-bottom ">
       <li class="py-3 {% if a == 1 %} actively {% endif %}">

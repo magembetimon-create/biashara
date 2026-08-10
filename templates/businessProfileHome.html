@@ -131,7 +131,7 @@
                 
                 <div class="px-2">
                     <p class=" px-2" style="overflow: hidden;white-space:nowrap ">
-                       <a class="btn btn-light btn-sm text-primary" href="#" onclick="goTo('#ainaB{{a.id.id}}')" >{{a.aina | title }} </a> 
+                       <a class="btn btn-light btn-sm text-primary" href="#" onclick="goTo('#ainaB{{a.id.id}}')" >{% if a.uncategorized %}{% if useri.langSet == 0 %}Bila Aina{% else %}Uncategorized{% endif %}{% else %}{{a.aina | title }}{% endif %} </a> 
                     </p>
                     
                 </div>

@@ -11,11 +11,22 @@ var __tbStatic = window.__tbStatic || (function () {
   };
 })();
 window.__tbStatic = __tbStatic;
+
+function posVariantDisplay(pi) {
+  if (pi.color_name == null) return ''
+  if (window.VariantUtils) {
+    return VariantUtils.variantPosLabel(pi.color_name, pi.color_nick, pi.colorAttr)
+  }
+  const nick = pi.color_nick != null && pi.color_nick !== '' ? '(' + pi.color_nick + ')' : ''
+  return pi.color_name + nick
+}
+
 POSDATA = true 
 PAGERELOAD = true
 let selected = [],
     POS_ITMS = [],
     ITM_CATEG = 0,
+    UNCATEGORIZED_CATEG = -1,
     POSCART = [],
     search_itm = ()=> $('#searchInputForItmm').val(),
     ITMPRICES = [],
@@ -29,6 +40,19 @@ let selected = [],
 
 let POS_SEARCH_TIMER = null
 const POS_SEARCH_DEBOUNCE_MS = 120
+const POS_INITIAL_RENDER_LIMIT = 45
+const POS_RENDER_CHUNK = 45
+const POS_SCROLL_LOAD_PX = 140
+let POS_RENDER_TICKET = 0
+let POS_ITEMS_SCROLL_STATE = {
+  list: [],
+  idx: 0,
+  ticket: 0,
+  loading: false,
+  bound: false,
+  servedQtyMaps: null,
+  dura: null
+}
 
 function normalizePosSearchText(value) {
     return String(value || '').replace(/[^a-z0-9 ]/gi, '').toLowerCase().trim()
@@ -36,7 +60,153 @@ function normalizePosSearchText(value) {
 
 function buildPosSearchIndex() {
     POS_ITMS.forEach(itm => {
-        itm.__search = normalizePosSearchText(`${itm.name || ''} ${itm.namba || ''} ${itm.color_name || ''} ${itm.size_name || ''} ${itm.color_nick || ''} ${itm.brand || ''}`)
+        itm.__search = normalizePosSearchText(`${itm.name || ''} ${itm.namba || ''} ${itm.sirio || ''} ${itm.color_name || ''} ${itm.size_name || ''} ${itm.color_nick || ''} ${itm.brand || ''}`)
+    })
+}
+
+function posFindByBarcode(code) {
+    const raw = String(code || '').trim()
+    const normalized = normalizePosSearchText(raw)
+    if (!raw) return []
+    return POS_ITMS.filter(itm => {
+        const s = String(itm.sirio || '').trim()
+        if (!s) return false
+        return s === raw || normalizePosSearchText(s) === normalized
+    })
+}
+
+function posMergePosRows(rows) {
+    if (!Array.isArray(rows) || !rows.length) return
+    rows.forEach(row => {
+        const exists = POS_ITMS.find(it =>
+            it.id === row.id && it.color_id === row.color_id && it.size_id === row.size_id
+        )
+        if (!exists) POS_ITMS.push(row)
+    })
+    buildPosSearchIndex()
+}
+
+function posOpenItemFromScan(pi) {
+    if (!pi) return
+    const indx = `${pi.id}${pi.color_id}${pi.size_id}`
+    const dt = { vipimo: ItemUnits(pi), pi, pos: indx }
+    const itmV = viewSelItem(dt)
+    const dura = servDura()
+    if (!IS_SERVICE || (dura.servFrom && dura.servTo && dura.servFrom < dura.servTo)) {
+        $('#posItemSelect').modal('show')
+        $('#selectedItemView').html(itmV.itm)
+        if (itmV.multiSelect) {
+            $('#UnitsPOS').val(itmV.unit)
+        }
+    } else {
+        $('#Duration_modal').modal('show')
+    }
+}
+
+function posSessionItemImage(pi) {
+    return (pi && pi.picha) ? pi.picha : __tbStatic('pics/img.svg')
+}
+
+function posQuickAddFromScan(pi, code) {
+    if (!pi) return false
+    const indx = `${pi.id}${pi.color_id}${pi.size_id}`
+    const units = ItemUnits(pi) || []
+    const defaultUnit = units[0] || { unit: pi.vipimo || 'pc', uwiano: 1, jum: 0, bei: pi.bei }
+    const unitratio = Number(defaultUnit.uwiano) || 1
+    const price = Number(defaultUnit.bei != null ? defaultUnit.bei : pi.bei) || 0
+    const existing = (typeof POSCART !== 'undefined' && Array.isArray(POSCART))
+        ? POSCART.find(itm => itm.id === pi.id && itm.color === pi.color_id && itm.size === pi.size_id)
+        : null
+    const qty = existing ? (Number(existing.qty) || 0) + 1 : 1
+    const onshelf = Math.max(0, Number(pi.idadi || 0) - Number(pi.partial_item_reduction_qty || 0))
+    const notsure = Number(pi.notsure) || 0
+    if (!notsure && unitratio * qty > onshelf) {
+        toastr.warning(
+            lang('Idadi ya bidhaa haitoshi kwenye stoo.', 'Item quantity exceeds available stock.'),
+            lang('Taarifa', 'Info'),
+            { timeOut: 2200 }
+        )
+        return false
+    }
+
+    placeItm({
+        itm: pi,
+        pos: indx,
+        qty: qty,
+        total: price * qty,
+        units: defaultUnit.unit || 'pc',
+        unitratio: unitratio,
+        na_vat: Number(pi.taxInclusive) || 0,
+        allow_vat: Number(pi.vat_allow) || 0,
+        jum: Number(defaultUnit.jum) || 0,
+        serial: '',
+    })
+
+    if (window.TbBarcode && typeof TbBarcode.addSessionItem === 'function') {
+        TbBarcode.markFound(code)
+        TbBarcode.addSessionItem({
+            key: indx,
+            name: pi.name || '',
+            image: posSessionItemImage(pi),
+            code: String(code || pi.sirio || ''),
+        })
+    }
+    return true
+}
+
+function posHandleBarcodeScan(code) {
+    const inSession = window.TbBarcode && typeof TbBarcode.isSessionOpen === 'function' && TbBarcode.isSessionOpen()
+    let matches = posFindByBarcode(code)
+    if (matches.length === 1) {
+        if (inSession) {
+            posQuickAddFromScan(matches[0], code)
+        } else {
+            posOpenItemFromScan(matches[0])
+        }
+        return
+    }
+    if (matches.length > 1) {
+        if (inSession) {
+            // Prefer first match during continuous session; user can adjust cart later.
+            posQuickAddFromScan(matches[0], code)
+            return
+        }
+        $('#searchInputForItmm').val(String(code || ''))
+        ITM_CATEG = 0
+        posItms()
+        return
+    }
+
+    const csrfToken = $('input[name=csrfmiddlewaretoken]').val()
+    POSTREQUEST({
+        data: { code: String(code || ''), csrfmiddlewaretoken: csrfToken },
+        url: '/stoku/posBarcodeLookup',
+    }).then(resp => {
+        if (!resp || !resp.success || !resp.items || !resp.items.length) {
+            if (inSession && window.TbBarcode && typeof TbBarcode.markNotFound === 'function') {
+                TbBarcode.markNotFound(code)
+            } else {
+                toastr.warning(
+                    lang('Barcode haijapatikana', 'Barcode not found'),
+                    '',
+                    { timeOut: 2500 }
+                )
+            }
+            return
+        }
+        posMergePosRows(resp.items)
+        posHandleBarcodeScan(code)
+    }).catch(() => {
+        toastr.error(lang('Hitilafu ya mtandao', 'Network error'), '', { timeOut: 2500 })
+    })
+}
+
+function initPosBarcodeScanner() {
+    if (!window.TbBarcode) return
+    TbBarcode.init({
+        onScan: function (code) {
+            posHandleBarcodeScan(code)
+        },
     })
 }
 
@@ -204,16 +374,24 @@ function posdata(c){
             
             const goods = x => (Number(x.Bei_kuuza)>0 || !x.material) && !x.service,
                   Services = x => x.service,
-             
-                all_item = Items.state.filter(x=>IS_SERVICE?Services(x):goods(x)),
-                itemsK = [...new Set(all_item.map(i=>i.aina))] 
+                  all_item = Items.state.filter(x=>IS_SERVICE?Services(x):goods(x))
+            let itemsK = [...new Set(all_item.map(i => (i.aina != null && i.aina !== '') ? i.aina : UNCATEGORIZED_CATEG))]
+                if (!all_item.some(i => i.aina == null || i.aina === '')) {
+                    itemsK = itemsK.filter(i => Number(i) !== UNCATEGORIZED_CATEG)
+                }
                  
                         Categ = itemsK.map(i=>getAllItm(i))
                             function getAllItm(i){
-                            
+                                    if (Number(i) === UNCATEGORIZED_CATEG) {
+                                        return {
+                                            id: UNCATEGORIZED_CATEG,
+                                            aina: lang('Bila Aina', 'Uncategorized'),
+                                        }
+                                    }
+                                    const found = all_item.find(itm => itm.aina === i)
                                     return {
                                             id : i,
-                                            aina: all_item.filter(itm=>itm.aina === i)[0].ainaN,
+                                            aina: (found && found.ainaN) ? found.ainaN : lang('Bila Aina', 'Uncategorized'),
                             
                                 }
                             }
@@ -261,6 +439,7 @@ function posdata(c){
                                                 'aina':itm.aina,
                                                 'color_name':ci.color__color_name,
                                                 'color_nick':ci.color__nick_name,
+                                                'colorAttr': itm.colorAttr,
                                                 'color_id':ci.id,
                                                 'size_name':szd.sized__size,
                                                 'size_id':szd.id,
@@ -291,6 +470,7 @@ function posdata(c){
                                                 'aina':itm.aina,
                                                 'color_name':ci.color__color_name,
                                                 'color_nick':ci.color__nick_name,
+                                                'colorAttr': itm.colorAttr,
                                                 'color_id':ci.id,
                                                 'size_name':null,
                                                 'size_id':0,
@@ -352,8 +532,9 @@ function posdata(c){
                          
 
                          POS_ITMS = itms_data
-                                                 buildPosSearchIndex()
+                         buildPosSearchIndex()
                          posItms()
+                         initPosBarcodeScanner()
 
      }
         
@@ -361,89 +542,137 @@ function posdata(c){
 
 }
 
+function posItemCardHtml(pi, servedQtyMaps, dura) {
+    const siz = pi.size_name != null ? `<i class="d-block" >Size:<strong class="brown text-uppercase" >${pi.size_name}</strong></i>` : '',
+        color = pi.color_name != null ? `<small> <i class="text-primary" >${posVariantDisplay(pi)}</i> </small> ` : '',
+        picha = `<img src="${pi.picha ? pi.picha : __tbStatic('pics/img.svg')}" alt="${lang('Hakuna Picha', 'No Image')}" loading="lazy" decoding="async">`,
+        indx = `${pi.id}${pi.color_id}${pi.size_id}`,
+        cart = POSCART.filter(itm => itm.id === pi.id && itm.color === pi.color_id && itm.size === pi.size_id),
+        cartqty = cart.length ? cart[0].qty : 0,
+        hidden = cartqty ? '' : 'hidden'
+    let svdQty = 0
+
+    if (dura.servFrom && dura.servTo) {
+        if (Number(servedQtyMaps.item[Number(pi.id)] || 0) > 0) svdQty = Number(servedQtyMaps.item[Number(pi.id)] || 0)
+        if (Number(servedQtyMaps.color[Number(pi.color_id)] || 0) > 0) svdQty = Number(servedQtyMaps.color[Number(pi.color_id)] || 0)
+        if (Number(servedQtyMaps.size[Number(pi.size_id)] || 0) > 0) svdQty = Number(servedQtyMaps.size[Number(pi.size_id)] || 0)
+    }
+
+    return `
+            <li class="list-unstyled" ${IS_SERVICE && pi.idadi == svdQty ? 'hidden' : ''} >
+                  <button class="itm_click" data-pos=${indx} data-itm=${pi.id} data-color=${pi.color_id} data-size=${pi.size_id} >
+                    <figure>
+                         ${picha}
+                 <div class="text-right" style="margin-top:-30px;z-index:9999" >
+                    <span data-qty=${cartqty} ${hidden} id="itmclickqty${indx}" class="bg-success border px-1" style="height:15px;width:15px;border-radius:50%;color:#fff" >
+                     ${cartqty}</span>
+                 </div>
+                      <h6 class="text-capitalize pt-2" >${siz} ${color} ${pi.name}</h6>
+                      <small>${pi.maelezo}</small>
+                     <small class="text-primary ml-2 text-italic"  ><i> ${pi.vipimo}</i>.</small><small>${Number(pi.idadi - svdQty).toLocaleString()}</small>
+                    </figure>
+                    <div class="pos-product-price">
+                     ${CURRENCII}. ${Number(pi.bei).toLocaleString()}
+                         <svg width="24" height="24" viewBox="0 0 24 24">
+                          <title>Add</title><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm6 13h-5v5h-2v-5h-5v-2h5v-5h2v5h5v2z"/></svg>
+                    </div>
+                  </button>
+                </li>
+      `
+}
+
+function bindPosItemsInfiniteScroll() {
+    if (POS_ITEMS_SCROLL_STATE.bound) return
+    const host = document.getElementById('pos_itms')
+    if (!host) return
+    host.addEventListener('scroll', onPosItemsScroll, { passive: true })
+    POS_ITEMS_SCROLL_STATE.bound = true
+}
+
+function onPosItemsScroll() {
+    const host = document.getElementById('pos_itms')
+    if (!host) return
+    if (host.scrollTop + host.clientHeight >= host.scrollHeight - POS_SCROLL_LOAD_PX) {
+        appendPosItemsChunk()
+    }
+}
+
+function appendPosItemsChunk() {
+    const st = POS_ITEMS_SCROLL_STATE
+    if (st.loading || st.ticket !== POS_RENDER_TICKET) return
+    if (!st.list.length || st.idx >= st.list.length) return
+
+    st.loading = true
+    const host = $('#pos_itms')
+    const nextEnd = Math.min(st.idx + POS_RENDER_CHUNK, st.list.length)
+    let chunkHtml = ''
+    for (let i = st.idx; i < nextEnd; i += 1) {
+        chunkHtml += posItemCardHtml(st.list[i], st.servedQtyMaps, st.dura)
+    }
+    host.append(chunkHtml)
+    st.idx = nextEnd
+    st.loading = false
+}
+
 function posItms(){
-    let pitm = ` `,
-        allItms = POS_ITMS
+    const ticket = ++POS_RENDER_TICKET
+    let allItms = POS_ITMS
     if(ITM_CATEG!=0){
-       allItms = allItms.filter(ct=>ct.aina===ITM_CATEG)
+       if(Number(ITM_CATEG) === UNCATEGORIZED_CATEG){
+           allItms = allItms.filter(ct => !ct.aina)
+       } else {
+           allItms = allItms.filter(ct=>ct.aina===ITM_CATEG)
+       }
     }
 
     VAT_allowed = Items.state[0]?.vat_allow || false
-    
 
     if(search_itm()!=''){
                 const query = normalizePosSearchText(search_itm())
                 if (query) {
                     allItms = allItms.filter(itm => {
-                        const baseSearch = itm.__search || normalizePosSearchText(`${itm.name || ''} ${itm.namba || ''} ${itm.color_name || ''} ${itm.size_name || ''} ${itm.color_nick || ''} ${itm.brand || ''}`)
+                        const baseSearch = itm.__search || normalizePosSearchText(`${itm.name || ''} ${itm.namba || ''} ${itm.sirio || ''} ${itm.color_name || ''} ${itm.size_name || ''} ${itm.color_nick || ''} ${itm.brand || ''}`)
                         return baseSearch.includes(query)
                     })
                 }
-
-
     }
 
-    if(onlyCart)allItms = cartItms
+    if(onlyCart) allItms = cartItms
 
-        const dura = servDura(),
-                    servedQtyMaps = getServedQtyMaps(dura)
-     
-    
-    allItms.forEach(pi=>{
-      const siz = pi.size_name!=null?`<i class="d-block" >Size:<strong class="brown text-uppercase" >${pi.size_name}</strong></i>`:'',
-           color_nik = pi.color_nick!=''?`(${pi.color_nick})`:'',
-           color = pi.color_name!=null?`<small> <i class="text-primary" >${pi.color_name}${color_nik}</i> </small> `:''  ,
-                     picha =`<img src="${pi.picha ? pi.picha : __tbStatic('pics/img.svg')}" alt="${lang('Hakuna Picha','No Image')}" loading="lazy" decoding="async">`,
-           indx = `${pi.id}${pi.color_id}${pi.size_id}`,
-           cart = POSCART.filter(itm=>itm.id===pi.id && itm.color===pi.color_id && itm.size===pi.size_id),
-           cartqty = cart.length?cart[0].qty:0,
-           hidden = cartqty?'':'hidden'
-           let svdQty = 0
+    const host = $('#pos_itms')
+    bindPosItemsInfiniteScroll()
 
-                     if(dura.servFrom&&dura.servTo){
-                        if(Number(servedQtyMaps.item[Number(pi.id)] || 0) > 0)svdQty=Number(servedQtyMaps.item[Number(pi.id)] || 0)
-                        if(Number(servedQtyMaps.color[Number(pi.color_id)] || 0) > 0)svdQty=Number(servedQtyMaps.color[Number(pi.color_id)] || 0)
-                        if(Number(servedQtyMaps.size[Number(pi.size_id)] || 0) > 0)svdQty=Number(servedQtyMaps.size[Number(pi.size_id)] || 0)
-           }
-          
+    if (!allItms.length) {
+        POS_ITEMS_SCROLL_STATE = {
+            list: [],
+            idx: 0,
+            ticket,
+            loading: false,
+            bound: POS_ITEMS_SCROLL_STATE.bound,
+            servedQtyMaps: null,
+            dura: null
+        }
+        host.html(`<li class="list-unstyled w-100 p-4 text-center text-muted">${lang('Hakuna bidhaa', 'No items')}</li>`)
+        goTo('#ItemListView')
+        return
+    }
 
+    const dura = servDura(),
+          servedQtyMaps = getServedQtyMaps(dura)
 
+    const firstEnd = Math.min(POS_INITIAL_RENDER_LIMIT, allItms.length)
+    host.html(allItms.slice(0, firstEnd).map(pi => posItemCardHtml(pi, servedQtyMaps, dura)).join(''))
+    host.scrollTop(0)
+    POS_ITEMS_SCROLL_STATE = {
+        list: allItms,
+        idx: firstEnd,
+        ticket,
+        loading: false,
+        bound: POS_ITEMS_SCROLL_STATE.bound,
+        servedQtyMaps,
+        dura
+    }
 
-           pitm+=`
-            <li class="list-unstyled" ${IS_SERVICE&&pi.idadi==svdQty?'hidden':''} >
-
-
-
-                  <button class="itm_click" data-pos=${indx} data-itm=${pi.id} data-color=${pi.color_id} data-size=${pi.size_id} >
-
-                    <figure>
-                         ${picha}
-
-                 <div class="text-right" style="margin-top:-30px;z-index:9999" >
-                    <span data-qty=${cartqty} ${hidden} id="itmclickqty${indx}" class="bg-success border px-1" style="height:15px;width:15px;border-radius:50%;color:#fff" >
-                     ${cartqty}</span>
-                 </div>                          
-
-                      <h6 class="text-capitalize pt-2" >${siz} ${color} ${pi.name}</h6>
-                      <small>${pi.maelezo}</small>
-                     <small class="text-primary ml-2 text-italic"  ><i> ${pi.vipimo}</i>.</small><small>${Number(pi.idadi-svdQty).toLocaleString()}</small>
-                    </figure>
-
-                    <div class="pos-product-price">
-                     ${CURRENCII}. ${Number(pi.bei).toLocaleString()} 
-                         <svg width="24" height="24" viewBox="0 0 24 24">
-                          <title>Add</title><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm6 13h-5v5h-2v-5h-5v-2h5v-5h2v5h5v2z"/></svg>
-                    </div>
-                  </button>
-
-
-                </li>
-      `
-
-           
-    })
-
-    $('#pos_itms').html(pitm)
     goTo('#ItemListView')
 }
 
@@ -523,7 +752,7 @@ function viewSelItem(dt){
 
     const siz = pi.size_name!=null?`<i>Size:<strong class="brown text-uppercase" >${pi.size_name}</strong></i>`:'',
           color_nik = pi.color_nick!=''?`(${pi.color_nick})`:'',
-          color = pi.color_name!=null?` <i class="text-primary text-capitalize" >${pi.color_name}${color_nik}</i>  `:''  ,
+          color = pi.color_name!=null?` <i class="text-primary text-capitalize" >${posVariantDisplay(pi)}</i>  `:''  ,
           picha =`<img style="max-width: 100%;"  src="${pi.picha ? pi.picha : __tbStatic('pics/img.svg')}" alt="${lang('Hakuna Picha','No Image')}">`,
           
           cart = POSCART.filter(itm=>itm.id===pi.id && itm.color===pi.color_id && itm.size===pi.size_id),
@@ -939,7 +1168,7 @@ function placeItm(data){
     const  pi = data.itm,
            siz = pi.size_name!=null?`<i>Size:<strong class="brown text-uppercase" >${pi.size_name}</strong></i>`:'',
            color_nik = pi.color_nick!=''?`(${pi.color_nick})`:'',
-           color = pi.color_name!=null?` <i class="text-primary text-capitalize" >${pi.color_name}${color_nik}</i>  `:''  ,
+           color = pi.color_name!=null?` <i class="text-primary text-capitalize" >${posVariantDisplay(pi)}</i>  `:''  ,
            dura = IS_SERVICE?servDura().dura.find(d=>d.value===pi.timely):{name:'',duration:1,opt:'',value:0},
            servT = IS_SERVICE?dura.duration:1,
            tms = IS_SERVICE&&pi.timely?`&times;<span>${dura.duration}</span><span class="text-primary">${dura.name}</span>`:'',

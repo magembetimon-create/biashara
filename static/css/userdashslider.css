@@ -1172,4 +1172,50 @@ box-shadow: 0px 0px 11px -7px #000000, 0px 0px 11px -7px #000000;
   }
 }
 
+/* Profile avatar — match other header icons (no extra Bootstrap padding) */
+.l-header .c-header-icon.logout {
+  padding: 0 6px;
+  min-width: 38px;
+  flex-shrink: 0;
+}
+
+.l-header .c-header-icon.logout .userimage {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+}
+
+/* Narrow phones (e.g. 360px) — tighten spacing so profile avatar stays visible */
+@media (max-width: 380px) {
+  .l-header__inner {
+    padding: 0 1px;
+  }
+  .l-header .posts {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+  .c-header-icon {
+    padding: 0 5px;
+    min-width: 34px;
+  }
+  .l-header .c-header-icon svg {
+    width: 1.44em;
+    height: 1.44em;
+  }
+  .header-icons-group {
+    padding-left: 1px;
+    padding-right: 2px;
+    gap: 0;
+    flex-shrink: 0;
+  }
+  .l-header .c-header-icon.logout {
+    padding: 0 3px;
+    min-width: 34px;
+  }
+  .l-header .c-header-icon.logout .userimage {
+    width: 26px;
+    height: 26px;
+  }
+}
+
 

@@ -16,6 +16,7 @@ function DuraTable(){
 
                  fct.then(function(data){
                     $("#loadMe").modal('hide');
+                    hideLoading()
 
                     let leo = moment().startOf('day').format(),
                         wk = moment().startOf('isoWeek').format(),
@@ -110,7 +111,8 @@ function createArray(name,from,to){
     
                      fct.then(function(data){
                         $("#loadMe").modal('hide');
-
+                        hideLoading()
+ 
                          theArr(data.itms,data.data,name,from,to)
 
                      })

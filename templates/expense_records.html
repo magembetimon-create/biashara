@@ -1,0 +1,274 @@
+{% extends 'userdash.html' %}
+{% load static %}
+
+{% block active-matumizi-menu %}class="btn-default btn btn-sm pop2_active_menu"{% endblock %}
+
+{% block all-bills %}
+<div class="whiteBg py-2 px-2 px-md-3 exp-records-page" style="margin-top:-15px; min-height:90vh;">
+  <h5 class="pb-2 border-bottom mb-3">
+    {% if useri.langSet == 0 %}Kurekodi Matumizi{% else %}Record Expenses{% endif %}
+    <span class="text-primary small">({{ duka.currencii }})</span>
+  </h5>
+
+  {% include 'partials/expense_nav.html' %}
+
+  <div id="recordExpPanel" class="exp-record-panel">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+      <p class="mb-0 text-muted smallFont">
+        {% if useri.langSet == 0 %}Ongeza mistari kadhaa kisha hifadhi zote kwa mara moja.{% else %}Add multiple lines then save all at once.{% endif %}
+      </p>
+      <button type="button" class="btn btn-sm btn-primary latoFont" data-toggle="modal" data-target="#expenseDefineModal">
+        + {% if useri.langSet == 0 %}Matumizi Mapya{% else %}New Expense{% endif %}
+      </button>
+    </div>
+
+    <form id="expenseForm">
+      {% csrf_token %}
+      <div class="row mb-3">
+        <div class="col-md-5 exp-date-field">
+          <label class="smallFont font-weight-bold mb-1">{% if useri.langSet == 0 %}Tarehe na Wakati{% else %}Date &amp; Time{% endif %}</label>
+          <input type="datetime-local" id="expenseDateTime" class="form-control form-control-sm" step="60">
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='expenseDateTime' recycle_title='Tumia tena tarehe na wakati' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='expenseDateTime' recycle_title='Reuse date and time' %}{% endif %}
+        </div>
+      </div>
+
+      <div class="exp-form-grid">
+        <div class="form-group">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Aina ya Matumizi{% else %}Expense Type{% endif %} *</label>
+          <select id="expenseType" class="form-control form-control-sm">
+            <option value="">--</option>
+            <option value="supplies">{% if useri.langSet == 0 %}Vifaa / Manunuzi{% else %}Supplies{% endif %}</option>
+            <option value="product">{% if useri.langSet == 0 %}Matumizi ya Bidhaa{% else %}Product expenses{% endif %}</option>
+            <option value="allowance">{% if useri.langSet == 0 %}Posho{% else %}Allowance{% endif %}</option>
+            {% comment %} <option value="customer_discounts">{% if useri.langSet == 0 %}Punguzo kwa Wateja{% else %}Customer discounts{% endif %}</option> {% endcomment %}
+            <option value="bills">{% if useri.langSet == 0 %}Billi{% else %}Bills{% endif %}</option>
+          </select>
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='expenseType' recycle_title='Tumia tena aina ya matumizi' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='expenseType' recycle_title='Reuse expense type' %}{% endif %}
+        </div>
+
+        <div class="form-group" id="expenseItemWrapper">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Matumizi{% else %}Expense{% endif %} *</label>
+          <input type="text" id="expenseItem" class="form-control form-control-sm" autocomplete="off" placeholder="{% if useri.langSet == 0 %}Tafuta...{% else %}Search...{% endif %}">
+          <div class="exp-ac-list hidden" id="expenseItemList"></div>
+          <input type="hidden" id="expenseItemValue">
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='expenseItem,expenseItemValue' recycle_title='Tumia tena jina la matumizi' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='expenseItem,expenseItemValue' recycle_title='Reuse expense name' %}{% endif %}
+        </div>
+
+        <div class="form-group hidden" id="productStockWrapper">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Bidhaa iliyotumika{% else %}Item used{% endif %} *</label>
+          <input type="text" id="productStockItem" class="form-control form-control-sm" autocomplete="off" placeholder="{% if useri.langSet == 0 %}Tafuta bidhaa...{% else %}Search item...{% endif %}">
+          <div class="exp-ac-list hidden" id="productStockList"></div>
+          <input type="hidden" id="productStockValue">
+          <small class="text-muted" id="productStockHint"></small>
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='productStockItem,productStockValue' recycle_title='Tumia tena bidhaa' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='productStockItem,productStockValue' recycle_title='Reuse item' %}{% endif %}
+        </div>
+
+        <div class="form-group hidden" id="productQtyWrapper">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Idadi zilizotumika{% else %}Quantity used{% endif %} *</label>
+          <input type="number" id="productQty" class="form-control form-control-sm" step="0.001" min="0.001">
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='productQty' recycle_title='Tumia tena idadi' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='productQty' recycle_title='Reuse quantity' %}{% endif %}
+        </div>
+
+        <div class="form-group" id="paymentAccountWrapper">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Akaunti ya Malipo{% else %}Payment account{% endif %} *</label>
+          <select id="paymentAccount" class="form-control form-control-sm">
+            <option value="">--</option>
+          </select>
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='paymentAccount' recycle_title='Tumia tena akaunti ya malipo' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='paymentAccount' recycle_title='Reuse payment account' %}{% endif %}
+        </div>
+
+        <div class="form-group hidden" id="recipientTypeWrapper">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Aliyekabidhiwa{% else %}Recipient{% endif %} *</label>
+          <select id="recipientType" class="form-control form-control-sm">
+            <option value="staff">{% if useri.langSet == 0 %}Mfanyakazi{% else %}Staff{% endif %}</option>
+            <option value="external">{% if useri.langSet == 0 %}Mtu wa nje{% else %}External{% endif %}</option>
+          </select>
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='recipientType' recycle_title='Tumia tena mpokeaji' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='recipientType' recycle_title='Reuse recipient type' %}{% endif %}
+        </div>
+
+        <div class="form-group hidden" id="staffWrapper">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Chagua mfanyakazi{% else %}Select staff{% endif %} *</label>
+          <input type="text" id="staffMember" class="form-control form-control-sm" autocomplete="off">
+          <div class="exp-ac-list hidden" id="staffMemberList"></div>
+          <input type="hidden" id="staffMemberValue">
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='staffMember,staffMemberValue' recycle_title='Tumia tena mfanyakazi' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='staffMember,staffMemberValue' recycle_title='Reuse staff' %}{% endif %}
+        </div>
+
+        <div class="form-group hidden" id="externalWrapper">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Jina{% else %}Name{% endif %} *</label>
+          <input type="text" id="extName" class="form-control form-control-sm">
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='extName' recycle_title='Tumia tena jina' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='extName' recycle_title='Reuse name' %}{% endif %}
+        </div>
+
+        <div class="form-group hidden" id="externalTinWrapper">
+          <label class="smallFont mb-1">TIN *</label>
+          <input type="text" id="extTin" class="form-control form-control-sm" maxlength="50">
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='extTin' recycle_title='Tumia tena TIN' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='extTin' recycle_title='Reuse TIN' %}{% endif %}
+        </div>
+
+        <div class="form-group hidden" id="customerNameWrapper">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Jina la mteja{% else %}Customer name{% endif %} *</label>
+          <input type="text" id="customerName" class="form-control form-control-sm">
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='customerName' recycle_title='Tumia tena jina la mteja' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='customerName' recycle_title='Reuse customer name' %}{% endif %}
+        </div>
+
+        <div class="form-group hidden" id="amountWrapper">
+          <label class="smallFont mb-1">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %} *</label>
+          <input type="text" inputmode="decimal" id="generalAmount" class="form-control form-control-sm exp-amount-field font-weight-bold" autocomplete="off" placeholder="0">
+          {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='generalAmount' recycle_title='Tumia tena kiasi' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='generalAmount' recycle_title='Reuse amount' %}{% endif %}
+        </div>
+      </div>
+
+      <div class="form-group hidden mb-3 exp-desc-row" id="descWrapper">
+        <label class="smallFont mb-1">{% if useri.langSet == 0 %}Maelezo{% else %}Description{% endif %}</label>
+        <textarea id="description" class="form-control form-control-sm exp-desc-textarea" rows="3" placeholder="{% if useri.langSet == 0 %}Maelezo ya ziada…{% else %}Additional notes…{% endif %}"></textarea>
+        {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='description' recycle_title='Tumia tena maelezo' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='description' recycle_title='Reuse description' %}{% endif %}
+      </div>
+
+      <div class="text-right mb-3">
+        <button type="button" id="addBtn" class="btn btn-primary btn-sm latoFont">
+          + {% if useri.langSet == 0 %}Ongeza kwenye jedwali{% else %}Add to table{% endif %}
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered smallFont" id="expQueueTable">
+          <thead class="thead-light">
+            <tr>
+              <th class="text-left" >{% if useri.langSet == 0 %}Matumizi{% else %}Item{% endif %}</th>
+              <th class="text-left" >{% if useri.langSet == 0 %}Mpokeaji{% else %}Recipient{% endif %}</th>
+              <th class="text-left" >{% if useri.langSet == 0 %}Maelezo{% else %}Notes{% endif %}</th>
+              <th class="text-right">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 pt-2 border-top">
+        <div class="smallFont">
+          {% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}:
+          <strong id="allExpensesTotalAmount">0</strong>
+          · <span id="allExpensesCount">0</span> {% if useri.langSet == 0 %}mistari{% else %}lines{% endif %}
+        </div>
+        <button type="submit" id="saveAll" class="btn btn-success latoFont" disabled>
+          {% if useri.langSet == 0 %}Hifadhi Yote{% else %}Save All{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="expenseDefineModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title">{% if useri.langSet == 0 %}Ongeza / Hariri Matumizi{% else %}Add / Edit Expense{% endif %}</h6>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <form id="expenseDefineForm">
+        <div class="modal-body smallFont">
+          {% csrf_token %}
+          <input type="hidden" name="edit" id="expDefineEdit" value="0">
+
+          <div class="form-group">
+            <label class="brown">{% if useri.langSet == 0 %}Jina la Matumizi{% else %}Expense Name{% endif %} <sup class="text-danger">*</sup></label>
+            <input type="text" class="form-control form-control-sm" id="expDefineName" name="groupName" required placeholder="{% if useri.langSet == 0 %}mf. Chakula, Usafiri{% else %}e.g. Food, Transport{% endif %}">
+          </div>
+
+          <div class="form-group">
+            <label class="brown">{% if useri.langSet == 0 %}Aina ya Matumizi{% else %}Expense Type{% endif %} <sup class="text-danger">*</sup></label>
+            <select class="form-control form-control-sm" id="expDefineType" name="expType">
+              <option value="">-----</option>
+              <option value="supplies">{% if useri.langSet == 0 %}Vifaa / Manunuzi{% else %}Supplies{% endif %}</option>
+              <option value="allowance">{% if useri.langSet == 0 %}Posho{% else %}Allowance{% endif %}</option>
+              <option value="bills">{% if useri.langSet == 0 %}Billi{% else %}Bills{% endif %}</option>
+            </select>
+          </div>
+
+          <div id="expDefineBillsPanel" class="d-none exp-define-bills-panel" hidden aria-hidden="true">
+            <div class="form-group">
+              <label class="brown">{% if useri.langSet == 0 %}Muda wa Billi{% else %}Bill Period{% endif %}</label>
+              <select class="form-control form-control-sm" id="expBillPeriodType" name="billPeriodType">
+                <option value="daily">{% if useri.langSet == 0 %}Kila Siku{% else %}Daily{% endif %}</option>
+                <option value="weekly">{% if useri.langSet == 0 %}Kila Wiki{% else %}Weekly{% endif %}</option>
+                <option value="monthly">{% if useri.langSet == 0 %}Kila Mwezi{% else %}Monthly{% endif %}</option>
+                <option value="yearly">{% if useri.langSet == 0 %}Kila Mwaka{% else %}Yearly{% endif %}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="brown">{% if useri.langSet == 0 %}Idadi ya vipindi{% else %}Period count{% endif %} <span id="expPeriodLabel">({% if useri.langSet == 0 %}Siku{% else %}Days{% endif %})</span></label>
+              <input type="number" min="1" class="form-control form-control-sm" id="expBillPeriodCount" name="billPeriodCount">
+            </div>
+            <div class="form-group">
+              <label class="brown">{% if useri.langSet == 0 %}Kiasi kinacholipwa{% else %}Amount payable{% endif %}</label>
+              <input type="number" step="0.01" class="form-control form-control-sm" id="expDefineBillAmount" name="billAmount">
+              <div class="custom-control custom-checkbox mt-2">
+                <input type="checkbox" class="custom-control-input" id="expBillDepends" name="isRecurringAmount" value="1">
+                <label class="custom-control-label" for="expBillDepends">{% if useri.langSet == 0 %}Kiasi kinategemeana na matumizi{% else %}Amount depends on usage{% endif %}</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="brown">{% if useri.langSet == 0 %}Tarehe ya mwisho kulipa{% else %}Last payment date{% endif %}</label>
+              <input type="date" class="form-control form-control-sm" id="expLastPaymentDate" name="lastPaymentDate">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="brown">{% if useri.langSet == 0 %}Kundi la Kodi (Tax Group){% else %}Tax Group{% endif %}</label>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <small class="text-muted">{% if useri.langSet == 0 %}Si lazima{% else %}Optional{% endif %}</small>
+              <div class="custom-control custom-checkbox mb-0">
+                <input type="checkbox" class="custom-control-input" id="expNewTaxGroup" name="newTaxGroup" value="1">
+                <label class="custom-control-label" for="expNewTaxGroup">{% if useri.langSet == 0 %}Mpya{% else %}New{% endif %}</label>
+              </div>
+            </div>
+            <select class="form-control form-control-sm" id="expTaxGroupSelect" name="taxGroup">
+              <option value="">-----</option>
+              {% for tax in exp_tax_groups %}
+              <option value="{{ tax.id }}">{{ tax.name }} ({{ tax.rate }}%)</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div id="expNewTaxPanel" class="d-none exp-define-tax-panel" hidden aria-hidden="true">
+            <div class="form-group">
+              <label class="brown">{% if useri.langSet == 0 %}Jina la Kodi{% else %}Tax name{% endif %}</label>
+              <input type="text" class="form-control form-control-sm" id="expTaxName" name="TaxGroupName" placeholder="VAT, SDL…">
+            </div>
+            <div class="form-group mb-0">
+              <label class="brown">{% if useri.langSet == 0 %}Kiwango (%) {% else %}Rate (%) {% endif %}</label>
+              <div class="input-group input-group-sm">
+                <input type="number" step="0.01" min="0" max="100" class="form-control" id="expTaxRate" name="TaxGroupRate">
+                <div class="input-group-append"><span class="input-group-text">%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mt-3 mb-0">
+            <div class="custom-control custom-checkbox">
+              <input type="checkbox" class="custom-control-input" id="expDefineReceipt" name="attachReceipt" value="1">
+              <label class="custom-control-label" for="expDefineReceipt">{% if useri.langSet == 0 %}Risiti ni lazima{% else %}Mandatory receipt{% endif %}</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</button>
+          <button type="submit" class="btn btn-primary btn-sm">{% if useri.langSet == 0 %}Hifadhi{% else %}Save{% endif %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="{% static 'css/expense_records.css' %}">
+<script>
+  window.EXP_RECORD_URLS = {
+    getData: "{% url 'getExpData' %}",
+    saveBatch: "{% url 'addExpense' %}",
+    saveGroup: "{% url 'addExpenseGroup' %}",
+  };
+</script>
+<script src="{% static 'js/expense_records.js' %}"></script>
+{% endblock %}

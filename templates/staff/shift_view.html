@@ -436,6 +436,17 @@
         </div>
 
         <div class="form-group">
+          <label for="printPaperSize" class="mb-2">
+            {% if useri.langSet == 0 %}Aina ya Karatasi{% else %}Paper Size{% endif %}
+          </label>
+          <select id="printPaperSize" class="form-control">
+            <option value="large">{% if useri.langSet == 0 %}Karatasi Kubwa (A4){% else %}Large Paper (A4){% endif %}</option>
+            <option value="thermal58">{% if useri.langSet == 0 %}Thermal 58mm{% else %}Thermal 58mm{% endif %}</option>
+            <option value="thermal80">{% if useri.langSet == 0 %}POS 80mm{% else %}POS 80mm{% endif %}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <div class="custom-control custom-checkbox">
             <input type="checkbox" class="custom-control-input" id="printItems" checked>
             <label class="custom-control-label" for="printItems">
@@ -478,7 +489,8 @@
           </label>
           <select id="actorSalesPrintPaperSize" class="form-control">
             <option value="large" selected>{% if useri.langSet == 0 %}Karatasi Kubwa (A4){% else %}Large Paper (A4){% endif %}</option>
-            <option value="thermal">{% if useri.langSet == 0 %}Thermal Ndogo (58mm){% else %}Small Thermal (58mm){% endif %}</option>
+            <option value="thermal58">{% if useri.langSet == 0 %}Thermal 58mm{% else %}Thermal 58mm{% endif %}</option>
+            <option value="thermal80">{% if useri.langSet == 0 %}POS 80mm{% else %}POS 80mm{% endif %}</option>
           </select>
         </div>
       </div>
@@ -514,12 +526,13 @@ function submitPrint() {
   var shiftId = document.getElementById('printShiftId').value;
   var lang = document.getElementById('printLanguage').value;
   var includeItems = document.getElementById('printItems').checked ? '1' : '0';
+  var paper = document.getElementById('printPaperSize').value || 'large';
 
   if (!shiftId) {
     return;
   }
 
-  var url = '/staff/shifts/print?sid=' + shiftId + '&lang=' + lang + '&items=' + includeItems;
+  var url = '/staff/shifts/print?sid=' + shiftId + '&lang=' + lang + '&items=' + includeItems + '&paper=' + encodeURIComponent(paper);
   window.open(url, '_blank');
   $('#printOptionsModal').modal('hide');
 }

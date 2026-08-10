@@ -34,9 +34,14 @@
   <div class="row align-items-center mt-3">
     <div class="col-md-7"></div>
     <div class="col-md-5">
-      <input type="text" class="form-control smallFont" id="shiftSearch"
-        placeholder="{% if useri.langSet == 0 %}Tafuta shift...{% else %}Search shifts...{% endif %}"
-        onkeyup="filterShiftTable(this.value)">
+      <form method="get" action="" class="d-flex">
+        <input type="text" class="form-control smallFont" name="q" id="shiftSearch"
+          value="{{ search_q|default:'' }}"
+          placeholder="{% if useri.langSet == 0 %}Tafuta shift...{% else %}Search shifts...{% endif %}">
+        <button type="submit" class="btn btn-outline-secondary btn-sm ml-2">
+          {% if useri.langSet == 0 %}Tafuta{% else %}Search{% endif %}
+        </button>
+      </form>
     </div>
   </div>
 
@@ -57,7 +62,7 @@
       <tbody>
         {% for s in shifts %}
         <tr>
-          <td>{{ forloop.counter }}</td>
+          <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
           <td> <a href="/staff/shifts/view?sid={{ s.id }}">{{ s.code }}</a> </td>
           <td>{{ s.shift_type }}</td>
           <td>
@@ -91,15 +96,72 @@
       </tbody>
     </table>
   </div>
-</div>
 
-<script>
-function filterShiftTable(query) {
-  var q = query.toLowerCase();
-  var rows = document.querySelectorAll('#shiftTable tbody tr');
-  rows.forEach(function(row) {
-    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-}
-</script>
+  {% if paginator.num_pages > 1 %}
+  <nav class="mt-3">
+    <ul class="pagination pagination-sm justify-content-center flex-wrap">
+
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1{% if search_q %}&q={{ search_q|urlencode }}{% endif %}">&laquo;</a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_q %}&q={{ search_q|urlencode }}{% endif %}">
+          {% if useri.langSet == 0 %}Iliyopita{% else %}Prev{% endif %}
+        </a>
+      </li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+      <li class="page-item disabled">
+        <span class="page-link">{% if useri.langSet == 0 %}Iliyopita{% else %}Prev{% endif %}</span>
+      </li>
+      {% endif %}
+
+      {% for num in paginator.page_range %}
+        {% if page_obj.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ num }}{% if search_q %}&q={{ search_q|urlencode }}{% endif %}">{{ num }}</a>
+        </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_q %}&q={{ search_q|urlencode }}{% endif %}">
+          {% if useri.langSet == 0 %}Inayofuata{% else %}Next{% endif %}
+        </a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ paginator.num_pages }}{% if search_q %}&q={{ search_q|urlencode }}{% endif %}">&raquo;</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">{% if useri.langSet == 0 %}Inayofuata{% else %}Next{% endif %}</span>
+      </li>
+      <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+      {% endif %}
+
+    </ul>
+    <div class="text-center text-muted small">
+      {% if useri.langSet == 0 %}
+        Ukurasa {{ page_obj.number }} kati ya {{ paginator.num_pages }}
+        &mdash; Rekodi {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }} kati ya {{ paginator.count }}
+      {% else %}
+        Page {{ page_obj.number }} of {{ paginator.num_pages }}
+        &mdash; Records {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }} of {{ paginator.count }}
+      {% endif %}
+    </div>
+  </nav>
+  {% elif paginator.count %}
+  <div class="text-center text-muted small mt-2">
+    {% if useri.langSet == 0 %}
+      Rekodi {{ paginator.count }}
+    {% else %}
+      {{ paginator.count }} record{{ paginator.count|pluralize }}
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

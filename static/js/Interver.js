@@ -53,9 +53,12 @@ const MsgRead = document.getElementById('msgRead'),
            }
 
 // POP NOTIICATIONS IF ANY ..............................................................//
-if(data.notice.length>0){
-      notificate(data.notice)
-    }  
+const pendingReceipts = Number(data.pendingExpenseReceipts || 0);
+if ((data.notice && data.notice.length > 0) || pendingReceipts > 0) {
+      notificate(data.notice || [], pendingReceipts);
+} else {
+      $('#there_is_note').hide();
+}
 
 //  POP  CHAT
 if(data.chat.length>0){
@@ -127,11 +130,50 @@ function billProcess(unpaid,halfpaid){
 
 
 
-function notificate(note){
+function showReceiptNotifyPopup(count) {
+  const n = Number(count) || 0;
+  if (n <= 0) return;
+  const body = lang(
+    `<strong>${n}</strong> matumizi yanahitaji risiti. Bofya kupakia.`,
+    `<strong>${n}</strong> expense(s) need receipt uploads. Tap to upload.`,
+  );
+  $('#notify').html(`<h6 style="color: beige;">${lang('Risiti za matumizi', 'Expense receipts')}</h6>
+    <a href="/purchase/expenseReceiptsPending" class="d-flex" style="color: beige;">
+      <div class="NoteIcon">
+        <div class="rounded-circle p-2 pt-1 justify-content-center d-flex" style="align-items:center;background-color: rgb(200, 130, 0);color:#fff;width:40px;height:40px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M3 0h10a1 1 0 0 1 1 1v14.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V1a1 1 0 0 1 1-1z"/>
+            <path d="M4 4h8v1H4V4zm0 3h8v1H4V7zm0 3h5v1H4v-1z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="the-note pl-2 latoFont">${body}</div>
+    </a>`);
+  $('#notify').show(500);
+}
 
-    $('#there_is_note').text(note.length)
-    $('#there_is_note').show()
-   
+function notificate(note, extraCount){
+
+    extraCount = Number(extraCount || 0);
+    const baseLen = note && note.length ? note.length : 0;
+    const total = baseLen + extraCount;
+    if (total <= 0) {
+      $('#there_is_note').hide();
+      $('#notify').fadeOut(200);
+      return;
+    }
+    $('#there_is_note').text(total);
+    $('#there_is_note').show();
+
+    if (extraCount > 0) {
+      showReceiptNotifyPopup(extraCount);
+      return;
+    }
+
+    if (!note || !note.length) {
+      $('#notify').fadeOut(200);
+      return;
+    }
     nt1 = note[0]
 
    

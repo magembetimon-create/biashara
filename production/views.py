@@ -1959,6 +1959,7 @@ def mfanyakazi(request):
                 simu1=request.POST.get('simu1')
                 simu2=request.POST.get('simu2')
                 kazi=request.POST.get('kazi')
+                tin=(request.POST.get('tin') or '').strip()
                 isActive=request.POST.get('isactive')
                 value=request.POST.get('value')
                 wId=request.POST.get('namba')
@@ -1989,6 +1990,7 @@ def mfanyakazi(request):
                     worker.simu1 = simu1
                     worker.simu2 = simu2
                     worker.kazi = kazi
+                    worker.tin = tin
                     worker.active = True
                     worker.diactive = where
                     worker.workerId = wId
@@ -2002,6 +2004,7 @@ def mfanyakazi(request):
                     worker.simu2 = simu2
                     worker.kazi = kazi
                     worker.workerId = wId
+                    worker.tin = tin
                     
                 if Workers.objects.filter(jina=name,Interprise=duka.id,simu1=simu1).exists() and not edit :
                     data={

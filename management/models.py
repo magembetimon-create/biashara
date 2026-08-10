@@ -142,6 +142,7 @@ class Interprise(models.Model):
     produxn =  models.BooleanField(default=True)
     sales =  models.BooleanField(default=True)
     waiter_counter =  models.BooleanField(default=False)
+    waiter_receipt_paper = models.PositiveSmallIntegerField(default=1)  # 1=58mm, 2=80mm POS
     shift_management_enabled = models.BooleanField(default=False)
     officeNo = models.CharField(max_length=200,blank=True)
     # tin_pic = models.ImageField(upload_to="pics",null=True,blank=True)
@@ -194,6 +195,7 @@ class Workers(models.Model):
     simu2 = models.CharField(max_length=15,null=True, blank=True)
     # email = models.EmailField(max_length=100,null=True, blank=True)
     kazi = models.TextField()
+    tin = models.CharField(max_length=50, blank=True, default='')
     active = models.BooleanField(default=False)
     diactive = models.ForeignKey(Anatumia,on_delete=models.SET_NULL,null=True,blank=True)
     # mteja =  models.OneToOneField(wateja_active,on_delete=models.SET_NULL,null=True,blank=True)
@@ -269,6 +271,7 @@ class InterprisePermissions(models.Model):
     SIM2_invoince = models.BooleanField(default=False)
 
     mnRecipt = models.BooleanField(default=False)
+    receiptPaper = models.PositiveSmallIntegerField(default=0)
     receiptSet = models.BooleanField(default=False)
 
     # if is employee
@@ -452,6 +455,14 @@ class wateja(models.Model):
     # where = models.ForeignKey(Interprise,on_delete=models.SET_NULL,null=True,blank=True)
     mteja =  models.OneToOneField(wateja_active,on_delete=models.SET_NULL,null=True,blank=True)
 
+
+class customer_Interprise(models.Model):
+    mteja = models.ForeignKey(wateja, on_delete=models.CASCADE, related_name='customer_interprise_links')
+    branch = models.ForeignKey(Interprise, on_delete=models.CASCADE, related_name='customer_branch_links')
+
+    class Meta:
+        unique_together = ('mteja', 'branch')
+
 class Huduma_za_kifedha(models.Model):
     # Interprise = models.ForeignKey(Interprise,on_delete=models.CASCADE)
     huduma=models.CharField(max_length=90)
@@ -471,7 +482,7 @@ class bidhaa(models.Model):
     vipimo = models.CharField(max_length=100)
     vipimo_jum = models.CharField(max_length=100)
     # mwisho_pungu = models.IntegerField(default=0)
-    Mahi = models.ForeignKey(mahitaji,on_delete=models.CASCADE)
+    Mahi = models.ForeignKey(mahitaji,on_delete=models.CASCADE,null=True,blank=True)
     change_date = models.DateTimeField()
     maelezo = models.TextField(default="none")
     saletaxInluded = models.BooleanField(default=False)
@@ -1165,9 +1176,33 @@ class manunuzi_bidhaa(models.Model):
     Interprise = models.IntegerField() 
     outstocku = models.IntegerField()
  
+class ExpenseTaxGroup(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    name = models.CharField(max_length=100)
+    desc = models.TextField(blank=True)
+    rate = models.DecimalField(max_digits=10, decimal_places=4, default=0)
+
+    class Meta:
+        verbose_name_plural = 'Expense tax groups'
+
 class matumizi(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE,null=True)
     matumizi=models.CharField(max_length=700)
+    tax_group = models.ForeignKey(ExpenseTaxGroup, on_delete=models.SET_NULL, null=True, blank=True)
+    for_supplies = models.BooleanField(default=True)
+    bidhaa_matumizi = models.BooleanField(default=False)
+    posho = models.BooleanField(default=False)
+    bili = models.BooleanField(default=False)
+    discount = models.BooleanField(default=False)
+    attach_receipt = models.BooleanField(default=False)
+    bill_amount = models.DecimalField(max_digits=20, decimal_places=4, null=True, blank=True)
+    bill_fixed = models.BooleanField(default=False)
+    bill_daily = models.BooleanField(default=False)
+    bill_weekly = models.BooleanField(default=False)
+    bill_monthly = models.BooleanField(default=False)
+    bill_yearly = models.BooleanField(default=False)
+    bill_duration = models.IntegerField(default=0)
+    bill_last_paid = models.DateField(null=True, blank=True)
 
 class matumiziTarehe(models.Model):
     produxn = models.ForeignKey(production, on_delete=models.CASCADE,blank=True, null=True)
@@ -1189,6 +1224,31 @@ class rekodiMatumizi(models.Model):
     akaunti = models.ForeignKey(PaymentAkaunts, on_delete=models.CASCADE,blank=True, null=True)
     by = models.ForeignKey(InterprisePermissions, on_delete=models.CASCADE,blank=True, null=True)
     maelezo = models.TextField(blank=True)
+    kabidhiwa = models.CharField(max_length=500, blank=True, default='')
+    worker_recipient = models.ForeignKey('Workers', on_delete=models.SET_NULL, null=True, blank=True)
+    tin_number = models.CharField(max_length=50, blank=True, default='')
+    expense_kind = models.CharField(max_length=40, blank=True, default='')
+    tax_group = models.ForeignKey(ExpenseTaxGroup, on_delete=models.SET_NULL, null=True, blank=True)
+
+class MatumiziReceiptAttachment(models.Model):
+    """Receipt images for expense records and product purchases."""
+    Interprise = models.ForeignKey(Interprise, on_delete=models.CASCADE)
+    rekodi_matumizi = models.ForeignKey(
+        rekodiMatumizi, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='receipt_attachments',
+    )
+    manunuzi = models.ForeignKey(
+        manunuzi, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='receipt_attachments',
+    )
+    image = models.ImageField(upload_to='matumizi_receipts/%Y/%m/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(
+        InterprisePermissions, on_delete=models.SET_NULL, null=True, blank=True,
+    )
+
+    class Meta:
+        verbose_name_plural = 'Matumizi receipt attachments'
 
 class staff_akaunt_permissions(models.Model):
     Akaunt = models.ForeignKey(PaymentAkaunts,on_delete=models.CASCADE)

@@ -15,6 +15,8 @@ let WAITER_ITEMS = []
 let WAITER_CART = []
 let WAITER_ITEM_IMG = []
 let WAITER_ITEM_CATEG = 0
+let WAITER_CATEG_ORIENT = 'horizontal'
+const WAITER_UNCATEGORIZED_CATEG = -1
 let WAITER_COUNTER_MODE = 'all'
 let WAITER_COUNTER_NAME = ''
 let WAITER_TABLE_AREAS = []
@@ -30,14 +32,23 @@ let WAITER_ORDERS = {
   printed: [],
   items: {}
 }
-const WAITER_INITIAL_RENDER_LIMIT = 24
-const WAITER_RENDER_CHUNK = 48
+const WAITER_INITIAL_RENDER_LIMIT = 45
+const WAITER_RENDER_CHUNK = 45
 const WAITER_SEARCH_DEBOUNCE_MS = 120
+const WAITER_SCROLL_LOAD_PX = 140
 let WAITER_RENDER_TICKET = 0
 let WAITER_SEARCH_TIMER = null
+let WAITER_ITEMS_SCROLL_STATE = {
+  list: [],
+  idx: 0,
+  ticket: 0,
+  loading: false,
+  bound: false
+}
 
 const WAITER_DEVICE_ID = String($('#DEVICE_ID').val() || '').trim()
 const WAITER_DEVICE_BIZ = Number($('#DEVICE_BIZ_ID').val() || 0)
+const WAITER_ACTIVE_WAITER_ID = String($('#ACTIVE_WAITER_ID').val() || '').trim()
 
 function waiterDeviceRequest(payload) {
   const reqData = Object.assign({}, payload || {})
@@ -128,12 +139,14 @@ function renderWaiterRightPanel() {
 
   if (mobile) {
     $('#waiterTopSection').toggle(showItems)
-    $('#waiterCategoriesSection').toggle(showItems)
+    $('.waiter-search-row').toggle(showItems)
     $('#waiterItemsColumn').toggle(showItems)
     $('#waiterSideColumn').toggle(!showItems)
+    if (!showItems) closeWaiterCategPopup()
   } else {
     $('#waiterTopSection').show()
-    $('#waiterCategoriesSection').show()
+    $('.waiter-search-row').show()
+    $('#waiterCategoriesSection').show().removeClass('waiter-categ-popup-open')
     $('#waiterItemsColumn').show()
     $('#waiterSideColumn').show()
   }
@@ -206,7 +219,106 @@ function waiterSearchValue() {
 
 function buildWaiterSearchIndex() {
   WAITER_ITEMS.forEach(it => {
-    it.__search = String(`${it.bidhaaN || ''} ${it.namba || ''} ${it.ainaN || ''} ${it.brand || ''}`).toLowerCase()
+    it.__search = String(`${it.bidhaaN || ''} ${it.namba || ''} ${it.sirio || ''} ${it.ainaN || ''} ${it.brand || ''}`).toLowerCase()
+  })
+}
+
+function waiterFindByBarcode(code) {
+  const raw = String(code || '').trim()
+  if (!raw) return []
+  return WAITER_ITEMS.filter(it => String(it.sirio || '').trim() === raw)
+}
+
+function waiterSessionItemImage(itm) {
+  if (!itm) return __tbStatic('pics/img.svg')
+  const map = typeof waiterImageMap === 'function' ? waiterImageMap() : {}
+  return map[Number(itm.bidhaa_id || 0)] || __tbStatic('pics/img.svg')
+}
+
+function waiterAddScannedToSession(itm, code) {
+  if (!itm || !window.TbBarcode || typeof TbBarcode.addSessionItem !== 'function') return
+  TbBarcode.markFound(code)
+  TbBarcode.addSessionItem({
+    key: String(itm.id),
+    name: itm.bidhaaN || '',
+    image: waiterSessionItemImage(itm),
+    code: String(code || itm.sirio || ''),
+  })
+}
+
+function waiterHandleBarcodeScan(code) {
+  const inSession = window.TbBarcode && typeof TbBarcode.isSessionOpen === 'function' && TbBarcode.isSessionOpen()
+  const matches = waiterFindByBarcode(code)
+  if (matches.length === 1) {
+    const beforeLen = WAITER_CART.length
+    const beforeQty = Number((WAITER_CART.find(x => Number(x.id) === Number(matches[0].id)) || {}).qty || 0)
+    addWaiterItemToCart(Number(matches[0].id))
+    const afterQty = Number((WAITER_CART.find(x => Number(x.id) === Number(matches[0].id)) || {}).qty || 0)
+    if (inSession && (afterQty > beforeQty || WAITER_CART.length > beforeLen)) {
+      waiterAddScannedToSession(matches[0], code)
+    }
+    return
+  }
+  if (matches.length > 1) {
+    if (inSession) {
+      const itm = matches[0]
+      const beforeQty = Number((WAITER_CART.find(x => Number(x.id) === Number(itm.id)) || {}).qty || 0)
+      addWaiterItemToCart(Number(itm.id))
+      const afterQty = Number((WAITER_CART.find(x => Number(x.id) === Number(itm.id)) || {}).qty || 0)
+      if (afterQty > beforeQty) waiterAddScannedToSession(itm, code)
+      return
+    }
+    $('#waiterSearchInput').val(String(code || ''))
+    if (typeof updateWaiterSearchClearBtn === 'function') updateWaiterSearchClearBtn()
+    WAITER_ITEM_CATEG = 0
+    queueWaiterItemsRender()
+    return
+  }
+
+  const csrfToken = $('input[name=csrfmiddlewaretoken]').val()
+  POSTREQUEST({
+    data: { code: String(code || ''), csrfmiddlewaretoken: csrfToken },
+    url: '/stoku/posBarcodeLookup',
+  }).then(resp => {
+    if (!resp || !resp.success || !resp.items || !resp.items.length) {
+      if (inSession && window.TbBarcode && typeof TbBarcode.markNotFound === 'function') {
+        TbBarcode.markNotFound(code)
+      } else {
+        toastr.warning(waiterLang('Barcode haijapatikana', 'Barcode not found'), '', { timeOut: 2500 })
+      }
+      return
+    }
+    const row = resp.items[0]
+    if (row && row.id != null && !WAITER_ITEMS.find(x => Number(x.id) === Number(row.id))) {
+      WAITER_ITEMS.push(Object.assign({}, row, {
+        bidhaaN: row.name || row.bidhaaN || '',
+        Bei_kuuza: row.bei != null ? row.bei : row.Bei_kuuza,
+      }))
+    }
+    const itm = WAITER_ITEMS.find(x => Number(x.id) === Number(row.id)) || row
+    const beforeQty = Number((WAITER_CART.find(x => Number(x.id) === Number(itm.id || row.id)) || {}).qty || 0)
+    addWaiterItemToCart(Number(row.id))
+    const afterQty = Number((WAITER_CART.find(x => Number(x.id) === Number(itm.id || row.id)) || {}).qty || 0)
+    if (inSession && afterQty > beforeQty) {
+      waiterAddScannedToSession({
+        id: row.id,
+        bidhaaN: itm.bidhaaN || row.name || '',
+        bidhaa_id: itm.bidhaa_id || row.bidhaa_id,
+        sirio: code,
+        picha: row.picha,
+      }, code)
+    }
+  }).catch(() => {
+    toastr.error(waiterLang('Hitilafu ya mtandao', 'Network error'), '', { timeOut: 2500 })
+  })
+}
+
+function initWaiterBarcodeScanner() {
+  if (!window.TbBarcode) return
+  TbBarcode.init({
+    onScan: function (code) {
+      waiterHandleBarcodeScan(code)
+    },
   })
 }
 
@@ -435,6 +547,9 @@ function addWaiterItemToCart(id) {
 
 function renderWaiterCategories() {
   let categBtn = `
+    <li class="py-1 waiter-categ-orient-row">
+      <button type="button" id="waiterCategOrientToggle" class="btn border btn-light waiter-categ-orient-btn" data-orient="vertical" title=""></button>
+    </li>
     <li class="py-1">
       <button data-aina="0" class="btn border waiter-categs-btn text-left text-capitalize latoFont btn-block btn-default">
         ${waiterLang('Aina Zote', 'All Categories')}
@@ -443,12 +558,18 @@ function renderWaiterCategories() {
   `
 
   const goods = WAITER_ITEMS.filter(x => (Number(x.Bei_kuuza || 0) > 0 || !x.material) && !x.service)
-  const categIds = [...new Set(goods.map(i => Number(i.aina || 0)).filter(Boolean))]
+  const categIds = [...new Set(goods.map(i => (i.aina != null && i.aina !== '') ? Number(i.aina) : WAITER_UNCATEGORIZED_CATEG))]
   const categs = categIds.map(id => {
+    if (Number(id) === WAITER_UNCATEGORIZED_CATEG) {
+      return {
+        id: WAITER_UNCATEGORIZED_CATEG,
+        aina: waiterLang('Bila Aina', 'Uncategorized'),
+      }
+    }
     const found = goods.find(it => Number(it.aina) === Number(id))
     return {
       id: id,
-      aina: found ? (found.ainaN || '') : ''
+      aina: found ? (found.ainaN || waiterLang('Bila Aina', 'Uncategorized')) : waiterLang('Bila Aina', 'Uncategorized')
     }
   }).sort((a, b) => String(a.aina).localeCompare(String(b.aina)))
 
@@ -463,6 +584,7 @@ function renderWaiterCategories() {
   })
 
   $('#waiterCounterNav').html(categBtn)
+  syncWaiterCategOrientBtn()
 }
 
 function waiterFilteredItems() {
@@ -470,7 +592,11 @@ function waiterFilteredItems() {
   const q = waiterSearchValue()
 
   if (WAITER_ITEM_CATEG !== 0) {
-    allItems = allItems.filter(it => Number(it.aina || 0) === Number(WAITER_ITEM_CATEG))
+    if (Number(WAITER_ITEM_CATEG) === WAITER_UNCATEGORIZED_CATEG) {
+      allItems = allItems.filter(it => !it.aina)
+    } else {
+      allItems = allItems.filter(it => Number(it.aina || 0) === Number(WAITER_ITEM_CATEG))
+    }
   }
 
   if (!q) return allItems
@@ -512,54 +638,74 @@ function waiterItemCardHtml(it, imgMap, cartQtyMap) {
   `
 }
 
-function renderWaiterItems() {
-  const ticket = ++WAITER_RENDER_TICKET
-  const list = waiterFilteredItems()
-  const imgMap = waiterImageMap()
+function waiterCartQtyMap() {
   const cartQtyMap = {}
   WAITER_CART.forEach(it => {
     cartQtyMap[Number(it.id)] = Number(it.qty || 0)
   })
+  return cartQtyMap
+}
+
+function bindWaiterItemsInfiniteScroll() {
+  if (WAITER_ITEMS_SCROLL_STATE.bound) return
+  const host = document.getElementById('waiterItemsList')
+  if (!host) return
+  host.addEventListener('scroll', onWaiterItemsScroll, { passive: true })
+  WAITER_ITEMS_SCROLL_STATE.bound = true
+}
+
+function onWaiterItemsScroll() {
+  const host = document.getElementById('waiterItemsList')
+  if (!host) return
+  if (host.scrollTop + host.clientHeight >= host.scrollHeight - WAITER_SCROLL_LOAD_PX) {
+    appendWaiterItemsChunk()
+  }
+}
+
+function appendWaiterItemsChunk() {
+  const st = WAITER_ITEMS_SCROLL_STATE
+  if (st.loading || st.ticket !== WAITER_RENDER_TICKET) return
+  if (!st.list.length || st.idx >= st.list.length) return
+
+  st.loading = true
+  const host = $('#waiterItemsList')
+  const imgMap = waiterImageMap()
+  const cartQtyMap = waiterCartQtyMap()
+  const nextEnd = Math.min(st.idx + WAITER_RENDER_CHUNK, st.list.length)
+  let chunkHtml = ''
+  for (let i = st.idx; i < nextEnd; i += 1) {
+    chunkHtml += waiterItemCardHtml(st.list[i], imgMap, cartQtyMap)
+  }
+  host.append(chunkHtml)
+  st.idx = nextEnd
+  st.loading = false
+}
+
+function renderWaiterItems() {
+  const ticket = ++WAITER_RENDER_TICKET
+  const list = waiterFilteredItems()
+  const imgMap = waiterImageMap()
+  const cartQtyMap = waiterCartQtyMap()
   const host = $('#waiterItemsList')
 
   $('#waiterItemsCount').text(list.length)
+  bindWaiterItemsInfiniteScroll()
 
   if (!list.length) {
+    WAITER_ITEMS_SCROLL_STATE = { list: [], idx: 0, ticket, loading: false, bound: WAITER_ITEMS_SCROLL_STATE.bound }
     host.html('<div class="waiter-empty">' + waiterLang('Hakuna bidhaa', 'No items') + '</div>')
     return
   }
 
   const firstEnd = Math.min(WAITER_INITIAL_RENDER_LIMIT, list.length)
-  const firstHtml = list.slice(0, firstEnd).map(it => waiterItemCardHtml(it, imgMap, cartQtyMap)).join('')
-  host.html(firstHtml)
-
-  if (firstEnd >= list.length) return
-
-  let idx = firstEnd
-  const appendChunk = () => {
-    if (ticket !== WAITER_RENDER_TICKET) return
-
-    const nextEnd = Math.min(idx + WAITER_RENDER_CHUNK, list.length)
-    let chunkHtml = ''
-    for (let i = idx; i < nextEnd; i += 1) {
-      chunkHtml += waiterItemCardHtml(list[i], imgMap, cartQtyMap)
-    }
-    host.append(chunkHtml)
-    idx = nextEnd
-
-    if (idx < list.length) {
-      if (window.requestAnimationFrame) {
-        window.requestAnimationFrame(appendChunk)
-      } else {
-        setTimeout(appendChunk, 0)
-      }
-    }
-  }
-
-  if (window.requestAnimationFrame) {
-    window.requestAnimationFrame(appendChunk)
-  } else {
-    setTimeout(appendChunk, 0)
+  host.html(list.slice(0, firstEnd).map(it => waiterItemCardHtml(it, imgMap, cartQtyMap)).join(''))
+  host.scrollTop(0)
+  WAITER_ITEMS_SCROLL_STATE = {
+    list,
+    idx: firstEnd,
+    ticket,
+    loading: false,
+    bound: WAITER_ITEMS_SCROLL_STATE.bound
   }
 }
 
@@ -760,7 +906,7 @@ function markWaiterOrderPrinted(orderId) {
 }
 
 function openWaiterPrintWindow(orderId) {
-  const printUrl = `/mauzo/waiter_Invoprint?item_valued=${Number(orderId)}&lang=1&m=1&biz=${encodeURIComponent(WAITER_DEVICE_BIZ || 0)}&device_id=${encodeURIComponent(WAITER_DEVICE_ID || '')}`
+  const printUrl = `/mauzo/waiter_Invoprint?item_valued=${Number(orderId)}&lang=1&biz=${encodeURIComponent(WAITER_DEVICE_BIZ || 0)}&device_id=${encodeURIComponent(WAITER_DEVICE_ID || '')}`
   const printWin = window.open(printUrl, '_blank')
 
   if (!printWin) {
@@ -922,6 +1068,7 @@ function initializeWaiterItems() {
     renderWaiterTableGrid()
     renderWaiterCategories()
     queueWaiterItemsRender()
+    initWaiterBarcodeScanner()
   })
 }
 
@@ -972,6 +1119,7 @@ $('body').on('click', '.waiter-categs-btn', function() {
   }
   WAITER_ITEM_CATEG = ain
   queueWaiterItemsRender()
+  closeWaiterCategPopup()
 })
 
 $('body').on('click', '.waiter-history-tab', function() {
@@ -1068,9 +1216,112 @@ $('body').on('hidden.bs.modal', '#waiterPrintConfirmModal', function() {
   $('#waiterConfirmPrintedBtn').prop('disabled', false)
 })
 
-$('#waiterSearchInput').on('keyup', function() {
+function updateWaiterSearchClearBtn() {
+  const hasText = Boolean(String($('#waiterSearchInput').val() || '').length)
+  $('#waiterSearchClear').toggle(hasText)
+}
+
+function clearWaiterSearchInput() {
+  $('#waiterSearchInput').val('')
+  updateWaiterSearchClearBtn()
+  queueWaiterItemsRender()
+}
+
+function waiterCategOrientStorageKey() {
+  const waiterId = WAITER_ACTIVE_WAITER_ID || '0'
+  const deviceId = WAITER_DEVICE_ID || '0'
+  return 'waiterCategOrient_d' + deviceId + '_w' + waiterId
+}
+
+function waiterCategOrientIcon(nextMode) {
+  if (nextMode === 'vertical') {
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h4v12H2V2zm6 0h6v3H8V2zm0 5h6v3H8V7zm0 5h6v3H8v-3z"/></svg>'
+  }
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M2 3.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/></svg>'
+}
+
+function syncWaiterCategOrientBtn() {
+  const mode = WAITER_CATEG_ORIENT === 'vertical' ? 'vertical' : 'horizontal'
+  const nextMode = mode === 'vertical' ? 'horizontal' : 'vertical'
+  const $btn = $('#waiterCategOrientToggle')
+  if (!$btn.length) return
+  $btn.attr('data-orient', nextMode)
+  $btn.attr(
+    'title',
+    nextMode === 'vertical'
+      ? waiterLang('Onyesha kushoto (wima)', 'Show left (vertical)')
+      : waiterLang('Onyesha juu (mlalo)', 'Show on top (horizontal)')
+  )
+  $btn.html(waiterCategOrientIcon(nextMode))
+}
+
+function applyWaiterCategOrientation(orient) {
+  const mode = orient === 'vertical' ? 'vertical' : 'horizontal'
+  WAITER_CATEG_ORIENT = mode
+  const $nav = $('#waiterCounterNav')
+  const $shell = $('.waiter-shell')
+  $nav.removeClass('is-horizontal is-vertical').addClass(mode === 'vertical' ? 'is-vertical' : 'is-horizontal')
+  $shell.removeClass('waiter-categ-horizontal waiter-categ-vertical')
+    .addClass(mode === 'vertical' ? 'waiter-categ-vertical' : 'waiter-categ-horizontal')
+  syncWaiterCategOrientBtn()
+  try {
+    localStorage.setItem(waiterCategOrientStorageKey(), mode)
+  } catch (err) {}
+}
+
+function initWaiterCategOrientation() {
+  let saved = 'horizontal'
+  try {
+    saved = localStorage.getItem(waiterCategOrientStorageKey()) || 'horizontal'
+  } catch (err) {}
+  applyWaiterCategOrientation(saved)
+}
+
+function openWaiterCategPopup() {
+  if (!waiterIsMobileLayout()) return
+  $('#waiterCategoriesSection').addClass('waiter-categ-popup-open')
+  $('body').addClass('waiter-categ-popup-active')
+}
+
+function closeWaiterCategPopup() {
+  $('#waiterCategoriesSection').removeClass('waiter-categ-popup-open')
+  $('body').removeClass('waiter-categ-popup-active')
+}
+
+$('#waiterSearchInput').on('keyup input', function() {
+  updateWaiterSearchClearBtn()
   debounceWaiterItemsRender()
 })
+
+$('#waiterSearchClear').on('click', function() {
+  clearWaiterSearchInput()
+  $('#waiterSearchInput').trigger('focus')
+})
+
+$('body').on('click', '#waiterCategOrientToggle', function(e) {
+  e.preventDefault()
+  e.stopPropagation()
+  applyWaiterCategOrientation(String($(this).attr('data-orient') || 'horizontal'))
+})
+
+$('#waiterOpenCategPopup').on('click', function() {
+  openWaiterCategPopup()
+})
+
+$('#waiterCloseCategPopup').on('click', function() {
+  closeWaiterCategPopup()
+})
+
+$('#waiterCategoriesSection').on('click', function(e) {
+  if (e.target === this) closeWaiterCategPopup()
+})
+
+$(window).on('resize', function() {
+  if (!waiterIsMobileLayout()) closeWaiterCategPopup()
+})
+
+initWaiterCategOrientation()
+updateWaiterSearchClearBtn()
 
 $('#waiter_order_btn').on('click', function() {
   saveWaiterOrder()

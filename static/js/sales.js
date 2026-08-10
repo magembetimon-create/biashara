@@ -1152,6 +1152,9 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
      const __tbPerfStart = tbPerfNowSales()
     let valu = $(`#is_colored_item${pos} button`).data('valu')
     const prs = The_price.state.filter(x=>x.item_id===valu)
+    const vAttr = window.VariantUtils
+      ? (VariantUtils.getVariantAttr(val, valu) || VariantUtils.resolveVariantAttr(val, colored))
+      : null
       
   
 
@@ -1248,23 +1251,21 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                             overflow-y:auto"
                             >
                              <p>
-                                <button type="button" class="mr-2 rangi-editing" 
+                                ${window.VariantUtils ? VariantUtils.variantPopupHeader(
+                                  colorObj.color__color_code,
+                                  colorObj.color__color_name,
+                                  vAttr,
+                                  `data-color=${colorObj.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")} data-color_name=${colorObj.color__color_name.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")} data-idadi_jum=${colorObj.bidhaa__bidhaa__idadi_jum} data-valued=${colorObj.id} data-toggle="modal" data-target="#kuweka-rangi-model"`,
+                                  true
+                                ) : `<button type="button" class="mr-2 rangi-editing" 
                                 data-color=${colorObj.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")} 
                                 data-color_name=${colorObj.color__color_name.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")} 
                                 data-idadi_jum=${colorObj.bidhaa__bidhaa__idadi_jum} 
                                 data-valued=${colorObj.id} 
                                 data-toggle="modal" data-target="#kuweka-rangi-model" style="height: 25px;width:40px;color:${colorObj.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
                                     background:${colorObj.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
-                                    cursor:pointer;
-                                    border-radius:3px;
-                                    -webkit-box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37); 
-                                    box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37);
-                                    border:0;
-
-                                ">
-                                   color
-                             </button>   
-                             <span class="smallerFont text-capitalize">${colorObj.color__color_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>
+                                    cursor:pointer;border-radius:3px;box-shadow:0px 3px 10px -3px rgba(0,0,0,0.37);border:0;">color</button>   
+                             <span class="smallerFont text-capitalize">${colorObj.color__color_name.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</span>`}
                              </p>
                              <div class="coloredscene" data-show="#success${colorObj.id}" data-idadi=${Shelfidadi} data-uwiano=${colorObj.bidhaa__bidhaa__idadi_jum} data-valu=${colorObj.id}  data-colored=true data-class="inputColor${colorObj.id}">
                              `
@@ -1477,67 +1478,15 @@ $('body').off('click','.colored_items').on('click','.colored_items',function(){
                              </div>
 
                            </div>
-                           <div id="Color${colored[l].id}" data-color=${colored[l].color} data-valued=${colored[l].id} class="showingpop241 the_identify"  data-showing="#ona_rang${colored[l].id}" 
-                                style="
-                                height: 25px;
-                                width:40px;
-                                color:${colored[l].color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
-                                background:${colored[l].color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};
-                                cursor:pointer;
-                                border-radius:3px;
-                                -webkit-box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37); 
-                                box-shadow: 0px 3px 10px -3px rgba(0,0,0,0.37);
-                                ">
-                              color
-
-                              <!-- CHECK THE QUANTITY SET COLOR.........................  -->
-                              <div class="position-absolute successmark" id="success${colored[l].id}"  
-                                style="
-                                margin-left:21px;
-                                margin-top:-18px;
-                                height:19px;
-                                width:17px;
-                                border-radius:50%;
-                                color:#fff;
-                                background:rgba(2, 167, 2, 0.842);
-                                border:1px solid #fff;
-                                `
-                                if(selected==0){
-                                 coloredone+=`display:none;"`
-                                }
-                              
-                               coloredone+=`> <span style="top:-1px;left:-1px;position:absolute;">
-                                    <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-check" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd" d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 0 1 .02-.022z"/>
-                                    </svg>
-                                </span>
-                             </div>
-
-                             
-                              <!-- SHOW ERROR ALert IF THE SET QUANTITY EXCEED THE ACTUAL COLOR.........................  -->
-                              <div class="position-absolute text-danger errormark" id="error${colored[l].id}"  
-                                style="
-                                margin-left:21px;
-                                margin-top:-18px;
-                                height:19px;
-                                width:17px;
-                                border-radius:50%;
-                                background:#fff;
-                                border:1px solid #fff;
-                                
-                                `
-                                 coloredone+=`display:none;"`
-
-                              
-                               coloredone+=`> 
-                             <span >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle" viewBox="0 0 16 16">
-                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
-                                    </svg>
-                              </span>
-                             </div>
-                           </div>
+                           ${window.VariantUtils ? VariantUtils.variantPickerTileHtml({
+                             id: colorObj.id,
+                             colorName: colorObj.color__color_name,
+                             colorCode: colorObj.color__color_code,
+                             colorAttr: vAttr,
+                             selected: selected,
+                             withError: true,
+                             extraData: 'data-color="' + colorObj.color + '" data-valued="' + colorObj.id + '"'
+                           }) : `<div id="Color${colorObj.id}" data-color=${colorObj.color} data-valued=${colorObj.id} class="showingpop241 the_identify" data-showing="#ona_rang${colorObj.id}" style="height:25px;width:40px;color:${colorObj.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};background:${colorObj.color__color_code.replace(/[&\/\\,+()$~%"*?<>{}`]/g, "")};cursor:pointer;border-radius:3px;-webkit-box-shadow:0px 3px 10px -3px rgba(0,0,0,0.37);box-shadow:0px 3px 10px -3px rgba(0,0,0,0.37);">color<div class="position-absolute successmark" id="success${colorObj.id}" style="margin-left:21px;margin-top:-18px;height:19px;width:17px;border-radius:50%;color:#fff;background:rgba(2,167,2,0.842);border:1px solid #fff;${selected == 0 ? 'display:none;' : ''}"><span style="top:-1px;left:-1px;position:absolute;"><svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-check" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 0 1 .02-.022z"/></svg></span></div><div class="position-absolute text-danger errormark" id="error${colorObj.id}" style="margin-left:21px;margin-top:-18px;height:19px;width:17px;border-radius:50%;background:#fff;border:1px solid #fff;display:none;"><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/></svg></span></div></div>`}
                        </div>
                           `
                          
@@ -1558,7 +1507,13 @@ if(total_colored>0){
 
 
     $('#bill_item_color').html(coloredone)
-    $('#item_jina').html($(`#place_searched${pos} label`).text())
+    const itemName = $(`#place_searched${pos} label`).text()
+    if (window.VariantUtils) {
+      VariantUtils.applyVariantModalLabels(itemName, val, valu)
+      VariantUtils.updateColoredButtonTitle(pos, val, valu, colored)
+    } else {
+      $('#item_jina').html(itemName)
+    }
 
     tbPerfLogSales('sales.color_size', __tbPerfStart, {
         pos: Number(pos),

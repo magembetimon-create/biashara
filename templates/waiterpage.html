@@ -56,30 +56,50 @@
     </div>
   </div>
 
-  <div id="waiterCategoriesSection" class="row classic_div mb-2">
-    <div class="col-12">
-      <ul id="waiterCounterNav" class="waiter-counter-nav list-unstyled d-flex pt-2 mb-0"></ul>
-    </div>
-  </div>
-
   <div class="row classic_div mb-2 waiter-search-row">
     <div class="col-12">
-      <div class="input-group waiter-search-input-wrap">
-        <input type="text" id="waiterSearchInput" class="form-control" placeholder="{% if useri.langSet == 0 %}Tafuta Bidhaa{% else %}Search Item{% endif %}">
-        <div class="input-group-append">
-          <span class="input-group-text">
-           <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      <div class="d-flex align-items-stretch waiter-search-bar">
+        <button type="button" id="waiterOpenCategPopup" class="btn btn-outline-primary mr-2 d-md-none waiter-categ-popup-trigger" title="{% if useri.langSet == 0 %}Aina{% else %}Categories{% endif %}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
           </svg>
-          </span>
+          <span class="ml-1">{% if useri.langSet == 0 %}Aina{% else %}Cats{% endif %}</span>
+        </button>
+        <div class="input-group waiter-search-input-wrap tb-barcode-allow-input flex-grow-1">
+          <input type="text" id="waiterSearchInput" class="form-control" placeholder="{% if useri.langSet == 0 %}Tafuta Bidhaa / Barcode{% else %}Search Item / Barcode{% endif %}">
+          <div class="input-group-append">
+            <button type="button" id="waiterSearchClear" class="btn btn-outline-secondary" style="display:none;" title="{% if useri.langSet == 0 %}Futa tafuta{% else %}Clear search{% endif %}">
+              &times;
+            </button>
+            <button type="button" class="btn btn-outline-secondary tb-open-barcode-camera" title="{% if useri.langSet == 0 %}Skani barcode{% else %}Scan barcode{% endif %}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upc-scan" viewBox="0 0 16 16">
+                <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5zM.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5zM3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7z"/>
+              </svg>
+            </button>
+            <span class="input-group-text">
+             <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            </span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="row">
-    <div id="waiterItemsColumn" class="col-lg-7 mb-3">
+  <div class="row waiter-content-row" id="waiterContentRow">
+    <div id="waiterCategoriesSection" class="col-12 mb-3">
+      <div class="classic_div waiter-categ-panel">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <small class="text-muted">{% if useri.langSet == 0 %}Aina{% else %}Categories{% endif %}</small>
+          <button type="button" class="btn btn-sm btn-light d-md-none" id="waiterCloseCategPopup" aria-label="Close">&times;</button>
+        </div>
+        <ul id="waiterCounterNav" class="waiter-counter-nav list-unstyled d-flex pt-1 mb-0 is-horizontal"></ul>
+      </div>
+    </div>
+
+    <div id="waiterItemsColumn" class="col-lg-8 mb-3">
       <div class="classic_div waiter-items-wrap">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h6 class="mb-0">{% if useri.langSet == 0 %}Bidhaa{% else %}Items{% endif %}</h6>
@@ -89,7 +109,7 @@
       </div>
     </div>
 
-    <div id="waiterSideColumn" class="col-lg-5 mb-3">
+    <div id="waiterSideColumn" class="col-lg-4 mb-3">
       <div class="classic_div mb-2 waiter-desktop-panel-toggle">
         <div class="btn-group btn-group-sm d-flex" role="group" aria-label="Waiter Panels">
           <button type="button" class="btn btn-primary waiter-panel-tab" data-panel="current">
@@ -454,4 +474,4 @@ class="c-menu__item style-none is-active  showingpop2"
 <script src="{% static 'js/waiterpage.js' %}"></script>
 {% endblock %}
 
-{% block forItems %}{% endblock %}
+<input type="hidden" id="waiter_receipt_paper" value="{{ waiter_receipt_paper|default:1 }}">

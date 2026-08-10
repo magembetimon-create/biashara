@@ -11,7 +11,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
 from business import settings
-from management.models import HudumaNyingine, Notifications,ainaBibi,ainaMama,Kata,Mitaa,Wilaya,Zones,Mikoa,wateja_active,productionList,now_categ,now_group,bidhaaA_edit,stokAdjustment,bidhaa_edit,stockAdjst_confirm, UserExtend,Kanda,bei_za_bidhaa,user_Interprise,ColorChange,SizeChange,staff_akaunt_permissions,wateja,receive,receiveList,transferList,received_confirm,transfered_size,received_size,transfered_color,received_color,transfer,sizes,mauzoList,Interprise,bidhaa_sifa,key_sifa,picha_yenyewe,productChangeRecord,InterprisePermissions,PaymentAkaunts,toaCash,wekaCash,mahitaji,bidhaa_aina,makampuni,bidhaa,wasambazaji,manunuzi,manunuziList,matumizi,rekodiMatumizi,bidhaa_stoku,color_produ,produ_colored,picha_bidhaa,produ_size,grouped_item,grouped_item_member,grouped_item_reconciliation
+from management.models import HudumaNyingine, Notifications,ainaBibi,ainaMama,Kata,Mitaa,Wilaya,Zones,Mikoa,wateja_active,productionList,now_categ,now_group,bidhaaA_edit,stokAdjustment,bidhaa_edit,stockAdjst_confirm, UserExtend,Kanda,bei_za_bidhaa,user_Interprise,ColorChange,SizeChange,staff_akaunt_permissions,wateja,customer_Interprise,receive,receiveList,transferList,received_confirm,transfered_size,received_size,transfered_color,received_color,transfer,sizes,mauzoList,Interprise,bidhaa_sifa,key_sifa,picha_yenyewe,productChangeRecord,InterprisePermissions,PaymentAkaunts,toaCash,wekaCash,mahitaji,bidhaa_aina,makampuni,bidhaa,wasambazaji,manunuzi,manunuziList,matumizi,rekodiMatumizi,bidhaa_stoku,color_produ,produ_colored,picha_bidhaa,produ_size,grouped_item,grouped_item_member,grouped_item_reconciliation
+from stoku.customer_branch_utils import customers_for_branch_list, sync_customer_branches
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
@@ -43,6 +44,15 @@ from django.core.cache import cache
 
 
 from accaunts.todos import Todos,updateOrder,shift_operation_block_payload
+from .item_excel import (
+    bulk_import_items,
+    build_ai_items_format_prompt,
+    build_items_xlsx_bytes,
+    extract_import_bundle,
+    fetch_export_rows,
+    group_import_rows,
+    parse_uploaded_xlsx,
+)
 from .grouped_items_utils import (
     should_reduce_stock_for_mauzolist,
     get_grouped_items_for_duka,
@@ -88,7 +98,7 @@ def getItems(request):
                 addCode=F('ongezwa__code'),
             
                 brand=F('bidhaa__kampuni_id__kampuni_jina'),
-                ainaN=F('bidhaa__bidhaa_aina_id__aina'),
+                ainaN=F('bidhaa__bidhaa_aina__aina'),
                 vendor=F('msambaji_id__jina'),
                 bidhaaN=F('bidhaa__bidhaa_jina'),
                 maelezo=F('bidhaa__maelezo'),
@@ -99,7 +109,8 @@ def getItems(request):
                 itmChangeDate=F('bidhaa__change_date'),
                 vipimo=F('bidhaa__vipimo'),
                 uwiano=F('bidhaa__idadi_jum'),
-                vipimoJum=F('bidhaa__vipimo_jum')
+                vipimoJum=F('bidhaa__vipimo_jum'),
+                colorAttr=F('bidhaa__colorAttr'),
                 )
 
 
@@ -109,7 +120,7 @@ def getItems(request):
         grouped_members_map = build_grouped_member_bidhaa_map(intp.id)
 
         produced = itmI.filter(produced__production__production__Interprise=intp.id)
-        custom = list(wateja.objects.filter(Interprise__owner=intpn.Interprise.owner.id).annotate(duka=F('Interprise'),duka_jina=F('Interprise__name')).values())
+        custom = customers_for_branch_list(intpn, branch_id=intp.id)
 
         produced_cost = []
         if produced.exists():
@@ -159,11 +170,11 @@ def getItems(request):
                             'sales':li.Bei_kuuza,
                             'material':li.bidhaa.material,
                             'bidhaa':li.bidhaa.id,
-                            'Aina':li.bidhaa.bidhaa_aina.id,
-                            'kundi':li.bidhaa.bidhaa_aina.mahi.id,
+                            'Aina': li.bidhaa.bidhaa_aina_id,
+                            'kundi': li.bidhaa.bidhaa_aina.mahi_id if li.bidhaa.bidhaa_aina else None,
                             'brand':li.bidhaa.kampuni.id
                         })
-        bidhaaRangi = list(produ_colored.objects.select_related('color_produ,bidhaa_stoku').filter(Interprise=intp,color__colored=True).exclude(bidhaa__inapacha=True,idadi=0).values('id','bidhaa','color','idadi','color__nick_name','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi'))  
+        bidhaaRangi = list(produ_colored.objects.select_related('color_produ,bidhaa_stoku').filter(Interprise=intp,color__colored=True).exclude(bidhaa__inapacha=True,idadi=0).values('id','bidhaa','color','idadi','color__nick_name','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi','bidhaa__bidhaa__colorAttr'))  
         sized=list(produ_size.objects.select_related('sizes').filter(Interprise=intp).exclude(bidhaa__inapacha=True,idadi=0).values('id','sized__color','sized__size','bidhaa','idadi','bidhaa__bidhaa__idadi_jum','bidhaa__idadi','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum'))
         itemImg=[]
     
@@ -197,6 +208,39 @@ def getItems(request):
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({'error': 'An error occurred while fetching items.'}, status=500)
+
+
+@login_required(login_url='login')
+def posBarcodeLookup(request):
+    """Lookup POS item row(s) by barcode (sirio) for scanner workflows."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'items': []})
+    try:
+        from .pos_utils import lookup_pos_items_by_barcode
+
+        todo = todoFunct(request)
+        intp = todo['cheo'].Interprise
+        code = (request.POST.get('code') or '').strip()
+        if not code:
+            return JsonResponse({
+                'success': False,
+                'items': [],
+                'message_swa': 'Barcode haipo',
+                'message_eng': 'Missing barcode',
+            })
+
+        items = lookup_pos_items_by_barcode(intp, code)
+        return JsonResponse({
+            'success': bool(items),
+            'items': items,
+            'message_swa': 'Imepatikana' if items else 'Barcode haijapatikana',
+            'message_eng': 'Found' if items else 'Barcode not found',
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'items': []}, status=500)
+
+
 @login_required(login_url='login')
 def OutStock(request):
     todo = todoFunct(request)
@@ -218,7 +262,7 @@ def OutStock(request):
         user_sup=F('msambaji__where'),
         brand=F('bidhaa__kampuni_id__kampuni_jina'),
 
-        ainaN=F('bidhaa__bidhaa_aina_id__aina'),
+        ainaN=F('bidhaa__bidhaa_aina__aina'),
         vendor=F('msambaji_id__jina'),
         bidhaaN=F('bidhaa__bidhaa_jina'),
         maelezo=F('bidhaa__maelezo'),
@@ -240,7 +284,7 @@ def OutStock(request):
     itms = itmI.values().order_by("-pk")
         
     stokuyanje =  list(itms.exclude(st=intp.id))
-    StokubidhaaRangi =list(color_produ.objects.filter(bidhaa__owner=intp.owner.user,colored=True).annotate(prod=F('bidhaa')).values().order_by("pk"))  
+    StokubidhaaRangi =list(color_produ.objects.filter(bidhaa__owner=intp.owner.user,colored=True).annotate(prod=F('bidhaa')).values('id','prod','bidhaa','color_code','color_name','nick_name','colored','bidhaa__colorAttr').order_by("pk"))  
    
     itemImg=[]
    
@@ -291,7 +335,7 @@ def getItemsAll(request):
         group_aina = F('bidhaa__bidhaa_aina__mahi__aina'),
 
         brand=F('bidhaa__kampuni_id__kampuni_jina'),
-        ainaN=F('bidhaa__bidhaa_aina_id__aina'),
+        ainaN=F('bidhaa__bidhaa_aina__aina'),
         vendor=F('msambaji_id__jina'),
         bidhaaN=F('bidhaa__bidhaa_jina'),
         maelezo=F('bidhaa__maelezo'),
@@ -308,7 +352,8 @@ def getItemsAll(request):
         itmChangeDate=F('bidhaa__change_date'),
         vipimo=F('bidhaa__vipimo'),
         uwiano=F('bidhaa__idadi_jum'),
-        vipimoJum=F('bidhaa__vipimo_jum')
+        vipimoJum=F('bidhaa__vipimo_jum'),
+        colorAttr=F('bidhaa__colorAttr'),
 
 
         
@@ -372,11 +417,11 @@ def getItemsAll(request):
                         'sales':li.Bei_kuuza,
                         'material':li.bidhaa.material,
                         'bidhaa':li.bidhaa.id,
-                        'Aina':li.bidhaa.bidhaa_aina.id,
-                        'kundi':li.bidhaa.bidhaa_aina.mahi.id,
+                        'Aina': li.bidhaa.bidhaa_aina_id,
+                        'kundi': li.bidhaa.bidhaa_aina.mahi_id if li.bidhaa.bidhaa_aina else None,
                         'brand':li.bidhaa.kampuni.id
                     })
-    bidhaaRangi = list(produ_colored.objects.select_related('color_produ,bidhaa_stoku').filter(Interprise=intp,color__colored=True).exclude(bidhaa__inapacha=True,idadi=0).values('id','bidhaa','color','idadi','color__nick_name','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi'))  
+    bidhaaRangi = list(produ_colored.objects.select_related('color_produ,bidhaa_stoku').filter(Interprise=intp,color__colored=True).exclude(bidhaa__inapacha=True,idadi=0).values('id','bidhaa','color','idadi','color__nick_name','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi','bidhaa__bidhaa__colorAttr'))  
     sized=list(produ_size.objects.select_related('sizes').filter(Interprise=intp).exclude(bidhaa__inapacha=True,idadi=0).values('id','sized__color','sized__size','bidhaa','idadi','bidhaa__bidhaa__idadi_jum','bidhaa__idadi','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum'))
     itemImg=[]
    
@@ -447,7 +492,7 @@ def getStokuData(request):
     intp = intpn.Interprise
     stok = list(InterprisePermissions.objects.select_related('Interprise').filter(user__user=request.user,Allow=True,Interprise__owner=intp.owner).exclude(Interprise=intp.id).values('Interprise','Interprise__name','Interprise__mtaa','Interprise__wilaya','Interprise__mkoa').order_by("-pk"))
     other_stock = list(Interprise.objects.filter(owner=intp.owner.id,Interprise=True).exclude(pk=intp.id).values())
-    custom = list(wateja.objects.filter(Interprise__owner=intpn.Interprise.owner.id).annotate(duka=F('Interprise'),duka_jina=F('Interprise__name')).values())
+    custom = customers_for_branch_list(intpn, branch_id=intp.id)
     data = dict()
     data['wateja']=custom
     data["stoku"]=stok
@@ -1184,6 +1229,22 @@ def mteja(request):
                 value=request.POST.get('value')
                 edit=int(request.POST.get('edit',0))
                 valued=int(request.POST.get('valued',0))
+                branch_raw = request.POST.getlist('branches[]') or request.POST.getlist('branches')
+                if not branch_raw and request.POST.get('branches'):
+                    branch_raw = [x for x in request.POST.get('branches').split(',') if x]
+                branch_ids = []
+                for b in branch_raw:
+                    try:
+                        branch_ids.append(int(b))
+                    except (TypeError, ValueError):
+                        pass
+
+                if edit and not intp.owner:
+                    return JsonResponse({
+                        'success': False,
+                        'message_swa': 'Ni admin pekee anaweza kuhariri taarifa za mteja',
+                        'message_eng': 'Only the business owner can edit customer details',
+                    })
 
                 
 
@@ -1225,7 +1286,8 @@ def mteja(request):
                     }
 
                 else:
-                    teja.save()    
+                    teja.save()
+                    sync_customer_branches(teja, branch_ids, intp)
                     data={
                         'success':True,
                         'message_swa':'Taarifa za mteja zimehifadhiwa kikamilifu',
@@ -1847,12 +1909,28 @@ def ongezaBidhaa(request):
 
             if not bidhaa.objects.filter(bidhaa_jina=name,owner=duka.owner.user.id).exists():
                  
+                try:
+                    ainai_int = int(ainai or 0)
+                except (TypeError, ValueError):
+                    ainai_int = 0
 
-                produ.kampuni=makampuni.objects.get(pk=kampuni)
-                produ.bidhaa_aina=bidhaa_aina.objects.get(pk=ainai)
+                try:
+                    kampuni_int = int(kampuni or 0)
+                except (TypeError, ValueError):
+                    kampuni_int = 0
+
+                if kampuni_int:
+                    produ.kampuni = makampuni.objects.get(pk=kampuni_int)
+                else:
+                    produ.kampuni = None
+                if ainai_int:
+                    selected_aina = bidhaa_aina.objects.get(pk=ainai_int)
+                    produ.bidhaa_aina = selected_aina
+                    produ.Mahi = selected_aina.mahi
+                else:
+                    produ.bidhaa_aina = None
+                    produ.Mahi = None
                 produ.idadi_jum=float(uwiano)
-                # produ.mwisho_pungu=punguzo
-                produ.Mahi=mahitaji.objects.get(pk=bidhaa_aina.objects.get(pk=ainai).mahi.id)
                 produ.change_date=datetime.datetime.now(tz=timezone.utc)
                 produ.maelezo = maelezo
                 produ.vipimo = pimoreja
@@ -2029,6 +2107,246 @@ def ongezaBidhaa(request):
              return JsonResponse(data) 
      else:
            return render(request,'pagenotFound.html',todoFunct(request)) 
+
+
+@login_required(login_url='login')
+def itemsExcelImport(request):
+    if request.method != 'POST':
+        return render(request, 'pagenotFound.html', todoFunct(request))
+    try:
+        todo = todoFunct(request)
+        duka = todo['duka']
+        intp = todo['cheo']
+        if not intp or not duka.Interprise:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Duka halipatikani',
+                'message_eng': 'Shop not found',
+            })
+        if not (intp.owner or (intp.addproduct and not intp.viewi)):
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Hauna ruhusa ya kuongeza bidhaa',
+                'message_eng': 'You have no permission to add items',
+            })
+        payload = json.loads(request.body.decode('utf-8') if request.body else '{}')
+        rows = payload.get('rows') or []
+        if not isinstance(rows, list) or len(rows) == 0:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Hakuna data ya kuimport',
+                'message_eng': 'No rows to import',
+            })
+        if len(rows) > 500:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Upeo ni mistari 500 kwa wakati mmoja',
+                'message_eng': 'Maximum 500 rows per import',
+            })
+        summary = bulk_import_items(duka, intp, request.user, rows)
+        return JsonResponse({
+            'success': summary['created'] > 0,
+            'created': summary['created'],
+            'failed': summary['failed'],
+            'results': summary['results'],
+            'message_swa': f"Imeongezwa {summary['created']} bidhaa, {summary['failed']} hazikufanikiwa",
+            'message_eng': f"Added {summary['created']} items, {summary['failed']} failed",
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'message_swa': 'Faili si sahihi',
+            'message_eng': 'Invalid import data',
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message_swa': 'Imeshindikana kuimport bidhaa',
+            'message_eng': 'Failed to import items',
+        })
+
+
+def _items_excel_lang_swa(todo):
+    useri = todo.get('useri')
+    try:
+        return int(getattr(useri, 'langSet', 0) or 0) == 0
+    except (TypeError, ValueError):
+        return True
+
+
+def _items_excel_download_response(content, filename):
+    response = HttpResponse(
+        content,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@login_required(login_url='login')
+def itemsExcelTemplate(request):
+    if request.method != 'GET':
+        return render(request, 'pagenotFound.html', todoFunct(request))
+    try:
+        todo = todoFunct(request)
+        lang_swa = _items_excel_lang_swa(todo)
+        content = build_items_xlsx_bytes(data_rows=None, lang_swa=lang_swa)
+        filename = 'template_bidhaa.xlsx' if lang_swa else 'items_template.xlsx'
+        return _items_excel_download_response(content, filename)
+    except Exception:
+        traceback.print_exc()
+        return render(request, 'pagenotFound.html', todoFunct(request))
+
+
+@login_required(login_url='login')
+def itemsExcelAiPrompt(request):
+    """Return AI prompt text for reformatting a messy product list into the Excel template."""
+    try:
+        todo = todoFunct(request)
+        lang_swa = _items_excel_lang_swa(todo)
+        if request.method == 'POST':
+            business = (request.POST.get('business') or '').strip()
+        else:
+            business = (request.GET.get('business') or '').strip()
+        prompt = build_ai_items_format_prompt(
+            lang_swa=lang_swa,
+            business_description=business,
+        )
+        return JsonResponse({
+            'success': True,
+            'prompt': prompt,
+            'lang_swa': lang_swa,
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message_swa': 'Imeshindikana kutengeneza maelekezo',
+            'message_eng': 'Could not build the prompt',
+        }, status=500)
+
+
+@login_required(login_url='login')
+def itemsExcelExport(request):
+    if request.method != 'GET':
+        return render(request, 'pagenotFound.html', todoFunct(request))
+    try:
+        todo = todoFunct(request)
+        intp = todo['cheo'].Interprise
+        lang_swa = _items_excel_lang_swa(todo)
+        filters = {
+            'f': request.GET.get('f'),
+            'bf': request.GET.get('bf'),
+            'sup': request.GET.get('sup'),
+            'uncat': request.GET.get('uncat'),
+        }
+        rows = fetch_export_rows(intp, filters, lang_swa=lang_swa)
+        if not rows:
+            return HttpResponse(
+                'No items to export' if not lang_swa else 'Hakuna bidhaa za kupakua',
+                status=404,
+            )
+        content = build_items_xlsx_bytes(
+            data_rows=rows,
+            lang_swa=lang_swa,
+            include_instructions=False,
+            include_example=False,
+        )
+        stamp = datetime.datetime.now().strftime('%Y-%m-%d')
+        filename = f"{'bidhaa' if lang_swa else 'items'}_{stamp}.xlsx"
+        return _items_excel_download_response(content, filename)
+    except Exception:
+        traceback.print_exc()
+        return render(request, 'pagenotFound.html', todoFunct(request))
+
+
+@login_required(login_url='login')
+def itemsExcelImportFile(request):
+    if request.method != 'POST':
+        return render(request, 'pagenotFound.html', todoFunct(request))
+    try:
+        todo = todoFunct(request)
+        duka = todo['duka']
+        intp = todo['cheo']
+        if not intp or not duka.Interprise:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Duka halipatikani',
+                'message_eng': 'Shop not found',
+            })
+        if not (intp.owner or (intp.addproduct and not intp.viewi)):
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Hauna ruhusa ya kuongeza bidhaa',
+                'message_eng': 'You have no permission to add items',
+            })
+        upload = request.FILES.get('file')
+        if not upload:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Chagua faili la Excel',
+                'message_eng': 'Choose an Excel file',
+            })
+        name = (upload.name or '').lower()
+        if not (name.endswith('.xlsx') or name.endswith('.zip')):
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Tumia faili la .xlsx au .zip (Excel + picha)',
+                'message_eng': 'Use .xlsx or .zip (Excel + images)',
+            })
+        xlsx_file, image_map = extract_import_bundle(upload)
+        rows = parse_uploaded_xlsx(xlsx_file)
+        if not rows:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Hakuna mistari sahihi kwenye faili',
+                'message_eng': 'No valid rows found in file',
+            })
+        groups = group_import_rows(rows)
+        preview_only = request.POST.get('preview') == '1' or request.GET.get('preview') == '1'
+        if preview_only:
+            preview = []
+            for g in groups[:15]:
+                master = g.get('master') or {}
+                preview.append({
+                    'row': g.get('start_row', 0),
+                    'jina_la_bidhaa': master.get('jina_la_bidhaa', ''),
+                    'aina': master.get('aina', ''),
+                    'bei_kununua': master.get('bei_kununua', 0),
+                    'rangi_model': master.get('rangi_model', ''),
+                    'size': master.get('size', ''),
+                    'variants': len(g.get('variants') or []),
+                })
+            return JsonResponse({
+                'success': True,
+                'count': len(groups),
+                'row_count': len(rows),
+                'preview': preview,
+            })
+        if len(groups) > 500:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Upeo ni bidhaa 500 kwa wakati mmoja',
+                'message_eng': 'Maximum 500 items per import',
+            })
+        summary = bulk_import_items(duka, intp, request.user, rows, image_map=image_map)
+        return JsonResponse({
+            'success': summary['created'] > 0,
+            'created': summary['created'],
+            'failed': summary['failed'],
+            'results': summary['results'],
+            'message_swa': f"Imeongezwa {summary['created']} bidhaa, {summary['failed']} hazikufanikiwa",
+            'message_eng': f"Added {summary['created']} items, {summary['failed']} failed",
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message_swa': 'Imeshindikana kusoma faili la Excel',
+            'message_eng': 'Failed to read Excel file',
+        })
+
 
 # USAJIRI KUTOKA MATAWI MENGINE............................//
 @login_required(login_url='login')
@@ -3685,7 +4003,7 @@ def ondoa_color(request):
             rangi_produ.delete()
             
    
-        bidhaaRangi =list(produ_colored.objects.select_related('bidhaa_stoku','color_produ').filter(Interprise=todoFunct(request)['cheo'].Interprise,bidhaa=produ).values('id','bidhaa','color','idadi','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi').order_by("-pk"))  
+        bidhaaRangi =list(produ_colored.objects.select_related('bidhaa_stoku','color_produ').filter(Interprise=todoFunct(request)['cheo'].Interprise,bidhaa=produ).values('id','bidhaa','color','idadi','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi','bidhaa__bidhaa__colorAttr').order_by("-pk"))  
         data={
              'rangi':bidhaaRangi,
               'success':True,
@@ -4235,7 +4553,7 @@ def save_color(request):
                 rangi.save()
                 rangi_produ.save()
 
-                bidhaaRangi =list(produ_colored.objects.select_related('bidhaa_stoku','color_produ').filter(Interprise=todoFunct(request)['cheo'].Interprise,bidhaa=produ).values('id','bidhaa','color','idadi','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi'))  
+                bidhaaRangi =list(produ_colored.objects.select_related('bidhaa_stoku','color_produ').filter(Interprise=todoFunct(request)['cheo'].Interprise,bidhaa=produ).values('id','bidhaa','color','idadi','color__color_code','color__color_name','color__colored','bidhaa__bidhaa__vipimo','bidhaa__bidhaa__vipimo_jum','bidhaa__bidhaa__idadi_jum','bidhaa__idadi','bidhaa__bidhaa__colorAttr'))  
 
                 data={
                     'rangi':bidhaaRangi,

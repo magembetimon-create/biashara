@@ -1,0 +1,193 @@
+{% extends 'userdash.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block akaunt %}
+<link rel="stylesheet" href="{% static 'css/payment_statement.css' %}">
+{% include 'akaunting_nav.html' %}
+
+<div class="container-fluid px-2 py-2">
+  <div class="card shadow-sm mb-3">
+    <div class="card-header py-2">
+      <h6 class="mb-0 robotoFont font-weight-bold">
+        {% if useri.langSet == 0 %}Taarifa ya Malipo{% else %}Payment Statement{% endif %}
+      </h6>
+    </div>
+    <div class="card-body">
+      <div class="payment-filters">
+        {% csrf_token %}
+
+        <div class="filter-group">
+          <label>{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}:</label>
+          <div class="input-group">
+            <select id="branchFilter" class="form-control form-control-sm">
+              {% if can_all_branches %}
+              <option value="0">{% if useri.langSet == 0 %}Matawi Yote{% else %}All Branches{% endif %}</option>
+              {% endif %}
+              <option value="{{ duka.id }}" selected data-branch-name="{{ duka.name }}">{{ duka.name }}</option>
+              {% for b in branches %}
+                {% if b.id != duka.id %}
+                <option value="{{ b.id }}" data-branch-name="{{ b.name }}">{{ b.name }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+            <div class="input-group-append dropdown">
+              <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+              <div class="dropdown-menu" id="common_duration">
+                <a class="dropdown-item duration-option" href="#" onclick="return psCreateArray('{% if useri.langSet == 0 %}Wiki Ilopita{% else %}Last Week{% endif %}',moment().startOf('isoWeek').subtract(1,'days').startOf('isoWeek').format(),moment().startOf('isoWeek').subtract(1,'days').endOf('isoWeek').format())">{% if useri.langSet == 0 %}Wiki Ilopita{% else %}Last Week{% endif %}</a>
+                <a class="dropdown-item duration-option" href="#" onclick="return psCreateArray('{% if useri.langSet == 0 %}Mwezi Uliopita{% else %}Last Month{% endif %}',moment().startOf('month').subtract(1,'days').startOf('month').format(),moment().startOf('month').subtract(1,'days').endOf('month').format())">{% if useri.langSet == 0 %}Mwezi Uliopita{% else %}Last Month{% endif %}</a>
+                <a class="dropdown-item duration-option" href="#" onclick="return psCreateArray('{% if useri.langSet == 0 %}Mwaka Huu{% else %}This Year{% endif %}',moment().startOf('year').format(),moment().format())">{% if useri.langSet == 0 %}Mwaka Huu{% else %}This Year{% endif %}</a>
+                <a class="dropdown-item duration-option" href="#" onclick="return psCreateArray('{% if useri.langSet == 0 %}Mwaka Uliopita{% else %}Last Year{% endif %}',moment().subtract(1,'year').startOf('year').format(),moment().startOf('year').subtract(1,'second').format())">{% if useri.langSet == 0 %}Mwaka Uliopita{% else %}Last Year{% endif %}</a>
+                <a class="dropdown-item duration-option" href="#" data-toggle="modal" data-target="#durationModal">{% if useri.langSet == 0 %}Weka Muda{% else %}Custom Date{% endif %}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label>{% if useri.langSet == 0 %}Akaunti{% else %}Account{% endif %}:</label>
+          <select id="psAccountFilter" class="form-control form-control-sm">
+            <option value="0">{% if useri.langSet == 0 %}Akaunti Zote{% else %}All Accounts{% endif %}</option>
+            {% for ac in payacc %}
+            <option value="{{ ac.id }}">{{ ac.Akaunt_name }} ({{ ac.Interprise.name }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>{% if useri.langSet == 0 %}Aliyerekebisha{% else %}Recorded By{% endif %}:</label>
+          <select id="psRecordedByFilter" class="form-control form-control-sm text-capitalize">
+            <option value="0">{% if useri.langSet == 0 %}Wote{% else %}All{% endif %}</option>
+            {% for st in recorders %}
+            <option value="{{ st.id }}">{{ st.first_name }} {{ st.last_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>{% if useri.langSet == 0 %}Mwelekeo{% else %}Direction{% endif %}:</label>
+          <select id="psDirectionFilter" class="form-control form-control-sm">
+            <option value="">{% if useri.langSet == 0 %}Zote{% else %}All{% endif %}</option>
+            <option value="in">{% if useri.langSet == 0 %}Mapokezi{% else %}Received{% endif %}</option>
+            <option value="out">{% if useri.langSet == 0 %}Malipo{% else %}Paid Out{% endif %}</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="paymentSummary">
+        <h6 class="font-weight-bold robotoFont mb-2">
+          {% if useri.langSet == 0 %}Muhtasari wa Malipo{% else %}Payment Summary{% endif %}
+        </h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover smallFont mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th>{% if useri.langSet == 0 %}Muda{% else %}Duration{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Rekodi{% else %}Records{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Mapokezi{% else %}Received{% endif %} ({{ duka.currencii }})</th>
+                <th>{% if useri.langSet == 0 %}Malipo{% else %}Paid{% endif %} ({{ duka.currencii }})</th>
+                <th>{% if useri.langSet == 0 %}Salio{% else %}Net{% endif %} ({{ duka.currencii }})</th>
+              </tr>
+            </thead>
+            <tbody id="paymentSummaryBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="paymentDetails" class="mt-4" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+          <div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="backToSummary">
+              &larr; {% if useri.langSet == 0 %}Rudi{% else %}Back{% endif %}
+            </button>
+            <h6 id="paymentDetailsTitle" class="d-inline font-weight-bold ml-2 mb-0 robotoFont">
+              {% if useri.langSet == 0 %}Maelezo ya Malipo{% else %}Payment Details{% endif %}
+            </h6>
+          </div>
+          <button type="button" id="printPaymentStatement" class="btn btn-secondary btn-sm">
+            {% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}
+          </button>
+        </div>
+        <div class="table-responsive" id="paymentsTable">
+          <table class="table table-striped table-sm smallFont mb-0">
+            <thead>
+              <tr>
+                <th>{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Akaunti{% else %}Account{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Kabla{% else %}Before{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Mapokezi{% else %}Received{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Kutoa{% else %}Withdrawal{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Baada{% else %}After{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Kutoka / Kwenda{% else %}From / To{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Maelezo{% else %}Description{% endif %}</th>
+                <th>{% if useri.langSet == 0 %}Aliyerekebisha{% else %}Recorded By{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody id="paymentsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="hidden" id="user_userName" value="{{ useri.user.first_name }} {{ useri.user.last_name }}">
+
+<div class="modal fade" id="durationModal" tabindex="-1" role="dialog" aria-labelledby="durationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title" id="durationModalLabel">{% if useri.langSet == 0 %}Chagua Muda{% else %}Select Duration{% endif %}</h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group mb-2">
+          <label for="durationName" class="smallFont">{% if useri.langSet == 0 %}Jina la Muda{% else %}Duration Name{% endif %}</label>
+          <input type="text" id="durationName" class="form-control form-control-sm">
+        </div>
+        <div class="form-group mb-2">
+          <label for="startDate" class="smallFont">{% if useri.langSet == 0 %}Tarehe ya Kuanza{% else %}Start Date{% endif %}</label>
+          <input type="date" id="startDate" class="form-control form-control-sm">
+        </div>
+        <div class="form-group mb-0">
+          <label for="endDate" class="smallFont">{% if useri.langSet == 0 %}Tarehe ya Kumaliza{% else %}End Date{% endif %}</label>
+          <input type="date" id="endDate" class="form-control form-control-sm">
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</button>
+        <button type="button" class="btn btn-primary btn-sm" id="customDateSubmit">{% if useri.langSet == 0 %}Ongeza{% else %}Add{% endif %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block nav-akaunt %}
+class="c-menu__item style-none is-active"
+{% endblock %}
+
+{% block active-akaunti %}
+<svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-credit-card text-primary" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <path fill-rule="evenodd" d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7z"/>
+</svg>
+{% endblock %}
+
+{% block dash-mapper %}
+{% if useri.langSet == 0 %}Taarifa ya Malipo{% else %}Payment Statement{% endif %}
+{% endblock %}
+
+{% block akaunt-map %}
+<a href="{% url 'payment_statement_page' %}" class="tab_show">
+  {% if useri.langSet == 0 %}Taarifa ya Malipo{% else %}Payment Statement{% endif %}
+</a>
+{% endblock %}
+
+{% block billmpya %}
+<script>
+  var PS_DATA_URL = "{% url 'payment_statement_data' %}";
+  var PS_CURRENCY = "{{ duka.currencii }}";
+</script>
+<script src="{% static 'js/payment_statement.js' %}"></script>
+{% endblock %}

@@ -68,11 +68,6 @@ class Todos:
     shift_data['shift_management_enabled'] = shift_enabled
     shift_data['can_open_shift'] = bool(dukap and (dukap.owner or dukap.open_own_shift))
 
-    if not shift_enabled:
-      shift_data['shift_status_swa'] = 'Usimamizi wa shift haujawezeshwa kwa biashara hii'
-      shift_data['shift_status_eng'] = 'Shift management is disabled for this business'
-      return shift_data
-
     active_shift = ShiftSession.objects.filter(
       Interprise=duka.id,
       ends_at__isnull=True,
@@ -107,8 +102,27 @@ class Todos:
 
     shift_data['is_assigned_to_active_shift'] = is_assigned
     shift_data['can_close_shift'] = bool(
-      active_shift and dukap and is_assigned and (dukap.owner or dukap.close_own_shift)
+      active_shift and dukap and (dukap.owner or (is_assigned and dukap.close_own_shift))
     )
+
+    # When shift management is off: no operation blocking for any user.
+    # Shifts can still be viewed/opened/closed by users with permission.
+    if not shift_enabled:
+      shift_data['shift_operation_allowed'] = True
+      if active_shift:
+        shift_code = str(active_shift.code or active_shift.id)
+        assigned_name = shift_data['active_shift_assigned_name']
+        if assigned_name:
+          shift_data['shift_status_swa'] = f'Shift {shift_code} inaendelea, assigned to {assigned_name}'
+          shift_data['shift_status_eng'] = f'Shift {shift_code} is active and assigned to {assigned_name}'
+        else:
+          shift_data['shift_status_swa'] = f'Shift {shift_code} inaendelea'
+          shift_data['shift_status_eng'] = f'Shift {shift_code} is active'
+      else:
+        shift_data['shift_status_swa'] = 'Hakuna shift inayoendelea kwa sasa'
+        shift_data['shift_status_eng'] = 'There is no active shift at the moment'
+      return shift_data
+
     shift_data['shift_operation_allowed'] = bool(active_shift and is_assigned)
 
     if not active_shift:

@@ -28,8 +28,11 @@ from django.db.models import Sum
 from django.forms.models import model_to_dict
 # Create your views here.
 
+from django.utils.dateparse import parse_datetime
+from django.utils import timezone as dj_timezone
+import traceback
+
 from accaunts.todos import Todos, shift_operation_block_payload
-# Create your views here.
 
 def todoFunct(request):
   usr = Todos(request)
@@ -1694,4 +1697,283 @@ def mobile_payments_data(request):
     })
 
 
+# ─── Payment Statement (Taarifa ya Malipo) ───────────────────────────────────
 
+def _ps_account_qs(todo):
+    duka = todo.get('duka')
+    cheo = todo.get('cheo')
+    if not duka or not cheo:
+        return PaymentAkaunts.objects.none()
+    payaccs_ = PaymentAkaunts.objects.filter(Interprise__owner=duka.owner).exclude(aina__iexact='Cash')
+    serv_cash = PaymentAkaunts.objects.filter(Interprise=duka, aina__iexact='Cash')
+    payaccs_ = (payaccs_ | serv_cash).distinct()
+    if not (cheo.owner or cheo.akaunti):
+        payaccs_ = payaccs_.exclude(onesha=False)
+    is_supervisor = InterprisePermissions.objects.filter(
+        user=cheo.user,
+        Interprise__owner=duka.owner,
+        cash_deposit_supervisor=True,
+    ).exists()
+    if not (cheo.owner or is_supervisor):
+        payaccs_ = payaccs_.exclude(supervisor_account=True)
+    return payaccs_
+
+
+def _ps_branch_ids(todo, branch_id=0):
+    duka = todo['duka']
+    cheo = todo.get('cheo')
+    if branch_id:
+        return [int(branch_id)]
+    if cheo and cheo.owner:
+        ids = list(
+            Interprise.objects.filter(owner=duka.owner, Interprise=True).values_list('id', flat=True)
+        )
+        return ids or [duka.id]
+    return [duka.id]
+
+
+def _ps_recorders_list(todo):
+    """Distinct auth users who recorded weka/toa (not one row per branch permission)."""
+    branch_ids = _ps_branch_ids(todo, 0)
+    allowed_accounts = _ps_account_qs(todo).values_list('id', flat=True)
+    weka_users = wekaCash.objects.filter(
+        Interprise_id__in=branch_ids,
+        Amount__gt=0,
+        Akaunt_id__in=allowed_accounts,
+        by__isnull=False,
+    ).values_list('by__user__user__id', flat=True).distinct()
+    toa_users = toaCash.objects.filter(
+        Interprise_id__in=branch_ids,
+        Amount__gt=0,
+        Akaunt_id__in=allowed_accounts,
+        by__isnull=False,
+    ).values_list('by__user__user__id', flat=True).distinct()
+    user_ids = {uid for uid in weka_users if uid} | {uid for uid in toa_users if uid}
+    if not user_ids:
+        return []
+    return list(
+        User.objects.filter(pk__in=user_ids)
+        .order_by('first_name', 'last_name')
+        .values('id', 'first_name', 'last_name')
+    )
+
+
+def _ps_parse_dt(value):
+    if not value:
+        return None
+    if isinstance(value, datetime.datetime):
+        dt = value
+    else:
+        dt = parse_datetime(str(value))
+        if dt is None:
+            try:
+                dt = datetime.datetime.fromisoformat(str(value))
+            except ValueError:
+                return None
+    if dj_timezone.is_naive(dt):
+        dt = dj_timezone.make_aware(dt, dj_timezone.get_current_timezone())
+    return dt
+
+
+def _ps_summary(weka_qs, toa_qs):
+    received = Decimal(str(weka_qs.aggregate(total=Sum('Amount'))['total'] or 0))
+    paid = Decimal(str(toa_qs.aggregate(total=Sum('Amount'))['total'] or 0))
+    return {
+        'received': float(received),
+        'paid': float(paid),
+        'net': float(received - paid),
+        'count_in': weka_qs.count(),
+        'count_out': toa_qs.count(),
+    }
+
+
+def _ps_build_qs(todo, t_fr, t_to, account_id=0, recorded_by=0, direction='', branch_id=0):
+    branch_ids = _ps_branch_ids(todo, branch_id)
+    allowed_accounts = _ps_account_qs(todo).values_list('id', flat=True)
+
+    weka = wekaCash.objects.filter(
+        Interprise_id__in=branch_ids,
+        Amount__gt=0,
+        Akaunt_id__in=allowed_accounts,
+        tarehe__range=[t_fr, t_to],
+    )
+    toa = toaCash.objects.filter(
+        Interprise_id__in=branch_ids,
+        Amount__gt=0,
+        Akaunt_id__in=allowed_accounts,
+        tarehe__range=[t_fr, t_to],
+    )
+
+    if account_id:
+        weka = weka.filter(Akaunt_id=account_id)
+        toa = toa.filter(Akaunt_id=account_id)
+    if recorded_by:
+        weka = weka.filter(by__user__user__id=recorded_by)
+        toa = toa.filter(by__user__user__id=recorded_by)
+    if direction == 'in':
+        toa = toa.none()
+    elif direction == 'out':
+        weka = weka.none()
+
+    return weka, toa
+
+
+def _ps_overview(todo, account_id=0, recorded_by=0, direction='', branch_id=0):
+    now = dj_timezone.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - datetime.timedelta(days=today_start.isoweekday() - 1)
+    month_start = today_start.replace(day=1)
+
+    ranges = {
+        'today': (today_start, now),
+        'week': (week_start, now),
+        'month': (month_start, now),
+    }
+    overview = {}
+    for key, (t_fr, t_to) in ranges.items():
+        weka, toa = _ps_build_qs(todo, t_fr, t_to, account_id, recorded_by, direction, branch_id)
+        overview[key] = _ps_summary(weka, toa)
+    return overview
+
+
+def _ps_serialize_weka(rows):
+    out = []
+    for row in rows:
+        out.append({
+            'id': row['id'],
+            'direction': 'in',
+            'date': row['tarehe'].isoformat() if row['tarehe'] else None,
+            'amount': float(row['Amount'] or 0),
+            'before': float(row['before'] or 0),
+            'after': float(row['After'] or 0),
+            'received_amount': float(row['Amount'] or 0),
+            'withdrawal_amount': None,
+            'account_name': row.get('account_name') or '',
+            'branch_name': row.get('branch_name') or '',
+            'recorded_by': f"{row.get('BFname') or ''} {row.get('BLname') or ''}".strip(),
+            'kutoka': row.get('kutoka') or '',
+            'kwenda': '',
+            'maelezo': row.get('maelezo') or '',
+            'mauzo': bool(row.get('mauzo')),
+            'order': bool(row.get('order')),
+            'invo_code': row.get('invo_code') or '',
+            'kuhamisha': bool(row.get('kuhamisha')),
+            'huduma': bool(row.get('huduma')),
+            'mtaji': bool(row.get('mtaji')),
+        })
+    return out
+
+
+def _ps_serialize_toa(rows):
+    out = []
+    for row in rows:
+        out.append({
+            'id': row['id'],
+            'direction': 'out',
+            'date': row['tarehe'].isoformat() if row['tarehe'] else None,
+            'amount': float(row['Amount'] or 0),
+            'before': float(row['before'] or 0),
+            'after': float(row['After'] or 0),
+            'received_amount': None,
+            'withdrawal_amount': float(row['Amount'] or 0),
+            'account_name': row.get('account_name') or '',
+            'branch_name': row.get('branch_name') or '',
+            'recorded_by': f"{row.get('BFname') or ''} {row.get('BLname') or ''}".strip(),
+            'kutoka': '',
+            'kwenda': row.get('kwenda') or '',
+            'maelezo': row.get('maelezo') or '',
+            'kuhamisha': bool(row.get('kuhamisha')),
+            'personal': bool(row.get('personal')),
+            'expense_name': row.get('expense_name') or '',
+            'bill_code': row.get('bill_code') or '',
+        })
+    return out
+
+
+@login_required(login_url='login')
+def payment_statement_page(request):
+    todo = todoFunct(request)
+    if not todo.get('duka') or not todo['duka'].Interprise:
+        return redirect('/userdash')
+    duka = todo['duka']
+    cheo = todo.get('cheo')
+    branches = Interprise.objects.filter(owner=duka.owner, Interprise=True).order_by('name')
+    todo['akaunt_page'] = 'payment_statement'
+    todo['branches'] = branches
+    todo['payacc'] = _ps_account_qs(todo)
+    todo['recorders'] = _ps_recorders_list(todo)
+    todo['can_all_branches'] = bool(cheo and cheo.owner)
+    return render(request, 'payment_statement.html', todo)
+
+
+@login_required(login_url='login')
+@csrf_exempt
+def payment_statement_data(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad Request'})
+
+    try:
+        todo = todoFunct(request)
+        if not todo.get('duka') or not todo['duka'].Interprise:
+            return JsonResponse({'success': False, 'swa': 'Hakuna ruhusa', 'eng': 'Not allowed'})
+
+        t_fr = request.POST.get('tFr')
+        t_to = request.POST.get('tTo')
+        account_id = int(request.POST.get('account', 0) or 0)
+        recorded_by = int(request.POST.get('recordedBy', 0) or 0)
+        direction = (request.POST.get('direction') or '').strip()
+        branch_id = int(request.POST.get('branch', 0) or 0)
+        overview = int(request.POST.get('overview', 0) or 0)
+        summary_only = int(request.POST.get('summaryOnly', 0) or 0)
+
+        if overview:
+            return JsonResponse({
+                'success': True,
+                'overview': _ps_overview(todo, account_id, recorded_by, direction, branch_id),
+            })
+
+        t_fr_dt = _ps_parse_dt(t_fr)
+        t_to_dt = _ps_parse_dt(t_to)
+        if not t_fr_dt or not t_to_dt:
+            return JsonResponse({'success': False, 'swa': 'Tarehe hazipo', 'eng': 'Dates are required'})
+
+        weka, toa = _ps_build_qs(todo, t_fr_dt, t_to_dt, account_id, recorded_by, direction, branch_id)
+        summary = _ps_summary(weka, toa)
+        payload = {'success': True, 'summary': summary}
+
+        if not summary_only:
+            weka_rows = list(
+                weka.annotate(
+                    branch_name=F('Interprise__name'),
+                    account_name=F('Akaunt__Akaunt_name'),
+                    invo_code=F('invo__code'),
+                    BFname=F('by__user__user__first_name'),
+                    BLname=F('by__user__user__last_name'),
+                ).values(
+                    'id', 'tarehe', 'Amount', 'before', 'After', 'kutoka', 'maelezo',
+                    'mauzo', 'order', 'kuhamisha', 'huduma', 'mtaji',
+                    'branch_name', 'account_name', 'invo_code', 'BFname', 'BLname',
+                )
+            )
+            toa_rows = list(
+                toa.annotate(
+                    branch_name=F('Interprise__name'),
+                    account_name=F('Akaunt__Akaunt_name'),
+                    expense_name=F('matumizi__matumizi__matumizi'),
+                    bill_code=F('bill__code'),
+                    BFname=F('by__user__user__first_name'),
+                    BLname=F('by__user__user__last_name'),
+                ).values(
+                    'id', 'tarehe', 'Amount', 'before', 'After', 'kwenda', 'maelezo',
+                    'kuhamisha', 'personal',
+                    'branch_name', 'account_name', 'expense_name', 'bill_code', 'BFname', 'BLname',
+                )
+            )
+            transactions = _ps_serialize_weka(weka_rows) + _ps_serialize_toa(toa_rows)
+            transactions.sort(key=lambda x: x['date'] or '', reverse=True)
+            payload['transactions'] = transactions
+
+        return JsonResponse(payload)
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'swa': 'Hitilafu', 'eng': 'Something went wrong'})

@@ -6,6 +6,7 @@ urlpatterns=[
     # load items data ........................
     path('getStokuData',views.getStokuData, name='getStokuData'),
     path('getItems',views.getItems, name='getItems'),
+    path('posBarcodeLookup',views.posBarcodeLookup, name='posBarcodeLookup'),
     path('OutStock',views.OutStock, name='OutStock'),
     path('getItemsAssociate',views.getItemsAssociate, name='getItemsAssociate'),
     path('getItemsAll',views.getItemsAll, name='getItemsAll'),
@@ -27,6 +28,11 @@ urlpatterns=[
 
 
     path('ongezaBidhaa',views.ongezaBidhaa, name='ongezaBidhaa'),
+    path('itemsExcelImport',views.itemsExcelImport, name='itemsExcelImport'),
+    path('itemsExcelTemplate',views.itemsExcelTemplate, name='itemsExcelTemplate'),
+    path('itemsExcelAiPrompt',views.itemsExcelAiPrompt, name='itemsExcelAiPrompt'),
+    path('itemsExcelExport',views.itemsExcelExport, name='itemsExcelExport'),
+    path('itemsExcelImportFile',views.itemsExcelImportFile, name='itemsExcelImportFile'),
     path('registeredItemsRegister',views.registeredItemsRegister, name='registeredItemsRegister'),
     path('UsajiriTokaMatawi',views.UsajiriTokaMatawi, name='UsajiriTokaMatawi'),
     path('galamaManunuzi',views.galamaManunuzi, name='galamaManunuzi'),

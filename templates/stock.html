@@ -188,7 +188,7 @@
    
 <div class="mt-2 whiteBg p-3 mb-5">
 
-  <div class="text-right mb-4 pb-2 border-bottom">
+  <div class="text-right mb-4 pb-2 border-bottom d-flex flex-wrap justify-content-end align-items-center">
    
     <!-- <button class="px-3 mx-2 btn btn-sm btn-light  smallFont" style="background:rgb(233, 233, 233);border-radius:10px"  
     data-toggle="modal" data-target="#modal-Interprises">
@@ -197,8 +197,10 @@
         <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
       </svg>
     </button> -->
-     
-    <button  data-toggle="modal" data-target="#add-products" class="tab_show btn btn-sm smallFont robotoFont btn-primary  ">
+
+    {% block items-excel-tools %}{% endblock %}
+
+    <button  data-toggle="modal" data-target="#add-products" class="tab_show btn btn-sm smallFont robotoFont btn-primary mx-1 mb-1">
         <b class="largeFont">+</b> {% if useri.langSet == 0 %}Bidhaa Mpya  {% else %} New Item {% endif %} 
       </button>
 
@@ -389,4 +391,5 @@
 <script>
   getStokuData('/stoku/getItemsAll')
 </script>
+{% block items-excel-scripts %}{% endblock %}
 {% endblock %}

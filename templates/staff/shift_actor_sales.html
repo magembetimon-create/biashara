@@ -6,8 +6,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% if useri.langSet == 0 %}Bidhaa Zilizouzwa na Mhusika{% else %}Sold Items by Staff{% endif %}</title>
-  {% if paper_size == 'thermal' %}
+  {% if paper_size == 'thermal58' or paper_size == 'thermal' %}
   <link rel="stylesheet" href="{% static 'css/minRecept.css' %}">
+  {% elif paper_size == 'thermal80' %}
+  <link rel="stylesheet" href="{% static 'css/posRecept.css' %}">
   {% endif %}
   <style>
     .btn {
@@ -71,7 +73,7 @@
       gap: 8px;
     }
 
-    {% if paper_size != 'thermal' %}
+    {% if paper_size != 'thermal58' and paper_size != 'thermal' and paper_size != 'thermal80' %}
     body {
       font-family: Arial, sans-serif;
       background: #f7f7f7;
@@ -130,7 +132,7 @@
     }
     {% endif %}
 
-    {% if paper_size == 'thermal' %}
+    {% if paper_size == 'thermal58' or paper_size == 'thermal' or paper_size == 'thermal80' %}
     body {
       background: #fff;
       margin: 0;
@@ -175,7 +177,7 @@
     }
 
     @page {
-      size: 58mm auto;
+      size: {% if paper_size == 'thermal80' %}80mm{% else %}58mm{% endif %} auto;
       margin: 0;
     }
     {% else %}
@@ -209,7 +211,7 @@
   </style>
 </head>
 <body>
-  {% if paper_size == 'thermal' %}
+  {% if paper_size == 'thermal58' or paper_size == 'thermal' or paper_size == 'thermal80' %}
   <div class="actions">
     <a class="btn alt" href="javascript:window.close();">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</a>
     <button type="button" class="btn" onclick="openPaperPrintModal()">{% if useri.langSet == 0 %}Print{% else %}Print{% endif %}</button>
@@ -330,8 +332,9 @@
         {% if useri.langSet == 0 %}Chagua Aina ya Karatasi{% else %}Select Paper Size{% endif %}
       </div>
       <select id="paperSizeSelect" class="paper-select">
-        <option value="large" {% if paper_size != 'thermal' %}selected{% endif %}>{% if useri.langSet == 0 %}Karatasi Kubwa (A4){% else %}Large Paper (A4){% endif %}</option>
-        <option value="thermal" {% if paper_size == 'thermal' %}selected{% endif %}>{% if useri.langSet == 0 %}Thermal Ndogo (58mm){% else %}Small Thermal (58mm){% endif %}</option>
+        <option value="large" {% if paper_size != 'thermal58' and paper_size != 'thermal' and paper_size != 'thermal80' %}selected{% endif %}>{% if useri.langSet == 0 %}Karatasi Kubwa (A4){% else %}Large Paper (A4){% endif %}</option>
+        <option value="thermal58" {% if paper_size == 'thermal58' or paper_size == 'thermal' %}selected{% endif %}>{% if useri.langSet == 0 %}Thermal 58mm{% else %}Thermal 58mm{% endif %}</option>
+        <option value="thermal80" {% if paper_size == 'thermal80' %}selected{% endif %}>{% if useri.langSet == 0 %}POS 80mm{% else %}POS 80mm{% endif %}</option>
       </select>
       <div class="paper-modal-actions">
         <button type="button" class="btn alt" onclick="closePaperPrintModal()">{% if useri.langSet == 0 %}Ghairi{% else %}Cancel{% endif %}</button>

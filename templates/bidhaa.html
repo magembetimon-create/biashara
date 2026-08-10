@@ -1,6 +1,22 @@
 {% extends 'stock.html' %}
 {% load static %}
 
+{% block items-excel-tools %}
+{% include 'partials/items_excel_tools.html' %}
+{% endblock %}
+
+{% block items-excel-scripts %}
+<script src="{% static 'js/itemsExcel.js' %}"></script>
+<script>
+  $(function () {
+    $('#items-excel-template-link').on('click', function (e) {
+      e.preventDefault();
+      if (window.ItemsExcel) ItemsExcel.downloadTemplate();
+    });
+  });
+</script>
+{% endblock %}
+
 <!-- IF THE THERE IS FILTER -->
 {% block descriptions %}
 {% if prod.count > 0 %}

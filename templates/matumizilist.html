@@ -1,17 +1,12 @@
 {% extends 'userdash.html' %}
 
 {% block all-bills %}
-<div class="whiteBg py-2 " style="margin-top: -15px;"> 
+<div class="whiteBg py-2 " style="margin-top: -15px;">
+  {% include 'partials/expense_nav.html' %}
   <h5 class="text-right py-3 px-2 {% if bil_num == 0 %} border-bottom {% endif %}">
-
-   
-      
-      <a href="/purchase/expenseList" type="button" class=" btn btn-light smallFont latoFont">
-         {% if useri.langSet == 0 %}  Expenses  {% else %}Matumizi  {% endif %}
+      <a href="{% url 'expenseRecords' %}" type="button" class=" btn btn-primary smallFont latoFont"><b class="largeFont">+</b>
+         {% if useri.langSet == 0 %}  Rekodi Matumizi  {% else %}Record Expenses  {% endif %}
       </a>
-      <button type="button" onclick="$('#matumizi_data').data('with_bil',0)" data-toggle="modal" data-target="#recodiMatumizi" class=" btn btn-primary smallFont latoFont"><b class="largeFont">+</b>
-         {% if useri.langSet == 0 %}  Ongeza  {% else %}Add  {% endif %}
-      </button>
 </h5>
  {% if bil_num > 0 %}
           {% load humanize %}
