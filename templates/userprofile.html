@@ -1,6 +1,6 @@
 {% extends "userdash.html" %}
 {% block Dashboard %}
-      
+{% load static %}
 
 <div  class=" Analytical p-md-5 p-3 whiteBg" id="general-panel" style="margin-top: -23px;min-height:100vh" >
           
@@ -552,7 +552,8 @@ box-shadow: 0px 0px 38px 11px rgba(0,0,0,0.57);">
   {% endblock %}
 
 {% block billmpya %}
-   <script src="/static/js/jisaji.js"></script>
+   <script src="{% static 'js/jisaji.js' %}"></script>
+
 {% endblock %}
 
 {% block dash-mapper %}
