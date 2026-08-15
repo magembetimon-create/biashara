@@ -34,7 +34,9 @@
          <h2 >
             {% if pack %}
 
-                  {% if service %}
+                  {% if waiter_printed %}
+                    {% if lang == 0 %} Oda imeshafanyiwa kazi na mhudumu {% else %} Your order has been processed by the waiter {% endif %}
+                  {% elif service %}
                     {% if lang == 0 %} Huduma Imeshahakikiwa {% else %} Your Booking has confirmed {% endif %}
                   {% else %}
                     {% if lang == 0 %} Mzigo Umeshafungashwa {% else %} Your order has been packed {% endif %}
@@ -60,7 +62,9 @@
             <span style="color:rgb(0, 110, 236);font-weight: 600;" > ORD-{{order}}</span>
            
             {% if pack %}
-               {% if service %}
+               {% if waiter_printed %}
+                  {% if lang == 0 %}  imeshafanyiwa kazi na mhudumu na iko tayari {% else %} has been processed by the waiter and is ready {% endif %}
+               {% elif service %}
                   {% if lang == 0 %}  Imehakikiwa, Nafasi ishawekwa kwa muda ulioweka {% else %} Has been confirmed by the time you set{% endif %}
                {% else %}
                   {% if lang == 0 %}  tayari Umeshafungashwa {% else %} Has been packed {% endif %}

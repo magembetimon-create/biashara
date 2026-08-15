@@ -92,57 +92,50 @@
 
 <link rel="stylesheet" href="{% static 'css/businessprof.css' %}">
 <link rel="stylesheet" href="{% static 'css/Ratingstars.css' %}">
+<link rel="stylesheet" href="{% static 'css/guest_public.css' %}">
 
 
  <link rel="shortcut icon" type="image/x-icon" href="{% static 'pics/logo1.png' %}">
 
 </head>
-<body  class="classic_div" style="max-width:100%;overflow-x:hidden "  >
-
-  <!-- TOP NAV -->
-    <header   class="l-header">
-        <div class="l-header__inner clearfix">
-
-        <div class="logo2 ml-2">
-            <div class="logo__txt " id="brandlogo">
-            <a href="/">  
-                <img  style="width:200px" src="{%  static 'pics/logowithtext.png'  %}" />
+<body class="classic_div guest-public-page" style="max-width:100%;overflow-x:hidden"  >
+{% csrf_token %}
+    <header class="guest-topbar" role="banner">
+        <div class="guest-topbar__container">
+            <a class="guest-topbar__brand" href="/" aria-label="FanyaBiashara">
+                <img src="{% static 'pics/logowithtext.png' %}" alt="FanyaBiashara">
             </a>
-            </div>
-        </div>
-
-
-       
-
-    <div class="header-icons-group px-3">
-    
-           
-            <a href="/login" style="height: 70%;margin: auto;" class="btn btn-primary">
-                Login/Register
-            </a>
-          
-     </div>
-        
-     
-    
-    
-
-
-    
-          
-  
-    
-    
-        
+            <nav class="guest-topbar__nav" aria-label="{% if useri.langSet == 0 %}Vitendo{% else %}Actions{% endif %}">
+                {% if shop %}
+                {% with guest_call_style='topbar' %}
+                {% include 'partials/guest_shop_call.html' %}
+                {% endwith %}
+                {% endif %}
+                {% if compound_order_enabled %}
+                <a href="/purchase/guestCompoundCart?value={{ shop.id }}" class="guest-topbar__action guest-topbar__action--cart" title="{% if useri.langSet == 0 %}Oda yangu{% else %}My order{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+                    </svg>
+                    <span class="guest-topbar__action-label">{% if useri.langSet == 0 %}Oda{% else %}Order{% endif %}</span>
+                    <span id="guestCartCountBadge" class="guest-topbar__badge" style="display:none">0</span>
+                </a>
+                {% endif %}
+                <a href="/login" class="guest-topbar__action guest-topbar__action--login" title="{% if useri.langSet == 0 %}Ingia{% else %}Login{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 3.5a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-1 0v1.707L11.293 8 9.5 6.207V8a.5.5 0 0 0 1 0V5.5a.5.5 0 0 0-.5-.5"/>
+                        <path fill-rule="evenodd" d="M14.354 7.646a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L13.293 7.5H4.5a.5.5 0 0 0 0 1h8.793l-2.647 2.646a.5.5 0 0 0 .708.708z"/>
+                    </svg>
+                    <span class="guest-topbar__action-label">{% if compound_order_enabled %}{% if useri.langSet == 0 %}Login{% else %}Login{% endif %}{% else %}{% if useri.langSet == 0 %}Login / Jisajili{% else %}Login / Register{% endif %}{% endif %}</span>
+                </a>
+            </nav>
         </div>
     </header>
 
     {% block contenthere %}
         
-    <div  class=" Analytical py-3 py-md-1 whiteBg" id="general-panel" 
+    <div  class=" Analytical py-3 py-md-1 whiteBg guest-public-offset" id="general-panel" 
     style="
              min-height:100vh;
-             margin-top:60px;
              background-image:url('{% if shop.prof_pic %}{{shop.prof_pic.url}}{% endif %}');
                 background-repeat:no-repeat;
                 
@@ -191,8 +184,11 @@
                         {{shop.mtaa.kata.wilaya.mkoa.mkoa | title }}, {{shop.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title }}
                                   
                       </h6>
-                      <h6 class="smallerFont  d-flex weight700">
-                          <span class="mr-1 pr-1 brown">{{shop.Intp_code}}</span> 
+                      <h6 class="smallerFont  d-flex weight700 flex-wrap align-items-center" style="gap:6px">
+                          <span class="mr-1 pr-1 brown">{{shop.Intp_code}}</span>
+                          {% with guest_call_style='inline' %}
+                          {% include 'partials/guest_shop_call.html' %}
+                          {% endwith %}
     
                         <div class="d-flex ">
                           <strong id="showrate" class="px-1 "  >{{rateAv|floatformat:'1'}}</strong>
@@ -313,6 +309,21 @@
     
         </ul>
     </div>
+
+    {% if compound_order_enabled %}
+    <input type="hidden" id="guest_compound_shop" value="{{ shop.id }}">
+    <div id="guestCompoundLocationBar" class="mx-3 mt-2 alert {% if guest_cell %}alert-success{% else %}alert-warning{% endif %} smallFont mb-0">
+      {% if guest_cell %}
+        <strong>{% if useri.langSet == 0 %}Uko:{% else %}You are at:{% endif %}</strong>
+        {{ guest_cell.area.name }} — {{ guest_cell.name }}
+      {% else %}
+        {% if useri.langSet == 0 %}Skani QR-CODE ya sehemu yako (chumba/meza) ili kuagiza bila kuingia.{% else %}Scan your location QR (room/table) to order without logging in.{% endif %}
+        <button type="button" id="guestScanQrBtn" class="btn btn-sm btn-dark ml-2 scan_qr" data-shop="{{ shop.id }}" data-onshelf="0" data-cell="1">
+          {% if useri.langSet == 0 %}Skani QR{% else %}Scan QR{% endif %}
+        </button>
+      {% endif %}
+    </div>
+    {% endif %}
     
     
      {% block bizness %}
@@ -414,6 +425,16 @@
             <path d="M2 16a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2zm6.5-4.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 1 0z"/>
           </svg>
     </button>
+
+      {% if compound_order_enabled %}
+      <a href="/purchase/guestCompoundCart?value={{ shop.id }}" class="btn btn-primary btn-sm py-2" title="{% if useri.langSet == 0 %}Oda yangu{% else %}My order{% endif %}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" fill="currentColor" class="bi bi-bag-check" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M10.854 5.146a.5.5 0 0 0-.708 0L7.5 7.793 6.354 6.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0 0-.708z"/>
+          <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+          <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+        </svg>
+      </a>
+      {% endif %}
     
       </div>
     
@@ -674,6 +695,7 @@
     <script src="{% static 'js/html5-qrcode.min.js' %}"></script>
     <script src="{% static 'js/qrcode.min.js' %}"></script>
     <script src="{% static 'js/barcode_process.js' %}"></script>
+    {% if compound_order_enabled %}<script src="{% static 'js/guest_compound.js' %}"></script>{% endif %}
 
     <script src="{% static 'js/audiorecord.js' %}"></script>
 

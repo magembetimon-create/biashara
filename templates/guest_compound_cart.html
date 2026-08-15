@@ -1,0 +1,108 @@
+{% extends 'businessProfileNoneLoged.html' %}
+{% load static humanize %}
+
+{% block contenthere %}
+<input type="hidden" id="guest_compound_shop" value="{{ shop.id }}">
+
+<div class="guest-page-shell">
+  <div class="guest-page-container">
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap" style="gap:10px">
+      <a href="{% url 'buzinessProfile' %}?value={{ shop.id }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 weight600">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-left mr-1" viewBox="0 0 16 16" aria-hidden="true">
+          <path fill-rule="evenodd" d="M15 8a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 7.5H14.5A.5.5 0 0 1 15 8"/>
+        </svg>
+        {% if useri.langSet == 0 %}Rudi {{ shop.name|title }}{% else %}Back to {{ shop.name|title }}{% endif %}
+      </a>
+      <h1 class="guest-page-title mb-0">{% if useri.langSet == 0 %}Oda yangu{% else %}My order{% endif %}</h1>
+    </div>
+
+    <div id="guestCellBanner" class="alert {% if guest_cell %}alert-success{% else %}alert-warning{% endif %} smallFont rounded-lg mb-3">
+      {% if guest_cell %}
+        {% if useri.langSet == 0 %}Sehemu:{% else %}Location:{% endif %}
+        <strong>{{ guest_cell.area.name }}</strong> — <strong>{{ guest_cell.name }}</strong>
+      {% else %}
+        {% if useri.langSet == 0 %}Skani QR-CODE ya sehemu yako ili kuwasilisha oda.{% else %}Scan your location QR code to submit the order.{% endif %}
+        <button type="button" class="btn btn-sm btn-outline-dark ml-2 scan_qr" data-shop="{{ shop.id }}" data-onshelf="0" data-cell="1">
+          {% if useri.langSet == 0 %}Skani QR{% else %}Scan QR{% endif %}
+        </button>
+      {% endif %}
+    </div>
+
+    <div class="card guest-card mb-3">
+      <div class="card-body p-0">
+        {% if cart_rows %}
+        <ul class="list-group list-group-flush" id="guestCartLines">
+          {% for row in cart_rows %}
+          <li class="list-group-item d-flex justify-content-between align-items-center" data-line="{{ row.id }}">
+            <div>
+              <div class="weight600">{{ row.name|title }}</div>
+              <small class="text-muted">x {{ row.qty|floatformat:0 }} @ {{ shop.currencii }} {{ row.price|floatformat:2|intcomma }}</small>
+            </div>
+            <div class="text-right">
+              <strong>{{ shop.currencii }} {{ row.line_total|floatformat:2|intcomma }}</strong>
+              <button type="button" class="btn btn-link btn-sm text-danger guest-remove-line" data-line="{{ row.id }}">&times;</button>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-center text-muted py-4 mb-0">{% if useri.langSet == 0 %}Kapu lako ni tupu{% else %}Your cart is empty{% endif %}</p>
+        {% endif %}
+      </div>
+      {% if cart_rows %}
+      <div class="card-footer d-flex justify-content-between align-items-center bg-white">
+        <span class="weight600">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</span>
+        <span class="h5 mb-0 brown">{{ shop.currencii }} {{ cart_total|floatformat:2|intcomma }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="card guest-card mb-3">
+      <div class="card-body">
+        <h6 class="weight600 mb-3 brown">{% if useri.langSet == 0 %}Maelezo yako{% else %}Your details{% endif %}</h6>
+        <div class="form-group">
+          <label class="smallFont text-muted mb-1" for="guestOrderName">{% if useri.langSet == 0 %}Jina la mteja{% else %}Customer name{% endif %}</label>
+          <input type="text" id="guestOrderName" class="form-control guest-form-control" maxlength="100" placeholder="{% if useri.langSet == 0 %}Mfano: John Doe (acha tupu = {{ suggested_customer_name }}){% else %}e.g. John Doe (leave blank = {{ suggested_customer_name }}){% endif %}" value="{{ cart_name|default:'' }}">
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label class="smallFont text-muted mb-1" for="guestOrderPhone">{% if useri.langSet == 0 %}Simu{% else %}Phone{% endif %}</label>
+            <input type="tel" id="guestOrderPhone" class="form-control guest-form-control" maxlength="17" placeholder="{% if useri.langSet == 0 %}Mfano: 0712345678{% else %}e.g. 0712345678{% endif %}" value="{{ cart_phone|default:'' }}">
+          </div>
+          <div class="form-group col-md-6">
+            <label class="smallFont text-muted mb-1" for="guestOrderEmail">Email</label>
+            <input type="email" id="guestOrderEmail" class="form-control guest-form-control" maxlength="100" placeholder="{% if useri.langSet == 0 %}Mfano: mteja@email.com{% else %}e.g. guest@email.com{% endif %}" value="{{ cart_email|default:'' }}">
+          </div>
+        </div>
+        <div class="form-group mb-0">
+          <label class="smallFont text-muted mb-1" for="guestOrderExpected">{% if useri.langSet == 0 %}Muda unaotarajia kupokea{% else %}Expected time to receive{% endif %}</label>
+          <input type="datetime-local" id="guestOrderExpected" class="form-control guest-form-control" value="{{ cart_expected|default:'' }}" min="">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="smallFont text-muted">{% if useri.langSet == 0 %}Maelezo (si lazima){% else %}Notes (optional){% endif %}</label>
+      <textarea id="guestOrderNote" class="form-control guest-form-control" rows="2" maxlength="500">{{ cart_note|default:'' }}</textarea>
+    </div>
+
+    <button type="button" id="guestPlaceOrderBtn" class="btn btn-primary btn-block weight600 py-2 mb-2" style="border-radius:999px" {% if not cart_rows %}disabled{% endif %} data-cart="{{ cart_id }}">
+      {% if useri.langSet == 0 %}Wasilisha oda{% else %}Submit order{% endif %}
+    </button>
+
+    <a href="{% url 'buzinessProfile' %}?value={{ shop.id }}" class="btn btn-outline-secondary btn-block weight600 py-2 guest-back-shop-btn" style="border-radius:999px">
+      {% if useri.langSet == 0 %}Rudi kwenye biashara{% else %}Back to shop{% endif %}
+    </a>
+  </div>
+</div>
+<script>
+  (function () {
+    var el = document.getElementById('guestOrderExpected');
+    if (el) {
+      var now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      el.min = now.toISOString().slice(0, 16);
+    }
+  })();
+</script>
+{% endblock %}

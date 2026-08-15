@@ -1,0 +1,11 @@
+{% if shop %}
+  {% if shop.officeNo %}
+    {% with guest_call_phone=shop.officeNo %}
+      {% include 'partials/guest_shop_call_link.html' %}
+    {% endwith %}
+  {% elif shop.owner and shop.owner.showNum1 and shop.owner.simu1 %}
+    {% with guest_call_phone=shop.owner.simu1 %}
+      {% include 'partials/guest_shop_call_link.html' %}
+    {% endwith %}
+  {% endif %}
+{% endif %}

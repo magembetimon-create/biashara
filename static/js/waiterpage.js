@@ -22,6 +22,7 @@ let WAITER_COUNTER_NAME = ''
 let WAITER_TAB = 'pending'
 let WAITER_PAYMENT_FILTER = 'all'
 let WAITER_SELECTED_ORDER = 0
+let WAITER_ACTIVE_PENDING_ORDER = 0
 let WAITER_PRINT_PENDING_ORDER = 0
 let WAITER_ENABLE_PRINT = false
 let WAITER_RIGHT_PANEL = 'items'
@@ -699,8 +700,90 @@ function renderWaiterItems() {
   }
 }
 
+function getWaiterPendingOrderById(orderId) {
+  const id = Number(orderId || 0)
+  if (!id) return null
+  return (WAITER_ORDERS.pending || []).find(x => Number(x.id) === id) || null
+}
+
+function syncWaiterActivePendingOrder() {
+  const pending = WAITER_ORDERS.pending || []
+  const activeId = Number(WAITER_ACTIVE_PENDING_ORDER || 0)
+  if (activeId && getWaiterPendingOrderById(activeId)) {
+    return activeId
+  }
+  if (WAITER_CART.length) {
+    WAITER_ACTIVE_PENDING_ORDER = 0
+    return 0
+  }
+  if (pending.length) {
+    WAITER_ACTIVE_PENDING_ORDER = Number(pending[0].id || 0)
+    WAITER_SELECTED_ORDER = WAITER_ACTIVE_PENDING_ORDER
+    return WAITER_ACTIVE_PENDING_ORDER
+  }
+  WAITER_ACTIVE_PENDING_ORDER = 0
+  return 0
+}
+
+function renderWaiterCurrentOrderActions() {
+  const activePending = Number(WAITER_ACTIVE_PENDING_ORDER || 0)
+  const $orderBtn = $('#waiter_order_btn')
+  if (!$orderBtn.length) return
+  if (activePending && !WAITER_CART.length) {
+    $orderBtn
+      .removeClass('btn-success')
+      .addClass('btn-primary')
+      .text(waiterLang('Print Order', 'Print Order'))
+    $('#waiterCurrentOrderHint').text(
+      waiterLang('Oda iliyopewa na msimamizi — bonyeza Print kupunguza stoku', 'Assigned order — tap Print to deduct stock')
+    ).show()
+    $('#clear_after_print').closest('.form-check').hide()
+  } else {
+    $orderBtn
+      .removeClass('btn-primary')
+      .addClass('btn-success')
+      .text(waiterLang('Order', 'Order'))
+    $('#waiterCurrentOrderHint').hide().text('')
+    $('#clear_after_print').closest('.form-check').show()
+  }
+}
+
 function renderWaiterCart() {
   updateWaiterMobileNavCounts()
+  syncWaiterActivePendingOrder()
+  renderWaiterCurrentOrderActions()
+
+  const activePending = Number(WAITER_ACTIVE_PENDING_ORDER || 0)
+  const pendingItems = activePending
+    ? (WAITER_ORDERS.items[String(activePending)] || WAITER_ORDERS.items[activePending] || [])
+    : []
+
+  if (activePending && pendingItems.length && !WAITER_CART.length) {
+    const pendingOrder = getWaiterPendingOrderById(activePending)
+    const header = pendingOrder
+      ? `<li class="waiter-cart-meta small text-muted pb-2 mb-2 border-bottom">
+          <strong>${waiterLang('Oda', 'Order')} ORD-${pendingOrder.code}</strong><br>
+          ${waiterLang('Mteja', 'Customer')}: ${pendingOrder.customer_name || pendingOrder.table || '-'}<br>
+          ${waiterLang('Eneo', 'Place')}: ${pendingOrder.place || '-'} — ${pendingOrder.table || '-'}
+          ${pendingOrder.is_guest_compound ? `<span class="badge badge-info ml-1">${waiterLang('Mgeni', 'Guest')}</span>` : ''}
+        </li>`
+      : ''
+    const html = pendingItems.map(it => `
+      <li class="waiter-cart-item">
+        <div>
+          <div class="small text-capitalize">${it.name}</div>
+          <div class="text-muted smallerFont">${CURRENCII} ${Number(it.price || 0).toLocaleString()}</div>
+        </div>
+        <div class="meta">
+          <strong>${it.qty}</strong>
+        </div>
+      </li>
+    `).join('')
+    $('#waiterCartList').html(header + html)
+    const total = pendingOrder ? Number(pendingOrder.amount || 0) : pendingItems.reduce((sum, it) => sum + Number(it.total || 0), 0)
+    $('#waiterCartTotal').text(total.toLocaleString())
+    return
+  }
 
   if (!WAITER_CART.length) {
     $('#waiterCartList').html('<li class="waiter-empty">' + waiterLang('Bado hujaongeza bidhaa', 'No item selected') + '</li>')
@@ -812,11 +895,16 @@ function loadWaiterOrders() {
       printed: resp.printed || [],
       items: resp.items || {}
     }
+    syncWaiterActivePendingOrder()
+    if ((WAITER_ORDERS.pending || []).length && !WAITER_CART.length) {
+      switchWaiterRightPanel('current')
+    }
     renderWaiterOrdersAmountSummary()
     updateWaiterMobileNavCounts()
     renderWaiterFilterCounts()
     renderWaiterHistory()
     renderSelectedOrderItems()
+    renderWaiterCart()
   })
 }
 
@@ -841,6 +929,7 @@ function renderWaiterHistory() {
       <div class="d-flex justify-content-between">
         <strong>ORD-${o.code}</strong>
         <div>
+          ${o.is_guest_compound ? `<span class="badge badge-info mr-1">${waiterLang('Mgeni', 'Guest')}</span>` : ''}
           <span class="badge badge-${o.status === 'pending' ? 'warning' : 'success'} mr-1">${o.status}</span>
           <span class="badge badge-${o.is_paid ? 'success' : 'secondary'}">${o.is_paid ? waiterLang('Paid', 'Paid') : waiterLang('Unpaid', 'Unpaid')}</span>
         </div>
@@ -853,7 +942,7 @@ function renderWaiterHistory() {
       ${o.status === 'pending' ? `<div class="mt-2 d-flex justify-content-end" style="gap:6px;">
         ${WAITER_ENABLE_PRINT ? `<button class="btn btn-sm btn-outline-primary waiterPrintOrder" data-id="${o.id}" data-status="${o.status}" data-printed="${Number(o.printed_number || 0)}">${waiterPrintButtonLabel(o.printed_number)}</button>` : ''}
         ${!o.is_paid ? `<button class="btn btn-sm btn-outline-success waiterPayOrder" data-id="${o.id}" data-amount="${o.amount}" data-paid="${o.paid_amount}" data-remaining="${o.remaining}">${waiterLang('Lipa', 'Pay')}</button>` : ''}
-        <button class="btn btn-sm btn-outline-danger waiterDeleteOrder" data-id="${o.id}">${waiterLang('Futa', 'Delete')}</button>
+        ${!o.is_guest_compound ? `<button class="btn btn-sm btn-outline-danger waiterDeleteOrder" data-id="${o.id}">${waiterLang('Futa', 'Delete')}</button>` : ''}
       </div>` : `<div class="mt-2 d-flex justify-content-end" style="gap:6px;">
         ${WAITER_ENABLE_PRINT ? `<button class="btn btn-sm btn-outline-primary waiterPrintOrder" data-id="${o.id}" data-status="${o.status}" data-printed="${Number(o.printed_number || 0)}">${waiterPrintButtonLabel(o.printed_number)}</button>` : ''}
         ${!o.is_paid ? `<button class="btn btn-sm btn-outline-success waiterPayOrder" data-id="${o.id}" data-amount="${o.amount}" data-paid="${o.paid_amount}" data-remaining="${o.remaining}">${waiterLang('Lipa', 'Pay')}</button>` : ''}
@@ -922,6 +1011,9 @@ function proceedPrintAfterMark(orderId) {
     }
 
     toastr.success(waiterLang('Print imehifadhiwa', 'Print saved'), 'Success', { timeOut: 2200 })
+    if (Number(orderId) === Number(WAITER_ACTIVE_PENDING_ORDER)) {
+      WAITER_ACTIVE_PENDING_ORDER = 0
+    }
     loadWaiterOrders()
   }).catch(() => {
     const msg = waiterLang('Hitilafu imetokea wakati wa kuhifadhi print', 'An error occurred while marking print')
@@ -1000,6 +1092,7 @@ function submitWaiterOrder() {
     const msg = waiterLang(resp.message_swa || 'Order imehifadhiwa', resp.message_eng || 'Order saved')
     toastr.success(msg, lang('Imefanikiwa','Success'), {timeOut: 2000});
     clearCurrentCart()
+    WAITER_ACTIVE_PENDING_ORDER = 0
     loadWaiterOrders()
   }).catch(() => {
     $('#loadMe').modal('hide')
@@ -1010,6 +1103,13 @@ function submitWaiterOrder() {
 }
 
 function saveWaiterOrder() {
+  const activePending = Number(WAITER_ACTIVE_PENDING_ORDER || 0)
+  if (activePending && !WAITER_CART.length) {
+    const pendingOrder = getWaiterPendingOrderById(activePending)
+    const printedNumber = Number((pendingOrder && pendingOrder.printed_number) || 0)
+    printWaiterOrder(activePending, printedNumber <= 0)
+    return
+  }
   if (!WAITER_CART.length) {
     toastr.warning(waiterLang('Hakuna bidhaa', 'No items selected'), waiterLang('Taarifa', 'Info'), { timeOut: 2500 })
     return
@@ -1128,9 +1228,11 @@ $('body').on('click', '.waiter-payment-tab', function() {
 
 $('body').on('click', '.waiter-history-card', function() {
   WAITER_SELECTED_ORDER = Number($(this).data('id'))
+  WAITER_ACTIVE_PENDING_ORDER = WAITER_SELECTED_ORDER
   switchWaiterRightPanel('orders')
   renderWaiterHistory()
   renderSelectedOrderItems()
+  renderWaiterCart()
 })
 
 $('body').on('click', '.waiter-panel-tab', function() {
@@ -1167,6 +1269,7 @@ $('body').on('click', '.waiterDeleteOrder', function(ev) {
 
     if (WAITER_SELECTED_ORDER === orderId) {
       WAITER_SELECTED_ORDER = 0
+      WAITER_ACTIVE_PENDING_ORDER = 0
     }
 
     toastr.success(waiterLang('Order imefutwa', 'Order deleted'), 'Success', { timeOut: 2000 })

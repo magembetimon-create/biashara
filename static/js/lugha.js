@@ -531,34 +531,57 @@ let ImgPreview =(input,preview,b4modal)=>{
 
 
 //FOR MINI AND PAPER INVOICES
-$('.receipt_options').click(function(){
-    $('.receipt_options').removeClass('text-primary')
-    $('.receipt_options').removeClass('bluebox')
-   
-    $(this).addClass('text-primary')
-    $(this).addClass('bluebox')
-    
-   const paper = Number($(this).data('paper')),
-         data = {
-              data:{paper, min: paper},
-              url:"/setInVoFormat"
-         }
-      $('#receipt_paper_active').val(paper)
-      $('#print_mini').data('active', paper)
+function getActiveReceiptPaper() {
+  const hidden = $('#receipt_paper_active').val()
+  if (hidden !== undefined && hidden !== null && String(hidden).trim() !== '') {
+    return Number(hidden)
+  }
+  const active = $('.receipt_options.bluebox').first()
+  if (active.length) {
+    return Number(active.data('paper'))
+  }
+  return Number($('#print_mini').data('active') || 0)
+}
 
-      const sendIt = POSTREQUEST(data)
-   
+function syncReceiptPaperChoice(paper) {
+  paper = Number(paper)
+  if (!Number.isFinite(paper)) {
+    paper = 0
+  }
+  $('#receipt_paper_active').val(paper)
+  $('#print_mini').data('active', paper)
+  $('.actionbtns[data-invo]').attr('data-paper', paper)
+}
+
+$('body').on('click', '.receipt_options', function () {
+  $('.receipt_options').removeClass('text-primary')
+  $('.receipt_options').removeClass('bluebox')
+
+  $(this).addClass('text-primary')
+  $(this).addClass('bluebox')
+
+  const paper = Number($(this).data('paper'))
+  syncReceiptPaperChoice(paper)
+
+  const data = {
+    data: { paper, min: paper },
+    url: '/setInVoFormat'
+  }
+  POSTREQUEST(data)
 })
 
 //PRINTING IVOICES.................................//
 $('body').on('click','.actionbtns',function(){
   const invo = Number($(this).data('invo')) || 0,
         lugha= Number($(this).data('lang')),
-        min = Number($('#receipt_paper_active').val() || $('#print_mini').data('active') || 0),
+        paperAttr = $(this).attr('data-paper'),
+        min = paperAttr !== undefined && paperAttr !== null && String(paperAttr).trim() !== ''
+          ? Number(paperAttr)
+          : getActiveReceiptPaper(),
         pu = Number($(this).data('pu'))||0,
         theHref = $(this).data('href'),
 
-        url = pu?`/purchase/Risitiprint?qp=${invo}&lang=${lugha}`:`/mauzo/Invoprint?item_valued=${invo}&lang=${lugha}&m=${min}`,
+        url = pu?`/purchase/Risitiprint?qp=${invo}&lang=${lugha}&m=${min}`:`/mauzo/Invoprint?item_valued=${invo}&lang=${lugha}&m=${min}`,
         dtaInv = {
             dta:{
                 data:{i:pu?0:invo,p:pu?invo:0},

@@ -190,6 +190,19 @@
 #buzi_nav li a:hover{
     text-decoration: none;
 }
+#shop_map_wrap{
+    width:100% !important;
+    max-width:none !important;
+}
+#shop_map_wrap iframe,
+#shop_map_iframe{
+    display:block !important;
+    width:100% !important;
+    max-width:none !important;
+    height:70vh !important;
+    min-height:560px !important;
+    border:0 !important;
+}
 
 .audio_end {
     position: fixed;

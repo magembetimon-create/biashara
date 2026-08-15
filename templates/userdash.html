@@ -453,8 +453,8 @@
             {% else %}
                 <a href="/purchase/puOrder?en=1" title=" {% if useri.langSet == 0 %}Oda za Manunuzi {% else %} Purchase Order{% endif %}"  class="c-header-icon basket">
                       
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1.38em" height="1.38em" fill="currentColor" class="bi bi-box-seam text-muted " stroke-width="1.5" viewBox="0 0 16 16">
-                    <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                  <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" width="35" fill="currentColor">
+                    <path d="M440-183v-274L200-596v274l240 139Zm80 0 240-139v-274L520-457v274Zm-80 92L160-252q-19-11-29.5-29T120-321v-318q0-22 10.5-40t29.5-29l280-161q19-11 40-11t40 11l280 161q19 11 29.5 29t10.5 40v318q0 22-10.5 40T800-252L520-91q-19 11-40 11t-40-11Zm200-528 77-44-237-137-78 45 238 136Zm-160 93 78-45-237-137-78 45 237 137Z"/>
                   </svg>
 
                   <!-- <svg xmlns="http://www.w3.org/2000/svg" width="1.38em" height="1.38em" viewBox="0 0 24 24" fill="currentColor">
@@ -5615,6 +5615,17 @@ background-color:rgb(22, 22, 22);color:#f2f2f2" >
 
 
 <div class="notify_and_msg" style="position:fixed;max-width: 500px;bottom:10px;right:6px;z-index:9999" >
+  {% if compound_positions_enabled %}
+  <div id="compoundOrdersPanel" class="mb-2 p-2 rounded shadow whiteBg" style="max-height:45vh;overflow:hidden;border-left:4px solid #c88200{% if not compound_orders_count %};display:none{% endif %}">
+    <button type="button" id="compoundOrdersToggle" class="btn btn-link btn-sm weight600 brown p-0 text-left w-100 d-flex justify-content-between align-items-center">
+      <span>{% if useri.langSet == 0 %}Oda za wateja (sehemu){% else %}Guest location orders{% endif %}</span>
+      <span id="compoundOrdersBadge" class="badge badge-danger{% if not compound_orders_count %} d-none{% endif %}">{{ compound_orders_count }}</span>
+    </button>
+    <div id="compoundOrdersPanelBody" style="max-height:38vh;overflow-y:auto;display:none" class="pt-2">
+      <div id="compoundOrdersList" class="small"></div>
+    </div>
+  </div>
+  {% endif %}
   <div id="notify" class="p-3 rounded" style="background:#000000;border-right:6px solid rgb(5, 107, 22) ;display:none;">
   
   </div>
@@ -5963,6 +5974,7 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     <script src="{% static 'js/dataTables.bootstrap4.min.js' %}"></script>
     <script src="{% static 'js/tabs.js' %}"></script>
     <script src="{% static 'js/Interver.js' %}"></script>
+    {% if compound_positions_enabled %}<script src="{% static 'js/compound_orders_panel.js' %}"></script>{% endif %}
 
   
     <!-- <script src="{% static 'path/to/dist/feather.js' %}"></script> -->

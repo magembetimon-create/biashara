@@ -132,6 +132,8 @@ urlpatterns=[
 
     #Business Profile About.................................//
     path('profileAbout',views.profileAbout, name='profileAbout'),
+    path('profileMaps',views.profileMaps, name='profileMaps'),
+    path('saveProfileMap',views.saveProfileMap, name='saveProfileMap'),
     path('loadRatings',views.loadRatings, name='loadRatings'),
     path('profileRegistration',views.profileRegistration, name='profileRegistration'),
 

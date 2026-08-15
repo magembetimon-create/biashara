@@ -48,6 +48,19 @@ from purchase.expense_receipt_utils import (
     count_pending_mandatory_expense_receipts,
     pending_mandatory_expense_receipts_list,
 )
+from purchase.guest_compound_utils import (
+    clear_guest_cart_session,
+    get_guest_cell,
+    get_or_create_guest_cart,
+    guest_cell_payload,
+    next_default_customer_name,
+    notify_compound_order,
+    set_guest_cell,
+    shop_cells_payload,
+    shop_has_compound_positions,
+    _item_unit_price,
+    _recalc_cart_amount,
+)
 # Create your views here.
 def todoFunct(request):
   usr = Todos(request)
@@ -4392,6 +4405,18 @@ def viewReceptFuct(request):
 
             return todo
 
+
+def _apply_purchase_quotation_vendor(todo):
+      """Purchase quotation prints must show the vendor shop header (like risiti.html)."""
+      the_bill = todo.get('the_bill')
+      if not the_bill or not getattr(the_bill, 'Interprise_id', None):
+            return todo
+      vendor = the_bill.Interprise
+      todo['duka'] = vendor
+      todo['shop'] = vendor
+      return todo
+
+
 @login_required(login_url='login')
 def viewRecept(request):
 
@@ -4408,24 +4433,42 @@ def viewRecept(request):
 # @login_required(login_url='login')
 def  Risitiprint(request):
       try:
-            
-            lang= int(request.GET.get('lang',0))
-            
+            from mauzo.receipt_format import (
+                  receipt_template_for_paper,
+                  RECEIPT_A4,
+                  normalize_receipt_paper,
+                  receipt_paper_from_cheo,
+            )
 
-            after={
-                  'lipa':False,
-                  'langSet':lang
+            lang = int(request.GET.get('lang', 0))
+            m_raw = request.GET.get('m')
+
+            after = {
+                  'lipa': False,
+                  'langSet': lang,
             }
 
-            todo= viewReceptFuct(request)
+            todo = viewReceptFuct(request)
+            if not todo:
+                  raise ValueError('Quotation not found')
 
-            todo.update({
-                  'then':after
-            })
-            
-            return render(request,'risiti.html' ,todo)
+            ctx = todoFunct(request)
+            todo.setdefault('cheo', ctx.get('cheo'))
+            todo.setdefault('useri', ctx.get('useri'))
+            todo.update({'then': after})
+            _apply_purchase_quotation_vendor(todo)
 
-      except:
+            if m_raw is not None and str(m_raw).strip() != '':
+                  paper = normalize_receipt_paper(m_raw)
+            else:
+                  paper = receipt_paper_from_cheo(ctx.get('cheo'))
+
+            goto = 'risiti.html' if paper == RECEIPT_A4 else receipt_template_for_paper(paper)
+
+            return render(request, goto, todo)
+
+      except Exception:
+             traceback.print_exc()
              return render(request,'errorpage.html',todoFunct(request)) 
 
 
@@ -4579,4 +4622,268 @@ def purchaseRate(request):
             return render(request,'pagenotFound.html',todoFunct(request))   
 
 
+# ─── Guest compound ordering (no login, QR location) ───────────────────────────
+from django.utils import timezone as dj_timezone
+
+
+def _guest_user_stub(lang_set=0):
+    return type('GuestUser', (), {'langSet': lang_set})()
+
+
+def _guest_shop_or_error(shop_id):
+    shop = Interprise.objects.filter(pk=shop_id).first()
+    if not shop or not shop_has_compound_positions(shop):
+        return None, JsonResponse({
+            'success': False,
+            'message_swa': 'Agizo la sehemu halipatikani kwa duka hili',
+            'message_eng': 'Location ordering is not available for this business',
+        })
+    return shop, None
+
+
+def guestCompoundCells(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    shop_id = int(request.POST.get('shop') or 0)
+    shop, err = _guest_shop_or_error(shop_id)
+    if err:
+        return err
+    return JsonResponse({
+        'success': True,
+        'areas': shop_cells_payload(shop.id),
+        'cell': guest_cell_payload(get_guest_cell(request, shop.id)),
+    })
+
+
+def guestCompoundSetCell(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    shop_id = int(request.POST.get('shop') or 0)
+    cell_id = int(request.POST.get('cell') or 0)
+    shop, err = _guest_shop_or_error(shop_id)
+    if err:
+        return err
+    cell = set_guest_cell(request, shop.id, cell_id)
+    if not cell:
+        return JsonResponse({
+            'success': False,
+            'message_swa': 'Sehemu haipatikani',
+            'message_eng': 'Location not found',
+        })
+    cart = get_or_create_guest_cart(request, shop)
+    return JsonResponse({
+        'success': True,
+        'cell': guest_cell_payload(cell),
+        'cart_id': cart.id,
+        'message_swa': f'Uko {cell.area.name} — {cell.name}',
+        'message_eng': f'You are at {cell.area.name} — {cell.name}',
+    })
+
+
+def guestCompoundAddToCart(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    try:
+        shop_id = int(request.POST.get('shop') or 0)
+        shop, err = _guest_shop_or_error(shop_id)
+        if err:
+            return err
+        cell = get_guest_cell(request, shop.id)
+        if not cell:
+            return JsonResponse({
+                'success': False,
+                'need_cell': True,
+                'message_swa': 'Skani QR-CODE ya sehemu yako kwanza',
+                'message_eng': 'Scan your location QR code first',
+            })
+        itm_id = int(request.POST.get('itm') or 0)
+        qty = float(request.POST.get('qty') or 1)
+        uwiano = int(request.POST.get('uwiano') or 1)
+        if qty <= 0:
+            raise ValueError('Invalid quantity')
+        itm = bidhaa_stoku.objects.filter(pk=itm_id, Interprise=shop.id).select_related('bidhaa').first()
+        if not itm or itm.service:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Bidhaa haipatikani',
+                'message_eng': 'Item not available',
+            })
+        cart = get_or_create_guest_cart(request, shop)
+        unit_price = _item_unit_price(itm, uwiano)
+        add_qty = float(qty) * float(uwiano)
+        with transaction.atomic():
+            cart = mauzoni.objects.select_for_update().get(pk=cart.pk)
+            line = (
+                mauzoList.objects.select_for_update()
+                .filter(mauzo=cart, produ=itm)
+                .order_by('pk')
+                .first()
+            )
+            if line:
+                line.idadi = float(line.idadi or 0) + add_qty
+                line.bei = unit_price / uwiano if uwiano else unit_price
+                line.bei_og = unit_price
+                line.saveT = 1
+                line.save()
+            else:
+                line = mauzoList()
+                line.mauzo = cart
+                line.produ = itm
+                line.idadi = add_qty
+                line.bei = unit_price / uwiano if uwiano else unit_price
+                line.bei_og = unit_price
+                line.saveT = 1
+                line.save()
+        amount = _recalc_cart_amount(cart)
+        return JsonResponse({
+            'success': True,
+            'cart_id': cart.id,
+            'cart_count': mauzoList.objects.filter(mauzo=cart).count(),
+            'amount': amount,
+            'message_swa': 'Imeongezwa kwenye oda',
+            'message_eng': 'Added to order',
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message_swa': 'Imeshindikana kuongeza',
+            'message_eng': 'Could not add item',
+        })
+
+
+def guestCompoundCart(request):
+    try:
+        shop_id = int(request.GET.get('value') or 0)
+        shop = Interprise.objects.filter(pk=shop_id).first()
+        if not shop or not shop_has_compound_positions(shop):
+            return render(request, 'pagenotFound.html', todoFunct(request))
+        cell = get_guest_cell(request, shop.id)
+        cart = None
+        cart_key = f'compound_cart_{shop.id}'
+        if request.session.get(cart_key):
+            cart = mauzoni.objects.filter(
+                pk=request.session[cart_key],
+                Interprise=shop,
+                cart=True,
+                user_customer__isnull=True,
+            ).first()
+        rows = []
+        total = 0
+        if cart:
+            for ln in mauzoList.objects.filter(mauzo=cart).select_related('produ__bidhaa'):
+                rows.append({
+                    'id': ln.id,
+                    'name': ln.produ.bidhaa.bidhaa_jina if ln.produ_id else '',
+                    'qty': ln.idadi,
+                    'price': ln.bei_og,
+                    'line_total': float(ln.idadi or 0) * float(ln.bei_og or 0),
+                })
+            total = float(cart.amount or 0)
+        ctx = {
+            'shop': shop,
+            'guest_cell': cell,
+            'compound_order_enabled': True,
+            'cart_rows': rows,
+            'cart_total': total,
+            'cart_id': cart.id if cart else 0,
+            'cart_name': (cart.mteja_jina or '') if cart else '',
+            'cart_phone': (cart.simu or '') if cart else '',
+            'cart_email': (cart.mail or '') if cart else '',
+            'cart_note': (cart.desc or '') if cart else '',
+            'cart_expected': cart.expected_date.strftime('%Y-%m-%dT%H:%M') if cart and cart.expected_date else '',
+            'suggested_customer_name': next_default_customer_name(shop),
+            'useri': _guest_user_stub(),
+            'duka': None,
+        }
+        return render(request, 'guest_compound_cart.html', ctx)
+    except Exception:
+        traceback.print_exc()
+        return render(request, 'pagenotFound.html', {'useri': _guest_user_stub()})
+
+
+def guestCompoundPlaceOrder(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    try:
+        shop_id = int(request.POST.get('shop') or 0)
+        shop, err = _guest_shop_or_error(shop_id)
+        if err:
+            return err
+        cell = get_guest_cell(request, shop.id)
+        if not cell:
+            return JsonResponse({
+                'success': False,
+                'need_cell': True,
+                'message_swa': 'Skani QR-CODE ya sehemu yako kwanza',
+                'message_eng': 'Scan your location QR code first',
+            })
+        cart_id = int(request.POST.get('cart_id') or request.session.get(f'compound_cart_{shop.id}') or 0)
+        cart = mauzoni.objects.filter(
+            pk=cart_id,
+            Interprise=shop,
+            cart=True,
+            order=True,
+            user_customer__isnull=True,
+        ).first()
+        if not cart or not mauzoList.objects.filter(mauzo=cart).exists():
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Kapu lako ni tupu',
+                'message_eng': 'Your cart is empty',
+            })
+        guest_note = (request.POST.get('note') or '').strip()[:500]
+        guest_name = (request.POST.get('customer_name') or '').strip()[:100]
+        guest_email = (request.POST.get('email') or '').strip()[:100]
+        guest_phone = (request.POST.get('phone') or '').strip()[:17]
+        expected_raw = (request.POST.get('expected_date') or '').strip()
+        expected_dt = parse_datetime(expected_raw) if expected_raw else None
+        if expected_dt and dj_timezone.is_naive(expected_dt):
+            expected_dt = dj_timezone.make_aware(expected_dt, dj_timezone.get_current_timezone())
+        cart.customer_in = cell
+        cart.mteja_jina = guest_name or next_default_customer_name(shop)
+        cart.cart = False
+        cart.desc = guest_note
+        cart.mail = guest_email or None
+        cart.simu = guest_phone or None
+        cart.expected_date = expected_dt
+        cart.tarehe = dj_timezone.now()
+        cart.save()
+        notify_compound_order(cart)
+        clear_guest_cart_session(request, shop.id)
+        return JsonResponse({
+            'success': True,
+            'order_id': cart.id,
+            'order_code': cart.code,
+            'message_swa': 'Oda yako imewasilishwa. Subiri huduma.',
+            'message_eng': 'Your order was submitted. Please wait for service.',
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message_swa': 'Imeshindikana kuwasilisha oda',
+            'message_eng': 'Could not submit order',
+        })
+
+
+def guestCompoundRemoveLine(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    try:
+        shop_id = int(request.POST.get('shop') or 0)
+        line_id = int(request.POST.get('line_id') or 0)
+        shop = Interprise.objects.filter(pk=shop_id).first()
+        if not shop:
+            return JsonResponse({'success': False})
+        cart_id = request.session.get(f'compound_cart_{shop.id}')
+        line = mauzoList.objects.filter(pk=line_id, mauzo_id=cart_id).first()
+        if line:
+            line.delete()
+            cart = mauzoni.objects.filter(pk=cart_id).first()
+            if cart:
+                _recalc_cart_amount(cart)
+        return JsonResponse({'success': True})
+    except Exception:
+        return JsonResponse({'success': False})
 

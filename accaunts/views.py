@@ -17,6 +17,13 @@ from django.conf import settings
 from business import settings
 from management.models import Notifications,VistorsSavedItems,customer_in_cell,customer_area,Activator,invoice_desk,Activated,marketPlace,VistedBanners,marketBanner,deliveryBy,KulipaPI,PhoneMailConfirm,bidhaa,Zones,Mikoa,Mitaa,Wilaya,Kata,mahitaji,Interprise_Rating, UserExtend,EmployeeAttachments,InterpriseVisotrs, makampuni,savedStockState,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive, stokAdjustment,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji
 from purchase.expense_receipt_utils import count_pending_mandatory_expense_receipts
+from purchase.guest_compound_utils import (
+    count_compound_guest_orders,
+    get_guest_cell,
+    guest_cell_payload,
+    set_guest_cell,
+    shop_has_compound_positions,
+)
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
@@ -39,6 +46,7 @@ import time
 # import pytz
 import datetime
 import re
+from urllib.parse import urlparse, unquote
 from stoku.variant_utils import variant_is_color_mode
 import socket
 import json
@@ -2674,6 +2682,109 @@ def profileRegistration(request):
      return render(request,'pagenotFound.html',todo)
 
 
+_IFRAME_SRC_RE = re.compile(r'<iframe[^>]+src=["\']([^"\']+)["\']', re.I)
+
+
+def _can_edit_shop_map(todo, shop):
+      cheo = todo.get('cheo')
+      duka = todo.get('duka')
+      return bool(
+            shop
+            and cheo
+            and getattr(cheo, 'owner', False)
+            and duka
+            and duka.id == shop.id
+      )
+
+
+def normalize_google_map_embed(raw):
+      text = (raw or '').strip()
+      if not text:
+            return ''
+      iframe_src = _IFRAME_SRC_RE.search(text)
+      if iframe_src:
+            text = iframe_src.group(1).strip()
+      text = unquote(text).strip()
+      parsed = urlparse(text)
+      if parsed.scheme not in ('http', 'https'):
+            return None
+      host = (parsed.netloc or '').lower()
+      if not (
+            host.endswith('google.com')
+            or host.endswith('google.co.tz')
+            or host.endswith('google.com.tz')
+      ):
+            return None
+      path = parsed.path or ''
+      if '/maps' not in path and 'maps.google' not in host:
+            return None
+      if '/maps/embed' in path or 'output=embed' in (parsed.query or ''):
+            return text
+      sep = '&' if parsed.query else '?'
+      return text + sep + 'output=embed'
+
+
+@login_required(login_url='login')
+def profileMaps(request):
+      todo = todoFunct(request)
+      try:
+            value = request.GET.get('value', 0)
+            dk = Interprise.objects.filter(pk=value)
+            if not dk.exists():
+                  return render(request, 'pagenotFound.html', todo)
+            shop = dk.last()
+            todo.update({
+                  'shop': shop,
+                  'can_edit_map': _can_edit_shop_map(todo, shop),
+                  'kapu': mauzoList.objects.filter(
+                        mauzo__order=True,
+                        mauzo__Interprise=shop.id,
+                        mauzo__cart=True,
+                        mauzo__user_customer__enteprise=todo['duka'].id,
+                        mauzo__user_customer__by=todo['useri'].id,
+                  ) if todo.get('duka') and todo.get('useri') else [],
+                  'rateAv': Interprise_Rating.objects.filter(Interprise=shop.id).aggregate(Avg=Avg('rating'))['Avg'],
+            })
+            return render(request, 'businessProfileMaps.html', todo)
+      except Exception:
+            traceback.print_exc()
+            return render(request, 'pagenotFound.html', todo)
+
+
+@login_required(login_url='login')
+def saveProfileMap(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False})
+      todo = todoFunct(request)
+      try:
+            shop_id = int(request.POST.get('shop') or 0)
+      except (TypeError, ValueError):
+            shop_id = 0
+      shop = Interprise.objects.filter(pk=shop_id).first()
+      if not _can_edit_shop_map(todo, shop):
+            return JsonResponse({
+                  'success': False,
+                  'msg_swa': 'Huna ruhusa ya kuhifadhi ramani ya biashara hii',
+                  'msg_eng': 'You are not allowed to save this business map',
+            })
+      raw = request.POST.get('map_embed', '')
+      embed = normalize_google_map_embed(raw)
+      if embed is None:
+            return JsonResponse({
+                  'success': False,
+                  'msg_swa': 'Weka link au iframe ya Google Maps (Share → Embed a map)',
+                  'msg_eng': 'Paste a Google Maps link or iframe (Share → Embed a map)',
+            })
+      shop.map_embed = embed or None
+      shop.save(update_fields=['map_embed'])
+      return JsonResponse({
+            'success': True,
+            'map_embed': shop.map_embed or '',
+            'msg_swa': 'Ramani imehifadhiwa' if shop.map_embed else 'Ramani imeondolewa',
+            'msg_eng': 'Map saved' if shop.map_embed else 'Map removed',
+      })
+
+
 #About Interprises  Profile................................................//
 @login_required(login_url='login')
 def profileAbout(request):
@@ -3117,7 +3228,12 @@ def displaySelItem(request):
             'AudioUpload':AUDISIZE(request)
           })
 
-        
+        if not userLoged and shop_has_compound_positions(duka):
+          todo.update({
+            'compound_order_enabled': True,
+            'guest_cell': get_guest_cell(request, duka.id),
+            'guest_cell_info': guest_cell_payload(get_guest_cell(request, duka.id)),
+          })
 
         return render(request,html_page,todo)
     else:
@@ -3237,7 +3353,17 @@ def buzinessProfile(request):
             html_page = 'businessProfileHome.html'
             dukaId = todo['duka'].id
 
-        duka=dk.last() 
+        userLoged = todo['duka'] is not None
+        duka=dk.last()
+        compound_order_enabled = shop_has_compound_positions(duka)
+        guest_cell = None
+        cell_param = int(request.GET.get('cell') or 0)
+        if compound_order_enabled and not userLoged:
+            if cell_param:
+                guest_cell = set_guest_cell(request, duka.id, cell_param)
+            else:
+                guest_cell = get_guest_cell(request, duka.id)
+
         produ = bidhaa_stoku.objects.filter(Q(inapacha=False)|Q(idadi__gt=0)|Q(produced__notsure=True),Bei_kuuza__gt=0,Interprise=duka.id)
         produ = produ.filter(Q(Interprise=dukaId)|Q(showToVistors=True))
 
@@ -3356,7 +3482,10 @@ def buzinessProfile(request):
           'services':other_services,
           'shop':duka,
           'NewItems':New_itms,
-          'thereIsNew':len(New_itms)
+          'thereIsNew':len(New_itms),
+          'compound_order_enabled': compound_order_enabled and not userLoged,
+          'guest_cell': guest_cell,
+          'guest_cell_info': guest_cell_payload(guest_cell),
         })
 
 
@@ -4617,7 +4746,10 @@ def notificationing(request):
 
          
           
-          if puo.Packed_at <= nt.date and nt.date <= deri_date:
+          if puo.waiter_order_id and int(puo.printed_number or 0) > 0:
+              msg_swa='Oda ya manunuzi  no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> imeshafanyiwa kazi na mhudumu'
+              msg_eng='Purchase Order no.<span class="text-danger text-capitalize">'+ puo.code +'</span> from <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> has been processed by the waiter'
+          elif puo.Packed_at <= nt.date and nt.date <= deri_date:
               if puo.service:
                   msg_swa='Oda kwa Huduma no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> imeshaandaliwa'
                   msg_eng='Service Booking no.<span class="text-danger text-capitalize">'+ puo.code +'</span> from <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> has already Prepered' 
@@ -4952,7 +5084,10 @@ def traceChange(request):
 
                 
 
-                if puo.Packed_at and puo.Packed_at <= nt.date and nt.date <= deri_date:
+                if puo.waiter_order_id and int(puo.printed_number or 0) > 0:
+                    msg_swa='Oda ya manunuzi  no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> imeshafanyiwa kazi na mhudumu'
+                    msg_eng='Purchase Order no.<span class="text-danger text-capitalize">'+ puo.code +'</span> from <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> has been processed by the waiter'
+                elif puo.Packed_at and puo.Packed_at <= nt.date and nt.date <= deri_date:
                     if puo.service:
 
                         msg_swa='Oda ya Huduma  no <span class="text-danger text-capitalize">'+ puo.code +'</span> kutoka <span class="text-primary text-capitalize">'+ puo.Interprise.name +'</span> imeshaandaliwa'
@@ -5028,6 +5163,7 @@ def traceChange(request):
         'pickup':pickup,
         'newPosts':len(banners),
         'pendingExpenseReceipts': count_pending_mandatory_expense_receipts(duka),
+        'compoundOrders': count_compound_guest_orders(duka) if duka and duka.Interprise and shop_has_compound_positions(duka) else 0,
       }
 
 

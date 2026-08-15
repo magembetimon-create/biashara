@@ -44,6 +44,13 @@ urlpatterns=[
     path('uploadExpenseReceipt', views.uploadExpenseReceipt, name='uploadExpenseReceipt'),
     path('removeExpenseReceipt', views.removeExpenseReceipt, name='removeExpenseReceipt'),
 
+    # Guest compound ordering (QR location, no login)
+    path('guestCompoundCells', views.guestCompoundCells, name='guestCompoundCells'),
+    path('guestCompoundSetCell', views.guestCompoundSetCell, name='guestCompoundSetCell'),
+    path('guestCompoundAddToCart', views.guestCompoundAddToCart, name='guestCompoundAddToCart'),
+    path('guestCompoundCart', views.guestCompoundCart, name='guestCompoundCart'),
+    path('guestCompoundPlaceOrder', views.guestCompoundPlaceOrder, name='guestCompoundPlaceOrder'),
+    path('guestCompoundRemoveLine', views.guestCompoundRemoveLine, name='guestCompoundRemoveLine'),
 
      # ADD ONLINE ITEM ORDER OR TO CART............................................//
     path('addtoCart',views.addtoCart, name='addtoCart'),

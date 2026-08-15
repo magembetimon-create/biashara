@@ -284,10 +284,21 @@ function qr_success(result){
 
   //Thie is when user scan qr to trigger his location
    function addPosCell(data){
-      
-        const the_url = `${data.url}/buzinessProfile?value=${SCANCELL}&cell=`
-          
-         const cell = Number(data.result.replace(the_url,'')) || 0
+        let cell = 0
+        try {
+          const raw = String(data.result || '')
+          const href = raw.match(/^https?:\/\//i) ? raw : ('https://' + raw.replace(/^\/+/, ''))
+          const u = new URL(href)
+          cell = Number(u.searchParams.get('cell') || 0)
+        } catch (e) {
+          const the_url = `${data.url}/buzinessProfile?value=${SCANCELL}&cell=`
+          cell = Number(String(data.result || '').replace(the_url, '')) || 0
+        }
+
+         if ($('#guest_compound_shop').length && typeof guestCompoundSetCellFromScan === 'function') {
+            guestCompoundSetCellFromScan(cell);
+            return;
+         }
         
          const   the_cell = SHOPCELLSS.cell.filter(c=>c.id===cell)
 

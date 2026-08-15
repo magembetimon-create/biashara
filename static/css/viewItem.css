@@ -212,6 +212,11 @@
       margin-left: -4%;
     }
 
+    .guest-item-page .product-gallery{
+      width: 100%;
+      margin-left: 0;
+    }
+
     .main-image-wrapper{
       touch-action: pan-y pinch-zoom;
       cursor: grab;

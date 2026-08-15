@@ -54,10 +54,25 @@ const MsgRead = document.getElementById('msgRead'),
 
 // POP NOTIICATIONS IF ANY ..............................................................//
 const pendingReceipts = Number(data.pendingExpenseReceipts || 0);
-if ((data.notice && data.notice.length > 0) || pendingReceipts > 0) {
+    if ((data.notice && data.notice.length > 0) || pendingReceipts > 0) {
       notificate(data.notice || [], pendingReceipts);
 } else {
       $('#there_is_note').hide();
+}
+
+const compoundOrders = Number(data.compoundOrders || 0);
+const compoundPanel = $('#compoundOrdersPanel');
+if (compoundPanel.length) {
+  if (compoundOrders > 0) {
+    compoundPanel.show();
+    $('#compoundOrdersBadge').text(compoundOrders).removeClass('d-none');
+    if (typeof window.loadCompoundOrders === 'function') {
+      window.loadCompoundOrders();
+    }
+  } else {
+    compoundPanel.hide();
+    $('#compoundOrdersPanelBody').hide();
+  }
 }
 
 //  POP  CHAT

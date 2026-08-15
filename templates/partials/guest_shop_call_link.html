@@ -1,0 +1,18 @@
+<a href="tel:{{ guest_call_phone|cut:' '|cut:'-' }}"
+   class="guest-call-action guest-call-action--{{ guest_call_style|default:'inline' }}"
+   title="{% if useri.langSet == 0 %}Piga simu{% else %}Call{% endif %} {{ shop.name|title }}">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+    <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58L3.654 1.328z"/>
+  </svg>
+  {% if guest_call_style == 'topbar' %}
+    <span class="guest-call-action__label">{% if useri.langSet == 0 %}Simu{% else %}Call{% endif %}</span>
+  {% elif guest_call_style == 'button' %}
+    <span class="guest-call-action__label">{% if useri.langSet == 0 %}Piga simu{% else %}Call us{% endif %}</span>
+    <span class="guest-call-action__number small">{{ guest_call_phone }}</span>
+  {% elif guest_call_style == 'subtle' %}
+    <span class="guest-call-action__label">{% if useri.langSet == 0 %}Piga simu{% else %}Call us{% endif %}</span>
+    <span class="guest-call-action__number">{{ guest_call_phone }}</span>
+  {% else %}
+    <span class="guest-call-action__number">{{ guest_call_phone }}</span>
+  {% endif %}
+</a>

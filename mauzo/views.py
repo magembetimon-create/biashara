@@ -36,6 +36,11 @@ from django.core.paginator import Paginator,EmptyPage
 
 
 from accaunts.todos import Todos , confirmMailF, updateOrder, shift_operation_block_payload
+from purchase.guest_compound_utils import (
+    compound_guest_orders_qs,
+    count_compound_guest_orders,
+    shop_has_compound_positions,
+)
 from stoku.grouped_items_utils import (
       build_grouped_member_bidhaa_map,
       get_grouped_stock_display_qty,
@@ -2536,7 +2541,13 @@ def viewCustomOrder(request):
       itm = [] 
       how_many_ = 0
       if itms.exists():
-            totol = mauzoni.objects.get(pk=itms.last().mauzo.id)
+            totol = mauzoni.objects.select_related(
+                  'waiter_order',
+                  'waiter_order__fanyakazi',
+                  'waiter_order__user__user',
+                  'customer_in',
+                  'customer_in__area',
+            ).get(pk=itms.last().mauzo.id)
             def  checkprice(bein,it):
                   prices = [{'idadi':1,'bei':it.Bei_kuuza,'vipimo':it.bidhaa.vipimo}]
                   if it.bidhaa.idadi_jum  > 1:
@@ -2631,6 +2642,36 @@ def viewCustomOrder(request):
       
 
       todo.update({'itms':itm,'total':totol,'itl':how_many_})
+
+      is_compound_guest = False
+      has_packed_items = False
+      can_assign_waiter = False
+      can_reassign_waiter = False
+      waiter_printed = False
+      branch_waiters = []
+      if totol:
+            is_compound_guest = _is_compound_guest_order(totol)
+            has_packed_items = _order_has_any_packed(totol)
+            waiter_printed = _order_waiter_printed(totol)
+            if (
+                  totol.customer_in_id
+                  and duka.waiter_counter
+                  and not has_packed_items
+            ):
+                  branch_waiters = _branch_waiters_for_assign(duka)
+                  if not totol.waiter_order_id:
+                        can_assign_waiter = len(branch_waiters) > 0
+                  elif not waiter_printed:
+                        can_reassign_waiter = len(branch_waiters) > 0
+      todo.update({
+            'is_compound_guest': is_compound_guest,
+            'has_packed_items': has_packed_items,
+            'can_assign_waiter': can_assign_waiter,
+            'can_reassign_waiter': can_reassign_waiter,
+            'waiter_printed': waiter_printed,
+            'branch_waiters': branch_waiters,
+      })
+
       if not duka.Interprise:
             return redirect('/userdash')
       else: 
@@ -2904,6 +2945,180 @@ def  packegeTransfer(request):
       else:
            return render(request,'pagenotFound.html',todoFunct(request))      
 # CREATE THE PACKAGE ...................................................//
+def _order_has_any_packed(order):
+      oid = order.id if hasattr(order, 'id') else order
+      if getattr(order, 'packed', False):
+            return True
+      if mauzoList.objects.filter(mauzo=oid, packed=True).exists():
+            return True
+      if sales_color.objects.filter(mauzo__mauzo=oid, packed=True).exists():
+            return True
+      if sales_size.objects.filter(mauzo__mauzo=oid, packed=True).exists():
+            return True
+      return False
+
+
+def _order_waiter_printed(order):
+      return int(getattr(order, 'printed_number', 0) or 0) > 0
+
+
+def _is_compound_guest_order(order):
+      return (
+            getattr(order, 'user_customer_id', None) is None
+            and getattr(order, 'customer_in_id', None) is not None
+      )
+
+
+def _is_logged_location_order(order):
+      return (
+            getattr(order, 'user_customer_id', None) is not None
+            and getattr(order, 'customer_in_id', None) is not None
+      )
+
+
+def _sync_compound_order_to_waiter_queue(sale, waiter_perm):
+      """Make a location order appear like a waiter-saved pending order."""
+      is_logged_customer = bool(getattr(sale, 'user_customer_id', None))
+      update_fields = [
+            'waiter_order', 'order', 'cart', 'receved', 'packed', 'By',
+      ]
+      if not is_logged_customer:
+            if sale.mteja_jina:
+                  table_name = str(sale.mteja_jina).strip()
+            elif sale.customer_in_id:
+                  table_name = str(sale.customer_in.name or '').strip()
+            else:
+                  table_name = ''
+            if table_name:
+                  sale.mteja_jina = table_name[:100]
+            sale.online = False
+            update_fields.extend(['online', 'mteja_jina'])
+      sale.waiter_order = waiter_perm
+      sale.order = True
+      sale.cart = False
+      sale.receved = False
+      sale.packed = False
+      sale.By = None
+      sale.save(update_fields=update_fields)
+      return sale
+
+
+def _get_compound_guest_order(duka, order_id):
+      try:
+            order_id = int(order_id)
+      except (TypeError, ValueError):
+            return None
+      return mauzoni.objects.filter(
+            pk=order_id,
+            Interprise=duka.id,
+            order=True,
+            cart=False,
+            user_customer__isnull=True,
+            customer_in__isnull=False,
+      ).first()
+
+
+def _get_location_order_for_waiter_assign(duka, order_id):
+      try:
+            order_id = int(order_id)
+      except (TypeError, ValueError):
+            return None
+      return mauzoni.objects.filter(
+            pk=order_id,
+            Interprise=duka.id,
+            order=True,
+            cart=False,
+            customer_in__isnull=False,
+      ).first()
+
+
+def _notify_logged_customer_waiter_print(sale):
+      """In-app + email notice to the buying user after waiter first-print."""
+      if not sale or not getattr(sale, 'user_customer_id', None):
+            return
+      if not getattr(sale, 'customer_in_id', None):
+            return
+      if not getattr(sale, 'bill_kwa_id', None):
+            return
+      user_customer = sale.user_customer
+      incharge = getattr(user_customer, 'by', None) if user_customer else None
+      if not incharge:
+            return
+      bill = sale.bill_kwa
+      if not bill:
+            return
+      notice = Notifications()
+      notice.date = datetime.datetime.now(tz=timezone.utc)
+      notice.Interprise = bill.Interprise
+      notice.puO = True
+      notice.puO_map = bill
+      notice.Incharge = incharge
+      notice.save()
+      email = getattr(getattr(incharge, 'user', None), 'email', None)
+      if not email:
+            return
+      shop_name = ''
+      if sale.Interprise_id:
+            shop_name = sale.Interprise.name
+      try:
+            confirmMailF({
+                  'to': email,
+                  'data': {
+                        'service': sale.service,
+                        'pack': True,
+                        'waiter_printed': True,
+                        'shop': shop_name,
+                        'order': sale.code,
+                        'lang': incharge.langSet,
+                  },
+                  'formail': False,
+            })
+      except Exception:
+            pass
+
+
+def _branch_waiters_for_assign(duka):
+      waiters = []
+      for perm in InterprisePermissions.objects.filter(
+            Interprise=duka.id,
+            owner=False,
+            waiter_counter=True,
+      ).select_related('user__user', 'fanyakazi'):
+            name = ''
+            if perm.fanyakazi_id:
+                  name = str(perm.fanyakazi.jina or '').strip()
+            if not name and perm.user_id and getattr(perm.user, 'user', None):
+                  name = (perm.user.user.get_full_name() or perm.user.user.username or '').strip()
+            waiters.append({
+                  'id': perm.id,
+                  'name': name or str(perm.cheo or '').strip() or 'Waiter',
+                  'cheo': str(perm.cheo or '').strip(),
+            })
+      return sorted(waiters, key=lambda x: x['name'].lower())
+
+
+def _pending_custom_order_qs(duka, bil, enterprise_id=None):
+    try:
+        bil = int(bil)
+    except (TypeError, ValueError):
+        return mauzoni.objects.none()
+    qs = mauzoni.objects.filter(pk=bil, Interprise=duka.id, order=True)
+    if not qs.exists():
+        return qs
+    order = qs.first()
+    if order.user_customer_id is None and order.customer_in_id is not None:
+        return qs.filter(user_customer__isnull=True, customer_in__isnull=False)
+    ent_id = enterprise_id
+    if ent_id not in (None, '', 0, '0'):
+        try:
+            return qs.filter(user_customer__enteprise_id=int(ent_id))
+        except (TypeError, ValueError):
+            pass
+    if order.user_customer_id:
+        return qs.filter(user_customer__enteprise_id=order.user_customer.enteprise_id)
+    return mauzoni.objects.none()
+
+
 @login_required(login_url='login')
 def  not_important(request):
       if request.method == "POST":
@@ -2913,11 +3128,8 @@ def  not_important(request):
                   todo=todoFunct(request)
                   duka=todo['duka']
 
-                  
-
-                  shop=Interprise.objects.get(pk=i)
-                  oda=mauzoni.objects.filter(pk=bil,Interprise=duka.id,user_customer__enteprise=shop.id)
-                  if oda.exists:
+                  oda=_pending_custom_order_qs(duka, bil, i)
+                  if oda.exists():
                         oda.update(sioMuhimu=True)
                         data = {
                               'success':True,
@@ -2945,8 +3157,15 @@ def  create_package(request):
       todo=todoFunct(request)
       duka=todo['duka']
 
-      shop=Interprise.objects.get(pk=i)
-      oda=mauzoni.objects.filter(pk=bil,Interprise=duka.id,user_customer__enteprise=shop.id)
+      oda=_pending_custom_order_qs(duka, bil, i)
+      if not oda.exists():
+            return redirect('/mauzo/viewCustomOrder?ord=' + str(bil))
+
+      order = oda.first()
+      is_guest = order.user_customer_id is None and order.customer_in_id is not None
+      if order.waiter_order_id and not _order_waiter_printed(order):
+            return redirect('/mauzo/viewCustomOrder?ord=' + str(bil))
+      shop = order.user_customer.enteprise if not is_guest else duka
       
       pi=mauzoList.objects.filter(mauzo=oda.last().id,packed=True)
       pc=sales_color.objects.filter(mauzo__mauzo=oda.last().id,packed=True)
@@ -2957,7 +3176,7 @@ def  create_package(request):
       ups=sales_size.objects.filter(mauzo__mauzo=oda.last().id,packed=False)
 
 
-      if (upi.exists() or upc.exists() or ups.exists())  and  (pi.exists() or pc.exists() or ps.exists()) : 
+      if (upi.exists() or upc.exists() or ups.exists())  and  (pi.exists() or pc.exists() or ps.exists()) and not is_guest: 
 
                         billno = 1
                         if manunuzi.objects.filter(Interprise=shop.id).exists():
@@ -3104,9 +3323,9 @@ def  create_package(request):
                         mauzo.save() 
                         pu.amount = float(totAmo)                      
                         pu.save()  
-                                          
-                        oda.update(amount=F('amount')-mauzo.amount)
-                        manunuzi.objects.filter(pk=oda.last().bill_kwa.id).update(amount=F('amount')-pu.amount)
+                        if oda.last().bill_kwa_id:
+                              oda.update(amount=F('amount')-mauzo.amount)
+                              manunuzi.objects.filter(pk=oda.last().bill_kwa.id).update(amount=F('amount')-pu.amount)
                         
                         # Incase not  all items packed..............
                         remains = remainedFromOda()
@@ -3118,37 +3337,192 @@ def  create_package(request):
       if pi.exists() or pc.exists() or ps.exists():
             oda.update(packed=True,By=todo['cheo'],Packed_at=datetime.datetime.now(tz=timezone.utc))
           
-            # Record Notiications For returning te itm ......................................//
-            
-           
             theOda_ = oda.last()
-            incharge_ = theOda_.user_customer.by
-            notice = Notifications()
-            notice.date= datetime.datetime.now(tz=timezone.utc)
-            notice.Interprise= theOda_.bill_kwa.Interprise
-            notice.puO= True
-            notice.puO_map= theOda_.bill_kwa
-            notice.Incharge  = incharge_
-            notice.save()  
-            try:
-                  confirmMailF({
-                  'to':incharge_.user.email,
-                  'data':{   
-                            'service':theOda_.service, 
-                             'pack':True, 
-                              'shop':duka.name,
-                              'order':theOda_.code,
-                              'lang':incharge_.langSet
-                              
-                              },
-                  'formail':False
-                  })  
-            except:
-                 pass      
+            incharge_ = None
+            if (
+                  not is_guest
+                  and theOda_.user_customer_id
+                  and theOda_.bill_kwa_id
+            ):
+                  incharge_ = getattr(theOda_.user_customer, 'by', None)
+            if incharge_:
+                  notice = Notifications()
+                  notice.date= datetime.datetime.now(tz=timezone.utc)
+                  notice.Interprise= theOda_.bill_kwa.Interprise
+                  notice.puO= True
+                  notice.puO_map= theOda_.bill_kwa
+                  notice.Incharge  = incharge_
+                  notice.save()  
+                  try:
+                        confirmMailF({
+                        'to':incharge_.user.email,
+                        'data':{   
+                                  'service':theOda_.service, 
+                                   'pack':True, 
+                                    'shop':duka.name,
+                                    'order':theOda_.code,
+                                    'lang':incharge_.langSet
+                                    
+                                    },
+                        'formail':False
+                        })  
+                  except:
+                       pass      
  
       return  redirect('/mauzo/viewOda?item_valued='+str(oda.last().id)) 
     except:
-        return render(request,'errorpage.html',todo)
+        traceback.print_exc()
+        return render(request,'errorpage.html',todoFunct(request) or {})
+
+
+@login_required(login_url='login')
+def compound_order_direct_sale(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False})
+      try:
+            todo = todoFunct(request)
+            duka = todo['duka']
+            cheo = todo['cheo']
+            sale = _get_compound_guest_order(duka, request.POST.get('order_id'))
+            if not sale:
+                  return JsonResponse({
+                        'success': False,
+                        'msg_swa': 'Oda haikupatikana',
+                        'msg_eng': 'Order not found',
+                  })
+            if sale.waiter_order_id:
+                  return JsonResponse({
+                        'success': False,
+                        'msg_swa': 'Oda tayari imewekwa kwa mhudumu',
+                        'msg_eng': 'Order is already assigned to a waiter',
+                  })
+            if _order_has_any_packed(sale):
+                  return JsonResponse({
+                        'success': False,
+                        'msg_swa': 'Huwezi kuuza moja kwa moja — kuna bidhaa zilizopack',
+                        'msg_eng': 'Cannot convert — some items are already packed',
+                  })
+            with transaction.atomic():
+                  sale = mauzoni.objects.select_for_update().get(pk=sale.id)
+                  if _order_has_any_packed(sale):
+                        raise ValueError('PACKED')
+                  sale.online = False
+                  _deduct_stock_for_order(sale)
+                  sale.order = False
+                  sale.By = cheo
+                  sale.save()
+            return JsonResponse({
+                  'success': True,
+                  'msg_swa': 'Oda imebadilishwa kuwa mauzo moja kwa moja',
+                  'msg_eng': 'Order converted to direct sale',
+                  'redirect': f'/mauzo/viewInvo?item_valued={sale.id}',
+            })
+      except ValueError:
+            return JsonResponse({
+                  'success': False,
+                  'msg_swa': 'Huwezi kuuza moja kwa moja — kuna bidhaa zilizopack',
+                  'msg_eng': 'Cannot convert — some items are already packed',
+            })
+      except Exception:
+            traceback.print_exc()
+            return JsonResponse({
+                  'success': False,
+                  'msg_swa': 'Imeshindikana kubadilisha oda',
+                  'msg_eng': 'Could not convert order',
+            })
+
+
+@login_required(login_url='login')
+def compound_order_assign_waiter(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False})
+      try:
+            todo = todoFunct(request)
+            duka = todo['duka']
+            if not duka or not duka.waiter_counter:
+                  return JsonResponse({
+                        'success': False,
+                        'msg_swa': 'Waiter counter haijawashwa',
+                        'msg_eng': 'Waiter counter is not enabled',
+                  })
+            sale = _get_location_order_for_waiter_assign(duka, request.POST.get('order_id'))
+            if not sale:
+                  return JsonResponse({
+                        'success': False,
+                        'msg_swa': 'Oda haikupatikana',
+                        'msg_eng': 'Order not found',
+                  })
+            if sale.waiter_order_id:
+                  reassign = str(request.POST.get('reassign') or '').lower() in ('1', 'true', 'yes')
+                  if not reassign:
+                        return JsonResponse({
+                              'success': False,
+                              'msg_swa': 'Oda tayari imewekwa kwa mhudumu',
+                              'msg_eng': 'Order is already assigned to a waiter',
+                        })
+                  if _order_waiter_printed(sale):
+                        return JsonResponse({
+                              'success': False,
+                              'msg_swa': 'Huwezi kubadilisha — oda tayari imechapishwa na mhudumu',
+                              'msg_eng': 'Cannot reassign — order was already printed by the waiter',
+                        })
+            if _order_has_any_packed(sale):
+                  return JsonResponse({
+                        'success': False,
+                        'msg_swa': 'Huwezi ku-assign — kuna bidhaa zilizopack',
+                        'msg_eng': 'Cannot assign — some items are already packed',
+                  })
+            try:
+                  waiter_id = int(request.POST.get('waiter_id') or 0)
+            except (TypeError, ValueError):
+                  waiter_id = 0
+            waiter_perm = InterprisePermissions.objects.filter(
+                  pk=waiter_id,
+                  Interprise=duka.id,
+                  owner=False,
+                  waiter_counter=True,
+            ).first()
+            if not waiter_perm:
+                  return JsonResponse({
+                        'success': False,
+                        'msg_swa': 'Chagua mhudumu halali',
+                        'msg_eng': 'Select a valid waiter',
+                  })
+            with transaction.atomic():
+                  sale = mauzoni.objects.select_for_update().get(pk=sale.id)
+                  if _order_has_any_packed(sale):
+                        raise ValueError('PACKED')
+                  if sale.waiter_order_id and _order_waiter_printed(sale):
+                        raise ValueError('PRINTED')
+                  _sync_compound_order_to_waiter_queue(sale, waiter_perm)
+            waiter_name = _branch_waiters_for_assign(duka)
+            wname = next((w['name'] for w in waiter_name if w['id'] == waiter_perm.id), '')
+            reassigned = str(request.POST.get('reassign') or '').lower() in ('1', 'true', 'yes')
+            return JsonResponse({
+                  'success': True,
+                  'msg_swa': f'Oda imewekwa kwa {wname or "mhudumu"}' if not reassigned else f'Oda imewekwa tena kwa {wname or "mhudumu"}',
+                  'msg_eng': f'Order assigned to {wname or "waiter"}' if not reassigned else f'Order reassigned to {wname or "waiter"}',
+                  'redirect': f'/mauzo/viewCustomOrder?ord={sale.id}',
+            })
+      except ValueError as err:
+            if str(err) == 'PRINTED':
+                  return JsonResponse({
+                        'success': False,
+                        'msg_swa': 'Huwezi kubadilisha — oda tayari imechapishwa na mhudumu',
+                        'msg_eng': 'Cannot reassign — order was already printed by the waiter',
+                  })
+            return JsonResponse({
+                  'success': False,
+                  'msg_swa': 'Huwezi ku-assign — kuna bidhaa zilizopack',
+                  'msg_eng': 'Cannot assign — some items are already packed',
+            })
+      except Exception:
+            traceback.print_exc()
+            return JsonResponse({
+                  'success': False,
+                  'msg_swa': 'Imeshindikana ku-assign oda',
+                  'msg_eng': 'Could not assign order',
+            })
             
 # LOAD INVOINCE DATA ...................................................//
 @login_required(login_url='login')
@@ -3308,8 +3682,10 @@ def waiter_orders_data(request):
             By__isnull=True,
             full_returned=False,
             order=True,
-            # desc__startswith='WAITER|'
-      ).select_related('customer_in__area').order_by('-pk')
+            cart=False,
+            receved=False,
+            printed_number=0,
+      ).select_related('customer_in__area', 'user_customer__enteprise').order_by('-pk')
 
       printed_qs = mauzoni.objects.filter(
             waiter_scope,
@@ -3319,7 +3695,7 @@ def waiter_orders_data(request):
             order=False,
             receved=True,
             # desc__startswith='WAITER|'
-      ).select_related('customer_in__area').order_by('-pk')
+      ).select_related('customer_in__area', 'user_customer__enteprise').order_by('-pk')
 
       pending_ids = [x.id for x in pending_qs]
       printed_ids = [x.id for x in printed_qs]
@@ -3331,12 +3707,14 @@ def waiter_orders_data(request):
             for line in lines:
                   if line.mauzo_id not in items_map:
                         items_map[line.mauzo_id] = []
+                  unit_price = float(line.bei_og or line.bei or 0)
+                  qty = float(line.idadi or 0)
                   items_map[line.mauzo_id].append({
                         'name': line.produ.bidhaa.bidhaa_jina,
-                        'qty': float(line.idadi),
+                        'qty': qty,
                         'unit': line.produ.bidhaa.vipimo,
-                        'price': float(line.bei),
-                        'total': float(line.bei) * float(line.idadi),
+                        'price': unit_price,
+                        'total': float(line.saveT or 1) * unit_price * qty,
                   })
 
       def serialize_order(order_obj, status_name):
@@ -3373,6 +3751,13 @@ def waiter_orders_data(request):
                   'is_paid': is_paid,
                   'printed_number': int(order_obj.printed_number or 0),
                   'status': status_name,
+                  'is_guest_compound': _is_compound_guest_order(order_obj),
+                  'customer_name': str(order_obj.mteja_jina or '').strip() or (
+                        str(order_obj.user_customer.enteprise.name or '').strip()
+                        if getattr(order_obj, 'user_customer_id', None)
+                        and getattr(order_obj.user_customer, 'enteprise', None)
+                        else ''
+                  ),
             }
 
       pending_data = [serialize_order(o, 'pending') for o in pending_qs]
@@ -4441,7 +4826,23 @@ def waiter_print_order(request):
             sale.receved = True
             sale.Packed_at = datetime.datetime.now(tz=timezone.utc)
             sale.printed_number = int(sale.printed_number or 0) + 1
-            sale.save(update_fields=['order', 'receved', 'Packed_at', 'printed_number'])
+            update_fields = ['order', 'receved', 'Packed_at', 'printed_number']
+            if first_print and sale.user_customer_id and sale.customer_in_id:
+                  sale.packed = True
+                  update_fields.append('packed')
+            sale.save(update_fields=update_fields)
+
+      if first_print:
+            try:
+                  sale = mauzoni.objects.select_related(
+                        'user_customer__by__user',
+                        'user_customer__enteprise',
+                        'bill_kwa__Interprise',
+                        'Interprise',
+                  ).get(pk=sale.id)
+                  _notify_logged_customer_waiter_print(sale)
+            except Exception:
+                  traceback.print_exc()
 
       return JsonResponse({
             'success': True,
@@ -4487,6 +4888,12 @@ def waiter_delete_order(request):
             sale = od.last()
             if not sale.order:
                   return JsonResponse({'success': False, 'msg': 'Printed orders cannot be deleted'})
+            if _is_compound_guest_order(sale) or _is_logged_location_order(sale):
+                  return JsonResponse({
+                        'success': False,
+                        'msg_swa': 'Huwezi kufuta oda hii — wasiliana na msimamizi',
+                        'msg_eng': 'This order cannot be deleted — contact manager',
+                  })
 
             with transaction.atomic():
                   mauzoList.objects.filter(mauzo=sale.id).delete()
@@ -7433,3 +7840,45 @@ def ReplyRating(request):
                   return redirect('/mauzo/AllRatings')
       else:
             return render(request,'pagenotFound.html',todoFunct(request))
+
+
+@login_required(login_url='login')
+def compound_orders_data(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    try:
+        todo = todoFunct(request)
+        duka = todo['duka']
+        if not duka or not duka.Interprise or not shop_has_compound_positions(duka):
+            return JsonResponse({'success': True, 'count': 0, 'orders': []})
+        orders = []
+        for sale in compound_guest_orders_qs(duka)[:80]:
+            lines = []
+            for ln in mauzoList.objects.filter(mauzo=sale).select_related('produ__bidhaa')[:20]:
+                lines.append({
+                    'name': ln.produ.bidhaa.bidhaa_jina if ln.produ_id else '',
+                    'qty': float(ln.idadi or 0),
+                    'price': float(ln.bei_og or 0),
+                })
+            cell = sale.customer_in
+            orders.append({
+                'id': sale.id,
+                'code': sale.code,
+                'amount': float(sale.amount or 0),
+                'date': sale.tarehe.isoformat() if sale.tarehe else '',
+                'note': sale.desc or '',
+                'customer_name': sale.mteja_jina or '',
+                'area': cell.area.name if cell and cell.area_id else '',
+                'place': cell.name if cell else '',
+                'lines': lines,
+            })
+        return JsonResponse({
+            'success': True,
+            'count': count_compound_guest_orders(duka),
+            'orders': orders,
+            'currency': duka.currencii or '',
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'orders': [], 'count': 0})
+

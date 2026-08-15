@@ -176,7 +176,7 @@ function AddRow(){
                   }
 
                 tr+=`
-                    <tr class="text-center ${bg}" id="dataRow${n}">
+                    <tr class="text-center ${bg} periodReportRow" id="dataRow${n}" data-val="${td.id}" style="cursor:pointer">
                     <td scope="row">
                        <span class="noWordCut"> ${td.name}</span>
                     </td>
@@ -222,12 +222,19 @@ function AddRow(){
 
 }
 
-$('body').on('click','.showDtBtn',function(){
-    let val = Number($(this).data('val')) || 0
-        placeDt(val)
-        $($(this).data('hide')).hide()
-        $($(this).data('show')).fadeIn(100)
+function openPeriodReportRow(val) {
+    placeDt(val)
+    $('.PeriodTableData').hide()
+    $('.RiportDataPanel').fadeIn(100)
+}
 
+$('body').on('click','.showDtBtn',function(){
+    openPeriodReportRow(Number($(this).data('val')) || 0)
+})
+
+$('body').on('click', '#riportData tr.periodReportRow', function (e) {
+    if ($(e.target).closest('button, a').length) return
+    openPeriodReportRow(Number($(this).data('val')) || 0)
 })
 
 
@@ -336,6 +343,9 @@ function placeDt(val){
                               case 5:
                                       placeAlipia({ankara,itms})
                                  
+                                  break;
+                              case 6:
+                                      placeStaff({ankara,itms,val})
                                   break;
                                   
                               
@@ -968,6 +978,203 @@ $('#SoldItems').DataTable();
 
      }
 
+function expenseRecipientKey(row) {
+    if (row.worker_recipient_id) {
+        return 'w_' + row.worker_recipient_id
+    }
+    const name = String(row.kabidhiwa || '').trim()
+    if (name) {
+        return 'k_' + name.toLowerCase()
+    }
+    return '_none_'
+}
+
+function expenseRecipientName(row) {
+    if (row.worker_name) {
+        return String(row.worker_name).trim()
+    }
+    const name = String(row.kabidhiwa || '').trim()
+    if (name) {
+        return name
+    }
+    return lang('Haijabainishwa', 'Not specified')
+}
+
+function buildStaffExpenseRow(key, rows) {
+    const sorted = rows.slice().sort((a, b) => moment(b.tarehe).valueOf() - moment(a.tarehe).valueOf())
+    return {
+        key: key,
+        name: expenseRecipientName(sorted[0]),
+        itms: sorted,
+        idadi: sorted.length,
+        cost: sorted.reduce((a, b) => a + Number(b.kiasi || 0), 0),
+    }
+}
+
+var staffExpenseList = []
+
+function placeStaff(dataa) {
+    const { ankara: itms } = dataa,
+        LoC = Number($('#riportChatRist .btn-secondary').data('riport')),
+        staffKeys = [...new Set(itms.map(i => expenseRecipientKey(i)))],
+        staffRows = staffKeys.map(k => buildStaffExpenseRow(k, itms.filter(i => expenseRecipientKey(i) === k)))
+            .filter(s => s.idadi > 0)
+            .sort((a, b) => b.cost - a.cost)
+
+    staffExpenseList = staffRows
+    bidhaaList = staffRows
+
+    if (LoC) {
+        let title = `<h6 class="py-2">${lang('Takwimu ya Matumizi kwa Staff/Mtu', 'Expenses by Staff/Person Statistics')}, ${duraTitle}<h6/>`
+        $('#theDataPanel').html(`${title}<div class="table-responsive"><canvas style="${window.outerWidth > 800 ? 'max-height:85vh !important' : 'max-height:70vh !important'}" id="myChartC"></canvas></div>`)
+
+        var canvas = document.getElementById('myChartC')
+        var ctx = canvas.getContext('2d')
+        var data = {
+            labels: staffRows.map(b => b.name),
+            datasets: [{
+                label: lang('Jumla iliyopewa', 'Total given'),
+                fill: true,
+                lineTension: 0,
+                backgroundColor: 'brown',
+                borderColor: 'brown',
+                data: staffRows.map(a => Number(a.cost).toFixed(FIXED_VALUE)),
+                spanGaps: false,
+            }]
+        }
+
+        var options = {
+            plugins: [{
+                beforeInit: function (chart) {
+                    chart.data.labels.forEach(function (e, i, a) {
+                        if (/\n/.test(e)) {
+                            a[i] = e.split(/\n/)
+                        }
+                    })
+                }
+            }],
+            tooltips: {
+                bodyFontSize: window.outerWidth > 800 ? 19 : 15,
+                enabled: true,
+                callbacks: {
+                    label: function (tooltipItems, data) {
+                        return data.datasets[tooltipItems.datasetIndex].label + ` ${currencii} : ` + tooltipItems.yLabel.toLocaleString()
+                    }
+                }
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        display: window.outerWidth > 800
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: ` ${currencii}`,
+                        fontSize: 13
+                    }
+                }],
+                xAxes: [{
+                    ticks: {
+                        display: false
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: lang('Staff/Mtu', 'Staff/Person'),
+                        fontSize: 13
+                    }
+                }]
+            }
+        }
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: options
+        })
+    } else {
+        let td = `<table id="StaffExpensesTable" class="table table-bordered table-hover smallFont" style="width:100%">
+            <thead>
+                <tr class="smallFont">
+                    <th>#</th>
+                    <th>${lang('Staff/Mtu', 'Staff/Person')}</th>
+                    <th>${lang('Idadi', 'Count')}</th>
+                    <th>${lang('Jumla iliyopewa', 'Total given')} <span class="text-primary latoFont">(${currencii})</span></th>
+                </tr>
+            </thead>
+            <tbody>`,
+            num = 0
+
+        staffRows.forEach(a => {
+            num += 1
+            td += `<tr class="expenseStaffRow" style="cursor:pointer" data-staff-idx="${num - 1}">
+                <td>${num}</td>
+                <td class="text-capitalize">${a.name}</td>
+                <td class="weight600">${floatValue(a.idadi)}</td>
+                <td class="brown weight600">${floatValue(a.cost)}</td>
+            </tr>`
+        })
+
+        td += `</tbody></table>`
+
+        let title = `<h6 class="py-2">${lang('Matumizi kwa Staff/Mtu', 'Expenses by Staff/Person')}, ${duraTitle}<h6/>`
+        $('#theDataPanel').html(title + td)
+        $('#StaffExpensesTable').DataTable()
+    }
+}
+
+function viewStaffExpenseDetail(staffIdx) {
+    const staff = staffExpenseList[Number(staffIdx)]
+    if (!staff) return
+
+    let td = `<table id="StaffExpenseDetailTable" class="table table-bordered table-hover smallFont" style="width:100%">
+        <thead>
+            <tr class="smallFont">
+                <th>#</th>
+                <th>${lang('Tarehe', 'Date')}</th>
+                <th>${lang('Matumizi', 'Expense')}</th>
+                <th>${lang('Maelezo', 'Notice')}</th>
+                <th>${lang('Kiasi', 'Amount')} <span class="text-primary latoFont">(${currencii})</span></th>
+            </tr>
+        </thead>
+        <tbody>`,
+        num = 0
+
+    staff.itms.forEach(row => {
+        num += 1
+        const dt = row.date || moment(row.tarehe).format('YYYY-MM-DD')
+        td += `<tr>
+            <td>${num}</td>
+            <td>${moment(dt).format('DD-MM-YYYY')}</td>
+            <td class="text-capitalize">${row.matumiziN || '-'}</td>
+            <td>${String(row.maelezo || row.akauntiN || '-').replace(/</g, '&lt;')}</td>
+            <td class="weight600">${floatValue(row.kiasi)}</td>
+        </tr>`
+    })
+
+    td += `<tr class="weight600 table-active">
+            <td colspan="4" class="text-right">${lang('Jumla', 'Total')}</td>
+            <td>${floatValue(staff.cost)}</td>
+        </tr></tbody></table>`
+
+    const title = `<div class="d-flex justify-content-between align-items-center py-2 flex-wrap">
+            <h6 class="mb-0">${lang('Matumizi kwa', 'Expenses for')} <span class="darkblue text-capitalize">${staff.name}</span></h6>
+            <button type="button" class="btn btn-sm btn-outline-secondary expenseStaffBack">${lang('Rudi', 'Back')}</button>
+        </div>`
+
+    $('#theDataPanel').html(title + td)
+    $('#StaffExpenseDetailTable').DataTable()
+}
+
+$('body').on('click', '.expenseStaffRow', function () {
+    viewStaffExpenseDetail(Number($(this).data('staff-idx')))
+})
+
+$('body').on('click', '.expenseStaffBack', function () {
+    const val = Number($('.riportOn.btn-primary').data('val') || Number($('#firstR').data('val')))
+    placeDt(val)
+})
+
 $('body').on('click','.riportOn',function(){
     $('.riportOn').addClass('btn-light')
     $(this).removeClass('btn-light')
@@ -1109,6 +1316,98 @@ td+=`</tbody>
 
 
 }  
+
+
+$('body').on('click', '#PrintExpensesReport', function () {
+    printExpensesReport()
+})
+
+function printExpensesReport() {
+    if (!$('.RiportDataPanel').is(':visible')) {
+        toastr.warning(lang('Fungua ripoti kwanza', 'Open a report period first'), lang('Taarifa', 'Info'), { timeOut: 2500 })
+        return
+    }
+
+    var dukaName = $('#expensePrintDuka').val() || document.title.replace(/[-|].*$/, '').trim() || ''
+    var printedBy = ($('#expensePrintUser').val() || '').trim()
+    var periodTitle = ($('#riporttitle').text() || '').trim()
+    var printDate = moment ? moment().format('ddd, DD MMM YYYY HH:mm') : new Date().toLocaleString()
+    var branch = ($('#Matawini option:selected').text() || '').trim()
+    var byUser = ($('#Waliotumia option:selected').text() || '').trim()
+    var byUserVal = Number($('#Waliotumia').val() || 0)
+
+    var summaryTable = document.querySelector('#summary_wrapper table')
+    var summaryHtml = summaryTable ? summaryTable.outerHTML : ''
+
+    var dataPanel = document.getElementById('theDataPanel')
+    var dataPanelHtml = ''
+    if (dataPanel) {
+        var clone = dataPanel.cloneNode(true)
+        clone.querySelectorAll('canvas').forEach(function (c) {
+            var msg = document.createElement('p')
+            msg.style.color = '#888'
+            msg.style.fontStyle = 'italic'
+            msg.textContent = lang('Chati haionyeshwi kwenye print', 'Chart not shown in print')
+            c.parentNode.replaceChild(msg, c)
+        })
+        clone.querySelectorAll('button, .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate').forEach(function (el) {
+            el.remove()
+        })
+        dataPanelHtml = clone.innerHTML
+    }
+
+    var switchLabel = (function () {
+        var active = document.querySelector('#riportSwitch .btn-primary')
+        return active ? (active.getAttribute('title') || '') : ''
+    })()
+
+    var html = '<!DOCTYPE html>\n' +
+        '<html>\n<head>\n' +
+        '  <meta charset="UTF-8">\n' +
+        '  <title>' + dukaName + ' — ' + lang('Ripoti ya Ghalama za Uendeshaji', 'Management Expenses Report') + '</title>\n' +
+        '  <style>\n' +
+        '    body { font-family: Arial, sans-serif; font-size: 12px; color: #222; margin: 0; padding: 16px; }\n' +
+        '    .print-header { text-align: center; margin-bottom: 10px; }\n' +
+        '    .print-header h2 { margin: 0 0 2px; font-size: 1.2rem; }\n' +
+        '    .print-header h4 { margin: 0 0 4px; font-size: 1rem; color: #444; }\n' +
+        '    .print-meta { font-size: .85rem; color: #555; margin-bottom: 14px; text-align: center; }\n' +
+        '    .section-title { font-size: .95rem; font-weight: bold; margin: 14px 0 4px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }\n' +
+        '    table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }\n' +
+        '    th, td { border: 1px solid #ccc; padding: 4px 7px; }\n' +
+        '    thead th { background: #f0f0f0; font-weight: bold; }\n' +
+        '    tbody tr:nth-child(even) { background: #fafafa; }\n' +
+        '    tfoot tr, .table-active { background: #f4f4f4; font-weight: bold; }\n' +
+        '    .text-right { text-align: right !important; }\n' +
+        '    .text-left { text-align: left !important; }\n' +
+        '    .text-center { text-align: center !important; }\n' +
+        '    .weight600 { font-weight: 600; }\n' +
+        '    .brown { color: #8B4513; }\n' +
+        '    .text-primary { color: #007bff; }\n' +
+        '    @media print { body { margin: 0; padding: 8px; } }\n' +
+        '  </style>\n' +
+        '</head>\n<body>\n' +
+        '  <div class="print-header">\n' +
+        '    <h2>' + dukaName + '</h2>\n' +
+        '    <h4>' + lang('Ripoti ya Ghalama za Uendeshaji', 'Management Expenses Report') + '</h4>\n' +
+        (branch ? '    <div class="print-meta"><strong>' + lang('Tawi', 'Branch') + ':</strong> ' + branch + '</div>\n' : '') +
+        '  </div>\n' +
+        '  <div class="print-meta">\n' +
+        '    <strong>' + lang('Kipindi', 'Period') + ':</strong> ' + periodTitle + '\n' +
+        (byUserVal > 0 ? '    &nbsp;&nbsp;<strong>' + lang('Na', 'By') + ':</strong> ' + byUser + '\n' : '') +
+        (printedBy ? '    &nbsp;&nbsp;<strong>' + lang('Aliyechapisha', 'Printed by') + ':</strong> ' + printedBy : '') +
+        '    &nbsp;&nbsp;<strong>' + lang('Tarehe', 'Date') + ':</strong> ' + printDate + '\n' +
+        '  </div>\n' +
+        (summaryHtml ? '  <div class="section-title">' + lang('Muhtasari', 'Summary') + '</div>\n  ' + summaryHtml + '\n' : '') +
+        (dataPanelHtml ? '  <div class="section-title">' + lang('Maelezo', 'Details') + (switchLabel ? ' — ' + switchLabel : '') + '</div>\n  <div>' + dataPanelHtml + '</div>\n' : '') +
+        '  <script>window.onload=function(){window.print();};<\/script>\n' +
+        '</body>\n</html>'
+
+    var win = window.open('', '_blank')
+    if (win) {
+        win.document.write(html)
+        win.document.close()
+    }
+}
 
 
 function roadRiportSave(){

@@ -151,18 +151,28 @@
                               </svg>
                         </button>
 
-                        
+                        <button type="button" class="btn border-secondary btn-sm riportOn btn-light" data-r="6" data-riport="1" data-val="0" title="{% if useri.langSet == 0 %}Matumizi kwa Staff/Mtu{% else %}Expenses by Staff/Person{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+                            </svg>
+                        </button>                         
 
                         <button type="button" class="btn border-secondary btn-sm riportOn btn-light" data-r="5" data-riport="1" data-val="0" title="{% if useri.langSet == 0 %}Akaunti za malipo{% else %}Payments Accounts{% endif %}">
                             <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-credit-card-2-back" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                 <path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>
                                 <path d="M11 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1zM1 9h14v2H1V9z"/>
                               </svg>
-                        </button> 
+                        </button>
+
+
                     </div>
             </div>
             
             <div class="col-4 text-right">
+                <button type="button" class="btn btn-sm btn-outline-secondary mr-1" id="PrintExpensesReport" title="{% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-printer"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    {% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}
+                </button>
                 <div class="btn-group riportChatRist" id="riportChatRist">
                         <button type="button"  class="btn border-secondary btn-sm riportListChatOn btn-secondary" data-r="0" data-riport="0" data-val="0" title="{% if useri.langSet == 0 %}Orodha{% else %}List{% endif %}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list">
@@ -388,6 +398,8 @@
 
 
     <input type="hidden" id="currencii" value="{{duka.currencii}}" data-currencii="{{duka.currencii}}" />
+    <input type="hidden" id="expensePrintUser" value="{{useri.user.first_name}} {{useri.user.last_name}}" />
+    <input type="hidden" id="expensePrintDuka" value="{{duka.name}}" />
  
 {% endblock %}
 

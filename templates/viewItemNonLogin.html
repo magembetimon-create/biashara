@@ -8,7 +8,16 @@
 <link rel="stylesheet" href="{% static 'css/customradio.css' %}">
 
 
-<div  class=" Analytical  p-2 p-md-3 whiteBg" id="general-panel" style="margin-top: 70px;min-height:100vh" >
+<div  class=" Analytical  p-2 p-md-3 whiteBg guest-public-offset guest-item-page" id="general-panel" style="min-height:100vh" >
+    {% if compound_order_enabled %}
+    <input type="hidden" id="guest_compound_shop" value="{{ shop.id }}">
+    {% if guest_cell %}
+    <div class="alert alert-success smallFont py-2">
+      {% if useri.langSet == 0 %}Sehemu:{% else %}Location:{% endif %}
+      <strong>{{ guest_cell.area.name }}</strong> — <strong>{{ guest_cell.name }}</strong>
+    </div>
+    {% endif %}
+    {% endif %}
     <div class="row classic_div">
       {% if bidhaa.service  %}
       <div class="col-12 row p-2 classic_div mb-3 bg-primary " style="border: 2px solid rgba(0, 0, 255, 0.555);color:#fff" >
@@ -16,12 +25,12 @@
           {% if useri.langSet == 0 %}Tafadhari weka muda wa haduma {% else %}Please Set Service Time {% endif %}
         </div>
         <div class="col-md-7 row classic_div mx-0 px-0"> 
-            <div class="col-md-6 px-0  smallFont text-right"> 
+            <div class="col-12 col-md-6 px-0 smallFont text-md-right service-time-col"> 
               {% if useri.langSet == 0 %}Kuanzia{% else %}From{% endif %}: <input type="datetime-local" 
                style="border: 2px solid rgba(0, 0, 255, 0.555);color:rgba(0, 0, 255, 0.795)"
                class="made-input kwaMuda" id="hudumaKuanzia" >
             </div>
-            <div class="col-md-6 px-0 smallFont  text-right">
+            <div class="col-12 col-md-6 px-0 smallFont text-md-right service-time-col">
               {% if useri.langSet == 0 %}Hadi{% else %}To{% endif %}: <input type="datetime-local" class="made-input kwaMuda" 
                    id="hudumaHadi"  style="border: 2px solid rgba(0, 0, 255, 0.555);color:rgba(0, 0, 255, 0.795)" >
             </div>
@@ -30,7 +39,7 @@
       {% endif %}
     
     
-      <div class="col-md-5">
+      <div class="col-12 col-md-5">
     
         <h5 class=" d-block d-md-none" >{{bidhaa.bidhaa.bidhaa_jina | title }}</h5>
           <p class="smallFont {% if duka == shop %} mb-4 pb-2 {% endif %} d-md-none" >
@@ -206,7 +215,7 @@
     
     
     
-      <div class="col-md-4">
+      <div class="col-12 col-md-4">
           <h5 class=" d-none d-md-block" >{{bidhaa.bidhaa.bidhaa_jina | title }}</h5>
           <p class="smallFont d-none d-md-block py-1" >{{bidhaa.bidhaa.maelezo}}
           <!-- Button trigger modal -->
@@ -223,8 +232,8 @@
           <hr>
          <div class="row">
            <div class="col-2 pt-1" style="font-weight: 600;" >{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}:</div>
-           <div class="col-10 pb-1" style="overflow-x: auto;" >
-             <div class="d-flex" style="text-indent: 1%;white-space: nowrap" >
+           <div class="col-10 pb-1 price-row-scroll" >
+             <div class="d-flex guest-price-list" style="text-indent: 1%;white-space: nowrap" >
                <div class="price_sh">
                   <span style="color:brown" > <span class="darkblue smallFont">{{shop.currencii  }}</span>  .<span style="font-size: medium;font-weight:600;text-shadow:0 1 1px #000" >{{bidhaa.Bei_kuuza | floatformat:'-2' | intcomma}}</span> <small class="text-primary">/{{bidhaa.bidhaa.vipimo}} 
                     <span class="brown" >
@@ -519,7 +528,7 @@
                   {% endif %}    
     
                     </div>
-              <div class="d-flex">
+              <div class="d-flex qty-controls">
                    <div>
                           <select name="price_select" onchange="$('.redbox').data({uwiano:0,qty:0});$('.bluebox').data({uwiano:0,qty:0});place_idadi();feedqty(0);$('#fractions_qty').html($('#fractions_qty').html())
                           " class="smallFont made-input" id="price_select">
@@ -862,7 +871,7 @@
         </div>
     
        
-      <div class="col-md-3 mt-4 mt-md-0 border-left"  >
+      <div class="col-12 col-md-3 mt-4 mt-md-0 border-left"  >
         <div class="text-center">
           {% if shop.logo %}
             <img src="{{shop.logo.url}}" style="height:40px" >
@@ -888,7 +897,7 @@
               <small>{{shop.jengo}}, {{shop.mtaa.mtaa | title }}, {{shop.mtaa.kata.kata | title }}, {{shop.mtaa.kata.wilaya.wilaya | title }} 
                 {{shop.mtaa.kata.wilaya.mkoa.mkoa | title }}, {{shop.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title }}
               </small>
-          </div> 
+          </div>
      
         
     
@@ -1007,7 +1016,35 @@
     
      <!-- KUAGIZA AU KUWEKA KWENYE  KAPU BIDHAA TU...... -->
        {% if not shop == duka and not bidhaa.service %}
-         {% if not agizwa.last.mauzo.user_customer.by == useri or not agizwa.last.mauzo.order  %}
+         {% if compound_order_enabled %}
+            <div class="guest-order-actions">
+              <button type="button" class="guest-order-actions__primary guest-add-item-btn latoFont"
+                data-item="{{ bidhaa.id }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M10.5 3.5a2.5 2.5 0 0 0-5 0V4H2.5a.5.5 0 0 0-.485.379L.5 12.5A.5.5 0 0 0 1 13h12a.5.5 0 0 0 .485-.621L14.5 4.379A.5.5 0 0 0 14 4h-3.5v-.5zm-4 0a1.5 1.5 0 1 1 3 0V4H6.5v-.5z"/>
+                  <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+                </svg>
+                {% if guest_cell %}
+                  {% if useri.langSet == 0 %}Ongeza kwenye oda{% else %}Add to order{% endif %}
+                {% else %}
+                  {% if useri.langSet == 0 %}Skani QR kisha agiza{% else %}Scan QR then order{% endif %}
+                {% endif %}
+              </button>
+              <a href="/purchase/guestCompoundCart?value={{ shop.id }}" class="guest-order-actions__secondary latoFont">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M5 0a.5.5 0 0 1 .5.5V2h1a.5.5 0 0 1 0 1H5.5v1a.5.5 0 0 1-1 0V3h-1a.5.5 0 0 1 0-1h1V.5A.5.5 0 0 1 5 0"/>
+                  <path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h8.5a.5.5 0 0 0 .5-.5V4a2 2 0 0 0-2-2zm10.5 1v9H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>
+                  <path d="M4.5 6.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5z"/>
+                </svg>
+                {% if useri.langSet == 0 %}Oda yangu{% else %}My order{% endif %}
+              </a>
+              <div class="guest-order-actions__call">
+                {% with guest_call_style='subtle' %}
+                {% include 'partials/guest_shop_call.html' %}
+                {% endwith %}
+              </div>
+            </div>
+         {% elif not agizwa.last.mauzo.user_customer.by == useri or not agizwa.last.mauzo.order  %}
             <p class="text-center">
                <!-- KAMA BIDHAA INAAGIZWA KWA AJILI YA DUKA ONESHA MODAL YA KUOANISHA -->
               {% if duka.Interprise and cheo.manunuziOda and not useri.company or cheo.owner and duka.Interprise and not useri.company %}
@@ -1937,7 +1974,7 @@
         {% endif %}
     </div>
     
-      <div class=" d-flex classic_div justify-content-center" style="align-items:center;width: 200px;height:30vh">
+      <div class="d-flex classic_div justify-content-center related-item-media" style="align-items:center;height:30vh">
             {% if b.img %}
                 <img src="{{b.img.url}}" style="max-width: 100%;max-height:100%" alt="">
             {% else %}
@@ -1951,9 +1988,9 @@
     
             
         </div>
-        <div class="pt-2 text-center classic_div" style="color:rgb(134, 39, 39) ;width: 200px;">
+        <div class="pt-2 text-center classic_div related-item-price" style="color:rgb(134, 39, 39);">
            <small class="text-primary" > {{shop.currencii }}</small>.<strong>  {{b.bei | floatformat:'-2' | intcomma }}</strong></div>
-        <div class=" text-center classic_div" style="width: 200px;">
+        <div class="text-center classic_div related-item-name">
             {% if b.name|length > 40 %}
             {{b.name|slice:40 | title}} ...
             {% else %}
@@ -1978,7 +2015,7 @@
     <div class="row mb-5 "  >
     {% for b in other_b %}       
       
-        <a href="{% url 'displaySelItem' %}?value={{shop.id}}&i={{b.id}}" class=" item_show  col-md-4 col-lg-3 mt-4">
+        <a href="{% url 'displaySelItem' %}?value={{shop.id}}&i={{b.id}}" class=" item_show col-12 col-md-4 col-lg-3 mt-4">
         
           <!-- ADDED TO CART OR ORDERED INDICATOR -->
           <div class="text-center  mb-2 " style="height: 20px;"  >
@@ -2020,7 +2057,7 @@
             {% endif %}
         </div>
     
-          <div class=" d-flex classic_div justify-content-center" style="align-items:center;width: 200px;height:30vh">
+          <div class="d-flex classic_div justify-content-center related-item-media" style="align-items:center;height:30vh">
             
               {% if b.img %}
                     <img src="{{b.img.url}}" style="max-width: 100%;max-height:100%" alt="">

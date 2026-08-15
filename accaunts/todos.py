@@ -1,4 +1,5 @@
 from management.models import Notifications,ainaMama,ainaBibi, UserExtend,Zones,Nchi,EmployeeAttachments,Kanda,Workers, customer_area, customer_in_cell,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji,ShiftSession,ShiftAssignment
+from purchase.guest_compound_utils import count_compound_guest_orders, shop_has_compound_positions
 from django.utils import timezone
 from django.db.models import Q,F
 from datetime import date
@@ -215,6 +216,8 @@ class Todos:
             produ__grouped_item_ref__isnull=False,
           ).values('mauzo_id').distinct().count()
         shift_data = self._shift_context(duka, dukap)
+        compound_positions_enabled = bool(duka and duka.Interprise and shop_has_compound_positions(duka))
+        compound_orders_count = count_compound_guest_orders(duka) if compound_positions_enabled else 0
         todo = {
         'cheo':dukap,
         'duka':duka,
@@ -231,12 +234,11 @@ class Todos:
         'waiter_uncleared_waiters_count':waiter_uncleared_waiters_count,
         'grouped_sales_track_count':grouped_sales_track_count,
         'payaccs_waiter':payaccs_waiter,
-        'customer_table':customer_table
+        'customer_table':customer_table,
+        'compound_positions_enabled': compound_positions_enabled,
+        'compound_orders_count': compound_orders_count,
         }
         todo.update(shift_data)
-
-
-
 
       except:
         traceback.print_exc()

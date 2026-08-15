@@ -6,16 +6,17 @@
 <link rel="stylesheet" href="{% static 'css/posts.css' %}">
 
 
-  <div class="whiteBg p-md-3 p-1" style="margin-top:-18px"  >
+  <div class="whiteBg p-md-3 p-1 posts-page" style="margin-top:-18px"  >
     <p class="text-center classic_div position-fixed smallFont latoFont" id="ShowNewBanners" hidden style="left:44%;top:90px">
       <a href="/posts" class="p-2 brown whiteBg shadowed weight700">
        (<span id="newBanner"></span>) {% if useri.langSet == 0 %} Mpya {% else %} New {% endif %}
        
       </a>
     </p>
-    <div  class="classic_div addBenners whiteBg shadow p-md-3 p-2" id="bannersContent"  style="max-width: 600px" >
+    <div class="classic_div addBenners whiteBg shadow p-md-3 p-2 posts-feed" id="bannersContent">
             {% if wilayaniI > 0 or mkoaniI > 0 or nchiniI > 0 %}
-              <div class="latoFont mb-2" >
+            <div class="posts-recommend-section">
+              <div class="posts-recommend-head latoFont mb-2" >
                         
                       {% if useri.langSet == 0 %}Mapendekezo ya bidhaa/Huduma {% else %}Recommended Items/Services{% endif %}
                 
@@ -39,39 +40,37 @@
              
                   </div>
 
-              <div class="table-responsive">
-                <div class="d-flex" style="min-width: 500px;" >
+              <div class="posts-recommend-scroll-wrap">
+                <div class="posts-recommend-scroll d-flex">
                   {% if wilayaniI > 0 %}
                   {% for it in wilayani %}
-                    <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}"  class=" centerItem mx-1 items_recommend"  >
-                          <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
+                    <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class="items_recommend">
+                      <span class="items_recommend__media"><img src="{{it.img.url}}" alt="{{ it.name }}"></span>
+                      <span class="items_recommend__label">{{ it.name|truncatechars:24 }}</span>
                     </a>
-                  
-                  {% endfor %} 
-                  {% endif %}  
+                  {% endfor %}
+                  {% endif %}
 
-                  {% if wilayaniI == 0 and mkoaniI > 0  %}
+                  {% if wilayaniI == 0 and mkoaniI > 0 %}
                   {% for it in mkoani %}
-                    <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}"  class=" centerItem mx-1 items_recommend "  >
-                          <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
+                    <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class="items_recommend">
+                      <span class="items_recommend__media"><img src="{{it.img.url}}" alt="{{ it.name }}"></span>
+                      <span class="items_recommend__label">{{ it.name|truncatechars:24 }}</span>
                     </a>
-                  
-                  {% endfor %} 
-                  {% endif %}  
+                  {% endfor %}
+                  {% endif %}
 
                   {% if wilayaniI == 0 and mkoaniI == 0 and nchiniI > 0 %}
                   {% for it in nchini %}
-                    <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class=" centerItem mx-1  items_recommend"  >
-                          <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
-                          <div class="smallerFont latoFont">  </div>
+                    <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class="items_recommend">
+                      <span class="items_recommend__media"><img src="{{it.img.url}}" alt="{{ it.name }}"></span>
+                      <span class="items_recommend__label">{{ it.name|truncatechars:24 }}</span>
                     </a>
-                  
-                  {% endfor %} 
-                  {% endif %}  
-
-
-                </div>                
+                  {% endfor %}
+                  {% endif %}
+                </div>
               </div>
+            </div>
               <hr>
             {% endif %}  
 
@@ -84,7 +83,7 @@
              <a  href="/vistFromBanner?b={{bn.banner.id}}" class="thebanner no-hover d-block "  >
             {% endif %}  
               
-                <img src="{{bn.banner.banner.url}}"  style="width:100%" srcset="">
+                <img src="{{bn.banner.banner.url}}" alt="" srcset="">
            
           
               
@@ -120,7 +119,8 @@
          {% if forloop.counter == 1 %}
          {% if   mkoaniI > 0 or nchiniI > 0  %}
          {% if wilayaniI > 0 %}
-         <div class="latoFont mb-2" >
+         <div class="posts-recommend-section">
+         <div class="posts-recommend-head latoFont mb-2" >
                    
                  {% if useri.langSet == 0 %}Mapendekezo ya bidhaa/Huduma {% else %}Recommended Items/Services{% endif %} 
            
@@ -141,30 +141,27 @@
         
               </div>
 
-         <div class="table-responsive">
-           <div class="d-flex" style="min-width: 500px;" >
- 
+         <div class="posts-recommend-scroll-wrap">
+           <div class="posts-recommend-scroll d-flex">
 
              {% if  mkoaniI > 0 and wilayaniI > 0 %}
              {% for it in mkoani %}
-               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}"  class="mx-1 centerItem items_recommend"  >
-                     <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
+               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class="items_recommend">
+                 <span class="items_recommend__media"><img src="{{it.img.url}}" alt="{{ it.name }}"></span>
+                 <span class="items_recommend__label">{{ it.name|truncatechars:24 }}</span>
                </a>
-             
-             {% endfor %} 
-           
+             {% endfor %}
 
              {% elif mkoaniI == 0  or wilayaniI == 0 and nchiniI > 0 %}
-
              {% for it in nchini %}
-               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class=" mx-1 centerItem items_recommend"  >
-                     <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
-                     <div class="smallerFont latoFont">  </div>
+               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class="items_recommend">
+                 <span class="items_recommend__media"><img src="{{it.img.url}}" alt="{{ it.name }}"></span>
+                 <span class="items_recommend__label">{{ it.name|truncatechars:24 }}</span>
                </a>
-             
-             {% endfor %} 
-             {% endif %}  
-           </div>                
+             {% endfor %}
+             {% endif %}
+           </div>
+         </div>
          </div>
          <hr>
        {% endif %}  
@@ -174,7 +171,8 @@
                
          {% if forloop.counter == 2 %}
          {% if   mkoaniI > 0 and nchiniI > 0 and wilayaniI > 0 %}
-         <div class="latoFont mb-2" >
+         <div class="posts-recommend-section">
+         <div class="posts-recommend-head latoFont mb-2" >
                  {% if useri.langSet == 0 %}Mapendekezo ya bidhaa/Huduma {% else %}Recommended Items/Services{% endif %}
                <a href="/ecommerce/itmsWithPlace?c={{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.id}}"  >  
                    {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
@@ -182,16 +180,16 @@
                   
               </div>
 
-         <div class="table-responsive">
-           <div class="d-flex" style="min-width: 500px;" >
+         <div class="posts-recommend-scroll-wrap">
+           <div class="posts-recommend-scroll d-flex">
              {% for it in nchini %}
-               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class=" centerItem items_recommend mx-1"  >
-                     <img src="{{it.img.url}}" alt=""  style="max-width: 80px;max-height:100% " >
-                     <div class="smallerFont latoFont">  </div>
+               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class="items_recommend">
+                 <span class="items_recommend__media"><img src="{{it.img.url}}" alt="{{ it.name }}"></span>
+                 <span class="items_recommend__label">{{ it.name|truncatechars:24 }}</span>
                </a>
-             {% endfor %} 
-           
-           </div>                
+             {% endfor %}
+           </div>
+         </div>
          </div>
          <hr>
        {% endif %}  
@@ -203,12 +201,21 @@
       {% if banners.count <= 2 %}
         {% if banners.count <= 1 %}
         
-        <div class="centerItem" style="min-height:70vh" >
-          <img src="{% static 'pics/post1.svg' %}" style="width:100%" alt="">
+        <div class="posts-empty-state">
+          <div class="posts-empty-illustration">
+            <img src="{% static 'pics/post1.svg' %}" alt="{% if useri.langSet == 0 %}Karibu kwenye machapisho{% else %}Welcome to posts{% endif %}">
+          </div>
+          <h3 class="posts-empty-title latoFont">
+            {% if useri.langSet == 0 %}Hakuna machapisho mengi bado{% else %}Not many posts yet{% endif %}
+          </h3>
+          <p class="posts-empty-text">
+            {% if useri.langSet == 0 %}Machapisho kutoka biashara zako yataonekana hapa. Endelea kusogeza chini.{% else %}Posts from businesses you follow will appear here. Keep scrolling.{% endif %}
+          </p>
         </div>
         {% if   mkoaniI > 0 or nchiniI > 0  %}
         {% if wilayaniI > 0 %}
-        <div class="latoFont mb-2" >
+        <div class="posts-recommend-section">
+        <div class="posts-recommend-head latoFont mb-2" >
                   
                 {% if useri.langSet == 0 %}Mapendekezo ya bidhaa/Huduma {% else %}Recommended Items/Services{% endif %} 
           
@@ -228,30 +235,26 @@
 
        
             </div>
-        <div class="table-responsive">
-          <div class="d-flex" style="min-width: 500px;" >
-
-
+        <div class="posts-recommend-scroll-wrap">
+          <div class="posts-recommend-scroll d-flex">
             {% if  mkoaniI > 0 and wilayaniI > 0 %}
             {% for it in mkoani %}
-              <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}"  class="shadowed centerItem items_recommend"  >
-                    <img src="{{it.img.url}}" alt=""  style="max-width: 100%;max-height:100% " >
+              <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class="items_recommend">
+                <span class="items_recommend__media"><img src="{{it.img.url}}" alt="{{ it.name }}"></span>
+                <span class="items_recommend__label">{{ it.name|truncatechars:24 }}</span>
               </a>
-            
-            {% endfor %} 
-          
+            {% endfor %}
 
             {% elif mkoaniI == 0  or wilayaniI == 0 and nchiniI > 0 %}
-
             {% for it in nchini %}
-              <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class=" centerItem  mr-3 items_recommend"  >
-                    <img src="{{it.img.url}}" alt=""  style="max-width: 100%;max-height:100% " >
-                    <div class="smallerFont latoFont">  </div>
+              <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class="items_recommend">
+                <span class="items_recommend__media"><img src="{{it.img.url}}" alt="{{ it.name }}"></span>
+                <span class="items_recommend__label">{{ it.name|truncatechars:24 }}</span>
               </a>
-            
-            {% endfor %} 
-            {% endif %}  
-          </div>                
+            {% endfor %}
+            {% endif %}
+          </div>
+        </div>
         </div>
        
       {% endif %}  
@@ -260,13 +263,24 @@
 
          <hr>
         
-         <div class="centerItem" style="min-height:70vh">
-                  <img src="{% static 'pics/post2.svg' %}" style="width:100%" alt="">
-
-         </div>
+         <a href="{% if duka.Interprise %}/buzinessProfile?value={{duka.id}}{% else %}/ecommerce/marketing?hm=1{% endif %}" class="posts-empty-state posts-empty-state--cta">
+           <div class="posts-empty-illustration">
+             <img src="{% static 'pics/post2.svg' %}" alt="{% if useri.langSet == 0 %}Kuza biashara yako{% else %}Grow your business{% endif %}">
+           </div>
+           <h3 class="posts-empty-title latoFont">
+             {% if useri.langSet == 0 %}Unataka kuuza zaidi?{% else %}Want to sell more?{% endif %}
+           </h3>
+           <p class="posts-empty-text">
+             {% if useri.langSet == 0 %}Tembelea soko, chapisha bidhaa zako na ungana na wateja wapya.{% else %}Visit the market, post your products and connect with new customers.{% endif %}
+           </p>
+           <span class="posts-empty-action">
+             {% if useri.langSet == 0 %}Tembelea Soko →{% else %}Visit Market →{% endif %}
+           </span>
+         </a>
 
          {% if   mkoaniI > 0 and nchiniI > 0 and wilayaniI > 0 %}
-         <div class="latoFont mb-2" >
+         <div class="posts-recommend-section">
+         <div class="posts-recommend-head latoFont mb-2" >
                  {% if useri.langSet == 0 %}Mapendekezo ya bidhaa/Huduma {% else %}Recommended Items/Services{% endif %}
                <a href="/ecommerce/itmsWithPlace?c={{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.id}}"  >  
                    {{useri.mtaa.kata.wilaya.mkoa.kanda.nchi.name |title}}
@@ -274,16 +288,16 @@
                   
               </div>
 
-         <div class="table-responsive">
-           <div class="d-flex" style="min-width: 500px;" >
+         <div class="posts-recommend-scroll-wrap">
+           <div class="posts-recommend-scroll d-flex">
              {% for it in nchini %}
-               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class=" centerItem  mr-3 items_recommend"  >
-                     <img src="{{it.img.url}}" alt=""  style="max-width: 100%;max-height:100% " >
-                     <div class="smallerFont latoFont">  </div>
+               <a href="/displaySelItem?value={{it.duka}}&i={{it.id}}" class="items_recommend">
+                 <span class="items_recommend__media"><img src="{{it.img.url}}" alt="{{ it.name }}"></span>
+                 <span class="items_recommend__label">{{ it.name|truncatechars:24 }}</span>
                </a>
-             {% endfor %} 
-           
-           </div>                
+             {% endfor %}
+           </div>
+         </div>
          </div>
          <hr>
        {% endif %} 
@@ -423,7 +437,7 @@
                   post+=`
                         ${bn.page==2 || bn.url!=null?`<div  type="button" onclick="updateVist(${bn.banner_id})"  target="blank" class="thebanner no-hover clickUpdate d-block "  >`:`<a  href="/vistFromBanner?b=${bn.banner_id}" class="thebanner no-hover d-block "  >`}
                   
-                          <img src="${bn.img}"  style="width:100%" srcset="">
+                          <img src="${bn.img}" alt="" srcset="">
                 
                 
                     

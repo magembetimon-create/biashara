@@ -1603,7 +1603,17 @@ def ExpensedData(request):
         for b in todo['matawi']:
           br.append(b.Interprise.id)
 
-        lst=rekodiMatumizi.objects.filter(Interprise__in=br,tarehe__gte=tf).exclude(tarehe__gt=tt).annotate(duka=F('Interprise'),akauntiN=F('akaunti__Akaunt_name'),Aamount=F('akaunti__Amount'),dukaN=F('Interprise__name'),Na=F('by'),matumiziN=F('matumizi__matumizi'),f_name=F('by__user__user__first_name'),l_name=F('by__user__user__last_name'))
+        lst=rekodiMatumizi.objects.filter(Interprise__in=br,tarehe__gte=tf).exclude(tarehe__gt=tt).annotate(
+          duka=F('Interprise'),
+          akauntiN=F('akaunti__Akaunt_name'),
+          Aamount=F('akaunti__Amount'),
+          dukaN=F('Interprise__name'),
+          Na=F('by'),
+          matumiziN=F('matumizi__matumizi'),
+          f_name=F('by__user__user__first_name'),
+          l_name=F('by__user__user__last_name'),
+          worker_name=F('worker_recipient__jina'),
+        )
         charges = toaCash.objects.filter(Interprise__in=br,tarehe__gte=tf,makato__gt=0).exclude(tarehe__gt=tt).annotate(duka=F('Interprise'),akaunti_id=F('Akaunt'),Na=F('by'),Aamount=F('Akaunt__Amount'))
       
         data = {

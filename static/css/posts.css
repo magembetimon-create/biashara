@@ -1,4 +1,302 @@
-.items_recommend{
-    height:120px;
-    width: 120px;
+/* ─── Posts feed (/posts) ─────────────────────────────────────────── */
+
+.posts-page {
+  min-height: calc(100vh - 80px);
+}
+
+.posts-feed {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.posts-feed .thebanner,
+.posts-feed > .thebanner {
+  display: block;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 0.25rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.posts-feed .thebanner:hover,
+.posts-feed .thebanner:focus {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.posts-feed .thebanner > img {
+  width: 100%;
+  display: block;
+  max-height: min(72vh, 520px);
+  object-fit: cover;
+  object-position: center;
+  background: #f3f4f6;
+}
+
+.posts-feed .thebanner .noprimary {
+  padding: 0.75rem 0.9rem 0.35rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #333;
+}
+
+.posts-feed .thebanner .d-flex.noprimary {
+  padding: 0 0.9rem 0.75rem;
+  font-size: 0.82rem;
+  color: #666;
+  align-items: center;
+}
+
+.posts-feed hr.detectView {
+  border: 0;
+  height: 0;
+  margin: 1.25rem 0;
+  visibility: hidden;
+}
+
+/* Recommended products strip */
+.posts-recommend-section {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.75rem 0.65rem;
+  background: linear-gradient(135deg, #fafafa 0%, #fff 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.posts-recommend-head {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 0.65rem !important;
+  padding: 0 0.15rem;
+}
+
+.posts-recommend-head a {
+  color: #8b4513;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.posts-recommend-head a:hover {
+  text-decoration: underline;
+}
+
+.posts-recommend-scroll-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -0.35rem;
+  padding: 0.15rem 0.35rem 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+}
+
+.posts-recommend-scroll-wrap::-webkit-scrollbar {
+  height: 5px;
+}
+
+.posts-recommend-scroll-wrap::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.posts-recommend-scroll {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.65rem;
+  min-width: min-content;
+  padding-bottom: 0.15rem;
+}
+
+.items_recommend {
+  flex: 0 0 auto;
+  width: 100px;
+  text-decoration: none !important;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.items_recommend:hover {
+  text-decoration: none;
+}
+
+.items_recommend__media {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.items_recommend:hover .items_recommend__media,
+.items_recommend:focus .items_recommend__media {
+  box-shadow: 0 4px 14px rgba(139, 69, 19, 0.15);
+  transform: translateY(-2px);
+}
+
+.items_recommend__media img,
+.items_recommend > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Legacy markup: img direct child without wrapper */
+.items_recommend:not(:has(.items_recommend__media)) {
+  width: 100px;
+  height: auto;
+}
+
+.items_recommend:not(:has(.items_recommend__media)) > img {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.items_recommend__label {
+  display: block;
+  font-size: 0.68rem;
+  line-height: 1.25;
+  color: #555;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 2px;
+  font-weight: 500;
+}
+
+/* Empty / placeholder illustrations */
+.posts-empty-state {
+  text-align: center;
+  padding: 1.25rem 0.75rem 1.75rem;
+  margin: 0.5rem 0;
+}
+
+.posts-empty-state--cta {
+  display: block;
+  text-decoration: none !important;
+  color: inherit;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 123, 255, 0.12);
+  background: linear-gradient(180deg, #fafcff 0%, #fff 100%);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.posts-empty-state--cta:hover,
+.posts-empty-state--cta:focus {
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 8px 24px rgba(0, 123, 255, 0.12);
+  transform: translateY(-2px);
+  border-color: rgba(0, 123, 255, 0.25);
+}
+
+.posts-empty-illustration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: auto;
+  padding: 0.75rem 0.5rem 0.25rem;
+  opacity: 1;
+}
+
+.posts-empty-illustration img {
+  width: 100%;
+  max-width: 380px;
+  height: auto;
+  display: block;
+}
+
+.posts-empty-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0.5rem 0 0.35rem;
+}
+
+.posts-empty-text {
+  font-size: 0.82rem;
+  color: #777;
+  line-height: 1.45;
+  max-width: 320px;
+  margin: 0 auto 0.5rem;
+}
+
+.posts-empty-action {
+  display: inline-block;
+  margin-top: 0.35rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: #fff !important;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+#loadDataWhenVisible {
+  padding: 1rem;
+  color: #888;
+  font-size: 0.88rem;
+}
+
+@media (min-width: 768px) {
+  .items_recommend,
+  .items_recommend:not(:has(.items_recommend__media)) {
+    width: 112px;
+  }
+
+  .items_recommend:not(:has(.items_recommend__media)) > img {
+    width: 112px;
+    height: 112px;
+  }
+
+  .posts-feed .thebanner > img {
+    max-height: 560px;
+  }
+}
+
+@media (max-width: 575px) {
+  .posts-feed {
+    max-width: 100%;
+  }
+
+  .items_recommend,
+  .items_recommend:not(:has(.items_recommend__media)) {
+    width: 88px;
+  }
+
+  .items_recommend:not(:has(.items_recommend__media)) > img {
+    width: 88px;
+    height: 88px;
+  }
+
+  .posts-feed .thebanner .noprimary {
+    font-size: 0.85rem;
+    padding: 0.6rem 0.75rem 0.3rem;
+  }
+
+  .posts-feed .thebanner .d-flex.noprimary {
+    padding: 0 0.75rem 0.6rem;
+  }
 }
