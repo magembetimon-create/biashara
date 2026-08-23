@@ -400,16 +400,26 @@
 
 
              <!-- IMAGE SEARCH BUTTON (large screens) -->
-             <label class="btn btn-default fontColor btn-sm mb-0 border-left" for="imgSearchInputL"
-               title="{% if useri.langSet == 0 %}Tafuta kwa Picha{% else %}Search by Image{% endif %}"
-               style="cursor:pointer;padding:0.3rem 0.45rem;border-radius:0 7px 7px 0">
-               <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                 <circle cx="12" cy="13" r="4"></circle>
-               </svg>
-             </label>
-             <input type="file" id="imgSearchInputL" accept="image/*" hidden>
+             <div class="dropdown d-inline-block">
+               <button type="button" class="btn btn-default fontColor btn-sm mb-0 border-left dropdown-toggle"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                 title="{% if useri.langSet == 0 %}Tafuta kwa Picha{% else %}Search by Image{% endif %}"
+                 style="cursor:pointer;padding:0.3rem 0.45rem;border-radius:0 7px 7px 0">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                   <circle cx="12" cy="13" r="4"></circle>
+                 </svg>
+               </button>
+               <div class="dropdown-menu dropdown-menu-right latoFont">
+                 <button type="button" class="dropdown-item py-2 img-search-pick" data-target="#imgSearchCamera">
+                   {% if useri.langSet == 0 %}Piga picha{% else %}Take photo{% endif %}
+                 </button>
+                 <button type="button" class="dropdown-item py-2 img-search-pick" data-target="#imgSearchGallery">
+                   {% if useri.langSet == 0 %}Chagua picha{% else %}Choose photo{% endif %}
+                 </button>
+               </div>
+             </div>
 
              <div id="serchAutoComplete"  class="serchAutoComplete whiteBg position-absolute masaki shadow round  " style="overflow-x:auto;max-height:400px ;width:360px;margin-top:35px" >
                   <ul class="list-unstyled px-2" >
@@ -925,16 +935,26 @@ let shwCo = false
      
 
         <!-- IMAGE SEARCH BUTTON (small screens) -->
-        <label class="btn btn-default fontColor btn-sm mb-0" for="imgSearchInputS"
-          title="{% if useri.langSet == 0 %}Tafuta kwa Picha{% else %}Search by Image{% endif %}"
-          style="cursor:pointer;padding:0.3rem 0.45rem">
-          <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-            <circle cx="12" cy="13" r="4"></circle>
-          </svg>
-        </label>
-        <input type="file" id="imgSearchInputS" accept="image/*" hidden>
+        <div class="dropdown d-inline-block">
+          <button type="button" class="btn btn-default fontColor btn-sm mb-0 dropdown-toggle"
+            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+            title="{% if useri.langSet == 0 %}Tafuta kwa Picha{% else %}Search by Image{% endif %}"
+            style="cursor:pointer;padding:0.3rem 0.45rem">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+          </button>
+          <div class="dropdown-menu dropdown-menu-right latoFont">
+            <button type="button" class="dropdown-item py-2 img-search-pick" data-target="#imgSearchCamera">
+              {% if useri.langSet == 0 %}Piga picha{% else %}Take photo{% endif %}
+            </button>
+            <button type="button" class="dropdown-item py-2 img-search-pick" data-target="#imgSearchGallery">
+              {% if useri.langSet == 0 %}Chagua picha{% else %}Choose photo{% endif %}
+            </button>
+          </div>
+        </div>
 
         <button onclick="$('#smallSearchPop').fadeOut(300)" class="btn btn-default fontColor largeFont btn-sm" >
           <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x">
@@ -3232,7 +3252,7 @@ $('.muamala-genu').click(function(){
           <div class="tb-scan-top">
             <div id="qr_reader" class="tb-scan-camera viewport"></div>
             <p class="tb-scan-focus-hint mb-0" id="tb-scan-focus-hint">
-              {% if useri.langSet == 0 %}Shikilia barcode cm 15–25. Gusa skrini ili kamera ifocus tena — usisongeze sana.{% else %}Hold the barcode 15–25cm away. Tap the screen to refocus — do not get too close.{% endif %}
+              {% if useri.langSet == 0 %}Shikilia cm 12–20. Stika ndogo: bonyeza + kukuza, usisongeze karibu (inakuwa blur). Gusa skrini kufocus.{% else %}Hold 12–20cm away. For small stickers tap + to zoom — don’t move too close (it blurs). Tap to refocus.{% endif %}
             </p>
             <div id="tb-scan-hid-panel" class="tb-scan-hid-panel" hidden>
               <div class="tb-scan-hid-icon" aria-hidden="true">
@@ -5989,6 +6009,9 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
 
     <script src="{% static 'js/audiorecord.js' %}"></script>
 
+    <input type="file" id="imgSearchCamera" accept="image/*" capture="environment" hidden>
+    <input type="file" id="imgSearchGallery" accept="image/*" hidden>
+
     <!-- IMAGE SEARCH RESULTS MODAL -->
     <div class="modal fade" id="imgSearchModal" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-lg" role="document">
@@ -6085,27 +6108,30 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
         var csrfToken = $('input[name=csrfmiddlewaretoken]').val();
     imgSearchState.isSearching = true;
 
-        // Show loading modal immediately
-        $('#imgSearchResultsList').html(
+        function setImgSearchLoader(msg) {
+          $('#imgSearchResultsList').html(
             '<div class="text-center py-4 text-muted" id="imgSearchLoaderMsg">' +
-            '<span class="spinner-border spinner-border-sm mr-1"></span>' +
-            (Number($('#luga').val()) == 0 ? 'Inatafuta...' : 'Searching...') +
+            '<span class="spinner-border spinner-border-sm mr-1"></span>' + msg +
             '</div>'
-        );
+          );
+        }
+
+        var isSwahili = Number($('#luga').val()) == 0;
+        setImgSearchLoader(isSwahili ? 'Inapunguza picha...' : 'Compressing image...');
         $('#imgSearchResultsCount').text('');
         $('#imgSearchModal').modal('show');
 
-        // Show preview
-        if (file) {
+        function showImgSearchPreview(srcFile) {
           var previewReader = new FileReader();
           previewReader.onload = function(e) {
             $('#imgSearchPreview').attr('src', e.target.result);
             $('#imgSearchPreviewRow').show();
           };
-          previewReader.readAsDataURL(file);
+          previewReader.readAsDataURL(srcFile);
         }
 
         function doImgSearchUpload(imgFile) {
+            setImgSearchLoader(isSwahili ? 'Inatafuta...' : 'Searching...');
             var fd = new FormData();
             fd.append('csrfmiddlewaretoken', csrfToken);
             fd.append('IMG', imgFile);
@@ -6123,8 +6149,7 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
                         showImgSearchResults(response);
 
                     } else {
-                       console.log(response)
-                        var msg = Number($('#luga').val()) == 0
+                        var msg = isSwahili
                             ? (response.msg_swa || 'Hitilafu imetokea')
                             : (response.msg_eng || 'An error occurred');
                         $('#imgSearchResultsList').html(
@@ -6136,37 +6161,74 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
                       imgSearchState.isSearching = false;
                     $('#imgSearchResultsList').html(
                         '<div class="text-center py-4 text-danger">' +
-                        (Number($('#luga').val()) == 0 ? 'Hitilafu ya muunganiko' : 'Connection error') +
+                        (isSwahili ? 'Hitilafu ya muunganiko' : 'Connection error') +
                         '</div>'
                     );
                 }
             });
         }
 
-                if (imgSearchState.file.size / 1024 <= 490) {
-                  doImgSearchUpload(imgSearchState.file);
-        } else {
-            // Compress before uploading
-            var reader = new FileReader();
-                  reader.readAsDataURL(imgSearchState.file);
-            reader.onload = function(event) {
-                var image_URL = event.target.result;
-                var image = document.createElement('img');
-                image.src = image_URL;
-                image.onload = function(e) {
-                    var canvas = document.createElement('canvas');
-                    var ratio = 500 / e.target.width;
-                    canvas.width = 500;
-                    canvas.height = e.target.height * ratio;
-                    var context = canvas.getContext('2d');
-                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-                    var new_image_url = canvas.toDataURL('image/jpeg', 0.8);
-                    var compressed = urltoFile(new_image_url);
-                    imgSearchState.file = compressed;
-                    doImgSearchUpload(compressed);
-                };
-            };
+        compressImgSearchFile(imgSearchState.file, function(compressed) {
+          imgSearchState.file = compressed || imgSearchState.file;
+          showImgSearchPreview(imgSearchState.file);
+          doImgSearchUpload(imgSearchState.file);
+        });
+    }
+
+    function compressImgSearchFile(file, done) {
+      var MAX_SIDE = 800;
+      var QUALITY = 0.7;
+
+      function exportCanvas(img, w, h) {
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(w));
+        canvas.height = Math.max(1, Math.round(h));
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        if (canvas.toBlob) {
+          canvas.toBlob(function(blob) {
+            if (!blob) {
+              done(typeof urltoFile === 'function' ? urltoFile(canvas.toDataURL('image/jpeg', QUALITY)) : file);
+              return;
+            }
+            done(new File([blob], 'search.jpg', { type: 'image/jpeg' }));
+          }, 'image/jpeg', QUALITY);
+          return;
         }
+        done(typeof urltoFile === 'function' ? urltoFile(canvas.toDataURL('image/jpeg', QUALITY)) : file);
+      }
+
+      function scaleAndExport(img) {
+        var w = img.width || img.naturalWidth || 0;
+        var h = img.height || img.naturalHeight || 0;
+        if (!w || !h) {
+          done(file);
+          return;
+        }
+        var scale = Math.min(1, MAX_SIDE / Math.max(w, h));
+        exportCanvas(img, w * scale, h * scale);
+        if (img.close) {
+          try { img.close(); } catch (err) {}
+        }
+      }
+
+      function fallbackReader() {
+        var reader = new FileReader();
+        reader.onload = function(event) {
+          var image = document.createElement('img');
+          image.onload = function() { scaleAndExport(image); };
+          image.onerror = function() { done(file); };
+          image.src = event.target.result;
+        };
+        reader.onerror = function() { done(file); };
+        reader.readAsDataURL(file);
+      }
+
+      if (typeof createImageBitmap === 'function') {
+        createImageBitmap(file).then(scaleAndExport).catch(fallbackReader);
+        return;
+      }
+      fallbackReader();
     }
 
     function showImgSearchResults(response) {
@@ -6233,12 +6295,16 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
         );
     }
 
-    // Bind file input events for both large and small screen
-    $('#imgSearchInputL, #imgSearchInputS').on('change', function() {
+    $(document).on('click', '.img-search-pick', function() {
+      var target = $(this).data('target');
+      if (target) $(target).trigger('click');
+    });
+
+    $('#imgSearchCamera, #imgSearchGallery').on('change', function() {
         var file = this.files[0];
         if (file) {
-        tafutaBidhaaKwaPicha(file, 'wilaya');
-            this.value = '';
+          tafutaBidhaaKwaPicha(file, 'wilaya');
+          this.value = '';
         }
     });
 

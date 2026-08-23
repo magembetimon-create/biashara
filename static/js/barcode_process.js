@@ -7,15 +7,15 @@ $(function() {
             inputStream: {
                 type : "LiveStream",
                 constraints: {
-                    width: { min: 640, ideal: 1280 },
-                    height: { min: 480, ideal: 720 },
+                    width: { min: 640, ideal: 1920 },
+                    height: { min: 480, ideal: 1080 },
                     aspectRatio: {min: 1, max: 100},
                     facingMode: "environment"
                 }
             },
             locator: {
-                patchSize: "medium",
-                halfSample: true
+                patchSize: "small",
+                halfSample: false
             },
             numOfWorkers: (navigator.hardwareConcurrency ? navigator.hardwareConcurrency : 4),
             decoder: {
@@ -48,6 +48,9 @@ $(function() {
                             return;
                         }
                         Quagga.start();
+                        if (window.TbScanCamera && typeof TbScanCamera.enhance === 'function') {
+                          setTimeout(function () { TbScanCamera.enhance('interactive') }, 250)
+                        }
                     }
                 );   
        
@@ -120,6 +123,9 @@ $(function() {
 
     // Stop quagga in any case, when the modal is closed
     $('#livestream_scanner').on('hide.bs.modal', function(){
+        if (window.TbScanCamera && typeof TbScanCamera.cleanup === 'function') {
+            TbScanCamera.cleanup()
+        }
         if (Quagga){
             Quagga.stop();	
         }

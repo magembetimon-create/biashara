@@ -11,11 +11,14 @@
 
   const SCAN_GAP_MS = 60
   let scanCamCleanups = []
+  let scanCamZoom = 2.2
+  let scanCamTrackLive = null
 
   function scanCamCleanup() {
     scanCamCleanups.splice(0).forEach(function (fn) {
       try { fn() } catch (err) {}
     })
+    scanCamTrackLive = null
   }
 
   function scanCamTrack(rootId) {
@@ -26,39 +29,128 @@
     return { video: video, track: tracks && tracks[0] ? tracks[0] : null }
   }
 
-  function scanCamApplyFocus(track) {
+  function scanCamPickZoom(caps, desired) {
+    if (!caps || !caps.zoom || typeof caps.zoom.max !== 'number') return null
+    const zmin = Number(caps.zoom.min) || 1
+    const zmax = Number(caps.zoom.max)
+    return Math.min(zmax, Math.max(zmin, desired))
+  }
+
+  function scanCamApplyFocus(track, opts) {
+    opts = opts || {}
     if (!track || typeof track.applyConstraints !== 'function') return Promise.resolve()
     let caps = {}
     try { caps = track.getCapabilities() || {} } catch (err) {}
     const modes = caps.focusMode || []
-    const focusMode = modes.includes('continuous')
+    let focusMode = modes.includes('continuous')
       ? 'continuous'
-      : (modes.includes('auto') ? 'auto' : 'continuous')
-    const advanced = [{ focusMode: focusMode }]
-    if (caps.zoom && typeof caps.zoom.max === 'number' && caps.zoom.max > 1) {
-      const zmin = Number(caps.zoom.min) || 1
-      advanced.push({ zoom: Math.min(caps.zoom.max, Math.max(zmin, 1.5)) })
+      : (modes.includes('auto') ? 'auto' : (modes.includes('single-shot') ? 'single-shot' : ''))
+    if (opts.macro && modes.includes('manual')) focusMode = 'manual'
+
+    const poi = opts.poi || { x: 0.5, y: 0.5 }
+    const advanced = {}
+    if (focusMode) advanced.focusMode = focusMode
+    if (caps.pointsOfInterest) advanced.pointsOfInterest = [poi]
+    if (opts.macro && caps.focusDistance && typeof caps.focusDistance.min === 'number') {
+      const fmin = Number(caps.focusDistance.min)
+      const fmax = Number(caps.focusDistance.max)
+      if (isFinite(fmin) && isFinite(fmax) && fmax > fmin) {
+        advanced.focusDistance = fmin + (fmax - fmin) * 0.1
+      }
     }
-    return track.applyConstraints({ advanced: advanced }).catch(function () {
-      return track.applyConstraints({ advanced: [{ focusMode: focusMode }] }).catch(function () {})
-    })
+    const zoom = scanCamPickZoom(caps, opts.zoom != null ? opts.zoom : scanCamZoom)
+    if (zoom != null) {
+      scanCamZoom = zoom
+      advanced.zoom = zoom
+    }
+
+    const apply = function (body) {
+      return track.applyConstraints({ advanced: [body] })
+    }
+    return apply(advanced).catch(function () {
+      const fallback = {}
+      if (focusMode) fallback.focusMode = focusMode
+      if (advanced.zoom != null) fallback.zoom = advanced.zoom
+      return apply(fallback)
+    }).catch(function () {
+      return focusMode ? apply({ focusMode: focusMode }) : Promise.resolve()
+    }).catch(function () {})
+  }
+
+  function scanCamPoiFromEvent(video, ev) {
+    const pt = (ev.changedTouches && ev.changedTouches[0]) || ev
+    const rect = video.getBoundingClientRect()
+    if (!rect.width || !rect.height) return { x: 0.5, y: 0.5 }
+    return {
+      x: Math.min(1, Math.max(0, (pt.clientX - rect.left) / rect.width)),
+      y: Math.min(1, Math.max(0, (pt.clientY - rect.top) / rect.height))
+    }
+  }
+
+  function scanCamEnsureZoomUi(root) {
+    if (!root || root.querySelector('.tb-scan-zoom-bar')) return
+    const bar = document.createElement('div')
+    bar.className = 'tb-scan-zoom-bar'
+    bar.innerHTML =
+      '<button type="button" class="tb-scan-zoom-btn" data-zoom-delta="-0.4" aria-label="Zoom out">−</button>' +
+      '<span class="tb-scan-zoom-label">2.2×</span>' +
+      '<button type="button" class="tb-scan-zoom-btn" data-zoom-delta="0.4" aria-label="Zoom in">+</button>'
+    root.appendChild(bar)
+  }
+
+  function scanCamUpdateZoomLabel(root) {
+    const el = root && root.querySelector('.tb-scan-zoom-label')
+    if (el) el.textContent = (Math.round(scanCamZoom * 10) / 10) + '×'
   }
 
   function scanCamEnhance(rootId) {
     scanCamCleanup()
+    scanCamZoom = 2.2
     const attach = function () {
       const found = scanCamTrack(rootId)
       if (!found.video || !found.track) return false
+      const root = document.getElementById(rootId)
+      scanCamTrackLive = found.track
       found.video.setAttribute('playsinline', 'true')
       found.video.setAttribute('webkit-playsinline', 'true')
-      scanCamApplyFocus(found.track)
-      const refocus = function () { scanCamApplyFocus(found.track) }
-      found.video.addEventListener('click', refocus)
-      found.video.addEventListener('touchend', refocus)
-      const timer = setInterval(refocus, 2200)
+      scanCamEnsureZoomUi(root)
+      scanCamApplyFocus(found.track, { zoom: scanCamZoom, poi: { x: 0.5, y: 0.5 } })
+      scanCamUpdateZoomLabel(root)
+
+      const onTap = function (ev) {
+        ev.preventDefault()
+        scanCamApplyFocus(found.track, {
+          macro: true,
+          zoom: scanCamZoom,
+          poi: scanCamPoiFromEvent(found.video, ev)
+        })
+      }
+      found.video.addEventListener('click', onTap)
+      found.video.addEventListener('touchend', onTap)
+
+      const onZoomClick = function (ev) {
+        const btn = ev.target.closest && ev.target.closest('.tb-scan-zoom-btn')
+        if (!btn) return
+        ev.preventDefault()
+        ev.stopPropagation()
+        let caps = {}
+        try { caps = found.track.getCapabilities() || {} } catch (err) {}
+        const next = scanCamPickZoom(caps, scanCamZoom + Number(btn.getAttribute('data-zoom-delta') || 0))
+        if (next == null) return
+        scanCamZoom = next
+        scanCamApplyFocus(found.track, { zoom: scanCamZoom, poi: { x: 0.5, y: 0.5 } })
+        scanCamUpdateZoomLabel(root)
+      }
+      if (root) root.addEventListener('click', onZoomClick)
+
+      const timer = setInterval(function () {
+        scanCamApplyFocus(found.track, { zoom: scanCamZoom, poi: { x: 0.5, y: 0.5 } })
+      }, 2800)
+
       scanCamCleanups.push(function () {
-        found.video.removeEventListener('click', refocus)
-        found.video.removeEventListener('touchend', refocus)
+        found.video.removeEventListener('click', onTap)
+        found.video.removeEventListener('touchend', onTap)
+        if (root) root.removeEventListener('click', onZoomClick)
         clearInterval(timer)
       })
       return true
@@ -73,10 +165,10 @@
 
   function scanCamQrConfig() {
     const cfg = {
-      fps: 15,
+      fps: 18,
       qrbox: function (viewW, viewH) {
-        const width = Math.max(220, Math.min(Math.floor(viewW * 0.92), 420))
-        const height = Math.max(90, Math.min(Math.floor(viewH * 0.42), 180))
+        const width = Math.max(240, Math.min(Math.floor(viewW * 0.9), 520))
+        const height = Math.max(72, Math.min(Math.floor(viewH * 0.26), 130))
         return { width: width, height: height }
       },
       aspectRatio: 1.777778,
