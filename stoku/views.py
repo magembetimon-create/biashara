@@ -3444,10 +3444,9 @@ def tafutaPicha(request):
             vision_data = picha_to_text(uploaded_img)
             query_terms = vision_terms_set(vision_data)
 
-            # 2. Pata taarifa za eneo la mtumiaji + duka lake
+            # 2. Eneo la mtumiaji: wilaya → mkoa → kanda → nchi
             todo = todoFunct(request)
             useri = todo['useri']
-            duka = todo.get('duka')
 
             place_ids = {
                 'wilaya': None,
@@ -3465,74 +3464,12 @@ def tafutaPicha(request):
                         if useri.mtaa.kata.wilaya.mkoa.kanda.nchi:
                             place_ids['nchi'] = useri.mtaa.kata.wilaya.mkoa.kanda.nchi.id
 
-            # Picha inaweza kuwa kwenye bidhaa yenye idadi 0; matching ni kwa terms si stock
-            stock_qs = bidhaa_stoku.objects.all()
-
-            scope_filters = {
-                'wilaya': 'Interprise__mtaa__kata__wilaya_id',
-                'mkoa': 'Interprise__mtaa__kata__wilaya__mkoa_id',
-                'kanda': 'Interprise__mtaa__kata__wilaya__mkoa__kanda_id',
-                'nchi': 'Interprise__mtaa__kata__wilaya__mkoa__kanda__nchi_id',
-            }
-
-            scope_id = place_ids.get(scope)
-            scope_field = scope_filters.get(scope)
-            scope_q = Q()
-            if scope_id and scope_field:
-                scope_q |= Q(**{scope_field: scope_id})
-            if duka and getattr(duka, 'id', None):
-                scope_q |= Q(Interprise_id=duka.id)
-            if scope_q:
-                stock_qs = stock_qs.filter(scope_q)
-
             pic_fields = (
                 'bidhaa_id',
                 'bidhaa__bidhaa_jina',
                 'picha__picha',
                 'picha__picha_hash',
             )
-            bidhaa_locations = {}
-            bidhaa_shop_seen = {}
-            bidhaa_primary_stock = {}
-
-            def add_stock_rows(rows):
-                for st in rows:
-                    bidhaa_id = st['bidhaa_id']
-                    if not bidhaa_id:
-                        continue
-                    if bidhaa_id not in bidhaa_primary_stock:
-                        bidhaa_primary_stock[bidhaa_id] = {
-                            'bidhaa_stoku_id': st['id'],
-                            'shop_id': st['Interprise_id'],
-                        }
-                    shop_id = st['Interprise_id']
-                    if bidhaa_id not in bidhaa_shop_seen:
-                        bidhaa_shop_seen[bidhaa_id] = set()
-                        bidhaa_locations[bidhaa_id] = []
-                    if shop_id in bidhaa_shop_seen[bidhaa_id]:
-                        continue
-                    bidhaa_shop_seen[bidhaa_id].add(shop_id)
-                    bidhaa_locations[bidhaa_id].append({
-                        'shop': st['Interprise__name'] or '',
-                        'mtaa': st['Interprise__mtaa__mtaa'] or '',
-                        'kata': st['Interprise__mtaa__kata__kata'] or '',
-                        'wilaya': st['Interprise__mtaa__kata__wilaya__wilaya'] or '',
-                        'mkoa': st['Interprise__mtaa__kata__wilaya__mkoa__mkoa'] or '',
-                    })
-
-            def stock_values(qs):
-                return qs.values(
-                    'id',
-                    'bidhaa_id',
-                    'Interprise_id',
-                    'Interprise__name',
-                    'Interprise__mtaa__mtaa',
-                    'Interprise__mtaa__kata__kata',
-                    'Interprise__mtaa__kata__wilaya__wilaya',
-                    'Interprise__mtaa__kata__wilaya__mkoa__mkoa'
-                )
-
-            add_stock_rows(stock_values(stock_qs))
 
             def pic_url_from(pic):
                 pic_name = pic.get('picha__picha')
@@ -3546,79 +3483,146 @@ def tafutaPicha(request):
                 except Exception:
                     return f"/media/{pic_name.lstrip('/')}"
 
-            def collect_matches(pics, best_matches):
-                considered = 0
-                with_terms = 0
-                scored = 0
-                closest = None
-                for pic in pics:
-                    considered += 1
-                    stored_hash_str = pic.get('picha__picha_hash')
-                    stored_terms = stored_terms_set(stored_hash_str)
-                    if stored_terms:
-                        with_terms += 1
-                    scored_row = score_vision_match(query_terms, stored_hash_str)
-                    if stored_terms and query_terms:
-                        inter = query_terms & stored_terms
-                        raw_sim = round(200.0 * len(inter) / (len(query_terms) + len(stored_terms)), 1) if inter else 0
-                        if closest is None or raw_sim > closest['similarity']:
-                            closest = {
-                                'bidhaa_id': pic.get('bidhaa_id'),
-                                'jina': pic.get('bidhaa__bidhaa_jina'),
-                                'similarity': raw_sim,
-                                'shared': len(inter),
-                                'stored_count': len(stored_terms),
-                            }
+            PIC_CANDIDATE_LIMIT = 800
+            MATCH_STOCK_LIMIT = 80
+            LOCATIONS_PER_ITEM = 8
+
+            best_matches = {}
+            if query_terms:
+                pics_qs = picha_bidhaa_by_terms(query_terms).values(*pic_fields)[:PIC_CANDIDATE_LIMIT]
+                for pic in pics_qs:
+                    scored_row = score_vision_match(query_terms, pic.get('picha__picha_hash'))
                     if not scored_row:
                         continue
-                    scored += 1
                     bidhaa_id = pic['bidhaa_id']
                     current = best_matches.get(bidhaa_id)
                     if (not current) or (scored_row['similarity'] > current['similarity']):
-                        stock_info = bidhaa_primary_stock.get(bidhaa_id, {})
                         best_matches[bidhaa_id] = {
                             'bidhaa_id': bidhaa_id,
-                            'bidhaa_stoku_id': stock_info.get('bidhaa_stoku_id'),
-                            'shop_id': stock_info.get('shop_id'),
                             'jina': pic['bidhaa__bidhaa_jina'],
                             'picha': pic_url_from(pic),
                             'similarity': scored_row['similarity'],
                             'distance': scored_row['distance'],
-                            'locations': bidhaa_locations.get(bidhaa_id, [])
+                            'bidhaa_stoku_id': None,
+                            'shop_id': None,
+                            'locations': [],
+                            'scopes': {
+                                'wilaya': False,
+                                'mkoa': False,
+                                'kanda': False,
+                                'nchi': False,
+                            },
                         }
-                return {
-                    'pics': considered,
-                    'pics_with_terms': with_terms,
-                    'pics_scored': scored,
-                    'closest': closest,
-                }
 
-            bidhaa_ids = stock_qs.values_list('bidhaa_id', flat=True).distinct()
-            all_pics = picha_bidhaa.objects.filter(bidhaa_id__in=bidhaa_ids).values(*pic_fields)
-            best_matches = {}
-            collect_matches(all_pics, best_matches)
+            if len(best_matches) > MATCH_STOCK_LIMIT:
+                top_ids = [
+                    row['bidhaa_id']
+                    for row in sorted(best_matches.values(), key=lambda x: x['similarity'], reverse=True)[:MATCH_STOCK_LIMIT]
+                ]
+                best_matches = {bid: best_matches[bid] for bid in top_ids}
 
-            # Terms zinaweza kuwepo kwenye picha nje ya eneo: tafuta tena kwa terms
-            if query_terms and not best_matches:
-                extra_pics = picha_bidhaa_by_terms(query_terms).values(*pic_fields)
-                collect_matches(extra_pics, best_matches)
-                missing_ids = [bid for bid in best_matches if bid not in bidhaa_primary_stock]
-                if missing_ids:
-                    add_stock_rows(stock_values(bidhaa_stoku.objects.filter(bidhaa_id__in=missing_ids)))
-                    for bid, row in best_matches.items():
-                        stock_info = bidhaa_primary_stock.get(bid, {})
-                        row['bidhaa_stoku_id'] = stock_info.get('bidhaa_stoku_id')
-                        row['shop_id'] = stock_info.get('shop_id')
-                        row['locations'] = bidhaa_locations.get(bid, [])
+            stock_rows = []
+            if best_matches:
+                stock_rows = list(bidhaa_stoku.objects.filter(
+                    bidhaa_id__in=list(best_matches.keys())
+                ).values(
+                    'id',
+                    'bidhaa_id',
+                    'Interprise_id',
+                    'Interprise__name',
+                    'Interprise__mtaa__mtaa',
+                    'Interprise__mtaa__kata__kata',
+                    'Interprise__mtaa__kata__wilaya__wilaya',
+                    'Interprise__mtaa__kata__wilaya__mkoa__mkoa',
+                    'Interprise__mtaa__kata__wilaya_id',
+                    'Interprise__mtaa__kata__wilaya__mkoa_id',
+                    'Interprise__mtaa__kata__wilaya__mkoa__kanda_id',
+                    'Interprise__mtaa__kata__wilaya__mkoa__kanda__nchi_id',
+                ))
 
-            results = list(best_matches.values())
-            results.sort(key=lambda x: x['similarity'], reverse=True)
+            id_keys = {
+                'wilaya': 'Interprise__mtaa__kata__wilaya_id',
+                'mkoa': 'Interprise__mtaa__kata__wilaya__mkoa_id',
+                'kanda': 'Interprise__mtaa__kata__wilaya__mkoa__kanda_id',
+                'nchi': 'Interprise__mtaa__kata__wilaya__mkoa__kanda__nchi_id',
+            }
+            scope_order = ('wilaya', 'mkoa', 'kanda', 'nchi')
+
+            def stock_scopes(st):
+                flags = {'wilaya': False, 'mkoa': False, 'kanda': False, 'nchi': False}
+                for level in scope_order:
+                    wanted = place_ids.get(level)
+                    if wanted and st.get(id_keys[level]) == wanted:
+                        flags[level] = True
+                if not any(place_ids.values()):
+                    flags['nchi'] = True
+                return flags
+
+            by_bid = {}
+            for st in stock_rows:
+                bid = st['bidhaa_id']
+                if bid not in by_bid:
+                    by_bid[bid] = []
+                by_bid[bid].append(st)
+
+            scope_counts = {'wilaya': 0, 'mkoa': 0, 'kanda': 0, 'nchi': 0}
+
+            for bid, row in best_matches.items():
+                shops = by_bid.get(bid, [])
+                seen = set()
+                merged = {'wilaya': False, 'mkoa': False, 'kanda': False, 'nchi': False}
+                locations = []
+                primary = None
+                for st in shops:
+                    shop_id = st['Interprise_id']
+                    flags = stock_scopes(st)
+                    for level in scope_order:
+                        if flags[level]:
+                            merged[level] = True
+                    if shop_id in seen:
+                        continue
+                    seen.add(shop_id)
+                    if len(locations) < LOCATIONS_PER_ITEM:
+                        locations.append({
+                            'shop': st['Interprise__name'] or '',
+                            'mtaa': st['Interprise__mtaa__mtaa'] or '',
+                            'kata': st['Interprise__mtaa__kata__kata'] or '',
+                            'wilaya': st['Interprise__mtaa__kata__wilaya__wilaya'] or '',
+                            'mkoa': st['Interprise__mtaa__kata__wilaya__mkoa__mkoa'] or '',
+                        })
+                    if primary is None or (
+                        flags.get(scope) and not stock_scopes(primary).get(scope)
+                    ):
+                        primary = st
+                    elif flags.get('wilaya') and primary is not None and not stock_scopes(primary).get('wilaya'):
+                        primary = st
+
+                if not shops and not any(place_ids.values()):
+                    merged['nchi'] = True
+
+                row['scopes'] = merged
+                row['locations'] = locations
+                if primary:
+                    row['bidhaa_stoku_id'] = primary['id']
+                    row['shop_id'] = primary['Interprise_id']
+
+                for level in scope_order:
+                    if merged[level]:
+                        scope_counts[level] += 1
+
+            all_results = list(best_matches.values())
+            all_results.sort(key=lambda x: x['similarity'], reverse=True)
+            scoped = [r for r in all_results if r.get('scopes', {}).get(scope)]
+            if not place_ids.get(scope):
+                scoped = all_results
 
             return JsonResponse({
                 'success': True,
-                'results': results[:20],
-                'count': len(results[:20]),
+                'results': scoped[:20],
+                'all_results': all_results[:40],
+                'count': len(scoped[:20]),
                 'scope': scope,
+                'scope_counts': scope_counts,
             })
 
         except Exception as e:
