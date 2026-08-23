@@ -69,6 +69,7 @@ path('ExpensedData',views.ExpensedData, name='ExpensedData'),
 # INCOME & EXPENDITURE..................................................//
 path('IncomeExpenditure',views.IncomeExpenditure, name='IncomeExpenditure'),
 path('incoExpndData',views.incoExpndData, name='incoExpndData'),
+path('incoExpndStock',views.incoExpndStock, name='incoExpndStock'),
 
 # AMOUNT TRANSFER..................................................//
 path('TansferR',views.TansferR, name='TansferR'),
@@ -77,6 +78,9 @@ path('TransferData',views.TransferData, name='TransferData'),
 # STOCK STATE..................................................//
 path('StockStateR',views.StockStateR, name='StockStateR'),
 path('StockStateData',views.StockStateData, name='StockStateData'),
+path('ItemTrack',views.ItemTrack, name='ItemTrack'),
+path('ItemTrackSearch',views.ItemTrackSearch, name='ItemTrackSearch'),
+path('ItemTrackData',views.ItemTrackData, name='ItemTrackData'),
 path('PrintItems',views.PrintItems, name='PrintItems'),
 path('PrintStockState',views.PrintStockState, name='PrintStockState'),
 

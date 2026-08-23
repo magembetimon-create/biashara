@@ -43,15 +43,123 @@
           </button>
         </p>
 
-
+        <hr class="my-4">
+        <h5>{% if useri.langSet == 0 %}Picha na Google Vision{% else %}Images & Google Vision{% endif %}</h5>
+        <p class="text-muted smallFont mb-2">
+          {% if useri.langSet == 0 %}
+            Soma picha zilizohifadhiwa (GCP) na ubadilishe pixels za zamani kuwa text ya Vision.
+          {% else %}
+            Read saved images (GCP) and replace old pixel hashes with Vision text.
+          {% endif %}
+        </p>
+        <div class="table-responsive" style="max-width:520px">
+          <table class="table table-sm">
+            <tbody>
+              <tr>
+                <td>{% if useri.langSet == 0 %}Picha jumla{% else %}Total images{% endif %}</td>
+                <td class="weight600" id="visionTotal">—</td>
+              </tr>
+              <tr>
+                <td>{% if useri.langSet == 0 %}Tayari zina text{% else %}Already have text{% endif %}</td>
+                <td class="weight600" id="visionDone">—</td>
+              </tr>
+              <tr>
+                <td>{% if useri.langSet == 0 %}Bado pixels / tupu{% else %}Still pixels / empty{% endif %}</td>
+                <td class="weight600" id="visionPending">—</td>
+              </tr>
+              <tr>
+                <td>{% if useri.langSet == 0 %}Zilizosasishwa sasa{% else %}Updated this run{% endif %}</td>
+                <td class="weight600" id="visionAffected">0</td>
+              </tr>
+              <tr>
+                <td>{% if useri.langSet == 0 %}Zimeshindwa{% else %}Failed{% endif %}</td>
+                <td class="weight600" id="visionFailed">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="smallFont text-muted" id="visionProgress"></p>
+        <button type="button" class="btn btn-sm btn-secondary" id="visionBackfillBtn" onclick="runVisionBackfill()">
+          {% if useri.langSet == 0 %}Sasisha picha kwa Vision{% else %}Update images with Vision{% endif %}
+        </button>
 
 </div>
 
 <script>
+    var visionRunTotal = 0
+
     $(document).ready(function(){
       loadData()
-      
+      loadVisionStats()
     })
+
+    function setVisionStats(resp, affected, failed) {
+      $('#visionTotal').text(resp.total)
+      $('#visionDone').text(resp.updated_already)
+      $('#visionPending').text(resp.pending)
+      if (typeof affected === 'number') $('#visionAffected').text(affected)
+      if (typeof failed === 'number') $('#visionFailed').text(failed)
+    }
+
+    function loadVisionStats() {
+      const sendit = POSTREQUEST({ data: {}, url: '/staffonly/visionPicsStatus' })
+      sendit.then(resp => {
+        if (resp && resp.success) setVisionStats(resp)
+      })
+    }
+
+    function runVisionBackfill() {
+      const btn = $('#visionBackfillBtn')
+      if (btn.prop('disabled')) return
+      btn.prop('disabled', true)
+      visionRunTotal = 0
+      var failedAcc = 0
+      var afterId = 0
+      $('#visionAffected').text(0)
+      $('#visionFailed').text(0)
+      $('#visionProgress').text(Number($('#luga').val()) == 0 ? 'Inasoma picha...' : 'Reading images...')
+      $('#loadMe').modal('show')
+
+      function nextBatch() {
+        const sendit = POSTREQUEST({ data: { limit: 8, after_id: afterId }, url: '/staffonly/visionPicsBackfill' })
+        sendit.then(resp => {
+          if (!resp || !resp.success) {
+            $('#loadMe').modal('hide')
+            hideLoading()
+            btn.prop('disabled', false)
+            $('#visionProgress').text(Number($('#luga').val()) == 0 ? 'Imeshindwa' : 'Failed')
+            return
+          }
+          visionRunTotal += Number(resp.updated || 0)
+          failedAcc += Number(resp.failed || 0)
+          afterId = Number(resp.last_id || afterId)
+          setVisionStats(resp, visionRunTotal, failedAcc)
+          $('#visionProgress').text(
+            (Number($('#luga').val()) == 0 ? 'Zimesasishwa ' : 'Updated ') +
+            visionRunTotal + ' / ' + resp.total +
+            (resp.pending ? (Number($('#luga').val()) == 0 ? '. Inaendelea...' : '. Continuing...') : '')
+          )
+          if (Number(resp.pending) > 0 && Number(resp.processed) > 0) {
+            nextBatch()
+          } else {
+            $('#loadMe').modal('hide')
+            hideLoading()
+            btn.prop('disabled', false)
+            $('#visionProgress').text(
+              (Number($('#luga').val()) == 0 ? 'Imekamilika. Jumla ' : 'Done. Total ') +
+              resp.total + (Number($('#luga').val()) == 0 ? ', zilizoathiriwa ' : ', affected ') +
+              visionRunTotal
+            )
+          }
+        }).catch(function () {
+          $('#loadMe').modal('hide')
+          hideLoading()
+          btn.prop('disabled', false)
+          $('#visionProgress').text(Number($('#luga').val()) == 0 ? 'Hitilafu ya muunganiko' : 'Connection error')
+        })
+      }
+      nextBatch()
+    }
 
     function loadData(){
       $('#loadMe').modal('show')

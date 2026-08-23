@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
 # from graphene import NonNull
-from management.models import  UserExtend,stokAdjustment,ForPrintingPupose,InterpriseVisotrs,savedStockState,SaveAkauntState,ItemsState,ColorState,SizeState,production_color,toaCash,production_size, manunuziList,productionListDate,purchased_size,ColorChange,SizeChange,purchased_color,sale_return,productChangeRecord,transferList,rekodiMatumizi,SavedRiport,ChangedService,Cash_order_return,sale_return_mauzo_fidia,sa_col_ret,sa_size_ret,sa_ret,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,receiveList,transfer,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wekaCash
+from management.models import  UserExtend,stokAdjustment,ForPrintingPupose,InterpriseVisotrs,savedStockState,SaveAkauntState,ItemsState,ColorState,SizeState,production_color,toaCash,production_size, manunuziList,productionListDate,purchased_size,ColorChange,SizeChange,purchased_color,sale_return,productChangeRecord,transferList,rekodiMatumizi,SavedRiport,ChangedService,Cash_order_return,sale_return_mauzo_fidia,sa_col_ret,sa_size_ret,sa_ret,pu_ret,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,receiveList,transfer,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wekaCash
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
@@ -32,6 +32,10 @@ import datetime
 import re
 import json
 from django.db.models import Sum
+from django.utils.dateparse import parse_datetime
+from django.utils.timezone import is_naive, make_aware
+from collections import defaultdict
+from decimal import Decimal
 import random 
 
 from accaunts.todos import Todos
@@ -1637,6 +1641,607 @@ def ExpensedData(request):
      return render(request,'pagenotFound.html',todoFunct(request))
 
 # INCOME & EXPENDITURE ................................................//
+def _parse_report_dt(val):
+  if not val:
+    return None
+  dt = parse_datetime(str(val))
+  if dt is None:
+    try:
+      dt = datetime.datetime.fromisoformat(str(val).replace('Z', '+00:00'))
+    except Exception:
+      return None
+  if is_naive(dt):
+    dt = make_aware(dt)
+  return dt
+
+
+def _dt_ge(when, other):
+  if when is None or other is None:
+    return False
+  try:
+    if is_naive(when) and not is_naive(other):
+      when = make_aware(when)
+    elif is_naive(other) and not is_naive(when):
+      other = make_aware(other)
+  except Exception:
+    pass
+  try:
+    return when >= other
+  except TypeError:
+    return False
+
+
+def _dt_gt(when, other):
+  if when is None or other is None:
+    return False
+  try:
+    if is_naive(when) and not is_naive(other):
+      when = make_aware(when)
+    elif is_naive(other) and not is_naive(when):
+      other = make_aware(other)
+  except Exception:
+    pass
+  try:
+    return when > other
+  except TypeError:
+    return False
+
+
+def _dt_lt(when, other):
+  if when is None or other is None:
+    return False
+  try:
+    if is_naive(when) and not is_naive(other):
+      when = make_aware(when)
+    elif is_naive(other) and not is_naive(when):
+      other = make_aware(other)
+  except Exception:
+    pass
+  try:
+    return when < other
+  except TypeError:
+    return False
+
+
+def _dt_le(when, other):
+  if when is None or other is None:
+    return False
+  try:
+    if is_naive(when) and not is_naive(other):
+      when = make_aware(when)
+    elif is_naive(other) and not is_naive(when):
+      other = make_aware(other)
+  except Exception:
+    pass
+  try:
+    return when <= other
+  except TypeError:
+    return False
+
+
+def _item_cost(qty, buy, ratio):
+  try:
+    r = Decimal(str(ratio if ratio not in (None, 0) else 1))
+    if r == 0:
+      r = Decimal('1')
+    return Decimal(str(qty or 0)) * Decimal(str(buy or 0)) / r
+  except Exception:
+    return Decimal('0')
+
+
+def _sum_cost_rows(rows, qty_key, buy_key='Bei_kununua', ratio_key='uwiano'):
+  total = Decimal('0')
+  for row in rows:
+    total += _item_cost(row.get(qty_key), row.get(buy_key), row.get(ratio_key))
+  return total
+
+
+def _stock_movements_since(br, at_dt):
+  """Movements at/after at_dt. qty_add is added to current qty to reconstruct qty at at_dt."""
+  rows = []
+
+  sales = mauzoList.objects.filter(
+    produ__Interprise__in=br,
+    produ__service=False,
+    produ__inapacha=False,
+    mauzo__tarehe__gte=at_dt,
+    mauzo__service=False,
+    mauzo__order=False,
+  ).values_list('produ_id', 'idadi', 'returned', 'serviceReturn', 'mauzo__tarehe')
+  for pid, qty, ret, sret, when in sales:
+    net = Decimal(str(qty or 0)) - Decimal(str(ret or 0)) - Decimal(str(sret or 0))
+    rows.append((pid, net, when))
+
+  old_returns = sa_ret.objects.filter(
+    sa_list__produ__Interprise__in=br,
+    sa_list__produ__service=False,
+    ret__tarehe__gte=at_dt,
+    sa_list__mauzo__tarehe__lt=at_dt,
+  ).values_list('sa_list__produ_id', 'idadi', 'ret__tarehe')
+  for pid, qty, when in old_returns:
+    rows.append((pid, -Decimal(str(qty or 0)), when))
+
+  transfers = transferList.objects.filter(
+    toka__Interprise__in=br,
+    toka__service=False,
+    toka__inapacha=False,
+    kwenda__receive__transfer__order=False,
+    kwenda__receive__transfer__tarehe__gte=at_dt,
+  ).values_list('toka_id', 'kwenda__qty', 'kwenda__receive__transfer__tarehe')
+  for pid, qty, when in transfers:
+    rows.append((pid, Decimal(str(qty or 0)), when))
+
+  reductions = productChangeRecord.objects.filter(
+    prod__Interprise__in=br,
+    prod__service=False,
+    prod__inapacha=False,
+    adjst__date__gte=at_dt,
+    adjst__Ongezwa=False,
+  ).filter(
+    Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True) | Q(adjst__expire=True) | Q(adjst__others=True) | Q(adjst__full_Return=True)
+  ).values_list('prod_id', 'qty', 'adjst__date')
+  for pid, qty, when in reductions:
+    rows.append((pid, Decimal(str(qty or 0)), when))
+
+  added = productChangeRecord.objects.filter(
+    prod__Interprise__in=br,
+    prod__service=False,
+    prod__inapacha=False,
+    adjst__date__gte=at_dt,
+    adjst__Ongezwa=True,
+  ).values_list('prod_id', 'qty', 'adjst__date')
+  for pid, qty, when in added:
+    rows.append((pid, -Decimal(str(qty or 0)), when))
+
+  pu_returns = pu_ret.objects.filter(
+    pu_list__Interprise__in=br,
+    pu_list__service=False,
+    ret__tarehe__gte=at_dt,
+  ).values_list('pu_list_id', 'idadi', 'ret__tarehe')
+  for pid, qty, when in pu_returns:
+    rows.append((pid, Decimal(str(qty or 0)), when))
+
+  return rows
+
+
+def _delta_map(movements, pred):
+  delta = defaultdict(lambda: Decimal('0'))
+  for pid, qty, when in movements:
+    if when and pred(when):
+      delta[pid] += qty
+  return delta
+
+
+def stock_mali_for_period(br, tf, tt):
+  items = bidhaa_stoku.objects.filter(
+    Interprise__in=br,
+    service=False,
+    inapacha=False,
+  ).annotate(
+    uwiano=F('bidhaa__idadi_jum'),
+    origin_pu=F('manunuzi__manunuzi__tarehe'),
+    origin_add=F('ongezwa__date'),
+    origin_tr=F('uhamisho__receive__transfer__tarehe'),
+    origin_pr=F('produced__production__date'),
+  ).values('id', 'idadi', 'Bei_kununua', 'uwiano', 'origin_pu', 'origin_add', 'origin_tr', 'origin_pr')
+
+  movements = _stock_movements_since(br, tf)
+  delta_open = _delta_map(movements, lambda when: _dt_ge(when, tf))
+  delta_close = _delta_map(movements, lambda when: _dt_gt(when, tt))
+
+  open_v = Decimal('0')
+  close_v = Decimal('0')
+  for row in items:
+    origin = row['origin_pu'] or row['origin_add'] or row['origin_tr'] or row['origin_pr']
+    buy = row['Bei_kununua']
+    ratio = row['uwiano']
+    iid = row['id']
+    current = Decimal(str(row['idadi'] or 0))
+    if origin is None or _dt_lt(origin, tf):
+      qty_o = current + delta_open.get(iid, Decimal('0'))
+      if qty_o > 0:
+        open_v += _item_cost(qty_o, buy, ratio)
+    if origin is None or _dt_le(origin, tt):
+      qty_c = current + delta_close.get(iid, Decimal('0'))
+      if qty_c > 0:
+        close_v += _item_cost(qty_c, buy, ratio)
+
+  purchases = _sum_cost_rows(list(bidhaa_stoku.objects.filter(
+    Interprise__in=br, service=False, inapacha=False,
+    manunuzi__isnull=False,
+    manunuzi__manunuzi__order=False,
+    manunuzi__manunuzi__tarehe__gte=tf,
+  ).exclude(manunuzi__manunuzi__tarehe__gt=tt).annotate(
+    uwiano=F('bidhaa__idadi_jum'),
+    init_qty=F('manunuzi__idadi'),
+  ).values('init_qty', 'Bei_kununua', 'uwiano')), 'init_qty')
+
+  produced = _sum_cost_rows(list(bidhaa_stoku.objects.filter(
+    Interprise__in=br, service=False, inapacha=False,
+    produced__isnull=False,
+    produced__production__date__gte=tf,
+  ).exclude(produced__production__date__gt=tt).annotate(
+    uwiano=F('bidhaa__idadi_jum'),
+    init_qty=F('produced__qty'),
+  ).values('init_qty', 'Bei_kununua', 'uwiano')), 'init_qty')
+
+  received = _sum_cost_rows(list(bidhaa_stoku.objects.filter(
+    Interprise__in=br, service=False, inapacha=False,
+    uhamisho__isnull=False,
+    uhamisho__receive__transfer__order=False,
+    uhamisho__receive__transfer__tarehe__gte=tf,
+  ).exclude(uhamisho__receive__transfer__tarehe__gt=tt).annotate(
+    uwiano=F('bidhaa__idadi_jum'),
+    init_qty=F('uhamisho__qty'),
+  ).values('init_qty', 'Bei_kununua', 'uwiano')), 'init_qty')
+
+  added = _sum_cost_rows(list(productChangeRecord.objects.filter(
+    prod__Interprise__in=br, prod__service=False, prod__inapacha=False,
+    adjst__Ongezwa=True, adjst__date__gte=tf,
+  ).exclude(adjst__date__gt=tt).annotate(
+    uwiano=F('prod__bidhaa__idadi_jum'),
+    Bei_kununua=F('prod__Bei_kununua'),
+  ).values('qty', 'Bei_kununua', 'uwiano')), 'qty')
+
+  cogs = Decimal('0')
+  for qty, ret, sret, buy, ratio in mauzoList.objects.filter(
+    produ__Interprise__in=br, produ__service=False, produ__inapacha=False,
+    mauzo__service=False, mauzo__order=False,
+    mauzo__tarehe__gte=tf,
+  ).exclude(mauzo__tarehe__gt=tt).values_list(
+    'idadi', 'returned', 'serviceReturn', 'produ__Bei_kununua', 'produ__bidhaa__idadi_jum'
+  ):
+    net = Decimal(str(qty or 0)) - Decimal(str(ret or 0)) - Decimal(str(sret or 0))
+    if net > 0:
+      cogs += _item_cost(net, buy, ratio)
+
+  reductions = _sum_cost_rows(list(productChangeRecord.objects.filter(
+    prod__Interprise__in=br, prod__service=False, prod__inapacha=False,
+    adjst__Ongezwa=False, adjst__date__gte=tf,
+  ).exclude(adjst__date__gt=tt).filter(
+    Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True) | Q(adjst__expire=True) | Q(adjst__others=True)
+  ).annotate(
+    uwiano=F('prod__bidhaa__idadi_jum'),
+    Bei_kununua=F('prod__Bei_kununua'),
+  ).values('qty', 'Bei_kununua', 'uwiano')), 'qty')
+
+  transferred = _sum_cost_rows(list(transferList.objects.filter(
+    toka__Interprise__in=br, toka__service=False, toka__inapacha=False,
+    kwenda__receive__transfer__order=False,
+    kwenda__receive__transfer__tarehe__gte=tf,
+  ).exclude(kwenda__receive__transfer__tarehe__gt=tt).annotate(
+    uwiano=F('toka__bidhaa__idadi_jum'),
+    Bei_kununua=F('toka__Bei_kununua'),
+    qty=F('kwenda__qty'),
+  ).values('qty', 'Bei_kununua', 'uwiano')), 'qty')
+
+  pu_returns = _sum_cost_rows(list(pu_ret.objects.filter(
+    pu_list__Interprise__in=br, pu_list__service=False,
+    ret__tarehe__gte=tf,
+  ).exclude(ret__tarehe__gt=tt).annotate(
+    uwiano=F('pu_list__bidhaa__idadi_jum'),
+    Bei_kununua=F('pu_list__Bei_kununua'),
+  ).values('idadi', 'Bei_kununua', 'uwiano')), 'idadi')
+
+  received_in = purchases + produced + received + added
+  other_out = reductions + transferred + pu_returns
+
+  def money(v):
+    return float(round(Decimal(v or 0), 2))
+
+  return {
+    'open_stock': money(open_v),
+    'close_stock': money(close_v),
+    'purchases': money(purchases),
+    'produced': money(produced),
+    'received': money(received),
+    'added': money(added),
+    'received_in': money(received_in),
+    'cogs': money(cogs),
+    'reductions': money(reductions),
+    'transferred': money(transferred),
+    'pu_returns': money(pu_returns),
+    'other_out': money(other_out),
+  }
+
+
+def _iso_dt(dt):
+  if not dt:
+    return ''
+  try:
+    return dt.isoformat()
+  except Exception:
+    return str(dt)
+
+
+def _qtyf(v):
+  try:
+    return float(Decimal(str(v or 0)))
+  except Exception:
+    return 0.0
+
+
+def _report_branch_ids(todo, shop):
+  duka = todo['duka']
+  allowed = [duka.id]
+  for b in todo['matawi']:
+    allowed.append(b.Interprise.id)
+  try:
+    shop = int(shop)
+  except (TypeError, ValueError):
+    shop = duka.id
+  if shop == 0:
+    return allowed
+  if shop in allowed:
+    return [shop]
+  return [duka.id]
+
+
+def _item_movements_since(item_ids, at_dt):
+  if not item_ids:
+    return []
+  rows = []
+  sales = mauzoList.objects.filter(
+    produ_id__in=item_ids,
+    mauzo__tarehe__gte=at_dt,
+    mauzo__order=False,
+  ).values_list('produ_id', 'idadi', 'returned', 'serviceReturn', 'mauzo__tarehe')
+  for pid, qty, ret, sret, when in sales:
+    net = Decimal(str(qty or 0)) - Decimal(str(ret or 0)) - Decimal(str(sret or 0))
+    rows.append((pid, net, when))
+
+  old_returns = sa_ret.objects.filter(
+    sa_list__produ_id__in=item_ids,
+    ret__tarehe__gte=at_dt,
+    sa_list__mauzo__tarehe__lt=at_dt,
+  ).values_list('sa_list__produ_id', 'idadi', 'ret__tarehe')
+  for pid, qty, when in old_returns:
+    rows.append((pid, -Decimal(str(qty or 0)), when))
+
+  transfers = transferList.objects.filter(
+    toka_id__in=item_ids,
+    kwenda__receive__transfer__order=False,
+    kwenda__receive__transfer__tarehe__gte=at_dt,
+  ).values_list('toka_id', 'kwenda__qty', 'kwenda__receive__transfer__tarehe')
+  for pid, qty, when in transfers:
+    rows.append((pid, Decimal(str(qty or 0)), when))
+
+  reductions = productChangeRecord.objects.filter(
+    prod_id__in=item_ids,
+    adjst__date__gte=at_dt,
+    adjst__Ongezwa=False,
+  ).filter(
+    Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True) | Q(adjst__expire=True) | Q(adjst__others=True) | Q(adjst__full_Return=True)
+  ).values_list('prod_id', 'qty', 'adjst__date')
+  for pid, qty, when in reductions:
+    rows.append((pid, Decimal(str(qty or 0)), when))
+
+  added = productChangeRecord.objects.filter(
+    prod_id__in=item_ids,
+    adjst__date__gte=at_dt,
+    adjst__Ongezwa=True,
+  ).values_list('prod_id', 'qty', 'adjst__date')
+  for pid, qty, when in added:
+    rows.append((pid, -Decimal(str(qty or 0)), when))
+
+  pu_returns = pu_ret.objects.filter(
+    pu_list_id__in=item_ids,
+    ret__tarehe__gte=at_dt,
+  ).values_list('pu_list_id', 'idadi', 'ret__tarehe')
+  for pid, qty, when in pu_returns:
+    rows.append((pid, Decimal(str(qty or 0)), when))
+
+  return rows
+
+
+def item_track_for_period(br, bidhaa_id, tf, tt):
+  items = bidhaa_stoku.objects.filter(
+    Interprise__in=br,
+    bidhaa_id=bidhaa_id,
+    inapacha=False,
+  ).annotate(
+    dukaN=F('Interprise__name'),
+    origin_pu=F('manunuzi__manunuzi__tarehe'),
+    origin_add=F('ongezwa__date'),
+    origin_tr=F('uhamisho__receive__transfer__tarehe'),
+    origin_pr=F('produced__production__date'),
+  ).values('id', 'idadi', 'Interprise_id', 'dukaN', 'origin_pu', 'origin_add', 'origin_tr', 'origin_pr')
+
+  item_ids = [row['id'] for row in items]
+  current = sum((Decimal(str(row['idadi'] or 0)) for row in items), Decimal('0'))
+  movements = _item_movements_since(item_ids, tf)
+  delta_open = _delta_map(movements, lambda when: _dt_ge(when, tf))
+  delta_close = _delta_map(movements, lambda when: _dt_gt(when, tt))
+
+  open_qty = Decimal('0')
+  close_qty = Decimal('0')
+  for row in items:
+    origin = row['origin_pu'] or row['origin_add'] or row['origin_tr'] or row['origin_pr']
+    iid = row['id']
+    cur = Decimal(str(row['idadi'] or 0))
+    if origin is None or _dt_lt(origin, tf):
+      q = cur + delta_open.get(iid, Decimal('0'))
+      if q > 0:
+        open_qty += q
+    if origin is None or _dt_le(origin, tt):
+      q = cur + delta_close.get(iid, Decimal('0'))
+      if q > 0:
+        close_qty += q
+
+  events = []
+
+  def add_ev(tarehe, kind, qty_in=0, qty_out=0, code='', note='', duka=0, dukaN=''):
+    if not tarehe:
+      return
+    if not _dt_ge(tarehe, tf) or _dt_gt(tarehe, tt):
+      return
+    qi = Decimal(str(qty_in or 0))
+    qo = Decimal(str(qty_out or 0))
+    if qi == 0 and qo == 0:
+      return
+    events.append({
+      'tarehe': _iso_dt(tarehe),
+      'kind': kind,
+      'qty_in': _qtyf(qi),
+      'qty_out': _qtyf(qo),
+      'code': code or '',
+      'note': note or '',
+      'duka': duka,
+      'dukaN': dukaN or '',
+    })
+
+  pu_rows = bidhaa_stoku.objects.filter(
+    id__in=item_ids,
+    manunuzi__isnull=False,
+    manunuzi__manunuzi__order=False,
+    manunuzi__manunuzi__tarehe__gte=tf,
+  ).exclude(manunuzi__manunuzi__tarehe__gt=tt).values(
+    'Interprise_id', 'Interprise__name', 'manunuzi__idadi', 'manunuzi__manunuzi__tarehe', 'manunuzi__manunuzi__code'
+  )
+  for r in pu_rows:
+    add_ev(r['manunuzi__manunuzi__tarehe'], 'purchase', qty_in=r['manunuzi__idadi'],
+           code=r['manunuzi__manunuzi__code'], duka=r['Interprise_id'], dukaN=r['Interprise__name'])
+
+  pr_rows = bidhaa_stoku.objects.filter(
+    id__in=item_ids,
+    produced__isnull=False,
+    produced__production__date__gte=tf,
+  ).exclude(produced__production__date__gt=tt).values(
+    'Interprise_id', 'Interprise__name', 'produced__qty', 'produced__production__date', 'produced__production__code'
+  )
+  for r in pr_rows:
+    add_ev(r['produced__production__date'], 'production', qty_in=r['produced__qty'],
+           code=r['produced__production__code'], duka=r['Interprise_id'], dukaN=r['Interprise__name'])
+
+  rc_rows = bidhaa_stoku.objects.filter(
+    id__in=item_ids,
+    uhamisho__isnull=False,
+    uhamisho__receive__transfer__order=False,
+    uhamisho__receive__transfer__tarehe__gte=tf,
+  ).exclude(uhamisho__receive__transfer__tarehe__gt=tt).values(
+    'Interprise_id', 'Interprise__name', 'uhamisho__qty', 'uhamisho__receive__transfer__tarehe',
+    'uhamisho__receive__transfer__code', 'uhamisho__receive__transfer__Interprise__name'
+  )
+  for r in rc_rows:
+    add_ev(r['uhamisho__receive__transfer__tarehe'], 'received', qty_in=r['uhamisho__qty'],
+           code=r['uhamisho__receive__transfer__code'],
+           note=r.get('uhamisho__receive__transfer__Interprise__name') or '',
+           duka=r['Interprise_id'], dukaN=r['Interprise__name'])
+
+  adj_rows = productChangeRecord.objects.filter(
+    prod_id__in=item_ids,
+    adjst__date__gte=tf,
+  ).exclude(adjst__date__gt=tt).values(
+    'qty', 'adjst__date', 'adjst__code', 'adjst__Ongezwa', 'adjst__haribika', 'adjst__potea',
+    'adjst__expire', 'adjst__tumika', 'adjst__registered', 'adjst__full_Return', 'adjst__others',
+    'adjst__production_id', 'adjst__desc', 'prod__Interprise_id', 'prod__Interprise__name'
+  )
+  for r in adj_rows:
+    kind = 'adjust'
+    qty_in = 0
+    qty_out = r['qty']
+    if r['adjst__Ongezwa'] or r['adjst__registered']:
+      kind = 'added'
+      qty_in = r['qty']
+      qty_out = 0
+    elif r['adjst__haribika']:
+      kind = 'damage'
+    elif r['adjst__potea']:
+      kind = 'lost'
+    elif r['adjst__expire']:
+      kind = 'expire'
+    elif r['adjst__full_Return']:
+      continue
+    elif r['adjst__tumika'] and r['adjst__production_id']:
+      kind = 'used_production'
+    elif r['adjst__tumika']:
+      kind = 'used'
+    add_ev(r['adjst__date'], kind, qty_in=qty_in, qty_out=qty_out,
+           code=r['adjst__code'], note=r['adjst__desc'] or '',
+           duka=r['prod__Interprise_id'], dukaN=r['prod__Interprise__name'])
+
+  sale_rows = mauzoList.objects.filter(
+    produ_id__in=item_ids,
+    mauzo__order=False,
+    mauzo__tarehe__gte=tf,
+  ).exclude(mauzo__tarehe__gt=tt).values(
+    'idadi', 'mauzo__tarehe', 'mauzo__code', 'produ__Interprise_id', 'produ__Interprise__name'
+  )
+  for r in sale_rows:
+    add_ev(r['mauzo__tarehe'], 'sale', qty_out=r['idadi'],
+           code=r['mauzo__code'], duka=r['produ__Interprise_id'], dukaN=r['produ__Interprise__name'])
+
+  ret_rows = sa_ret.objects.filter(
+    sa_list__produ_id__in=item_ids,
+    ret__tarehe__gte=tf,
+  ).exclude(ret__tarehe__gt=tt).values(
+    'idadi', 'ret__tarehe', 'ret__code', 'sa_list__produ__Interprise_id', 'sa_list__produ__Interprise__name'
+  )
+  for r in ret_rows:
+    add_ev(r['ret__tarehe'], 'sale_return', qty_in=r['idadi'],
+           code=r['ret__code'], duka=r['sa_list__produ__Interprise_id'], dukaN=r['sa_list__produ__Interprise__name'])
+
+  tr_rows = transferList.objects.filter(
+    toka_id__in=item_ids,
+    kwenda__receive__transfer__order=False,
+    kwenda__receive__transfer__tarehe__gte=tf,
+  ).exclude(kwenda__receive__transfer__tarehe__gt=tt).values(
+    'kwenda__qty', 'kwenda__receive__transfer__tarehe', 'kwenda__receive__transfer__code',
+    'toka__Interprise_id', 'toka__Interprise__name', 'kwenda__receive__Interprise__name'
+  )
+  for r in tr_rows:
+    add_ev(r['kwenda__receive__transfer__tarehe'], 'transfer_out', qty_out=r['kwenda__qty'],
+           code=r['kwenda__receive__transfer__code'],
+           note=r.get('kwenda__receive__Interprise__name') or '',
+           duka=r['toka__Interprise_id'], dukaN=r['toka__Interprise__name'])
+
+  prn_rows = pu_ret.objects.filter(
+    pu_list_id__in=item_ids,
+    ret__tarehe__gte=tf,
+  ).exclude(ret__tarehe__gt=tt).values(
+    'idadi', 'ret__tarehe', 'ret__code', 'pu_list__Interprise_id', 'pu_list__Interprise__name'
+  )
+  for r in prn_rows:
+    add_ev(r['ret__tarehe'], 'pu_return', qty_out=r['idadi'],
+           code=r['ret__code'], duka=r['pu_list__Interprise_id'], dukaN=r['pu_list__Interprise__name'])
+
+  events.sort(key=lambda e: e['tarehe'] or '')
+  running = open_qty
+  for ev in events:
+    running += Decimal(str(ev['qty_in'] or 0)) - Decimal(str(ev['qty_out'] or 0))
+    ev['balance'] = _qtyf(running)
+
+  qty_in = sum((Decimal(str(e['qty_in'] or 0)) for e in events), Decimal('0'))
+  qty_out = sum((Decimal(str(e['qty_out'] or 0)) for e in events), Decimal('0'))
+
+  info = bidhaa_stoku.objects.filter(bidhaa_id=bidhaa_id, Interprise__in=br).select_related('bidhaa', 'bidhaa__bidhaa_aina').first()
+  name = ''
+  unit = ''
+  namba = ''
+  aina = ''
+  if info and info.bidhaa:
+    name = info.bidhaa.bidhaa_jina or ''
+    unit = info.bidhaa.vipimo or ''
+    namba = info.bidhaa.namba or ''
+    aina = info.bidhaa.bidhaa_aina.aina if info.bidhaa.bidhaa_aina else ''
+
+  return {
+    'open_qty': _qtyf(open_qty),
+    'close_qty': _qtyf(close_qty),
+    'current_qty': _qtyf(current),
+    'qty_in': _qtyf(qty_in),
+    'qty_out': _qtyf(qty_out),
+    'events': events,
+    'item': {
+      'id': bidhaa_id,
+      'name': name,
+      'unit': unit,
+      'namba': namba,
+      'aina': aina,
+    },
+  }
+
+
 @login_required(login_url='login')
 def IncomeExpenditure(request):
   todo = todoFunct(request)
@@ -1736,6 +2341,43 @@ def incoExpndData(request):
       return JsonResponse(data)
   else:
      return render(request,'pagenotFound.html',todoFunct(request))
+
+@login_required(login_url='login')
+def incoExpndStock(request):
+  if request.method != 'POST':
+    return render(request,'pagenotFound.html',todoFunct(request))
+  try:
+    todo = todoFunct(request)
+    duka = todo['duka']
+    if not duka.Interprise:
+      return JsonResponse({'success': False}, status=403)
+
+    allowed = [duka.id]
+    for b in todo['matawi']:
+      allowed.append(b.Interprise.id)
+
+    try:
+      shop = int(request.POST.get('d', duka.id))
+    except (TypeError, ValueError):
+      shop = duka.id
+
+    if shop == 0:
+      br = allowed
+    elif shop in allowed:
+      br = [shop]
+    else:
+      br = [duka.id]
+
+    tf = _parse_report_dt(request.POST.get('tf'))
+    tt = _parse_report_dt(request.POST.get('tt'))
+    if not tf or not tt:
+      return JsonResponse({'success': False, 'error': 'tarehe'})
+
+    data = stock_mali_for_period(br, tf, tt)
+    data['success'] = True
+    return JsonResponse(data)
+  except Exception:
+    return JsonResponse({'success': False})
 
 # AMOUNT TRANSFER ................................................//
 @login_required(login_url='login')
@@ -1911,6 +2553,83 @@ def StockStateData(request):
       return JsonResponse(data)
   else:
      return render(request,'pagenotFound.html',todoFunct(request))
+
+@login_required(login_url='login')
+def ItemTrack(request):
+  todo = todoFunct(request)
+  if not todo['duka'].Interprise:
+    return redirect('/userdash')
+  return render(request, 'riportItemTrack.html', todo)
+
+@login_required(login_url='login')
+def ItemTrackSearch(request):
+  if request.method != 'POST':
+    return JsonResponse({'success': False, 'items': []})
+  try:
+    todo = todoFunct(request)
+    duka = todo['duka']
+    if not duka.Interprise:
+      return JsonResponse({'success': False, 'items': []})
+    br = _report_branch_ids(todo, request.POST.get('d', duka.id))
+    q = (request.POST.get('q') or '').strip()
+    if len(q) < 1:
+      return JsonResponse({'success': True, 'items': []})
+    rows = bidhaa_stoku.objects.filter(
+      Interprise__in=br,
+      inapacha=False,
+    ).filter(
+      Q(bidhaa__bidhaa_jina__icontains=q) | Q(bidhaa__namba__icontains=q)
+    ).values('bidhaa_id', 'bidhaa__bidhaa_jina', 'bidhaa__vipimo', 'bidhaa__namba', 'bidhaa__bidhaa_aina__aina').distinct()[:40]
+    seen = set()
+    items = []
+    for r in rows:
+      bid = r['bidhaa_id']
+      if bid in seen:
+        continue
+      seen.add(bid)
+      name = r['bidhaa__bidhaa_jina'] or ''
+      namba = r['bidhaa__namba'] or ''
+      unit = r['bidhaa__vipimo'] or ''
+      aina = r['bidhaa__bidhaa_aina__aina'] or ''
+      label = name
+      if namba:
+        label = f'{name} ({namba})'
+      items.append({
+        'id': bid,
+        'label': label,
+        'name': name,
+        'namba': namba,
+        'unit': unit,
+        'aina': aina,
+      })
+      if len(items) >= 20:
+        break
+    return JsonResponse({'success': True, 'items': items})
+  except Exception:
+    return JsonResponse({'success': False, 'items': []})
+
+@login_required(login_url='login')
+def ItemTrackData(request):
+  if request.method != 'POST':
+    return render(request, 'pagenotFound.html', todoFunct(request))
+  try:
+    todo = todoFunct(request)
+    duka = todo['duka']
+    if not duka.Interprise:
+      return JsonResponse({'success': False}, status=403)
+    bidhaa_id = int(request.POST.get('bidhaa', 0))
+    if not bidhaa_id:
+      return JsonResponse({'success': False, 'error': 'bidhaa'})
+    br = _report_branch_ids(todo, request.POST.get('d', duka.id))
+    tf = _parse_report_dt(request.POST.get('tf'))
+    tt = _parse_report_dt(request.POST.get('tt'))
+    if not tf or not tt:
+      return JsonResponse({'success': False, 'error': 'tarehe'})
+    data = item_track_for_period(br, bidhaa_id, tf, tt)
+    data['success'] = True
+    return JsonResponse(data)
+  except Exception:
+    return JsonResponse({'success': False})
 
 @login_required(login_url='login')
 def SaveInventory(request):

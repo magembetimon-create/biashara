@@ -10,6 +10,103 @@
   'use strict'
 
   const SCAN_GAP_MS = 60
+  let scanCamCleanups = []
+
+  function scanCamCleanup() {
+    scanCamCleanups.splice(0).forEach(function (fn) {
+      try { fn() } catch (err) {}
+    })
+  }
+
+  function scanCamTrack(rootId) {
+    const root = document.getElementById(rootId)
+    const video = root && root.querySelector('video')
+    if (!video || !video.srcObject) return { video: video, track: null }
+    const tracks = video.srcObject.getVideoTracks()
+    return { video: video, track: tracks && tracks[0] ? tracks[0] : null }
+  }
+
+  function scanCamApplyFocus(track) {
+    if (!track || typeof track.applyConstraints !== 'function') return Promise.resolve()
+    let caps = {}
+    try { caps = track.getCapabilities() || {} } catch (err) {}
+    const modes = caps.focusMode || []
+    const focusMode = modes.includes('continuous')
+      ? 'continuous'
+      : (modes.includes('auto') ? 'auto' : 'continuous')
+    const advanced = [{ focusMode: focusMode }]
+    if (caps.zoom && typeof caps.zoom.max === 'number' && caps.zoom.max > 1) {
+      const zmin = Number(caps.zoom.min) || 1
+      advanced.push({ zoom: Math.min(caps.zoom.max, Math.max(zmin, 1.5)) })
+    }
+    return track.applyConstraints({ advanced: advanced }).catch(function () {
+      return track.applyConstraints({ advanced: [{ focusMode: focusMode }] }).catch(function () {})
+    })
+  }
+
+  function scanCamEnhance(rootId) {
+    scanCamCleanup()
+    const attach = function () {
+      const found = scanCamTrack(rootId)
+      if (!found.video || !found.track) return false
+      found.video.setAttribute('playsinline', 'true')
+      found.video.setAttribute('webkit-playsinline', 'true')
+      scanCamApplyFocus(found.track)
+      const refocus = function () { scanCamApplyFocus(found.track) }
+      found.video.addEventListener('click', refocus)
+      found.video.addEventListener('touchend', refocus)
+      const timer = setInterval(refocus, 2200)
+      scanCamCleanups.push(function () {
+        found.video.removeEventListener('click', refocus)
+        found.video.removeEventListener('touchend', refocus)
+        clearInterval(timer)
+      })
+      return true
+    }
+    if (attach()) return
+    const wait = setInterval(function () {
+      if (attach()) clearInterval(wait)
+    }, 180)
+    scanCamCleanups.push(function () { clearInterval(wait) })
+    setTimeout(function () { clearInterval(wait) }, 8000)
+  }
+
+  function scanCamQrConfig() {
+    const cfg = {
+      fps: 15,
+      qrbox: function (viewW, viewH) {
+        const width = Math.max(220, Math.min(Math.floor(viewW * 0.92), 420))
+        const height = Math.max(90, Math.min(Math.floor(viewH * 0.42), 180))
+        return { width: width, height: height }
+      },
+      aspectRatio: 1.777778,
+      disableFlip: false,
+      videoConstraints: {
+        facingMode: { ideal: 'environment' },
+        width: { min: 640, ideal: 1920 },
+        height: { min: 480, ideal: 1080 }
+      }
+    }
+    if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
+      cfg.formatsToSupport = [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+      ]
+    }
+    return cfg
+  }
+
+  window.TbScanCamera = {
+    enhance: scanCamEnhance,
+    cleanup: scanCamCleanup,
+    qrConfig: scanCamQrConfig,
+    applyFocus: scanCamApplyFocus
+  }
   const MIN_CODE_LEN = 3
   const HID_TERMINATORS = new Set(['Enter', 'Tab'])
   const MODAL_SEL = '#livestream__qr_scanner'
@@ -76,6 +173,7 @@
         '<div class="tb-scan-session-body">' +
           '<div class="tb-scan-top">' +
             '<div id="qr_reader" class="tb-scan-camera viewport"></div>' +
+            '<p class="tb-scan-focus-hint mb-0" id="tb-scan-focus-hint"></p>' +
             '<div id="tb-scan-hid-panel" class="tb-scan-hid-panel">' +
               '<div class="tb-scan-hid-icon" aria-hidden="true">' +
                 '<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" fill="currentColor" viewBox="0 0 16 16">' +
@@ -108,6 +206,13 @@
     $('#tb-scan-last-label').text(lang('Barcode:', 'Barcode:'))
     $('#tb-scan-bottom-title').text(lang('Bidhaa zilizoskaniwa', 'Scanned items'))
     $('#tb-scan-session-empty').text(lang('Bado hakuna bidhaa. Skani barcode...', 'No items yet. Scan a barcode...'))
+    if (!$('#tb-scan-focus-hint').length) {
+      $('#qr_reader').after('<p class="tb-scan-focus-hint mb-0" id="tb-scan-focus-hint"></p>')
+    }
+    $('#tb-scan-focus-hint').text(lang(
+      'Shikilia barcode cm 15–25. Gusa skrini ili kamera ifocus tena — usisongeze sana.',
+      'Hold the barcode 15–25cm away. Tap the screen to refocus — do not get too close.'
+    ))
     $modal.find('.modal-title').text(lang('Barcode Scanner', 'Barcode Scanner'))
     $modal.find('.modal-footer .stop_qr').text(lang('Maliza / Funga', 'Done / Close'))
     return true
@@ -158,7 +263,7 @@
       const img = it.image || defaultImage()
       return (
         '<li class="tb-scan-session-item d-flex align-items-center">' +
-          '<img class="tb-scan-session-img" src="' + escapeHtml(img) + '" alt="" loading="lazy">' +
+          '<img class="tb-scan-session-img" src="' + escapeHtml(img) + '" alt="">' +
           '<div class="tb-scan-session-meta flex-grow-1 min-width-0">' +
             '<div class="tb-scan-session-name text-capitalize text-truncate">' + escapeHtml(it.name || '') + '</div>' +
             '<div class="tb-scan-session-code text-muted small text-truncate">' + escapeHtml(it.code || '') + '</div>' +
@@ -309,9 +414,14 @@
       el.setAttribute('autocomplete', 'off')
       el.setAttribute('autocapitalize', 'off')
       el.setAttribute('spellcheck', 'false')
-      el.setAttribute('aria-hidden', 'true')
       el.setAttribute('tabindex', '-1')
+      el.setAttribute('aria-label', 'Barcode scanner')
       document.body.appendChild(el)
+    } else {
+      el.removeAttribute('aria-hidden')
+      if (!el.getAttribute('aria-label')) {
+        el.setAttribute('aria-label', 'Barcode scanner')
+      }
     }
     return el
   }
@@ -327,6 +437,7 @@
   }
 
   function stopCamera() {
+    scanCamCleanup()
     if (window.Quagga && typeof Quagga.stop === 'function') {
       try { Quagga.stop() } catch (err) {}
     }
@@ -367,20 +478,18 @@
       html5Scanner = new Html5Qrcode('qr_reader')
     }
 
-    const qrConfig = {
-      fps: 10,
-      qrbox: { width: 280, height: 140 },
+    const qrConfig = scanCamQrConfig()
+
+    function onDecoded(decodedText) {
+      if (captureMode === 'field') {
+        finishFieldCapture(decodedText)
+        return
+      }
+      dispatchScan(decodedText, 'camera')
     }
-    if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
-      qrConfig.formatsToSupport = [
-        Html5QrcodeSupportedFormats.QR_CODE,
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-      ]
+
+    function startWithConfig(cameraId, config) {
+      return html5Scanner.start(cameraId, config, onDecoded, function () {})
     }
 
     function launchScanner() {
@@ -397,28 +506,28 @@
         if (html5Running) return
 
         setSessionMode('camera')
-        html5Scanner.start(
-          cameraId,
-          qrConfig,
-          function (decodedText) {
-            if (captureMode === 'field') {
-              finishFieldCapture(decodedText)
-              return
-            }
-            // Keep session + camera running for continuous scans.
-            dispatchScan(decodedText, 'camera')
-          },
-          function () {}
-        ).then(function () {
+        startWithConfig(cameraId, qrConfig).then(function () {
           html5Running = true
           html5Stopping = false
           setSessionMode('camera')
           $('#qr_error').text('')
-        }).catch(function (err) {
-          html5Running = false
-          html5Stopping = false
-          setSessionMode('hid')
-          $('#qr_error').text(String(err))
+          scanCamEnhance('qr_reader')
+        }).catch(function () {
+          const low = Object.assign({}, qrConfig, {
+            videoConstraints: { facingMode: { ideal: 'environment' } }
+          })
+          startWithConfig(cameraId, low).then(function () {
+            html5Running = true
+            html5Stopping = false
+            setSessionMode('camera')
+            $('#qr_error').text('')
+            scanCamEnhance('qr_reader')
+          }).catch(function (err) {
+            html5Running = false
+            html5Stopping = false
+            setSessionMode('hid')
+            $('#qr_error').text(String(err))
+          })
         })
       }).catch(function (err) {
         setSessionMode('hid')

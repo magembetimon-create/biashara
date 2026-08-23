@@ -7,10 +7,10 @@ $(function() {
             inputStream: {
                 type : "LiveStream",
                 constraints: {
-                    width: {max: 640},
-                    height: {max: 480},
+                    width: { min: 640, ideal: 1280 },
+                    height: { min: 480, ideal: 720 },
                     aspectRatio: {min: 1, max: 100},
-                    facingMode: "environment" // or "user" for the front camera
+                    facingMode: "environment"
                 }
             },
             locator: {
@@ -390,21 +390,35 @@ function qr_success(result){
        qr_success(decodedResult.decodedText)
   
   };
-  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-  const startPromise = dt.len>1
-    ? scanner.start({ facingMode: { exact: "environment"} }, config, qrCodeSuccessCallback)
-    : scanner.start({ facingMode: { exact: "user"} }, config, qrCodeSuccessCallback);
+  const config = (window.TbScanCamera && typeof TbScanCamera.qrConfig === 'function')
+    ? TbScanCamera.qrConfig()
+    : { fps: 15, qrbox: { width: 280, height: 140 } }
+  const cameraId = dt.len > 1
+    ? { facingMode: { ideal: 'environment' } }
+    : { facingMode: { ideal: 'user' } }
+  const rootId = typeof QR_R === 'string' ? QR_R : 'qr_reader'
 
+  function afterStart() {
+    barcodeProcessRunning = true
+    barcodeProcessStopping = false
+    if (window.TbScanCamera && typeof TbScanCamera.enhance === 'function') {
+      TbScanCamera.enhance(rootId)
+    }
+  }
+
+  const startPromise = scanner.start(cameraId, config, qrCodeSuccessCallback)
   if (startPromise && typeof startPromise.then === 'function') {
-    startPromise.then(function () {
-      barcodeProcessRunning = true
-      barcodeProcessStopping = false
-    }).catch(function () {
-      barcodeProcessRunning = false
-      barcodeProcessStopping = false
+    startPromise.then(afterStart).catch(function () {
+      const low = Object.assign({}, config, {
+        videoConstraints: { facingMode: cameraId.facingMode }
+      })
+      scanner.start(cameraId, low, qrCodeSuccessCallback).then(afterStart).catch(function () {
+        barcodeProcessRunning = false
+        barcodeProcessStopping = false
+      })
     })
   } else {
-    barcodeProcessRunning = true
+    afterStart()
   }
   
   }
@@ -413,6 +427,9 @@ function qr_success(result){
   
   // stop scanning if is got
   function stop_sanning(){
+      if (window.TbScanCamera && typeof TbScanCamera.cleanup === 'function') {
+        TbScanCamera.cleanup()
+      }
       if (!scanner || !barcodeProcessRunning || barcodeProcessStopping) return
       barcodeProcessStopping = true
       barcodeProcessRunning = false

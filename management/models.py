@@ -1039,7 +1039,7 @@ class transfered_color(models.Model):
 
 class picha_yenyewe(models.Model):      
     picha=models.ImageField(upload_to="pics")
-    picha_hash = models.CharField(max_length=600, null=True, blank=True, db_index=True)
+    picha_hash = models.TextField(null=True, blank=True)
     pic_size=models.IntegerField()
     owner=models.ForeignKey(User, on_delete=models.CASCADE)
    

@@ -258,7 +258,20 @@ function   placeAlipia(pay){
       
    } 
       })
-      
+
+        const variantInitialQty = (row) => {
+            const n = Number(row?.qty ?? row?.idadi)
+            return Number.isFinite(n) ? n : 0
+        }
+        const variantCurrentSizeQty = (shelfSizes, s) => shelfSizes
+            .filter(z => z.id === s.id || z.id === s.size_id)
+            .reduce((a, b) => a + Number(b.idadi || 0), 0)
+        const variantCurrentColorQty = (shelfColors, c, it) => shelfColors
+            .filter(z => (SVD || it.code?.num == 1)
+                ? (z.color_id === c.color_id || z.id === c.id)
+                : (z.id === c.color_id || z.id === c.id))
+            .reduce((a, b) => a + Number(b.idadi || 0), 0)
+        const variantDate = (d) => d && moment(d).isValid() ? moment(d).format('DD/MM/YYYY HH:mm') : '---'
 
 
         trendsT =`
@@ -324,9 +337,9 @@ function   placeAlipia(pay){
             <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''}>${n+=1}</td>
             <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''}>${it.namba}</td>
             <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="text-capitalize "  > ${it.name}</td>
-            <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="text-capitalize noWordCut" >${moment(it.intitDate).format('DD/MM/YYYY HH:mm')}</td>
+            <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="text-capitalize noWordCut" >${variantDate(it.intitDate)}</td>
             <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="report-tag-initial" >${it.initialN}</td>
-            <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="report-code noWordCut" >${it.code?.code}</td>
+            <td ${ss>1?'rowspan='+(Number(rss)):cc>1?'rowspan='+rcc:''} class="report-code noWordCut" >${it.code?.code || '---'}</td>
 
             `
 
@@ -366,8 +379,8 @@ function   placeAlipia(pay){
                    
                         
                        sz.forEach(s => {
-                         let 
-                              shq = it.shelf_S.filter(z=>(SVD||it.code.num==1?z.id===s.id:z.size_id===s.size_id)).reduce((a,b)=> a + Number((b.idadi)),0)
+                         let initq = variantInitialQty(s),
+                              shq = variantCurrentSizeQty(it.shelf_S, s)
                           
                               trendsT+=`${row1?'':`<tr >`}
                                      <td style="padding: 10px 3px !important;"><span class="report-size smallFont"> ${s.size_name}</span></td>
@@ -375,8 +388,8 @@ function   placeAlipia(pay){
                                      <td>${floatValue(it.bei)}</td> 
                                     
 
-                                     <td class="weight600 manunuzi report-tag-initial" >${Number((!(SVD||it.code.num)==1?s.qty:s.idadi)).toFixed(FIXED_VALUE)}</td> 
-                                     <td class="manunuzi">${floatValue(it.bei*Number(!(SVD||it.code.num)==1?s.qty:s.idadi))}</td> 
+                                     <td class="weight600 manunuzi report-tag-initial" >${Number(initq).toFixed(FIXED_VALUE)}</td> 
+                                     <td class="manunuzi">${floatValue(it.bei*initq)}</td> 
 
                                     <td class="weight600 zilizopo report-tag-current">${Number(shq).toFixed(FIXED_VALUE)}</td> 
                                     <td class="zilizopo">${floatValue(it.bei*shq)}</td>   
@@ -397,15 +410,15 @@ function   placeAlipia(pay){
                    if(sized.length>0){
                      trendsT+=`<td>---</td>`   
                    }
-                             let 
-                              shq = it.shelf_C.filter(z=>((SVD||it.code.num==1?z.color_id:z.id)===c.color_id)).reduce((a,b)=> a + Number((b.idadi)),0)
+                             let initq = variantInitialQty(c),
+                              shq = variantCurrentColorQty(it.shelf_C, c, it)
                           
                                   trendsT+=`<td>${it.kipimo}</td> 
                                      <td>${floatValue(it.bei)}</td> 
                                     
 
-                                                 <td class="weight600 manunuzi report-tag-initial" >${Number((!(SVD||it.code.num)==1?c.qty:c.idadi)).toFixed(FIXED_VALUE)}</td> 
-                                     <td class="manunuzi">${floatValue(it.bei*Number(!(SVD||it.code.num)==1?c.qty:c.idadi))}</td> 
+                                                 <td class="weight600 manunuzi report-tag-initial" >${Number(initq).toFixed(FIXED_VALUE)}</td> 
+                                     <td class="manunuzi">${floatValue(it.bei*initq)}</td> 
 
                                     
 

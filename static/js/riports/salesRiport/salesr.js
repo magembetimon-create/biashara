@@ -2570,3 +2570,105 @@ function roadRiportSave(){
 
 }
 
+$('body').on('click', '#PrintSalesReport', function () {
+    printSalesReport()
+})
+
+function printSalesReport() {
+    if (!$('.RiportDataPanel').is(':visible')) {
+        toastr.warning(lang('Fungua ripoti kwanza', 'Open a report period first'), lang('Taarifa', 'Info'), { timeOut: 2500 })
+        return
+    }
+
+    var isChart = Number($('#riportChatRist .riportListChatOn.btn-secondary').data('r') || 0) === 1
+    var dataPanel = document.getElementById('theDataPanel')
+    var hasTable = dataPanel && dataPanel.querySelector('table')
+    if (isChart || !hasTable) {
+        toastr.warning(lang('Chagua Orodha kisha chapisha jedwali', 'Switch to List then print the table'), lang('Taarifa', 'Info'), { timeOut: 3000 })
+        return
+    }
+
+    var dukaName = $('#salesPrintDuka').val() || document.title.replace(/[-|].*$/, '').trim() || ''
+    var printedBy = ($('#salesPrintUser').val() || '').trim()
+    var periodTitle = ($('#riporttitle').text() || '').trim()
+    var printDate = moment ? moment().format('ddd, DD MMM YYYY HH:mm') : new Date().toLocaleString()
+    var branch = ($('#Matawini option:selected').text() || '').trim()
+    var byUser = ($('#Waliotumia option:selected').text() || '').trim()
+    var byUserVal = Number($('#Waliotumia').val() || 0)
+    var currency = ($('#currencii').val() || '').trim()
+
+    var summaryTable = document.querySelector('#summary_wrapper table')
+    var summaryHtml = summaryTable ? summaryTable.outerHTML : ''
+
+    var dataPanelHtml = ''
+    var clone = dataPanel.cloneNode(true)
+    clone.querySelectorAll('canvas').forEach(function (c) {
+        c.remove()
+    })
+    clone.querySelectorAll('button, .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate, .dataTables_filter, .dataTables_length, .dataTables_info, .dataTables_paginate').forEach(function (el) {
+        el.remove()
+    })
+    var tables = clone.querySelectorAll('table')
+    if (!tables.length) {
+        toastr.warning(lang('Hakuna jedwali la kuchapisha', 'No table to print'), lang('Taarifa', 'Info'), { timeOut: 2500 })
+        return
+    }
+    dataPanelHtml = clone.innerHTML
+
+    var switchLabel = (function () {
+        var active = document.querySelector('#riportSwitch .riportOn.btn-primary')
+        return active ? (active.getAttribute('title') || '') : ''
+    })()
+
+    var html = '<!DOCTYPE html>\n' +
+        '<html>\n<head>\n' +
+        '  <meta charset="UTF-8">\n' +
+        '  <title>' + dukaName + ' — ' + lang('Ripoti za Mauzo', 'Sales Report') + '</title>\n' +
+        '  <style>\n' +
+        '    body { font-family: Arial, sans-serif; font-size: 12px; color: #222; margin: 0; padding: 16px; }\n' +
+        '    .print-header { text-align: center; margin-bottom: 10px; }\n' +
+        '    .print-header h2 { margin: 0 0 2px; font-size: 1.2rem; }\n' +
+        '    .print-header h4 { margin: 0 0 4px; font-size: 1rem; color: #444; }\n' +
+        '    .print-meta { font-size: .85rem; color: #555; margin-bottom: 14px; text-align: center; }\n' +
+        '    .section-title { font-size: .95rem; font-weight: bold; margin: 14px 0 4px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }\n' +
+        '    table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }\n' +
+        '    th, td { border: 1px solid #ccc; padding: 4px 7px; }\n' +
+        '    thead th { background: #f0f0f0; font-weight: bold; }\n' +
+        '    tbody tr:nth-child(even) { background: #fafafa; }\n' +
+        '    tfoot tr, .table-active { background: #f4f4f4; font-weight: bold; }\n' +
+        '    .text-right { text-align: right !important; }\n' +
+        '    .text-left { text-align: left !important; }\n' +
+        '    .text-center { text-align: center !important; }\n' +
+        '    .weight600 { font-weight: 600; }\n' +
+        '    .brown { color: #8B4513; }\n' +
+        '    .text-primary { color: #007bff; }\n' +
+        '    .darkblue { color: #1e279e; }\n' +
+        '    @media print { body { margin: 0; padding: 8px; } }\n' +
+        '  </style>\n' +
+        '</head>\n<body>\n' +
+        '  <div class="print-header">\n' +
+        '    <h2>' + dukaName + '</h2>\n' +
+        '    <h4>' + lang('Ripoti za Mauzo', 'Sales Report') + (switchLabel ? ' — ' + switchLabel : '') + '</h4>\n' +
+        (branch ? '    <div class="print-meta"><strong>' + lang('Tawi', 'Branch') + ':</strong> ' + branch + (currency ? ' (' + currency + ')' : '') + '</div>\n' : '') +
+        '  </div>\n' +
+        '  <div class="print-meta">\n' +
+        '    <strong>' + lang('Kipindi', 'Period') + ':</strong> ' + periodTitle + '\n' +
+        (byUserVal > 0 ? '    &nbsp;&nbsp;<strong>' + lang('Na', 'By') + ':</strong> ' + byUser + '\n' : '') +
+        (printedBy ? '    &nbsp;&nbsp;<strong>' + lang('Aliyechapisha', 'Printed by') + ':</strong> ' + printedBy : '') +
+        '    &nbsp;&nbsp;<strong>' + lang('Tarehe', 'Date') + ':</strong> ' + printDate + '\n' +
+        '  </div>\n' +
+        (summaryHtml ? '  <div class="section-title">' + lang('Muhtasari', 'Summary') + '</div>\n  ' + summaryHtml + '\n' : '') +
+        '  <div class="section-title">' + lang('Jedwali', 'Table') + (switchLabel ? ' — ' + switchLabel : '') + '</div>\n  <div>' + dataPanelHtml + '</div>\n' +
+        '  <script>window.onload=function(){window.print();};<\/script>\n' +
+        '</body>\n</html>'
+
+    var win = window.open('', '_blank')
+    if (win) {
+        win.document.write(html)
+        win.document.close()
+    } else {
+        toastr.warning(lang('Ruhusu popup ili kuprint', 'Allow popups to print'), lang('Taarifa', 'Info'), { timeOut: 3000 })
+    }
+}
+
+

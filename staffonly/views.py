@@ -78,7 +78,40 @@ def staffPanel(request):
            return render(request,'staffs/staffdash.html',todo)
     else:
         return redirect('/userdash')
-    
+
+
+@login_required(login_url='login')
+def visionPicsStatus(request):
+    todo = todoFunct(request)
+    if not todo['useri'].ImSuper:
+        return JsonResponse({'success': False}, status=403)
+    from stoku.views import picha_vision_counts
+    data = picha_vision_counts()
+    data['success'] = True
+    return JsonResponse(data)
+
+
+@login_required(login_url='login')
+def visionPicsBackfill(request):
+    if request.method != 'POST':
+        return redirect('/staffonly/staffPanel')
+    todo = todoFunct(request)
+    if not todo['useri'].ImSuper:
+        return JsonResponse({'success': False}, status=403)
+    from stoku.views import backfill_picha_vision_terms
+    try:
+        limit = int(request.POST.get('limit', 8))
+    except (TypeError, ValueError):
+        limit = 8
+    try:
+        after_id = int(request.POST.get('after_id', 0))
+    except (TypeError, ValueError):
+        after_id = 0
+    limit = max(1, min(limit, 20))
+    force = request.POST.get('force') in ('1', 'true', 'True')
+    data = backfill_picha_vision_terms(limit=limit, force=force, after_id=after_id)
+    data['success'] = True
+    return JsonResponse(data)
 
 
 @login_required(login_url='login')

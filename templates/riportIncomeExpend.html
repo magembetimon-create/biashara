@@ -225,6 +225,38 @@
         </div>
 
         <h6 class="py-3 weight600" id="netBalance"></h6>
+
+        <div id="maliWrap" class="mt-2 mb-4" style="display:none;">
+            <h6 class="weight600 mb-2">{% if useri.langSet == 0 %}Mali (pesa na bidhaa){% else %}Assets (cash and goods){% endif %}
+              <span class="text-muted weight400 smallFont">{% if useri.langSet == 0 %}— bidhaa kwa bei ya ununuzi{% else %}— goods at purchase price{% endif %}</span>
+            </h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover" style="max-width:720px">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th class="text-right">{% if useri.langSet == 0 %}Kufungua{% else %}Opening{% endif %} <span class="text-primary latoFont smallFont">({{duka.currencii}})</span></th>
+                            <th class="text-right">{% if useri.langSet == 0 %}Kufunga{% else %}Closing{% endif %}</th>
+                            <th class="text-right">{% if useri.langSet == 0 %}Mabadiliko{% else %}Change{% endif %}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="maliTable"></tbody>
+                </table>
+            </div>
+            <h6 class="weight500 mt-3 mb-2">{% if useri.langSet == 0 %}Bidhaa kwa kipindi{% else %}Goods this period{% endif %}</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover" style="max-width:520px">
+                    <thead>
+                        <tr>
+                            <th>{% if useri.langSet == 0 %}Kipengele{% else %}Item{% endif %}</th>
+                            <th class="text-right">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %} <span class="text-primary latoFont smallFont">({{duka.currencii}})</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockFlowTable"></tbody>
+                </table>
+            </div>
+            <p class="smallFont text-muted mb-0" id="stockFlowNote"></p>
+        </div>
        
         
       
@@ -299,7 +331,10 @@
                                 <line x1="12" y1="20" x2="12" y2="4"></line>
                                 <line x1="6" y1="20" x2="6" y2="14"></line>
                                 </svg>
-                        </button>  
+                        </button>
+                        <button type="button" class="btn border-secondary btn-sm btn-outline-secondary" id="PrintIncomeReport" title="{% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.0em" height="1.0em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-printer"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        </button>
                 </div>
             </div>
           </div>
@@ -852,6 +887,8 @@
 
     <input type="hidden" id="currencii" value="{{duka.currencii}}" data-currencii="{{duka.currencii}}" />
    <input type="hidden"s value="{% if cheo.user == duka.owner %}1{% else %}0{% endif %}" id="HIMOWNER">
+    <input type="hidden" id="incomePrintUser" value="{{useri.user.first_name}} {{useri.user.last_name}}" />
+    <input type="hidden" id="incomePrintDuka" value="{{duka.name}}" />
 {% endblock %}
 
 {% block billmpya %}

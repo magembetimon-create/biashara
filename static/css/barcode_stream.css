@@ -28,8 +28,8 @@
 
 .tb-scan-camera {
   width: 100%;
-  min-height: 180px;
-  max-height: 240px;
+  min-height: 220px;
+  max-height: 360px;
   overflow: hidden;
   border-radius: 8px;
   background: #020617;
@@ -39,8 +39,16 @@
 .tb-scan-camera canvas,
 .tb-scan-camera img {
   width: 100% !important;
-  max-height: 240px;
-  object-fit: cover;
+  max-height: 360px;
+  object-fit: contain;
+}
+
+.tb-scan-focus-hint {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #94a3b8;
+  text-align: center;
 }
 
 .tb-scan-hid-panel {
@@ -157,6 +165,6 @@
 
 .tb-scan-field-mode .tb-scan-camera,
 .tb-scan-field-mode .tb-scan-hid-panel {
-  min-height: 220px;
-  max-height: 320px;
+  min-height: 240px;
+  max-height: 380px;
 }

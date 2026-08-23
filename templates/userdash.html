@@ -2929,7 +2929,7 @@ $('.muamala-genu').click(function(){
                   <div class="custom-control custom-checkbox ">
                     <input type="checkbox" {% block checked_material %}{% endblock %} class="custom-control-input cursorpointer " style="cursor: pointer !important;" id="prodMaterial">
                     <label class="custom-control-label brown" style="cursor: pointer !important;" for="prodMaterial">
-                      {% if useri.langSet == 0 %} Nyenzo kwa uzalishaji {% else %} Item for production {% endif %}
+                      {% if useri.langSet == 0 %} Inatumika kuzalisha bidhaa nyingine {% else %} Ingredient used for production {% endif %}
                     </label>
                   </div>     
                 </div> 
@@ -3231,6 +3231,9 @@ $('.muamala-genu').click(function(){
         <div class="tb-scan-session-body">
           <div class="tb-scan-top">
             <div id="qr_reader" class="tb-scan-camera viewport"></div>
+            <p class="tb-scan-focus-hint mb-0" id="tb-scan-focus-hint">
+              {% if useri.langSet == 0 %}Shikilia barcode cm 15–25. Gusa skrini ili kamera ifocus tena — usisongeze sana.{% else %}Hold the barcode 15–25cm away. Tap the screen to refocus — do not get too close.{% endif %}
+            </p>
             <div id="tb-scan-hid-panel" class="tb-scan-hid-panel" hidden>
               <div class="tb-scan-hid-icon" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" fill="currentColor" viewBox="0 0 16 16">
@@ -6118,7 +6121,6 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
               imgSearchState.isSearching = false;
                     if (response.success) {
                         showImgSearchResults(response);
-                        // console.log(response)
 
                     } else {
                        console.log(response)

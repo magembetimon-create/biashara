@@ -278,7 +278,7 @@ function placeDt(val){
 
                       duraTitle = theDT.txt
 
-                      incomeExpSummary({expend:ankara,income:itms,allIncome,allExpense,others:nonExisting,from})
+                      incomeExpSummary({expend:ankara,income:itms,allIncome,allExpense,others:nonExisting,from,to:theDT.To})
 
                       switch (Number(n)) {
                         case 1:
@@ -315,7 +315,7 @@ function placeDt(val){
 
 
 function incomeExpSummary(transaxn){
-        const {expend,income,others,allExpense,allIncome,from} = transaxn
+        const {expend,income,others,allExpense,allIncome,from,to} = transaxn
    
           const     trf = tr=> !tr.kuhamisha,
                Tawi = branch(),
@@ -510,7 +510,151 @@ function incomeExpSummary(transaxn){
                $('#netExpense').text(floatValue(totExp))
                $('#netBalance').html(NetBalance)
 
+               loadStockMali({
+                  from,
+                  to,
+                  openCash: capitalAmount,
+                  closeCash: totalIncome + capitalAmount - totExp
+               })
 
+
+}
+
+var STOCK_MALI_CACHE = {}, STOCK_MALI_REQ = 0
+
+function signedAmt(n) {
+  const v = Number(n) || 0
+  if (v > 0) return '+' + floatValue(v)
+  return floatValue(v)
+}
+
+function changeTone(n) {
+  const v = Number(n) || 0
+  if (v > 0) return 'style="color:green"'
+  if (v < 0) return 'style="color:brown"'
+  return ''
+}
+
+function renderStockMali(stock, cash) {
+  const openCash = Number(cash.openCash) || 0
+  const closeCash = Number(cash.closeCash) || 0
+  const openSt = Number(stock.open_stock) || 0
+  const closeSt = Number(stock.close_stock) || 0
+  const dCash = closeCash - openCash
+  const dSt = closeSt - openSt
+  const openW = openCash + openSt
+  const closeW = closeCash + closeSt
+  const dW = closeW - openW
+
+  $('#maliTable').html(`
+    <tr>
+      <td>${lang('Pesa (akaunti)','Cash (accounts)')}</td>
+      <td class="text-right">${floatValue(openCash)}</td>
+      <td class="text-right">${floatValue(closeCash)}</td>
+      <td class="text-right" ${changeTone(dCash)}>${signedAmt(dCash)}</td>
+    </tr>
+    <tr>
+      <td>${lang('Bidhaa (bei ya ununuzi)','Goods (purchase price)')}</td>
+      <td class="text-right">${floatValue(openSt)}</td>
+      <td class="text-right">${floatValue(closeSt)}</td>
+      <td class="text-right" ${changeTone(dSt)}>${signedAmt(dSt)}</td>
+    </tr>
+    <tr class="weight600">
+      <td>${lang('Jumla ya mali','Total assets')}</td>
+      <td class="text-right">${floatValue(openW)}</td>
+      <td class="text-right">${floatValue(closeW)}</td>
+      <td class="text-right" ${changeTone(dW)}>${signedAmt(dW)}</td>
+    </tr>
+  `)
+
+  let flow = `
+    <tr class="weight600" style="background-color: rgba(160, 57, 49, 0.13)">
+      <td>${lang('Bidhaa kufungua','Opening goods')}</td>
+      <td class="text-right">${floatValue(openSt)}</td>
+    </tr>`
+  if (Number(stock.purchases) > 0) {
+    flow += `<tr><td>${lang('+ Manunuzi yaliyopokelewa','+ Purchases received')}</td><td class="text-right">${floatValue(stock.purchases)}</td></tr>`
+  }
+  if (Number(stock.produced) > 0) {
+    flow += `<tr><td>${lang('+ Uzalishaji','+ Production')}</td><td class="text-right">${floatValue(stock.produced)}</td></tr>`
+  }
+  if (Number(stock.received) > 0) {
+    flow += `<tr><td>${lang('+ Zilizopokelewa (uhamisho)','+ Received (transfer)')}</td><td class="text-right">${floatValue(stock.received)}</td></tr>`
+  }
+  if (Number(stock.added) > 0) {
+    flow += `<tr><td>${lang('+ Zilizongezwa stokini','+ Stock additions')}</td><td class="text-right">${floatValue(stock.added)}</td></tr>`
+  }
+  if (Number(stock.cogs) > 0) {
+    flow += `<tr><td>${lang('− Gharama ya zilizouzwa','− Cost of goods sold')}</td><td class="text-right">${floatValue(stock.cogs)}</td></tr>`
+  }
+  if (Number(stock.reductions) > 0) {
+    flow += `<tr><td>${lang('− Uharibifu / matumizi / zilizopotea','− Damage / usage / loss')}</td><td class="text-right">${floatValue(stock.reductions)}</td></tr>`
+  }
+  if (Number(stock.transferred) > 0) {
+    flow += `<tr><td>${lang('− Uhamisho nje','− Transferred out')}</td><td class="text-right">${floatValue(stock.transferred)}</td></tr>`
+  }
+  if (Number(stock.pu_returns) > 0) {
+    flow += `<tr><td>${lang('− Kurudisha manunuzi','− Purchase returns')}</td><td class="text-right">${floatValue(stock.pu_returns)}</td></tr>`
+  }
+  flow += `
+    <tr class="weight600">
+      <td>${lang('Bidhaa kufunga','Closing goods')}</td>
+      <td class="text-right">${floatValue(closeSt)}</td>
+    </tr>`
+
+  $('#stockFlowTable').html(flow)
+  $('#stockFlowNote').text(lang(
+    'Manunuzi kwenye Matumizi ni pesa iliyotoka; hapa ni thamani ya bidhaa zilizopokelewa (bei ya ununuzi).',
+    'Purchases under Expenditure are cash paid; here is the value of goods received (purchase price).'
+  ))
+  $('#maliWrap').show()
+}
+
+function loadStockMali(opts) {
+  const Tawi = branch()
+  const from = opts.from
+  const to = opts.to
+  const cash = { openCash: opts.openCash, closeCash: opts.closeCash }
+  if (!from || !to) {
+    $('#maliWrap').hide()
+    return
+  }
+  const key = `${moment(from).format()}|${moment(to).format()}|${Tawi}`
+  STOCK_MALI_REQ += 1
+  const req = STOCK_MALI_REQ
+
+  if (STOCK_MALI_CACHE[key]) {
+    renderStockMali(STOCK_MALI_CACHE[key], cash)
+    return
+  }
+
+  $('#maliWrap').show()
+  $('#maliTable').html(`<tr><td colspan="4" class="text-muted">${lang('Inahesabu bidhaa...','Calculating goods...')}</td></tr>`)
+  $('#stockFlowTable').html('')
+  $('#stockFlowNote').text('')
+
+  const sendit = getRiportData({
+    data: {
+      tf: moment(from).format(),
+      tt: moment(to).format(),
+      d: Tawi,
+      csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+    },
+    url: '/riport/incoExpndStock'
+  })
+
+  sendit.then(resp => {
+    if (req !== STOCK_MALI_REQ) return
+    if (!resp || !resp.success) {
+      $('#maliWrap').hide()
+      return
+    }
+    STOCK_MALI_CACHE[key] = resp
+    renderStockMali(resp, cash)
+  }).catch(function () {
+    if (req !== STOCK_MALI_REQ) return
+    $('#maliWrap').hide()
+  })
 }
 
 function placedeposit(itms){
@@ -1339,13 +1483,116 @@ allTranxn = () =>{
 }  
 
 
+$('body').on('click', '#PrintIncomeReport', function () {
+    printIncomeExpenditure()
+})
 
+function printIncomeExpenditure() {
+    if (!$('.RiportDataPanel').is(':visible')) {
+        toastr.warning(lang('Fungua ripoti kwanza', 'Open a report period first'), lang('Taarifa', 'Info'), { timeOut: 2500 })
+        return
+    }
 
+    var isChart = Number($('#riportChatRist .riportListChatOn.btn-secondary').data('r') || 0) === 1
+    var dataPanel = document.getElementById('theDataPanel')
+    var hasTable = dataPanel && dataPanel.querySelector('table')
+    if (isChart || !hasTable) {
+        toastr.warning(lang('Chagua Orodha kisha chapisha jedwali', 'Switch to List then print the table'), lang('Taarifa', 'Info'), { timeOut: 3000 })
+        return
+    }
 
- 
+    var dukaName = $('#incomePrintDuka').val() || document.title.replace(/[-|].*$/, '').trim() || ''
+    var printedBy = ($('#incomePrintUser').val() || '').trim()
+    var periodTitle = ($('#riporttitle').text() || '').trim()
+    var printDate = moment ? moment().format('ddd, DD MMM YYYY HH:mm') : new Date().toLocaleString()
+    var branch = ($('#Matawini option:selected').text() || '').trim()
+    var currency = ($('#currencii').val() || '').trim()
+    var netBalance = ($('#netBalance').text() || '').trim()
+    var maliHtml = ''
+    var maliWrap = document.getElementById('maliWrap')
+    if (maliWrap && maliWrap.style.display !== 'none') {
+        var mClone = maliWrap.cloneNode(true)
+        mClone.querySelectorAll('button, canvas').forEach(function (el) { el.remove() })
+        maliHtml = mClone.innerHTML
+    }
 
+    var summaryHtml = ''
+    var summaryWrap = document.getElementById('summary_wrapper')
+    if (summaryWrap) {
+        var sClone = summaryWrap.cloneNode(true)
+        sClone.querySelectorAll('button, canvas').forEach(function (el) { el.remove() })
+        var sTables = sClone.querySelectorAll('table')
+        if (sTables.length) {
+            sTables.forEach(function (t) { summaryHtml += t.outerHTML })
+        }
+    }
 
+    var clone = dataPanel.cloneNode(true)
+    clone.querySelectorAll('canvas').forEach(function (c) { c.remove() })
+    clone.querySelectorAll('button, .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate, .dataTables_filter, .dataTables_length, .dataTables_info, .dataTables_paginate').forEach(function (el) {
+        el.remove()
+    })
+    var tables = clone.querySelectorAll('table')
+    if (!tables.length) {
+        toastr.warning(lang('Hakuna jedwali la kuchapisha', 'No table to print'), lang('Taarifa', 'Info'), { timeOut: 2500 })
+        return
+    }
 
+    var switchLabel = (function () {
+        var active = document.querySelector('#riportSwitch .riportOn.btn-primary')
+        return active ? (active.getAttribute('title') || '') : ''
+    })()
+
+    var html = '<!DOCTYPE html>\n' +
+        '<html>\n<head>\n' +
+        '  <meta charset="UTF-8">\n' +
+        '  <title>' + dukaName + ' — ' + lang('Ripoti ya Mapato na Matumizi', 'Income & Expenditure Report') + '</title>\n' +
+        '  <style>\n' +
+        '    body { font-family: Arial, sans-serif; font-size: 12px; color: #222; margin: 0; padding: 16px; }\n' +
+        '    .print-header { text-align: center; margin-bottom: 10px; }\n' +
+        '    .print-header h2 { margin: 0 0 2px; font-size: 1.2rem; }\n' +
+        '    .print-header h4 { margin: 0 0 4px; font-size: 1rem; color: #444; }\n' +
+        '    .print-meta { font-size: .85rem; color: #555; margin-bottom: 14px; text-align: center; }\n' +
+        '    .section-title { font-size: .95rem; font-weight: bold; margin: 14px 0 4px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }\n' +
+        '    .net-balance { font-weight: 700; margin: 8px 0 14px; }\n' +
+        '    table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }\n' +
+        '    th, td { border: 1px solid #ccc; padding: 4px 7px; }\n' +
+        '    thead th { background: #f0f0f0; font-weight: bold; }\n' +
+        '    tbody tr:nth-child(even) { background: #fafafa; }\n' +
+        '    tfoot tr, .table-active, .weight500, .weight600 { background: #f4f4f4; font-weight: bold; }\n' +
+        '    .text-right { text-align: right !important; }\n' +
+        '    .text-left { text-align: left !important; }\n' +
+        '    .text-center { text-align: center !important; }\n' +
+        '    .text-primary { color: #007bff; }\n' +
+        '    .darkblue { color: #1e279e; }\n' +
+        '    @media print { body { margin: 0; padding: 8px; } }\n' +
+        '  </style>\n' +
+        '</head>\n<body>\n' +
+        '  <div class="print-header">\n' +
+        '    <h2>' + dukaName + '</h2>\n' +
+        '    <h4>' + lang('Ripoti ya Mapato na Matumizi', 'Income & Expenditure Report') + (switchLabel ? ' — ' + switchLabel : '') + '</h4>\n' +
+        (branch ? '    <div class="print-meta"><strong>' + lang('Tawi', 'Branch') + ':</strong> ' + branch + (currency ? ' (' + currency + ')' : '') + '</div>\n' : '') +
+        '  </div>\n' +
+        '  <div class="print-meta">\n' +
+        '    <strong>' + lang('Kipindi', 'Period') + ':</strong> ' + periodTitle + '\n' +
+        (printedBy ? '    &nbsp;&nbsp;<strong>' + lang('Aliyechapisha', 'Printed by') + ':</strong> ' + printedBy : '') +
+        '    &nbsp;&nbsp;<strong>' + lang('Tarehe', 'Date') + ':</strong> ' + printDate + '\n' +
+        '  </div>\n' +
+        (summaryHtml ? '  <div class="section-title">' + lang('Muhtasari', 'Summary') + '</div>\n  ' + summaryHtml + '\n' : '') +
+        (netBalance ? '  <div class="net-balance">' + netBalance + '</div>\n' : '') +
+        (maliHtml ? '  <div class="section-title">' + lang('Mali (pesa na bidhaa)', 'Assets (cash and goods)') + '</div>\n  ' + maliHtml + '\n' : '') +
+        '  <div class="section-title">' + lang('Jedwali', 'Table') + (switchLabel ? ' — ' + switchLabel : '') + '</div>\n  <div>' + clone.innerHTML + '</div>\n' +
+        '  <script>window.onload=function(){window.print();};<\/script>\n' +
+        '</body>\n</html>'
+
+    var win = window.open('', '_blank')
+    if (win) {
+        win.document.write(html)
+        win.document.close()
+    } else {
+        toastr.warning(lang('Ruhusu popup ili kuprint', 'Allow popups to print'), lang('Taarifa', 'Info'), { timeOut: 3000 })
+    }
+}
 
 
 

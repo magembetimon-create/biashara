@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="{% static 'css/sales.css' %}">
   <link rel="stylesheet" href="{% static 'css/waiterpage.css' %}">
   <link rel="stylesheet" href="{% static 'css/barcode_stream.css' %}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+  <link rel="stylesheet" href="{% static 'css/toastr.min.css' %}">
   
   <style>
     body.theme-dark { background: #10182f; color: #e5e9ff; }
@@ -648,7 +648,7 @@
 
 <script src="{% static 'js/bootstrap.min.js' %}"></script>
 <script src="{% static 'js/moment.min.js' %}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="{% static 'js/toastr.min.js' %}"></script>
 <script src="{% static 'js/lugha.js' %}"></script>
 <script src="{% static 'js/loadCells.js' %}"></script>
 <script src="{% static 'js/quagga.js' %}"></script>
@@ -691,6 +691,9 @@
         <div class="tb-scan-session-body">
           <div class="tb-scan-top">
             <div id="qr_reader" class="tb-scan-camera viewport"></div>
+            <p class="tb-scan-focus-hint mb-0" id="tb-scan-focus-hint">
+              {% if useri.langSet == 0 %}Shikilia barcode cm 15–25. Gusa skrini ili kamera ifocus tena — usisongeze sana.{% else %}Hold the barcode 15–25cm away. Tap the screen to refocus — do not get too close.{% endif %}
+            </p>
             <div id="tb-scan-hid-panel" class="tb-scan-hid-panel" hidden>
               <div class="tb-scan-hid-icon" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" fill="currentColor" viewBox="0 0 16 16">

@@ -33,6 +33,7 @@ import time
 import pytz
 import datetime
 import re
+import unicodedata
 from decimal import Decimal, InvalidOperation
 from django.db.models import Sum
 from django.forms.models import model_to_dict
@@ -3438,18 +3439,15 @@ def tafutaPicha(request):
             if scope not in allowed_scopes:
                 scope = 'wilaya'
 
-            # 1. Tengeneza hash ya picha aliyopakia mteja
-            def get_hash_list(img_file, size=16):
-                img = PILImage.open(img_file).convert('L').resize((size, size), PILImage.LANCZOS)
-                pixels = list(img.getdata())
-                avg = sum(pixels) / len(pixels)
-                return [1 if p > avg else 0 for p in pixels]
+            # 1. Soma text/terms kutoka Google Vision
+            uploaded_img.seek(0)
+            vision_data = picha_to_text(uploaded_img)
+            query_terms = vision_terms_set(vision_data)
 
-            upload_hash = get_hash_list(uploaded_img)
-
-            # 2. Pata taarifa za eneo la mtumiaji
+            # 2. Pata taarifa za eneo la mtumiaji + duka lake
             todo = todoFunct(request)
             useri = todo['useri']
+            duka = todo.get('duka')
 
             place_ids = {
                 'wilaya': None,
@@ -3467,10 +3465,8 @@ def tafutaPicha(request):
                         if useri.mtaa.kata.wilaya.mkoa.kanda.nchi:
                             place_ids['nchi'] = useri.mtaa.kata.wilaya.mkoa.kanda.nchi.id
 
-            # img_text=Picha_to_text(uploaded_img)  
-            # print(img_text)               
-
-            stock_qs = bidhaa_stoku.objects.filter(idadi__gt=0)
+            # Picha inaweza kuwa kwenye bidhaa yenye idadi 0; matching ni kwa terms si stock
+            stock_qs = bidhaa_stoku.objects.all()
 
             scope_filters = {
                 'wilaya': 'Interprise__mtaa__kata__wilaya_id',
@@ -3481,125 +3477,146 @@ def tafutaPicha(request):
 
             scope_id = place_ids.get(scope)
             scope_field = scope_filters.get(scope)
+            scope_q = Q()
             if scope_id and scope_field:
-                stock_qs = stock_qs.filter(**{scope_field: scope_id})
+                scope_q |= Q(**{scope_field: scope_id})
+            if duka and getattr(duka, 'id', None):
+                scope_q |= Q(Interprise_id=duka.id)
+            if scope_q:
+                stock_qs = stock_qs.filter(scope_q)
 
-            # Mahali bidhaa zilipo (duka + mtaa/kata/wilaya/mkoa)
-            # na item halisi ya stoku ya kuitumia kwenye displaySelItem
+            pic_fields = (
+                'bidhaa_id',
+                'bidhaa__bidhaa_jina',
+                'picha__picha',
+                'picha__picha_hash',
+            )
             bidhaa_locations = {}
             bidhaa_shop_seen = {}
             bidhaa_primary_stock = {}
 
-            stock_places = stock_qs.values(
-                'id',
-                'bidhaa_id',
-                'Interprise_id',
-                'Interprise__name',
-                'Interprise__mtaa__mtaa',
-                'Interprise__mtaa__kata__kata',
-                'Interprise__mtaa__kata__wilaya__wilaya',
-                'Interprise__mtaa__kata__wilaya__mkoa__mkoa'
-            )
+            def add_stock_rows(rows):
+                for st in rows:
+                    bidhaa_id = st['bidhaa_id']
+                    if not bidhaa_id:
+                        continue
+                    if bidhaa_id not in bidhaa_primary_stock:
+                        bidhaa_primary_stock[bidhaa_id] = {
+                            'bidhaa_stoku_id': st['id'],
+                            'shop_id': st['Interprise_id'],
+                        }
+                    shop_id = st['Interprise_id']
+                    if bidhaa_id not in bidhaa_shop_seen:
+                        bidhaa_shop_seen[bidhaa_id] = set()
+                        bidhaa_locations[bidhaa_id] = []
+                    if shop_id in bidhaa_shop_seen[bidhaa_id]:
+                        continue
+                    bidhaa_shop_seen[bidhaa_id].add(shop_id)
+                    bidhaa_locations[bidhaa_id].append({
+                        'shop': st['Interprise__name'] or '',
+                        'mtaa': st['Interprise__mtaa__mtaa'] or '',
+                        'kata': st['Interprise__mtaa__kata__kata'] or '',
+                        'wilaya': st['Interprise__mtaa__kata__wilaya__wilaya'] or '',
+                        'mkoa': st['Interprise__mtaa__kata__wilaya__mkoa__mkoa'] or '',
+                    })
 
-            for st in stock_places:
-                bidhaa_id = st['bidhaa_id']
-                if not bidhaa_id:
-                    continue
+            def stock_values(qs):
+                return qs.values(
+                    'id',
+                    'bidhaa_id',
+                    'Interprise_id',
+                    'Interprise__name',
+                    'Interprise__mtaa__mtaa',
+                    'Interprise__mtaa__kata__kata',
+                    'Interprise__mtaa__kata__wilaya__wilaya',
+                    'Interprise__mtaa__kata__wilaya__mkoa__mkoa'
+                )
 
-                if bidhaa_id not in bidhaa_primary_stock:
-                    bidhaa_primary_stock[bidhaa_id] = {
-                        'bidhaa_stoku_id': st['id'],
-                        'shop_id': st['Interprise_id'],
-                    }
+            add_stock_rows(stock_values(stock_qs))
 
-                shop_id = st['Interprise_id']
-                if bidhaa_id not in bidhaa_shop_seen:
-                    bidhaa_shop_seen[bidhaa_id] = set()
-                    bidhaa_locations[bidhaa_id] = []
+            def pic_url_from(pic):
+                pic_name = pic.get('picha__picha')
+                if not pic_name:
+                    return ''
+                pic_name = str(pic_name)
+                if pic_name.startswith('http://') or pic_name.startswith('https://'):
+                    return pic_name
+                try:
+                    return default_storage.url(pic_name)
+                except Exception:
+                    return f"/media/{pic_name.lstrip('/')}"
 
-                # Epuka kurudia duka lilelile kwa bidhaa moja
-                if shop_id in bidhaa_shop_seen[bidhaa_id]:
-                    continue
-                bidhaa_shop_seen[bidhaa_id].add(shop_id)
-
-                bidhaa_locations[bidhaa_id].append({
-                    'shop': st['Interprise__name'] or '',
-                    'mtaa': st['Interprise__mtaa__mtaa'] or '',
-                    'kata': st['Interprise__mtaa__kata__kata'] or '',
-                    'wilaya': st['Interprise__mtaa__kata__wilaya__wilaya'] or '',
-                    'mkoa': st['Interprise__mtaa__kata__wilaya__mkoa__mkoa'] or '',
-                })
-
-            bidhaa_ids = stock_qs.values_list('bidhaa_id', flat=True).distinct()
-
-            # 3. Vuta hash zote kutoka DB za bidhaa za eneo husika TU
-            all_pics = picha_bidhaa.objects.filter(
-                bidhaa_id__in=bidhaa_ids
-            ).values(
-                'bidhaa_id', 
-                'bidhaa__bidhaa_jina', 
-                'picha__picha', 
-                'picha__picha_hash'
-            )
-
-            best_matches = {}
-
-            # 4. Linganisha hash ya mteja na hash za kwenye DB
-            for pic in all_pics:
-                stored_hash_str = pic['picha__picha_hash']
-                if not stored_hash_str:
-                    continue
-
-                # Geuza string "0101..." kwenda list [0, 1, 0, 1...]
-                stored_hash = [int(x) for x in stored_hash_str]
-                if not stored_hash:
-                    continue
-                
-                # Piga hesabu ya utofauti (Hamming Distance)
-                distance = sum(a != b for a, b in zip(upload_hash, stored_hash))
-                hash_len = min(len(upload_hash), len(stored_hash))
-                if hash_len == 0:
-                    continue
-                similarity = round((hash_len - distance) / hash_len * 100, 1)
-
-                # Chukua tu bidhaa zinazofanana kwa zaidi ya 50%
-                if similarity > 50:
+            def collect_matches(pics, best_matches):
+                considered = 0
+                with_terms = 0
+                scored = 0
+                closest = None
+                for pic in pics:
+                    considered += 1
+                    stored_hash_str = pic.get('picha__picha_hash')
+                    stored_terms = stored_terms_set(stored_hash_str)
+                    if stored_terms:
+                        with_terms += 1
+                    scored_row = score_vision_match(query_terms, stored_hash_str)
+                    if stored_terms and query_terms:
+                        inter = query_terms & stored_terms
+                        raw_sim = round(200.0 * len(inter) / (len(query_terms) + len(stored_terms)), 1) if inter else 0
+                        if closest is None or raw_sim > closest['similarity']:
+                            closest = {
+                                'bidhaa_id': pic.get('bidhaa_id'),
+                                'jina': pic.get('bidhaa__bidhaa_jina'),
+                                'similarity': raw_sim,
+                                'shared': len(inter),
+                                'stored_count': len(stored_terms),
+                            }
+                    if not scored_row:
+                        continue
+                    scored += 1
                     bidhaa_id = pic['bidhaa_id']
-
-                    pic_name = pic.get('picha__picha')
-                    pic_url = ''
-                    if pic_name:
-                        pic_name = str(pic_name)
-                        if pic_name.startswith('http://') or pic_name.startswith('https://'):
-                            pic_url = pic_name
-                        else:
-                            try:
-                                pic_url = default_storage.url(pic_name)
-                            except Exception:
-                                pic_url = f"/media/{pic_name.lstrip('/')}"
-
                     current = best_matches.get(bidhaa_id)
-                    if (not current) or (similarity > current['similarity']):
+                    if (not current) or (scored_row['similarity'] > current['similarity']):
                         stock_info = bidhaa_primary_stock.get(bidhaa_id, {})
                         best_matches[bidhaa_id] = {
                             'bidhaa_id': bidhaa_id,
                             'bidhaa_stoku_id': stock_info.get('bidhaa_stoku_id'),
                             'shop_id': stock_info.get('shop_id'),
                             'jina': pic['bidhaa__bidhaa_jina'],
-                            'picha': pic_url,
-                            'similarity': similarity,
-                            'distance': distance,
+                            'picha': pic_url_from(pic),
+                            'similarity': scored_row['similarity'],
+                            'distance': scored_row['distance'],
                             'locations': bidhaa_locations.get(bidhaa_id, [])
                         }
+                return {
+                    'pics': considered,
+                    'pics_with_terms': with_terms,
+                    'pics_scored': scored,
+                    'closest': closest,
+                }
+
+            bidhaa_ids = stock_qs.values_list('bidhaa_id', flat=True).distinct()
+            all_pics = picha_bidhaa.objects.filter(bidhaa_id__in=bidhaa_ids).values(*pic_fields)
+            best_matches = {}
+            collect_matches(all_pics, best_matches)
+
+            # Terms zinaweza kuwepo kwenye picha nje ya eneo: tafuta tena kwa terms
+            if query_terms and not best_matches:
+                extra_pics = picha_bidhaa_by_terms(query_terms).values(*pic_fields)
+                collect_matches(extra_pics, best_matches)
+                missing_ids = [bid for bid in best_matches if bid not in bidhaa_primary_stock]
+                if missing_ids:
+                    add_stock_rows(stock_values(bidhaa_stoku.objects.filter(bidhaa_id__in=missing_ids)))
+                    for bid, row in best_matches.items():
+                        stock_info = bidhaa_primary_stock.get(bid, {})
+                        row['bidhaa_stoku_id'] = stock_info.get('bidhaa_stoku_id')
+                        row['shop_id'] = stock_info.get('shop_id')
+                        row['locations'] = bidhaa_locations.get(bid, [])
 
             results = list(best_matches.values())
-
-            # 5. Panga matokeo (Inayofanana zaidi iwe juu)
             results.sort(key=lambda x: x['similarity'], reverse=True)
 
             return JsonResponse({
                 'success': True,
-                'results': results[:20], # Rudisha bidhaa 20 bora
+                'results': results[:20],
                 'count': len(results[:20]),
                 'scope': scope,
             })
@@ -3609,101 +3626,204 @@ def tafutaPicha(request):
     
     return render(request, 'pagenotFound.html')
 
-from google.cloud import vision
 
-# def Picha_to_text(img_file):
-#     """
-#     Inapokea picha, inatuma Google Vision AI (Text + Objects), 
-#     na kurudisha orodha ya maneno yaliyopatikana.
-#     """
-#     if img_file:
-#         try:
-#             from google.cloud import vision
-#             client = vision.ImageAnnotatorClient()
+def is_pixel_hash(value):
+    text = (value or '').strip()
+    return bool(text) and set(text) <= {'0', '1'} and len(text) >= 64
 
-#             # 1. Soma picha kutoka kwenye request
-#             picha = img_file
-#             picha.seek(0)  # Reset file pointer to beginning
-#             content = picha.read()
-#             image = vision.Image(content=content)
 
-#             # 2. Tengeneza maombi ya kutafuta Text na Labels kwa pamoja
-#             features = [
-#                 vision.Feature(type_=vision.Feature.Type.TEXT_DETECTION),
-#                 vision.Feature(type_=vision.Feature.Type.LABEL_DETECTION),
-#             ]
-            
-#             request_ai = vision.AnnotateImageRequest(image=image, features=features)
-            
-#             # 3. Tuma maombi kwa Google
-#             response = client.annotate_image(request_ai)
-            
-#             matokeo = set() # Tunatumia set ili kuzuia maneno yanayojirudia
+def normalize_term(term):
+    import unicodedata as ud
+    text = ud.normalize('NFKD', str(term or ''))
+    text = ''.join(ch for ch in text if not ud.combining(ch))
+    return text.strip().lower()
 
-#             # Maneno yasiyo muhimu / generic tunayotaka kuyaondoa
-#             stop_words = {
-#                 'technology', 'tech', 'design', 'brand', 'product', 'products',
-#                 'image', 'photo', 'picture', 'graphics', 'illustration',
-#                 'object', 'objects', 'symbol', 'icon', 'font', 'text',
-#                 'style', 'modern', 'simple', 'quality', 'new', 'background',
-#                 'label', 'material', 'pattern', 'shape', 'line', 'number'
-#             }
 
-#             # Rangi tunazotaka zisionekane kwenye results
-#             color_words = {
-#                 'blue', 'red', 'white', 'black', 'green', 'yellow', 'orange',
-#                 'purple', 'pink', 'brown', 'grey', 'gray', 'gold', 'silver',
-#                 'beige', 'violet', 'indigo', 'cyan', 'magenta', 'maroon',
-#                 'navy', 'teal', 'olive', 'lime', 'turquoise', 'cream'
-#             }
+def vision_terms_text(vision_data):
+    if not vision_data or not vision_data.get('success'):
+        return ''
+    terms = vision_data.get('terms') or []
+    return ' '.join(str(t).strip().lower() for t in terms if str(t).strip())
 
-#             def clean_terms(words):
-#                 cleaned = []
-#                 for w in words:
-#                     term = re.sub(r'[^a-zA-Z0-9\-]', '', str(w).lower()).strip('-')
 
-#                     # Ondoa terms fupi sana / zisizo na maana / rangi
-#                     if len(term) < 3:
-#                         continue
-#                     if term.isdigit():
-#                         continue
-#                     if term in stop_words or term in color_words:
-#                         continue
+def vision_terms_set(vision_data):
+    return stored_terms_set(vision_terms_text(vision_data))
 
-#                     cleaned.append(term)
-#                 return cleaned
 
-#             # --- A: CHUKUA MAANDISHI (OCR) ---
-#             if response.text_annotations:
-#                 # Tunachukua description nzima, tunaigeuza kuwa ndogo, kisha tunaigawa
-#                 maandishi = response.text_annotations[0].description.lower().split()
-#                 matokeo.update(clean_terms(maandishi))
+def stored_terms_set(value):
+    if is_pixel_hash(value):
+        return set()
+    parts = re.split(r'[\s,;|/]+', str(value or ''))
+    return {normalize_term(t) for t in parts if normalize_term(t)}
 
-#             # --- B: CHUKUA LABELS (OBJECTS) ---
-#             if response.label_annotations:
-#                 for label in response.label_annotations:
-#                     # Tunachukua tu vitu ambavyo AI ina uhakika navyo (Score > 0.7)
-#                     if label.score >= 0.70:
-#                         matokeo.update(clean_terms(label.description.lower().split()))
 
-#             # 4. Angalia kama kuna makosa kutoka kwa Google
-#             if response.error.message:
-#                 {'success': False, 'error': response.error.message}
+def distinctive_vision_terms(query_terms):
+    skip = {'and', 'the', 'of', 'or', 'for', 'with', 'from'}
+    terms = [t for t in query_terms if len(t) >= 4 and t not in skip]
+    return terms[:12] or list(query_terms)[:8]
 
-#             # Rudisha majibu kama list
-#             final_list = list(matokeo)
-            
-#             if final_list:
-                
-#                 return {'success': True, 'results': final_list}
-#             else:
-#                 return {'success': False, 'message': 'Hakuna kilichotambulika'}
 
-#         except Exception as e:
-#             print(f"Error kwenye Vision AI: {e}")
-#             return {'success': False, 'error': str(e)}
-            
-#     return {'success': False, 'message': 'Picha haikupatikana'}
+def picha_bidhaa_by_terms(query_terms):
+    terms = distinctive_vision_terms(query_terms)
+    q = Q()
+    for t in terms:
+        q |= Q(picha__picha_hash__icontains=t)
+    if not q:
+        return picha_bidhaa.objects.none()
+    return picha_bidhaa.objects.filter(q).exclude(
+        Q(picha__picha_hash='') | Q(picha__picha_hash__isnull=True)
+    )
+
+
+def score_vision_match(query_terms, stored_hash_str):
+    stored_terms = stored_terms_set(stored_hash_str)
+    if not query_terms or not stored_terms:
+        return None
+    inter = query_terms & stored_terms
+    if not inter:
+        return None
+    similarity = round(200.0 * len(inter) / (len(query_terms) + len(stored_terms)), 1)
+    if similarity <= 15:
+        return None
+    return {
+        'similarity': similarity,
+        'distance': len(query_terms | stored_terms) - len(inter),
+        'shared': len(inter),
+    }
+
+
+def picha_vision_counts():
+    qs = picha_yenyewe.objects.exclude(picha='').exclude(picha__isnull=True)
+    total = qs.count()
+    pending = 0
+    for photo in qs.only('picha_hash').iterator():
+        stored = (photo.picha_hash or '').strip()
+        if (not stored) or is_pixel_hash(stored):
+            pending += 1
+    return {
+        'total': total,
+        'pending': pending,
+        'updated_already': total - pending,
+    }
+
+
+def backfill_picha_vision_terms(limit=10, force=False, after_id=0):
+    qs = picha_yenyewe.objects.exclude(picha='').exclude(picha__isnull=True).order_by('id')
+    if after_id:
+        qs = qs.filter(id__gt=after_id)
+    updated = 0
+    failed = 0
+    processed = 0
+    errors = []
+    last_id = after_id
+
+    for photo in qs.iterator():
+        stored = (photo.picha_hash or '').strip()
+        if stored and not is_pixel_hash(stored) and not force:
+            continue
+
+        processed += 1
+        last_id = photo.id
+        try:
+            photo.picha.open('rb')
+            vision_data = picha_to_text(photo.picha)
+        except Exception as e:
+            failed += 1
+            errors.append(f'#{photo.id}: {e}')
+            continue
+        finally:
+            try:
+                photo.picha.close()
+            except Exception:
+                pass
+
+        if not vision_data.get('success'):
+            failed += 1
+            errors.append(f"#{photo.id}: {vision_data.get('error')}")
+            continue
+
+        photo.picha_hash = vision_terms_text(vision_data)
+        photo.save(update_fields=['picha_hash'])
+        updated += 1
+
+        if limit and processed >= limit:
+            break
+
+    counts = picha_vision_counts()
+    counts.update({
+        'updated': updated,
+        'failed': failed,
+        'processed': processed,
+        'last_id': last_id,
+        'errors': errors[:8],
+    })
+    return counts
+
+
+def picha_to_text(img_file):
+    """Tuma picha Google Vision (OCR + labels) na rudisha terms zote."""
+    if not img_file:
+        return {'success': False, 'error': 'Picha haikupatikana'}
+
+    key_path = getattr(settings, 'GCP_JSON_KEY_PATH', '')
+    if not key_path or not os.path.exists(key_path):
+        return {'success': False, 'error': 'GCP Vision key haipo (secrets/gcp-vision-key.json)'}
+
+    try:
+        from google.cloud import vision
+        from google.oauth2 import service_account
+
+        creds = service_account.Credentials.from_service_account_file(key_path)
+        client = vision.ImageAnnotatorClient(credentials=creds)
+
+        img_file.seek(0)
+        content = img_file.read()
+        image = vision.Image(content=content)
+        response = client.annotate_image({
+            'image': image,
+            'features': [
+                {'type_': vision.Feature.Type.TEXT_DETECTION},
+                {'type_': vision.Feature.Type.LABEL_DETECTION, 'max_results': 15},
+            ],
+        })
+
+        if response.error.message:
+            return {'success': False, 'error': response.error.message}
+
+        def all_terms(words):
+            cleaned = []
+            for w in words:
+                term = str(w).strip().lower()
+                if term:
+                    cleaned.append(term)
+            return cleaned
+
+        full_text = ''
+        words = []
+        if response.text_annotations:
+            full_text = response.text_annotations[0].description or ''
+            words = all_terms(full_text.split())
+
+        labels = []
+        label_terms = []
+        if response.label_annotations:
+            for label in response.label_annotations:
+                labels.append({
+                    'description': label.description,
+                    'score': round(float(label.score), 3),
+                })
+                label_terms.extend(all_terms(label.description.split()))
+
+        terms = list(dict.fromkeys(words + label_terms))
+        return {
+            'success': True,
+            'text': full_text,
+            'words': words,
+            'labels': labels,
+            'terms': terms,
+        }
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
 
 # place picrure...........................
 
@@ -3712,8 +3832,9 @@ def kuwekaPicha(request):
      if request.method == 'POST' :
        try:
           picha = request.FILES['IMG']
-          picha_hash_value = generate_avg_hash(picha)
-          picha.seek(0) # Rudisha pointer mwanzo baada ya kuisoma kwa PIL
+          vision_data = picha_to_text(picha)
+          picha_hash_value = vision_terms_text(vision_data)
+          picha.seek(0)
           # ----------------
 
 
