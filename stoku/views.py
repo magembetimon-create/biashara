@@ -3635,6 +3635,51 @@ def is_pixel_hash(value):
     return bool(compact) and set(compact) <= {'0', '1'} and len(compact) >= 64
 
 
+def stored_picha_name(photo):
+    name = (getattr(photo.picha, 'name', None) or '').replace('\\', '/').lstrip('/')
+    if name.startswith('http://') or name.startswith('https://'):
+        for marker in ('/media/', '/products/', '/pics/'):
+            idx = name.find(marker)
+            if idx != -1:
+                if marker == '/media/':
+                    return name[idx + len(marker):]
+                return name[idx + 1:]
+        return name.rsplit('/', 1)[-1]
+    if name.startswith('media/'):
+        return name[6:]
+    return name
+
+
+def open_stored_picha(photo):
+    """
+    DEBUG=True  (local): soma kutoka MEDIA_ROOT (disk).
+    DEBUG=False (production): soma kutoka GCP bucket (GCS_STORAGE_INSTANCE).
+    """
+    name = stored_picha_name(photo)
+    if not name:
+        raise FileNotFoundError('Picha haina jina kwenye database')
+
+    if settings.DEBUG:
+        storage = default_storage
+    else:
+        if not hasattr(settings, 'GCS_STORAGE_INSTANCE'):
+            raise FileNotFoundError('GCS_STORAGE_INSTANCE haipo (DEBUG=False inahitaji GCP bucket)')
+        storage = settings.GCS_STORAGE_INSTANCE
+
+    try:
+        return storage.open(name, 'rb')
+    except Exception:
+        base = os.path.basename(name)
+        for alt in (f'products/{base}', f'pics/{base}'):
+            if alt == name:
+                continue
+            try:
+                return storage.open(alt, 'rb')
+            except Exception:
+                continue
+        raise
+
+
 def normalize_term(term):
     import unicodedata as ud
     text = ud.normalize('NFKD', str(term or ''))
@@ -3739,9 +3784,10 @@ def backfill_picha_vision_terms(limit=10, force=False, after_id=0):
 
         processed += 1
         last_id = photo.id
+        fh = None
         try:
-            photo.picha.open('rb')
-            vision_data = picha_to_text(photo.picha)
+            fh = open_stored_picha(photo)
+            vision_data = picha_to_text(fh)
         except Exception as e:
             failed += 1
             err = f'#{photo.id}: {e}'
@@ -3749,10 +3795,11 @@ def backfill_picha_vision_terms(limit=10, force=False, after_id=0):
             errors.append(err)
             continue
         finally:
-            try:
-                photo.picha.close()
-            except Exception:
-                pass
+            if fh is not None:
+                try:
+                    fh.close()
+                except Exception:
+                    pass
 
         if not vision_data.get('success'):
             failed += 1
