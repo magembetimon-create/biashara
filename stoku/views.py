@@ -3629,7 +3629,10 @@ def tafutaPicha(request):
 
 def is_pixel_hash(value):
     text = (value or '').strip()
-    return bool(text) and set(text) <= {'0', '1'} and len(text) >= 64
+    if not text:
+        return False
+    compact = ''.join(ch for ch in text if ch not in ' \t\r\n,[]')
+    return bool(compact) and set(compact) <= {'0', '1'} and len(compact) >= 64
 
 
 def normalize_term(term):
@@ -3714,12 +3717,24 @@ def backfill_picha_vision_terms(limit=10, force=False, after_id=0):
     updated = 0
     failed = 0
     processed = 0
+    skipped_already = 0
     errors = []
     last_id = after_id
+    skip_samples = []
+
+    key_path = getattr(settings, 'GCP_JSON_KEY_PATH', '')
+    key_exists = bool(key_path and os.path.exists(key_path))
+    if not key_exists:
+        msg = f'GCP Vision key haipo: {key_path or "(GCP_JSON_KEY_PATH tupu)"}'
+        print('vision backfill:', msg)
+        errors.append(msg)
 
     for photo in qs.iterator():
         stored = (photo.picha_hash or '').strip()
         if stored and not is_pixel_hash(stored) and not force:
+            skipped_already += 1
+            if len(skip_samples) < 3:
+                skip_samples.append(f'#{photo.id}: {stored[:80]}')
             continue
 
         processed += 1
@@ -3729,7 +3744,9 @@ def backfill_picha_vision_terms(limit=10, force=False, after_id=0):
             vision_data = picha_to_text(photo.picha)
         except Exception as e:
             failed += 1
-            errors.append(f'#{photo.id}: {e}')
+            err = f'#{photo.id}: {e}'
+            print('vision backfill fail:', err)
+            errors.append(err)
             continue
         finally:
             try:
@@ -3739,7 +3756,9 @@ def backfill_picha_vision_terms(limit=10, force=False, after_id=0):
 
         if not vision_data.get('success'):
             failed += 1
-            errors.append(f"#{photo.id}: {vision_data.get('error')}")
+            err = f"#{photo.id}: {vision_data.get('error')}"
+            print('vision backfill fail:', err)
+            errors.append(err)
             continue
 
         photo.picha_hash = vision_terms_text(vision_data)
@@ -3749,14 +3768,29 @@ def backfill_picha_vision_terms(limit=10, force=False, after_id=0):
         if limit and processed >= limit:
             break
 
+    if processed == 0:
+        msg = (
+            f'Hakuna picha iliyochakatwa. skipped_already={skipped_already}, '
+            f'after_id={after_id}, key_exists={key_exists}'
+        )
+        print('vision backfill:', msg)
+        errors.append(msg)
+        if skip_samples:
+            print('vision backfill skip samples:', skip_samples)
+            errors.extend(skip_samples)
+
     counts = picha_vision_counts()
-    counts.update({
+    summary = {
         'updated': updated,
         'failed': failed,
         'processed': processed,
+        'skipped_already': skipped_already,
         'last_id': last_id,
-        'errors': errors[:8],
-    })
+        'key_exists': key_exists,
+        'errors': errors[:12],
+    }
+    print('vision backfill summary:', summary)
+    counts.update(summary)
     return counts
 
 

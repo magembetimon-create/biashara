@@ -79,6 +79,7 @@
           </table>
         </div>
         <p class="smallFont text-muted" id="visionProgress"></p>
+        <pre class="smallFont text-danger mb-0" id="visionErrors" style="white-space:pre-wrap;max-height:160px;overflow:auto"></pre>
         <button type="button" class="btn btn-sm btn-secondary" id="visionBackfillBtn" onclick="runVisionBackfill()">
           {% if useri.langSet == 0 %}Sasisha picha kwa Vision{% else %}Update images with Vision{% endif %}
         </button>
@@ -117,6 +118,7 @@
       var afterId = 0
       $('#visionAffected').text(0)
       $('#visionFailed').text(0)
+      $('#visionErrors').text('')
       $('#visionProgress').text(Number($('#luga').val()) == 0 ? 'Inasoma picha...' : 'Reading images...')
       $('#loadMe').modal('show')
 
@@ -128,7 +130,14 @@
             hideLoading()
             btn.prop('disabled', false)
             $('#visionProgress').text(Number($('#luga').val()) == 0 ? 'Imeshindwa' : 'Failed')
+            var failErrs = (resp && resp.errors) ? resp.errors : [(resp && (resp.msg_swa || resp.msg_eng)) || 'Failed']
+            $('#visionErrors').text(failErrs.join('\n'))
+            console.log('visionPicsBackfill fail:', resp)
             return
+          }
+          if (resp.errors && resp.errors.length) {
+            $('#visionErrors').text(resp.errors.join('\n'))
+            console.log('visionPicsBackfill errors:', resp.errors)
           }
           visionRunTotal += Number(resp.updated || 0)
           failedAcc += Number(resp.failed || 0)

@@ -109,7 +109,23 @@ def visionPicsBackfill(request):
         after_id = 0
     limit = max(1, min(limit, 20))
     force = request.POST.get('force') in ('1', 'true', 'True')
-    data = backfill_picha_vision_terms(limit=limit, force=force, after_id=after_id)
+    try:
+        data = backfill_picha_vision_terms(limit=limit, force=force, after_id=after_id)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print('visionPicsBackfill exception:', e)
+        return JsonResponse({
+            'success': False,
+            'errors': [str(e)],
+            'msg_swa': str(e),
+            'msg_eng': str(e),
+        })
+    errors = data.get('errors') or []
+    if errors:
+        print('visionPicsBackfill errors:', errors)
+    if not data.get('updated') and not data.get('processed'):
+        print('visionPicsBackfill: hakuna picha iliyosasishwa', data)
     data['success'] = True
     return JsonResponse(data)
 
