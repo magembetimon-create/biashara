@@ -6,15 +6,24 @@ function useHtml5CodeScanner() {
 }
 
 $(function() {
+    if (typeof HTMLCanvasElement !== 'undefined' && !HTMLCanvasElement.prototype._tbWillReadPatch) {
+      const origGetContext = HTMLCanvasElement.prototype.getContext
+      HTMLCanvasElement.prototype.getContext = function (type, attrs) {
+        if (type === '2d' && this.closest && this.closest('#interactive, #livestream_scanner')) {
+          attrs = Object.assign({}, attrs || {}, { willReadFrequently: true })
+        }
+        return origGetContext.call(this, type, attrs)
+      }
+      HTMLCanvasElement.prototype._tbWillReadPatch = true
+    }
+
     // Create the QuaggaJS config object for the live stream
     var liveStreamConfig = {
             inputStream: {
                 type : "LiveStream",
                 constraints: {
-                    width: { min: 640, ideal: 1920 },
-                    height: { min: 480, ideal: 1080 },
-                    aspectRatio: {min: 1, max: 100},
-                    facingMode: "environment"
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                 }
             },
             locator: {
@@ -48,23 +57,25 @@ $(function() {
             return
         }
 
-                Quagga.init(
-                    liveStreamConfig, 
-                    function(err) {
-                        if (err) {
-                            $('#livestream_scanner .modal-body .error').html('<div class="alert alert-danger"><strong><i class="fa fa-exclamation-triangle"></i> '+err.name+'</strong>: '+err.message+'</div>');
-                            Quagga.stop();
-                            return;
-                        }
-                        Quagga.start();
-                        if (window.TbScanCamera && typeof TbScanCamera.enhance === 'function') {
-                          setTimeout(function () { TbScanCamera.enhance('interactive') }, 250)
-                        }
+        function startQuaggaWith(config, allowRetry) {
+            Quagga.init(config, function(err) {
+                if (err) {
+                    if (allowRetry) {
+                        const loose = $.extend(true, {}, config)
+                        loose.inputStream.constraints = {}
+                        startQuaggaWith(loose, false)
+                        return
                     }
-                );   
-       
-
-
+                    $('#livestream_scanner .modal-body .error').html('<div class="alert alert-danger"><strong><i class="fa fa-exclamation-triangle"></i> '+err.name+'</strong>: '+err.message+'</div>');
+                    return;
+                }
+                Quagga.start();
+                if (window.TbScanCamera && typeof TbScanCamera.enhance === 'function') {
+                  setTimeout(function () { TbScanCamera.enhance('interactive') }, 250)
+                }
+            });
+        }
+        startQuaggaWith(liveStreamConfig, true);
     });
     
     // Make sure, QuaggaJS draws frames an lines around possible 
@@ -414,6 +425,12 @@ function qr_success(result){
 
   
   function start_can(){
+    if (window.TbBarcode && typeof window.TbBarcode.openFieldCapture === 'function') {
+      window.TbBarcode.openFieldCapture({
+        onCode: function (code) { qr_success(code) }
+      })
+      return
+    }
     if (typeof Html5Qrcode === 'undefined') return
     if ($('#livestream_scanner').hasClass('show')) {
         $('#livestream_scanner').modal('hide')
@@ -454,7 +471,7 @@ function qr_success(result){
   
   };
   const config = html5ProcessConfig()
-  const cameraId = { facingMode: { ideal: 'environment' } }
+  const cameraId = 'environment'
   const rootId = QR_R
 
   function afterStart() {
@@ -468,10 +485,7 @@ function qr_success(result){
   const startPromise = processScanner.start(cameraId, config, qrCodeSuccessCallback)
   if (startPromise && typeof startPromise.then === 'function') {
     startPromise.then(afterStart).catch(function () {
-      const low = Object.assign({}, config, {
-        videoConstraints: { facingMode: cameraId.facingMode }
-      })
-      processScanner.start(cameraId, low, qrCodeSuccessCallback).then(afterStart).catch(function () {
+      processScanner.start(cameraId, { fps: 10, disableFlip: false }, qrCodeSuccessCallback).then(afterStart).catch(function () {
         barcodeProcessRunning = false
         barcodeProcessStopping = false
       })
@@ -511,11 +525,13 @@ function qr_success(result){
   
   
     // Stop once on modal hide (Close buttons use data-dismiss — avoid double stop on click).
-    $('#livestream__qr_scanner')
-      .off('hide.bs.modal.barcodeprocess')
-      .on('hide.bs.modal.barcodeprocess', function () {
-        stop_sanning()
-      });
+    if (!window.TbBarcode) {
+      $('#livestream__qr_scanner')
+        .off('hide.bs.modal.barcodeprocess')
+        .on('hide.bs.modal.barcodeprocess', function () {
+          stop_sanning()
+        })
+    }
 
 
 //Play the scan audio on catchup

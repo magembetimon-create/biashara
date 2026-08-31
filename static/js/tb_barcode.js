@@ -219,6 +219,8 @@
   let html5Scanner = null
   let html5Running = false
   let html5Stopping = false
+  let html5Starting = false
+  let html5Queue = Promise.resolve()
   let sessionOpen = false
   let sessionMode = 'hid' // 'camera' | 'hid'
   let captureMode = null // null | 'session' | 'field'
@@ -418,8 +420,6 @@
     const cb = fieldCaptureCallback
     fieldCaptureCallback = null
     captureMode = null
-    stopCamera()
-    // Close after a tick so the last-code UI can paint briefly.
     $(MODAL_SEL).modal('hide')
     if (typeof cb === 'function') {
       try { cb(code) } catch (err) { console.error(err) }
@@ -530,30 +530,52 @@
     }
   }
 
-  function stopCamera() {
+  function delayMs(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms) })
+  }
+
+  function scannerIsLive(scanner) {
+    try {
+      return !!(scanner && typeof scanner.getState === 'function' && scanner.getState() === 2)
+    } catch (err) {
+      return false
+    }
+  }
+
+  function safeStopScanner(scanner) {
+    return Promise.resolve().then(function () {
+      if (!scanner || typeof scanner.stop !== 'function') return
+      if (typeof scanner.getState === 'function' && scanner.getState() !== 2) return
+      return scanner.stop()
+    }).catch(function () {})
+  }
+
+  function stopHtml5Instance() {
     scanCamCleanup()
     if (window.Quagga && typeof Quagga.stop === 'function') {
       try { Quagga.stop() } catch (err) {}
     }
-    if (!html5Scanner || typeof html5Scanner.stop !== 'function') return
-    if (!html5Running || html5Stopping) return
-
-    html5Stopping = true
+    if (html5Stopping) return Promise.resolve()
+    const scanner = html5Scanner
+    const shouldStop = html5Running || scannerIsLive(scanner)
     html5Running = false
-    try {
-      const stopped = html5Scanner.stop()
-      if (stopped && typeof stopped.then === 'function') {
-        stopped.then(function () {
-          html5Stopping = false
-        }).catch(function () {
-          html5Stopping = false
-        })
-      } else {
-        html5Stopping = false
-      }
-    } catch (err) {
+    html5Starting = false
+    if (!shouldStop) {
       html5Stopping = false
+      return Promise.resolve()
     }
+    html5Stopping = true
+    return safeStopScanner(scanner).then(function () {
+      html5Stopping = false
+    })
+  }
+
+  function stopCamera() {
+    html5Queue = html5Queue.then(stopHtml5Instance).catch(function () {
+      html5Running = false
+      html5Stopping = false
+    })
+    return html5Queue
   }
 
   function bindQuagga() {
@@ -565,12 +587,9 @@
     if (typeof Html5Qrcode === 'undefined') {
       setSessionMode('hid')
       $('#qr_error').text(lang('Kamera haipatikani, tumia barcode scanner', 'Camera unavailable — use a barcode scanner'))
-      return
+      return html5Queue
     }
-
-    if (!html5Scanner) {
-      html5Scanner = new Html5Qrcode('qr_reader')
-    }
+    if (html5Starting || html5Running) return html5Queue
 
     function onDecoded(decodedText) {
       if (captureMode === 'field') {
@@ -580,86 +599,52 @@
       dispatchScan(decodedText, 'camera')
     }
 
-    function startWithConfig(cameraId, config) {
-      return html5Scanner.start(cameraId, config, onDecoded, function () {})
-    }
-
-    function launchScanner() {
-      const backCam = { facingMode: { ideal: 'environment' } }
-      const qrConfig = scanCamQrConfig()
-
+    html5Starting = true
+    html5Queue = html5Queue.then(function () {
       if (html5Running) return
-
       setSessionMode('camera')
-      startWithConfig(backCam, qrConfig).then(function () {
-        html5Running = true
-        html5Stopping = false
-        setSessionMode('camera')
-        $('#qr_error').text('')
-        scanCamEnhance('qr_reader')
-      }).catch(function () {
-        const simple = { fps: 10, disableFlip: false }
-        startWithConfig(backCam, simple).then(function () {
-          html5Running = true
-          html5Stopping = false
-          setSessionMode('camera')
-          $('#qr_error').text('')
-          scanCamEnhance('qr_reader')
-        }).catch(function (err) {
-          Html5Qrcode.getCameras().then(function (devices) {
-            if (!devices || !devices.length) {
-              html5Running = false
-              html5Stopping = false
-              setSessionMode('hid')
-              $('#qr_error').text(String(err))
-              return
-            }
-            startWithConfig(devices[devices.length - 1].id, simple).then(function () {
-              html5Running = true
-              html5Stopping = false
-              setSessionMode('camera')
-              $('#qr_error').text('')
-              scanCamEnhance('qr_reader')
-            }).catch(function (err2) {
-              html5Running = false
-              html5Stopping = false
-              setSessionMode('hid')
-              $('#qr_error').text(String(err2))
-            })
-          }).catch(function (err2) {
-            html5Running = false
-            html5Stopping = false
-            setSessionMode('hid')
-            $('#qr_error').text(String(err2))
+      if (!document.getElementById('qr_reader')) {
+        html5Starting = false
+        return
+      }
+      if (!html5Scanner) html5Scanner = new Html5Qrcode('qr_reader')
+      const scanCfg = { fps: 10, disableFlip: false, experimentalFeatures: { useBarCodeDetectorIfSupported: true } }
+      function startCam(cameraId) {
+        return html5Scanner.start(cameraId, scanCfg, onDecoded, function () {})
+      }
+      const preferBack = typeof ISMOBILE !== 'undefined' && ISMOBILE
+      return startCam(preferBack ? 'environment' : 'user')
+        .catch(function () {
+          return startCam('user')
+        })
+        .catch(function () {
+          return startCam('environment')
+        })
+        .catch(function () {
+          return Html5Qrcode.getCameras().then(function (devices) {
+            if (!devices || !devices.length) throw new Error('No camera')
+            return startCam(devices[0].id)
           })
         })
-      })
-    }
-
-    if (html5Running) {
-      html5Stopping = true
+    }).then(function () {
+      if (!html5Starting) return
+      html5Starting = false
+      html5Running = true
+      html5Stopping = false
+      setSessionMode('camera')
+      $('#qr_error').text('')
+      scanCamEnhance('qr_reader')
+    }).catch(function (err) {
+      html5Scanner = null
+      html5Starting = false
       html5Running = false
-      try {
-        const stopped = html5Scanner.stop()
-        if (stopped && typeof stopped.then === 'function') {
-          stopped.then(function () {
-            html5Stopping = false
-            launchScanner()
-          }).catch(function () {
-            html5Stopping = false
-            launchScanner()
-          })
-        } else {
-          html5Stopping = false
-          launchScanner()
-        }
-      } catch (err) {
-        html5Stopping = false
-        launchScanner()
+      html5Stopping = false
+      const msg = String(err && err.message ? err.message : err)
+      if (msg.indexOf('already under transition') === -1 && msg.indexOf('Cannot stop') === -1) {
+        $('#qr_error').text(msg)
       }
-    } else {
-      launchScanner()
-    }
+    })
+    return html5Queue
   }
 
   function ensureListeners() {
@@ -703,16 +688,8 @@
     sessionOpen = true
     clearSession()
     setUiForCaptureMode('session')
-    setSessionMode('hid')
+    setSessionMode('camera')
     $(MODAL_SEL).modal({ backdrop: 'static', keyboard: false, show: true })
-
-    if (typeof Html5Qrcode !== 'undefined') {
-      startHtml5Camera()
-    } else {
-      setSessionMode('hid')
-    }
-
-    setTimeout(focusCapture, 300)
   }
 
   /**
@@ -728,16 +705,8 @@
     sessionOpen = true
     clearSession()
     setUiForCaptureMode('field')
-    setSessionMode('hid')
+    setSessionMode('camera')
     $(MODAL_SEL).modal({ backdrop: true, keyboard: true, show: true })
-
-    if (typeof Html5Qrcode !== 'undefined') {
-      startHtml5Camera()
-    } else {
-      setSessionMode('hid')
-    }
-
-    setTimeout(focusCapture, 300)
   }
 
   function closeSessionCleanup() {
@@ -761,6 +730,11 @@
       })
       .off('shown.bs.modal.tbbarcode')
       .on('shown.bs.modal.tbbarcode', function () {
+        if (sessionOpen && typeof Html5Qrcode !== 'undefined') {
+          startHtml5Camera()
+        } else {
+          setSessionMode('hid')
+        }
         setTimeout(focusCapture, 200)
       })
   }
