@@ -609,21 +609,42 @@
       }
       if (!html5Scanner) html5Scanner = new Html5Qrcode('qr_reader')
       const scanCfg = { fps: 10, disableFlip: false, experimentalFeatures: { useBarCodeDetectorIfSupported: true } }
-      function startCam(cameraId) {
-        return html5Scanner.start(cameraId, scanCfg, onDecoded, function () {})
+      function startCam(cameraConfig) {
+        return html5Scanner.start(cameraConfig, scanCfg, onDecoded, function () {})
       }
-      const preferBack = typeof ISMOBILE !== 'undefined' && ISMOBILE
-      return startCam(preferBack ? 'environment' : 'user')
-        .catch(function () {
-          return startCam('user')
+      const preferBack = typeof ISMOBILE === 'undefined' || !!ISMOBILE
+      function isFrontLabel(label) {
+        return /front|user|face|selfie|facing front|mbele/i.test(label || '')
+      }
+      function isBackLabel(label) {
+        return /back|rear|environment|world|behind|posterior|facing back|nyuma/i.test(label || '')
+      }
+      function pickCameraId(devices) {
+        if (!devices || !devices.length) return null
+        if (!preferBack) {
+          const front = devices.find(function (d) { return isFrontLabel(d.label) })
+          return (front || devices[0]).id
+        }
+        const labeledBack = devices.find(function (d) {
+          return isBackLabel(d.label) && !isFrontLabel(d.label)
         })
+        if (labeledBack) return labeledBack.id
+        const notFront = devices.filter(function (d) { return !isFrontLabel(d.label) })
+        if (notFront.length) return notFront[notFront.length - 1].id
+        return devices[devices.length - 1].id
+      }
+      const facing = preferBack
+        ? { facingMode: { exact: 'environment' } }
+        : { facingMode: 'user' }
+      return startCam(facing)
         .catch(function () {
-          return startCam('environment')
+          return startCam({ facingMode: preferBack ? 'environment' : 'user' })
         })
         .catch(function () {
           return Html5Qrcode.getCameras().then(function (devices) {
-            if (!devices || !devices.length) throw new Error('No camera')
-            return startCam(devices[0].id)
+            const id = pickCameraId(devices)
+            if (!id) throw new Error('No camera')
+            return startCam({ deviceId: { exact: id } })
           })
         })
     }).then(function () {

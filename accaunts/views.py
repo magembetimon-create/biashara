@@ -5241,6 +5241,7 @@ def traceChange(request):
         # bidhaa.objects.filter(pk=22).delete()
 
     except:
+      traceback.print_exc()
       data = {
       "online":"error",
       "updated":False,
