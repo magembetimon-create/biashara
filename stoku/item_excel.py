@@ -489,31 +489,76 @@ def _empty_master_export_row():
     return row
 
 
-def _image_basename_for_color(color_id):
-    pic = picha_bidhaa.objects.filter(color_produ_id=color_id).select_related('picha').first()
+def _qty_parts_for_export(qty, uwiano):
+    qty = float(qty or 0)
+    idadi_jum = int(qty // uwiano) if uwiano > 1 else 0
+    idadi_rej = int(qty % uwiano) if uwiano > 1 else int(qty)
+    return idadi_jum, idadi_rej
+
+
+def _pic_basename(pic):
     if not pic or not pic.picha or not pic.picha.picha:
         return ''
     return os.path.basename(str(pic.picha.picha.name))
 
 
-def _export_variant_lines(stoku_id, intp_id, uwiano):
+def _prefetch_export_variant_data(stoku_ids, intp_id, bidhaa_ids):
+    """Load colors, sizes, and image names for an export in a few queries."""
+    colors_by_stoku = {}
+    color_ids = []
+    if stoku_ids:
+        for pc in produ_colored.objects.filter(
+            bidhaa_id__in=stoku_ids,
+            Interprise_id=intp_id,
+            color__colored=True,
+        ).select_related('color').order_by('id'):
+            colors_by_stoku.setdefault(pc.bidhaa_id, []).append(pc)
+            color_ids.append(pc.color_id)
+
+    sizes_by_stoku_color = {}
+    if stoku_ids:
+        for ps in produ_size.objects.filter(
+            bidhaa_id__in=stoku_ids,
+            Interprise_id=intp_id,
+        ).select_related('sized').order_by('id'):
+            if not ps.sized_id:
+                continue
+            key = (ps.bidhaa_id, ps.sized.color_id)
+            sizes_by_stoku_color.setdefault(key, []).append(ps)
+
+    pic_by_color = {}
+    if color_ids:
+        for pic in picha_bidhaa.objects.filter(
+            color_produ_id__in=color_ids,
+        ).select_related('picha').order_by('id'):
+            if pic.color_produ_id in pic_by_color:
+                continue
+            name = _pic_basename(pic)
+            if name:
+                pic_by_color[pic.color_produ_id] = name
+
+    pic_by_bidhaa = {}
+    if bidhaa_ids:
+        for pic in picha_bidhaa.objects.filter(
+            bidhaa_id__in=bidhaa_ids,
+        ).select_related('picha').order_by('id'):
+            if pic.bidhaa_id in pic_by_bidhaa:
+                continue
+            name = _pic_basename(pic)
+            if name:
+                pic_by_bidhaa[pic.bidhaa_id] = name
+
+    return colors_by_stoku, sizes_by_stoku_color, pic_by_color, pic_by_bidhaa
+
+
+def _export_variant_lines_cached(stoku_id, bidhaa_id, uwiano, colors_by_stoku, sizes_by_stoku_color, pic_by_color, pic_by_bidhaa):
     lines = []
-    colors = produ_colored.objects.filter(
-        bidhaa_id=stoku_id,
-        Interprise_id=intp_id,
-        color__colored=True,
-    ).select_related('color').order_by('id')
-    for pc in colors:
-        size_qs = produ_size.objects.filter(
-            bidhaa_id=stoku_id,
-            sized__color=pc.color,
-        ).select_related('sized').order_by('id')
-        pic_name = _image_basename_for_color(pc.color_id)
-        if size_qs.exists():
-            for ps in size_qs:
-                qty = float(ps.idadi or 0)
-                idadi_jum = int(qty // uwiano) if uwiano > 1 else 0
-                idadi_rej = int(qty % uwiano) if uwiano > 1 else int(qty)
+    for pc in colors_by_stoku.get(stoku_id) or []:
+        pic_name = pic_by_color.get(pc.color_id, '')
+        size_rows = sizes_by_stoku_color.get((stoku_id, pc.color_id)) or []
+        if size_rows:
+            for ps in size_rows:
+                idadi_jum, idadi_rej = _qty_parts_for_export(ps.idadi, uwiano)
                 lines.append({
                     'rangi_model': pc.color.color_name or '',
                     'size': ps.sized.size if ps.sized else '',
@@ -523,9 +568,7 @@ def _export_variant_lines(stoku_id, intp_id, uwiano):
                 })
                 pic_name = ''
         else:
-            qty = float(pc.idadi or 0)
-            idadi_jum = int(qty // uwiano) if uwiano > 1 else 0
-            idadi_rej = int(qty % uwiano) if uwiano > 1 else int(qty)
+            idadi_jum, idadi_rej = _qty_parts_for_export(pc.idadi, uwiano)
             lines.append({
                 'rangi_model': pc.color.color_name or '',
                 'size': '',
@@ -534,17 +577,15 @@ def _export_variant_lines(stoku_id, intp_id, uwiano):
                 'picha': pic_name,
             })
     if not lines:
-        stoku = bidhaa_stoku.objects.filter(pk=stoku_id).select_related('bidhaa').first()
-        if stoku:
-            pic = picha_bidhaa.objects.filter(bidhaa_id=stoku.bidhaa_id).select_related('picha').first()
-            if pic and pic.picha and pic.picha.picha:
-                lines.append({
-                    'rangi_model': '',
-                    'size': '',
-                    'idadi_jumla': '',
-                    'idadi_reja': '',
-                    'picha': os.path.basename(str(pic.picha.picha.name)),
-                })
+        pic_name = pic_by_bidhaa.get(bidhaa_id, '')
+        if pic_name:
+            lines.append({
+                'rangi_model': '',
+                'size': '',
+                'idadi_jumla': '',
+                'idadi_reja': '',
+                'picha': pic_name,
+            })
     return lines
 
 
@@ -553,9 +594,9 @@ def fetch_export_rows(intp, filters=None, lang_swa=True):
     filters = filters or {}
     itm_qs = bidhaa_stoku.objects.filter(
         Q(idadi__gt=0) | Q(inapacha=False) | Q(produced__notsure=True),
-        Interprise__owner=intp.owner.id,
+        Interprise_id=intp.id,
+        service=False,
     ).annotate(
-        st=F('Interprise'),
         group_name=F('bidhaa__bidhaa_aina__mahi__mahitaji'),
         kampuni=F('bidhaa__kampuni__id'),
         aina=F('bidhaa__bidhaa_aina__id'),
@@ -570,7 +611,20 @@ def fetch_export_rows(intp, filters=None, lang_swa=True):
         uwiano=F('bidhaa__idadi_jum'),
         vipimoJum=F('bidhaa__vipimo_jum'),
         colorAttr=F('bidhaa__colorAttr'),
-    ).filter(st=intp.id)
+    )
+
+    flt = int(filters.get('f') or 0)
+    bflt = int(filters.get('bf') or 0)
+    supflt = int(filters.get('sup') or 0)
+    uncat = str(filters.get('uncat') or '') in ('1', 'true', 'True')
+    if uncat:
+        itm_qs = itm_qs.filter(bidhaa__bidhaa_aina__isnull=True)
+    if flt > 0:
+        itm_qs = itm_qs.filter(bidhaa__bidhaa_aina_id=flt)
+    if bflt > 0:
+        itm_qs = itm_qs.filter(bidhaa__kampuni_id=bflt)
+    if supflt > 0:
+        itm_qs = itm_qs.filter(msambaji_id=supflt)
 
     records = list(itm_qs.values(
         'id', 'idadi', 'Bei_kununua', 'Bei_kuuza', 'Bei_kuuza_jum', 'sirio', 'service',
@@ -579,35 +633,33 @@ def fetch_export_rows(intp, filters=None, lang_swa=True):
         'colorAttr',
     ))
 
-    flt = int(filters.get('f') or 0)
-    bflt = int(filters.get('bf') or 0)
-    supflt = int(filters.get('sup') or 0)
-    uncat = str(filters.get('uncat') or '') in ('1', 'true', 'True')
-
-    export_rows = []
+    kept = []
     seen = set()
     for rec in records:
         if not ((float(rec.get('Bei_kuuza') or 0) > 0) or not rec.get('material')):
-            continue
-        if rec.get('service'):
-            continue
-        if uncat and rec.get('aina'):
-            continue
-        if flt > 0 and int(rec.get('aina') or 0) != flt:
-            continue
-        if bflt > 0 and int(rec.get('kampuni') or 0) != bflt:
-            continue
-        if supflt > 0 and int(rec.get('msambaji_id') or 0) != supflt:
             continue
         key = rec.get('bidhaa_id')
         if key in seen:
             continue
         seen.add(key)
-        base = stoku_record_to_export_row(rec, lang_swa=lang_swa)
-        if not _cell_str(base.get('jina_la_bidhaa')):
+        if not _cell_str(rec.get('bidhaaN')):
             continue
+        kept.append(rec)
+
+    stoku_ids = [rec['id'] for rec in kept]
+    bidhaa_ids = [rec['bidhaa_id'] for rec in kept if rec.get('bidhaa_id')]
+    colors_by_stoku, sizes_by_stoku_color, pic_by_color, pic_by_bidhaa = _prefetch_export_variant_data(
+        stoku_ids, intp.id, bidhaa_ids,
+    )
+
+    export_rows = []
+    for rec in kept:
+        base = stoku_record_to_export_row(rec, lang_swa=lang_swa)
         uwiano = max(int(float(rec.get('uwiano') or 1)), 1)
-        variant_lines = _export_variant_lines(rec.get('id'), intp.id, uwiano)
+        variant_lines = _export_variant_lines_cached(
+            rec.get('id'), rec.get('bidhaa_id'), uwiano,
+            colors_by_stoku, sizes_by_stoku_color, pic_by_color, pic_by_bidhaa,
+        )
         if not variant_lines:
             export_rows.append(base)
             continue
