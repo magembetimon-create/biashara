@@ -75,7 +75,7 @@
   width: 100% !important;
   height: auto;
   max-height: min(52vh, 520px);
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .tb-scan-focus-hint {

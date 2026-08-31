@@ -337,9 +337,13 @@ function qr_success(result){
       return TbScanCamera.qrConfig()
     }
     const cfg = {
-      fps: 24,
+      fps: 10,
       disableFlip: false,
-      experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+      experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+      qrbox: function (viewW, viewH) {
+        const size = Math.max(220, Math.floor(Math.min(viewW, viewH) * 0.92))
+        return { width: size, height: size }
+      }
     }
     if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
       const F = Html5QrcodeSupportedFormats
@@ -378,7 +382,15 @@ function qr_success(result){
        const pos = Number($(this).data('pos')) || 0
        $('#livestream_scanner').data('pos',pos)
 
-       SCANCELL = Number($(this).data('shop')) || 0 //this is to detect if the scan is from customer position 
+       SCANCELL = Number($(this).data('shop')) || 0
+       if (window.TbBarcode && typeof window.TbBarcode.openFieldCapture === 'function') {
+         window.TbBarcode.openFieldCapture({
+           onCode: function (code) {
+             qr_success(code)
+           }
+         })
+         return
+       }
        start_can()
   });
 
@@ -442,9 +454,7 @@ function qr_success(result){
   
   };
   const config = html5ProcessConfig()
-  const cameraId = dt.len > 1
-    ? { facingMode: { ideal: 'environment' } }
-    : { facingMode: { ideal: 'user' } }
+  const cameraId = { facingMode: { ideal: 'environment' } }
   const rootId = QR_R
 
   function afterStart() {

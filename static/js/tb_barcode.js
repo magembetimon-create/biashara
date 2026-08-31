@@ -12,6 +12,7 @@
   const SCAN_GAP_MS = 60
   let scanCamCleanups = []
   let scanCamZoom = 1
+  let scanCamZoomUserSet = false
   let scanCamTrackLive = null
 
   function scanCamCleanup() {
@@ -58,7 +59,9 @@
         advanced.focusDistance = fmin + (fmax - fmin) * 0.1
       }
     }
-    const zoom = scanCamPickZoom(caps, opts.zoom != null ? opts.zoom : scanCamZoom)
+    const zoom = (opts.skipZoom || (!scanCamZoomUserSet && (opts.zoom == null || Number(opts.zoom) <= 1)))
+      ? null
+      : scanCamPickZoom(caps, opts.zoom != null ? opts.zoom : scanCamZoom)
     if (zoom != null) {
       scanCamZoom = zoom
       advanced.zoom = zoom
@@ -106,6 +109,7 @@
   function scanCamEnhance(rootId) {
     scanCamCleanup()
     scanCamZoom = 1
+    scanCamZoomUserSet = false
     const attach = function () {
       const found = scanCamTrack(rootId)
       if (!found.video || !found.track) return false
@@ -113,14 +117,17 @@
       scanCamTrackLive = found.track
       found.video.setAttribute('playsinline', 'true')
       found.video.setAttribute('webkit-playsinline', 'true')
+      found.video.setAttribute('muted', 'true')
       scanCamEnsureZoomUi(root)
-      scanCamApplyFocus(found.track, { zoom: scanCamZoom, poi: { x: 0.5, y: 0.5 } })
+      scanCamApplyFocus(found.track, { skipZoom: true, poi: { x: 0.5, y: 0.5 } })
       scanCamUpdateZoomLabel(root)
 
       const onTap = function (ev) {
+        if (ev.target && ev.target.closest && ev.target.closest('.tb-scan-zoom-bar')) return
         ev.preventDefault()
         scanCamApplyFocus(found.track, {
           macro: true,
+          skipZoom: !scanCamZoomUserSet,
           zoom: scanCamZoom,
           poi: scanCamPoiFromEvent(found.video, ev)
         })
@@ -138,20 +145,16 @@
         const next = scanCamPickZoom(caps, scanCamZoom + Number(btn.getAttribute('data-zoom-delta') || 0))
         if (next == null) return
         scanCamZoom = next
+        scanCamZoomUserSet = true
         scanCamApplyFocus(found.track, { zoom: scanCamZoom, poi: { x: 0.5, y: 0.5 } })
         scanCamUpdateZoomLabel(root)
       }
       if (root) root.addEventListener('click', onZoomClick)
 
-      const timer = setInterval(function () {
-        scanCamApplyFocus(found.track, { zoom: scanCamZoom, poi: { x: 0.5, y: 0.5 } })
-      }, 2800)
-
       scanCamCleanups.push(function () {
         found.video.removeEventListener('click', onTap)
         found.video.removeEventListener('touchend', onTap)
         if (root) root.removeEventListener('click', onZoomClick)
-        clearInterval(timer)
       })
       return true
     }
@@ -165,15 +168,14 @@
 
   function scanCamQrConfig() {
     const cfg = {
-      fps: 24,
+      fps: 10,
       disableFlip: false,
       experimentalFeatures: {
         useBarCodeDetectorIfSupported: true
       },
-      videoConstraints: {
-        facingMode: { ideal: 'environment' },
-        width: { min: 640, ideal: 1920 },
-        height: { min: 480, ideal: 1080 }
+      qrbox: function (viewW, viewH) {
+        const size = Math.max(220, Math.floor(Math.min(viewW, viewH) * 0.92))
+        return { width: size, height: size }
       }
     }
     if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
@@ -570,8 +572,6 @@
       html5Scanner = new Html5Qrcode('qr_reader')
     }
 
-    const qrConfig = scanCamQrConfig()
-
     function onDecoded(decodedText) {
       if (captureMode === 'field') {
         finishFieldCapture(decodedText)
@@ -585,45 +585,54 @@
     }
 
     function launchScanner() {
-      Html5Qrcode.getCameras().then(function (devices) {
-        if (!devices || !devices.length) {
-          setSessionMode('hid')
-          $('#qr_error').text(lang('Kamera haipatikani, tumia barcode scanner', 'Camera unavailable — use a barcode scanner'))
-          return
-        }
-        const cameraId = devices.length > 1
-          ? { facingMode: 'environment' }
-          : devices[0].id
+      const backCam = { facingMode: { ideal: 'environment' } }
+      const qrConfig = scanCamQrConfig()
 
-        if (html5Running) return
+      if (html5Running) return
 
+      setSessionMode('camera')
+      startWithConfig(backCam, qrConfig).then(function () {
+        html5Running = true
+        html5Stopping = false
         setSessionMode('camera')
-        startWithConfig(cameraId, qrConfig).then(function () {
+        $('#qr_error').text('')
+        scanCamEnhance('qr_reader')
+      }).catch(function () {
+        const simple = { fps: 10, disableFlip: false }
+        startWithConfig(backCam, simple).then(function () {
           html5Running = true
           html5Stopping = false
           setSessionMode('camera')
           $('#qr_error').text('')
           scanCamEnhance('qr_reader')
-        }).catch(function () {
-          const low = Object.assign({}, qrConfig, {
-            videoConstraints: { facingMode: { ideal: 'environment' } }
-          })
-          startWithConfig(cameraId, low).then(function () {
-            html5Running = true
-            html5Stopping = false
-            setSessionMode('camera')
-            $('#qr_error').text('')
-            scanCamEnhance('qr_reader')
-          }).catch(function (err) {
+        }).catch(function (err) {
+          Html5Qrcode.getCameras().then(function (devices) {
+            if (!devices || !devices.length) {
+              html5Running = false
+              html5Stopping = false
+              setSessionMode('hid')
+              $('#qr_error').text(String(err))
+              return
+            }
+            startWithConfig(devices[devices.length - 1].id, simple).then(function () {
+              html5Running = true
+              html5Stopping = false
+              setSessionMode('camera')
+              $('#qr_error').text('')
+              scanCamEnhance('qr_reader')
+            }).catch(function (err2) {
+              html5Running = false
+              html5Stopping = false
+              setSessionMode('hid')
+              $('#qr_error').text(String(err2))
+            })
+          }).catch(function (err2) {
             html5Running = false
             html5Stopping = false
             setSessionMode('hid')
-            $('#qr_error').text(String(err))
+            $('#qr_error').text(String(err2))
           })
         })
-      }).catch(function (err) {
-        setSessionMode('hid')
-        $('#qr_error').text(String(err))
       })
     }
 
