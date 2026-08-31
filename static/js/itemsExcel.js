@@ -86,6 +86,53 @@
       });
   }
 
+  function appendImportResults(results) {
+    var $results = $('#items-excel-results');
+    if (!results || !results.length) return;
+    results.forEach(function (r) {
+      if (r.skipped) return;
+      var ok = r.success;
+      var msg = lang(r.message_swa, r.message_eng);
+      $results.append(
+        '<div class="smallFont ' + (ok ? 'text-success' : 'text-danger') + '">' +
+        lang('Mstari', 'Row') + ' ' + r.row + ': ' + msg + '</div>'
+      );
+    });
+  }
+
+  function setImportProgress(processed, total, created, failed) {
+    var $wrap = $('#items-excel-progress-wrap');
+    if (!$wrap.length) return;
+    $wrap.show();
+    var pct = total ? Math.min(100, Math.round((processed / total) * 100)) : 0;
+    $('#items-excel-progress-bar').css('width', pct + '%');
+    $('#items-excel-progress-label').text(
+      lang('Inaimport bidhaa...', 'Importing items...')
+    );
+    $('#items-excel-progress-count').text(
+      processed + ' / ' + total +
+      ' (' + lang('imeongezwa', 'added') + ' ' + created +
+      ', ' + lang('hazikufanikiwa', 'failed') + ' ' + failed + ')'
+    );
+  }
+
+  function finishImport(created, failed) {
+    $('#loadMe').modal('hide');
+    $('#items-excel-import-btn').prop('disabled', false);
+    var msgSwa = 'Imeongezwa ' + created + ' bidhaa, ' + failed + ' hazikufanikiwa';
+    var msgEng = 'Added ' + created + ' items, ' + failed + ' failed';
+    if (created > 0) {
+      toastr.success(lang(msgSwa, msgEng), lang('Imefanikiwa', 'Success'));
+      if (typeof getStokuData === 'function') {
+        getStokuData('/stoku/getItemsAll');
+      }
+    } else if (failed === 0) {
+      toastr.info(lang(msgSwa, msgEng), lang('Taarifa', 'Notice'));
+    } else {
+      toastr.error(lang(msgSwa, msgEng), lang('Haikufanikiwa', 'Error'));
+    }
+  }
+
   function submitImport() {
     if (!pendingImportFile) {
       toastr.warning(lang('Chagua faili la Excel kwanza', 'Choose an Excel file first'));
@@ -93,46 +140,58 @@
     }
     var $btn = $('#items-excel-import-btn');
     $btn.prop('disabled', true);
+    $('#items-excel-results').empty();
+    $('#items-excel-progress-wrap').show();
+    setImportProgress(0, Number($('#items-excel-row-count').text()) || 0, 0, 0);
     $('#loadMe').modal('show');
 
-    var form = new FormData();
-    form.append('file', pendingImportFile);
-    form.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val());
+    var batchSize = 50;
+    var createdTotal = 0;
+    var failedTotal = 0;
 
-    fetch('/stoku/itemsExcelImportFile', {
-      method: 'POST',
-      headers: { 'X-CSRFToken': $('input[name=csrfmiddlewaretoken]').val() },
-      body: form
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        $('#loadMe').modal('hide');
-        $btn.prop('disabled', false);
-        var $results = $('#items-excel-results');
-        $results.empty();
-        if (data.results && data.results.length) {
-          data.results.forEach(function (r) {
-            if (r.skipped) return;
-            var ok = r.success;
-            var msg = lang(r.message_swa, r.message_eng);
-            $results.append(
-              '<div class="smallFont ' + (ok ? 'text-success' : 'text-danger') + '">' +
-              lang('Mstari', 'Row') + ' ' + r.row + ': ' + msg + '</div>'
-            );
-          });
+    function postBatch(offset) {
+      var form = new FormData();
+      form.append('file', pendingImportFile);
+      form.append('offset', String(offset));
+      form.append('limit', String(batchSize));
+      form.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val());
+
+      return fetch('/stoku/itemsExcelImportFile', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': $('input[name=csrfmiddlewaretoken]').val() },
+        body: form
+      }).then(function (r) {
+        if (!r.ok) throw new Error('import-http');
+        return r.json();
+      }).then(function (data) {
+        if (typeof data.total !== 'number') {
+          throw new Error(data.message_eng || 'import');
         }
-        if (data.success || data.created > 0) {
-          toastr.success(lang(data.message_swa, data.message_eng), lang('Imefanikiwa', 'Success'));
-          getStokuData('/stoku/getItemsAll');
-        } else {
-          toastr.error(lang(data.message_swa, data.message_eng), lang('Haikufanikiwa', 'Error'));
+        createdTotal += Number(data.created || 0);
+        failedTotal += Number(data.failed || 0);
+        appendImportResults(data.results || []);
+        var total = Number(data.total || 0);
+        var processed = Number(data.processed || offset);
+        setImportProgress(processed, total, createdTotal, failedTotal);
+        if (data.done) {
+          finishImport(createdTotal, failedTotal);
+          return;
         }
-      })
-      .catch(function () {
-        $('#loadMe').modal('hide');
-        $btn.prop('disabled', false);
-        toastr.error(lang('Imeshindikana kuimport', 'Import failed'), lang('Hitilafu', 'Error'));
+        return postBatch(processed);
       });
+    }
+
+    postBatch(0).catch(function () {
+      $('#loadMe').modal('hide');
+      $btn.prop('disabled', false);
+      toastr.error(
+        lang(
+          'Import imesimama. Bidhaa ' + createdTotal + ' zimeshaingia — jaribu tena ili kuendelea na zilizobaki.',
+          'Import stopped. ' + createdTotal + ' items were added — try again to continue with the rest.'
+        ),
+        lang('Hitilafu', 'Error')
+      );
+    });
   }
 
   function loadAiPrompt(showToast) {
@@ -269,6 +328,8 @@
       var file = this.files && this.files[0];
       pendingImportFile = null;
       $('#items-excel-results').empty();
+      $('#items-excel-progress-wrap').hide();
+      $('#items-excel-progress-bar').css('width', '0%');
       if (!file) {
         renderPreview([], 0);
         return;
@@ -291,6 +352,8 @@
       $('#items-excel-preview-body').empty();
       $('#items-excel-row-count').text('0');
       $('#items-excel-results').empty();
+      $('#items-excel-progress-wrap').hide();
+      $('#items-excel-progress-bar').css('width', '0%');
     });
   }
 

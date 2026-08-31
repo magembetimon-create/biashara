@@ -1396,7 +1396,10 @@ def import_item_row(duka, intp, user, row, row_num=0, image_map=None):
 
 
 def bulk_import_items(duka, intp, user, rows, image_map=None):
-    groups = group_import_rows(rows)
+    return bulk_import_groups(duka, intp, user, group_import_rows(rows), image_map=image_map)
+
+
+def bulk_import_groups(duka, intp, user, groups, image_map=None):
     results = []
     created = 0
     failed = 0

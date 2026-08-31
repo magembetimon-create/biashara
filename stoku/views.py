@@ -47,6 +47,7 @@ from django.core.cache import cache
 from accaunts.todos import Todos,updateOrder,shift_operation_block_payload
 from .item_excel import (
     bulk_import_items,
+    bulk_import_groups,
     build_ai_items_format_prompt,
     build_items_xlsx_bytes,
     extract_import_bundle,
@@ -2325,18 +2326,30 @@ def itemsExcelImportFile(request):
                 'row_count': len(rows),
                 'preview': preview,
             })
-        if len(groups) > 500:
-            return JsonResponse({
-                'success': False,
-                'message_swa': 'Upeo ni bidhaa 500 kwa wakati mmoja',
-                'message_eng': 'Maximum 500 items per import',
-            })
-        summary = bulk_import_items(duka, intp, request.user, rows, image_map=image_map)
+        try:
+            offset = max(0, int(request.POST.get('offset') or 0))
+        except (TypeError, ValueError):
+            offset = 0
+        try:
+            limit = int(request.POST.get('limit') or 50)
+        except (TypeError, ValueError):
+            limit = 50
+        limit = max(1, min(limit, 50))
+        total = len(groups)
+        batch = groups[offset:offset + limit]
+        summary = bulk_import_groups(duka, intp, request.user, batch, image_map=image_map)
+        processed = offset + len(batch)
+        done = processed >= total
         return JsonResponse({
-            'success': summary['created'] > 0,
+            'success': summary['created'] > 0 or (done and summary['failed'] == 0),
             'created': summary['created'],
             'failed': summary['failed'],
             'results': summary['results'],
+            'offset': offset,
+            'limit': limit,
+            'processed': processed,
+            'total': total,
+            'done': done,
             'message_swa': f"Imeongezwa {summary['created']} bidhaa, {summary['failed']} hazikufanikiwa",
             'message_eng': f"Added {summary['created']} items, {summary['failed']} failed",
         })
