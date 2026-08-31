@@ -99,7 +99,7 @@ $('body').on('click','.search_By_Bar',function (e) {
         // });
 
         $('#livestream_scanner').data('pos',pos)
-        if(ISMOBILE){
+        if(typeof useHtml5CodeScanner === 'function' ? useHtml5CodeScanner() : ISMOBILE){
           start_can()
         }else{
           $('#livestream_scanner').modal('show')

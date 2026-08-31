@@ -45,7 +45,38 @@ function start(){
 
   //record audio................................................//
   
-  class VoiceRecorder {
+  function pickRecorderMime() {
+  const types = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/aac',
+    'audio/ogg;codecs=opus',
+    'audio/ogg',
+  ];
+  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) {
+    return '';
+  }
+  for (let i = 0; i < types.length; i++) {
+    if (MediaRecorder.isTypeSupported(types[i])) {
+      return types[i];
+    }
+  }
+  return '';
+}
+
+function extForMime(mime) {
+  const m = String(mime || '').toLowerCase();
+  if (m.indexOf('mp4') >= 0 || m.indexOf('aac') >= 0 || m.indexOf('m4a') >= 0) {
+    return 'm4a';
+  }
+  if (m.indexOf('ogg') >= 0) {
+    return 'ogg';
+  }
+  return 'webm';
+}
+
+class VoiceRecorder {
     constructor() {
      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       //  console.log("getUserMedia supported")
@@ -75,16 +106,35 @@ function start(){
   
     handleSuccess(stream) {
       this.stream = stream
+      this.chunks = []
       this.stream.oninactive = () => {
        // console.log("Stream ended!")
       };
-      this.recorderRef.srcObject = this.stream
-      this.mediaRecorder = new MediaRecorder(this.stream)
-     // console.log(this.mediaRecorder)
+      if (this.recorderRef) {
+        this.recorderRef.srcObject = this.stream
+        this.recorderRef.muted = true
+        this.recorderRef.setAttribute('playsinline', 'true')
+        const playP = this.recorderRef.play()
+        if (playP && playP.catch) {
+          playP.catch(function () {})
+        }
+      }
+      const mime = pickRecorderMime()
+      try {
+        this.mediaRecorder = mime
+          ? new MediaRecorder(this.stream, { mimeType: mime })
+          : new MediaRecorder(this.stream)
+      } catch (err) {
+        this.mediaRecorder = new MediaRecorder(this.stream)
+      }
+      this.chosenMime = (this.mediaRecorder && this.mediaRecorder.mimeType) || mime || 'audio/webm'
       this.mediaRecorder.ondataavailable = this.onMediaRecorderDataAvailable.bind(this)
       this.mediaRecorder.onstop = this.onMediaRecorderStop.bind(this)
-      this.recorderRef.play()
-      this.mediaRecorder.start()
+      try {
+        this.mediaRecorder.start(250)
+      } catch (err) {
+        this.mediaRecorder.start()
+      }
     }
   
     handleError(error) {
@@ -93,12 +143,26 @@ function start(){
 
     }
     
-    onMediaRecorderDataAvailable(e) { this.chunks.push(e.data) }
+    onMediaRecorderDataAvailable(e) {
+      if (e && e.data && e.data.size > 0) {
+        this.chunks.push(e.data)
+      }
+    }
     
     onMediaRecorderStop(e) { 
-        const blob = new Blob(this.chunks, { 'type': 'audio/ogg; codecs=opus' })
+        const mime = this.chosenMime || 'audio/webm'
+        const blob = new Blob(this.chunks, { type: mime })
+        if (!blob.size) {
+          toastr.error(lang('Sauti haijarekodiwa. Jaribu tena.','Audio was not recorded. Try again.'), lang('Haijafanikiwa','Error'), {timeOut: 2500})
+          this.chunks = []
+          if (this.stream) {
+            this.stream.getAudioTracks().forEach(track => track.stop())
+            this.stream = null
+          }
+          return
+        }
         const audioURL = window.URL.createObjectURL(blob),
-        filename =  new Date().toISOString() + '.ogg'
+        filename =  new Date().toISOString() + '.' + extForMime(mime)
        
        $('#the_textingField').append(`
        <li class="text-right py-1 my-2">
@@ -178,12 +242,18 @@ function start(){
       if (!this.isRecording) return
       this.isRecording = false
      // this.startRef.innerHTML = 'Record'
-      this.recorderRef.pause()
-      this.mediaRecorder.stop()
-
-
-
-  }
+      if (this.recorderRef) {
+        this.recorderRef.pause()
+      }
+      if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+        try {
+          this.mediaRecorder.requestData()
+        } catch (err) {}
+        this.mediaRecorder.stop()
+      } else if (this.mediaRecorder && this.mediaRecorder.state === 'paused') {
+        this.mediaRecorder.stop()
+      }
+    }
   
 }
   

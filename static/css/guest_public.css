@@ -283,13 +283,13 @@ body.guest-public-page {
     margin-bottom: 8px;
   }
 
-  .guest-item-page .qty-controls {
+  .guest-item-page .qty-controls:not(.item-qty-panel__grid) {
     flex-wrap: wrap;
     gap: 8px;
     max-width: 100%;
   }
 
-  .guest-item-page .qty-controls > div {
+  .guest-item-page .qty-controls:not(.item-qty-panel__grid) > div {
     flex: 1 1 auto;
     min-width: 0;
   }

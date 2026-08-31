@@ -59,8 +59,7 @@ const psPartyCell = (item) => {
 const psDescriptionCell = (item) => {
   if (item.maelezo) return item.maelezo;
   if (item.direction === 'in') {
-    if (item.mauzo) return lang('Malipo ya mauzo', 'Sales payment');
-    if (item.order) return lang('Malipo ya order', 'Order payment');
+    if (item.mauzo || item.order || item.from_waiter_payments_id) return lang('Malipo ya mauzo', 'Sales payment');
     if (item.kuhamisha) return lang('Uhamisho wa pesa (mapokezi)', 'Transfer in');
     if (item.huduma) return lang('Malipo ya huduma', 'Service payment');
     if (item.mtaji) return lang('Mtaji', 'Capital');

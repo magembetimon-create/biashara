@@ -4335,11 +4335,15 @@ def waiter_summary_clear_waiter_payments(request):
                   cash_in.maelezo = f'Orders total: {total_orders_amount}'
                   cash_in.by = cheo
                   cash_in.order = True
+                  cash_in.mauzo = True
                   cash_in.from_waiter_payments = clear_rec
                   cash_in.save()
 
             # Allocate paid amount through waiter orders in sequence.
             paidAmo = float(clear_amount or 0)
+            cleared_codes = []
+            has_service = False
+            has_goods = False
             for od in selected_qs:
                   order_amount = float(od.amount or 0)
                   if paidAmo <= 0:
@@ -4370,10 +4374,28 @@ def waiter_summary_clear_waiter_payments(request):
                   clearOda.By = None if clearOda.amount > clearOda.ilolipwa else cheo
                   clearOda.save()
 
-
+                  if order_paid > 0:
+                        code = str(od.code or '').strip() or str(od.Invo_no or od.id)
+                        cleared_codes.append(code)
+                        if od.service:
+                              has_service = True
+                        else:
+                              has_goods = True
 
                   if paidAmo <= 0 and order_paid < order_amount:
                         break
+
+            invo_note = ', '.join(f'INVO-{c}' for c in cleared_codes[:40])
+            if len(cleared_codes) > 40:
+                  invo_note += '...'
+            maelezo = f'Orders total: {total_orders_amount}'
+            if invo_note:
+                  maelezo = f'{maelezo}. {invo_note}'
+            wekaCash.objects.filter(from_waiter_payments=clear_rec).update(
+                  maelezo=maelezo[:500],
+                  mauzo=bool(has_goods or not has_service),
+                  huduma=bool(has_service and not has_goods),
+            )
 
       return JsonResponse({
             'success': True,
@@ -7346,7 +7368,18 @@ def _cs_unpaid_invoices_qs(todo, customer_id):
     )
 
 
-def _apply_mauzo_payment(cheo, bill, wekakwa, paid_amo, pay_d, desc):
+def _invo_code_tag(bill):
+    return f"INVO-{str(getattr(bill, 'code', None) or bill.id).strip()}"
+
+
+def _clip_weka_note(text, limit=500):
+    text = ' '.join(str(text or '').split())
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - 3)] + '...'
+
+
+def _apply_mauzo_payment(cheo, bill, wekakwa, paid_amo, pay_d, desc, extra=''):
     paid_amo = Decimal(str(paid_amo))
     if paid_amo <= 0:
         return False
@@ -7361,18 +7394,33 @@ def _apply_mauzo_payment(cheo, bill, wekakwa, paid_amo, pay_d, desc):
     bill.ilolipwa = ilobaki + paid_amo
     bill.save()
 
+    is_service = bool(bill.service)
+    note_parts = []
+    for part in (desc, extra, _invo_code_tag(bill)):
+        p = str(part or '').strip()
+        if p and p not in note_parts:
+            note_parts.append(p)
+    try:
+        cust_obj = bill.customer_id
+        cust = str(cust_obj.jina or '').strip() if cust_obj else ''
+    except Exception:
+        cust = ''
+    if cust and cust not in note_parts:
+        note_parts.append(cust)
+
     beforweka = wekakwa.Amount
     weka = wekaCash()
     weka.Akaunt = wekakwa
     weka.Amount = paid_amo
     weka.before = beforweka
     weka.After = beforweka + paid_amo
-    weka.kutoka = 'Goods Sales'
-    weka.maelezo = desc or ''
+    weka.kutoka = 'Service Income' if is_service else 'Goods Sales'
+    weka.maelezo = _clip_weka_note('. '.join(note_parts))
     weka.tarehe = datetime.datetime.now(tz=timezone.utc)
     weka.by = cheo
     weka.Interprise = bill.Interprise
-    weka.mauzo = True
+    weka.mauzo = not is_service
+    weka.huduma = is_service
     weka.invo = bill
     if not wekakwa.onesha:
         weka.usiri = True
@@ -7427,7 +7475,7 @@ def customer_sales_record_payment(request):
             return JsonResponse(shift_operation_block_payload(todo), status=403)
         cheo = todo['cheo']
         customer_id = int(request.POST.get('cust', 0) or 0)
-        wateja.objects.get(pk=customer_id, Interprise__owner=todo['duka'].owner.id)
+        mteja = wateja.objects.get(pk=customer_id, Interprise__owner=todo['duka'].owner.id)
         ac_id = int(request.POST.get('invo_ac_id', 0) or 0)
         paid_amo = Decimal(str(request.POST.get('invo_amo', 0) or 0))
         pay_d = request.POST.get('pay_d')
@@ -7465,6 +7513,24 @@ def customer_sales_record_payment(request):
             })
 
         allocations = []
+        preview = paid_amo
+        paid_codes = []
+        for bill in invoices:
+            if preview <= 0:
+                break
+            owed = bill.amount - bill.ilolipwa
+            pay_this = min(preview, owed)
+            if pay_this > 0:
+                paid_codes.append(str(bill.code))
+                preview -= pay_this
+
+        mkupuo = ''
+        if len(paid_codes) > 1:
+            mkupuo = 'Mkupuo: ' + ', '.join(f'INVO-{c}' for c in paid_codes)
+            cust_name = str(mteja.jina or '').strip()
+            if cust_name:
+                mkupuo += f' ({cust_name})'
+
         with transaction.atomic():
             remaining = paid_amo
             for bill in invoices:
@@ -7472,7 +7538,7 @@ def customer_sales_record_payment(request):
                     break
                 owed = bill.amount - bill.ilolipwa
                 pay_this = min(remaining, owed)
-                if not _apply_mauzo_payment(cheo, bill, wekakwa, pay_this, pay_d, desc):
+                if not _apply_mauzo_payment(cheo, bill, wekakwa, pay_this, pay_d, desc, extra=mkupuo):
                     raise ValueError('payment_failed')
                 remaining -= pay_this
                 allocations.append({

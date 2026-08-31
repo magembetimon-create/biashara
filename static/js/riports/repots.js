@@ -1669,3 +1669,47 @@ function removeSaved(val){
   }
 }
 
+// Click the whole report row to open the same "more info" as the Action button.
+if (!$('#report-row-click-style').length) {
+  $('head').append(`<style id="report-row-click-style">
+    #PeriodTable tbody tr { cursor: pointer; }
+    #PeriodTable tbody tr:hover { background-color: rgba(0, 106, 228, 0.07); }
+    .RiportDataPanel tbody tr:has(.checkInvo),
+    .RiportDataPanel tbody tr:has(.viewInvo),
+    .RiportDataPanel tbody tr:has(.viewReturn),
+    #theDataPanel tbody tr:has(.checkInvo),
+    #theDataPanel tbody tr:has(.viewInvo),
+    #theDataPanel tbody tr:has(.viewReturn) { cursor: pointer; }
+  </style>`)
+}
+
+function isReportRowInteractiveTarget(e) {
+  return $(e.target).closest('button, a, input, label, select, textarea, .custom-control').length > 0
+}
+
+function triggerSingleReportAction($row, selector) {
+  const $btns = $row.find(selector)
+  if ($btns.length !== 1) return false
+  $btns.trigger('click')
+  return true
+}
+
+$('body').on('click', '#riportData tr', function (e) {
+  if (isReportRowInteractiveTarget(e)) return
+  const $btn = $(this).find('.showDtBtn').first()
+  if ($btn.length) $btn.trigger('click')
+})
+
+$('body').on('click', '.RiportDataPanel table tbody tr', function (e) {
+  if (isReportRowInteractiveTarget(e)) return
+  const $row = $(this)
+  const $all = $row.find('.checkInvo[data-all="1"]')
+  if ($all.length === 1) {
+    $all.trigger('click')
+    return
+  }
+  if (triggerSingleReportAction($row, '.checkInvo')) return
+  triggerSingleReportAction($row, '.viewInvo, .viewReturn')
+})
+
+

@@ -222,19 +222,13 @@ function AddRow(){
 
 }
 
-function openPeriodReportRow(val) {
-    placeDt(val)
-    $('.PeriodTableData').hide()
-    $('.RiportDataPanel').fadeIn(100)
-}
-
 $('body').on('click','.showDtBtn',function(){
-    openPeriodReportRow(Number($(this).data('val')) || 0)
-})
-
-$('body').on('click', '#riportData tr.periodReportRow', function (e) {
-    if ($(e.target).closest('button, a').length) return
-    openPeriodReportRow(Number($(this).data('val')) || 0)
+    let val = Number($(this).data('val')) || 0
+    if ($(this).data('val') !== undefined) {
+        placeDt(val)
+    }
+    $($(this).data('hide')).hide()
+    $($(this).data('show')).fadeIn(100)
 })
 
 

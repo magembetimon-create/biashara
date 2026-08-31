@@ -2350,16 +2350,366 @@ def itemsExcelImportFile(request):
 
 
 # USAJIRI KUTOKA MATAWI MENGINE............................//
+def _allowed_other_branch_perms(todo):
+    duka = todo.get('duka')
+    useri = todo.get('useri')
+    if not duka or not useri or not getattr(duka, 'owner_id', None):
+        return InterprisePermissions.objects.none()
+    return (
+        InterprisePermissions.objects.filter(
+            user=useri,
+            Allow=True,
+            Interprise__owner=duka.owner,
+        )
+        .exclude(Interprise_id=duka.id)
+        .select_related('Interprise')
+        .order_by('Interprise__name')
+    )
+
+
+def _rangi_qty_total(rangi, uwiano):
+    total = 0.0
+    for r in rangi or []:
+        sized = r.get('sized') or []
+        if sized:
+            for s in sized:
+                total += (uwiano * float(s.get('idadi_jum') or 0)) + float(s.get('idadi_rej') or 0)
+        else:
+            total += (uwiano * float(r.get('idadi_jum') or 0)) + float(r.get('idadi_rej') or 0)
+    return total
+
+
+def _apply_rangi_to_stock(duka, src, produStock, reg, rangi):
+    if not rangi:
+        return
+    uwiano = float(src.bidhaa.idadi_jum or 1)
+    for r in rangi:
+        rang = color_produ()
+        if color_produ.objects.filter(pk=r.get('val') or 0, bidhaa=src.bidhaa).exists():
+            rang = color_produ.objects.filter(pk=r.get('val'), bidhaa=src.bidhaa).last()
+        else:
+            rang.color_code = r.get('color_code') or '#ffffff'
+            rang.color_name = r.get('color_name') or ''
+            rang.nick_name = r.get('other_name') or ''
+            rang.colored = True
+            rang.bidhaa = src.bidhaa
+            rang.save()
+
+        color = produ_colored()
+        color.bidhaa = produStock
+        color.color = rang
+        color.Interprise = duka
+        color.idadi = (uwiano * float(r.get('idadi_jum') or 0)) + float(r.get('idadi_rej') or 0)
+        color.owner = duka.owner.user
+        color.save()
+
+        regC = ColorChange()
+        regC.change = reg
+        regC.color = color
+        regC.qty = float(color.idadi)
+        regC.save()
+
+        sized = r.get('sized') or []
+        if sized:
+            idd = 0
+            for s in sized:
+                if sizes.objects.filter(pk=s.get('val') or 0, color=rang.id).exists():
+                    szs = sizes.objects.filter(pk=s.get('val'), color=rang.id).last()
+                else:
+                    szs = sizes()
+                    szs.size = s.get('size') or ''
+                    szs.color = rang
+                    szs.save()
+                szd = produ_size()
+                szd.bidhaa = produStock
+                szd.sized = szs
+                szd.Interprise = duka
+                szd.idadi = (uwiano * float(s.get('idadi_jum') or 0)) + float(s.get('idadi_rej') or 0)
+                szd.owner = duka.owner.user
+                szd.save()
+                regS = SizeChange()
+                regS.size = szd
+                regS.color = regC
+                regS.qty = float(szd.idadi)
+                regS.save()
+                idd += float(szd.idadi)
+            color.idadi = idd
+            color.save()
+            regC.qty = idd
+            regC.save()
+
+
+def _register_item_from_other_stock(todo, request, stock_id, sup, idj, idr, rangi=None):
+    duka = todo['duka']
+    try:
+        stock_id = int(stock_id)
+        sup = int(sup or 0)
+        idj = float(idj or 0)
+        idr = float(idr or 0)
+    except (TypeError, ValueError):
+        return {'ok': False, 'swa': 'Taarifa si sahihi', 'eng': 'Invalid item data'}
+    if not isinstance(rangi, list):
+        rangi = []
+
+    item = bidhaa_stoku.objects.filter(pk=stock_id, Interprise__owner=duka.owner.id)
+    if not item.exists():
+        return {
+            'ok': False,
+            'swa': 'Bidhaa haijatambulika kwenye tawi lolote',
+            'eng': 'The item selected was not found in any owner branch',
+        }
+    src = item.last()
+    if bidhaa_stoku.objects.filter(bidhaa=src.bidhaa, Interprise=duka.id).exists():
+        return {
+            'ok': False,
+            'already': True,
+            'swa': f'{src.bidhaa.bidhaa_jina} tayari imeshasajiriwa',
+            'eng': f'{src.bidhaa.bidhaa_jina} is already registered',
+        }
+
+    uwiano = float(src.bidhaa.idadi_jum or 1)
+    qty = (uwiano * idj) + idr
+    if rangi:
+        qty = _rangi_qty_total(rangi, uwiano)
+
+    produStock = bidhaa_stoku()
+    produStock.bidhaa = src.bidhaa
+    produStock.idadi = qty
+    produStock.Interprise = duka
+    if wasambazaji.objects.filter(pk=sup, owner=duka.owner.user.id).exists():
+        produStock.msambaji = wasambazaji.objects.get(pk=sup)
+    else:
+        produStock.msambaji = src.msambaji
+    produStock.Bei_kununua = src.Bei_kununua
+    produStock.Bei_kuuza = src.Bei_kuuza
+    produStock.Bei_kuuza_jum = src.Bei_kuuza_jum
+    produStock.op_name = UserExtend.objects.get(user=request.user)
+    produStock.expire_date = src.expire_date
+    produStock.sirio = src.sirio
+    produStock.tanguliziwa = 0
+    produStock.save()
+
+    updateOrder({'itm': produStock, 'request': request, 'out': False})
+
+    adjno = 1
+    if stokAdjustment.objects.filter(Interprise=duka.id).exists():
+        adjno = stokAdjustment.objects.filter(Interprise=duka.id).last().code_num
+    if adjno < 10:
+        adj_str = '000' + str(adjno)
+    elif adjno < 100:
+        adj_str = '00' + str(adjno)
+    elif adjno < 1000:
+        adj_str = '0' + str(adjno)
+    else:
+        adj_str = str(adjno)
+
+    adj = stokAdjustment()
+    adj.Interprise = duka
+    adj.date = datetime.datetime.now(tz=timezone.utc)
+    adj.Recodeddate = date.today()
+    adj.code = adj_str
+    adj.code_num = adjno + 1
+    adj.Na = todo['cheo']
+    adj.registered = True
+    if produStock.idadi > 0:
+        adj.Ongezwa = True
+    adj.save()
+
+    reg = productChangeRecord()
+    reg.prod = produStock
+    reg.qty = produStock.idadi
+    reg.adjst = adj
+    reg.save()
+    _apply_rangi_to_stock(duka, src, produStock, reg, rangi)
+    return {'ok': True, 'name': src.bidhaa.bidhaa_jina}
+
+
 @login_required(login_url='login')
 def UsajiriTokaMatawi(request):
     todo = todoFunct(request)
-    if todo['matawi'] > 0:
-        if not todo['duka'].Interprise:
-            return redirect('/userdash')
-        else:  
-            return render(request,'usajiri_toka_nje.html',todo)
-    else:
-         return redirect('bidhaapanel')
+    duka = todo.get('duka')
+    if not duka or not duka.Interprise:
+        return redirect('/userdash')
+    branches = _allowed_other_branch_perms(todo)
+    suppliers = wasambazaji.objects.filter(owner=duka.owner.user.id).order_by('jina')
+    todo.update({
+        'allowed_branches': branches,
+        'branch_suppliers': suppliers,
+    })
+    return render(request, 'usajiri_toka_nje.html', todo)
+
+
+@login_required(login_url='login')
+def searchOtherBranchItems(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'items': []})
+    try:
+        todo = todoFunct(request)
+        duka = todo.get('duka')
+        if not duka or not duka.Interprise:
+            return JsonResponse({'success': False, 'items': []})
+
+        allowed = {
+            p.Interprise_id: p.Interprise.name
+            for p in _allowed_other_branch_perms(todo)
+        }
+        try:
+            branch_ids = [int(x) for x in json.loads(request.POST.get('branches', '[]') or '[]')]
+        except (TypeError, ValueError, json.JSONDecodeError):
+            branch_ids = []
+        branch_ids = [i for i in branch_ids if i in allowed]
+        if not branch_ids:
+            return JsonResponse({
+                'success': False,
+                'items': [],
+                'message_swa': 'Chagua tawi angalau moja',
+                'message_eng': 'Select at least one branch',
+            })
+
+        q = str(request.POST.get('q', '') or '').strip()
+        local_ids = bidhaa_stoku.objects.filter(Interprise=duka).values_list('bidhaa_id', flat=True)
+        qs = (
+            bidhaa_stoku.objects.filter(
+                Interprise_id__in=branch_ids,
+                Interprise__owner=duka.owner,
+            )
+            .exclude(bidhaa_id__in=local_ids)
+            .select_related('bidhaa', 'Interprise', 'msambaji', 'bidhaa__bidhaa_aina', 'bidhaa__kampuni')
+            .order_by('bidhaa__bidhaa_jina', '-pk')
+        )
+        if q:
+            qs = qs.filter(
+                Q(bidhaa__bidhaa_jina__icontains=q)
+                | Q(sirio__icontains=q)
+                | Q(bidhaa__namba__icontains=q)
+            )
+
+        seen = set()
+        rows = []
+        bidhaa_ids = []
+        for rec in qs.iterator():
+            if rec.bidhaa_id in seen:
+                continue
+            seen.add(rec.bidhaa_id)
+            bidhaa_ids.append(rec.bidhaa_id)
+            uwiano = float(rec.bidhaa.idadi_jum or 1)
+            rows.append({
+                'id': rec.id,
+                'bidhaa_id': rec.bidhaa_id,
+                'bidhaaN': rec.bidhaa.bidhaa_jina,
+                'ainaN': rec.bidhaa.bidhaa_aina.aina if rec.bidhaa.bidhaa_aina_id else '',
+                'brand': rec.bidhaa.kampuni.kampuni_jina if rec.bidhaa.kampuni_id else '',
+                'stName': rec.Interprise.name,
+                'st': rec.Interprise_id,
+                'msambaji_id': rec.msambaji_id or 0,
+                'vendor': rec.msambaji.jina if rec.msambaji_id else '',
+                'vipimo': rec.bidhaa.vipimo or '',
+                'vipimoJum': rec.bidhaa.vipimo_jum or '',
+                'uwiano': uwiano,
+                'colorAttr': rec.bidhaa.colorAttr or '',
+                'sirio': rec.sirio or '',
+                'Bei_kuuza': float(rec.Bei_kuuza or 0),
+                'img': '',
+                'colors': [],
+            })
+
+        pics = {}
+        colors_by_bidhaa = {}
+        if bidhaa_ids:
+            for im in picha_bidhaa.objects.filter(bidhaa_id__in=bidhaa_ids).select_related('picha'):
+                if im.bidhaa_id in pics:
+                    continue
+                try:
+                    pics[im.bidhaa_id] = im.picha.picha.url
+                except Exception:
+                    pics[im.bidhaa_id] = ''
+            size_map = {}
+            for sz in sizes.objects.filter(color__bidhaa_id__in=bidhaa_ids).order_by('pk'):
+                size_map.setdefault(sz.color_id, []).append({'id': sz.id, 'size': sz.size})
+            for cl in color_produ.objects.filter(bidhaa_id__in=bidhaa_ids, colored=True).order_by('pk'):
+                colors_by_bidhaa.setdefault(cl.bidhaa_id, []).append({
+                    'id': cl.id,
+                    'color_code': cl.color_code or '#ffffff',
+                    'color_name': cl.color_name or '',
+                    'nick_name': cl.nick_name or '',
+                    'sizes': size_map.get(cl.id, []),
+                })
+        for row in rows:
+            row['img'] = pics.get(row['bidhaa_id'], '')
+            row['colors'] = colors_by_bidhaa.get(row['bidhaa_id'], [])
+
+        return JsonResponse({'success': True, 'items': rows})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'items': [],
+            'message_swa': 'Hitilafu wakati wa kutafuta',
+            'message_eng': 'Search failed',
+        })
+
+
+@login_required(login_url='login')
+def registeredItemsRegisterBulk(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    try:
+        todo = todoFunct(request)
+        duka = todo.get('duka')
+        if not duka or not duka.Interprise:
+            return JsonResponse({'success': False})
+        try:
+            payload = json.loads(request.POST.get('items', '[]') or '[]')
+        except (TypeError, ValueError, json.JSONDecodeError):
+            payload = []
+        if not isinstance(payload, list) or not payload:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Chagua bidhaa angalau moja',
+                'message_eng': 'Select at least one item',
+            })
+
+        created, failed, skipped = 0, 0, 0
+        errors = []
+        for row in payload[:400]:
+            try:
+                result = _register_item_from_other_stock(
+                    todo,
+                    request,
+                    row.get('itm'),
+                    row.get('sup', 0),
+                    row.get('idj', 0),
+                    row.get('idr', 0),
+                    row.get('rangi') or [],
+                )
+                if result.get('ok'):
+                    created += 1
+                elif result.get('already'):
+                    skipped += 1
+                else:
+                    failed += 1
+                    if result.get('swa'):
+                        errors.append(result['swa'])
+            except Exception:
+                traceback.print_exc()
+                failed += 1
+
+        return JsonResponse({
+            'success': created > 0,
+            'created': created,
+            'failed': failed,
+            'skipped': skipped,
+            'message_swa': f'Zimeongezwa {created}. Zilizokwisha {skipped}. Hazikufanikiwa {failed}.',
+            'message_eng': f'Added {created}. Already registered {skipped}. Failed {failed}.',
+            'errors': errors[:8],
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message_swa': 'Bidhaa hazijaongezwa kutokana na hitilafu',
+            'message_eng': 'Items were not added, please try again',
+        })
 
 @login_required(login_url='login')
 def kupunguzaBidhaa(request):  
@@ -3486,6 +3836,7 @@ def tafutaPicha(request):
             PIC_CANDIDATE_LIMIT = 800
             MATCH_STOCK_LIMIT = 80
             LOCATIONS_PER_ITEM = 8
+            PLACES_PER_ITEM = 40
 
             best_matches = {}
             if query_terms:
@@ -3531,12 +3882,14 @@ def tafutaPicha(request):
                     'Interprise_id',
                     'Interprise__name',
                     'Interprise__mtaa__mtaa',
+                    'Interprise__mtaa__kata_id',
                     'Interprise__mtaa__kata__kata',
-                    'Interprise__mtaa__kata__wilaya__wilaya',
-                    'Interprise__mtaa__kata__wilaya__mkoa__mkoa',
                     'Interprise__mtaa__kata__wilaya_id',
+                    'Interprise__mtaa__kata__wilaya__wilaya',
                     'Interprise__mtaa__kata__wilaya__mkoa_id',
+                    'Interprise__mtaa__kata__wilaya__mkoa__mkoa',
                     'Interprise__mtaa__kata__wilaya__mkoa__kanda_id',
+                    'Interprise__mtaa__kata__wilaya__mkoa__kanda__kanda',
                     'Interprise__mtaa__kata__wilaya__mkoa__kanda__nchi_id',
                 ))
 
@@ -3572,6 +3925,7 @@ def tafutaPicha(request):
                 seen = set()
                 merged = {'wilaya': False, 'mkoa': False, 'kanda': False, 'nchi': False}
                 locations = []
+                places_map = {}
                 primary = None
                 for st in shops:
                     shop_id = st['Interprise_id']
@@ -3579,16 +3933,42 @@ def tafutaPicha(request):
                     for level in scope_order:
                         if flags[level]:
                             merged[level] = True
+                    place = {
+                        'shop': st['Interprise__name'] or '',
+                        'mtaa': st['Interprise__mtaa__mtaa'] or '',
+                        'kata_id': st['Interprise__mtaa__kata_id'],
+                        'kata': st['Interprise__mtaa__kata__kata'] or '',
+                        'wilaya_id': st['Interprise__mtaa__kata__wilaya_id'],
+                        'wilaya': st['Interprise__mtaa__kata__wilaya__wilaya'] or '',
+                        'mkoa_id': st['Interprise__mtaa__kata__wilaya__mkoa_id'],
+                        'mkoa': st['Interprise__mtaa__kata__wilaya__mkoa__mkoa'] or '',
+                        'kanda_id': st['Interprise__mtaa__kata__wilaya__mkoa__kanda_id'],
+                        'kanda': st['Interprise__mtaa__kata__wilaya__mkoa__kanda__kanda'] or '',
+                        'nchi_id': st['Interprise__mtaa__kata__wilaya__mkoa__kanda__nchi_id'],
+                        'shop_id': shop_id,
+                        'stock_id': st['id'],
+                    }
+                    place_key = place['kata_id'] or shop_id
+                    if place_key and place_key not in places_map and len(places_map) < PLACES_PER_ITEM:
+                        places_map[place_key] = place
                     if shop_id in seen:
                         continue
                     seen.add(shop_id)
                     if len(locations) < LOCATIONS_PER_ITEM:
                         locations.append({
-                            'shop': st['Interprise__name'] or '',
-                            'mtaa': st['Interprise__mtaa__mtaa'] or '',
-                            'kata': st['Interprise__mtaa__kata__kata'] or '',
-                            'wilaya': st['Interprise__mtaa__kata__wilaya__wilaya'] or '',
-                            'mkoa': st['Interprise__mtaa__kata__wilaya__mkoa__mkoa'] or '',
+                            'shop': place['shop'],
+                            'mtaa': place['mtaa'],
+                            'kata': place['kata'],
+                            'wilaya': place['wilaya'],
+                            'mkoa': place['mkoa'],
+                            'kanda': place['kanda'],
+                            'kata_id': place['kata_id'],
+                            'wilaya_id': place['wilaya_id'],
+                            'mkoa_id': place['mkoa_id'],
+                            'kanda_id': place['kanda_id'],
+                            'nchi_id': place['nchi_id'],
+                            'shop_id': shop_id,
+                            'stock_id': st['id'],
                         })
                     if primary is None or (
                         flags.get(scope) and not stock_scopes(primary).get(scope)
@@ -3602,6 +3982,7 @@ def tafutaPicha(request):
 
                 row['scopes'] = merged
                 row['locations'] = locations
+                row['places'] = list(places_map.values())
                 if primary:
                     row['bidhaa_stoku_id'] = primary['id']
                     row['shop_id'] = primary['Interprise_id']
@@ -3623,6 +4004,7 @@ def tafutaPicha(request):
                 'count': len(scoped[:20]),
                 'scope': scope,
                 'scope_counts': scope_counts,
+                'user_place': place_ids,
             })
 
         except Exception as e:

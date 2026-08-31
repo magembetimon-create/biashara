@@ -1,6 +1,10 @@
 const  beep_audio_ = document.getElementById("beep_audio");
 let SCANCELL = 0
 
+function useHtml5CodeScanner() {
+    return typeof ISMOBILE !== 'undefined' && !!ISMOBILE
+}
+
 $(function() {
     // Create the QuaggaJS config object for the live stream
     var liveStreamConfig = {
@@ -36,9 +40,14 @@ $(function() {
                 }
             }
         );
-    // Start the live stream scanner when the modal opens
+    // Laptop cameras: Quagga. Phones: html5-qrcode (better barcode + QR).
     $('#livestream_scanner').on('shown.bs.modal', function (e) {
-   
+        if (useHtml5CodeScanner()) {
+            $(this).modal('hide')
+            start_can()
+            return
+        }
+
                 Quagga.init(
                     liveStreamConfig, 
                     function(err) {
@@ -59,8 +68,8 @@ $(function() {
     });
     
     // Make sure, QuaggaJS draws frames an lines around possible 
-    // barcodes on the live stream
-    Quagga.onProcessed(function(result) {
+    // barcodes on the live stream (desktop only)
+    if (!useHtml5CodeScanner() && window.Quagga) Quagga.onProcessed(function(result) {
 
         var drawingCtx = Quagga.canvas.ctx.overlay,
             drawingCanvas = Quagga.canvas.dom.overlay;
@@ -88,7 +97,7 @@ $(function() {
     // Once a barcode had been read successfully, stop quagga and 
     // close the modal after a second to let the user notice where 
     // the barcode had actually been found.
-    Quagga.onDetected(function(result) {    
+    if (!useHtml5CodeScanner() && window.Quagga) Quagga.onDetected(function(result) {    
         beep_play()		
         if (result.codeResult.code){
             const code = result.codeResult.code
@@ -126,7 +135,7 @@ $(function() {
         if (window.TbScanCamera && typeof TbScanCamera.cleanup === 'function') {
             TbScanCamera.cleanup()
         }
-        if (Quagga){
+        if (!useHtml5CodeScanner() && window.Quagga){
             Quagga.stop();	
         }
         $('#livestream_scanner').data('pos',0)
@@ -318,10 +327,45 @@ function qr_success(result){
    }
   
   
-  const QR_R = ISMOBILE && $("#livestream_scanner").data('bs.modal')?._isShown ? 'interactive':"qr_reader",
-    scanner = new Html5Qrcode(/* element id */ QR_R);
+  const QR_R = "qr_reader"
+  let scanner = null
   let barcodeProcessRunning = false
   let barcodeProcessStopping = false
+
+  function html5ProcessConfig() {
+    if (window.TbScanCamera && typeof TbScanCamera.qrConfig === 'function') {
+      return TbScanCamera.qrConfig()
+    }
+    const cfg = { fps: 15, qrbox: { width: 280, height: 140 }, disableFlip: false }
+    if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
+      cfg.formatsToSupport = [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+      ]
+    }
+    return cfg
+  }
+
+  function getProcessScanner() {
+    if (typeof Html5Qrcode === 'undefined' || !document.getElementById(QR_R)) return null
+    if (!scanner) scanner = new Html5Qrcode(QR_R)
+    return scanner
+  }
+
+  function fillFromScannedCode(code) {
+    if (typeof getItemsForItems === 'function') {
+      getItemsForItems(code)
+    } else if ($("#Item_editModal").data('bs.modal')?._isShown) {
+      $('#bar_code_place').val(code)
+    } else {
+      $('#code-ya-bidhaa').val(code)
+    }
+  }
   
   $('.scan_qr').click(function (e) { 
        const pos = Number($(this).data('pos')) || 0
@@ -335,35 +379,27 @@ function qr_success(result){
   $('body').on('click','.ScanBarCode',function(e){
     e.preventDefault()
     // One-shot: fill register/edit field or search other-branch item, then close.
-    // Do NOT open the continuous POS session modal here.
     SEARCH_ITM_BY_BARCODE = 0
-    if (window.TbBarcode && typeof window.TbBarcode.openFieldCapture === 'function') {
-      window.TbBarcode.openFieldCapture({
-        onCode: function (code) {
-          if (typeof getItemsForItems === 'function') {
-            getItemsForItems(code)
-          } else if ($("#Item_editModal").data('bs.modal')?._isShown) {
-            $('#bar_code_place').val(code)
-          } else {
-            $('#code-ya-bidhaa').val(code)
-          }
-        }
-      })
+    if (useHtml5CodeScanner()) {
+      if (window.TbBarcode && typeof window.TbBarcode.openFieldCapture === 'function') {
+        window.TbBarcode.openFieldCapture({
+          onCode: fillFromScannedCode
+        })
+        return
+      }
+      start_can()
       return
     }
-    if(ISMOBILE){
-        start_can()
-    }else{
-        $('#livestream_scanner').modal('show')
-    }
+    $('#livestream_scanner').modal('show')
   })
 
   
   function start_can(){
-    if(!$("#livestream_scanner").data('bs.modal')){
-        $('#livestream__qr_scanner').modal('show')
+    if (typeof Html5Qrcode === 'undefined') return
+    if ($('#livestream_scanner').hasClass('show')) {
+        $('#livestream_scanner').modal('hide')
     }
-    
+    $('#livestream__qr_scanner').modal('show')
   
           Html5Qrcode.getCameras().then(devices => {
           /**
@@ -389,6 +425,8 @@ function qr_success(result){
   
   function startIt(dt){
   if (barcodeProcessRunning || barcodeProcessStopping) return
+  const processScanner = getProcessScanner()
+  if (!processScanner) return
   const qrCodeSuccessCallback = (decodedText, decodedResult) => {
       /* handle success */
        beep_play()
@@ -396,13 +434,11 @@ function qr_success(result){
        qr_success(decodedResult.decodedText)
   
   };
-  const config = (window.TbScanCamera && typeof TbScanCamera.qrConfig === 'function')
-    ? TbScanCamera.qrConfig()
-    : { fps: 15, qrbox: { width: 280, height: 140 } }
+  const config = html5ProcessConfig()
   const cameraId = dt.len > 1
     ? { facingMode: { ideal: 'environment' } }
     : { facingMode: { ideal: 'user' } }
-  const rootId = typeof QR_R === 'string' ? QR_R : 'qr_reader'
+  const rootId = QR_R
 
   function afterStart() {
     barcodeProcessRunning = true
@@ -412,13 +448,13 @@ function qr_success(result){
     }
   }
 
-  const startPromise = scanner.start(cameraId, config, qrCodeSuccessCallback)
+  const startPromise = processScanner.start(cameraId, config, qrCodeSuccessCallback)
   if (startPromise && typeof startPromise.then === 'function') {
     startPromise.then(afterStart).catch(function () {
       const low = Object.assign({}, config, {
         videoConstraints: { facingMode: cameraId.facingMode }
       })
-      scanner.start(cameraId, low, qrCodeSuccessCallback).then(afterStart).catch(function () {
+      processScanner.start(cameraId, low, qrCodeSuccessCallback).then(afterStart).catch(function () {
         barcodeProcessRunning = false
         barcodeProcessStopping = false
       })

@@ -2269,7 +2269,7 @@ def incoExpndData(request):
           br.append(b.Interprise.id)
 
         expend=toaCash.objects.filter(Interprise__in=br,tarehe__gte=tf).exclude(tarehe__gt=tt).annotate(duka=F('Interprise'),akauntiN=F('Akaunt__Akaunt_name'),Aamount=F('Akaunt__Amount'),kiasi=F('Amount'),dukaN=F('Interprise__name'),Na=F('by'),matumiziN=F('matumizi__matumizi__matumizi'),expenses=F('matumizi__matumizi'),bill_code=F('bill__code'),f_name=F('by__user__user__first_name'),l_name=F('by__user__user__last_name')).order_by('id')
-        income = wekaCash.objects.filter(Interprise__in=br,tarehe__gte=tf).exclude(tarehe__gt=tt).annotate(duka=F('Interprise'),akauntiN=F('Akaunt__Akaunt_name'),other_service=F('huduma_nyingine__huduma'),Aamount=F('Akaunt__Amount'),kiasi=F('Amount'),Na=F('by'),serv=F('invo__service'),f_name=F('by__user__user__first_name'),invo_code=F('invo__code'),l_name=F('by__user__user__last_name')).order_by('id')
+        income = wekaCash.objects.filter(Interprise__in=br,tarehe__gte=tf).exclude(tarehe__gt=tt).annotate(duka=F('Interprise'),akauntiN=F('Akaunt__Akaunt_name'),other_service=F('huduma_nyingine__huduma'),Aamount=F('Akaunt__Amount'),kiasi=F('Amount'),Na=F('by'),serv=F('invo__service'),f_name=F('by__user__user__first_name'),invo_code=F('invo__code'),cust_jina=F('invo__customer_id__jina'),l_name=F('by__user__user__last_name')).order_by('id')
       
         # check each payment account initial amount .........................................................//
 

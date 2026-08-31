@@ -546,7 +546,7 @@ if(hasdata!=undefined){
   
       }
           $('#livestream_scanner').data('pos',pos)
-          if(ISMOBILE){
+          if(typeof useHtml5CodeScanner === 'function' ? useHtml5CodeScanner() : ISMOBILE){
                 start_can()
             }else{
                 $('#livestream_scanner').modal('show')

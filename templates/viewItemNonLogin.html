@@ -229,12 +229,21 @@
           {% endif %}
           </p>
     
-          <hr>
-         <div class="row">
-           <div class="col-2 pt-1" style="font-weight: 600;" >{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}:</div>
-           <div class="col-10 pb-1 price-row-scroll" >
-             <div class="d-flex guest-price-list" style="text-indent: 1%;white-space: nowrap" >
-               <div class="price_sh">
+         <div class="item-opt-panel the_price">
+           <div class="item-opt-panel__head">
+             <span class="item-opt-panel__icon" aria-hidden="true">
+               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                 <path d="M6 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-1 0a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0"/>
+                 <path d="M2 1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 1 6.586V2a1 1 0 0 1 1-1m0 5.586 7 7L13.586 9l-7-7H2z"/>
+               </svg>
+             </span>
+             <div class="item-opt-panel__copy">
+               <div class="item-opt-panel__title">{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}</div>
+               <div class="item-opt-panel__hint">{% if useri.langSet == 0 %}Bei kwa kila kipimo{% else %}Price per unit{% endif %}</div>
+             </div>
+           </div>
+           <div class="item-price-grid guest-price-list">
+               <div class="price_sh item-price-chip">
                   <span style="color:brown" > <span class="darkblue smallFont">{{shop.currencii  }}</span>  .<span style="font-size: medium;font-weight:600;text-shadow:0 1 1px #000" >{{bidhaa.Bei_kuuza | floatformat:'-2' | intcomma}}</span> <small class="text-primary">/{{bidhaa.bidhaa.vipimo}} 
                     <span class="brown" >
                       {%if bidhaa.timely > 0  %}
@@ -265,7 +274,7 @@
     
                {% if bei.count > 0  %}
                    {% for bi in bei %}
-                    <div class="price_sh ml-2 border-left pl-2">
+                    <div class="price_sh item-price-chip">
                           <span style="color:brown" > 
                             <span class="darkblue smallFont">{{shop.currencii  }}</span>   .<span style="font-size: medium;font-weight:600;text-shadow:0 1 1px #000" >{{bi.bei | floatformat:'-2'  | intcomma}}</span> <small class="text-primary" >/{{bi.jina | title }} <small class="text-danger">({{bidhaa.bidhaa.vipimo}} => {{bi.idadi | floatformat:'-2' | intcomma }})</small> </small> 
                             <span class="brown" >
@@ -297,7 +306,7 @@
                {% endif %}
     
                  {% if bidhaa.bidhaa.idadi_jum > 1 %}
-                     <div class="price_sh ml-2 border-left pl-2">
+                     <div class="price_sh item-price-chip">
                           <span style="color:brown" > <span class="darkblue smallFont">{{shop.currencii }}</span> . <span style="font-size: medium;font-weight:600;text-shadow:0 1 1px #000" >{{bidhaa.Bei_kuuza_jum | floatformat:'-2'  | intcomma}}</span> <small class="text-primary" >/{{bidhaa.bidhaa.vipimo_jum | title }} <small class="text-danger" >({{bidhaa.bidhaa.vipimo}} => {{bidhaa.bidhaa.idadi_jum  | floatformat:'-2'  | intcomma}})</small> </small> 
                           <span class="brown" >
                             {%if bidhaa.timely > 0  %}
@@ -325,39 +334,35 @@
                         </span> 
                     </div>
               {% endif %}
-    
-    
-              
-     
-             </div>
            </div>
          </div>
     
          
          {% if rangi.count > 0 and rangi.last.color.colored  %}
-         <div class="row mt-2">
-           <div class="col-3 " style="font-weight: 600;">
-    
+         <div class="item-opt-panel">
+           <div class="item-opt-panel__head">
+             <span class="item-opt-panel__icon" aria-hidden="true">
+               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><circle cx="5" cy="6" r="2"/><circle cx="11" cy="5" r="2"/><circle cx="8" cy="11" r="2"/></svg>
+             </span>
+             <div class="item-opt-panel__copy">
+               <div class="item-opt-panel__title">
             {% if bidhaa.bidhaa.colorAttr %}
                  {{bidhaa.bidhaa.colorAttr}}
             {% else %}
-              {% if useri.langSet  == 0 %}Rangi{% else %}Color{% endif %}
-            {% endif %}  
+              {% if useri.langSet  == 0 %}Rangi / Model{% else %}Color / Model{% endif %}
+            {% endif %}
+               </div>
+               <div class="item-opt-panel__hint capitalize" id="color_text"></div>
+             </div>
               {% if duka == shop %}
-                 <button class="btn-default btn text-primary p-0 btn-sm" onclick="$('#setColorKey').toggle(300)" >
+                 <button type="button" class="item-opt-panel__action btn btn-sm btn-light p-1" onclick="$('#setColorKey').toggle(300)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-settings">
                       <circle cx="12" cy="12" r="3"></circle>
                       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                   </svg>
                  </button>
               {% endif %}
-              :
            </div>
-           <div class="col-9">
-              <span id="color_text" class="capitalize" ></span>
-              
-           </div>
-         </div>
         
          {% if duka == shop %}
           <div id="setColorKey" style="display:none" >
@@ -403,10 +408,10 @@
           </script>
          {% endif %}
     
-         <div class="row mt-3 classic_div {% if not variant_is_color_mode %}d-flex flex-wrap align-items-start{% endif %}" id="penye-rangi">
+         <div class="item-opt-swatches classic_div {% if not variant_is_color_mode %}d-flex flex-wrap align-items-start{% endif %}" id="penye-rangi">
           {% for r in rangi %}
             {% if variant_is_color_mode %}
-                <div data-qty=0 data-uwiano=0 class="column btn mb-2 mx-1 the_identify rounded" data-idadi="{{ r.idadi }}" data-toggle="modal" data-target="#kuweka-rangi-model" data-rangi="{{ r.color.id }}" data-val="{{ r.id }}" data-jina="{{ r.color.color_name }}" data-other="{{ r.color.nick_name }}" data-code="{{ r.color.color_code }}" title="{{ r.color.color_name|title }}" style="height:25px;width:40px;background-color:{{ r.color.color_code }};cursor:pointer;-webkit-box-shadow:0px 3px 10px -3px rgba(0,0,0,0.37);box-shadow:0px 3px 10px -3px rgba(0,0,0,0.37);">
+                <div data-qty=0 data-uwiano=0 class="column btn the_identify item-color-swatch" data-idadi="{{ r.idadi }}" data-toggle="modal" data-target="#kuweka-rangi-model" data-rangi="{{ r.color.id }}" data-val="{{ r.id }}" data-jina="{{ r.color.color_name }}" data-other="{{ r.color.nick_name }}" data-code="{{ r.color.color_code }}" title="{{ r.color.color_name|title }}" style="background-color:{{ r.color.color_code }};cursor:pointer;">
                   <div class="position-absolute bg-primary successmark" id="success{{ r.id }}" style="margin-left:13px;margin-top:-8px;height:17px;width:15px;border-radius:50%;color:#fff;border:1px solid #fff;display:none;">
                     <span style="top:-6px;left:-2px;position:absolute;">
                       <svg width="1.1em" height="1.1em" viewBox="0 0 16 16" class="bi bi-check" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 0 1 .02-.022z"/></svg>
@@ -414,7 +419,7 @@
                   </div>
                 </div>
             {% else %}
-                <span data-qty=0 data-uwiano=0 class="the_identify btn btn-default border text-danger mx-1 mb-2 px-2 py-0 text-capitalize item_variant_text position-relative" data-idadi="{{ r.idadi }}" data-rangi="{{ r.color.id }}" data-val="{{ r.id }}" data-jina="{{ r.color.color_name }}" data-other="{{ r.color.nick_name }}" data-code="{{ r.color.color_code }}" title="{{ r.color.color_name|title }}">
+                <span data-qty=0 data-uwiano=0 class="the_identify item-variant-chip text-capitalize item_variant_text position-relative" data-idadi="{{ r.idadi }}" data-rangi="{{ r.color.id }}" data-val="{{ r.id }}" data-jina="{{ r.color.color_name }}" data-other="{{ r.color.nick_name }}" data-code="{{ r.color.color_code }}" title="{{ r.color.color_name|title }}">
                   {{ r.color.color_name }}
                   <span class="position-absolute bg-primary successmark" id="success{{ r.id }}" style="margin-left:-6px;margin-top:-8px;height:12px;width:12px;border-radius:50%;color:#fff;border:1px solid #fff;display:none;">
                     <span style="top:-9px;left:-3px;position:absolute;">
@@ -425,18 +430,24 @@
             {% endif %}
           {% endfor %}
         </div>
-    
-       
+         </div>
     
          {% if size.count > 0 %}
-         <div class="row mt-3">
-          <div class="col-1 py-1" style="font-weight: 600;">
-            Size:
-          </div>
-          <div class="col-11" style="overflow-x: auto;">
-             <div id="penye_size" class="py-1 capitalize d-flex" >
+         <div class="item-opt-panel">
+           <div class="item-opt-panel__head">
+             <span class="item-opt-panel__icon" aria-hidden="true">
+               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                 <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5z"/>
+               </svg>
+             </span>
+             <div class="item-opt-panel__copy">
+               <div class="item-opt-panel__title">Size</div>
+               <div class="item-opt-panel__hint">{% if useri.langSet == 0 %}Chagua size inayokufaa{% else %}Choose a size{% endif %}</div>
+             </div>
+           </div>
+             <div id="penye_size" class="item-opt-chips capitalize" >
                {% for s in size %}
-              <span data-toggle="modal" style="display: none;"  id="siz{{s.id}}"  data-qty=0 data-target="#kuweka-size-model" data-idadi={{s.idadi}} data-val={{s.id}} data-color={{s.sized.color.id}} data-jina="{{s.sized.size}}" class="text-danger border item_sized_{{s.sized.color.id}} item_sized_ btn btn-default mx-1 px-2 py-0" >
+              <span data-toggle="modal" style="display: none;"  id="siz{{s.id}}"  data-qty=0 data-target="#kuweka-size-model" data-idadi={{s.idadi}} data-val={{s.id}} data-color={{s.sized.color.id}} data-jina="{{s.sized.size}}" class="item-size-chip item_sized_{{s.sized.color.id}} item_sized_" >
                 {{s.sized.size}} 
     
                 <div class="position-relative bg-primary successmark" id="success{{s.id}}"  
@@ -463,9 +474,7 @@
               <span id="hakuna_size" style="display: none;" data-uwiano=0 class="text-primary btn btn-default px-2 py-0" >{% if useri.langSet == 0 %}Hakuna Size{% else %}No Size{% endif %}</span>
               
              </div>
-             
-          </div>
-        </div>
+         </div>
         {% endif %}
     
     
@@ -504,17 +513,30 @@
          {% endif %}
     
     <!-- SELECT QUANTITIY -->
-         <div class=" mt-3">
-           
-                    <div class="smallFont col-12 py-1 " style="font-weight: 600;"> 
-                      {% if bidhaa.service  %}
-                         {% if useri.langSet == 0 %}Nafasi{% else %}Space{% endif %} 
-                      {% else %}
-                        {% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %} 
-                      {% endif %}  
+         <div class="item-qty-panel mt-3">
+                    <div class="item-qty-panel__head">
+                      <span class="item-qty-panel__icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                        </svg>
+                      </span>
+                      <div class="item-qty-panel__copy">
+                        <div class="item-qty-panel__title">
+                          {% if bidhaa.service  %}
+                             {% if useri.langSet == 0 %}Chagua nafasi{% else %}Choose space{% endif %}
+                          {% else %}
+                            {% if useri.langSet == 0 %}Chagua idadi na kipimo{% else %}Choose quantity and unit{% endif %}
+                          {% endif %}
+                        </div>
+                        <div class="item-qty-panel__hint">
+                          {% if useri.langSet == 0 %}Sehemu hii inahitajika kabla ya kuagiza{% else %}This step is required before ordering{% endif %}
+                        </div>
+                      </div>
+                    </div>
                 
                   {% if not duka == shop %}
-                    <span hidden class="pl-2 text-danger latoFont" style="font-weight: 400;" id="zimeisha_aret"> 
+                    <span hidden class="item-qty-panel__alert text-danger latoFont" id="zimeisha_aret"> 
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
                           <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
                           <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
@@ -527,11 +549,11 @@
                     </span> 
                   {% endif %}    
     
-                    </div>
-              <div class="d-flex qty-controls">
-                   <div>
+              <div class="item-qty-panel__grid qty-controls">
+                   <div class="item-qty-field">
+                          <label class="item-qty-field__label" for="price_select">{% if useri.langSet == 0 %}Kipimo{% else %}Unit{% endif %}</label>
                           <select name="price_select" onchange="$('.redbox').data({uwiano:0,qty:0});$('.bluebox').data({uwiano:0,qty:0});place_idadi();feedqty(0);$('#fractions_qty').html($('#fractions_qty').html())
-                          " class="smallFont made-input" id="price_select">
+                          " class="smallFont made-input item-qty-unit" id="price_select">
                                   <option value=1 data-idadi=1 data-bei={{bidhaa.Bei_kuuza}} data-jina="{{bidhaa.bidhaa.vipimo}}" >{{bidhaa.bidhaa.vipimo}}</option>
                                 {% if bei.count > 0 %}
                                 {% for b in bei %}
@@ -544,10 +566,17 @@
                           </select>   
                    </div>
     
-                      <div class="pl-2">
-                          <div class="input-group " >
-                            <button onclick="addItems(-1)" class="btn input-group-append border btn-default btn-sm">
-                              <strong>- </strong> 
+                      <div class="item-qty-field">
+                          <label class="item-qty-field__label" for="item_idadi">
+                            {% if bidhaa.service %}
+                              {% if useri.langSet == 0 %}Nafasi{% else %}Space{% endif %}
+                            {% else %}
+                              {% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}
+                            {% endif %}
+                          </label>
+                          <div class="item-qty-stepper input-group">
+                            <button type="button" onclick="addItems(-1)" class="item-qty-stepper__btn" aria-label="-">
+                              <strong>−</strong> 
                             </button>
                             <input  type="number" placeholder="0" onkeyup="
                             
@@ -578,12 +607,10 @@
                                 feedqty(val*uwiano);
                             "
                             
-                            name="item_idadi" class="smallFont form-control" id="item_idadi" data-qty=0 data-timely="{{bidhaa.timely}}" data-muda=0>
+                            name="item_idadi" class="smallFont form-control item-qty-stepper__input" id="item_idadi" inputmode="decimal" min="0" data-qty=0 data-timely="{{bidhaa.timely}}" data-muda=0>
                                 
                           
-                            <button onclick="addItems(1)"
-                            
-                            class="btn input-group-append border btn-default btn-sm">
+                            <button type="button" onclick="addItems(1)" class="item-qty-stepper__btn" aria-label="+">
                                 <strong>+</strong>
                             </button>
                           </div>
@@ -594,7 +621,8 @@
               </div>
           
                  
-                <div class="form-group mt-3">
+                {% if bidhaa.bidhaa.fractions or duka == shop %}
+                <div class="item-qty-panel__extra">
     
                 {% if duka == shop and cheo.product_edit  %}
                   <div class="custom-control custom-checkbox">
@@ -622,7 +650,7 @@
                   </div>
                 {% else %}  
                        {% if bidhaa.bidhaa.fractions %}
-                           <label class="smallFont"  for="fractions_qty">
+                           <label class="item-qty-field__label"  for="fractions_qty">
                              {% if useri.langSet == 0 %}Sehemu {% else %}Fractions{% endif %}
                           </label>
                        {% endif %}
@@ -631,7 +659,7 @@
                 {% endif %}
                 {% if bidhaa.bidhaa.fractions or duka == shop %}
                       
-                   <select class="made-input smallFont" onchange="var val_u = Number($(this).val()),idadd=Number($('#item_idadi').val()),weino=Number($('#price_select').val());feedqty((val_u+idadd)*weino)" name="fractions_qty"  id="fractions_qty">
+                   <select class="made-input smallFont item-qty-unit" onchange="var val_u = Number($(this).val()),idadd=Number($('#item_idadi').val()),weino=Number($('#price_select').val());feedqty((val_u+idadd)*weino)" name="fractions_qty"  id="fractions_qty">
                      <option value=0 >0</option>
                      {% if bidhaa.idadi >= 0.25 or duka == shop %}
                         <option value=0.25 >{% if useri.langSet == 0 %}Robo{% else %}Quarter{% endif %} (0.25) </option>
@@ -647,6 +675,7 @@
                    {% endif %}
     
                 </div>
+                {% endif %}
                 
     
                 <!-- MAELEZO YA SAUTI KWA BIDHAA -->

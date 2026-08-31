@@ -480,6 +480,30 @@
     -o-transition: all 0.5s ease-in-out;
     transition: all 0.5s ease-in-out;
   }
+  .c-menu > ul .c-menu__item .c-menu__icon-slot {
+    flex: 0 0 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+  }
+  .c-menu > ul .c-menu__item .c-menu__icon-badge {
+    position: relative;
+    display: inline-flex;
+    line-height: 0;
+    overflow: visible;
+  }
+  .c-menu > ul .c-menu__item .c-menu__icon-badge svg {
+    flex: 0 0 auto;
+  }
+  .c-menu > ul .c-menu__item .c-menu__icon-badge .c-badge--header-icon2 {
+    display: block;
+    top: -2px;
+    right: -3px;
+    bottom: auto;
+    margin-left: 0;
+    z-index: 2;
+  }
   .c-menu > ul .c-menu__item .c-menu-item__expand {
     position: relative;
     left: 100px;

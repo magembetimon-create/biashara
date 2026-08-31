@@ -169,6 +169,48 @@
     background: #243463;
     color: #93c5fd;
   }
+  .img-subfilter-row { margin-top: 8px; }
+  .img-subfilter-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+  .img-subfilter-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .img-subfilter-btn {
+    border: 1px solid #dbe3f0;
+    background: #f8fafc;
+    color: #0f172a;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .img-subfilter-btn .badge {
+    font-size: 10px;
+    padding: 1px 5px;
+    margin-left: 2px;
+  }
+  .img-subfilter-btn.active {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #fff;
+  }
+  .img-subfilter-btn.active .badge {
+    background: #fff;
+    color: #1d4ed8;
+  }
+  body.theme-dark .img-subfilter-label { color: #94a3b8; }
+  body.theme-dark .img-subfilter-btn {
+    background: #15203f;
+    border-color: #4b5e8d;
+    color: #e5e9ff;
+  }
+  body.theme-dark .img-subfilter-btn.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+  }
 </style>
 
 <script type="text/javascript" src="{% static 'js/projectntc.js' %}"></script>
@@ -1579,14 +1621,17 @@ let shwCo = false
               <li {% block nav-oda %} class="c-menu__item has-submenu  activate" {% endblock %}  data-toggle="tooltip" title=" {% if useri.langSet == 0 %} Oda za Manunuzi {% else %} Purchase Order {% endif %}" >
 
                 <a href="/purchase/puOrder?en=1" class="c-menu__item__inner">
-                   
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-box-seam " viewBox="0 0 16 16">
-                    <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
-                  </svg>
-                {% if puO.count > 0 %}   
-                    <span class="c-badge c-badge--header-icon2 d-inline animated shake"></span>
-                        {% endif %} 
-                    <div class="c-menu-item__title"><span> {% if useri.langSet == 0 %} Oda za Manunuzi  {% else %} Purchase Order {% endif %}</span></div>
+                  <span class="c-menu__icon-slot">
+                    <span class="c-menu__icon-badge">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-box-seam " viewBox="0 0 16 16">
+                        <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                      </svg>
+                      {% if puO.count > 0 %}
+                         <span class="c-badge c-badge--header-icon2 d-inline animated shake"></span>
+                      {% endif %}
+                    </span>
+                  </span>
+                    <div class="c-menu-item__title"><span> {% if useri.langSet == 0 %} Oda za Manunuzi  {% else %} Purchase Order {% endif %} </span></div>
                   </a>
               </li>
 
@@ -2709,6 +2754,12 @@ $('.muamala-genu').click(function(){
            <div class="text-center">
        
         <button type="submit" class="btn btn-primary latoFont">{% if useri.langSet == 0 %}Ongeza Bidhaa{% else %}Add Item{% endif %}</button>
+      </div>
+
+      <div class="text-center my-3">
+        <a href="{% url 'UsajiriTokaMatawi' %}" class="btn btn-outline-primary btn-sm latoFont">
+          {% if useri.langSet == 0 %}Sajiri bidhaa nyingi kwa wakati mmoja{% else %}Register many items at once{% endif %}
+        </a>
       </div>
 
       <div class="text-center my-3">
@@ -6178,6 +6229,7 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
                 </button>
               </div>
               <div class="smallestFont text-muted mt-1" id="imgSearchScopeHint"></div>
+              <div id="imgSearchSubFilters"></div>
             </div>
             
             <div id="imgSearchResultsList">
@@ -6198,8 +6250,30 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     activeScope: 'wilaya',
     isSearching: false,
     allResults: [],
-    scopeCounts: { wilaya: 0, mkoa: 0, kanda: 0, nchi: 0 }
+    scopeCounts: { wilaya: 0, mkoa: 0, kanda: 0, nchi: 0 },
+    userPlace: {},
+    geoFilter: { kanda: null, mkoa: null, wilaya: null, kata: null }
   };
+
+  var IMG_GEO_CHAIN = {
+    wilaya: ['kata'],
+    mkoa: ['wilaya', 'kata'],
+    kanda: ['mkoa', 'wilaya', 'kata'],
+    nchi: ['kanda', 'mkoa', 'wilaya', 'kata']
+  };
+
+  function resetImgGeoFilter() {
+    imgSearchState.geoFilter = { kanda: null, mkoa: null, wilaya: null, kata: null };
+  }
+
+  function escImgHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\"/g, '&quot;')
+      .replace(/\'/g, '&#39;');
+  }
 
   function getImgScopeName(scope) {
     var el = $('#imgSearchLocationData');
@@ -6208,7 +6282,9 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
   }
 
   function setActiveImgScope(scope) {
+    var prev = imgSearchState.activeScope;
     imgSearchState.activeScope = scope || 'wilaya';
+    if (prev !== imgSearchState.activeScope) resetImgGeoFilter();
     $('#imgSearchScopeBtns .img-search-scope-btn').each(function() {
       var isActive = ($(this).data('scope') === imgSearchState.activeScope);
       $(this).toggleClass('btn-primary', isActive)
@@ -6234,7 +6310,10 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     imgSearchState.isSearching = true;
     imgSearchState.allResults = [];
     imgSearchState.scopeCounts = { wilaya: 0, mkoa: 0, kanda: 0, nchi: 0 };
+    imgSearchState.userPlace = {};
+    resetImgGeoFilter();
     updateImgScopeCountBadges(imgSearchState.scopeCounts);
+    $('#imgSearchSubFilters').empty();
 
         function setImgSearchLoader(msg) {
           $('#imgSearchResultsList').html(
@@ -6366,12 +6445,129 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
       });
     }
 
+    function itemPlaces(item) {
+      if (item && item.places && item.places.length) return item.places;
+      return (item && item.locations) || [];
+    }
+
+    function placeMatchesFilter(place, filter) {
+      if (!place || !filter) return true;
+      return ['kanda', 'mkoa', 'wilaya', 'kata', 'nchi'].every(function(key) {
+        if (filter[key] == null || filter[key] === '') return true;
+        return String(place[key + '_id']) === String(filter[key]);
+      });
+    }
+
+    function userBoxFilter() {
+      var scope = imgSearchState.activeScope;
+      var up = imgSearchState.userPlace || {};
+      var box = {};
+      if (scope === 'wilaya' && up.wilaya) box.wilaya = up.wilaya;
+      if (scope === 'mkoa' && up.mkoa) box.mkoa = up.mkoa;
+      if (scope === 'kanda' && up.kanda) box.kanda = up.kanda;
+      if (scope === 'nchi' && up.nchi) box.nchi = up.nchi;
+      return box;
+    }
+
+    function combinedGeoFilter() {
+      var box = userBoxFilter();
+      var extra = imgSearchState.geoFilter || {};
+      return {
+        nchi: extra.nchi || box.nchi || null,
+        kanda: extra.kanda || box.kanda || null,
+        mkoa: extra.mkoa || box.mkoa || null,
+        wilaya: extra.wilaya || box.wilaya || null,
+        kata: extra.kata || null
+      };
+    }
+
+    function matchingPlace(item) {
+      var filter = combinedGeoFilter();
+      var places = itemPlaces(item);
+      for (var i = 0; i < places.length; i++) {
+        if (placeMatchesFilter(places[i], filter)) return places[i];
+      }
+      return places[0] || null;
+    }
+
     function resultsForActiveScope() {
       var scope = imgSearchState.activeScope || 'wilaya';
-      var all = imgSearchState.allResults || [];
-      return all.filter(function(item) {
-        return item && item.scopes && item.scopes[scope];
+      var filter = combinedGeoFilter();
+      return (imgSearchState.allResults || []).filter(function(item) {
+        if (!(item && item.scopes && item.scopes[scope])) return false;
+        return itemPlaces(item).some(function(p) { return placeMatchesFilter(p, filter); });
       });
+    }
+
+    function parentFilterForLevel(level) {
+      var chain = IMG_GEO_CHAIN[imgSearchState.activeScope] || [];
+      var box = userBoxFilter();
+      var extra = imgSearchState.geoFilter || {};
+      var filter = {
+        nchi: box.nchi || null,
+        kanda: box.kanda || null,
+        mkoa: box.mkoa || null,
+        wilaya: box.wilaya || null,
+        kata: null
+      };
+      var order = ['kanda', 'mkoa', 'wilaya', 'kata'];
+      var idx = order.indexOf(level);
+      order.slice(0, idx).forEach(function(key) {
+        if (extra[key]) filter[key] = extra[key];
+      });
+      return filter;
+    }
+
+    function countsForGeoLevel(level) {
+      var filter = parentFilterForLevel(level);
+      var scope = imgSearchState.activeScope;
+      var map = {};
+      (imgSearchState.allResults || []).forEach(function(item) {
+        if (!(item.scopes && item.scopes[scope])) return;
+        var seen = {};
+        itemPlaces(item).forEach(function(p) {
+          if (!placeMatchesFilter(p, filter)) return;
+          var id = p[level + '_id'];
+          var name = p[level];
+          if (!id || !name || seen[String(id)]) return;
+          seen[String(id)] = true;
+          if (!map[id]) map[id] = { id: id, name: name, count: 0 };
+          map[id].count += 1;
+        });
+      });
+      return Object.keys(map).map(function(id) { return map[id]; }).sort(function(a, b) {
+        return String(a.name).localeCompare(String(b.name));
+      });
+    }
+
+    function renderImgSubFilters() {
+      var isSwahili = Number($('#luga').val()) == 0;
+      var labels = {
+        kanda: isSwahili ? 'Kanda' : 'Zones',
+        mkoa: isSwahili ? 'Mikoa' : 'Regions',
+        wilaya: isSwahili ? 'Wilaya' : 'Districts',
+        kata: isSwahili ? 'Kata' : 'Wards'
+      };
+      var chain = IMG_GEO_CHAIN[imgSearchState.activeScope] || [];
+      var extra = imgSearchState.geoFilter || {};
+      var html = '';
+      chain.forEach(function(level, i) {
+        if (i > 0 && !extra[chain[i - 1]]) return;
+        var opts = countsForGeoLevel(level);
+        if (!opts.length) return;
+        html += '<div class="img-subfilter-row">';
+        html += '<div class="img-subfilter-label">' + labels[level] + '</div>';
+        html += '<div class="img-subfilter-btns">';
+        opts.forEach(function(opt) {
+          var active = String(extra[level] || '') === String(opt.id);
+          html += '<button type="button" class="img-subfilter-btn' + (active ? ' active' : '') +
+            '" data-level="' + level + '" data-id="' + escImgHtml(opt.id) + '">' +
+            escImgHtml(opt.name) +
+            ' <span class="badge badge-light">' + opt.count + '</span></button>';
+        });
+        html += '</div></div>';
+      });
+      $('#imgSearchSubFilters').html(html);
     }
 
     function showImgSearchResults(response) {
@@ -6381,7 +6577,11 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
         if (response && response.scope_counts) {
           imgSearchState.scopeCounts = response.scope_counts;
         }
+        if (response && response.user_place) {
+          imgSearchState.userPlace = response.user_place;
+        }
         updateImgScopeCountBadges(imgSearchState.scopeCounts);
+        renderImgSubFilters();
 
         var results = resultsForActiveScope();
         if (!results.length && response && Array.isArray(response.results) && !(imgSearchState.allResults || []).length) {
@@ -6389,15 +6589,6 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
         }
         var isSwahili = Number($('#luga').val()) == 0;
         var html = '';
-
-      function escHtml(str) {
-        return String(str || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/\"/g, '&quot;')
-          .replace(/\'/g, '&#39;');
-      }
 
         if (results.length === 0) {
             var emptyMsg = isSwahili
@@ -6421,31 +6612,25 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
                 var matchBadge = item.similarity >= 70
                     ? 'badge-success'
                     : item.similarity >= 45 ? 'badge-warning' : 'badge-secondary';
+                var place = matchingPlace(item);
+                var stockId = (place && place.stock_id) || item.bidhaa_stoku_id || 0;
+                var shopId = (place && place.shop_id) || item.shop_id || 0;
 
-              var maeneo = Array.isArray(item.locations) ? item.locations : [];
               var locationHtml = '';
-              if (maeneo.length > 0) {
-                var topLoc = maeneo[0] || {};
-                var locParts = [topLoc.shop, topLoc.mtaa, topLoc.kata, topLoc.wilaya, topLoc.mkoa].filter(Boolean);
+              if (place) {
+                var locParts = [place.shop, place.mtaa, place.kata, place.wilaya, place.mkoa].filter(Boolean);
                 locationHtml = '<p class="smallestFont text-muted mb-1" style="line-height:1.15">' +
-                  escHtml(locParts.join(', ')) +
+                  escImgHtml(locParts.join(', ')) +
                   '</p>';
-
-                if (maeneo.length > 1) {
-                  locationHtml += '<div class="smallestFont text-muted">+' +
-                    (maeneo.length - 1) + ' ' +
-                    (isSwahili ? 'maduka mengine' : 'other shops') +
-                    '</div>';
-                }
               }
 
                 html += '<div class="col-6 col-sm-4 col-md-3 mb-3 px-1">' +
-                  '<a href="/displaySelItem?i=' + encodeURIComponent(item.bidhaa_stoku_id || 0) + '&value=' + encodeURIComponent(item.shop_id || 0) + '" class="text-decoration-none d-block h-100">' +
+                  '<a href="/displaySelItem?i=' + encodeURIComponent(stockId) + '&value=' + encodeURIComponent(shopId) + '" class="text-decoration-none d-block h-100">' +
                     '<div class="card border shadow-sm h-100" style="border-radius:8px;overflow:hidden">' +
                     '<img src="' + imgSrc + '" class="card-img-top" style="height:110px;object-fit:cover" ' +
                     'onerror="this.style.display=\'none\'">' +
                     '<div class="card-body p-2">' +
-                '<p class="card-text smallerFont text-capitalize mb-1 fontColor font-weight-500" style="line-height:1.2">' + escHtml(item.jina) + '</p>' +
+                '<p class="card-text smallerFont text-capitalize mb-1 fontColor font-weight-500" style="line-height:1.2">' + escImgHtml(item.jina) + '</p>' +
                 locationHtml +
                     '<span class="badge ' + matchBadge + ' smallestFont">' +
                     (isSwahili ? 'Ufanani' : 'Match') + ': ' + item.similarity + '%</span>' +
@@ -6498,6 +6683,25 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
       }
     });
 
+    $(document).on('click', '.img-subfilter-btn', function() {
+      var level = $(this).data('level');
+      var id = $(this).data('id');
+      if (!level) return;
+      var extra = imgSearchState.geoFilter || resetImgGeoFilter() || imgSearchState.geoFilter;
+      if (String(extra[level] || '') === String(id)) {
+        extra[level] = null;
+      } else {
+        extra[level] = id;
+      }
+      var chain = IMG_GEO_CHAIN[imgSearchState.activeScope] || [];
+      var idx = chain.indexOf(level);
+      if (idx >= 0) {
+        chain.slice(idx + 1).forEach(function(child) { extra[child] = null; });
+      }
+      imgSearchState.geoFilter = extra;
+      showImgSearchResults({});
+    });
+
     setActiveImgScope('wilaya');
 
     // Reset preview when modal closes
@@ -6508,7 +6712,10 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
       imgSearchState.isSearching = false;
       imgSearchState.allResults = [];
       imgSearchState.scopeCounts = { wilaya: 0, mkoa: 0, kanda: 0, nchi: 0 };
+      imgSearchState.userPlace = {};
+      resetImgGeoFilter();
       updateImgScopeCountBadges(imgSearchState.scopeCounts);
+      $('#imgSearchSubFilters').empty();
       setActiveImgScope('wilaya');
     });
     </script>

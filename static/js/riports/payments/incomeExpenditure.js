@@ -2,6 +2,58 @@
 
 var PAYACC = [],Transactions=[]
 const HIM = Number($('#HIMOWNER').val())
+
+function ieIsInternalTransfer(iv){
+  return !!(iv.kuhamisha && !iv.kuhamishaNje)
+}
+function ieIsWaiterSales(iv){
+  return !!(iv.from_waiter_payments_id || (iv.order && !iv.invo_id))
+}
+function ieIsGoodsIncome(iv){
+  if (ieIsInternalTransfer(iv) || iv.huduma_nyingine_id != null) return false
+  if (iv.serv || iv.huduma) return false
+  if (iv.invo_id) return true
+  if (ieIsWaiterSales(iv) || iv.mauzo) return true
+  return false
+}
+function ieIsServiceIncome(iv){
+  if (ieIsInternalTransfer(iv) || iv.huduma_nyingine_id != null) return false
+  if (iv.invo_id && iv.serv) return true
+  if ((ieIsWaiterSales(iv) || iv.mauzo) && (iv.serv || iv.huduma)) return true
+  if (!iv.invo_id && iv.huduma) return true
+  return false
+}
+function ieIsCapitalIncome(iv){
+  if (ieIsInternalTransfer(iv) || iv.huduma_nyingine_id != null) return false
+  return !ieIsGoodsIncome(iv) && !ieIsServiceIncome(iv)
+}
+function ieIncomeFromLabel(dt){
+  if (dt.kutoka_siri && !HIM) return lang('Mengineyo','Others')
+  const isMkupuo = String(dt.maelezo || '').indexOf('Mkupuo') !== -1
+  if (ieIsServiceIncome(dt)) {
+    return isMkupuo
+      ? lang('Mapato Kutokana na Huduma (Mkupuo)','Service Income (Bulk)')
+      : lang('Mapato Kutokana na Huduma','Service Income')
+  }
+  if (ieIsGoodsIncome(dt)) {
+    if (ieIsWaiterSales(dt)) return lang('Mauzo ya Bidhaa (Waiter)','Goods Sales (Waiter)')
+    return isMkupuo
+      ? lang('Mauzo ya Bidhaa (Mkupuo)','Goods Sales (Bulk)')
+      : lang('Mauzo ya Bidhaa','Goods Sales')
+  }
+  if (dt.huduma_nyingine_id) return lang('Huduma nyingine','Other Services')
+  return String(dt.kutoka || '').replace(/[/[&\\#,+()$~%"*?<>{}`]/g, '')
+}
+function ieIncomeDescHtml(dt){
+  const extra = String(dt.maelezo || dt.kutoka || '').replace(/[[,+()$~%"*{}`]/g, '')
+  if (dt.invo_id) {
+    const btn = `<button type="button" data-val=${dt.invo_id} data-target="#ShowTheInvo" data-toggle="modal" class="btn btn-sm border0 viewInvo smallerFont btn-light" title="${lang('Onesha Ankara','View Invo')}">
+              INVO-<span class="text-primary">${dt.invo_code}</span>
+           </button>`
+    return extra ? `${btn} <span class="small text-muted">${extra}</span>` : btn
+  }
+  return extra
+}
 function DuraTable(){
         let dta = {
             data:{ 
@@ -358,10 +410,11 @@ function incomeExpSummary(transaxn){
               //  INCOME TABLE GENERATE ................................................................//
             const  capitalAmount = payInitial.reduce((a,b)=>a + Number(b.intial),0),
 
-              mauzo = income.filter(iv=>iv.invo_id!=null && !iv.serv).reduce((a,b)=>a + Number(b.Amount),0),
-              huduma = income.filter(iv=>iv.invo_id!=null && iv.serv).reduce((a,b)=>a + Number(b.Amount),0),
+              mauzo = income.filter(ieIsGoodsIncome).reduce((a,b)=>a + Number(b.Amount),0),
+              waiterMauzo = income.filter(ieIsWaiterSales).reduce((a,b)=>a + Number(b.Amount),0),
+              huduma = income.filter(ieIsServiceIncome).reduce((a,b)=>a + Number(b.Amount),0),
               huduma_nyingine = income.filter(iv=>iv.huduma_nyingine_id!=null).reduce((a,b)=>a + Number(b.Amount),0),
-              mtaji = income.filter(iv=>iv.huduma_nyingine_id===null&&iv.invo_id===null&&(!iv.kuhamisha||iv.kuhamishaNje)).reduce((a,b)=>a + Number(b.Amount),0),
+              mtaji = income.filter(ieIsCapitalIncome).reduce((a,b)=>a + Number(b.Amount),0),
               totalIncome = mauzo+huduma+huduma_nyingine+mtaji,
 
               incomT = () =>{
@@ -376,6 +429,12 @@ function incomeExpSummary(transaxn){
                                         <td>${lang('Mauzo ya Bidhaa','Goods Sales ')}</td>
                                         <td>${floatValue(mauzo)}</td>
                                   </tr>`
+                                 if(waiterMauzo>0){
+                                    tr+= `<tr class="text-muted">
+                                        <td class="pl-3">${lang('Ikiwemo malipo ya waiter','Including waiter collections')}</td>
+                                        <td>${floatValue(waiterMauzo)}</td>
+                                  </tr>`
+                                 }
                               }
                             if(huduma>0){
                                  tr+=
@@ -1283,30 +1342,10 @@ inc.reverse().forEach(dt => {
     if(dt.kutoka_siri && !HIM){
       tr+=` <td>${lang('Mengineyo','Others')}</td>`
     }else{
-      //  tr+=`<td>${dt.kutoka.replace(/[/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</td>`
-        if(dt.invo_id){
-              tr+=`<td>${dt.serv?lang('Mapato Kutokana na Huduma','Service Income'):lang('Mauzo ya Bidhaa','Goods Sales')}</td>
-                `
-         }else{
-             tr+=`<td>${dt.huduma_nyingine_id?lang('Huduma nyingine','Other Services'):dt.kutoka.replace(/[/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</td>
-          `
-      }
+      tr+=`<td>${ieIncomeFromLabel(dt)}</td>`
     }
 
-    if(dt.invo_id){
-          let invo = `
-          <button type="button" data-val=${dt.invo_id} data-target="#ShowTheInvo" data-toggle="modal" class="btn btn-sm border0 viewInvo smallerFont btn-light" title="${lang('Onesha Ankara','View Invo')}">
-              INVO-<span class="text-primary">${dt.invo_code}</span>
-           </button>
-          `
-         
-         
-          tr+=`<td>${invo}</td>`
-  }else{
-        tr+=`<td>${dt.maelezo.replace(/[[,+()$~%"*{}`]/g, "")}</td>
-       `
-   
-  }
+    tr+=`<td>${ieIncomeDescHtml(dt)}</td>`
 
       tr+=`
       <td class="text-capitalize" >${(dt.f_name || 'None').replace(/[/[&\/\\#,+()$~%"*?<>{}`]/g, "") +' '+ (dt.l_name || "None" ).replace(/[/[&\/\\#,+()$~%"*?<>{}`]/g, "")}</td>
@@ -1381,12 +1420,7 @@ withdrawTr = () =>{
 allTranxn = () =>{
     const depoTrxn = inc.map(t=>
         {
-            let invo = `
-            <button type="button" data-val=${t.invo_id} data-target="#ShowTheInvo" data-toggle="modal" class="btn btn-sm border0 viewInvo smallerFont btn-light" title="${lang('Onesha Ankara','View Invo')}">
-                INVO-<span class="text-primary">${t.invo_code}</span>
-             </button>
-            `,
-             invo_desc = t.serv?lang('Mapato Kutokana na Huduma','Service Income'):lang('Mauzo ya Bidhaa','Goods Sales') + ' '+invo
+            let invo_desc = ieIncomeFromLabel(t) + ' ' + ieIncomeDescHtml(t)
              
              return{
                   date:t.tarehe,
@@ -1396,7 +1430,7 @@ allTranxn = () =>{
                   weka:1,
                   l_name:t.l_name,
                   f_name:t.f_name,
-                  maelezo:t.invo_id?invo_desc:t.maelezo,
+                  maelezo: (t.invo_id || ieIsGoodsIncome(t) || ieIsServiceIncome(t)) ? invo_desc : t.maelezo,
                   name:t.akauntiN.replace(/[/[&\/\\#,+()$~%"*?<>{}`]/g, "")
                 }}),
 
