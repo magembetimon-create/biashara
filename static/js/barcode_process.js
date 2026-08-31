@@ -336,17 +336,24 @@ function qr_success(result){
     if (window.TbScanCamera && typeof TbScanCamera.qrConfig === 'function') {
       return TbScanCamera.qrConfig()
     }
-    const cfg = { fps: 15, qrbox: { width: 280, height: 140 }, disableFlip: false }
+    const cfg = {
+      fps: 24,
+      disableFlip: false,
+      experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+    }
     if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
+      const F = Html5QrcodeSupportedFormats
       cfg.formatsToSupport = [
-        Html5QrcodeSupportedFormats.QR_CODE,
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-      ]
+        F.QR_CODE,
+        F.EAN_13,
+        F.EAN_8,
+        F.CODE_128,
+        F.CODE_39,
+        F.UPC_A,
+        F.UPC_E,
+      ].concat(
+        [F.CODE_93, F.ITF, F.CODABAR].filter(function (f) { return typeof f === 'number' })
+      )
     }
     return cfg
   }

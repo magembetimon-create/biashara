@@ -11,7 +11,7 @@
 
   const SCAN_GAP_MS = 60
   let scanCamCleanups = []
-  let scanCamZoom = 2.2
+  let scanCamZoom = 1
   let scanCamTrackLive = null
 
   function scanCamCleanup() {
@@ -93,7 +93,7 @@
     bar.className = 'tb-scan-zoom-bar'
     bar.innerHTML =
       '<button type="button" class="tb-scan-zoom-btn" data-zoom-delta="-0.4" aria-label="Zoom out">−</button>' +
-      '<span class="tb-scan-zoom-label">2.2×</span>' +
+      '<span class="tb-scan-zoom-label">1×</span>' +
       '<button type="button" class="tb-scan-zoom-btn" data-zoom-delta="0.4" aria-label="Zoom in">+</button>'
     root.appendChild(bar)
   }
@@ -105,7 +105,7 @@
 
   function scanCamEnhance(rootId) {
     scanCamCleanup()
-    scanCamZoom = 2.2
+    scanCamZoom = 1
     const attach = function () {
       const found = scanCamTrack(rootId)
       if (!found.video || !found.track) return false
@@ -165,14 +165,11 @@
 
   function scanCamQrConfig() {
     const cfg = {
-      fps: 18,
-      qrbox: function (viewW, viewH) {
-        const width = Math.max(240, Math.min(Math.floor(viewW * 0.9), 520))
-        const height = Math.max(72, Math.min(Math.floor(viewH * 0.26), 130))
-        return { width: width, height: height }
-      },
-      aspectRatio: 1.777778,
+      fps: 24,
       disableFlip: false,
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true
+      },
       videoConstraints: {
         facingMode: { ideal: 'environment' },
         width: { min: 640, ideal: 1920 },
@@ -180,15 +177,18 @@
       }
     }
     if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
+      const F = Html5QrcodeSupportedFormats
       cfg.formatsToSupport = [
-        Html5QrcodeSupportedFormats.QR_CODE,
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-      ]
+        F.QR_CODE,
+        F.EAN_13,
+        F.EAN_8,
+        F.CODE_128,
+        F.CODE_39,
+        F.UPC_A,
+        F.UPC_E,
+      ].concat(
+        [F.CODE_93, F.ITF, F.CODABAR].filter(function (f) { return typeof f === 'number' })
+      )
     }
     return cfg
   }
@@ -302,8 +302,8 @@
       $('#qr_reader').after('<p class="tb-scan-focus-hint mb-0" id="tb-scan-focus-hint"></p>')
     }
     $('#tb-scan-focus-hint').text(lang(
-      'Shikilia barcode cm 15–25. Gusa skrini ili kamera ifocus tena — usisongeze sana.',
-      'Hold the barcode 15–25cm away. Tap the screen to refocus — do not get too close.'
+      'Weka label yote ndani ya kamera (cm 12–25). Usisongeze sana. Bonyeza + kukuza stika ndogo, gusa skrini kufocus.',
+      'Fit the whole label in view (12–25cm). Don’t get too close. Tap + for tiny stickers, tap the screen to refocus.'
     ))
     $modal.find('.modal-title').text(lang('Barcode Scanner', 'Barcode Scanner'))
     $modal.find('.modal-footer .stop_qr').text(lang('Maliza / Funga', 'Done / Close'))
