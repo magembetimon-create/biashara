@@ -14,7 +14,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from django.db.models import F, Q
+from django.db.models import F, Max, Q
 from django.utils import timezone
 
 try:
@@ -785,17 +785,51 @@ def normalize_import_row(raw):
     return normalized
 
 
-def _next_adj_code(duka):
-    adjno = 1
-    if stokAdjustment.objects.filter(Interprise=duka.id).exists():
-        adjno = stokAdjustment.objects.filter(Interprise=duka.id).last().code_num
+def _format_adj_code(adjno):
+    adjno = int(adjno or 1)
     if adjno < 10:
-        return '000' + str(adjno), adjno + 1
+        return '000' + str(adjno)
     if adjno < 100:
-        return '00' + str(adjno), adjno + 1
+        return '00' + str(adjno)
     if adjno < 1000:
-        return '0' + str(adjno), adjno + 1
-    return str(adjno), adjno + 1
+        return '0' + str(adjno)
+    return str(adjno)
+
+
+def _load_next_adj_num(duka):
+    mx = stokAdjustment.objects.filter(Interprise=duka.id).aggregate(m=Max('code_num'))['m']
+    return int(mx) if mx else 1
+
+
+class _AdjSeq:
+    """In-memory adjustment numbers so bulk import does not query .last() per item."""
+
+    def __init__(self, start):
+        self.n = int(start or 1)
+
+    def next(self):
+        adjno = self.n
+        self.n = adjno + 1
+        return _format_adj_code(adjno), self.n
+
+
+def _next_adj_code(duka, adj_seq=None):
+    if adj_seq is None:
+        adj_seq = _AdjSeq(_load_next_adj_num(duka))
+    return adj_seq.next()
+
+
+def _import_ctx(duka, intp, user, ctx=None):
+    if ctx is not None:
+        return ctx
+    return {
+        'adj_seq': _AdjSeq(_load_next_adj_num(duka)),
+        'owner_user': User.objects.get(pk=intp.admin),
+        'op_user': UserExtend.objects.get(user=user),
+        'aina': {},
+        'brand': {},
+        'supplier': {},
+    }
 
 
 def _resolve_aina(duka, aina_name, kundi_name):
@@ -1185,9 +1219,10 @@ def _enrich_existing_item(duka, intp, user, existing, produ_stock, row, variants
     return updated_fields, variant_applied
 
 
-def import_item_group(duka, intp, user, group, image_map=None, row_num=0):
+def import_item_group(duka, intp, user, group, image_map=None, row_num=0, ctx=None):
     """Create bidhaa + variants + images from a grouped import."""
     image_map = image_map or {}
+    ctx = _import_ctx(duka, intp, user, ctx)
     row = group.get('master') or {}
     variants = group.get('variants') or []
     row_num = group.get('start_row') or row_num
@@ -1254,9 +1289,26 @@ def import_item_group(duka, intp, user, group, image_map=None, row_num=0):
     if variants and not color_attr:
         color_attr = 'Model'
 
-    selected_aina, mahi = _resolve_aina(duka, row.get('aina'), row.get('kundi'))
-    brand = _resolve_brand(duka, row.get('chapa'))
-    supplier = _resolve_supplier(duka.owner.user, row.get('wasambazaji'))
+    aina_key = (_cell_str(row.get('aina')).lower(), _cell_str(row.get('kundi')).lower())
+    if aina_key in ctx['aina']:
+        selected_aina, mahi = ctx['aina'][aina_key]
+    else:
+        selected_aina, mahi = _resolve_aina(duka, row.get('aina'), row.get('kundi'))
+        ctx['aina'][aina_key] = (selected_aina, mahi)
+
+    brand_key = _cell_str(row.get('chapa')).lower()
+    if brand_key in ctx['brand']:
+        brand = ctx['brand'][brand_key]
+    else:
+        brand = _resolve_brand(duka, row.get('chapa'))
+        ctx['brand'][brand_key] = brand
+
+    supplier_key = _cell_str(row.get('wasambazaji')).lower()
+    if supplier_key in ctx['supplier']:
+        supplier = ctx['supplier'][supplier_key]
+    else:
+        supplier = _resolve_supplier(duka.owner.user, row.get('wasambazaji'))
+        ctx['supplier'][supplier_key] = supplier
 
     produ = bidhaa()
     produ.kampuni = brand
@@ -1272,7 +1324,7 @@ def import_item_group(duka, intp, user, group, image_map=None, row_num=0):
     produ.purchtaxInluded = False
     produ.namba = _cell_str(row.get('namba'))
     produ.material = False
-    produ.owner = User.objects.get(pk=intp.admin)
+    produ.owner = ctx['owner_user']
     if color_attr or variants:
         produ.colorAttr = color_attr or 'Model'
     produ.save()
@@ -1286,14 +1338,14 @@ def import_item_group(duka, intp, user, group, image_map=None, row_num=0):
     produ_stock.Bei_kununua = float(bei_kununua)
     produ_stock.Bei_kuuza = float(bei_kuuza)
     produ_stock.Bei_kuuza_jum = float(bei_kuuza_jum)
-    produ_stock.op_name = UserExtend.objects.get(user=user)
+    produ_stock.op_name = ctx['op_user']
     produ_stock.expire_date = None
     produ_stock.sirio = _cell_str(row.get('barcode'))
     produ_stock.tanguliziwa = 0
     produ_stock.service = is_service
     produ_stock.timely = 0
 
-    adj_str, adj_num_next = _next_adj_code(duka)
+    adj_str, adj_num_next = _next_adj_code(duka, ctx['adj_seq'])
     adj = stokAdjustment()
     adj.Interprise = duka
     adj.date = timezone.now()
@@ -1348,10 +1400,11 @@ def bulk_import_items(duka, intp, user, rows, image_map=None):
     results = []
     created = 0
     failed = 0
+    ctx = _import_ctx(duka, intp, user)
     for group in groups:
         row_num = group.get('start_row', 0)
         try:
-            result = import_item_group(duka, intp, user, group, image_map=image_map, row_num=row_num)
+            result = import_item_group(duka, intp, user, group, image_map=image_map, row_num=row_num, ctx=ctx)
         except Exception as exc:
             result = {
                 'success': False,
