@@ -633,6 +633,16 @@
       html5Stopping = false
       setSessionMode('camera')
       $('#qr_error').text('')
+      const video = document.querySelector('#qr_reader video')
+      if (video) {
+        video.setAttribute('playsinline', 'true')
+        video.setAttribute('webkit-playsinline', 'true')
+        video.muted = true
+        video.style.display = 'block'
+        if (video.paused && typeof video.play === 'function') {
+          video.play().catch(function () {})
+        }
+      }
       scanCamEnhance('qr_reader')
     }).catch(function (err) {
       html5Scanner = null
