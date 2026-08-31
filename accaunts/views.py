@@ -4939,7 +4939,7 @@ def traceChange(request):
       # print(os.getenv("COMPANY_TOKEN"))
 
       notice = Notifications.objects.filter(Q(admin_read=False,Interprise__owner__user=request.user.id)|Q(Incharge=todo['useri'].id,Incharge_reade=False)|Q(admin_read=False,AnyUser_read=False,Incharge_reade=False),Interprise__in=[entId,pent]).select_related('Incharge__user')
-      chalst = chats.objects.filter(Q(to__to__owner=todo['useri'].id,admin_read=False)|Q(Anyuser_read=False),to__to__in=[duka.id,pent.id]).select_related('By__picha','From__logo','By__user').annotate(
+      chalst = chats.objects.filter(Q(to__to__owner=todo['useri'].id,admin_read=False)|Q(Anyuser_read=False),to__to__in=[duka.id,pent.id]).select_related('By', 'By__user', 'From', 'to').annotate(
          f_name=F('By__user__first_name'),
         #  imgBy=F('By__picha'),
         #  imgEntp=F('From__logo'),
