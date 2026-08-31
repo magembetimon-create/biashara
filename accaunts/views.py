@@ -3,6 +3,7 @@
  
 from genericpath import exists
 from ipaddress import ip_address
+import logging
 import traceback
 from typing import Dict
 from django.core.files import storage
@@ -58,6 +59,8 @@ import xmltodict
 
 from .todos import Todos,confirmMailF,sendSMS
 # Create your views here.
+
+logger = logging.getLogger(__name__)
 
 def todoFunct(request):
   usr = Todos(request)
@@ -5148,9 +5151,8 @@ def traceChange(request):
             
             })
 
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
+        except Exception:
+            logger.exception('traceChange: notice loop failed')
             notify=[] 
              
       
@@ -5240,12 +5242,13 @@ def traceChange(request):
         
         # bidhaa.objects.filter(pk=22).delete()
 
-    except:
-      traceback.print_exc()
+    except Exception as e:
+      logger.exception('traceChange failed')
       data = {
       "online":"error",
       "updated":False,
-      "Asum":"Error"
+      "Asum":"Error",
+      "error": str(e),
     } 
 
 
