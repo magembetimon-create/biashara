@@ -6,9 +6,9 @@
    
 <div class="whiteBg">
 
-{% if thereIsNew > 0 %}    
+{% if thereIsNew > 0 and not is_new %}    
   <div class="  mb-3" id="NewItems" >
-        <h6 class="py-2 mx-2">{% if useri.langSet == 0 %} Bidhaa/Huduma <span class="brown">Mpya</span>   {% else %} <span class="brown">New</span>  Items/Services {% endif %} <i class="mx-1 pl-1 text-primary border-left"><u>{{shop.name | title}}</u> </i> <small class=" px-2 px-md-1  smallFont  rounded " style="color:rgb(255, 255, 255);background:rgba(168, 51, 51, 0.877)" >{{thereIsNew}} </small></h6>
+        <h6 class="py-2 mx-2">{% if useri.langSet == 0 %} Bidhaa/Huduma <span class="brown">Mpya</span>   {% else %} <span class="brown">New</span>  Items/Services {% endif %} <i class="mx-1 pl-1 text-primary border-left"><u>{{shop.name | title}}</u> </i> <small class=" px-2 px-md-1  smallFont  rounded " style="color:rgb(255, 255, 255);background:rgba(168, 51, 51, 0.877)" >{{thereIsNew}} </small>{% if thereIsNew > 15 %} <a href="{% url 'displayProfItems' %}?new=1&value={{shop.id}}" class="latoFont smallFont float-right">{% if useri.langSet == 0 %}Zaidi..{% else %}More..{% endif %}</a>{% endif %}</h6>
         <button style="position:absolute;margin-left:0;margin-top:90px"   onclick="$('#scrollable').animate({scrollLeft:'-=300px'},'fast');" 
         class="btn btn-default ">
         <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-chevron-compact-left" viewBox="0 0 16 16">

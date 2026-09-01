@@ -2863,6 +2863,7 @@ def displayProfItems(request):
     value = request.GET.get('value',0)
     aina = request.GET.get('a',0)
     uncat = int(request.GET.get('uncat', 0) or 0)
+    is_new = int(request.GET.get('new', 0) or 0)
     kampuni = request.GET.get('k',0)
     mahitaji = request.GET.get('m',0)
     byi = None
@@ -2870,7 +2871,24 @@ def displayProfItems(request):
     dk = Interprise.objects.filter(pk=value)
     if dk.exists():
         duka=dk.last()
-        if uncat:
+        if is_new:
+          prod = bidhaa_stoku.objects.filter(
+            Q(inapacha=False)|Q(idadi__gt=0)|Q(produced__notsure=True),
+            Bei_kuuza__gt=0,
+            Interprise=duka.id,
+          )
+          last_visit = InterpriseVisotrs.objects.filter(
+            user=todo['useri'].id,
+            Interprise=duka.id,
+          ).exclude(date=date.today())
+          if last_visit.exists():
+            prod = prod.filter(bidhaa__change_date__gt=last_visit.last().date)
+          prod = prod.order_by('-bidhaa__change_date', '-pk')
+          ain = True
+          brand = False
+          kundi = False
+          by = 'Bidhaa Mpya' if todo['useri'].langSet == 0 else 'New Items'
+        elif uncat:
           prod = bidhaa_stoku.objects.filter(
             Q(inapacha=False)|Q(idadi__gt=0),
             Bei_kuuza__gt=0,
@@ -2906,7 +2924,11 @@ def displayProfItems(request):
 
 
         prod = prod.filter(Q(Interprise=todo['duka'].id)|Q(showToVistors=True))
-        prod = prod.select_related('bidhaa').order_by('-pk')
+        prod = prod.select_related('bidhaa')
+        if is_new:
+          prod = prod.order_by('-bidhaa__change_date', '-pk')
+        else:
+          prod = prod.order_by('-pk')
 
         paginator = Paginator(prod, 24)
         try:
@@ -2962,6 +2984,7 @@ def displayProfItems(request):
           'brands':brands,
           'by':by,
           'byi':byi,
+          'is_new': bool(is_new),
           'kapu':mauzoList.objects.filter(mauzo__order=True,mauzo__Interprise=duka.id,mauzo__cart=True,mauzo__user_customer__enteprise__in=[todo['duka'].id,todo['pent'].id],mauzo__user_customer__by=todo['useri'].id)
         })
         if duka == todo['duka']:
@@ -3468,10 +3491,12 @@ def buzinessProfile(request):
         lastVist = InterpriseVisotrs.objects.filter(user=userId,Interprise=duka.id).exclude(date=date.today())
 
         New_itms=[]
-        if lastVist.exists() and todo['duka'].id is not duka.id:
+        new_total = 0
+        if lastVist.exists():
            l_Visted = lastVist.last()
-           Nitems =  produ.filter(bidhaa__change_date__gt=l_Visted.date) 
-           for p in Nitems:
+           Nitems = produ.filter(bidhaa__change_date__gt=l_Visted.date).select_related('bidhaa').order_by('-bidhaa__change_date', '-pk')
+           new_total = Nitems.count()
+           for p in Nitems[:15]:
             img_url = None
             img = picha_bidhaa.objects.filter(bidhaa=p.bidhaa.id)
             if img.exists():
@@ -3497,7 +3522,7 @@ def buzinessProfile(request):
           'services':other_services,
           'shop':duka,
           'NewItems':New_itms,
-          'thereIsNew':len(New_itms),
+          'thereIsNew':new_total,
           'compound_order_enabled': compound_order_enabled and not userLoged,
           'guest_cell': guest_cell,
           'guest_cell_info': guest_cell_payload(guest_cell),

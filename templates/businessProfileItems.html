@@ -19,7 +19,7 @@
         <a class="float-right smallFont" href="{% url 'buzinessProfile' %}?value={{shop.id}}">{% if useri.langSet == 0 %}Onesha Zote{% else %}Show all{% endif %}</a>
     </h6>
 
-    {% if duka == shop  %}
+    {% if duka == shop and byi %}
 
     {% if byi.audio %} 
 
@@ -281,7 +281,7 @@
 
 {% if duka != shop %}
 
-{% if byi.audio %}
+{% if byi and byi.audio %}
 <p  >
 
   <button class="audio_end" id="audio_end" onclick="$(this).hide();$(this).siblings('.audio_end').fadeIn(500);let p=document.getElementById('the_audio') ;p.pause()"> 
