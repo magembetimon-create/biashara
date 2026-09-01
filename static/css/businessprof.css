@@ -263,3 +263,53 @@
         display: none;
     }
 }
+
+.prof-items-grid {
+    margin-left: -6px;
+    margin-right: -6px;
+}
+
+.prof-item-card {
+    display: block;
+    width: 100%;
+    text-decoration: none;
+    color: inherit;
+}
+
+.prof-item-card .prof-item-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 28vh;
+    min-height: 110px;
+    max-height: 180px;
+    overflow: hidden;
+}
+
+.prof-item-card .prof-item-img img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.prof-item-card .prof-item-name,
+.prof-item-card .prof-item-price {
+    width: 100%;
+    word-break: break-word;
+}
+
+.prof-item-card .prof-item-name {
+    font-size: 0.85rem;
+    line-height: 1.25;
+}
+
+@media screen and (min-width: 768px) {
+    .prof-item-card .prof-item-img {
+        height: 34vh;
+        max-height: 240px;
+    }
+    .prof-item-card .prof-item-name {
+        font-size: 1rem;
+    }
+}

@@ -125,14 +125,14 @@
 
 
 
-    <div class="container">
-          <div class=" row mb-5">
+    <div class="container px-2 px-md-3">
+          <div class="row mb-4 prof-items-grid">
         {% for b in bidhaa %}
         
                    
-        <a href="{% url 'displaySelItem' %}?value={{shop.id}}&i={{b.id}}" class="item_show col-md-4 col-lg-3  mt-4">
+        <a href="{% url 'displaySelItem' %}?value={{shop.id}}&i={{b.id}}" class="item_show prof-item-card col-6 col-md-4 col-lg-3 mt-3 px-1 px-md-2">
            <!-- ADDED TO CART OR ORDERED INDICATOR -->
-           <div class="text-center mb-2" style="height: 20px;" >
+           <div class="text-center mb-1" style="min-height: 18px;" >
             <!-- SHOW IF TE ITEM HAS ORDERED TO CART .................................. ... -->
             {% if b.agizwa.last.mauzo.order and not b.agizwa.last.mauzo.cart %}
                 <span class="bg-primary latoFont smallerFont " 
@@ -154,7 +154,7 @@
 
         <!-- SHOW IF TE ITEM HAS ADDED TO CART .................................. ... -->
             {% if b.agizwa.last.mauzo.order and  b.agizwa.last.mauzo.cart %}
-            <span class="bg-primary latoFont smallerFont p-2" 
+            <span class="bg-primary latoFont smallerFont p-1" 
             style="-webkit-box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);
             -moz-box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);
                 box-shadow: 1px 1px 16px -1px rgba(0,0,0,0.7);color:#fff;">
@@ -171,12 +171,12 @@
         </div>
 
 
-            <div class=" d-flex  justify-content-center " style="align-items:center;width: 280px;height:38vh">
+            <div class="prof-item-img">
                 {% if b.img %}
-                    <img src="{{b.img.url}}" style="max-width: 100%;max-height:100%" alt="">
+                    <img src="{{b.img.url}}" alt="">
                 {% else %}
                 <span style="color:rgb(163, 163, 163)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-card-image" viewBox="0 0 16 16">
                         <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                         <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.505.505 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
                     </svg>
@@ -185,7 +185,7 @@
 
                 
             </div>
-                <div class="mt-2 text-center  noprimary" style="width:280px" >
+                <div class="mt-2 text-center noprimary prof-item-name">
                     {% if b.name|length > 40 %}
                     {{b.name|slice:40 | title}} ...
                     {% else %}
@@ -193,7 +193,7 @@
                     {% endif %}
                 </div>   
 
-                <h6 class="pt-1 text-center mb-3 brown" style="width:280px">
+                <h6 class="pt-1 text-center mb-3 brown prof-item-price">
                    <small class="text-primary" > {{shop.currencii}}</small>.<strong>  {{b.bei | floatformat:'-2' | intcomma }}</strong>
                 </h6>
             
@@ -205,8 +205,69 @@
             
 
         
+        {% empty %}
+        <div class="col-12 py-4 text-center text-muted latoFont">
+          {% if useri.langSet == 0 %}Hakuna bidhaa{% else %}No items{% endif %}
+        </div>
         {% endfor %}
     </div>
+
+    {% if paginator and paginator.num_pages > 1 %}
+    <nav class="mt-2 mb-4">
+      <ul class="pagination pagination-sm justify-content-center flex-wrap">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if item_query %}{{ item_query }}&{% endif %}page=1">&laquo;</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?{% if item_query %}{{ item_query }}&{% endif %}page={{ page_obj.previous_page_number }}">
+            {% if useri.langSet == 0 %}Iliyopita{% else %}Prev{% endif %}
+          </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+        <li class="page-item disabled">
+          <span class="page-link">{% if useri.langSet == 0 %}Iliyopita{% else %}Prev{% endif %}</span>
+        </li>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
+          {% if page_obj.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if item_query %}{{ item_query }}&{% endif %}page={{ num }}">{{ num }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if item_query %}{{ item_query }}&{% endif %}page={{ page_obj.next_page_number }}">
+            {% if useri.langSet == 0 %}Ifuatayo{% else %}Next{% endif %}
+          </a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?{% if item_query %}{{ item_query }}&{% endif %}page={{ paginator.num_pages }}">&raquo;</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">{% if useri.langSet == 0 %}Ifuatayo{% else %}Next{% endif %}</span>
+        </li>
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+        {% endif %}
+      </ul>
+      <p class="text-center smallFont text-muted mb-0">
+        {% if useri.langSet == 0 %}
+          Ukurasa {{ page_obj.number }} kati ya {{ paginator.num_pages }}
+          &mdash; Bidhaa {{ page_obj.start_index }}–{{ page_obj.end_index }} kati ya {{ paginator.count }}
+        {% else %}
+          Page {{ page_obj.number }} of {{ paginator.num_pages }}
+          &mdash; Items {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }}
+        {% endif %}
+      </p>
+    </nav>
+    {% endif %}
     
     </div>
   

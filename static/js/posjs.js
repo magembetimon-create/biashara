@@ -38,7 +38,7 @@ let selected = [],
     ServsC = [],
     ServsS = []
 
-let POS_SEARCH_TIMER = null
+let POS_VAT_ALLOW = false
 const POS_SEARCH_DEBOUNCE_MS = 120
 const POS_INITIAL_RENDER_LIMIT = 20
 const POS_RENDER_CHUNK = 45
@@ -351,8 +351,86 @@ const vat_per = Number($('#vat_percent').val()),
 
 
 
-function posdata(c){
+function renderPosCategoryButtons(categories) {
+    let categ_butn = `
+   <li  class="py-1">
+            <button data-aina=0 data-categ=0 class="btn border categsBtn text-left text-capitalize latoFont btn-block btn-default">
+                 ${lang('Aina Zote','All Categories')}
+                 </button>
+            </li>`
+    const list = (categories || []).slice()
+    list.sort(function (a, b) {
+        return String(a.aina || '').localeCompare(String(b.aina || ''))
+    })
+    list.forEach(c => {
+        const label = c.id === UNCATEGORIZED_CATEG
+            ? lang('Bila Aina', 'Uncategorized')
+            : (c.aina || lang('Bila Aina', 'Uncategorized'))
+        categ_butn += `
+                                    <li class="py-1" >
+                                        <button data-aina=${c.id} data-categ=1 class="btn border categsBtn text-left text-capitalize latoFont btn-block btn-light">
+                                        ${label}
+                                        </button>
+                                    </li>
+                            `
+    })
+    $('#categsList').html(categ_butn)
+}
 
+function applyPosCatalog(data, append) {
+    const rows = Array.isArray(data.items) ? data.items : []
+    if (append) {
+        posMergePosRows(rows)
+        if (!search_itm() && Number(ITM_CATEG) === 0 && POS_ITEMS_SCROLL_STATE && POS_ITEMS_SCROLL_STATE.list) {
+            POS_ITEMS_SCROLL_STATE.list = POS_ITMS
+        }
+        return
+    }
+    POS_ITMS = rows
+    POS_VAT_ALLOW = !!data.vat_allow
+    buildPosSearchIndex()
+    renderPosCategoryButtons(data.categories || [])
+    posItms()
+    initPosBarcodeScanner()
+}
+
+function loadPosCatalog() {
+    const csrfToken = $('input[name=csrfmiddlewaretoken]').val()
+    const firstLimit = 20
+    const nextLimit = 80
+
+    function postPage(offset, limit, first) {
+        return POSTREQUEST({
+            data: {
+                s: IS_SERVICE || 0,
+                offset: offset,
+                limit: limit,
+                csrfmiddlewaretoken: csrfToken,
+            },
+            url: '/stoku/getPosCatalog',
+        }).then(function (data) {
+            if (!data || data.success === false) {
+                throw new Error('catalog')
+            }
+            applyPosCatalog(data, !first)
+            if (first) {
+                $('#loadMe').modal('hide')
+                if (typeof hideLoading === 'function') hideLoading()
+            }
+            if (!data.done) {
+                return postPage(Number(data.processed || (offset + limit)), nextLimit, false)
+            }
+        })
+    }
+
+    postPage(0, firstLimit, true).catch(function () {
+        toastr.error(lang('Imeshindikana kupakia bidhaa', 'Could not load items'))
+        $('#loadMe').modal('hide')
+        if (typeof hideLoading === 'function') hideLoading()
+    })
+}
+
+function posdata(c){
  const groupedMembersMap = window.__tbGroupedMembersMap || {}
  if (Items.state?.length) {
      Items.state = applyPosGroupedRepresentativeQty(Items.state, groupedMembersMap)
@@ -416,24 +494,55 @@ function posdata(c){
                         $('#categsList').html(categ_butn)
 
 
-                        // WORK ON ITEMS
-                        let itms_data = [],
-                            colr = coloredItem.state,
-                            sz = ItemsSize.state
+                        const colr = coloredItem.state || []
+                        const sz = ItemsSize.state || []
+                        const imgs = ItemImg.state || []
+                        const colorsByBidhaa = new Map()
+                        colr.forEach(ci => {
+                            const k = ci.bidhaa
+                            let list = colorsByBidhaa.get(k)
+                            if (!list) {
+                                list = []
+                                colorsByBidhaa.set(k, list)
+                            }
+                            list.push(ci)
+                        })
+                        const sizesByColor = new Map()
+                        sz.forEach(s => {
+                            const k = s.sized__color
+                            let list = sizesByColor.get(k)
+                            if (!list) {
+                                list = []
+                                sizesByColor.set(k, list)
+                            }
+                            list.push(s)
+                        })
+                        const imgByColor = new Map()
+                        const imgByBidhaa = new Map()
+                        imgs.forEach(im => {
+                            if (im.color_produ != null && !imgByColor.has(im.color_produ)) {
+                                imgByColor.set(im.color_produ, im.picha__picha)
+                            }
+                            if (im.bidhaa != null && !imgByBidhaa.has(im.bidhaa)) {
+                                imgByBidhaa.set(im.bidhaa, im.picha__picha)
+                            }
+                        })
 
+                        const itms_data = []
+                        function pushPosRow(row) {
+                            itms_data.push(row)
+                        }
 
-                        all_item.forEach(itm=>{
+                        all_item.forEach(itm => {
+                           const itmC = colorsByBidhaa.get(itm.bidhaa_id) || []
+                           if (itmC.length) {
+                               itmC.forEach(ci => {
+                                  const szC = sizesByColor.get(ci.color) || []
+                                  const pic = imgByColor.get(ci.color) || imgByBidhaa.get(itm.bidhaa_id)
 
-                           let itmC = colr.filter(it=>itm.bidhaa_id===it.bidhaa)
-                           if(itmC.length){
-                             //Item with color ..............................//
-                               itmC.forEach(ci=>{
-                                  szC=sz.filter(s=>s.sized__color===ci.color)   
-
-                                    if(szC.length){
-                                        //Item with color and size............................//
-                                        szC.forEach(szd=>{
-                                            itms_data.push({
+                                    if (szC.length) {
+                                        szC.forEach(szd => {
+                                            pushPosRow({
                                                 'id':itm.id,
                                                 'name':itm.bidhaaN,
                                                 'aina':itm.aina,
@@ -449,7 +558,7 @@ function posdata(c){
                                                 'thamani':itm.Bei_kununua,
                                                 'bidhaa':itm.bidhaa_id,
                                                 'idadi':szd.idadi,
-                                                'picha':ItemImg.state.filter(im=>im.color_produ===ci.color)[0]?.picha__picha,
+                                                'picha': pic,
                                                 'namba':itm.namba,
                                                 'brand':itm.brand,
                                                 'vipimo':itm.vipimo,
@@ -459,12 +568,10 @@ function posdata(c){
                                                 'vat_included':itm.taxInclusive,
                                                 'timely':itm.timely,
                                                 'sirio':itm.sirio
-                                            })   
+                                            })
                                         })
-
-                                    }else{
-                                          //Item with color but no size......................//
-                                          itms_data.push({
+                                    } else {
+                                          pushPosRow({
                                                 'id':itm.id,
                                                 'name':itm.bidhaaN,
                                                 'aina':itm.aina,
@@ -480,7 +587,7 @@ function posdata(c){
                                                 'bei_jum':itm.Bei_kuuza_jum,
                                                 'thamani':itm.Bei_kununua,
                                                 'bidhaa':itm.bidhaa_id,
-                                                'picha':ItemImg.state.filter(im=>im.color_produ===ci.color)[0]?.picha__picha,
+                                                'picha': pic,
                                                 'namba':itm.namba,
                                                 'brand':itm.brand,
                                                 'vipimo':itm.vipimo,
@@ -490,15 +597,11 @@ function posdata(c){
                                                 'vat_included':itm.taxInclusive,
                                                 'timely':itm.timely,
                                                 'sirio':itm.sirio
-                                            })   
-
+                                            })
                                     }
-
-                                  
                                })
-                           }else{
-                            // itm with no color.................//
-                                itms_data.push({
+                           } else {
+                                pushPosRow({
                                      'id':itm.id,
                                      'name':itm.bidhaaN,
                                      'aina':itm.aina,
@@ -513,23 +616,19 @@ function posdata(c){
                                      'bei_jum':itm.Bei_kuuza_jum,
                                      'thamani':itm.Bei_kununua,
                                      'bidhaa':itm.bidhaa_id,
-                                     'picha':ItemImg.state.filter(im=>im.bidhaa===itm.bidhaa_id)[0]?.picha__picha,
+                                     'picha': imgByBidhaa.get(itm.bidhaa_id),
                                      'namba':itm.namba,
                                      'brand':itm.brand,
                                      'vipimo':itm.vipimo,
-                                    'uwiano':itm.uwiano,
-                                    'vipimo_jum':itm.vipimoJum,
-                                    'notsure':itm.notsure,
-                                    'vat_included':itm.taxInclusive,
-                                    'timely':itm.timely,
-                                    'sirio':itm.sirio
-
+                                     'uwiano':itm.uwiano,
+                                     'vipimo_jum':itm.vipimoJum,
+                                     'notsure':itm.notsure,
+                                     'vat_included':itm.taxInclusive,
+                                     'timely':itm.timely,
+                                     'sirio':itm.sirio
                                   })
-
                            }
                         })
-
-                         
 
                          POS_ITMS = itms_data
                          buildPosSearchIndex()
@@ -542,13 +641,21 @@ function posdata(c){
 
 }
 
-function posItemCardHtml(pi, servedQtyMaps, dura) {
+function posCartQtyMap() {
+    const m = Object.create(null)
+    if (!POSCART || !POSCART.length) return m
+    POSCART.forEach(itm => {
+        m[`${itm.id}${itm.color}${itm.size}`] = itm.qty
+    })
+    return m
+}
+
+function posItemCardHtml(pi, servedQtyMaps, dura, cartQtyByKey) {
     const siz = pi.size_name != null ? `<i class="d-block" >Size:<strong class="brown text-uppercase" >${pi.size_name}</strong></i>` : '',
         color = pi.color_name != null ? `<small> <i class="text-primary" >${posVariantDisplay(pi)}</i> </small> ` : '',
         picha = `<img src="${pi.picha ? pi.picha : __tbStatic('pics/img.svg')}" alt="${lang('Hakuna Picha', 'No Image')}" loading="lazy" decoding="async">`,
         indx = `${pi.id}${pi.color_id}${pi.size_id}`,
-        cart = POSCART.filter(itm => itm.id === pi.id && itm.color === pi.color_id && itm.size === pi.size_id),
-        cartqty = cart.length ? cart[0].qty : 0,
+        cartqty = (cartQtyByKey && cartQtyByKey[indx]) || 0,
         hidden = cartqty ? '' : 'hidden'
     let svdQty = 0
 
@@ -607,7 +714,7 @@ function appendPosItemsChunk() {
     const nextEnd = Math.min(st.idx + POS_RENDER_CHUNK, st.list.length)
     let chunkHtml = ''
     for (let i = st.idx; i < nextEnd; i += 1) {
-        chunkHtml += posItemCardHtml(st.list[i], st.servedQtyMaps, st.dura)
+        chunkHtml += posItemCardHtml(st.list[i], st.servedQtyMaps, st.dura, st.cartQtyByKey)
     }
     host.append(chunkHtml)
     st.idx = nextEnd
@@ -625,7 +732,7 @@ function posItms(){
        }
     }
 
-    VAT_allowed = Items.state[0]?.vat_allow || false
+    VAT_allowed = POS_VAT_ALLOW || Items.state[0]?.vat_allow || false
 
     if(search_itm()!=''){
                 const query = normalizePosSearchText(search_itm())
@@ -650,7 +757,8 @@ function posItms(){
             loading: false,
             bound: POS_ITEMS_SCROLL_STATE.bound,
             servedQtyMaps: null,
-            dura: null
+            dura: null,
+            cartQtyByKey: null
         }
         host.html(`<li class="list-unstyled w-100 p-4 text-center text-muted">${lang('Hakuna bidhaa', 'No items')}</li>`)
         goTo('#ItemListView')
@@ -658,10 +766,11 @@ function posItms(){
     }
 
     const dura = servDura(),
-          servedQtyMaps = getServedQtyMaps(dura)
+          servedQtyMaps = getServedQtyMaps(dura),
+          cartQtyByKey = posCartQtyMap()
 
     const firstEnd = Math.min(POS_INITIAL_RENDER_LIMIT, allItms.length)
-    host.html(allItms.slice(0, firstEnd).map(pi => posItemCardHtml(pi, servedQtyMaps, dura)).join(''))
+    host.html(allItms.slice(0, firstEnd).map(pi => posItemCardHtml(pi, servedQtyMaps, dura, cartQtyByKey)).join(''))
     host.scrollTop(0)
     POS_ITEMS_SCROLL_STATE = {
         list: allItms,
@@ -670,7 +779,8 @@ function posItms(){
         loading: false,
         bound: POS_ITEMS_SCROLL_STATE.bound,
         servedQtyMaps,
-        dura
+        dura,
+        cartQtyByKey
     }
 
     goTo('#ItemListView')

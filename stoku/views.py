@@ -244,6 +244,34 @@ def posBarcodeLookup(request):
 
 
 @login_required(login_url='login')
+def getPosCatalog(request):
+    """Lightweight POS item list (no full getItems dump)."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'items': []})
+    try:
+        from .pos_utils import fetch_pos_catalog
+
+        todo = todoFunct(request)
+        intp = todo['cheo'].Interprise
+        is_service = bool(int(request.POST.get('s') or 0))
+        try:
+            offset = max(0, int(request.POST.get('offset') or 0))
+        except (TypeError, ValueError):
+            offset = 0
+        try:
+            limit = int(request.POST.get('limit') or 20)
+        except (TypeError, ValueError):
+            limit = 20
+        limit = max(1, min(limit, 100))
+        data = fetch_pos_catalog(intp, is_service=is_service, offset=offset, limit=limit)
+        data['success'] = True
+        return JsonResponse(data)
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'items': []}, status=500)
+
+
+@login_required(login_url='login')
 def OutStock(request):
     todo = todoFunct(request)
     intpn = todo['cheo']

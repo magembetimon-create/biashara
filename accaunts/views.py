@@ -32,7 +32,7 @@ from django.db.models import F
 from django.core import serializers
 from django.db.models import Q
 # from datetime import datetime
-from django.core.paginator import Paginator,EmptyPage
+from django.core.paginator import Paginator,EmptyPage,PageNotAnInteger
 from itertools import chain
 
 import requests
@@ -2905,12 +2905,17 @@ def displayProfItems(request):
             by = byi.aina
 
 
-        itms=[]
-
         prod = prod.filter(Q(Interprise=todo['duka'].id)|Q(showToVistors=True))
-        prod = prod.order_by('-pk')
+        prod = prod.select_related('bidhaa').order_by('-pk')
 
-        for p in prod:
+        paginator = Paginator(prod, 24)
+        try:
+          page_obj = paginator.page(request.GET.get('page', 1))
+        except (EmptyPage, PageNotAnInteger):
+          page_obj = paginator.page(1)
+
+        itms=[]
+        for p in page_obj.object_list:
           img_url = None
           img = picha_bidhaa.objects.filter(bidhaa=p.bidhaa)
           if img.exists():
@@ -2935,9 +2940,16 @@ def displayProfItems(request):
         brands = produ.distinct('bidhaa__kampuni')
         rating = Interprise_Rating.objects.filter(Interprise=duka.id)
 
+        q = request.GET.copy()
+        q.pop('page', None)
+        item_query = q.urlencode()
+
         todo.update({
           'shop':duka,
           'bidhaa':itms,
+          'page_obj': page_obj,
+          'paginator': paginator,
+          'item_query': item_query,
           'ain':ain,
           'brand':brand,
           'kundi':kundi,

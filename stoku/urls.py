@@ -7,6 +7,7 @@ urlpatterns=[
     path('getStokuData',views.getStokuData, name='getStokuData'),
     path('getItems',views.getItems, name='getItems'),
     path('posBarcodeLookup',views.posBarcodeLookup, name='posBarcodeLookup'),
+    path('getPosCatalog',views.getPosCatalog, name='getPosCatalog'),
     path('OutStock',views.OutStock, name='OutStock'),
     path('getItemsAssociate',views.getItemsAssociate, name='getItemsAssociate'),
     path('getItemsAll',views.getItemsAll, name='getItemsAll'),
