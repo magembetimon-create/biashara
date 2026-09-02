@@ -2509,7 +2509,7 @@
           
             <div class="form-body ">
              <div class="row classic_div whiteBg p-3"  >
-                <form data-value={{bidhaa.id}}  id="kuediti-bidhaa-form" data-bidhaa=0 action="/stoku/editBidhaa">
+                <form data-value={{bidhaa.id}} data-bidhaa="{{bidhaa.bidhaa.id}}" id="kuediti-bidhaa-form" action="/stoku/editBidhaa">
                   <div class="row classic_div">
                     <div class="col-md-6">
                         <div class="form-group">
@@ -2700,6 +2700,35 @@
                           </div>
                       </div>
                       </div>
+                  <h6 class="card-title px-3 pt-3">
+                    {% if useri.langSet == 0 %}Mahali kwenye stoo{% else %}Store location{% endif %}
+                  </h6>
+                  <div class="row classic_div">
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label>{% if useri.langSet == 0 %}Upande{% else %}Side{% endif %}</label>
+                        <select id="item-place-side" class="form-control">
+                          <option value="0">{% if useri.langSet == 0 %}— Hakuna —{% else %}— None —{% endif %}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label>{% if useri.langSet == 0 %}Mstari{% else %}Row{% endif %}</label>
+                        <select id="item-place-row" class="form-control">
+                          <option value="0">{% if useri.langSet == 0 %}— Chagua —{% else %}— Select —{% endif %}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label>{% if useri.langSet == 0 %}Safu (si lazima){% else %}Column (optional){% endif %}</label>
+                        <select id="item-place-col" class="form-control">
+                          <option value="0">{% if useri.langSet == 0 %}— Hakuna —{% else %}— None —{% endif %}</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
                   <h6 class="card-title px-3 pt-3 "> 
                     {% if bidhaa.service %}
                     {% if useri.langSet == 0 %} Maelezo ya Huduma  {% else %} Service Descriptions {% endif %}
@@ -3001,7 +3030,7 @@
 
 
 
-<script src="{% static 'js/edit_item.js' %}"></script>
+<script src="{% static 'js/edit_item.js' %}?v=ed3"></script>
 <script src="{% static 'js/addAudio.js' %}"></script>
 
 <!-- Add UNITS -->

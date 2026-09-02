@@ -7,6 +7,7 @@ from management.models import (
     produ_colored,
     produ_size,
 )
+from stoku.stock_place import attach_places
 
 
 def _image_for_color(owner_user_id, color_id, bidhaa_id):
@@ -70,6 +71,9 @@ def flatten_stoku_to_pos_rows(stoku, intp, image_map=None):
             'vat_included': bool(stoku.bidhaa.saletaxInluded),
             'timely': int(stoku.timely or 0),
             'sirio': stoku.sirio or '',
+            'place_side': '',
+            'place_row': '',
+            'place_col': '',
         }
 
         if sizes.exists():
@@ -114,8 +118,12 @@ def flatten_stoku_to_pos_rows(stoku, intp, image_map=None):
             'vat_included': bool(stoku.bidhaa.saletaxInluded),
             'timely': int(stoku.timely or 0),
             'sirio': stoku.sirio or '',
+            'place_side': '',
+            'place_row': '',
+            'place_col': '',
         })
 
+    attach_places(intp.id, rows)
     return rows
 
 
@@ -147,6 +155,9 @@ def _pos_row_from_stock_values(rec):
         'vat_allow': bool(rec.get('vat_allow')),
         'timely': int(rec.get('timely') or 0),
         'sirio': rec.get('sirio') or '',
+        'place_side': '',
+        'place_row': '',
+        'place_col': '',
         'is_grouped_item': 1 if rec.get('is_grouped_item') else 0,
         'grouped_item_ref_id': rec.get('grouped_item_ref_id'),
         'partial_item_reduction_qty': float(rec.get('partial_item_reduction_qty') or 0),
@@ -260,6 +271,7 @@ def fetch_pos_catalog(intp, is_service=False, offset=0, limit=20):
         vat_allow = bool(first.get('vat_allow')) if first else False
 
     processed = offset + len(page_recs)
+    attach_places(intp.id, items)
     return {
         'items': items,
         'categories': categories,

@@ -85,6 +85,12 @@ urlpatterns=[
     path('aina',views.bidhaaAina, name='aina'),
     path('kundi',views.bidhaaKundi, name='kundi'),
     path('groupedItems',views.groupedItemsPage, name='groupedItems'),
+    path('pande',views.stockSidesPage, name='stockSides'),
+    path('stockLocationData',views.stockLocationData, name='stockLocationData'),
+    path('stockSideSave',views.stockSideSave, name='stockSideSave'),
+    path('stockSideDelete',views.stockSideDelete, name='stockSideDelete'),
+    path('stockSideSlotSave',views.stockSideSlotSave, name='stockSideSlotSave'),
+    path('stockSideSlotDelete',views.stockSideSlotDelete, name='stockSideSlotDelete'),
     path('chapa',views.bidhaaChapa, name='chapa'),
 
 # Services   

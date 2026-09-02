@@ -677,6 +677,32 @@ class bidhaa_stoku(models.Model):
     visted = models.IntegerField(default=0)
     showToVistors = models.BooleanField(default=True)
 
+class stock_side(models.Model):
+    Interprise = models.ForeignKey(Interprise, on_delete=models.CASCADE)
+    name = models.CharField(max_length=120)
+    sort = models.IntegerField(default=0)
+    aina = models.ManyToManyField(bidhaa_aina, blank=True, related_name='stock_sides')
+
+class stock_row(models.Model):
+    side = models.ForeignKey(stock_side, on_delete=models.CASCADE, related_name='rows')
+    name = models.CharField(max_length=80)
+    sort = models.IntegerField(default=0)
+
+class stock_column(models.Model):
+    side = models.ForeignKey(stock_side, on_delete=models.CASCADE, related_name='columns')
+    name = models.CharField(max_length=80)
+    sort = models.IntegerField(default=0)
+
+class stock_item_place(models.Model):
+    Interprise = models.ForeignKey(Interprise, on_delete=models.CASCADE)
+    bidhaa = models.ForeignKey(bidhaa, on_delete=models.CASCADE)
+    side = models.ForeignKey(stock_side, on_delete=models.CASCADE)
+    row = models.ForeignKey(stock_row, on_delete=models.CASCADE)
+    column = models.ForeignKey(stock_column, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('Interprise', 'bidhaa')
+
 class transferList(models.Model):
     kwenda = models.OneToOneField(receiveList,on_delete=models.CASCADE)
     qty_before = models.DecimalField(max_digits=10,decimal_places=3)

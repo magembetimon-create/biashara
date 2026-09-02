@@ -9,6 +9,21 @@ if(Vallow()){
     $('#vatAllowed').hide()
 }
 
+let CURRENT_SALES_ITMS = []
+
+function salesKeyMatch(a, b) {
+    if (a == null || a === '') return b == null || b === '' || b === 'null' || b === 'undefined'
+    return String(a) === String(b)
+}
+
+function salesEscHtml(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+}
+
 
 
 function DuraTable(){
@@ -330,6 +345,7 @@ function AddRow(){
 
                                ankara = Wvat==0?vAnakara:Wvat==1?vAnakara.filter(v=>v.vat>0):vAnakara.filter(v=>(v.vat<v.evat)||v.vat==0)
                                itms = Wvat==0?itms:Wvat==1?itms.filter(v=>v.vat_set):itms.filter(v=>!v.vat_set)
+                               CURRENT_SALES_ITMS = itms
                              
 
                                   
@@ -695,7 +711,7 @@ function AddRow(){
 
  }
   
- function   placeItems(itms,val){
+ function   placeItems(itms,val,ctx){
      let LoC = Number($('#riportChatRist .btn-secondary').data('riport')),
          bd = [... new Set(itms.map(i=>i.bidhaa))],
          bidhaa = bd.map(b=>theItms(b)),
@@ -889,6 +905,11 @@ function AddRow(){
  </table>
  `   
  let title = `<h6 class="py-2" >${lang(`Orodha ya Mauzo kwa kila Bidhaa `,`Sales List on each Item `)} , ${duraTitle}<h6/>`
+ if(ctx && ctx.sourceName){
+    title = `<h6 class="py-2">${lang('Orodha ya Mauzo ya Bidhaa','Sales List on Items')}: <i class="text-primary text-capitalize">${salesEscHtml(ctx.sourceName)}</i> , ${duraTitle}
+    <button type="button" class="btn btn-light btn-sm float-right latoFont smallFont backToSalesGroup" data-kind="${ctx.source}" data-val="${val}">${lang('Rudi','Back')}</button>
+    </h6>`
+ }
  $('#theDataPanel').html(title+td)
  $('#SoldItems').DataTable();
          }
@@ -906,7 +927,8 @@ function AddRow(){
              let itm = itms.filter(i=>i.aina == b)
              return {
                  id:b,
-                 name:aina.filter(a=>a.id==b)[0].aina,
+                 name:aina.filter(a=>a.id==b)[0]?.aina || lang('Bila Aina','Uncategorized'),
+                 n_itms:[... new Set(itm.map(i=>i.bidhaa))].length,
                  tha:itm.reduce((a,b)=> a + (b.thamani*(b.idadi-b.returned)/b.uwiano),0),
                  sale:itm.reduce((a,b)=> a + (b.bei*(b.idadi-b.returned)),0),
                  vat:Number(itm.filter(v=>v.vat_set).reduce((a,b)=> a + Number((b.idadi-b.returned)*(vatPer(b.vat,b.bei))),0)),
@@ -1038,6 +1060,7 @@ function AddRow(){
              <tr class="smallFont ">
                  <th>#</th>
                  <th>${lang('Aina','Category')}</th>
+                 <th>${lang('Bidhaa','Items')}</th>
              
                  <th> ${lang('Thamani','Cost')} <span class="text-primary latoFont">(${currencii})</span> </th>
                  <th> ${lang('Mauzo','Sales')} <span class="text-primary latoFont">(${currencii})</span> </th>`
@@ -1063,6 +1086,7 @@ function AddRow(){
                <td>${num}</td>
               
                <td class="text-capitalize" >${a.name}</td>
+               <td><button type="button" data-val="${val}" data-itm="${a.id}" data-kind="aina" data-name="${salesEscHtml(a.name)}" class="btn btn-default viewCategItems latoFont text-primary" title="${lang('Onesha bidhaa','Show items')}">${Number(a.n_itms)}</button></td>
             
                <td>${floatValue(a.tha)}</td>
                <td>${floatValue(a.sale)}</td>`
@@ -1108,7 +1132,8 @@ function AddRow(){
         let itm = itms.filter(i=>i.kundi == b)
         return {
             id:b,
-            name:aina.filter(a=>a.id==b)[0]?.mahitaji,
+            name:aina.filter(a=>a.id==b)[0]?.mahitaji || lang('Bila Kundi','Ungrouped'),
+            n_itms:[... new Set(itm.map(i=>i.bidhaa))].length,
             tha:itm.reduce((a,b)=> a + (b.thamani*(b.idadi-b.returned)/b.uwiano),0),
             sale:itm.reduce((a,b)=> a + (b.bei*(b.idadi-b.returned)),0),
             vat:Number(itm.filter(v=>v.vat_set).reduce((a,b)=> a + Number((b.idadi-b.returned)*(vatPer(b.vat,b.bei))),0)),
@@ -1241,6 +1266,7 @@ function AddRow(){
         <tr class="smallFont ">
             <th>#</th>
             <th>${lang('Kundi','Group')}</th>
+            <th>${lang('Bidhaa','Items')}</th>
             <th> ${lang('Thamani','Cost')} <span class="text-primary latoFont">(${currencii})</span> </th>
             <th> ${lang('Mauzo','Sales')}<span class="text-primary latoFont">(${currencii})</span> </th>`
             if(Vallow()){
@@ -1265,6 +1291,7 @@ function AddRow(){
           <td>${num}</td>
          
           <td class="text-capitalize" >${a.name}</td>
+          <td><button type="button" data-val="${val}" data-itm="${a.id}" data-kind="kundi" data-name="${salesEscHtml(a.name)}" class="btn btn-default viewCategItems latoFont text-primary" title="${lang('Onesha bidhaa','Show items')}">${Number(a.n_itms)}</button></td>
        
           <td>${floatValue(a.tha)}</td>
           <td>${floatValue(a.sale)}</td>`
@@ -1714,6 +1741,25 @@ $('body').on('click','.checkByBranch',function(){
        
     }
     
+})
+
+$('body').on('click','.viewCategItems',function(){
+    let val = Number($(this).data('val')),
+        id = $(this).attr('data-itm'),
+        kind = $(this).data('kind'),
+        name = $(this).attr('data-name') || '',
+        itms = CURRENT_SALES_ITMS.filter(i => kind === 'kundi' ? salesKeyMatch(i.kundi, id) : salesKeyMatch(i.aina, id))
+    placeItems(itms, val, {source: kind, sourceName: name})
+})
+
+$('body').on('click','.backToSalesGroup',function(){
+    let val = Number($(this).data('val')),
+        kind = $(this).data('kind')
+    if(kind === 'kundi'){
+        placeGroups(CURRENT_SALES_ITMS, val)
+    }else{
+        placeCategory(CURRENT_SALES_ITMS, val)
+    }
 })
 
 

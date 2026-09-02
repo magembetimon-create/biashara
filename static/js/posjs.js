@@ -39,6 +39,7 @@ let selected = [],
     ServsS = []
 
 let POS_VAT_ALLOW = false
+let POS_SEARCH_TIMER = null
 const POS_SEARCH_DEBOUNCE_MS = 120
 const POS_INITIAL_RENDER_LIMIT = 20
 const POS_RENDER_CHUNK = 45
@@ -960,6 +961,7 @@ function viewSelItem(dt){
                  const itm  = `
                ${servD}  
                <h6 class="col-12 latoFont py-2 text-capitalize"  > ${siz} ${color} ${pi.name} </h6>
+               ${pi.place_side ? `<div class="col-12 mb-2"><span class="badge badge-light border latoFont p-2">${lang('Mahali','Location')}: <strong class="text-primary">${pi.place_side}</strong>${pi.place_row ? ` · ${lang('Mstari','Row')} <strong>${pi.place_row}</strong>` : ''}${pi.place_col ? ` · ${lang('Safu','Col')} <strong>${pi.place_col}</strong>` : ''}</span></div>` : ''}
                
                <div class="col-5 col-md-6 ">
                    <div>

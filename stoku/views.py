@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
 from business import settings
-from management.models import HudumaNyingine, Notifications,ainaBibi,ainaMama,Kata,Mitaa,Wilaya,Zones,Mikoa,wateja_active,productionList,now_categ,now_group,bidhaaA_edit,stokAdjustment,bidhaa_edit,stockAdjst_confirm, UserExtend,Kanda,bei_za_bidhaa,user_Interprise,ColorChange,SizeChange,staff_akaunt_permissions,wateja,customer_Interprise,receive,receiveList,transferList,received_confirm,transfered_size,received_size,transfered_color,received_color,transfer,sizes,mauzoList,Interprise,bidhaa_sifa,key_sifa,picha_yenyewe,productChangeRecord,InterprisePermissions,PaymentAkaunts,toaCash,wekaCash,mahitaji,bidhaa_aina,makampuni,bidhaa,wasambazaji,manunuzi,manunuziList,matumizi,rekodiMatumizi,bidhaa_stoku,color_produ,produ_colored,picha_bidhaa,produ_size,grouped_item,grouped_item_member,grouped_item_reconciliation
+from management.models import HudumaNyingine, Notifications,ainaBibi,ainaMama,Kata,Mitaa,Wilaya,Zones,Mikoa,wateja_active,productionList,now_categ,now_group,bidhaaA_edit,stokAdjustment,bidhaa_edit,stockAdjst_confirm, UserExtend,Kanda,bei_za_bidhaa,user_Interprise,ColorChange,SizeChange,staff_akaunt_permissions,wateja,customer_Interprise,receive,receiveList,transferList,received_confirm,transfered_size,received_size,transfered_color,received_color,transfer,sizes,mauzoList,Interprise,bidhaa_sifa,key_sifa,picha_yenyewe,productChangeRecord,InterprisePermissions,PaymentAkaunts,toaCash,wekaCash,mahitaji,bidhaa_aina,makampuni,bidhaa,wasambazaji,manunuzi,manunuziList,matumizi,rekodiMatumizi,bidhaa_stoku,color_produ,produ_colored,picha_bidhaa,produ_size,grouped_item,grouped_item_member,grouped_item_reconciliation,stock_side,stock_row,stock_column,stock_item_place
 from stoku.customer_branch_utils import customers_for_branch_list, sync_customer_branches
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
@@ -1498,6 +1498,15 @@ def EditBidhaa(request):
                 produ.save()
 
                 bidhaa_stoku.objects.filter(bidhaa=item.last().id,idadi__gt=0).update(Bei_kuuza=Bei_reja,sirio=sirio,Bei_kuuza_jum=Bei)
+
+                from stoku.stock_place import upsert_item_place
+                upsert_item_place(
+                    duka,
+                    item.last(),
+                    request.POST.get('place_side'),
+                    request.POST.get('place_row'),
+                    request.POST.get('place_col'),
+                )
 
 
                     
@@ -7536,3 +7545,152 @@ def grouped_items_delete(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'msg': f'Error: {str(e)}'})
+
+
+def _can_edit_stock_place(todo):
+    cheo = todo.get('cheo')
+    if not cheo:
+        return False
+    return bool(cheo.owner or (cheo.product_edit and not cheo.viewi))
+
+
+@login_required(login_url='login')
+def stockSidesPage(request):
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    if not duka or not duka.Interprise:
+        return redirect('/userdash')
+    from stoku.stock_place import serialize_sides
+    import json
+    from django.utils.safestring import mark_safe
+    categories = list(
+        bidhaa_aina.objects.filter(Interprise__owner=duka.owner).order_by('aina').values('id', 'aina')
+    )
+    sides = serialize_sides(duka.id)
+    todo.update({
+        'stock_sides_json': mark_safe(json.dumps(sides)),
+        'stock_categories': categories,
+    })
+    return render(request, 'stockSides.html', todo)
+
+
+@login_required(login_url='login')
+def stockLocationData(request):
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    if not duka:
+        return JsonResponse({'success': False})
+    from stoku.stock_place import place_dict, serialize_sides
+    bidhaa_id = int(request.GET.get('bidhaa') or 0)
+    place = None
+    if bidhaa_id:
+        place = stock_item_place.objects.filter(Interprise=duka, bidhaa_id=bidhaa_id).select_related('side', 'row', 'column').first()
+    return JsonResponse({
+        'success': True,
+        'sides': serialize_sides(duka.id),
+        'place': place_dict(place),
+    })
+
+
+@login_required(login_url='login')
+def stockSideSave(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    todo = todoFunct(request)
+    if not _can_edit_stock_place(todo):
+        return JsonResponse({'success': False, 'msg_swa': 'Hauna ruhusa', 'msg_eng': 'No permission'})
+    duka = todo['duka']
+    from stoku.stock_place import serialize_sides
+    try:
+        sid = int(request.POST.get('id') or 0)
+        name = (request.POST.get('name') or '').strip()
+        if not name:
+            return JsonResponse({'success': False, 'msg_swa': 'Weka jina la upande', 'msg_eng': 'Enter side name'})
+        if sid:
+            side = stock_side.objects.get(pk=sid, Interprise=duka)
+            side.name = name
+            side.save()
+        else:
+            side = stock_side.objects.create(Interprise=duka, name=name, sort=stock_side.objects.filter(Interprise=duka).count())
+        aina_ids = request.POST.getlist('aina') or []
+        if request.POST.get('aina_csv'):
+            aina_ids = [x for x in str(request.POST.get('aina_csv')).split(',') if x]
+        cats = bidhaa_aina.objects.filter(pk__in=aina_ids, Interprise__owner=duka.owner)
+        side.aina.set(cats)
+        return JsonResponse({
+            'success': True,
+            'sides': serialize_sides(duka.id),
+            'msg_swa': 'Upande umehifadhiwa',
+            'msg_eng': 'Side saved',
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'msg_swa': 'Hitilafu', 'msg_eng': 'Error'})
+
+
+@login_required(login_url='login')
+def stockSideDelete(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    todo = todoFunct(request)
+    if not _can_edit_stock_place(todo):
+        return JsonResponse({'success': False, 'msg_swa': 'Hauna ruhusa', 'msg_eng': 'No permission'})
+    duka = todo['duka']
+    from stoku.stock_place import serialize_sides
+    try:
+        sid = int(request.POST.get('id') or 0)
+        stock_side.objects.filter(pk=sid, Interprise=duka).delete()
+        return JsonResponse({'success': True, 'sides': serialize_sides(duka.id)})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False})
+
+
+@login_required(login_url='login')
+def stockSideSlotSave(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    todo = todoFunct(request)
+    if not _can_edit_stock_place(todo):
+        return JsonResponse({'success': False, 'msg_swa': 'Hauna ruhusa', 'msg_eng': 'No permission'})
+    duka = todo['duka']
+    from stoku.stock_place import serialize_sides
+    kind = request.POST.get('kind')
+    try:
+        side = stock_side.objects.get(pk=int(request.POST.get('side') or 0), Interprise=duka)
+        name = (request.POST.get('name') or '').strip()
+        slot_id = int(request.POST.get('id') or 0)
+        if not name:
+            return JsonResponse({'success': False, 'msg_swa': 'Weka jina', 'msg_eng': 'Enter a name'})
+        Model = stock_row if kind == 'row' else stock_column
+        if slot_id:
+            obj = Model.objects.get(pk=slot_id, side=side)
+            obj.name = name
+            obj.save()
+        else:
+            Model.objects.create(side=side, name=name, sort=Model.objects.filter(side=side).count())
+        return JsonResponse({'success': True, 'sides': serialize_sides(duka.id)})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'msg_swa': 'Hitilafu', 'msg_eng': 'Error'})
+
+
+@login_required(login_url='login')
+def stockSideSlotDelete(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+    todo = todoFunct(request)
+    if not _can_edit_stock_place(todo):
+        return JsonResponse({'success': False})
+    duka = todo['duka']
+    from stoku.stock_place import serialize_sides
+    kind = request.POST.get('kind')
+    try:
+        side = stock_side.objects.get(pk=int(request.POST.get('side') or 0), Interprise=duka)
+        Model = stock_row if kind == 'row' else stock_column
+        Model.objects.filter(pk=int(request.POST.get('id') or 0), side=side).delete()
+        return JsonResponse({'success': True, 'sides': serialize_sides(duka.id)})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False})
+

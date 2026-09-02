@@ -1,3 +1,48 @@
+let STOCK_LOCATION_SIDES = []
+
+function fillItemPlaceRowCol(sideId, selectedRow, selectedCol) {
+    const side = STOCK_LOCATION_SIDES.find(s => Number(s.id) === Number(sideId))
+    const rowSel = $('#item-place-row')
+    const colSel = $('#item-place-col')
+    if (!rowSel.length) return
+    rowSel.html(`<option value="0">${lang('— Chagua —','— Select —')}</option>`)
+    colSel.html(`<option value="0">${lang('— Hakuna —','— None —')}</option>`)
+    if (!side) return
+    ;(side.rows || []).forEach(r => {
+        rowSel.append(`<option value="${r.id}">${r.name}</option>`)
+    })
+    ;(side.columns || []).forEach(c => {
+        colSel.append(`<option value="${c.id}">${c.name}</option>`)
+    })
+    if (selectedRow) rowSel.val(String(selectedRow))
+    if (selectedCol) colSel.val(String(selectedCol))
+}
+
+function loadItemLocation(bidhaaId, ainaId) {
+    if (!$('#item-place-side').length) return
+    $.get('/stoku/stockLocationData', { bidhaa: bidhaaId || 0 }).done(function (res) {
+        if (!res || !res.success) return
+        STOCK_LOCATION_SIDES = res.sides || []
+        const sideSel = $('#item-place-side')
+        sideSel.html(`<option value="0">${lang('— Hakuna —','— None —')}</option>`)
+        STOCK_LOCATION_SIDES.forEach(s => {
+            const linked = (s.aina_ids || []).map(Number).includes(Number(ainaId))
+            const mark = linked ? ' *' : ''
+            sideSel.append(`<option value="${s.id}">${s.name}${mark}</option>`)
+        })
+        const place = res.place || {}
+        if (place.side_id) {
+            sideSel.val(String(place.side_id))
+            fillItemPlaceRowCol(place.side_id, place.row_id, place.col_id)
+        } else {
+            fillItemPlaceRowCol(0)
+        }
+    })
+}
+
+$('body').on('change', '#item-place-side', function () {
+    fillItemPlaceRowCol($(this).val(), 0, 0)
+})
 
 //KUWEKA SIFA MUHIMU.................................................................//
 $('body').on('submit','.sifa_muhimu',function(e){
@@ -262,7 +307,7 @@ function wekaMaelezoKina(sifa){
 
 
 //KUEDIT BIDHAA....................................................................................//
-$("#kuediti-bidhaa-form").submit(function(e){
+$('body').on('submit','#kuediti-bidhaa-form',function(e){
     e.preventDefault()
     let   value = $(this).data('value'),
           Jina = ($('#kuedit_jina_la-bidhaa').val()).replace(/[&\/\\#,+$~%"*?<>{}`]/g, ""),
@@ -278,7 +323,10 @@ $("#kuediti-bidhaa-form").submit(function(e){
           vipimo_reja = $('#kuediti-bidhaa-vipimo_reja').val() || $('#kuediti-bidhaa-vipimo_reja').attr('placeholder') ,
           maelezo = $('#kuediti-bidhaa-maelezo').val(),
           material = Number($('#addMaterialtoUse').prop('checked')),
-          csrfToken =   $('input[name=csrfmiddlewaretoken]').val()
+          csrfToken =   $('input[name=csrfmiddlewaretoken]').val(),
+          place_side = $('#item-place-side').val() || 0,
+          place_row = $('#item-place-row').val() || 0,
+          place_col = $('#item-place-col').val() || 0
 
           
 
@@ -299,6 +347,9 @@ let data={
         uwiano:uwiano,
        
         vipimo_reja:(vipimo_reja).replace(/[&\/\\#,+$~%"*?<>{}`]/g, ""),
+        place_side:place_side,
+        place_row:place_row,
+        place_col:place_col,
       csrfmiddlewaretoken:csrfToken
 
     },
@@ -628,5 +679,13 @@ function ShowToItemVistors(dt){
   
   
   }
+
+$(function () {
+    const form = $('#kuediti-bidhaa-form')
+    if (form.length && $('#item-place-side').length && form.data('bidhaa')) {
+        loadItemLocation(form.data('bidhaa'), $('#kuedit-bidhaa-aina').data('val'))
+    }
+})
+
 
 

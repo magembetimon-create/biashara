@@ -1164,6 +1164,17 @@ let shwCo = false
             <span class="pl-2">  {% if useri.langSet == 0 %} Bidhaa za Makundi  {% else %} Grouped Items {% endif %}</span>
             </a>
             </li>
+
+          <li>
+            <a {% block active-sides-menu %}class="btn-default btn btn-sm "{% endblock %} href="/stoku/pande">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-geo-alt" viewBox="0 0 16 16">
+                <path d="M12.166 8.94c-.294 1.047-.806 1.946-1.227 2.58C10.233 12.557 9.3 13.5 8 13.5s-2.233-.943-2.939-2.0c-.42-.634-.933-1.533-1.227-2.58C3.534 7.812 3.5 7.273 3.5 7a4.5 4.5 0 0 1 9 0c0 .273-.034.812-.334 1.94z"/>
+                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10z"/>
+                <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+              </svg>
+            <span class="pl-2">  {% if useri.langSet == 0 %} Pande za stoo  {% else %} Store sides {% endif %}</span>
+            </a>
+            </li>
       
           <li>
             <a {% block active-chapa-menu %} class="btn-default btn btn-sm "{% endblock %} href="/stoku/chapa" >
