@@ -1,0 +1,195 @@
+<div class="modal fade bd-example-modal-lg" id="Item_editModal" tabindex="-1" role="dialog" aria-labelledby="itemEditModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg md-user-dialog classic_div" style="margin-left:auto;margin-right:auto;width:100%">
+    <div class="modal-content modal-content-one">
+      <div class="modal-header">
+        <h5 class="modal-title" id="itemEditModalTitle">
+          {% if useri.langSet == 0 %}Kuhusu Bidhaa {% else %} About Item {% endif %}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="form-body">
+            <div class="row classic_div whiteBg p-3">
+              <form data-value="0" id="kuediti-bidhaa-form" data-bidhaa="0" action="/stoku/editBidhaa">
+                {% csrf_token %}
+                <div class="row classic_div">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label class="control-label">{% if useri.langSet == 0 %}Jina la bidhaa{% else %}Item Name{% endif %}</label>
+                      <input type="text" id="kuedit_jina_la-bidhaa" class="form-control">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label class="control-label">{% if useri.langSet == 0 %}Aina ya Bidhaa{% else %}Item Category{% endif %}</label>
+                      <select data-placeholder="Choose Category" data-val="0" id="kuedit-bidhaa-aina" tabindex="1" class="form-control selectpicker" data-live-search="True"></select>
+                    </div>
+                  </div>
+                </div>
+                <div class="row classic_div">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label class="control-label">{% if useri.langSet == 0 %}Chapa ya Bidhaa{% else %}Item Brand{% endif %}</label>
+                      <select data-val="0" data-placeholder="Choose Brand" id="kuedit-bidhaa-chapa" tabindex="1" class="form-control selectpicker" data-live-search="True"></select>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Msambazaji{% else %}Supplier{% endif %}</label>
+                      <select data-placeholder="Choose Supplier" id="kuediti-bidbaa-msambazaji" tabindex="1" class="form-control selectpicker" data-live-search="True"></select>
+                    </div>
+                  </div>
+                </div>
+                <div class="row classic_div">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="bar_code_place">Bar code</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" name="bar_code_place" id="bar_code_place" placeholder="">
+                        <span class="input-group-btn border">
+                          <button class="btn btn-default btn-sm ScanBarCode" type="button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upc-scan" viewBox="0 0 16 16">
+                              <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5zM.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5zM3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7z"/>
+                            </svg>
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="item_namba_place">{% if useri.langSet == 0 %}Namba ya Bidhaa{% else %}Item Number{% endif %}</label>
+                      <input type="text" class="form-control" name="item_namba_place" id="item_namba_place" placeholder="">
+                    </div>
+                  </div>
+                </div>
+                <div class="row mt-3 classic_div">
+                  <div class="col-12">
+                    <p class="py-2" style="border-bottom:1px dotted rgb(97, 63, 0)">{% if useri.langSet == 0 %}Mauzo ya Jumla{% else %}Whole Selling{% endif %}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Bei ya kuuza{% else %}Sales Price{% endif %}</label>
+                      <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text robotoFont smallerFont">{{ duka.currencii }}</span>
+                        </div>
+                        <input type="number" data-val="" id="kuediti-bidhaa-thamani" class="money-fomat form-control">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Uzalishaji{% else %}Production{% endif %}</label>
+                      <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="addMaterialtoUse">
+                        <label class="custom-control-label" style="cursor:pointer !important" for="addMaterialtoUse">
+                          {% if useri.langSet == 0 %}Nyenzo/Bidhaa kwa kuzalishia{% else %}Material/Item for production{% endif %}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</label>
+                      <input type="text" id="kuediti-bidhaa-vipimo" class="form-control">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Zilizopo Stoku{% else %}On shelf{% endif %}</label>
+                      <input type="number" disabled id="kuediti-bidhaa-idadi_jum" class="form-control">
+                    </div>
+                  </div>
+                </div>
+                <div class="row mt-3 classic_div" hidden id="kuedit-rejareja">
+                  <div class="col-12">
+                    <p class="py-2" style="border-bottom:1px dotted rgb(97, 3, 0)">{% if useri.langSet == 0 %}Mauzo ya Rejareja{% else %}Retail Sales{% endif %}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Bei ya kuuza{% else %}Sales Price{% endif %}</label>
+                      <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text currencii robotoFont smallerFont">{{ duka.currencii }}</span>
+                        </div>
+                        <input type="number" data-val="" id="kuediti-bidhaa-thamanireja" class="money-fomat form-control">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Uwiano{% else %}Ratio{% endif %} (<span class="text-primary" id="uwiano-note"></span>)</label>
+                      <input type="number" data-val="1" id="kuediti-bidhaa-uwiano" class="form-control">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</label>
+                      <input type="text" id="kuediti-bidhaa-vipimo_reja" class="form-control">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Zilizopo stoku{% else %}Items on shelf{% endif %}</label>
+                      <input type="number" disabled id="kuediti-bidhaa-idadi_reja" class="form-control">
+                    </div>
+                  </div>
+                </div>
+                <h6 class="card-title px-3 pt-3">{% if useri.langSet == 0 %}Mahali kwenye stoo{% else %}Store location{% endif %}</h6>
+                <div class="row classic_div">
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Upande{% else %}Side{% endif %}</label>
+                      <select id="item-place-side" class="form-control">
+                        <option value="0">{% if useri.langSet == 0 %}— Hakuna —{% else %}— None —{% endif %}</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Mstari{% else %}Row{% endif %}</label>
+                      <select id="item-place-row" class="form-control">
+                        <option value="0">{% if useri.langSet == 0 %}— Chagua —{% else %}— Select —{% endif %}</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label>{% if useri.langSet == 0 %}Safu (si lazima){% else %}Column (optional){% endif %}</label>
+                      <select id="item-place-col" class="form-control">
+                        <option value="0">{% if useri.langSet == 0 %}— Hakuna —{% else %}— None —{% endif %}</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <h6 class="card-title px-3 pt-3">{% if useri.langSet == 0 %}Maelezo ya Bidhaa{% else %}Item Descriptions{% endif %}</h6>
+                <div class="row classic_div">
+                  <div class="col-md-12">
+                    <div class="form-group">
+                      <textarea rows="2" id="kuediti-bidhaa-maelezo" class="form-control latoFont"></textarea>
+                    </div>
+                  </div>
+                </div>
+                <div class="classic_div px-3">
+                  <button type="button" class="btn btn-light smallFont robotoFont btn-lg" data-dismiss="modal">Close</button>
+                  <div class="d-inline float-right">
+                    <button type="submit" class="bidhaa-edit-savebtn">
+                      <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-check2" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                      </svg>
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

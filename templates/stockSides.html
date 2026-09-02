@@ -1,0 +1,88 @@
+{% extends 'stock.html' %}
+{% load static %}
+
+{% block nav-stock %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+{% block top-nav-sides %} actively {% endblock %}
+{% block top-nav-sides-icon %}
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-geo-alt" viewBox="0 0 16 16">
+  <path d="M12.166 8.94c-.294 1.047-.806 1.946-1.227 2.58C10.233 12.557 9.3 13.5 8 13.5s-2.233-.943-2.939-2.0c-.42-.634-.933-1.533-1.227-2.58C3.534 7.812 3.5 7.273 3.5 7a4.5 4.5 0 0 1 9 0c0 .273-.034.812-.334 1.94z"/>
+  <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10z"/>
+  <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+</svg>
+{% endblock %}
+
+{% block active-sides-menu %}class="btn-default btn btn-sm pop2_active_menu"{% endblock %}
+
+{% block Stock-keyWord %}
+{% if useri.langSet == 0 %}Pande za stoo{% else %}Store sides{% endif %}
+{% endblock %}
+
+{% block dash-mapper %}
+{% if useri.langSet == 0 %}Stoku{% else %}Stock{% endif %}
+{% endblock %}
+
+{% block active-stock %} class="bi bi-shop text-primary font-weight-bold"{% endblock %}
+
+{% block dash-map %}
+{% if useri.langSet == 0 %}Pande za stoo{% else %}Store sides{% endif %}
+{% endblock %}
+
+{% block descriptions %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h5 class="mb-1">{% if useri.langSet == 0 %}Pande, mistari na safu{% else %}Sides, rows and columns{% endif %}</h5>
+    <p class="text-muted smallFont mb-0">
+      {% if useri.langSet == 0 %}
+        Tengeneza pande za stoo (kulia, kushoto, nyuma). Kila upande una mistari (lazima) na safu (si lazima). Aina za bidhaa zinaweza kuwekwa pande nyingi.
+      {% else %}
+        Create store sides (right, left, back). Each side has rows (required) and columns (optional). Categories can belong to more than one side.
+      {% endif %}
+    </p>
+  </div>
+  <button type="button" class="btn btn-primary btn-sm" id="addStockSideBtn">
+    {% if useri.langSet == 0 %}Ongeza upande{% else %}Add side{% endif %}
+  </button>
+</div>
+<div id="stock-sides-host"></div>
+
+<div class="modal fade" id="stockSideModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% if useri.langSet == 0 %}Upande{% else %}Side{% endif %}</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="sideEditId" value="0">
+        <div class="form-group">
+          <label>{% if useri.langSet == 0 %}Jina{% else %}Name{% endif %}</label>
+          <input type="text" class="form-control" id="sideEditName" placeholder="{% if useri.langSet == 0 %}mf. Kulia{% else %}e.g. Right{% endif %}">
+        </div>
+        <div class="form-group">
+          <label>{% if useri.langSet == 0 %}Aina za bidhaa (si lazima){% else %}Item categories (optional){% endif %}</label>
+          <select id="sideEditAina" class="form-control" multiple size="8">
+            {% for c in stock_categories %}
+            <option value="{{ c.id }}">{{ c.aina }}</option>
+            {% endfor %}
+          </select>
+          <small class="text-muted">{% if useri.langSet == 0 %}Shikilia Ctrl ili kuchagua zaidi ya moja.{% else %}Hold Ctrl to select more than one.{% endif %}</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="saveStockSideBtn">{% if useri.langSet == 0 %}Hifadhi{% else %}Save{% endif %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  window.STOCK_SIDES_INIT = {{ stock_sides_json }};
+</script>
+{% endblock %}
+
+{% block datatable %}
+<script src="{% static 'js/stokutable/stockSides.js' %}?v=1"></script>
+{% endblock %}
