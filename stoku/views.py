@@ -2579,7 +2579,7 @@ def UsajiriTokaMatawi(request):
     todo = todoFunct(request)
     duka = todo.get('duka')
     if not duka or not duka.Interprise:
-        return redirect('/userdash')
+            return redirect('/userdash')
     branches = _allowed_other_branch_perms(todo)
     suppliers = wasambazaji.objects.filter(owner=duka.owner.user.id).order_by('jina')
     todo.update({
@@ -3927,15 +3927,15 @@ def tafutaPicha(request):
                 stock_rows = list(bidhaa_stoku.objects.filter(
                     bidhaa_id__in=list(best_matches.keys())
                 ).values(
-                    'id',
-                    'bidhaa_id',
-                    'Interprise_id',
-                    'Interprise__name',
-                    'Interprise__mtaa__mtaa',
+                'id',
+                'bidhaa_id',
+                'Interprise_id',
+                'Interprise__name',
+                'Interprise__mtaa__mtaa',
                     'Interprise__mtaa__kata_id',
-                    'Interprise__mtaa__kata__kata',
+                'Interprise__mtaa__kata__kata',
                     'Interprise__mtaa__kata__wilaya_id',
-                    'Interprise__mtaa__kata__wilaya__wilaya',
+                'Interprise__mtaa__kata__wilaya__wilaya',
                     'Interprise__mtaa__kata__wilaya__mkoa_id',
                     'Interprise__mtaa__kata__wilaya__mkoa__mkoa',
                     'Interprise__mtaa__kata__wilaya__mkoa__kanda_id',
@@ -3984,14 +3984,14 @@ def tafutaPicha(request):
                         if flags[level]:
                             merged[level] = True
                     place = {
-                        'shop': st['Interprise__name'] or '',
-                        'mtaa': st['Interprise__mtaa__mtaa'] or '',
+                    'shop': st['Interprise__name'] or '',
+                    'mtaa': st['Interprise__mtaa__mtaa'] or '',
                         'kata_id': st['Interprise__mtaa__kata_id'],
-                        'kata': st['Interprise__mtaa__kata__kata'] or '',
+                    'kata': st['Interprise__mtaa__kata__kata'] or '',
                         'wilaya_id': st['Interprise__mtaa__kata__wilaya_id'],
-                        'wilaya': st['Interprise__mtaa__kata__wilaya__wilaya'] or '',
+                    'wilaya': st['Interprise__mtaa__kata__wilaya__wilaya'] or '',
                         'mkoa_id': st['Interprise__mtaa__kata__wilaya__mkoa_id'],
-                        'mkoa': st['Interprise__mtaa__kata__wilaya__mkoa__mkoa'] or '',
+                    'mkoa': st['Interprise__mtaa__kata__wilaya__mkoa__mkoa'] or '',
                         'kanda_id': st['Interprise__mtaa__kata__wilaya__mkoa__kanda_id'],
                         'kanda': st['Interprise__mtaa__kata__wilaya__mkoa__kanda__kanda'] or '',
                         'nchi_id': st['Interprise__mtaa__kata__wilaya__mkoa__kanda__nchi_id'],

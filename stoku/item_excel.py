@@ -881,6 +881,7 @@ def _import_ctx(duka, intp, user, ctx=None):
         'aina': {},
         'brand': {},
         'supplier': {},
+        'bidhaa_by_name': {},
     }
 
 
@@ -1116,20 +1117,28 @@ def _enrich_variants_from_master(master, variants):
     return variants
 
 
-def _apply_variants(duka, intp, user, produ, produ_stock, reg, uwiano, variant_rows, image_map, color_attr=''):
+def _apply_variants(duka, intp, user, produ, produ_stock, reg, uwiano, variant_rows, image_map, color_attr='', reuse_colors=False):
     color_groups = _build_color_groups(variant_rows)
     if not color_groups:
         return
     is_color_mode = variant_is_color_mode(color_attr)
     total_qty = 0
     for cg in color_groups:
-        rang = color_produ()
-        rang.color_code = _variant_color_code(cg['rangi_model']) if is_color_mode else '#cccccc'
-        rang.color_name = cg['rangi_model']
-        rang.nick_name = cg['rangi_model']
-        rang.colored = True
-        rang.bidhaa = produ
-        rang.save()
+        rang = None
+        if reuse_colors:
+            rang = color_produ.objects.filter(
+                bidhaa=produ,
+                color_name__iexact=cg['rangi_model'],
+                colored=True,
+            ).first()
+        if rang is None:
+            rang = color_produ()
+            rang.color_code = _variant_color_code(cg['rangi_model']) if is_color_mode else '#cccccc'
+            rang.color_name = cg['rangi_model']
+            rang.nick_name = cg['rangi_model']
+            rang.colored = True
+            rang.bidhaa = produ
+            rang.save()
 
         color = produ_colored()
         color.bidhaa = produ_stock
@@ -1144,10 +1153,14 @@ def _apply_variants(duka, intp, user, produ, produ_stock, reg, uwiano, variant_r
             idd = 0
             size_entries = []
             for s in cg['sizes']:
-                szs = sizes()
-                szs.size = s['size']
-                szs.color = rang
-                szs.save()
+                szs = None
+                if reuse_colors:
+                    szs = sizes.objects.filter(color=rang, size__iexact=s['size']).first()
+                if szs is None:
+                    szs = sizes()
+                    szs.size = s['size']
+                    szs.color = rang
+                    szs.save()
 
                 szd = produ_size()
                 szd.bidhaa = produ_stock
@@ -1195,16 +1208,20 @@ def _apply_variants(duka, intp, user, produ, produ_stock, reg, uwiano, variant_r
         reg.save()
 
 
-def _attach_item_image_no_variant(duka, intp, produ, produ_stock, picha_name, image_map):
+def _attach_item_image_no_variant(duka, intp, produ, produ_stock, picha_name, image_map, reuse_colors=False):
     img_bytes, img_name = _resolve_image_bytes(picha_name, image_map)
     if not img_bytes:
         return
-    hamna_rangi = color_produ()
-    hamna_rangi.color_code = '#ffffff'
-    hamna_rangi.color_name = 'none'
-    hamna_rangi.colored = False
-    hamna_rangi.bidhaa = produ
-    hamna_rangi.save()
+    hamna_rangi = None
+    if reuse_colors:
+        hamna_rangi = color_produ.objects.filter(bidhaa=produ, colored=False).first()
+    if hamna_rangi is None:
+        hamna_rangi = color_produ()
+        hamna_rangi.color_code = '#ffffff'
+        hamna_rangi.color_name = 'none'
+        hamna_rangi.colored = False
+        hamna_rangi.bidhaa = produ
+        hamna_rangi.save()
 
     coloring = produ_colored()
     coloring.bidhaa = produ_stock
@@ -1271,64 +1288,16 @@ def _enrich_existing_item(duka, intp, user, existing, produ_stock, row, variants
     return updated_fields, variant_applied
 
 
-def import_item_group(duka, intp, user, group, image_map=None, row_num=0, ctx=None):
-    """Create bidhaa + variants + images from a grouped import."""
-    image_map = image_map or {}
-    ctx = _import_ctx(duka, intp, user, ctx)
-    row = group.get('master') or {}
-    variants = group.get('variants') or []
-    row_num = group.get('start_row') or row_num
-
-    name = _cell_str(row.get('jina_la_bidhaa'))
-    if _is_skippable_name(name):
-        return {
-            'success': False,
-            'row': row_num,
-            'skipped': True,
-            'message_swa': 'Mstari wa kichwa au mfano — umerukwa',
-            'message_eng': 'Header or example row — skipped',
-        }
-    if not name:
-        return {
-            'success': False,
-            'row': row_num,
-            'message_swa': 'Mstari hauna jina la bidhaa',
-            'message_eng': 'Row is missing item name',
-        }
-
-    existing = bidhaa.objects.filter(bidhaa_jina=name, owner=duka.owner.user.id).first()
-    if existing:
-        produ_stock = bidhaa_stoku.objects.filter(
-            bidhaa=existing,
-            Interprise=intp.Interprise,
-        ).first()
-        updated_fields, variant_applied = _enrich_existing_item(
-            duka, intp, user, existing, produ_stock, row, variants, image_map,
-        )
-        if updated_fields:
-            parts_swa = ', '.join(updated_fields)
-            return {
-                'success': True,
-                'row': row_num,
-                'item_id': produ_stock.id if produ_stock else existing.id,
-                'name': name,
-                'enriched': True,
-                'message_swa': f'Bidhaa "{name}" imesasishwa ({parts_swa})',
-                'message_eng': f'Item "{name}" was updated ({parts_swa})',
-            }
-        return {
-            'success': False,
-            'row': row_num,
-            'message_swa': f'Bidhaa "{name}" tayari ipo',
-            'message_eng': f'Item "{name}" already exists',
-        }
-
-    vipimo_jum = _cell_str(row.get('vipimo_jum')) or 'pc'
-    vipimo_reja = _cell_str(row.get('vipimo_reja')) or vipimo_jum
-    uwiano = max(_parse_int(row.get('uwiano'), 1), 1)
+def _qty_from_excel_row(row, uwiano):
     idadi_jum = _parse_int(row.get('idadi_jumla'), 0)
     idadi_rej = _parse_int(row.get('idadi_reja'), 0)
-    idadi = idadi_rej + (idadi_jum * uwiano)
+    return idadi_rej + (idadi_jum * uwiano)
+
+
+def _create_branch_stock(duka, intp, user, produ, row, variants, image_map, ctx, reuse_colors=False):
+    """Create bidhaa_stoku on this enterprise for an existing or new catalog item."""
+    uwiano = max(int(float(produ.idadi_jum or 1)), 1)
+    idadi = _qty_from_excel_row(row, uwiano)
 
     bei_kununua = _parse_decimal(row.get('bei_kununua'), 0)
     bei_kuuza = _parse_decimal(row.get('bei_kuuza'), 0)
@@ -1336,24 +1305,16 @@ def import_item_group(duka, intp, user, group, image_map=None, row_num=0, ctx=No
     if bei_kuuza_jum <= 0 and bei_kuuza > 0:
         bei_kuuza_jum = bei_kuuza * uwiano
 
-    is_service = _parse_bool_yn(row.get('huduma'), False)
-    color_attr = _normalize_kielelezo(row.get('kielelezo'))
-    if variants and not color_attr:
-        color_attr = 'Model'
-
-    aina_key = (_cell_str(row.get('aina')).lower(), _cell_str(row.get('kundi')).lower())
-    if aina_key in ctx['aina']:
-        selected_aina, mahi = ctx['aina'][aina_key]
-    else:
-        selected_aina, mahi = _resolve_aina(duka, row.get('aina'), row.get('kundi'))
-        ctx['aina'][aina_key] = (selected_aina, mahi)
-
-    brand_key = _cell_str(row.get('chapa')).lower()
-    if brand_key in ctx['brand']:
-        brand = ctx['brand'][brand_key]
-    else:
-        brand = _resolve_brand(duka, row.get('chapa'))
-        ctx['brand'][brand_key] = brand
+    src = bidhaa_stoku.objects.filter(bidhaa=produ).exclude(
+        Interprise=intp.Interprise,
+    ).order_by('-pk').first()
+    if src:
+        if bei_kununua <= 0:
+            bei_kununua = src.Bei_kununua
+        if bei_kuuza <= 0:
+            bei_kuuza = src.Bei_kuuza
+        if bei_kuuza_jum <= 0:
+            bei_kuuza_jum = src.Bei_kuuza_jum
 
     supplier_key = _cell_str(row.get('wasambazaji')).lower()
     if supplier_key in ctx['supplier']:
@@ -1361,25 +1322,14 @@ def import_item_group(duka, intp, user, group, image_map=None, row_num=0, ctx=No
     else:
         supplier = _resolve_supplier(duka.owner.user, row.get('wasambazaji'))
         ctx['supplier'][supplier_key] = supplier
+    if not supplier and src:
+        supplier = src.msambaji
 
-    produ = bidhaa()
-    produ.kampuni = brand
-    produ.bidhaa_aina = selected_aina
-    produ.Mahi = mahi
-    produ.idadi_jum = float(uwiano)
-    produ.change_date = timezone.now()
-    produ.maelezo = _cell_str(row.get('maelezo')) or 'none'
-    produ.vipimo = vipimo_reja
-    produ.vipimo_jum = vipimo_jum
-    produ.bidhaa_jina = name
-    produ.saletaxInluded = False
-    produ.purchtaxInluded = False
-    produ.namba = _cell_str(row.get('namba'))
-    produ.material = False
-    produ.owner = ctx['owner_user']
-    if color_attr or variants:
-        produ.colorAttr = color_attr or 'Model'
-    produ.save()
+    if row.get('huduma') not in (None, ''):
+        is_service = _parse_bool_yn(row.get('huduma'), False)
+    else:
+        is_service = bool(src.service) if src else False
+    barcode = _cell_str(row.get('barcode')) or (src.sirio if src else '')
 
     produ_stock = bidhaa_stoku()
     produ_stock.bidhaa = produ
@@ -1392,7 +1342,7 @@ def import_item_group(duka, intp, user, group, image_map=None, row_num=0, ctx=No
     produ_stock.Bei_kuuza_jum = float(bei_kuuza_jum)
     produ_stock.op_name = ctx['op_user']
     produ_stock.expire_date = None
-    produ_stock.sirio = _cell_str(row.get('barcode'))
+    produ_stock.sirio = barcode
     produ_stock.tanguliziwa = 0
     produ_stock.service = is_service
     produ_stock.timely = 0
@@ -1418,14 +1368,144 @@ def import_item_group(duka, intp, user, group, image_map=None, row_num=0, ctx=No
     reg.adjst = adj
     reg.save()
 
+    color_attr = _normalize_kielelezo(row.get('kielelezo')) or produ.colorAttr or ''
     if variants:
         variants = _enrich_variants_from_master(row, variants)
         _apply_variants(
             duka, intp, user, produ, produ_stock, reg, uwiano, variants, image_map,
-            color_attr=color_attr or produ.colorAttr or '',
+            color_attr=color_attr or 'Model',
+            reuse_colors=reuse_colors,
         )
     elif _cell_str(row.get('picha')):
-        _attach_item_image_no_variant(duka, intp, produ, produ_stock, row.get('picha'), image_map)
+        _attach_item_image_no_variant(
+            duka, intp, produ, produ_stock, row.get('picha'), image_map,
+            reuse_colors=reuse_colors,
+        )
+    return produ_stock
+
+
+def import_item_group(duka, intp, user, group, image_map=None, row_num=0, ctx=None):
+    """Create bidhaa + variants + images from a grouped import."""
+    image_map = image_map or {}
+    ctx = _import_ctx(duka, intp, user, ctx)
+    row = group.get('master') or {}
+    variants = group.get('variants') or []
+    row_num = group.get('start_row') or row_num
+
+    name = _cell_str(row.get('jina_la_bidhaa'))
+    if _is_skippable_name(name):
+        return {
+            'success': False,
+            'row': row_num,
+            'skipped': True,
+            'message_swa': 'Mstari wa kichwa au mfano — umerukwa',
+            'message_eng': 'Header or example row — skipped',
+        }
+    if not name:
+        return {
+            'success': False,
+            'row': row_num,
+            'message_swa': 'Mstari hauna jina la bidhaa',
+            'message_eng': 'Row is missing item name',
+        }
+
+    name_key = name.strip().lower()
+    bidhaa_cache = ctx.setdefault('bidhaa_by_name', {})
+    if name_key in bidhaa_cache:
+        existing = bidhaa_cache[name_key]
+    else:
+        existing = bidhaa.objects.filter(
+            bidhaa_jina__iexact=name,
+            owner=duka.owner.user.id,
+        ).first()
+        bidhaa_cache[name_key] = existing
+
+    if existing:
+        produ_stock = bidhaa_stoku.objects.filter(
+            bidhaa=existing,
+            Interprise=intp.Interprise,
+        ).first()
+        if produ_stock is None:
+            produ_stock = _create_branch_stock(
+                duka, intp, user, existing, row, variants, image_map, ctx,
+                reuse_colors=True,
+            )
+            return {
+                'success': True,
+                'row': row_num,
+                'item_id': produ_stock.id,
+                'name': name,
+                'branch_registered': True,
+                'message_swa': f'Bidhaa "{name}" imesajiliwa kwenye tawi hili (idadi kutoka faili)',
+                'message_eng': f'Item "{name}" was registered on this branch (qty from file)',
+            }
+        updated_fields, variant_applied = _enrich_existing_item(
+            duka, intp, user, existing, produ_stock, row, variants, image_map,
+        )
+        if updated_fields:
+            parts_swa = ', '.join(updated_fields)
+            return {
+                'success': True,
+                'row': row_num,
+                'item_id': produ_stock.id if produ_stock else existing.id,
+                'name': name,
+                'enriched': True,
+                'message_swa': f'Bidhaa "{name}" imesasishwa ({parts_swa})',
+                'message_eng': f'Item "{name}" was updated ({parts_swa})',
+            }
+        return {
+            'success': False,
+            'row': row_num,
+            'message_swa': f'Bidhaa "{name}" tayari ipo',
+            'message_eng': f'Item "{name}" already exists',
+        }
+
+    vipimo_jum = _cell_str(row.get('vipimo_jum')) or 'pc'
+    vipimo_reja = _cell_str(row.get('vipimo_reja')) or vipimo_jum
+    uwiano = max(_parse_int(row.get('uwiano'), 1), 1)
+
+    color_attr = _normalize_kielelezo(row.get('kielelezo'))
+    if variants and not color_attr:
+        color_attr = 'Model'
+
+    aina_key = (_cell_str(row.get('aina')).lower(), _cell_str(row.get('kundi')).lower())
+    if aina_key in ctx['aina']:
+        selected_aina, mahi = ctx['aina'][aina_key]
+    else:
+        selected_aina, mahi = _resolve_aina(duka, row.get('aina'), row.get('kundi'))
+        ctx['aina'][aina_key] = (selected_aina, mahi)
+
+    brand_key = _cell_str(row.get('chapa')).lower()
+    if brand_key in ctx['brand']:
+        brand = ctx['brand'][brand_key]
+    else:
+        brand = _resolve_brand(duka, row.get('chapa'))
+        ctx['brand'][brand_key] = brand
+
+    produ = bidhaa()
+    produ.kampuni = brand
+    produ.bidhaa_aina = selected_aina
+    produ.Mahi = mahi
+    produ.idadi_jum = float(uwiano)
+    produ.change_date = timezone.now()
+    produ.maelezo = _cell_str(row.get('maelezo')) or 'none'
+    produ.vipimo = vipimo_reja
+    produ.vipimo_jum = vipimo_jum
+    produ.bidhaa_jina = name
+    produ.saletaxInluded = False
+    produ.purchtaxInluded = False
+    produ.namba = _cell_str(row.get('namba'))
+    produ.material = False
+    produ.owner = ctx['owner_user']
+    if color_attr or variants:
+        produ.colorAttr = color_attr or 'Model'
+    produ.save()
+    bidhaa_cache[name_key] = produ
+
+    produ_stock = _create_branch_stock(
+        duka, intp, user, produ, row, variants, image_map, ctx,
+        reuse_colors=False,
+    )
 
     return {
         'success': True,
