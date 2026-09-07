@@ -127,6 +127,50 @@ def flatten_stoku_to_pos_rows(stoku, intp, image_map=None):
     return rows
 
 
+def attach_pos_images(intp, items, colors_by_stoku=None):
+    """Fill row['picha'] in one query per catalog page (no N+1)."""
+    if not items:
+        return items
+    bidhaa_ids = {r.get('bidhaa') for r in items if r.get('bidhaa')}
+    if not bidhaa_ids:
+        return items
+
+    colored_to_produ = {}
+    if colors_by_stoku:
+        for clist in colors_by_stoku.values():
+            for ci in clist:
+                if ci.color_id:
+                    colored_to_produ[ci.id] = ci.color_id
+
+    owner_id = intp.owner.user_id
+    by_color = {}
+    by_bidhaa = {}
+    pics = (
+        picha_bidhaa.objects.filter(
+            picha__owner_id=owner_id,
+            bidhaa_id__in=bidhaa_ids,
+        )
+        .select_related('picha')
+        .order_by('id')
+    )
+    for pic in pics:
+        try:
+            url = pic.picha.picha.url if pic.picha and pic.picha.picha else ''
+        except Exception:
+            url = ''
+        if not url:
+            continue
+        if pic.color_produ_id:
+            by_color[pic.color_produ_id] = url
+        if pic.bidhaa_id:
+            by_bidhaa[pic.bidhaa_id] = url
+
+    for row in items:
+        color_produ_id = colored_to_produ.get(row.get('color_id')) if row.get('color_id') else None
+        row['picha'] = (by_color.get(color_produ_id) if color_produ_id else None) or by_bidhaa.get(row.get('bidhaa')) or ''
+    return items
+
+
 def _pos_row_from_stock_values(rec):
     return {
         'id': rec['id'],
@@ -216,11 +260,11 @@ def fetch_pos_catalog(intp, is_service=False, offset=0, limit=20):
     ).exclude(bidhaa__inapacha=True, idadi=0).exists()
 
     items = []
+    colors_by_stoku = {}
     if not has_colors:
         items = [_pos_row_from_stock_values(r) for r in page_recs]
     else:
         stoku_ids = [r['id'] for r in page_recs]
-        colors_by_stoku = {}
         if stoku_ids:
             for ci in produ_colored.objects.filter(
                 bidhaa_id__in=stoku_ids,
@@ -271,6 +315,7 @@ def fetch_pos_catalog(intp, is_service=False, offset=0, limit=20):
         vat_allow = bool(first.get('vat_allow')) if first else False
 
     processed = offset + len(page_recs)
+    attach_pos_images(intp, items, colors_by_stoku)
     attach_places(intp.id, items)
     return {
         'items': items,
