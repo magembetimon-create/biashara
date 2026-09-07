@@ -386,13 +386,14 @@ $('#cb-switch').change(function () {
             contentType: false,
             success: function (response) {
 
-              if('itm' in formData)getItemData(formData.itm,0) //This fetcth imageItems after uploanding
+              if('itm' in formData && typeof getItemData === 'function')getItemData(formData.itm,0) //This fetcth imageItems after uploanding
               
                 $("#loadMe").modal('hide');
                 hideLoading()
                 if(response.success){
 
                     toastr.success(lang(response.msg_swa,response.msg_eng), lang('Imefanikiwa','Success'), {timeOut: 2000});
+                     if(typeof formData.onSuccess === 'function') formData.onSuccess(response)
                      if(RELOAD && !item_modal_is_shown())location.reload()  //Reload after upload
                      if(REPlACE_BANNER && !item_modal_is_shown()  )location.replace(`/ecommerce/marketing?bn=${response.bn}&${response.to}`)
                      if(GETIMAGEDATA && !item_modal_is_shown()  )getTheImgs() 
@@ -481,7 +482,8 @@ $('#cb-switch').change(function () {
 
 
               let theData = {url:image_file.url}
-              if('itm' in image_file) theData = {url:image_file.url,itm:image_file.itm}
+              if('itm' in image_file) theData.itm = image_file.itm
+              if(typeof image_file.onSuccess === 'function') theData.onSuccess = image_file.onSuccess
                 
               ImageUpload(theData)
 

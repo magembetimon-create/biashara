@@ -109,26 +109,7 @@ let idadi_item=0,zilizopo=0,thamani=0,mauzo_tegemeo=0,num=0
         num+=1
             trp+=`<tr>
                       <td>${num}</td>   
-                    <td>`  
-            var imge=data.img,coount=0,im_sr=''
-
-            for(var im in imge){
-                if(imge[im].bidhaa==itm.id) {
-                coount+=1;
-                im_sr=`<img src="${imge[im].picha__picha}" style="max-width:3.9625em;max-height:3.9em;cursor:pointer">`
-                }
-            }
-            
-            if(coount>0){
-                trp+=im_sr
-            }else{
-                trp+=`       
-            <svg width="2.4625em" height="2.4em" viewBox="0 0 17 16" class="bi bi-image" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" d="M14.002 2h-12a1 1 0 0 0-1 1v9l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094L15.002 9.5V3a1 1 0 0 0-1-1zm-12-1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm4 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-            </svg>`
-            }
-        
-        trp+=`   </td> 
+                    <td>${stockImgCellHtml(itm.id, itm.stock_id, itm.jina, data.img)}</td>
             <td>${tbSafeText(itm.namba, lang('Hakuna','None'))}</td>
             <td>${tbSafeText(itm.jina)}</td>
             <td>${itm.zote}</td>
