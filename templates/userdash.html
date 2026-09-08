@@ -6456,9 +6456,20 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
       });
     }
 
+    function placeVisibleInScope(place, scope) {
+      if (!place) return false;
+      if (!place.scopes) return true;
+      return !!place.scopes[scope];
+    }
+
     function itemPlaces(item) {
       if (item && item.places && item.places.length) return item.places;
       return (item && item.locations) || [];
+    }
+
+    function itemPlacesInScope(item, scope) {
+      scope = scope || imgSearchState.activeScope || 'wilaya';
+      return itemPlaces(item).filter(function(p) { return placeVisibleInScope(p, scope); });
     }
 
     function placeMatchesFilter(place, filter) {
@@ -6494,7 +6505,8 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
 
     function matchingPlace(item) {
       var filter = combinedGeoFilter();
-      var places = itemPlaces(item);
+      var scope = imgSearchState.activeScope || 'wilaya';
+      var places = itemPlacesInScope(item, scope);
       for (var i = 0; i < places.length; i++) {
         if (placeMatchesFilter(places[i], filter)) return places[i];
       }
@@ -6506,7 +6518,7 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
       var filter = combinedGeoFilter();
       return (imgSearchState.allResults || []).filter(function(item) {
         if (!(item && item.scopes && item.scopes[scope])) return false;
-        return itemPlaces(item).some(function(p) { return placeMatchesFilter(p, filter); });
+        return itemPlacesInScope(item, scope).some(function(p) { return placeMatchesFilter(p, filter); });
       });
     }
 
@@ -6536,7 +6548,7 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
       (imgSearchState.allResults || []).forEach(function(item) {
         if (!(item.scopes && item.scopes[scope])) return;
         var seen = {};
-        itemPlaces(item).forEach(function(p) {
+        itemPlacesInScope(item, scope).forEach(function(p) {
           if (!placeMatchesFilter(p, filter)) return;
           var id = p[level + '_id'];
           var name = p[level];
