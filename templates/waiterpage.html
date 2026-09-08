@@ -102,7 +102,10 @@
     <div id="waiterItemsColumn" class="col-lg-8 mb-3">
       <div class="classic_div waiter-items-wrap">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="mb-0">{% if useri.langSet == 0 %}Bidhaa{% else %}Items{% endif %}</h6>
+          <div class="d-flex align-items-center flex-wrap">
+            <small class="items-categ-label mr-2" id="waiterItemsCategLabel">{% if useri.langSet == 0 %}Aina Zote{% else %}All Categories{% endif %}</small>
+            <h6 class="mb-0">{% if useri.langSet == 0 %}Bidhaa{% else %}Items{% endif %}</h6>
+          </div>
           <small class="text-muted" id="waiterItemsCount">0</small>
         </div>
         <div id="waiterItemsList" class="waiter-items-grid"></div>
@@ -472,7 +475,7 @@ class="c-menu__item style-none is-active  showingpop2"
 
 {% block for_pos %}
 <script src="{% static 'js/loadCells.js' %}"></script>
-<script src="{% static 'js/waiterpage.js' %}?v=wcat1"></script>
+<script src="{% static 'js/waiterpage.js' %}?v=wcat2"></script>
 {% endblock %}
 
 <input type="hidden" id="waiter_receipt_paper" value="{{ waiter_receipt_paper|default:1 }}">

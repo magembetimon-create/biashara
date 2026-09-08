@@ -82,6 +82,14 @@
                 
               </ul>
 
+              <div id="posItemsCountBar" class="pos-items-count-bar">
+                <div class="d-flex align-items-center flex-wrap">
+                  <small class="items-categ-label mr-2" id="posItemsCategLabel">{% if useri.langSet == 0 %}Aina Zote{% else %}All Categories{% endif %}</small>
+                  <h6 class="mb-0">{% if serv %}{% if useri.langSet == 0 %}Huduma{% else %}Services{% endif %}{% else %}{% if useri.langSet == 0 %}Bidhaa{% else %}Items{% endif %}{% endif %}</h6>
+                </div>
+                <small class="text-muted" id="posItemsCount">0</small>
+              </div>
+
               <ul id="pos_itms"  class="pos-products-list">
                  
               </ul>
@@ -811,7 +819,7 @@ class="c-menu__item style-none is-active  showingpop2"
 {% block active-mauzo %} class="bi bi-cart-check text-primary" {% endblock %}
 
 {% block for_pos %}
-<script src="{% static 'js/posjs.js' %}?v=pos25"></script>
+<script src="{% static 'js/posjs.js' %}?v=pos27"></script>
 <script src="{% static 'js/searchCustomer.js' %}"></script>
 {% endblock %}
 

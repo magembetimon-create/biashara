@@ -215,6 +215,17 @@
   overflow: hidden;
 }
 
+.items-categ-label {
+  font-size: 0.78rem;
+  color: #6c757d;
+  text-transform: capitalize;
+  line-height: 1.2;
+}
+.items-categ-label.is-filtered {
+  color: #007bff;
+  font-weight: 600;
+}
+
 .waiter-search-input-wrap .input-group-text {
   background: #f8fafc;
   border-color: #d7deea;

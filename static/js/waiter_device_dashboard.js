@@ -591,6 +591,20 @@ function renderWaiterCategories() {
   }
 }
 
+function waiterSelectedCategLabel() {
+  if (!WAITER_ITEM_CATEG) return waiterLang('Aina Zote', 'All Categories')
+  if (Number(WAITER_ITEM_CATEG) === WAITER_UNCATEGORIZED_CATEG) return waiterLang('Bila Aina', 'Uncategorized')
+  const found = WAITER_ITEMS.find(it => Number(it.aina) === Number(WAITER_ITEM_CATEG))
+  return found ? (found.ainaN || waiterLang('Bila Aina', 'Uncategorized')) : waiterLang('Bila Aina', 'Uncategorized')
+}
+
+function updateWaiterItemsCategLabel() {
+  const el = document.getElementById('waiterItemsCategLabel')
+  if (!el) return
+  el.textContent = waiterSelectedCategLabel()
+  el.classList.toggle('is-filtered', !!WAITER_ITEM_CATEG)
+}
+
 function waiterFilteredItems() {
   let allItems = WAITER_ITEMS.filter(it => !it.service && Number(it.Bei_kuuza || 0) > 0)
   const q = waiterSearchValue()
@@ -693,6 +707,7 @@ function renderWaiterItems() {
   const host = $('#waiterItemsList')
 
   $('#waiterItemsCount').text(list.length)
+  updateWaiterItemsCategLabel()
   bindWaiterItemsInfiniteScroll()
 
   if (!list.length) {
@@ -1163,6 +1178,7 @@ function applyWaiterCatalog(data, append) {
     if (noFilter && WAITER_ITEMS_SCROLL_STATE && WAITER_ITEMS_SCROLL_STATE.list) {
       WAITER_ITEMS_SCROLL_STATE.list = waiterFilteredItems()
       $('#waiterItemsCount').text(WAITER_ITEMS_SCROLL_STATE.list.length)
+      updateWaiterItemsCategLabel()
     } else {
       queueWaiterItemsRender()
     }

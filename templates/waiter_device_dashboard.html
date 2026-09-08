@@ -347,7 +347,10 @@
       <div id="waiterItemsColumn" class="col-lg-8 mb-3">
         <div class="classic_div waiter-items-wrap">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="mb-0">{% if useri.langSet == 0 %}Bidhaa{% else %}Items{% endif %}</h6>
+            <div class="d-flex align-items-center flex-wrap">
+              <small class="items-categ-label mr-2" id="waiterItemsCategLabel">{% if useri.langSet == 0 %}Aina Zote{% else %}All Categories{% endif %}</small>
+              <h6 class="mb-0">{% if useri.langSet == 0 %}Bidhaa{% else %}Items{% endif %}</h6>
+            </div>
             <small class="text-muted" id="waiterItemsCount">0</small>
           </div>
           <div id="waiterItemsList" class="waiter-items-grid"></div>
@@ -654,7 +657,7 @@
 <script src="{% static 'js/quagga.js' %}"></script>
 <script src="{% static 'js/html5-qrcode.min.js' %}"></script>
 <script src="{% static 'js/tb_barcode.js' %}?v=scan10"></script>
-<script src="{% static 'js/waiter_device_dashboard.js' %}?v=wcat1"></script>
+<script src="{% static 'js/waiter_device_dashboard.js' %}?v=wcat2"></script>
 
 <div class="beep_audio" hidden>
   <audio id="beep_audio" preload="auto">

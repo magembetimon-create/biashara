@@ -39,6 +39,7 @@ let selected = [],
     ServsS = []
 
 let POS_VAT_ALLOW = false
+let POS_CATEGORIES = []
 let POS_SEARCH_TIMER = null
 const POS_SEARCH_DEBOUNCE_MS = 120
 const POS_INITIAL_RENDER_LIMIT = 20
@@ -353,13 +354,14 @@ const vat_per = Number($('#vat_percent').val()),
 
 
 function renderPosCategoryButtons(categories) {
+    const list = (categories || []).slice()
+    POS_CATEGORIES = list
     let categ_butn = `
    <li  class="py-1">
             <button data-aina=0 data-categ=0 class="btn border categsBtn text-left text-capitalize latoFont btn-block btn-default">
                  ${lang('Aina Zote','All Categories')}
                  </button>
             </li>`
-    const list = (categories || []).slice()
     list.sort(function (a, b) {
         return String(a.aina || '').localeCompare(String(b.aina || ''))
     })
@@ -376,6 +378,7 @@ function renderPosCategoryButtons(categories) {
                             `
     })
     $('#categsList').html(categ_butn)
+    updatePosItemsCategLabel()
 }
 
 function applyPosCatalog(data, append) {
@@ -384,6 +387,9 @@ function applyPosCatalog(data, append) {
         posMergePosRows(rows)
         if (!search_itm() && Number(ITM_CATEG) === 0 && POS_ITEMS_SCROLL_STATE && POS_ITEMS_SCROLL_STATE.list) {
             POS_ITEMS_SCROLL_STATE.list = POS_ITMS
+            updatePosItemsCount(POS_ITMS.length)
+        } else {
+            updatePosItemsCount(posFilteredItems().length)
         }
         return
     }
@@ -493,6 +499,8 @@ function posdata(c){
 
 
                         $('#categsList').html(categ_butn)
+                        POS_CATEGORIES = Categ
+                        updatePosItemsCategLabel()
 
 
                         const colr = coloredItem.state || []
@@ -722,30 +730,58 @@ function appendPosItemsChunk() {
     st.loading = false
 }
 
+function updatePosItemsCount(n) {
+    const el = document.getElementById('posItemsCount')
+    if (el) el.textContent = Number(n) || 0
+    updatePosItemsCategLabel()
+}
+
+function posSelectedCategLabel() {
+    if (!ITM_CATEG) return lang('Aina Zote', 'All Categories')
+    if (Number(ITM_CATEG) === UNCATEGORIZED_CATEG) return lang('Bila Aina', 'Uncategorized')
+    const found = (POS_CATEGORIES || []).find(c => Number(c.id) === Number(ITM_CATEG))
+    if (found && found.aina) return found.aina
+    const it = POS_ITMS.find(x => Number(x.aina) === Number(ITM_CATEG))
+    return (it && it.ainaN) ? it.ainaN : lang('Bila Aina', 'Uncategorized')
+}
+
+function updatePosItemsCategLabel() {
+    const el = document.getElementById('posItemsCategLabel')
+    if (!el) return
+    el.textContent = posSelectedCategLabel()
+    el.classList.toggle('is-filtered', !!ITM_CATEG)
+}
+
+function posFilteredItems() {
+    let allItms = POS_ITMS
+    if (ITM_CATEG != 0) {
+        if (Number(ITM_CATEG) === UNCATEGORIZED_CATEG) {
+            allItms = allItms.filter(ct => !ct.aina)
+        } else {
+            allItms = allItms.filter(ct => ct.aina === ITM_CATEG)
+        }
+    }
+
+    if (search_itm() != '') {
+        const query = normalizePosSearchText(search_itm())
+        if (query) {
+            allItms = allItms.filter(itm => {
+                const baseSearch = itm.__search || normalizePosSearchText(`${itm.name || ''} ${itm.namba || ''} ${itm.sirio || ''} ${itm.color_name || ''} ${itm.size_name || ''} ${itm.color_nick || ''} ${itm.brand || ''}`)
+                return baseSearch.includes(query)
+            })
+        }
+    }
+
+    if (onlyCart) allItms = cartItms
+    return allItms
+}
+
 function posItms(){
     const ticket = ++POS_RENDER_TICKET
-    let allItms = POS_ITMS
-    if(ITM_CATEG!=0){
-       if(Number(ITM_CATEG) === UNCATEGORIZED_CATEG){
-           allItms = allItms.filter(ct => !ct.aina)
-       } else {
-           allItms = allItms.filter(ct=>ct.aina===ITM_CATEG)
-       }
-    }
+    const allItms = posFilteredItems()
+    updatePosItemsCount(allItms.length)
 
     VAT_allowed = POS_VAT_ALLOW || Items.state[0]?.vat_allow || false
-
-    if(search_itm()!=''){
-                const query = normalizePosSearchText(search_itm())
-                if (query) {
-                    allItms = allItms.filter(itm => {
-                        const baseSearch = itm.__search || normalizePosSearchText(`${itm.name || ''} ${itm.namba || ''} ${itm.sirio || ''} ${itm.color_name || ''} ${itm.size_name || ''} ${itm.color_nick || ''} ${itm.brand || ''}`)
-                        return baseSearch.includes(query)
-                    })
-                }
-    }
-
-    if(onlyCart) allItms = cartItms
 
     const host = $('#pos_itms')
     bindPosItemsInfiniteScroll()
