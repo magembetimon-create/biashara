@@ -3924,13 +3924,9 @@ def tafutaPicha(request):
 
             stock_rows = []
             if best_matches:
-                today = date.today()
                 stock_rows = list(bidhaa_stoku.objects.filter(
                     bidhaa_id__in=list(best_matches.keys()),
-                    Interprise__marketing__gte=2000,
-                ).filter(
-                    Q(Interprise__bill_tobePaid__isnull=True) |
-                    Q(Interprise__bill_tobePaid__gte=today)
+                    Interprise__marketing__gt=0,
                 ).values(
                 'id',
                 'bidhaa_id',
@@ -3956,32 +3952,17 @@ def tafutaPicha(request):
                 'nchi': 'Interprise__mtaa__kata__wilaya__mkoa__kanda__nchi_id',
             }
             scope_order = ('wilaya', 'mkoa', 'kanda', 'nchi')
-            MARKETING_WILAYA = 2000
-            MARKETING_MKOA = 5000
-            MARKETING_NCHI = 10000
-
-            def marketing_allows_scope(level, marketing):
-                m = int(marketing or 0)
-                if m < MARKETING_WILAYA:
-                    return False
-                if level == 'wilaya':
-                    return m >= MARKETING_WILAYA
-                if level == 'mkoa':
-                    return m >= MARKETING_MKOA
-                if level in ('kanda', 'nchi'):
-                    return m >= MARKETING_NCHI
-                return False
 
             def stock_scopes(st):
                 flags = {'wilaya': False, 'mkoa': False, 'kanda': False, 'nchi': False}
-                marketing = st.get('Interprise__marketing') if isinstance(st, dict) else None
+                marketing = int((st.get('Interprise__marketing') if isinstance(st, dict) else 0) or 0)
+                if marketing <= 0:
+                    return flags
                 for level in scope_order:
-                    if not marketing_allows_scope(level, marketing):
-                        continue
                     wanted = place_ids.get(level)
                     if wanted and st.get(id_keys[level]) == wanted:
                         flags[level] = True
-                if not any(place_ids.values()) and marketing_allows_scope('nchi', marketing):
+                if not any(place_ids.values()):
                     flags['nchi'] = True
                 return flags
 
@@ -4023,9 +4004,10 @@ def tafutaPicha(request):
                         'nchi_id': st['Interprise__mtaa__kata__wilaya__mkoa__kanda__nchi_id'],
                         'shop_id': shop_id,
                         'stock_id': st['id'],
+                        'marketing': int(st.get('Interprise__marketing') or 0),
                         'scopes': flags,
                     }
-                    place_key = place['kata_id'] or shop_id
+                    place_key = shop_id
                     if place_key and place_key not in places_map and len(places_map) < PLACES_PER_ITEM:
                         places_map[place_key] = place
                     if shop_id in seen:
@@ -4046,6 +4028,7 @@ def tafutaPicha(request):
                             'nchi_id': place['nchi_id'],
                             'shop_id': shop_id,
                             'stock_id': st['id'],
+                            'marketing': place['marketing'],
                             'scopes': flags,
                         })
                     if primary is None or (
@@ -4072,9 +4055,9 @@ def tafutaPicha(request):
 
             return JsonResponse({
                 'success': True,
-                'results': scoped[:20],
-                'all_results': all_results[:40],
-                'count': len(scoped[:20]),
+                'results': scoped[:40],
+                'all_results': all_results,
+                'count': len(scoped),
                 'scope': scope,
                 'scope_counts': scope_counts,
                 'user_place': place_ids,

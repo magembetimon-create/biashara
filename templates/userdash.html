@@ -6462,14 +6462,58 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
       return !!place.scopes[scope];
     }
 
+    var MKT_WILAYA = 2000;
+    var MKT_MKOA = 5000;
+    var MKT_NCHI = 10000;
+
+    function placeMarketing(place) {
+      return Number(place && place.marketing) || 0;
+    }
+
+    function marketingRangeForView(scope, extra) {
+      scope = scope || imgSearchState.activeScope || 'wilaya';
+      extra = extra || imgSearchState.geoFilter || {};
+      if (scope === 'wilaya' && !extra.wilaya) {
+        return { min: 1, max: null };
+      }
+      if (extra.wilaya) {
+        return { min: MKT_WILAYA + 1, max: null };
+      }
+      if (extra.mkoa || scope === 'mkoa') {
+        return { min: MKT_MKOA, max: MKT_NCHI };
+      }
+      return { min: MKT_NCHI, max: null };
+    }
+
+    function marketingRangeForSubLevel(level) {
+      if (level === 'wilaya' || level === 'kata') {
+        return { min: MKT_WILAYA + 1, max: null };
+      }
+      if (level === 'mkoa') {
+        return { min: MKT_MKOA, max: MKT_NCHI };
+      }
+      return { min: MKT_NCHI, max: null };
+    }
+
+    function placePassesMarketing(place, range) {
+      var m = placeMarketing(place);
+      if (m <= 0) return false;
+      if (range.min != null && m < range.min) return false;
+      if (range.max != null && m >= range.max) return false;
+      return true;
+    }
+
     function itemPlaces(item) {
       if (item && item.places && item.places.length) return item.places;
       return (item && item.locations) || [];
     }
 
-    function itemPlacesInScope(item, scope) {
+    function itemPlacesInScope(item, scope, range) {
       scope = scope || imgSearchState.activeScope || 'wilaya';
-      return itemPlaces(item).filter(function(p) { return placeVisibleInScope(p, scope); });
+      range = range || marketingRangeForView(scope, imgSearchState.geoFilter);
+      return itemPlaces(item).filter(function(p) {
+        return placeVisibleInScope(p, scope) && placePassesMarketing(p, range);
+      });
     }
 
     function placeMatchesFilter(place, filter) {
@@ -6516,10 +6560,34 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     function resultsForActiveScope() {
       var scope = imgSearchState.activeScope || 'wilaya';
       var filter = combinedGeoFilter();
+      var range = marketingRangeForView(scope, imgSearchState.geoFilter);
       return (imgSearchState.allResults || []).filter(function(item) {
         if (!(item && item.scopes && item.scopes[scope])) return false;
-        return itemPlacesInScope(item, scope).some(function(p) { return placeMatchesFilter(p, filter); });
+        return itemPlacesInScope(item, scope, range).some(function(p) { return placeMatchesFilter(p, filter); });
       });
+    }
+
+    function countItemsForMainScope(scope) {
+      var range = marketingRangeForView(scope, {});
+      var n = 0;
+      (imgSearchState.allResults || []).forEach(function(item) {
+        if (!(item && item.scopes && item.scopes[scope])) return;
+        var has = itemPlaces(item).some(function(p) {
+          return placeVisibleInScope(p, scope) && placePassesMarketing(p, range);
+        });
+        if (has) n += 1;
+      });
+      return n;
+    }
+
+    function refreshImgScopeCounts() {
+      imgSearchState.scopeCounts = {
+        wilaya: countItemsForMainScope('wilaya'),
+        mkoa: countItemsForMainScope('mkoa'),
+        kanda: countItemsForMainScope('kanda'),
+        nchi: countItemsForMainScope('nchi')
+      };
+      updateImgScopeCountBadges(imgSearchState.scopeCounts);
     }
 
     function parentFilterForLevel(level) {
@@ -6544,11 +6612,14 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     function countsForGeoLevel(level) {
       var filter = parentFilterForLevel(level);
       var scope = imgSearchState.activeScope;
+      var range = marketingRangeForSubLevel(level);
       var map = {};
       (imgSearchState.allResults || []).forEach(function(item) {
         if (!(item.scopes && item.scopes[scope])) return;
         var seen = {};
-        itemPlacesInScope(item, scope).forEach(function(p) {
+        itemPlaces(item).forEach(function(p) {
+          if (!placeVisibleInScope(p, scope)) return;
+          if (!placePassesMarketing(p, range)) return;
           if (!placeMatchesFilter(p, filter)) return;
           var id = p[level + '_id'];
           var name = p[level];
@@ -6603,7 +6674,7 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
         if (response && response.user_place) {
           imgSearchState.userPlace = response.user_place;
         }
-        updateImgScopeCountBadges(imgSearchState.scopeCounts);
+        refreshImgScopeCounts();
         renderImgSubFilters();
 
         var results = resultsForActiveScope();
