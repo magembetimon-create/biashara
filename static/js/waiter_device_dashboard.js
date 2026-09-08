@@ -586,6 +586,9 @@ function renderWaiterCategories() {
 
   $('#waiterCounterNav').html(categBtn)
   syncWaiterCategOrientBtn()
+  if (WAITER_ITEM_CATEG) {
+    $(`.waiter-categs-btn[data-aina="${WAITER_ITEM_CATEG}"]`).addClass('text-primary border-primary')
+  }
 }
 
 function waiterFilteredItems() {
@@ -610,7 +613,7 @@ function waiterFilteredItems() {
 
 function waiterItemCardHtml(it, imgMap, cartQtyMap) {
   const price = Number(it.Bei_kuuza || 0)
-  const picha = imgMap[Number(it.bidhaa_id || 0)] || __tbStatic('pics/img.svg')
+  const picha = it.picha || imgMap[Number(it.bidhaa_id || 0)] || __tbStatic('pics/img.svg')
   const stockQty = Number(it.idadi || 0)
   const isNotSure = Number(it.notsure || 0) === 1
   const cartQty = Number(cartQtyMap[Number(it.id)] || 0)
@@ -1138,38 +1141,82 @@ function saveWaiterOrder() {
   $('#waiterOrderModal').modal('show')
 }
 
-function initializeWaiterItems() {
-  $('#waiterItemsList').html('<div class="waiter-empty">' + waiterLang('Inapakia bidhaa...', 'Loading items...') + '</div>')
+function applyWaiterCatalog(data, append) {
+  const rows = (data.products || []).slice(0)
+  if (data.grouped_members_map) {
+    window.__waiterGroupedMembersMap = data.grouped_members_map
+  }
+  const groupedMap = window.__waiterGroupedMembersMap || {}
 
-  const data = {
-    data: waiterDeviceRequest({}),
-    url: '/mauzo/waiter_items_data'
+  if (append) {
+    const seen = new Set(WAITER_ITEMS.map(x => Number(x.id)))
+    rows.forEach(r => {
+      if (!seen.has(Number(r.id))) WAITER_ITEMS.push(r)
+    })
+    if (data.img && data.img.length) {
+      WAITER_ITEM_IMG = WAITER_ITEM_IMG.concat(data.img)
+    }
+    WAITER_ITEMS = applyWaiterGroupedRepresentativeQty(WAITER_ITEMS, groupedMap)
+    buildWaiterSearchIndex()
+    renderWaiterCategories()
+    const noFilter = !waiterSearchValue() && Number(WAITER_ITEM_CATEG) === 0
+    if (noFilter && WAITER_ITEMS_SCROLL_STATE && WAITER_ITEMS_SCROLL_STATE.list) {
+      WAITER_ITEMS_SCROLL_STATE.list = waiterFilteredItems()
+      $('#waiterItemsCount').text(WAITER_ITEMS_SCROLL_STATE.list.length)
+    } else {
+      queueWaiterItemsRender()
+    }
+    return
   }
 
-  const req = POSTREQUEST(data)
-  req.then(resp => {
-    if (!resp.success) {
-      $('#waiterItemsList').html('<div class="waiter-empty">Failed to load items</div>')
-      return
+  WAITER_ITEMS = applyWaiterGroupedRepresentativeQty(rows, groupedMap)
+  buildWaiterSearchIndex()
+  WAITER_ITEM_IMG = (data.img || []).slice(0)
+  WAITER_TABLE_AREAS = normalizeWaiterTableAreas(data.table_areas || [])
+  WAITER_SELECTED_AREA_ID = 0
+  WAITER_COUNTER_MODE = String(data.counter_mode || 'all')
+  WAITER_COUNTER_NAME = String(data.counter_name || '')
+  renderActiveCounter(data)
+  renderWaiterTableGrid()
+  renderWaiterCategories()
+  queueWaiterItemsRender()
+  initWaiterBarcodeScanner()
+}
+
+function loadWaiterCatalog() {
+  $('#waiterItemsList').html('<div class="waiter-empty">' + waiterLang('Inapakia bidhaa...', 'Loading items...') + '</div>')
+  const firstLimit = 20
+  const nextLimit = 80
+  const csrfToken = $('input[name=csrfmiddlewaretoken]').val()
+
+  function postPage(offset, limit, first) {
+    const payload = {
+      offset: offset,
+      limit: limit,
+      csrfmiddlewaretoken: csrfToken,
     }
+    const data = {
+      data: waiterDeviceRequest(payload),
+      url: '/mauzo/waiter_items_data',
+    }
+    return POSTREQUEST(data).then(resp => {
+      if (!resp || !resp.success) {
+        throw new Error('catalog')
+      }
+      applyWaiterCatalog(resp, !first)
+      if (!resp.done) {
+        return postPage(Number(resp.processed || (offset + limit)), nextLimit, false)
+      }
+    })
+  }
 
-    WAITER_ITEMS = applyWaiterGroupedRepresentativeQty(
-      (resp.products || []).slice(0),
-      resp.grouped_members_map || {}
-    )
-    buildWaiterSearchIndex()
-    WAITER_ITEM_IMG = (resp.img || []).slice(0)
-    WAITER_TABLE_AREAS = normalizeWaiterTableAreas(resp.table_areas || [])
-    WAITER_SELECTED_AREA_ID = 0
-
-    WAITER_COUNTER_MODE = String(resp.counter_mode || 'all')
-    WAITER_COUNTER_NAME = String(resp.counter_name || '')
-    renderActiveCounter(resp)
-    renderWaiterTableGrid()
-    renderWaiterCategories()
-    queueWaiterItemsRender()
-    initWaiterBarcodeScanner()
+  postPage(0, firstLimit, true).catch(function () {
+    $('#waiterItemsList').html('<div class="waiter-empty">Failed to load items</div>')
   })
+}
+
+function initializeWaiterItems() {
+  loadWaiterCatalog()
 }
 
 $('body').on('click', '.addWaiterItem', function() {

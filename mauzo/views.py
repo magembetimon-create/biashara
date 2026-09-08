@@ -47,6 +47,7 @@ from stoku.grouped_items_utils import (
       reduce_grouped_members_stock,
       restore_grouped_members_stock,
 )
+from stoku.pos_utils import attach_pos_images
 from .receipt_format import receipt_template_for_paper
 from stoku.customer_branch_utils import (
     assignable_branches_qs,
@@ -567,133 +568,103 @@ def waiter_items_data(request):
 
       servicing_counter = ctx['cheo']
       duka = ctx['duka']
-
-      
       mode = _waiter_counter_mode(servicing_counter)
 
-      products_qs = bidhaa_stoku.objects.filter(
+      try:
+            offset = max(0, int(request.POST.get('offset') or 0))
+      except (TypeError, ValueError):
+            offset = 0
+      try:
+            limit = int(request.POST.get('limit') or 20)
+      except (TypeError, ValueError):
+            limit = 20
+      limit = max(1, min(limit, 100))
+
+      qs = bidhaa_stoku.objects.filter(
             Q(idadi__gt=0) | Q(inapacha=False) | Q(produced__notsure=True),
-            Interprise=duka.id,
-            Bei_kuuza__gt=0
+            Interprise_id=duka.id,
+            Bei_kuuza__gt=0,
       ).annotate(
-            st=F('Interprise'),
-            stName=F('Interprise__name'),
-            group_name=F('bidhaa__bidhaa_aina__mahi__mahitaji'),
-            group=F('bidhaa__bidhaa_aina__mahi__id'),
-            kampuni=F('bidhaa__kampuni__id'),
-            aina=F('bidhaa__bidhaa_aina__id'),
+            aina=F('bidhaa__bidhaa_aina_id'),
             namba=F('bidhaa__namba'),
             material=F('bidhaa__material'),
-            curenci=F('Interprise__currencii'),
-            vat=F('Interprise__vatper'),
             ainaN=F('bidhaa__bidhaa_aina__aina'),
             bidhaaN=F('bidhaa__bidhaa_jina'),
             maelezo=F('bidhaa__maelezo'),
             brand=F('bidhaa__kampuni__kampuni_jina'),
-            brandId=F('bidhaa__kampuni'),
             taxInclusive=F('bidhaa__saletaxInluded'),
             vat_allow=F('Interprise__vat_allow'),
             notsure=F('produced__notsure'),
             vipimo=F('bidhaa__vipimo'),
             uwiano=F('bidhaa__idadi_jum'),
             vipimoJum=F('bidhaa__vipimo_jum'),
-            colorAttr=F('bidhaa__colorAttr'),
-      ).values().order_by('-pk')
-
-      products = list(products_qs)
-      grouped_members_map = build_grouped_member_bidhaa_map(duka.id)
+      ).values(
+            'id', 'idadi', 'Bei_kuuza', 'sirio', 'service', 'bidhaa_id',
+            'aina', 'ainaN', 'namba', 'material', 'brand', 'bidhaaN', 'maelezo',
+            'taxInclusive', 'vat_allow', 'notsure', 'vipimo', 'uwiano', 'vipimoJum',
+            'is_grouped_item', 'grouped_item_ref_id', 'partial_item_reduction_qty',
+      ).order_by('-pk')
 
       if mode == 'drinks':
-            products = [x for x in products if re.search(r'(kinywaji|drink|beverage|bar|juice|soda)', str(x.get('ainaN', '')).lower())]
+            drink_q = Q()
+            for kw in ('kinywaji', 'drink', 'beverage', 'bar', 'juice', 'soda'):
+                  drink_q |= Q(ainaN__icontains=kw)
+            qs = qs.filter(drink_q)
       elif mode == 'kitchen':
-            products = [x for x in products if re.search(r'(chakula|food|kitchen|jikoni|meal)', str(x.get('ainaN', '')).lower())]
+            kitchen_q = Q()
+            for kw in ('chakula', 'food', 'kitchen', 'jikoni', 'meal'):
+                  kitchen_q |= Q(ainaN__icontains=kw)
+            qs = qs.filter(kitchen_q)
 
-      bidhaaRangi = list(
-            produ_colored.objects.select_related('color_produ', 'bidhaa_stoku').filter(
-                  Interprise=duka.id,
-                  color__colored=True
-            ).exclude(
-                  bidhaa__inapacha=True,
-                  idadi=0
-            ).values(
-                  'id',
-                  'bidhaa',
-                  'color',
-                  'idadi',
-                  'color__nick_name',
-                  'color__color_code',
-                  'color__color_name',
-                  'color__colored',
-                  'bidhaa__bidhaa__vipimo',
-                  'bidhaa__bidhaa__vipimo_jum',
-                  'bidhaa__bidhaa__idadi_jum',
-                  'bidhaa__idadi',
-                  'bidhaa__bidhaa__colorAttr',
-            )
-      )
-
-      sized = list(
-            produ_size.objects.select_related('sizes').filter(
-                  Interprise=duka.id
-            ).exclude(
-                  bidhaa__inapacha=True,
-                  idadi=0
-            ).values(
-                  'id',
-                  'sized__color',
-                  'sized__size',
-                  'bidhaa',
-                  'idadi',
-                  'bidhaa__bidhaa__idadi_jum',
-                  'bidhaa__idadi',
-                  'bidhaa__bidhaa__vipimo',
-                  'bidhaa__bidhaa__vipimo_jum'
-            )
-      )
+      total = qs.count()
+      products = list(qs[offset:offset + limit])
+      for rec in products:
+            rec['bidhaa'] = rec.get('bidhaa_id')
+      attach_pos_images(duka, products, None)
 
       itemImg = []
-      pics = picha_bidhaa.objects.filter(picha__owner=duka.owner.user).annotate(
-            rangi=F('color_produ'),
-            size=F('picha__pic_size')
-      )
-      if pics.exists():
-            for im in pics:
+      for rec in products:
+            url = rec.get('picha') or ''
+            if url:
                   itemImg.append({
-                        'picha__picha': im.picha.picha.url,
-                        'picha': im.picha.id,
-                        'id': im.id,
-                        'color_produ': im.rangi,
-                        'bidhaa': im.bidhaa.id
+                        'picha__picha': url,
+                        'bidhaa': rec.get('bidhaa_id'),
                   })
 
-      # customer_table = customer_in_cell.objects.filter(area__Interprise=duka.id).order_by('area__name', 'name')
-      area_qs = customer_area.objects.filter(Interprise=duka.id).prefetch_related('customer_in_cell_set').order_by('name')
-      table_areas = []
-      for area in area_qs:
-            tables_in_area = list(area.customer_in_cell_set.values('id', 'name').order_by('name'))
-            for tb in tables_in_area:
-                  tb['area_id'] = area.id
-                  tb['area_name'] = area.name
-            table_areas.append({
-                  'id': area.id,
-                  'name': area.name,
-                  'tables': tables_in_area
-            })
-
-      return JsonResponse({
+      processed = offset + len(products)
+      data = {
             'success': True,
             'products': products,
-            'grouped_members_map': grouped_members_map,
-            'bidhaa_Rangi': bidhaaRangi,
-            'sized': sized,
             'img': itemImg,
+            'offset': offset,
+            'limit': limit,
+            'processed': processed,
+            'total': total,
+            'done': processed >= total,
             'counter_mode': mode,
             'counter_id': servicing_counter.id if servicing_counter else 0,
             'counter_name': servicing_counter.Interprise.name if servicing_counter else '',
             'counter_staff': f"{servicing_counter.user.user.first_name} {servicing_counter.user.user.last_name}".strip() if servicing_counter else '',
             'counter_role': servicing_counter.cheo if servicing_counter else '',
-            'table_areas': table_areas,
-      })
+      }
+
+      if offset == 0:
+            data['grouped_members_map'] = build_grouped_member_bidhaa_map(duka.id)
+            area_qs = customer_area.objects.filter(Interprise=duka.id).prefetch_related('customer_in_cell_set').order_by('name')
+            table_areas = []
+            for area in area_qs:
+                  tables_in_area = list(area.customer_in_cell_set.values('id', 'name').order_by('name'))
+                  for tb in tables_in_area:
+                        tb['area_id'] = area.id
+                        tb['area_name'] = area.name
+                  table_areas.append({
+                        'id': area.id,
+                        'name': area.name,
+                        'tables': tables_in_area,
+                  })
+            data['table_areas'] = table_areas
+
+      return JsonResponse(data)
 
 
 @login_required(login_url='login')
