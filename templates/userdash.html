@@ -6473,11 +6473,8 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     function marketingRangeForView(scope, extra) {
       scope = scope || imgSearchState.activeScope || 'wilaya';
       extra = extra || imgSearchState.geoFilter || {};
-      if (scope === 'wilaya' && !extra.wilaya) {
+      if (extra.wilaya || scope === 'wilaya') {
         return { min: 1, max: null };
-      }
-      if (extra.wilaya) {
-        return { min: MKT_WILAYA + 1, max: null };
       }
       if (extra.mkoa || scope === 'mkoa') {
         return { min: MKT_MKOA, max: MKT_NCHI };
@@ -6485,19 +6482,18 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
       return { min: MKT_NCHI, max: null };
     }
 
+    function marketingRangeAll() {
+      return { min: 1, max: null };
+    }
+
     function marketingRangeForSubLevel(level) {
-      if (level === 'wilaya' || level === 'kata') {
-        return { min: MKT_WILAYA + 1, max: null };
-      }
-      if (level === 'mkoa') {
-        return { min: MKT_MKOA, max: MKT_NCHI };
-      }
-      return { min: MKT_NCHI, max: null };
+      return marketingRangeAll();
     }
 
     function placePassesMarketing(place, range) {
       var m = placeMarketing(place);
       if (m <= 0) return false;
+      if (!range) return true;
       if (range.min != null && m < range.min) return false;
       if (range.max != null && m >= range.max) return false;
       return true;
@@ -6568,7 +6564,7 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     }
 
     function countItemsForMainScope(scope) {
-      var range = marketingRangeForView(scope, {});
+      var range = marketingRangeAll();
       var n = 0;
       (imgSearchState.allResults || []).forEach(function(item) {
         if (!(item && item.scopes && item.scopes[scope])) return;
