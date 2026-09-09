@@ -199,7 +199,7 @@ hr {
     justify-content: center;
     align-items: center;
     width: 100%;
-    margin: 8px 0 6px;
+    margin: 4px 0 2px;
     text-align: center;
 }
 
@@ -207,8 +207,8 @@ hr {
 #imgBox img,
 #imgBox table {
     display: block;
-    width: 100px;
-    max-width: 100%;
+    width: 52px;
+    max-width: 52px;
     height: auto;
     margin-left: auto !important;
     margin-right: auto !important;
@@ -245,13 +245,13 @@ hr {
     html,
     body {
         margin: 0;
-        width: 100%;
+        width: 248px; /* si 80mm kamili — nafasi ya kulia kama 58mm (180px) */
     }
 
     #invoice-POS {
         width: 100%;
         margin: 0;
-        padding: 4px 6px;
+        padding: 4px 8px 4px 4px;
     }
 
     #imgBox {

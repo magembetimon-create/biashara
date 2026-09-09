@@ -191,6 +191,11 @@
       body {
         background: #fff;
         padding: 0;
+        {% if paper_size == 'thermal80' %}
+        width: 248px;
+        {% elif paper_size == 'thermal58' or paper_size == 'thermal' %}
+        width: 180px;
+        {% endif %}
       }
 
       .container {
