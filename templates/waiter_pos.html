@@ -5,6 +5,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% if duka %}{{ duka.name }} – Waiter POS{% else %}Waiter POS{% endif %}</title>
+  <script>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    if (!params.get('biz')) return;
+    var key = 'waiter_pos_device_id';
+    var localId = String(localStorage.getItem(key) || '').trim();
+    function genId() {
+      var seed = [navigator.userAgent || '', navigator.platform || '', Date.now().toString(36), Math.random().toString(36).slice(2, 12)].join('|');
+      var raw = btoa(unescape(encodeURIComponent(seed))).replace(/[^a-zA-Z0-9]/g, '');
+      return ('dev_' + raw).slice(0, 120);
+    }
+    if (localId.length < 8) {
+      localId = genId();
+      try { localStorage.setItem(key, localId); } catch (e) {}
+    }
+    if (params.get('device_id') !== localId) {
+      params.set('device_id', localId);
+      window.location.replace(window.location.pathname + '?' + params.toString());
+    }
+  })();
+  </script>
   <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
   <style>
     * { box-sizing: border-box; }

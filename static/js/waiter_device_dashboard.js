@@ -55,6 +55,7 @@ function waiterDeviceRequest(payload) {
   const reqData = Object.assign({}, payload || {})
   if (WAITER_DEVICE_ID) reqData.device_id = WAITER_DEVICE_ID
   if (WAITER_DEVICE_BIZ) reqData.biz = WAITER_DEVICE_BIZ
+  if (WAITER_ACTIVE_WAITER_ID) reqData.waiter_id = WAITER_ACTIVE_WAITER_ID
   return reqData
 }
 
@@ -1013,7 +1014,7 @@ function markWaiterOrderPrinted(orderId) {
 }
 
 function openWaiterPrintWindow(orderId) {
-  const printUrl = `/mauzo/waiter_Invoprint?item_valued=${Number(orderId)}&lang=1&biz=${encodeURIComponent(WAITER_DEVICE_BIZ || 0)}&device_id=${encodeURIComponent(WAITER_DEVICE_ID || '')}`
+  const printUrl = `/mauzo/waiter_Invoprint?item_valued=${Number(orderId)}&lang=1&biz=${encodeURIComponent(WAITER_DEVICE_BIZ || 0)}&device_id=${encodeURIComponent(WAITER_DEVICE_ID || '')}&waiter_id=${encodeURIComponent(WAITER_ACTIVE_WAITER_ID || '')}`
   const printWin = window.open(printUrl, '_blank')
 
   if (!printWin) {

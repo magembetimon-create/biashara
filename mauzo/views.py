@@ -350,32 +350,48 @@ def _resolve_waiter_context(request):
       device_id = str(
             request.POST.get('device_id', '')
             or request.GET.get('device_id', '')
-            or request.session.get('waiter_pos_device', '')
             or ''
       ).strip()
 
-      biz_id_raw = request.POST.get('biz', '') or request.GET.get('biz', '') or request.session.get('waiter_pos_biz', 0)
+      biz_id_raw = request.POST.get('biz', '') or request.GET.get('biz', '') or ''
       try:
             biz_id = int(biz_id_raw or 0)
-      except:
+      except Exception:
             biz_id = 0
 
+      waiter_id = 0
+      try:
+            waiter_id = int(request.POST.get('waiter_id', 0) or request.GET.get('waiter_id', 0) or 0)
+      except Exception:
+            waiter_id = 0
+
       if device_id:
-            device_qs = WaiterPosDeviceSession.objects.select_related('Interprise', 'active_user').filter(
-                  device_id=device_id,
-                  active=True,
+            if not biz_id:
+                  return {
+                        'ok': False,
+                        'msg': 'Kifaa hakijatambulika',
+                  }
+            device_session = (
+                  WaiterPosDeviceSession.objects.select_related('Interprise', 'active_user')
+                  .filter(
+                        device_id=device_id,
+                        Interprise_id=biz_id,
+                        active=True,
+                  )
+                  .first()
             )
-
-            if biz_id:
-                  device_qs = device_qs.filter(Interprise__id=biz_id)
-
-            device_session = device_qs.order_by('-updated_at').first()
             if device_session and device_session.active_user and device_session.active_user.waiter_counter:
+                  cheo = device_session.active_user
+                  if waiter_id and int(waiter_id) != int(cheo.pk):
+                        return {
+                              'ok': False,
+                              'msg': 'Waiter session imebadilika. Ingia tena kwa PIN.',
+                        }
                   return {
                         'ok': True,
                         'source': 'device',
                         'duka': device_session.Interprise,
-                        'cheo': device_session.active_user,
+                        'cheo': cheo,
                         'device_id': device_id,
                   }
 
@@ -411,13 +427,22 @@ def _resolve_waiter_context(request):
       }
 
 
+def _waiter_shift_block_response(request, ctx):
+      """PIN/device POS has no shop UserExtend; check shift on the device shop instead."""
+      if ctx.get('source') == 'device':
+            shift = Todos(request)._shift_context(ctx.get('duka'), ctx.get('cheo'))
+            if shift.get('shift_management_enabled') and not shift.get('shift_operation_allowed'):
+                  return shift_operation_block_payload(shift)
+            return None
+      todo = todoFunct(request)
+      if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
+            return shift_operation_block_payload(todo)
+      return None
+
+
 def waiter_order(request):
       if request.method != 'POST':
             return JsonResponse({'success': False, 'message_swa': 'Njia si sahihi', 'message_eng': 'Invalid request method'})
-
-      todo = todoFunct(request)
-      if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
-            return JsonResponse(shift_operation_block_payload(todo), status=403)
 
       try:
             raw_items = request.POST.get('itm_dt', '[]')
@@ -431,6 +456,10 @@ def waiter_order(request):
       ctx = _resolve_waiter_context(request)
       if not ctx.get('ok'):
             return JsonResponse({'success': False, 'message_swa': 'Hakuna counter active', 'message_eng': str(ctx.get('msg') or 'No active waiter counter')})
+
+      shift_block = _waiter_shift_block_response(request, ctx)
+      if shift_block:
+            return JsonResponse(shift_block, status=403)
 
       active_counter = ctx['cheo']
       duka = ctx['duka']
@@ -4906,10 +4935,6 @@ def waiter_pay_order(request):
       if request.method != 'POST':
             return JsonResponse({'success': False, 'msg': 'Invalid method'})
 
-      todo = todoFunct(request)
-      if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
-            return JsonResponse(shift_operation_block_payload(todo), status=403)
-
       try:
             order_id = int(request.POST.get('order', 0))
             pay_amount = float(request.POST.get('amount', 0) or 0)
@@ -4927,6 +4952,10 @@ def waiter_pay_order(request):
       ctx = _resolve_waiter_context(request)
       if not ctx.get('ok'):
             return JsonResponse({'success': False, 'msg': str(ctx.get('msg') or 'No active waiter counter')})
+
+      shift_block = _waiter_shift_block_response(request, ctx)
+      if shift_block:
+            return JsonResponse(shift_block, status=403)
 
       duka = ctx['duka']
       cheo = ctx['cheo']
@@ -5304,14 +5333,20 @@ def waiter_pos(request):
             device_session_ok = False
 
             if duka and device_id:
+                  if len(device_id) >= 8:
+                        WaiterPosDeviceSession.objects.get_or_create(
+                              Interprise=duka,
+                              device_id=device_id,
+                              defaults={
+                                    'active': True,
+                                    'device_name': str(request.META.get('HTTP_USER_AGENT', '') or '')[:120] or None,
+                              },
+                        )
                   device_session_ok = WaiterPosDeviceSession.objects.filter(
                         Interprise=duka,
                         device_id=device_id,
                         active=True,
                   ).exists()
-                  # Do not write session on GET-only page load. If session is deleted
-                  # concurrently (logout in another tab/device), Django can raise
-                  # SessionInterrupted while saving response.
 
             if request.method == 'POST':
                   counter_id = int(request.POST.get('counter', 0) or 0)
@@ -5336,18 +5371,13 @@ def waiter_pos(request):
                   if not counter:
                         return JsonResponse({'success': False, 'msg': 'PIN si sahihi'})
 
-                  # Mark this counter as servicing (deactivate others first)
-                  InterprisePermissions.objects.filter(
-                        Interprise__id=biz_id,
-                        waiter_counter=True,
-                  ).update(servicing=False)
-                  InterprisePermissions.objects.filter(pk=counter_id).update(servicing=True)
-
-                  # Save active_user to device session
+                  # Bind this waiter to THIS device only. Do not clear other devices/waiters.
                   WaiterPosDeviceSession.objects.filter(
                         Interprise__id=biz_id,
                         device_id=device_id,
                   ).update(active_user=counter)
+
+                  InterprisePermissions.objects.filter(pk=counter_id).update(servicing=True)
 
                   return JsonResponse({'success': True, 'redirect': f'/mauzo/waiter_device_dashboard?biz={biz_id}&device_id={device_id}'})
 
@@ -5440,7 +5470,7 @@ def waiter_device_dashboard(request):
             ).first()
 
             if not device_session or not device_session.active_user:
-                  return redirect(f'/mauzo/waiter_pos?biz={biz_id}')
+                  return redirect(f'/mauzo/waiter_pos?biz={biz_id}&device_id={device_id}')
 
             active_counter = device_session.active_user
             counters = InterprisePermissions.objects.filter(

@@ -5,6 +5,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% if duka %}{{ duka.name }} – Waiter Dashboard{% else %}Waiter Dashboard{% endif %}</title>
+  <script>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    if (!params.get('biz')) return;
+    var key = 'waiter_pos_device_id';
+    var localId = String(localStorage.getItem(key) || '').trim();
+    var urlId = String(params.get('device_id') || '').trim();
+    if (localId.length >= 8 && urlId && urlId !== localId) {
+      params.set('device_id', localId);
+      window.location.replace('/mauzo/waiter_pos?' + params.toString());
+    } else if (urlId.length >= 8 && localId.length < 8) {
+      try { localStorage.setItem(key, urlId); } catch (e) {}
+    }
+  })();
+  </script>
   <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/sales.css' %}">
   <link rel="stylesheet" href="{% static 'css/waiterpage.css' %}">
@@ -657,7 +672,7 @@
 <script src="{% static 'js/quagga.js' %}"></script>
 <script src="{% static 'js/html5-qrcode.min.js' %}"></script>
 <script src="{% static 'js/tb_barcode.js' %}?v=scan10"></script>
-<script src="{% static 'js/waiter_device_dashboard.js' %}?v=wcat2"></script>
+<script src="{% static 'js/waiter_device_dashboard.js' %}?v=wcat3"></script>
 
 <div class="beep_audio" hidden>
   <audio id="beep_audio" preload="auto">

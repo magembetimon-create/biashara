@@ -146,7 +146,32 @@ class Todos:
         shift_data['shift_operation_block_reason_eng'] = 'This operation is only allowed for the user assigned to the active shift.'
 
     return shift_data
-      
+
+  def _empty_todo(self):
+      return {
+            'cheo':None,
+            'duka':None,
+            'useri':None,
+            'hdm':None,
+            'matawi':None,
+            'pent':None,
+            'puO':None,
+            'waiter_uncleared_waiters_count':0,
+            'grouped_sales_track_count':0,
+            'shift_management_enabled':False,
+            'active_shift':None,
+            'has_active_shift':False,
+            'active_shift_assigned_to':None,
+            'active_shift_assigned_name':'',
+            'is_assigned_to_active_shift':False,
+            'can_open_shift':False,
+            'can_close_shift':False,
+            'shift_operation_allowed':False,
+            'shift_status_swa':'Usimamizi wa shift haujawezeshwa',
+            'shift_status_eng':'Shift management is disabled',
+            'shift_operation_block_reason_swa':'',
+            'shift_operation_block_reason_eng':''
+      }
 
   def todoF(self):  
       todo = {}
@@ -154,7 +179,11 @@ class Todos:
         used = self.request.user
         dukap=None
         duka = None
-        user = UserExtend.objects.get(user = used.id ) 
+        if not getattr(used, 'is_authenticated', False):
+          return self._empty_todo()
+        user = UserExtend.objects.filter(user=used.id).first()
+        if not user:
+          return self._empty_todo() 
         pent = Interprise.objects.get(owner = user,Interprise=False)
         duka = pent
         p = InterprisePermissions.objects.filter(Q(Allow=True,Interprise__usage__gt=0,Interprise__bill_tobePaid__gte = date.today())|Q(Interprise__owner=user.id),user__user = used.id, default = True)
@@ -242,33 +271,7 @@ class Todos:
 
       except:
         traceback.print_exc()
-        todo={
-              'cheo':None,
-            'duka':None,
-            'useri':None,
-            # 'wilaya' :wilaya, 
-            # 'mikoa':mikoa, 
-            # 'kanda':kanda,
-            'hdm':None,
-            'matawi':None,
-            'pent':None,
-            'puO':None,
-            'waiter_uncleared_waiters_count':0,
-            'grouped_sales_track_count':0,
-            'shift_management_enabled':False,
-            'active_shift':None,
-            'has_active_shift':False,
-            'active_shift_assigned_to':None,
-            'active_shift_assigned_name':'',
-            'is_assigned_to_active_shift':False,
-            'can_open_shift':False,
-            'can_close_shift':False,
-            'shift_operation_allowed':False,
-            'shift_status_swa':'Usimamizi wa shift haujawezeshwa',
-            'shift_status_eng':'Shift management is disabled',
-            'shift_operation_block_reason_swa':'',
-            'shift_operation_block_reason_eng':''
-        }
+        todo = self._empty_todo()
       return todo
 
 def confirmMailF(mail):
