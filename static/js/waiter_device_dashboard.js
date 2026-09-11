@@ -59,6 +59,14 @@ function waiterDeviceRequest(payload) {
   return reqData
 }
 
+function waiterRequestErrorMessage(xhr) {
+  const resp = (xhr && xhr.responseJSON) || {}
+  return waiterLang(
+    resp.message_swa || resp.msg_swa || resp.msg || 'Haijafanikiwa',
+    resp.message_eng || resp.msg_eng || resp.msg || 'Failed'
+  )
+}
+
 function waiterIsMobileLayout() {
   return window.matchMedia('(max-width: 767px)').matches
 }
@@ -1123,10 +1131,10 @@ function submitWaiterOrder() {
     clearCurrentCart()
     WAITER_ACTIVE_PENDING_ORDER = 0
     loadWaiterOrders()
-  }).catch(() => {
+  }).catch((xhr) => {
     $('#loadMe').modal('hide')
     hideLoading()
-    const msg = waiterLang('Haijafanikiwa', 'Failed')
+    const msg = waiterRequestErrorMessage(xhr)
     toastr.error(msg, lang('Haikufanikiwa','Error'), {timeOut: 2000});
   })
 }

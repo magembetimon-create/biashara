@@ -28,8 +28,10 @@ ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://fanyabiashara.com',
+    'https://www.fanyabiashara.com',
     'http://fanyabiashara.com',
-    'https://google.com', 
+    'http://www.fanyabiashara.com',
+    'https://google.com',
     'https://fanyabiashara-behqabgwdsh8dvb8.centralus-01.azurewebsites.net'
 ]
 

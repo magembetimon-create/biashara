@@ -428,16 +428,18 @@ def _resolve_waiter_context(request):
 
 
 def _waiter_shift_block_response(request, ctx):
-      """PIN/device POS has no shop UserExtend; check shift on the device shop instead."""
-      if ctx.get('source') == 'device':
-            shift = Todos(request)._shift_context(ctx.get('duka'), ctx.get('cheo'))
-            if shift.get('shift_management_enabled') and not shift.get('shift_operation_allowed'):
-                  return shift_operation_block_payload(shift)
+      """Waiter PIN/device POS is not the shift cashier. Block only when shift is on and none is open."""
+      duka = ctx.get('duka')
+      cheo = ctx.get('cheo')
+      if ctx.get('source') == 'device' or (duka and cheo):
+            shift = Todos(request)._shift_context(duka, cheo)
+      else:
+            shift = todoFunct(request)
+      if not shift.get('shift_management_enabled'):
             return None
-      todo = todoFunct(request)
-      if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
-            return shift_operation_block_payload(todo)
-      return None
+      if shift.get('has_active_shift'):
+            return None
+      return shift_operation_block_payload(shift)
 
 
 def waiter_order(request):
@@ -459,7 +461,7 @@ def waiter_order(request):
 
       shift_block = _waiter_shift_block_response(request, ctx)
       if shift_block:
-            return JsonResponse(shift_block, status=403)
+            return JsonResponse(shift_block)
 
       active_counter = ctx['cheo']
       duka = ctx['duka']
@@ -4955,7 +4957,7 @@ def waiter_pay_order(request):
 
       shift_block = _waiter_shift_block_response(request, ctx)
       if shift_block:
-            return JsonResponse(shift_block, status=403)
+            return JsonResponse(shift_block)
 
       duka = ctx['duka']
       cheo = ctx['cheo']
