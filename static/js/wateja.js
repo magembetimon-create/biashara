@@ -14,14 +14,60 @@ function getCustomData(){
     })
 }
 
+function fmtCustomerMoney(n, curr) {
+    const v = Number(n || 0)
+    const s = v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+    return (curr ? curr + ' ' : '') + s
+}
+
+function renderCustomerDebtPanels(data) {
+    const summary = data.summary || { deni: 0, wadadaiwa: 0 }
+    const curr = data.currencii || ''
+    $('#customerDebtSummary').html(`
+      <div class="col-md-6 mb-2">
+        <div class="classic_div p-3 h-100">
+          <div class="text-muted smallFont mb-1">${lang('Jumla ya deni', 'Total debt')}</div>
+          <div class="h5 mb-0 weight600 text-danger">${fmtCustomerMoney(summary.deni, curr)}</div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-2">
+        <div class="classic_div p-3 h-100">
+          <div class="text-muted smallFont mb-1">${lang('Wateja wanaodaiwa', 'Customers with debt')}</div>
+          <div class="h5 mb-0 weight600">${Number(summary.wadadaiwa || 0).toLocaleString()}</div>
+        </div>
+      </div>
+    `)
+
+    const branches = data.branches || []
+    const bar = $('#customerBranchBar')
+    const sel = $('#this_entp')
+    if (!data.can_scope || branches.length < 2) {
+        bar.prop('hidden', true)
+        return
+    }
+    const currentId = Number(data.current_branch_id || sel.val())
+    const selected = data.selected_branch != null ? Number(data.selected_branch) : currentId
+    let opts = ''
+    branches.forEach(b => {
+        const id = Number(b.id)
+        const label = id === 0
+            ? lang('Matawi yote', 'All branches')
+            : (b.name || '')
+        opts += `<option value="${id}">${label}</option>`
+    })
+    sel.html(opts)
+    sel.val(String(selected))
+    if (sel.val() == null || sel.val() === '') {
+        sel.val(String(currentId))
+    }
+    bar.prop('hidden', false)
+}
+
 function placedataTotable(data){
     
-   let teja = data.wateja
-    if(data.wateja.length==0){
-        teja = customers.state
-    }
+    let teja = Array.isArray(data.wateja) ? data.wateja.slice() : []
 
-   
+    renderCustomerDebtPanels(data)
 
     thsE = Number($('#this_entp').val())
 
@@ -42,6 +88,7 @@ function placedataTotable(data){
             <th> ${lang('SIMU 1','PHONE 1')}</th>
             <th> ${lang('SIMU 2','PHONE 2')}</th>
             <th> ${lang('Matawi','Branches')}</th>
+            <th class="text-right"> ${lang('Deni','Debt')}</th>
             
             <th>Action</th>
         </tr>
@@ -50,17 +97,20 @@ function placedataTotable(data){
 
     `,
     n=1
+    const curr = (data && data.currencii) || ''
 
     teja.forEach(w => {
         const branchLabel = w.branch_names || w.duka_jina || ''
+        const deni = Number(w.deni || 0)
+        const deniCls = deni > 0 ? 'text-danger weight600' : 'text-muted'
         tb+=`<tr>
            <td>${n}</td>
            
              <td class="text-capitalize" >${w.jina}</td>
              <td class="text-capitalize" >${w.address}</td>
-             <td>+${w.code} ${w.simu1}</td>`
+             <td>${w.code} ${w.simu1}</td>`
             if(w.simu2){
-                  tb+= `<td>+${w.code} ${w.simu2}</td>`
+                  tb+= `<td>${w.code} ${w.simu2}</td>`
             }else{
                  tb+= `<td>${lang('Hakuna','Null')}</td>`
             }
@@ -69,6 +119,7 @@ function placedataTotable(data){
             tb+= `
 
              <td class="text-capitalize small">${branchLabel}</td>
+             <td class="text-right ${deniCls}" data-order="${deni}">${fmtCustomerMoney(deni, curr)}</td>
              <td>
              <div class="d-flex">
                <a href="/mauzo/CustomerSales?cst=${w.id}" class="btn btn-light border0 btn-sm latoFont smallerFont" title="${lang('Angalia','View')}">
@@ -91,7 +142,15 @@ function placedataTotable(data){
         $('#table-bidhaa').DataTable().destroy()
      }
      $('#worker_table').html(tb)
-    $('#table-bidhaa').DataTable();
+    $('#table-bidhaa').DataTable({
+        order: [[6, 'desc']]
+    });
 
     $('#loadMe').modal('hide')
+    hideLoading()
 }
+
+$('#this_entp').on('change', function () {
+    $('#loadMe').modal('show')
+    getCustomData()
+})

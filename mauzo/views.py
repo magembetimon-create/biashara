@@ -53,6 +53,10 @@ from stoku.customer_branch_utils import (
     assignable_branches_qs,
     customer_visible_on_branch,
     customers_for_branch_list,
+    debt_by_branch,
+    debt_scope_summary,
+    debts_by_customer,
+    sibling_interprises_qs,
 )
 
 def todoFunct(request):
@@ -6987,14 +6991,66 @@ def  customer(request):
 def  getCustomers(request):
     used = request.user
     dukap = InterprisePermissions.objects.get(user__user=used.id, default=True)
+    duka = dukap.Interprise
+    can_scope = bool(dukap.owner or dukap.msaidizi or int(dukap.admin or 0))
     branch_param = int(request.POST.get('branch', -1) if request.method == 'POST' else request.GET.get('branch', -1) or -1)
-    all_branches = branch_param == 0 and dukap.owner
-    branch_id = None if all_branches else (branch_param if branch_param > 0 else dukap.Interprise_id)
-    custom = customers_for_branch_list(dukap, branch_id=branch_id, all_branches=all_branches)
-    data = dict()
-    data['wateja'] = custom
-    data['watejatu'] = 1
-    return JsonResponse(data)
+
+    siblings = list(sibling_interprises_qs(duka).values('id', 'name'))
+    sibling_ids = [b['id'] for b in siblings]
+    if duka.id not in sibling_ids:
+        sibling_ids.append(duka.id)
+        siblings.append({'id': duka.id, 'name': duka.name})
+
+    all_branches = branch_param == 0 and can_scope
+    if all_branches:
+        branch_id = None
+        debt_branch_ids = sibling_ids
+        custom = customers_for_branch_list(dukap, all_branches=True)
+    else:
+        branch_id = branch_param if branch_param > 0 else dukap.Interprise_id
+        if not can_scope:
+            branch_id = dukap.Interprise_id
+        if can_scope and branch_id not in sibling_ids:
+            branch_id = dukap.Interprise_id
+        debt_branch_ids = [branch_id]
+        custom = customers_for_branch_list(dukap, branch_id=branch_id, all_branches=False)
+
+    cust_ids = [r['id'] for r in custom]
+    deni_map = debts_by_customer(debt_branch_ids, cust_ids)
+    for row in custom:
+        row['deni'] = round(float(deni_map.get(row['id'], 0) or 0), 2)
+
+    summary = debt_scope_summary(debt_branch_ids)
+    branch_rows = []
+    if can_scope and len(siblings) > 1:
+        by_br = debt_by_branch(sibling_ids)
+        all_sum = debt_scope_summary(sibling_ids)
+        branch_rows.append({
+            'id': 0,
+            'name': 'all',
+            'deni': all_sum['deni'],
+            'wadadaiwa': all_sum['wadadaiwa'],
+        })
+        for br in siblings:
+            st = by_br.get(br['id'], {'deni': 0, 'wadadaiwa': 0})
+            branch_rows.append({
+                'id': br['id'],
+                'name': br['name'],
+                'deni': st['deni'],
+                'wadadaiwa': st['wadadaiwa'],
+            })
+
+    selected = 0 if all_branches else (branch_id or dukap.Interprise_id)
+    return JsonResponse({
+        'wateja': custom,
+        'watejatu': 1,
+        'summary': summary,
+        'branches': branch_rows,
+        'can_scope': can_scope,
+        'selected_branch': selected,
+        'currencii': duka.currencii or '',
+        'current_branch_id': dukap.Interprise_id,
+    })
 
 
 @login_required(login_url='login')

@@ -14,7 +14,7 @@
                   $('#mteja-Id').val('')
                   $('#mteja-jina').val('')
                   $('#mteja-sehemu').val('')
-                  $('.simuCode').val('+{{duka.countryCode}}')
+                  $('.simuCode').val('{{duka.countryCode}}')
                   $('#mteja-simu').val('')
                   $('#mteja-simu2').val('')
                   $('#mteja-mail').val('')
@@ -30,16 +30,13 @@
   
       </h5>
 
-      {% if matawi > 0 and duka.owner == useri %}
-      <p class="text-right py-2">
-        <label for="this_entp" class="weight600"> {% if useri.langSet == 0 %}Tawi:{% else %}Branch{% endif %}</label>
-        <select name="this_entp" class="made-input latoFont" id="this_entp" onchange="getCustomData()" >
-          <option value="{{duka.id}}" > {% if useri.langSet == 0 %}Tawi hili tu {% else %}Only this Branch{% endif %}</option>
-          <option value=0 > {% if useri.langSet == 0 %}Matawi yote{% else %}All Branches{% endif %}</option>
+      <div class="row mb-3" id="customerDebtSummary"></div>
+      <div class="mb-3 text-right" id="customerBranchBar" hidden>
+        <label for="this_entp" class="mb-0 mr-2 weight600">{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}</label>
+        <select id="this_entp" class="form-control form-control-sm d-inline-block latoFont" style="width:auto;min-width:240px;max-width:100%">
+          <option value="{{ duka.id }}" selected>{{ duka.name }}</option>
         </select>
-      </p>
-      {% endif %}
-
+      </div>
 
       <div  id="worker_table" class="container-fluid" >
         
@@ -55,7 +52,7 @@
 </script>
 
 <script src="{% static 'js/lugha.js' %}"></script>
-<script src="{% static 'js/wateja.js' %}"></script>
+<script src="{% static 'js/wateja.js' %}?v=cden2"></script>
 
 {% endblock %}
     

@@ -1,8 +1,8 @@
 from collections import defaultdict
 
-from django.db.models import F
+from django.db.models import Count, DecimalField, F, Sum
 
-from management.models import Interprise, InterprisePermissions, customer_Interprise, wateja
+from management.models import Interprise, InterprisePermissions, customer_Interprise, mauzoni, wateja
 
 
 def assignable_branches_qs(cheo):
@@ -74,3 +74,59 @@ def customer_visible_on_branch(mteja_id, branch_id, owner_id):
         branch_id=branch_id,
         mteja__Interprise__owner_id=owner_id,
     ).exists()
+
+
+def sibling_interprises_qs(interprise):
+    if not interprise or not interprise.owner_id:
+        return Interprise.objects.none()
+    return Interprise.objects.filter(
+        owner_id=interprise.owner_id,
+        Interprise=True,
+    ).order_by('name')
+
+
+def _unpaid_customer_sales_qs(branch_ids):
+    return (
+        mauzoni.objects.filter(
+            Interprise_id__in=list(branch_ids or []),
+            customer_id_id__isnull=False,
+        )
+        .exclude(full_returned=True)
+        .exclude(order=True, derivered=False)
+        .filter(amount__gt=F('ilolipwa'))
+    )
+
+
+def debts_by_customer(branch_ids, customer_ids=None):
+    qs = _unpaid_customer_sales_qs(branch_ids)
+    if customer_ids is not None:
+        qs = qs.filter(customer_id_id__in=list(customer_ids))
+    rows = qs.values('customer_id_id').annotate(
+        deni=Sum(F('amount') - F('ilolipwa'), output_field=DecimalField()),
+    )
+    return {r['customer_id_id']: float(r['deni'] or 0) for r in rows}
+
+
+def debt_scope_summary(branch_ids):
+    agg = _unpaid_customer_sales_qs(branch_ids).aggregate(
+        deni=Sum(F('amount') - F('ilolipwa'), output_field=DecimalField()),
+        wadadaiwa=Count('customer_id_id', distinct=True),
+    )
+    return {
+        'deni': round(float(agg.get('deni') or 0), 2),
+        'wadadaiwa': int(agg.get('wadadaiwa') or 0),
+    }
+
+
+def debt_by_branch(branch_ids):
+    rows = _unpaid_customer_sales_qs(branch_ids).values('Interprise_id').annotate(
+        deni=Sum(F('amount') - F('ilolipwa'), output_field=DecimalField()),
+        wadadaiwa=Count('customer_id_id', distinct=True),
+    )
+    return {
+        r['Interprise_id']: {
+            'deni': round(float(r.get('deni') or 0), 2),
+            'wadadaiwa': int(r.get('wadadaiwa') or 0),
+        }
+        for r in rows
+    }
