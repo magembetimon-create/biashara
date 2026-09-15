@@ -39,6 +39,7 @@ from management.models import (
     wekaCash,
 )
 from accaunts.todos import Todos
+from staff.shift_report import build_shift_report, completed_sales_qs
 
 
 def todoFunct(request):
@@ -79,7 +80,7 @@ def _save_opening_snapshot(duka, opener_perm, desc=''):
     state.By = opener_perm
     state.save()
 
-    items = bidhaa_stoku.objects.filter(Q(inapacha=False) | Q(idadi__gt=0), Interprise=duka.id)
+    items = bidhaa_stoku.objects.filter(Interprise=duka.id)
     colors = produ_colored.objects.filter(
         Q(bidhaa__idadi__gt=0) | Q(bidhaa__inapacha=False),
         color__colored=True,
@@ -819,374 +820,10 @@ def shift_view(request):
         duka = todo['duka']
         sid = int(request.GET.get('sid', 0))
         shift = ShiftSession.objects.get(pk=sid, Interprise=duka.id)
-        period_end = shift.ends_at or timezone.now()
-
-        assignments = ShiftAssignment.objects.filter(shift=shift.id, active=True).select_related('staff__user__user', 'staff__fanyakazi').order_by('role', 'assigned_at')
-        activities = ShiftActivity.objects.filter(shift=shift.id).order_by('-recorded_at')
-
-        # Team rows: recorder first, then other shift members.
-        shift_team_rows = []
-        for a in assignments:
-            staff_perm = a.staff
-            worker = staff_perm.fanyakazi if staff_perm else None
-            if worker:
-                name = worker.jina
-                role_name = 'Recorder' if a.role == 'recorder' else (worker.kazi or 'Staff')
-            elif staff_perm and staff_perm.user and staff_perm.user.user:
-                user_obj = staff_perm.user.user
-                name = user_obj.get_full_name() or user_obj.username
-                role_name = 'Recorder' if a.role == 'recorder' else (staff_perm.cheo or 'Staff')
-            else:
-                name = 'Unknown'
-                role_name = 'Recorder' if a.role == 'recorder' else 'Staff'
-
-            shift_team_rows.append({
-                'name': name,
-                'role': role_name,
-                'is_recorder': a.role == 'recorder',
-            })
-
-        shift_team_rows.sort(key=lambda row: (0 if row['is_recorder'] else 1, row['name'].lower()))
-
-        sales_rows = mauzoList.objects.filter(
-            mauzo__Interprise=duka.id,
-            mauzo__tarehe__gte=shift.starts_at,
-            mauzo__tarehe__lte=period_end,
-            mauzo__service=False,
-            mauzo__order=False,
-        ).annotate(net_qty=F('idadi') - F('returned') - F('serviceReturn')).values_list('net_qty', 'bei')
-        sales_amount = sum((row[0] or 0) * (row[1] or 0) for row in sales_rows)
-
-        used_qty = productChangeRecord.objects.filter(
-            adjst__Interprise=duka.id,
-            adjst__date__gte=shift.starts_at,
-            adjst__date__lte=period_end,
-            adjst__tumika=True,
-        ).aggregate(sum=Sum('qty'))['sum'] or 0
-
-        damaged_qty = productChangeRecord.objects.filter(
-            adjst__Interprise=duka.id,
-            adjst__date__gte=shift.starts_at,
-            adjst__date__lte=period_end,
-        ).filter(Q(adjst__haribika=True) | Q(adjst__potea=True)).aggregate(sum=Sum('qty'))['sum'] or 0
-
-        stock_now = bidhaa_stoku.objects.filter(Interprise=duka.id).aggregate(sum=Sum('idadi'))['sum'] or 0
-
-        expenses = toaCash.objects.filter(
-            Interprise=duka.id,
-            tarehe__gte=shift.starts_at,
-            tarehe__lte=period_end,
-        ).aggregate(sum=Sum('Amount'))['sum'] or 0
-
-        deposits = wekaCash.objects.filter(
-            Interprise=duka.id,
-            tarehe__gte=shift.starts_at,
-            tarehe__lte=period_end,
-        ).aggregate(sum=Sum('Amount'))['sum'] or 0
-
-        cash_accounts = PaymentAkaunts.objects.filter(Interprise=duka.id, aina__iexact='Cash').order_by('Akaunt_name')
-        opening_cash = shift.opening_cash
-        current_cash = cash_accounts.aggregate(sum=Sum('Amount'))['sum'] or 0
-
-        expected_cash = Decimal(opening_cash) + Decimal(deposits) - Decimal(expenses)
-
-        # Get mobile payments (non-Cash accounts) for this shift
-        mobile_payments = wekaCash.objects.filter(
-            Interprise=duka.id,
-            tarehe__gte=shift.starts_at,
-            tarehe__lte=period_end,
-        ).exclude(
-            Akaunt__aina__iexact='Cash'
-        ).select_related('Akaunt', 'by__fanyakazi').order_by('tarehe')
-        mobile_payments_total = mobile_payments.aggregate(sum=Sum('Amount'))['sum'] or Decimal('0')
-
-        stock_items_qs = bidhaa_stoku.objects.filter(
-            Interprise=duka.id,
-        ).select_related('bidhaa').order_by('bidhaa__bidhaa_jina')
-
-        opening_snapshot_activity = ShiftActivity.objects.filter(
-            shift=shift.id,
-            event_type='OPENING_SNAPSHOT',
-            event_ref_id__isnull=False,
-        ).order_by('recorded_at').first()
-
-        before_qty_map = defaultdict(lambda: Decimal('0'))
-        if opening_snapshot_activity:
-            for row in ItemsState.objects.filter(state_id=opening_snapshot_activity.event_ref_id).values('sbidhaa_id', 'sidadi'):
-                before_qty_map[row['sbidhaa_id']] = Decimal(row['sidadi'] or 0)
-
-        sold_qty_map = defaultdict(lambda: Decimal('0'))
-        sold_rows = mauzoList.objects.filter(
-            mauzo__Interprise=duka.id,
-            mauzo__tarehe__gte=shift.starts_at,
-            mauzo__tarehe__lte=period_end,
-            mauzo__service=False,
-            mauzo__order=False,
-        ).values_list('produ_id', 'idadi', 'returned', 'serviceReturn')
-        for produ_id, qty, returned, service_return in sold_rows:
-            net_qty = Decimal(qty or 0) - Decimal(returned or 0) - Decimal(service_return or 0)
-            if net_qty > 0:
-                sold_qty_map[produ_id] += net_qty
-
-        reduction_qty_map = defaultdict(lambda: Decimal('0'))
-        reduction_rows = productChangeRecord.objects.filter(
-            adjst__Interprise=duka.id,
-            adjst__date__gte=shift.starts_at,
-            adjst__date__lte=period_end,
-        ).filter(
-            Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True)
-        ).values_list('prod_id', 'qty')
-        for prod_id, qty in reduction_rows:
-            reduction_qty_map[prod_id] += Decimal(qty or 0)
-
-        added_qty_map = defaultdict(lambda: Decimal('0'))
-        added_rows = productChangeRecord.objects.filter(
-            adjst__Interprise=duka.id,
-            adjst__date__gte=shift.starts_at,
-            adjst__date__lte=period_end,
-            adjst__Ongezwa=True,
-        ).values_list('prod_id', 'qty')
-        for prod_id, qty in added_rows:
-            added_qty_map[prod_id] += Decimal(qty or 0)
-
-        transferred_qty_map = defaultdict(lambda: Decimal('0'))
-        transferred_rows = transferList.objects.filter(
-            toka__Interprise=duka.id,
-            kwenda__receive__transfer__Interprise=duka.id,
-            kwenda__receive__transfer__order=False,
-            kwenda__receive__transfer__tarehe__gte=shift.starts_at,
-            kwenda__receive__transfer__tarehe__lte=period_end,
-        ).values_list('toka_id', 'kwenda__qty')
-        for toka_id, qty in transferred_rows:
-            transferred_qty_map[toka_id] += Decimal(qty or 0)
-
-        received_qty_map = defaultdict(lambda: Decimal('0'))
-        received_rows = bidhaa_stoku.objects.filter(
-            Interprise=duka.id,
-            uhamisho__isnull=False,
-            uhamisho__receive__transfer__order=False,
-            uhamisho__receive__transfer__tarehe__gte=shift.starts_at,
-            uhamisho__receive__transfer__tarehe__lte=period_end,
-        ).values_list('id', 'uhamisho__qty')
-        for prod_id, qty in received_rows:
-            received_qty_map[prod_id] += Decimal(qty or 0)
-
-        stock_value_rows = []
-        stock_value_totals = {
-            'before_qty': Decimal('0'),
-            'before_value': Decimal('0'),
-            'before_worth': Decimal('0'),
-            'added_qty': Decimal('0'),
-            'added_value': Decimal('0'),
-            'added_worth': Decimal('0'),
-            'sold_qty': Decimal('0'),
-            'sold_value': Decimal('0'),
-            'sold_worth': Decimal('0'),
-            'reduction_qty': Decimal('0'),
-            'reduction_value': Decimal('0'),
-            'reduction_worth': Decimal('0'),
-            'transferred_qty': Decimal('0'),
-            'transferred_value': Decimal('0'),
-            'transferred_worth': Decimal('0'),
-            'received_qty': Decimal('0'),
-            'received_value': Decimal('0'),
-            'received_worth': Decimal('0'),
-            'current_qty': Decimal('0'),
-            'current_value': Decimal('0'),
-            'current_worth': Decimal('0'),
-        }
-        # Group bidhaa_stoku by distinct bidhaa (product) – each product name appears only once
-        bidhaa_groups = {}
-        for itm in stock_items_qs:
-            bid = itm.bidhaa_id
-            if bid not in bidhaa_groups:
-                bidhaa_groups[bid] = []
-            bidhaa_groups[bid].append(itm)
-
-        for bid, items in sorted(bidhaa_groups.items(), key=lambda x: (x[1][0].bidhaa.bidhaa_jina or '').lower() if x[1][0].bidhaa else ''):
-            first_item = items[0]
-            item_name = first_item.bidhaa.bidhaa_jina if first_item.bidhaa else ''
-            units = first_item.bidhaa.vipimo if first_item.bidhaa else ''
-
-            current_qty = Decimal('0')
-            current_value = Decimal('0')
-            current_worth = Decimal('0')
-            before_qty = Decimal('0')
-            before_value = Decimal('0')
-            before_worth = Decimal('0')
-            added_qty = Decimal('0')
-            added_value = Decimal('0')
-            added_worth = Decimal('0')
-            sold_qty = Decimal('0')
-            sold_value = Decimal('0')
-            sold_worth = Decimal('0')
-            reduction_qty = Decimal('0')
-            reduction_value = Decimal('0')
-            reduction_worth = Decimal('0')
-            transferred_qty = Decimal('0')
-            transferred_value = Decimal('0')
-            transferred_worth = Decimal('0')
-            received_qty = Decimal('0')
-            received_value = Decimal('0')
-            received_worth = Decimal('0')
-
-            for itm in items:
-                ratio = Decimal(itm.bidhaa.idadi_jum or 1) if itm.bidhaa else Decimal('1')
-                buy_price = Decimal(itm.Bei_kununua or 0)
-                sales_price = Decimal(itm.Bei_kuuza or 0)
-                iid = itm.id
-
-                c_qty = Decimal(itm.idadi or 0)
-                current_qty += c_qty
-                current_value += c_qty * buy_price / ratio
-                current_worth += c_qty * sales_price
-
-                b_qty = before_qty_map[iid]
-                before_qty += b_qty
-                before_value += b_qty * buy_price / ratio
-                before_worth += b_qty * sales_price
-
-                a_qty = added_qty_map[iid]
-                added_qty += a_qty
-                added_value += a_qty * buy_price / ratio
-                added_worth += a_qty * sales_price
-
-                s_qty = sold_qty_map[iid]
-                sold_qty += s_qty
-                sold_value += s_qty * buy_price / ratio
-                sold_worth += s_qty * sales_price
-
-                r_qty = reduction_qty_map[iid]
-                reduction_qty += r_qty
-                reduction_value += r_qty * buy_price / ratio
-                reduction_worth += r_qty * sales_price
-
-                t_qty = transferred_qty_map[iid]
-                transferred_qty += t_qty
-                transferred_value += t_qty * buy_price / ratio
-                transferred_worth += t_qty * sales_price
-
-                rc_qty = received_qty_map[iid]
-                received_qty += rc_qty
-                received_value += rc_qty * buy_price / ratio
-                received_worth += rc_qty * sales_price
-
-            stock_value_rows.append({
-                'item_name': item_name,
-                'units': units,
-                'before_qty': before_qty,
-                'before_value': before_value,
-                'before_worth': before_worth,
-                'added_qty': added_qty,
-                'added_value': added_value,
-                'added_worth': added_worth,
-                'sold_qty': sold_qty,
-                'sold_value': sold_value,
-                'sold_worth': sold_worth,
-                'reduction_qty': reduction_qty,
-                'reduction_value': reduction_value,
-                'reduction_worth': reduction_worth,
-                'transferred_qty': transferred_qty,
-                'transferred_value': transferred_value,
-                'transferred_worth': transferred_worth,
-                'received_qty': received_qty,
-                'received_value': received_value,
-                'received_worth': received_worth,
-                'current_qty': current_qty,
-                'current_value': current_value,
-                'current_worth': current_worth,
-            })
-
-            stock_value_totals['before_qty'] += before_qty
-            stock_value_totals['before_value'] += before_value
-            stock_value_totals['before_worth'] += before_worth
-            stock_value_totals['added_qty'] += added_qty
-            stock_value_totals['added_value'] += added_value
-            stock_value_totals['added_worth'] += added_worth
-            stock_value_totals['sold_qty'] += sold_qty
-            stock_value_totals['sold_value'] += sold_value
-            stock_value_totals['sold_worth'] += sold_worth
-            stock_value_totals['reduction_qty'] += reduction_qty
-            stock_value_totals['reduction_value'] += reduction_value
-            stock_value_totals['reduction_worth'] += reduction_worth
-            stock_value_totals['transferred_qty'] += transferred_qty
-            stock_value_totals['transferred_value'] += transferred_value
-            stock_value_totals['transferred_worth'] += transferred_worth
-            stock_value_totals['received_qty'] += received_qty
-            stock_value_totals['received_value'] += received_value
-            stock_value_totals['received_worth'] += received_worth
-            stock_value_totals['current_qty'] += current_qty
-            stock_value_totals['current_value'] += current_value
-            stock_value_totals['current_worth'] += current_worth
-
-        # --- Sales breakdown per staff (waiter orders + direct recorder sales) ---
-        from management.models import mauzoni
-        sales_qs = mauzoni.objects.filter(
-            Interprise=duka.id,
-            tarehe__gte=shift.starts_at,
-            tarehe__lte=period_end,
-            service=False,
-            returned=False,
-            ignore=False,
-        ).select_related(
-            'waiter_order__user__user',
-            'waiter_order__user_entp__Interprise',
-            'By__user__user',
-            'By__user_entp__Interprise',
-        )
-
-        def _staff_display_name(staff_perm):
-            if not staff_perm:
-                return 'Unknown'
-            user_extend = getattr(staff_perm, 'user', None)
-            auth_user = getattr(user_extend, 'user', None) if user_extend else None
-            first_name = (getattr(auth_user, 'first_name', '') or '').strip() if auth_user else ''
-            last_name = (getattr(auth_user, 'last_name', '') or '').strip() if auth_user else ''
-            full_name = (f"{first_name} {last_name}").strip()
-            if not full_name:
-                full_name = (
-                    auth_user.get_full_name().strip()
-                    if auth_user and hasattr(auth_user, 'get_full_name') and auth_user.get_full_name()
-                    else (auth_user.username if auth_user else '')
-                )
-            if not full_name and getattr(staff_perm, 'fanyakazi', None):
-                full_name = (staff_perm.fanyakazi.jina or '').strip()
-
-            entp_code = ''
-            user_entp = getattr(staff_perm, 'user_entp', None)
-            if user_entp and getattr(user_entp, 'Interprise', None):
-                entp_code = (user_entp.Interprise.Intp_code or '').strip()
-
-            if full_name and entp_code:
-                return f"{full_name} ({entp_code})"
-            if full_name:
-                return full_name
-            if entp_code:
-                return entp_code
-            return 'Unknown'
-
-        breakdown = {}
-        for sale in sales_qs:
-            actor = sale.waiter_order if sale.waiter_order_id else sale.By
-            key = actor.id if actor else 0
-            if key not in breakdown:
-                breakdown[key] = {
-                    'actor_id': actor.id if actor else None,
-                    'name': _staff_display_name(actor),
-                    'sales_count': 0,
-                    'total_amount': Decimal('0'),
-                }
-            breakdown[key]['sales_count'] += 1
-            breakdown[key]['total_amount'] += Decimal(sale.amount or 0)
-
-        sales_breakdown_rows = sorted(
-            breakdown.values(),
-            key=lambda x: (x['name'] or '').lower(),
-        )
-        sales_breakdown_totals = {
-            'sales_count': sum(row['sales_count'] for row in sales_breakdown_rows),
-            'total_amount': sum((row['total_amount'] for row in sales_breakdown_rows), Decimal('0')),
-        }
+        report = build_shift_report(duka, shift)
+        assignments = report['assignments']
+        activities = report['activities']
+        shift_team_rows = report['shift_team_rows']
 
         todo.update({
             'staff_page': 'shifts',
@@ -1194,27 +831,17 @@ def shift_view(request):
             'assignments': assignments,
             'shift_team_rows': shift_team_rows,
             'activities': activities,
-            'movement': {
-                'sales_amount': sales_amount,
-                'used_qty': used_qty,
-                'damaged_qty': damaged_qty,
-                'stock_now': stock_now,
-            },
-            'payments': {
-                'opening_cash': opening_cash,
-                'expenses': expenses,
-                'deposits': deposits,
-                'expected_cash': expected_cash,
-                'current_cash': current_cash,
-            },
-            'cash_accounts': cash_accounts,
-            'mobile_payments': mobile_payments,
-            'mobile_payments_total': mobile_payments_total,
-            'stock_value_rows': stock_value_rows,
-            'stock_value_totals': stock_value_totals,
-            'sales_breakdown_rows': sales_breakdown_rows,
-            'sales_breakdown_totals': sales_breakdown_totals,
+            'movement': report['movement'],
+            'payments': report['payments'],
+            'cash_accounts': report['cash_accounts'],
+            'mobile_payments': report['mobile_payments'],
+            'mobile_payments_total': report['mobile_payments_total'],
+            'stock_value_rows': report['stock_value_rows'],
+            'stock_value_totals': report['stock_value_totals'],
+            'sales_breakdown_rows': report['sales_breakdown_rows'],
+            'sales_breakdown_totals': report['sales_breakdown_totals'],
         })
+
         return render(request, 'staff/shift_view.html', todo)
     except Exception:
         traceback.print_exc()
@@ -1269,6 +896,15 @@ def close_shift(request):
         shift.variance = actual - expected
         shift.save()
 
+        closing_state = _save_opening_snapshot(duka, cheo, desc=f'Closing snapshot {shift.code}')
+        ShiftActivity.objects.create(
+            shift=shift,
+            event_type='CLOSING_SNAPSHOT',
+            event_ref_id=closing_state.id,
+            details='Closing stock snapshot',
+            by=cheo,
+        )
+
         ShiftActivity.objects.create(
             shift=shift,
             event_type='CLOSING_CASH',
@@ -1306,389 +942,25 @@ def print_shift(request):
             return JsonResponse({'success': False, 'msg': 'User context error'}, status=400)
 
         shift = ShiftSession.objects.get(pk=sid, Interprise=duka.id)
-        period_end = shift.ends_at or timezone.now()
-
-        # --- Shift team (identical to shift_view) ---
-        assignments = ShiftAssignment.objects.filter(
-            shift=shift.id, active=True
-        ).select_related('staff__user__user', 'staff__fanyakazi').order_by('role', 'assigned_at')
-
-        shift_team_rows = []
-        for a in assignments:
-            staff_perm = a.staff
-            worker = staff_perm.fanyakazi if staff_perm else None
-            if worker:
-                name = worker.jina
-                role_name = 'Recorder' if a.role == 'recorder' else (worker.kazi or 'Staff')
-            elif staff_perm and staff_perm.user and staff_perm.user.user:
-                user_obj = staff_perm.user.user
-                name = user_obj.get_full_name() or user_obj.username
-                role_name = 'Recorder' if a.role == 'recorder' else (staff_perm.cheo or 'Staff')
-            else:
-                name = 'Unknown'
-                role_name = 'Recorder' if a.role == 'recorder' else 'Staff'
-            shift_team_rows.append({'name': name, 'role': role_name, 'is_recorder': a.role == 'recorder'})
-        shift_team_rows.sort(key=lambda row: (0 if row['is_recorder'] else 1, row['name'].lower()))
-
-        # --- Activities (identical to shift_view) ---
-        activities = ShiftActivity.objects.filter(shift=shift.id).order_by('-recorded_at')
-
-        # --- Stock movement (identical to shift_view) ---
-        sales_rows = mauzoList.objects.filter(
-            mauzo__Interprise=duka.id,
-            mauzo__tarehe__gte=shift.starts_at,
-            mauzo__tarehe__lte=period_end,
-            mauzo__service=False,
-            mauzo__order=False,
-        ).annotate(net_qty=F('idadi') - F('returned') - F('serviceReturn')).values_list('net_qty', 'bei')
-        sales_amount = sum((row[0] or 0) * (row[1] or 0) for row in sales_rows)
-
-        used_qty = productChangeRecord.objects.filter(
-            adjst__Interprise=duka.id,
-            adjst__date__gte=shift.starts_at,
-            adjst__date__lte=period_end,
-            adjst__tumika=True,
-        ).aggregate(sum=Sum('qty'))['sum'] or 0
-
-        damaged_qty = productChangeRecord.objects.filter(
-            adjst__Interprise=duka.id,
-            adjst__date__gte=shift.starts_at,
-            adjst__date__lte=period_end,
-        ).filter(Q(adjst__haribika=True) | Q(adjst__potea=True)).aggregate(sum=Sum('qty'))['sum'] or 0
-
-        stock_now = bidhaa_stoku.objects.filter(Interprise=duka.id).aggregate(sum=Sum('idadi'))['sum'] or 0
-
-        # --- Cash summary (identical to shift_view) ---
-        expenses = toaCash.objects.filter(
-            Interprise=duka.id,
-            tarehe__gte=shift.starts_at,
-            tarehe__lte=period_end,
-        ).aggregate(sum=Sum('Amount'))['sum'] or 0
-
-        deposits = wekaCash.objects.filter(
-            Interprise=duka.id,
-            tarehe__gte=shift.starts_at,
-            tarehe__lte=period_end,
-        ).aggregate(sum=Sum('Amount'))['sum'] or 0
-
-        cash_accounts = PaymentAkaunts.objects.filter(Interprise=duka.id, aina__iexact='Cash').order_by('Akaunt_name')
-        opening_cash = shift.opening_cash
-        current_cash = cash_accounts.aggregate(sum=Sum('Amount'))['sum'] or 0
-        expected_cash = Decimal(opening_cash) + Decimal(deposits) - Decimal(expenses)
-
-        # --- Mobile payments (identical to shift_view) ---
-        mobile_payments = wekaCash.objects.filter(
-            Interprise=duka.id,
-            tarehe__gte=shift.starts_at,
-            tarehe__lte=period_end,
-        ).exclude(
-            Akaunt__aina__iexact='Cash'
-        ).select_related('Akaunt', 'by__fanyakazi').order_by('tarehe')
-        mobile_payments_total = mobile_payments.aggregate(sum=Sum('Amount'))['sum'] or Decimal('0')
-
-        # --- Stock value rows (identical to shift_view) ---
-        stock_items_qs = bidhaa_stoku.objects.filter(
-            Interprise=duka.id,
-        ).select_related('bidhaa').order_by('bidhaa__bidhaa_jina')
-
-        opening_snapshot_activity = ShiftActivity.objects.filter(
-            shift=shift.id,
-            event_type='OPENING_SNAPSHOT',
-            event_ref_id__isnull=False,
-        ).order_by('recorded_at').first()
-
-        before_qty_map = defaultdict(lambda: Decimal('0'))
-        if opening_snapshot_activity:
-            for row in ItemsState.objects.filter(state_id=opening_snapshot_activity.event_ref_id).values('sbidhaa_id', 'sidadi'):
-                before_qty_map[row['sbidhaa_id']] = Decimal(row['sidadi'] or 0)
-
-        sold_qty_map = defaultdict(lambda: Decimal('0'))
-        sold_rows = mauzoList.objects.filter(
-            mauzo__Interprise=duka.id,
-            mauzo__tarehe__gte=shift.starts_at,
-            mauzo__tarehe__lte=period_end,
-            mauzo__service=False,
-            mauzo__order=False,
-        ).values_list('produ_id', 'idadi', 'returned', 'serviceReturn')
-        for produ_id, qty, returned, service_return in sold_rows:
-            net_qty = Decimal(qty or 0) - Decimal(returned or 0) - Decimal(service_return or 0)
-            if net_qty > 0:
-                sold_qty_map[produ_id] += net_qty
-
-        reduction_qty_map = defaultdict(lambda: Decimal('0'))
-        reduction_rows = productChangeRecord.objects.filter(
-            adjst__Interprise=duka.id,
-            adjst__date__gte=shift.starts_at,
-            adjst__date__lte=period_end,
-        ).filter(
-            Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True)
-        ).values_list('prod_id', 'qty')
-        for prod_id, qty in reduction_rows:
-            reduction_qty_map[prod_id] += Decimal(qty or 0)
-
-        added_qty_map = defaultdict(lambda: Decimal('0'))
-        added_rows = productChangeRecord.objects.filter(
-            adjst__Interprise=duka.id,
-            adjst__date__gte=shift.starts_at,
-            adjst__date__lte=period_end,
-            adjst__Ongezwa=True,
-        ).values_list('prod_id', 'qty')
-        for prod_id, qty in added_rows:
-            added_qty_map[prod_id] += Decimal(qty or 0)
-
-        transferred_qty_map = defaultdict(lambda: Decimal('0'))
-        transferred_rows = transferList.objects.filter(
-            toka__Interprise=duka.id,
-            kwenda__receive__transfer__Interprise=duka.id,
-            kwenda__receive__transfer__order=False,
-            kwenda__receive__transfer__tarehe__gte=shift.starts_at,
-            kwenda__receive__transfer__tarehe__lte=period_end,
-        ).values_list('toka_id', 'kwenda__qty')
-        for toka_id, qty in transferred_rows:
-            transferred_qty_map[toka_id] += Decimal(qty or 0)
-
-        received_qty_map = defaultdict(lambda: Decimal('0'))
-        received_rows = bidhaa_stoku.objects.filter(
-            Interprise=duka.id,
-            uhamisho__isnull=False,
-            uhamisho__receive__transfer__order=False,
-            uhamisho__receive__transfer__tarehe__gte=shift.starts_at,
-            uhamisho__receive__transfer__tarehe__lte=period_end,
-        ).values_list('id', 'uhamisho__qty')
-        for prod_id, qty in received_rows:
-            received_qty_map[prod_id] += Decimal(qty or 0)
-
-        stock_value_rows = []
-        stock_value_totals = {
-            'before_qty': Decimal('0'), 'before_value': Decimal('0'), 'before_worth': Decimal('0'),
-            'added_qty': Decimal('0'), 'added_value': Decimal('0'), 'added_worth': Decimal('0'),
-            'sold_qty': Decimal('0'), 'sold_value': Decimal('0'), 'sold_worth': Decimal('0'),
-            'reduction_qty': Decimal('0'), 'reduction_value': Decimal('0'), 'reduction_worth': Decimal('0'),
-            'transferred_qty': Decimal('0'), 'transferred_value': Decimal('0'), 'transferred_worth': Decimal('0'),
-            'received_qty': Decimal('0'), 'received_value': Decimal('0'), 'received_worth': Decimal('0'),
-            'current_qty': Decimal('0'), 'current_value': Decimal('0'), 'current_worth': Decimal('0'),
-        }
-        # Group bidhaa_stoku by distinct bidhaa (product) – each product name appears only once
-        bidhaa_groups = {}
-        for itm in stock_items_qs:
-            bid = itm.bidhaa_id
-            if bid not in bidhaa_groups:
-                bidhaa_groups[bid] = []
-            bidhaa_groups[bid].append(itm)
-
-        for bid, items in sorted(bidhaa_groups.items(), key=lambda x: (x[1][0].bidhaa.bidhaa_jina or '').lower() if x[1][0].bidhaa else ''):
-            first_item = items[0]
-            item_name = first_item.bidhaa.bidhaa_jina if first_item.bidhaa else ''
-            units = first_item.bidhaa.vipimo if first_item.bidhaa else ''
-
-            current_qty = Decimal('0')
-            current_value = Decimal('0')
-            current_worth = Decimal('0')
-            before_qty = Decimal('0')
-            before_value = Decimal('0')
-            before_worth = Decimal('0')
-            added_qty = Decimal('0')
-            added_value = Decimal('0')
-            added_worth = Decimal('0')
-            sold_qty = Decimal('0')
-            sold_value = Decimal('0')
-            sold_worth = Decimal('0')
-            reduction_qty = Decimal('0')
-            reduction_value = Decimal('0')
-            reduction_worth = Decimal('0')
-            transferred_qty = Decimal('0')
-            transferred_value = Decimal('0')
-            transferred_worth = Decimal('0')
-            received_qty = Decimal('0')
-            received_value = Decimal('0')
-            received_worth = Decimal('0')
-
-            for itm in items:
-                ratio = Decimal(itm.bidhaa.idadi_jum or 1) if itm.bidhaa else Decimal('1')
-                buy_price = Decimal(itm.Bei_kununua or 0)
-                sales_price = Decimal(itm.Bei_kuuza or 0)
-                iid = itm.id
-
-                c_qty = Decimal(itm.idadi or 0)
-                current_qty += c_qty
-                current_value += c_qty * buy_price / ratio
-                current_worth += c_qty * sales_price
-
-                b_qty = before_qty_map[iid]
-                before_qty += b_qty
-                before_value += b_qty * buy_price / ratio
-                before_worth += b_qty * sales_price
-
-                a_qty = added_qty_map[iid]
-                added_qty += a_qty
-                added_value += a_qty * buy_price / ratio
-                added_worth += a_qty * sales_price
-
-                s_qty = sold_qty_map[iid]
-                sold_qty += s_qty
-                sold_value += s_qty * buy_price / ratio
-                sold_worth += s_qty * sales_price
-
-                r_qty = reduction_qty_map[iid]
-                reduction_qty += r_qty
-                reduction_value += r_qty * buy_price / ratio
-                reduction_worth += r_qty * sales_price
-
-                t_qty = transferred_qty_map[iid]
-                transferred_qty += t_qty
-                transferred_value += t_qty * buy_price / ratio
-                transferred_worth += t_qty * sales_price
-
-                rc_qty = received_qty_map[iid]
-                received_qty += rc_qty
-                received_value += rc_qty * buy_price / ratio
-                received_worth += rc_qty * sales_price
-
-            stock_value_rows.append({
-                'item_name': item_name,
-                'units': units,
-                'before_qty': before_qty,
-                'before_value': before_value,
-                'before_worth': before_worth,
-                'added_qty': added_qty,
-                'added_value': added_value,
-                'added_worth': added_worth,
-                'sold_qty': sold_qty,
-                'sold_value': sold_value,
-                'sold_worth': sold_worth,
-                'reduction_qty': reduction_qty,
-                'reduction_value': reduction_value,
-                'reduction_worth': reduction_worth,
-                'transferred_qty': transferred_qty,
-                'transferred_value': transferred_value,
-                'transferred_worth': transferred_worth,
-                'received_qty': received_qty,
-                'received_value': received_value,
-                'received_worth': received_worth,
-                'current_qty': current_qty,
-                'current_value': current_value,
-                'current_worth': current_worth,
-            })
-
-            stock_value_totals['before_qty'] += before_qty
-            stock_value_totals['before_value'] += before_value
-            stock_value_totals['before_worth'] += before_worth
-            stock_value_totals['added_qty'] += added_qty
-            stock_value_totals['added_value'] += added_value
-            stock_value_totals['added_worth'] += added_worth
-            stock_value_totals['sold_qty'] += sold_qty
-            stock_value_totals['sold_value'] += sold_value
-            stock_value_totals['sold_worth'] += sold_worth
-            stock_value_totals['reduction_qty'] += reduction_qty
-            stock_value_totals['reduction_value'] += reduction_value
-            stock_value_totals['reduction_worth'] += reduction_worth
-            stock_value_totals['transferred_qty'] += transferred_qty
-            stock_value_totals['transferred_value'] += transferred_value
-            stock_value_totals['transferred_worth'] += transferred_worth
-            stock_value_totals['received_qty'] += received_qty
-            stock_value_totals['received_value'] += received_value
-            stock_value_totals['received_worth'] += received_worth
-            stock_value_totals['current_qty'] += current_qty
-            stock_value_totals['current_value'] += current_value
-            stock_value_totals['current_worth'] += current_worth
-
-        # --- Sales breakdown per staff (waiter orders + direct recorder sales) ---
-        from management.models import mauzoni
-        sales_qs = mauzoni.objects.filter(
-            Interprise=duka.id,
-            tarehe__gte=shift.starts_at,
-            tarehe__lte=period_end,
-            service=False,
-            returned=False,
-            ignore=False,
-        ).select_related(
-            'waiter_order__user__user',
-            'waiter_order__user_entp__Interprise',
-            'By__user__user',
-            'By__user_entp__Interprise',
-        )
-
-        def _staff_display_name(staff_perm):
-            if not staff_perm:
-                return 'Unknown'
-            user_extend = getattr(staff_perm, 'user', None)
-            auth_user = getattr(user_extend, 'user', None) if user_extend else None
-            first_name = (getattr(auth_user, 'first_name', '') or '').strip() if auth_user else ''
-            last_name = (getattr(auth_user, 'last_name', '') or '').strip() if auth_user else ''
-            full_name = (f"{first_name} {last_name}").strip()
-            if not full_name:
-                full_name = (
-                    auth_user.get_full_name().strip()
-                    if auth_user and hasattr(auth_user, 'get_full_name') and auth_user.get_full_name()
-                    else (auth_user.username if auth_user else '')
-                )
-            if not full_name and getattr(staff_perm, 'fanyakazi', None):
-                full_name = (staff_perm.fanyakazi.jina or '').strip()
-
-            entp_code = ''
-            user_entp = getattr(staff_perm, 'user_entp', None)
-            if user_entp and getattr(user_entp, 'Interprise', None):
-                entp_code = (user_entp.Interprise.Intp_code or '').strip()
-
-            if full_name and entp_code:
-                return f"{full_name} ({entp_code})"
-            if full_name:
-                return full_name
-            if entp_code:
-                return entp_code
-            return 'Unknown'
-
-        breakdown = {}
-        for sale in sales_qs:
-            actor = sale.waiter_order if sale.waiter_order_id else sale.By
-            key = actor.id if actor else 0
-            if key not in breakdown:
-                breakdown[key] = {
-                    'actor_id': actor.id if actor else None,
-                    'name': _staff_display_name(actor),
-                    'sales_count': 0,
-                    'total_amount': Decimal('0'),
-                }
-            breakdown[key]['sales_count'] += 1
-            breakdown[key]['total_amount'] += Decimal(sale.amount or 0)
-
-        sales_breakdown_rows = sorted(
-            breakdown.values(),
-            key=lambda x: (x['name'] or '').lower(),
-        )
-        sales_breakdown_totals = {
-            'sales_count': sum(row['sales_count'] for row in sales_breakdown_rows),
-            'total_amount': sum((row['total_amount'] for row in sales_breakdown_rows), Decimal('0')),
-        }
+        report = build_shift_report(duka, shift)
 
         context = {
             'shift': shift,
-            'shift_team_rows': shift_team_rows,
-            'activities': activities,
-            'movement': {
-                'sales_amount': sales_amount,
-                'used_qty': used_qty,
-                'damaged_qty': damaged_qty,
-                'stock_now': stock_now,
-            },
-            'payments': {
-                'opening_cash': opening_cash,
-                'expenses': expenses,
-                'deposits': deposits,
-                'expected_cash': expected_cash,
-                'current_cash': current_cash,
-            },
-            'cash_accounts': cash_accounts,
-            'mobile_payments': mobile_payments,
-            'mobile_payments_total': mobile_payments_total,
-            'stock_value_rows': stock_value_rows,
-            'stock_value_totals': stock_value_totals,
+            'shift_team_rows': report['shift_team_rows'],
+            'activities': report['activities'],
+            'movement': report['movement'],
+            'payments': report['payments'],
+            'cash_accounts': report['cash_accounts'],
+            'mobile_payments': report['mobile_payments'],
+            'mobile_payments_total': report['mobile_payments_total'],
+            'stock_value_rows': report['stock_value_rows'],
+            'stock_value_totals': report['stock_value_totals'],
             'useri': useri,
             'include_items': include_items,
             'lang': lang,
             'paper_size': paper_size,
-            'sales_breakdown_rows': sales_breakdown_rows,
-            'sales_breakdown_totals': sales_breakdown_totals,
+            'sales_breakdown_rows': report['sales_breakdown_rows'],
+            'sales_breakdown_totals': report['sales_breakdown_totals'],
         }
 
         return render(request, 'staff/print_shift.html', context)
@@ -1747,14 +1019,7 @@ def shift_actor_sales(request):
         if actor.user_entp and actor.user_entp.Interprise:
             actor_code = (actor.user_entp.Interprise.Intp_code or '').strip()
 
-        actor_sales = mauzoni.objects.filter(
-            Interprise=duka.id,
-            tarehe__gte=shift.starts_at,
-            tarehe__lte=period_end,
-            service=False,
-            returned=False,
-            ignore=False,
-        ).filter(
+        actor_sales = completed_sales_qs(duka, shift.starts_at, period_end).filter(
             Q(waiter_order_id=actor_id) |
             (Q(waiter_order__isnull=True) & Q(By_id=actor_id))
         )

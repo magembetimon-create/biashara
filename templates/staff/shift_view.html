@@ -47,10 +47,11 @@
         <div class="card-header py-2"><strong>{% if useri.langSet == 0 %}Mzunguko wa Stoku{% else %}Stock Movement{% endif %}</strong></div>
         <div class="card-body py-2">
           <table class="table table-sm mb-0">
-            <tr><td>{% if useri.langSet == 0 %}Mauzo{% else %}Sales{% endif %}</td><td class="text-right">{{ movement.sales_amount|floatformat:2|intcomma }}</td></tr>
+            <tr><td>{% if useri.langSet == 0 %}Mauzo (yaliyokamilika){% else %}Sales (completed){% endif %}</td><td class="text-right">{{ movement.sales_amount|floatformat:2|intcomma }}</td></tr>
+            <tr><td>{% if useri.langSet == 0 %}Oda za waiter (bado hazijaprint){% else %}Pending waiter orders{% endif %}</td><td class="text-right">{{ movement.pending_sales_amount|floatformat:2|intcomma }} ({{ movement.pending_sales_count }})</td></tr>
             <tr><td>{% if useri.langSet == 0 %}Vilivyotumika{% else %}Used Materials{% endif %}</td><td class="text-right">{{ movement.used_qty|floatformat:2|intcomma }}</td></tr>
             <tr><td>{% if useri.langSet == 0 %}Vilivyoharibika/Vilivyopotea{% else %}Damaged/Lost{% endif %}</td><td class="text-right">{{ movement.damaged_qty|floatformat:2|intcomma }}</td></tr>
-            <tr><td>{% if useri.langSet == 0 %}Stoku Iliyopo{% else %}Current Stock{% endif %}</td><td class="text-right">{{ movement.stock_now|floatformat:2|intcomma }}</td></tr>
+            <tr><td>{% if useri.langSet == 0 %}{% if movement.stock_frozen %}Stoku ya kufunga{% else %}Stoku Iliyopo{% endif %}{% else %}{% if movement.stock_frozen %}Closing Stock{% else %}Current Stock{% endif %}{% endif %}</td><td class="text-right">{{ movement.stock_now|floatformat:2|intcomma }}</td></tr>
           </table>
         </div>
       </div>
@@ -130,6 +131,9 @@
       <!-- Sales Breakdown Table -->
       <div class="mt-4">
         <h6>{% if useri.langSet == 0 %}Mchanganuo wa Mauzo kwa Mhusika{% else %}Sales Breakdown per Staff{% endif %}</h6>
+        <p class="small text-muted mb-2">
+          {% if useri.langSet == 0 %}Jumla hii ni sawa na Mauzo kwenye Stock Movement: POS iliyohifadhiwa na oda za waiter zilizoprint. Oda pending hazihesabiwi hapa.{% else %}This total matches Stock Movement Sales: saved POS bills and printed waiter orders. Pending waiter orders are excluded.{% endif %}
+        </p>
         <div class="table-responsive">
           <table class="table table-sm table-bordered table-striped" id="mchanganuoTable" >
             <thead>
@@ -240,9 +244,9 @@
               <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Bidhaa Zilizopokelewa{% else %}Item Received{% endif %}</th>
               
               <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Sold{% else %}Sold{% endif %}</th>
-
-              <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Current Stock{% else %}Current Stock{% endif %}</th>
-           
+              <th class="text-center" rowspan="2">{% if useri.langSet == 0 %}Inayotarajiwa{% else %}Expected{% endif %}</th>
+              <th class="text-center" colspan="3">{% if useri.langSet == 0 %}{% if movement.stock_frozen %}Stoku ya kufunga{% else %}Stoku ya Sasa{% endif %}{% else %}{% if movement.stock_frozen %}Closing Stock{% else %}Current Stock{% endif %}{% endif %}</th>
+              <th class="text-center" rowspan="2">{% if useri.langSet == 0 %}Tofauti{% else %}Diff{% endif %}</th>
             </tr>
             <tr>
               <th class="text-left">Qty</th>
@@ -297,14 +301,14 @@
               <td>{{ s.sold_qty|floatformat:2|intcomma }}</td>
               <td>{{ s.sold_value|floatformat:2|intcomma }}</td>
               <td>{{ s.sold_worth|floatformat:2|intcomma }}</td>
-
-              
+              <td>{{ s.expected_qty|floatformat:2|intcomma }}</td>
               <td>{{ s.current_qty|floatformat:2|intcomma }}</td>
               <td>{{ s.current_value|floatformat:2|intcomma }}</td>
               <td>{{ s.current_worth|floatformat:2|intcomma }}</td>
+              <td {% if s.variance_qty %}class="text-danger font-weight-bold"{% endif %}>{{ s.variance_qty|floatformat:2|intcomma }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="23" class="text-muted">No stock data</td></tr>
+            <tr><td colspan="26" class="text-muted">No stock data</td></tr>
             {% endfor %}
           </tbody>
           <tfoot>
@@ -335,14 +339,22 @@
               <td>{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>
-              
+              <td>{{ stock_value_totals.expected_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.current_qty|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.current_value|floatformat:2|intcomma }}</td>
               <td>{{ stock_value_totals.current_worth|floatformat:2|intcomma }}</td>
+              <td>{{ stock_value_totals.variance_qty|floatformat:2|intcomma }}</td>
             </tr>
           </tfoot>
         </table>
       </div>
+      <p class="small text-muted mt-2">
+        {% if useri.langSet == 0 %}
+        Inayotarajiwa = Kabla + Added + Received − Sold − Reduction − Transferred. Tofauti inaonyesha mabadiliko yasiyorekodiwa (ununuzi, grouped items, au muda kati ya shift). Mauzo ya waiter yanahesabiwa wakati wa print ya kwanza (punguzo la stock), si wakati wa kuokoa oda.
+        {% else %}
+        Expected = Before + Added + Received − Sold − Reduction − Transferred. Diff shows untracked changes (purchases, grouped items, or time between shifts). Waiter sales count at first print (when stock is deducted), not when the order is saved.
+        {% endif %}
+      </p>
     </div>
   </div>
 

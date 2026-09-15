@@ -59,6 +59,15 @@ function waiterDeviceRequest(payload) {
   return reqData
 }
 
+function waiterOrderCanDelete(order) {
+  if (!order) return false
+  if (Number(order.printed_number || 0) > 0) return false
+  if (String(order.status || '') === 'printed') return false
+  if (order.can_delete === false) return false
+  if (order.can_delete === true) return true
+  return !Boolean(order.is_guest_compound)
+}
+
 function waiterRequestErrorMessage(xhr) {
   const resp = (xhr && xhr.responseJSON) || {}
   return waiterLang(
@@ -976,14 +985,11 @@ function renderWaiterHistory() {
       <div class="small">${CURRENCII} ${Number(o.amount || 0).toLocaleString()}</div>
       <div class="small text-muted">${waiterLang('Paid', 'Paid')}: ${CURRENCII} ${Number(o.paid_amount || 0).toLocaleString()}</div>
       <div class="small text-muted">${waiterLang('Print Count', 'Print Count')}: ${Number(o.printed_number || 0)}</div>
-      ${o.status === 'pending' ? `<div class="mt-2 d-flex justify-content-end" style="gap:6px;">
+      <div class="mt-2 d-flex flex-wrap justify-content-end" style="gap:6px;">
         ${WAITER_ENABLE_PRINT ? `<button class="btn btn-sm btn-outline-primary waiterPrintOrder" data-id="${o.id}" data-status="${o.status}" data-printed="${Number(o.printed_number || 0)}">${waiterPrintButtonLabel(o.printed_number)}</button>` : ''}
         ${!o.is_paid ? `<button class="btn btn-sm btn-outline-success waiterPayOrder" data-id="${o.id}" data-amount="${o.amount}" data-paid="${o.paid_amount}" data-remaining="${o.remaining}">${waiterLang('Lipa', 'Pay')}</button>` : ''}
-        ${!o.is_guest_compound ? `<button class="btn btn-sm btn-outline-danger waiterDeleteOrder" data-id="${o.id}">${waiterLang('Futa', 'Delete')}</button>` : ''}
-      </div>` : `<div class="mt-2 d-flex justify-content-end" style="gap:6px;">
-        ${WAITER_ENABLE_PRINT ? `<button class="btn btn-sm btn-outline-primary waiterPrintOrder" data-id="${o.id}" data-status="${o.status}" data-printed="${Number(o.printed_number || 0)}">${waiterPrintButtonLabel(o.printed_number)}</button>` : ''}
-        ${!o.is_paid ? `<button class="btn btn-sm btn-outline-success waiterPayOrder" data-id="${o.id}" data-amount="${o.amount}" data-paid="${o.paid_amount}" data-remaining="${o.remaining}">${waiterLang('Lipa', 'Pay')}</button>` : ''}
-      </div>`}
+        ${waiterOrderCanDelete(o) ? `<button class="btn btn-sm btn-outline-danger waiterDeleteOrder" data-id="${o.id}">${waiterLang('Futa', 'Delete')}</button>` : ''}
+      </div>
     </div>
   `).join('')
 

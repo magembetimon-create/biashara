@@ -2982,6 +2982,22 @@ def _is_logged_location_order(order):
       )
 
 
+def _is_waiter_saved_order(order):
+      return str(getattr(order, 'desc', '') or '').startswith('WAITER|')
+
+
+def _waiter_can_delete_unprinted(order):
+      if int(getattr(order, 'printed_number', 0) or 0) > 0:
+            return False
+      if not getattr(order, 'order', False):
+            return False
+      if _is_waiter_saved_order(order):
+            return True
+      if _is_compound_guest_order(order) or _is_logged_location_order(order):
+            return False
+      return True
+
+
 def _sync_compound_order_to_waiter_queue(sale, waiter_perm):
       """Make a location order appear like a waiter-saved pending order."""
       is_logged_customer = bool(getattr(sale, 'user_customer_id', None))
@@ -3757,7 +3773,11 @@ def waiter_orders_data(request):
                   'is_paid': is_paid,
                   'printed_number': int(order_obj.printed_number or 0),
                   'status': status_name,
-                  'is_guest_compound': _is_compound_guest_order(order_obj),
+                  'is_guest_compound': (
+                        _is_compound_guest_order(order_obj)
+                        and not _is_waiter_saved_order(order_obj)
+                  ),
+                  'can_delete': _waiter_can_delete_unprinted(order_obj),
                   'customer_name': str(order_obj.mteja_jina or '').strip() or (
                         str(order_obj.user_customer.enteprise.name or '').strip()
                         if getattr(order_obj, 'user_customer_id', None)
@@ -4914,9 +4934,14 @@ def waiter_delete_order(request):
                   return JsonResponse({'success': False, 'msg': 'Order not found'})
 
             sale = od.last()
-            if not sale.order:
-                  return JsonResponse({'success': False, 'msg': 'Printed orders cannot be deleted'})
-            if _is_compound_guest_order(sale) or _is_logged_location_order(sale):
+            if not _waiter_can_delete_unprinted(sale):
+                  if int(sale.printed_number or 0) > 0 or not sale.order:
+                        return JsonResponse({
+                              'success': False,
+                              'msg': 'Printed orders cannot be deleted',
+                              'msg_swa': 'Oda iliyoprint haiwezi kufutwa',
+                              'msg_eng': 'Printed orders cannot be deleted',
+                        })
                   return JsonResponse({
                         'success': False,
                         'msg_swa': 'Huwezi kufuta oda hii — wasiliana na msimamizi',
