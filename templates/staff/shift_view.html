@@ -172,7 +172,14 @@
                 <td>{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
                 <td>{{ sales_breakdown_totals.sales_count }}</td>
                 <td>{{ sales_breakdown_totals.total_amount|floatformat:2|intcomma }}</td>
-                <td></td>
+                <td>
+                  <a href="/staff/shifts/actor-sales?sid={{ shift.id }}&actor=0" class="btn btn-sm btn-outline-primary" target="_blank">
+                    {% if useri.langSet == 0 %}Angalia{% else %}View{% endif %}
+                  </a>
+                  <button type="button" class="btn btn-sm btn-primary" onclick="openActorSalesPrintModal('0')">
+                    {% if useri.langSet == 0 %}Print{% else %}Print{% endif %}
+                  </button>
+                </td>
               </tr>
             </tfoot>
           </table>
@@ -550,7 +557,7 @@ function submitPrint() {
 }
 
 function openActorSalesPrintModal(actorId) {
-  document.getElementById('actorSalesPrintActorId').value = actorId || '';
+  document.getElementById('actorSalesPrintActorId').value = String(actorId);
   document.getElementById('actorSalesPrintPaperSize').value = 'large';
   $('#actorSalesPrintModal').modal('show');
 }
@@ -558,7 +565,7 @@ function openActorSalesPrintModal(actorId) {
 function submitActorSalesPrint() {
   var actorId = document.getElementById('actorSalesPrintActorId').value;
   var paper = document.getElementById('actorSalesPrintPaperSize').value || 'large';
-  if (!actorId) {
+  if (actorId === '' || actorId === null) {
     return;
   }
 

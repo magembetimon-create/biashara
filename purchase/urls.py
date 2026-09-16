@@ -74,5 +74,10 @@ urlpatterns=[
     # RATING THE SHOP .............
     path('purchaseRate',views.purchaseRate, name='purchaseRate'),
 
+    path('vendors', views.vendors, name='vendors'),
+    path('getVendors', views.getVendors, name='getVendors'),
+    path('VendorPurchases', views.VendorPurchases, name='VendorPurchases'),
+    path('VendorPurchases/statement-data', views.vendor_purchases_statement_data, name='vendor_purchases_statement_data'),
+
   
 ]

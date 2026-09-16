@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% if useri.langSet == 0 %}Bidhaa Zilizouzwa na Mhusika{% else %}Sold Items by Staff{% endif %}</title>
+  <title>{% if all_staff %}{% if useri.langSet == 0 %}Bidhaa Zilizouzwa (Jumla){% else %}Sold Items (All Staff){% endif %}{% else %}{% if useri.langSet == 0 %}Bidhaa Zilizouzwa na Mhusika{% else %}Sold Items by Staff{% endif %}{% endif %}</title>
   {% if paper_size == 'thermal58' or paper_size == 'thermal' %}
   <link rel="stylesheet" href="{% static 'css/minRecept.css' %}">
   {% elif paper_size == 'thermal80' %}

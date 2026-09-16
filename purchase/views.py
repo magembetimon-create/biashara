@@ -48,6 +48,14 @@ from purchase.expense_receipt_utils import (
     count_pending_mandatory_expense_receipts,
     pending_mandatory_expense_receipts_list,
 )
+from purchase.vendor_utils import (
+    debts_by_vendor,
+    vendor_branch_ids,
+    vendor_debt_by_branch,
+    vendor_debt_summary,
+    vendor_statement_payload,
+    _parse_dt,
+)
 from purchase.guest_compound_utils import (
     clear_guest_cart_session,
     get_guest_cell,
@@ -4886,4 +4894,141 @@ def guestCompoundRemoveLine(request):
         return JsonResponse({'success': True})
     except Exception:
         return JsonResponse({'success': False})
+
+
+@login_required(login_url='login')
+def vendors(request):
+    todo = todoFunct(request)
+    if not todo['duka'].Interprise:
+        return redirect('/userdash')
+    return render(request, 'vendorspanel.html', todo)
+
+
+@login_required(login_url='login')
+def getVendors(request):
+    try:
+        todo = todoFunct(request)
+        duka = todo['duka']
+        cheo = todo.get('cheo')
+        if not duka or not cheo:
+            return JsonResponse({'success': False})
+        branch_param = int(
+            request.POST.get('branch', -1) if request.method == 'POST' else request.GET.get('branch', -1) or -1
+        )
+        branch_ids, siblings, selected_branch, can_scope = vendor_branch_ids(duka, cheo, branch_param)
+        all_branches = selected_branch == 0 and can_scope
+
+        vendor_rows = list(
+            wasambazaji.objects.filter(owner=duka.owner.user)
+            .order_by('jina')
+            .values('id', 'jina', 'address', 'code', 'simu1', 'simu2', 'email', 'where_id')
+        )
+        vendor_ids = [r['id'] for r in vendor_rows]
+        deni_map = debts_by_vendor(branch_ids, vendor_ids)
+        branch_name = {b['id']: b['name'] for b in siblings}
+
+        for row in vendor_rows:
+            row['deni'] = round(float(deni_map.get(row['id'], 0) or 0), 2)
+            row['branch_name'] = branch_name.get(row.get('where_id')) or ''
+
+        summary = vendor_debt_summary(branch_ids)
+        branch_rows = []
+        if can_scope and len(siblings) > 1:
+            sibling_ids = [b['id'] for b in siblings]
+            by_br = vendor_debt_by_branch(sibling_ids)
+            all_sum = vendor_debt_summary(sibling_ids)
+            branch_rows.append({
+                'id': 0,
+                'name': 'all',
+                'deni': all_sum['deni'],
+                'wadadai': all_sum['wadadai'],
+            })
+            for br in siblings:
+                st = by_br.get(br['id'], {'deni': 0, 'wadadai': 0})
+                branch_rows.append({
+                    'id': br['id'],
+                    'name': br['name'],
+                    'deni': st['deni'],
+                    'wadadai': st['wadadai'],
+                })
+
+        return JsonResponse({
+            'success': True,
+            'vendors': vendor_rows,
+            'summary': summary,
+            'branches': branch_rows,
+            'can_scope': can_scope,
+            'selected_branch': 0 if all_branches else selected_branch,
+            'currencii': duka.currencii or '',
+            'current_branch_id': duka.id,
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False})
+
+
+@login_required(login_url='login')
+def VendorPurchases(request):
+    try:
+        todo = todoFunct(request)
+        duka = todo['duka']
+        vendor_id = int(request.GET.get('vnd', 0) or 0)
+        vendor = wasambazaji.objects.get(pk=vendor_id, owner=duka.owner.user)
+        branch_ids, siblings, _, can_scope = vendor_branch_ids(duka, todo.get('cheo'), 0)
+        if not can_scope:
+            branch_ids = [duka.id]
+        if not branch_ids:
+            branch_ids = [duka.id]
+        num = manunuzi.objects.filter(
+            supplier_id_id=vendor.id,
+            Interprise_id__in=branch_ids,
+            order=False,
+            full_returned=False,
+        ).count()
+        branch_label = ''
+        if vendor.where_id:
+            branch_label = next((b['name'] for b in siblings if b['id'] == vendor.where_id), '')
+            if not branch_label and vendor.where:
+                branch_label = vendor.where.name
+        todo.update({
+            'vendor': vendor,
+            'vendor_id': vendor.id,
+            'num': num,
+            'vendor_branch_name': branch_label,
+        })
+        if not duka.Interprise:
+            return redirect('/userdash')
+        return render(request, 'VendorPurchases.html', todo)
+    except Exception:
+        return render(request, 'errorpage.html', todoFunct(request))
+
+
+@login_required(login_url='login')
+def vendor_purchases_statement_data(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad Request'})
+    try:
+        todo = todoFunct(request)
+        duka = todo.get('duka')
+        if not duka or not duka.Interprise:
+            return JsonResponse({'success': False, 'swa': 'Hakuna ruhusa', 'eng': 'Not allowed'})
+        vendor_id = int(request.POST.get('vnd', 0) or 0)
+        if not vendor_id:
+            return JsonResponse({'success': False, 'swa': 'Chagua vendor', 'eng': 'Vendor required'})
+        wasambazaji.objects.get(pk=vendor_id, owner=duka.owner.user)
+        t_fr_dt = _parse_dt(request.POST.get('tFr'))
+        t_to_dt = _parse_dt(request.POST.get('tTo'))
+        if not t_fr_dt or not t_to_dt:
+            return JsonResponse({'success': False, 'swa': 'Tarehe hazipo', 'eng': 'Dates are required'})
+        cheo = todo.get('cheo')
+        branch_ids, _, _, can_scope = vendor_branch_ids(duka, cheo, 0)
+        if not can_scope:
+            branch_ids = [duka.id]
+        payload = vendor_statement_payload(duka, vendor_id, t_fr_dt, t_to_dt, branch_ids)
+        return JsonResponse({'success': True, **payload})
+    except wasambazaji.DoesNotExist:
+        return JsonResponse({'success': False, 'swa': 'Vendor hajapatikana', 'eng': 'Vendor not found'})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'swa': 'Hitilafu', 'eng': 'Something went wrong'})
 

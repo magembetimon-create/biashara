@@ -989,40 +989,48 @@ def shift_actor_sales(request):
         paper_size = shift_paper_class(paper)
 
         duka = todo.get('duka')
-        if not duka or sid <= 0 or actor_id <= 0:
+        if not duka or sid <= 0 or actor_id < 0:
             return JsonResponse({'success': False, 'msg': 'Invalid parameters'}, status=400)
 
         shift = ShiftSession.objects.get(pk=sid, Interprise=duka.id)
         period_end = shift.ends_at or timezone.now()
 
-        actor = InterprisePermissions.objects.filter(pk=actor_id, Interprise=duka.id).select_related(
-            'user__user', 'fanyakazi', 'user_entp__Interprise'
-        ).first()
-        if not actor:
-            return JsonResponse({'success': False, 'msg': 'Staff actor not found'}, status=404)
-
-        first_name = (actor.user.user.first_name or '').strip() if actor.user and actor.user.user else ''
-        last_name = (actor.user.user.last_name or '').strip() if actor.user and actor.user.user else ''
-        actor_name = (f"{first_name} {last_name}").strip()
-        if not actor_name:
-            actor_name = (
-                actor.user.user.get_full_name().strip()
-                if actor.user and actor.user.user and actor.user.user.get_full_name()
-                else ''
-            )
-        if not actor_name and actor.fanyakazi:
-            actor_name = (actor.fanyakazi.jina or '').strip()
-        if not actor_name:
-            actor_name = 'Unknown'
-
+        all_staff = actor_id == 0
+        actor = None
+        actor_name = ''
         actor_code = ''
-        if actor.user_entp and actor.user_entp.Interprise:
-            actor_code = (actor.user_entp.Interprise.Intp_code or '').strip()
+        if not all_staff:
+            actor = InterprisePermissions.objects.filter(pk=actor_id, Interprise=duka.id).select_related(
+                'user__user', 'fanyakazi', 'user_entp__Interprise'
+            ).first()
+            if not actor:
+                return JsonResponse({'success': False, 'msg': 'Staff actor not found'}, status=404)
 
-        actor_sales = completed_sales_qs(duka, shift.starts_at, period_end).filter(
-            Q(waiter_order_id=actor_id) |
-            (Q(waiter_order__isnull=True) & Q(By_id=actor_id))
-        )
+            first_name = (actor.user.user.first_name or '').strip() if actor.user and actor.user.user else ''
+            last_name = (actor.user.user.last_name or '').strip() if actor.user and actor.user.user else ''
+            actor_name = (f"{first_name} {last_name}").strip()
+            if not actor_name:
+                actor_name = (
+                    actor.user.user.get_full_name().strip()
+                    if actor.user and actor.user.user and actor.user.user.get_full_name()
+                    else ''
+                )
+            if not actor_name and actor.fanyakazi:
+                actor_name = (actor.fanyakazi.jina or '').strip()
+            if not actor_name:
+                actor_name = 'Unknown'
+
+            if actor.user_entp and actor.user_entp.Interprise:
+                actor_code = (actor.user_entp.Interprise.Intp_code or '').strip()
+        else:
+            actor_name = 'Wafanyakazi wote' if todo.get('useri') and getattr(todo.get('useri'), 'langSet', 1) == 0 else 'All staff'
+
+        actor_sales = completed_sales_qs(duka, shift.starts_at, period_end)
+        if not all_staff:
+            actor_sales = actor_sales.filter(
+                Q(waiter_order_id=actor_id) |
+                (Q(waiter_order__isnull=True) & Q(By_id=actor_id))
+            )
 
         item_buckets = {}
         sold_lines = mauzoList.objects.filter(
@@ -1064,6 +1072,7 @@ def shift_actor_sales(request):
             'actor_name': actor_name,
             'actor_code': actor_code,
             'actor_id': actor_id,
+            'all_staff': all_staff,
             'item_rows': item_rows,
             'totals': totals,
             'should_print': should_print,
