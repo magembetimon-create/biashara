@@ -207,9 +207,10 @@ hr {
 #imgBox img,
 #imgBox table {
     display: block;
-    width: 52px;
-    max-width: 52px;
+    width: 112px;
+    max-width: 112px;
     height: auto;
+    image-rendering: pixelated;
     margin-left: auto !important;
     margin-right: auto !important;
 }

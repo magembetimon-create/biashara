@@ -67,13 +67,25 @@
         
         <div class="receipt-line the_address">
           <span>{% if then.langSet == 0 %} Tarehe ya Ankara{% else %} Invoice Date {% endif %}:</span>
-          <span class="right">{{the_bill.date | date:'d/m/Y' }}</span>
+          <span class="right">
+            {% if the_bill.waiter_order %}
+              {% if the_bill.tarehe %}
+                <script>document.write(moment('{{ the_bill.tarehe|date:"r" }}').format('DD/MM/YYYY, HH:mm'))</script>
+              {% else %}
+                {{the_bill.date | date:'d/m/Y' }}
+              {% endif %}
+            {% else %}
+              {{the_bill.date | date:'d/m/Y' }}
+            {% endif %}
+          </span>
         </div>
 
+        {% if not the_bill.waiter_order %}
         <div class="receipt-line the_address">
           <span>{% if then.langSet == 0 %}Tarehe ya Kukamilisha  {% else %} Due date {% endif %}:</span>
           <span class="right">{{the_bill.kulipa | date:'d/m/Y'}}</span>
         </div>
+        {% endif %}
 
         <hr>
 
@@ -251,8 +263,8 @@
   
                     qrcode = new QRCode('imgBox',{
                       text:`${url}/mauzo/viewInvo?item_valued={{the_bill.id}}`,
-                      height:52,
-                      width:52,
+                      height:112,
+                      width:112,
                     
                   })
                })
