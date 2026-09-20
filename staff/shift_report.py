@@ -59,6 +59,130 @@ def completed_sale_lines_qs(duka, starts_at, period_end):
     )
 
 
+def shift_sales_amounts(duka, shifts):
+    """Completed sales totals per shift, matching shift view Stock Movement sales."""
+    now = timezone.now()
+    amounts = {}
+    windows = []
+    for shift in shifts:
+        period_end = shift.ends_at or now
+        amounts[shift.id] = Decimal('0')
+        if shift.starts_at:
+            windows.append((shift.id, shift.starts_at, period_end))
+    if not windows:
+        return amounts
+
+    range_start = min(start for _, start, _ in windows)
+    range_end = max(end for _, _, end in windows)
+    for line in completed_sale_lines_qs(duka, range_start, range_end):
+        net_qty = Decimal(line.idadi or 0) - Decimal(line.returned or 0) - Decimal(line.serviceReturn or 0)
+        if net_qty <= 0:
+            continue
+        event_at = getattr(line, 'event_at', None)
+        if not event_at:
+            continue
+        line_amount = net_qty * Decimal(line.bei or 0)
+        for shift_id, starts_at, period_end in windows:
+            if starts_at <= event_at <= period_end:
+                amounts[shift_id] += line_amount
+    return amounts
+
+
+def _shift_time_windows(shifts, now=None):
+    now = now or timezone.now()
+    windows = []
+    for shift in shifts:
+        if not shift.starts_at:
+            continue
+        windows.append((shift.id, shift.starts_at, shift.ends_at or now))
+    return windows
+
+
+def _amounts_in_windows(windows, qs, date_field='tarehe', amount_field='Amount'):
+    amounts = {sid: Decimal('0') for sid, _, _ in windows}
+    if not windows:
+        return amounts
+    range_start = min(start for _, start, _ in windows)
+    range_end = max(end for _, _, end in windows)
+    rows = qs.filter(**{
+        f'{date_field}__gte': range_start,
+        f'{date_field}__lte': range_end,
+    }).values(date_field, amount_field)
+    for row in rows:
+        event_at = row.get(date_field)
+        if not event_at:
+            continue
+        amt = Decimal(str(row.get(amount_field) or 0))
+        for shift_id, starts_at, period_end in windows:
+            if starts_at <= event_at <= period_end:
+                amounts[shift_id] += amt
+    return amounts
+
+
+def build_shifts_period_report(duka, shifts):
+    now = timezone.now()
+    windows = _shift_time_windows(shifts, now)
+    sales_map = shift_sales_amounts(duka, shifts)
+    expenses_map = _amounts_in_windows(
+        windows,
+        toaCash.objects.filter(Interprise=duka.id),
+    )
+    deposits_map = _amounts_in_windows(
+        windows,
+        wekaCash.objects.filter(Interprise=duka.id),
+    )
+
+    rows = []
+    totals = {
+        'opening': Decimal('0'),
+        'closing': Decimal('0'),
+        'sales': Decimal('0'),
+        'expenses': Decimal('0'),
+        'deposits': Decimal('0'),
+        'balance': Decimal('0'),
+        'count': 0,
+        'open_count': 0,
+        'closed_count': 0,
+    }
+
+    for shift in shifts:
+        sales = Decimal(str(sales_map.get(shift.id, 0) or 0))
+        expenses = Decimal(str(expenses_map.get(shift.id, 0) or 0))
+        deposits = Decimal(str(deposits_map.get(shift.id, 0) or 0))
+        opening = Decimal(str(shift.opening_cash or 0))
+        balance = opening + deposits - expenses
+        if shift.status == 'closed' and shift.actual_closing_cash is not None:
+            closing = Decimal(str(shift.actual_closing_cash))
+        elif shift.status == 'closed' and shift.expected_closing_cash is not None:
+            closing = Decimal(str(shift.expected_closing_cash))
+        else:
+            closing = balance
+
+        row = {
+            'shift': shift,
+            'opening': opening,
+            'closing': closing,
+            'sales': sales,
+            'expenses': expenses,
+            'deposits': deposits,
+            'balance': balance,
+        }
+        rows.append(row)
+        totals['opening'] += opening
+        totals['closing'] += closing
+        totals['sales'] += sales
+        totals['expenses'] += expenses
+        totals['deposits'] += deposits
+        totals['balance'] += balance
+        totals['count'] += 1
+        if shift.status == 'closed':
+            totals['closed_count'] += 1
+        else:
+            totals['open_count'] += 1
+
+    return rows, totals
+
+
 def staff_display_name(staff_perm):
     if not staff_perm:
         return 'Unknown'

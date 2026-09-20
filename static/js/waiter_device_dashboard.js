@@ -47,13 +47,14 @@ let WAITER_ITEMS_SCROLL_STATE = {
   bound: false
 }
 
-const WAITER_DEVICE_ID = String($('#DEVICE_ID').val() || '').trim()
+const WAITER_DEVICE_ID = (typeof getWaiterPosDeviceId === 'function' ? getWaiterPosDeviceId() : String($('#DEVICE_ID').val() || '').trim())
 const WAITER_DEVICE_BIZ = Number($('#DEVICE_BIZ_ID').val() || 0)
 const WAITER_ACTIVE_WAITER_ID = String($('#ACTIVE_WAITER_ID').val() || '').trim()
 
 function waiterDeviceRequest(payload) {
   const reqData = Object.assign({}, payload || {})
-  if (WAITER_DEVICE_ID) reqData.device_id = WAITER_DEVICE_ID
+  const deviceId = (typeof getWaiterPosDeviceId === 'function' ? getWaiterPosDeviceId() : WAITER_DEVICE_ID)
+  if (deviceId) reqData.device_id = deviceId
   if (WAITER_DEVICE_BIZ) reqData.biz = WAITER_DEVICE_BIZ
   if (WAITER_ACTIVE_WAITER_ID) reqData.waiter_id = WAITER_ACTIVE_WAITER_ID
   return reqData

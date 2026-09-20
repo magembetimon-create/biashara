@@ -207,8 +207,8 @@ hr {
 #imgBox img,
 #imgBox table {
     display: block;
-    width: 112px;
-    max-width: 112px;
+    width: 84px;
+    max-width: 84px;
     height: auto;
     image-rendering: pixelated;
     margin-left: auto !important;

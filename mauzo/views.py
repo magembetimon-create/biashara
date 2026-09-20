@@ -11,6 +11,7 @@ from django.contrib.auth.models import User, auth
 from management.models import UserExtend,Interprise_Rating,ForPrintingPupose,ChangedServiceFrom,invoice_desk,HudumaNyingine,ChangedServiceTo,ChangedService,Kanda,Workers,Notifications,deliveryAgents,productionList,deliveryBy,salePuMatch,manunuzi,remainedFromOda, manunuziList,order_from,order_to,bidhaa_aina,sale_return,user_customers,businessReg,sale_return_mauzo_fidia,sa_ret,sa_col_ret,sa_size_ret,picha_bidhaa,Cash_order_return,Interprise,toaCash,bei_za_bidhaa,bidhaa,Interprise_contacts,wekaCash,produ_size,color_produ,produ_colored,bidhaa_stoku,wateja,customer_Interprise,sales_color,sales_size,mauzoni,mauzoList,InterprisePermissions,PaymentAkaunts,customer_in_cell,waiterPayments,WaiterPosDeviceSession,waiter_clearing
 from management.models import customer_area
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
 from django.db.models import F,FloatField,Count,DecimalField,Sum
@@ -352,6 +353,8 @@ def _resolve_waiter_context(request):
             or request.GET.get('device_id', '')
             or ''
       ).strip()
+      if device_id and len(device_id) < 8:
+            device_id = ''
 
       biz_id_raw = request.POST.get('biz', '') or request.GET.get('biz', '') or ''
       try:
@@ -5345,6 +5348,7 @@ def waiter_pos_manage(request):
       return render(request, 'waiter_pos_manage.html', todo)
 
 
+@never_cache
 def waiter_pos(request):
       
       """
@@ -5355,7 +5359,7 @@ def waiter_pos(request):
             """
       try:
             biz_id = int(request.GET.get('biz', 0) or request.POST.get('biz', 0) or 0)
-            device_id = str(request.GET.get('device_id', '') or request.POST.get('device_id', '') or request.session.get('waiter_pos_device', '') or '').strip()
+            device_id = str(request.GET.get('device_id', '') or request.POST.get('device_id', '') or '').strip()
             duka = Interprise.objects.filter(pk=biz_id).first() if biz_id else None
             device_session_ok = False
 
@@ -5382,7 +5386,7 @@ def waiter_pos(request):
                   if not biz_id or not counter_id or not pin:
                         return JsonResponse({'success': False, 'msg': 'Data haipo'})
 
-                  if not device_id:
+                  if not device_id or len(device_id) < 8:
                         return JsonResponse({'success': False, 'msg': 'Kifaa hakijatambulika'})
 
                   if not device_session_ok:
@@ -5399,10 +5403,14 @@ def waiter_pos(request):
                         return JsonResponse({'success': False, 'msg': 'PIN si sahihi'})
 
                   # Bind this waiter to THIS device only. Do not clear other devices/waiters.
-                  WaiterPosDeviceSession.objects.filter(
-                        Interprise__id=biz_id,
+                  WaiterPosDeviceSession.objects.update_or_create(
+                        Interprise_id=biz_id,
                         device_id=device_id,
-                  ).update(active_user=counter)
+                        defaults={
+                              'active': True,
+                              'active_user': counter,
+                        },
+                  )
 
                   InterprisePermissions.objects.filter(pk=counter_id).update(servicing=True)
 
@@ -5442,18 +5450,19 @@ def waiter_pos(request):
 
 
 
+@never_cache
 def waiter_device_exit(request):
       """Clear active waiter user for a shared waiter POS device and return to PIN page."""
       if request.method != 'POST':
             return JsonResponse({'success': False, 'msg': 'Invalid method'})
 
-      device_id = str(request.POST.get('device_id', '') or request.session.get('waiter_pos_device', '') or '').strip()
+      device_id = str(request.POST.get('device_id', '') or '').strip()
       try:
-            biz_id = int(request.POST.get('biz', 0) or request.session.get('waiter_pos_biz', 0) or 0)
+            biz_id = int(request.POST.get('biz', 0) or 0)
       except:
             biz_id = 0
 
-      if not device_id:
+      if not device_id or len(device_id) < 8:
             return JsonResponse({'success': False, 'msg': 'Kifaa hakijatambulika'})
 
       ds_qs = WaiterPosDeviceSession.objects.filter(device_id=device_id, active=True)
@@ -5473,6 +5482,7 @@ def waiter_device_exit(request):
       })
 
 
+@never_cache
 def waiter_device_dashboard(request):
       """
       Device-authenticated waiter POS dashboard.
@@ -5480,8 +5490,8 @@ def waiter_device_dashboard(request):
       Print button always visible (force enable_print=True).
       """
       try:
-            biz_id = int(request.GET.get('biz', 0) or request.POST.get('biz', 0) or request.session.get('waiter_pos_biz', 0) or 0)
-            device_id = str(request.GET.get('device_id', '') or request.POST.get('device_id', '') or request.session.get('waiter_pos_device', '') or '').strip()
+            biz_id = int(request.GET.get('biz', 0) or request.POST.get('biz', 0) or 0)
+            device_id = str(request.GET.get('device_id', '') or request.POST.get('device_id', '') or '').strip()
 
             if not biz_id or not device_id:
                   return redirect('/mauzo/waiter_pos')

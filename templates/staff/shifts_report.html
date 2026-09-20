@@ -1,0 +1,193 @@
+{% extends 'userdash.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block nav-staff %}class="c-menu__item style-none is-active showingpop2"{% endblock %}
+{% block active-staff-shifts-menu %}class="btn-default btn btn-sm pop2_active_menu"{% endblock %}
+
+{% block Dashboard %}
+<style>
+  .sr-summary .classic_div { min-height: 86px; }
+  @media print {
+    .c-menu, .navbar, .staff-no-print, nav.nav-tabs { display: none !important; }
+    #general-panel { min-height: auto !important; padding: 0 !important; }
+    .table { font-size: 11px; }
+  }
+</style>
+<div class="Analytical whiteBg p-2 px-md-5 pt-md-3" id="general-panel" style="min-height:100vh;">
+  {% include 'staff/staffnavigations.html' %}
+
+  <div class="row align-items-center py-3 border-bottom staff-no-print">
+    <div class="col-md-8">
+      <h5 class="mb-0">{% if useri.langSet == 0 %}Ripoti za Shift{% else %}Shift Reports{% endif %}</h5>
+      <small class="text-muted">
+        {% if useri.langSet == 0 %}Mchanganuo wa hesabu kwa shift zilizoanza katika kipindi ulichochagua{% else %}Cash and sales breakdown for shifts that started in the selected period{% endif %}
+        {% if duka.currencii %} ({{ duka.currencii }}){% endif %}
+      </small>
+    </div>
+    <div class="col-md-4 text-md-right mt-2 mt-md-0">
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+        {% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}
+      </button>
+    </div>
+  </div>
+
+  <div class="mt-3 staff-no-print">
+    <a class="btn btn-sm {% if preset == 'week' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/staff/shifts/report?preset=week">
+      {% if useri.langSet == 0 %}Wiki hii{% else %}This week{% endif %}
+    </a>
+    <a class="btn btn-sm {% if preset == 'month' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/staff/shifts/report?preset=month">
+      {% if useri.langSet == 0 %}Mwezi huu{% else %}This month{% endif %}
+    </a>
+    <button type="button" class="btn btn-sm {% if preset == 'custom' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-toggle="modal" data-target="#shiftReportDates">
+      {% if useri.langSet == 0 %}Tarehe maalum{% else %}Custom date{% endif %}
+    </button>
+  </div>
+
+  <p class="mt-3 mb-2">
+    {% if useri.langSet == 0 %}Kipindi{% else %}Period{% endif %}:
+    <strong>
+      <script>document.write(moment('{{ period_start|date:"r" }}').format('DD MMM YYYY HH:mm'))</script>
+      –
+      <script>document.write(moment('{{ period_end|date:"r" }}').format('DD MMM YYYY HH:mm'))</script>
+    </strong>
+    · {{ report_totals.count }} {% if useri.langSet == 0 %}shift{% else %}shift(s){% endif %}
+  </p>
+
+  <div class="row sr-summary mb-3">
+    <div class="col-md-4 col-lg-2 mb-2">
+      <div class="classic_div p-3 h-100">
+        <div class="text-muted smallFont mb-1">{% if useri.langSet == 0 %}Cash ya kuanza{% else %}Opening{% endif %}</div>
+        <div class="weight600">{{ report_totals.opening|floatformat:2|intcomma }}</div>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-2 mb-2">
+      <div class="classic_div p-3 h-100">
+        <div class="text-muted smallFont mb-1">{% if useri.langSet == 0 %}Cash ya kufunga{% else %}Closing{% endif %}</div>
+        <div class="weight600">{{ report_totals.closing|floatformat:2|intcomma }}</div>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-2 mb-2">
+      <div class="classic_div p-3 h-100">
+        <div class="text-muted smallFont mb-1">{% if useri.langSet == 0 %}Mauzo / Mapato{% else %}Sales / Income{% endif %}</div>
+        <div class="weight600 text-primary">{{ report_totals.sales|floatformat:2|intcomma }}</div>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-2 mb-2">
+      <div class="classic_div p-3 h-100">
+        <div class="text-muted smallFont mb-1">{% if useri.langSet == 0 %}Matumizi{% else %}Expenses{% endif %}</div>
+        <div class="weight600 text-danger">{{ report_totals.expenses|floatformat:2|intcomma }}</div>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-2 mb-2">
+      <div class="classic_div p-3 h-100">
+        <div class="text-muted smallFont mb-1">{% if useri.langSet == 0 %}Cash deposit{% else %}Cash deposit{% endif %}</div>
+        <div class="weight600 text-success">{{ report_totals.deposits|floatformat:2|intcomma }}</div>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-2 mb-2">
+      <div class="classic_div p-3 h-100">
+        <div class="text-muted smallFont mb-1">{% if useri.langSet == 0 %}Pesa ya balance{% else %}Balance{% endif %}</div>
+        <div class="weight600 brown">{{ report_totals.balance|floatformat:2|intcomma }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover table-sm">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Msimbo{% else %}Code{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Hali{% else %}Status{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Imeanza{% else %}Started{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Kuanza{% else %}Opening{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Kufunga{% else %}Closing{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Mauzo{% else %}Sales{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Matumizi{% else %}Expenses{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Deposit{% else %}Deposit{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Balance{% else %}Balance{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report_rows %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td class="text-left">
+            <a href="/staff/shifts/view?sid={{ row.shift.id }}">{{ row.shift.code }}</a>
+          </td>
+          <td class="text-left">
+            {% if row.shift.status == 'closed' %}
+              <span class="badge badge-secondary">{% if useri.langSet == 0 %}Imefungwa{% else %}Closed{% endif %}</span>
+            {% else %}
+              <span class="badge badge-success">{% if useri.langSet == 0 %}Wazi{% else %}Open{% endif %}</span>
+            {% endif %}
+          </td>
+          <td class="text-left text-nowrap">
+            <script>document.write(moment('{{ row.shift.starts_at|date:"r" }}').format('DD MMM YYYY HH:mm'))</script>
+          </td>
+          <td class="text-right">{{ row.opening|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ row.closing|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ row.sales|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ row.expenses|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ row.deposits|floatformat:2|intcomma }}</td>
+          <td class="text-right weight600">{{ row.balance|floatformat:2|intcomma }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="10" class="text-center text-muted py-4">
+            {% if useri.langSet == 0 %}Hakuna shift zilizoanza katika kipindi hiki.{% else %}No shifts started in this period.{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% if report_rows %}
+      <tfoot>
+        <tr class="weight600">
+          <td colspan="4" class="text-right">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
+          <td class="text-right">{{ report_totals.opening|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ report_totals.closing|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ report_totals.sales|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ report_totals.expenses|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ report_totals.deposits|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ report_totals.balance|floatformat:2|intcomma }}</td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+  <p class="small text-muted staff-no-print">
+    {% if useri.langSet == 0 %}
+      Mauzo ni yale yaliyokamilika (POS na oda za waiter zilizoprint). Matumizi na cash deposit ni miamala ya pesa ndani ya muda wa shift. Balance = cash ya kuanza + deposit − matumizi. Kufunga ni cash halisi ikiwa shift imefungwa, vinginevyo ni balance inayotarajiwa.
+    {% else %}
+      Sales are completed POS and printed waiter orders. Expenses and cash deposits are cash movements during the shift. Balance = opening + deposits − expenses. Closing is actual cash if the shift is closed, otherwise expected balance.
+    {% endif %}
+  </p>
+</div>
+
+<div class="modal fade" id="shiftReportDates" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm" role="document">
+    <form method="get" action="/staff/shifts/report" class="modal-content">
+      <input type="hidden" name="preset" value="custom">
+      <div class="modal-header py-2">
+        <h6 class="modal-title">{% if useri.langSet == 0 %}Chagua muda{% else %}Select period{% endif %}</h6>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group mb-2">
+          <label class="smallFont">{% if useri.langSet == 0 %}Kuanzia{% else %}From{% endif %}</label>
+          <input type="date" name="fr" class="form-control form-control-sm" value="{{ custom_fr }}" required>
+        </div>
+        <div class="form-group mb-0">
+          <label class="smallFont">{% if useri.langSet == 0 %}Hadi{% else %}To{% endif %}</label>
+          <input type="date" name="to" class="form-control form-control-sm" value="{{ custom_to }}" required>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</button>
+        <button type="submit" class="btn btn-primary btn-sm">{% if useri.langSet == 0 %}Onyesha{% else %}Show{% endif %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

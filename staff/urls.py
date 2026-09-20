@@ -9,6 +9,7 @@ urlpatterns = [
     path('with-access', views.staff_with_access, name='staff_with_access'),
     path('waiters', views.waiters, name='staff_waiters'),
     path('shifts', views.staff_shifts, name='staff_shifts'),
+    path('shifts/report', views.staff_shifts_report, name='staff_shifts_report'),
     path('shifts/new', views.new_shift, name='staff_new_shift'),
     path('shifts/view', views.shift_view, name='staff_shift_view'),
     path('shifts/actor-sales', views.shift_actor_sales, name='staff_shift_actor_sales'),

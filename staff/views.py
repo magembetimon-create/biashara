@@ -1,6 +1,6 @@
 import traceback
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from collections import defaultdict
 
 from django.shortcuts import render, redirect
@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Sum, F
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 import json
 
 from management.models import (
@@ -39,7 +40,12 @@ from management.models import (
     wekaCash,
 )
 from accaunts.todos import Todos
-from staff.shift_report import build_shift_report, completed_sales_qs
+from staff.shift_report import (
+    build_shift_report,
+    build_shifts_period_report,
+    completed_sales_qs,
+    shift_sales_amounts,
+)
 
 
 def todoFunct(request):
@@ -618,6 +624,10 @@ def staff_shifts(request):
         except EmptyPage:
             page_obj = paginator.page(paginator.num_pages)
 
+        sales_map = shift_sales_amounts(duka, list(page_obj.object_list))
+        for shift in page_obj.object_list:
+            shift.sales_amount = sales_map.get(shift.id, Decimal('0'))
+
         todo.update({
             'staff_page': 'shifts',
             'shifts': page_obj,
@@ -627,6 +637,69 @@ def staff_shifts(request):
             'has_open_shift': has_open_shift,
         })
         return render(request, 'staff/shifts.html', todo)
+    except Exception:
+        traceback.print_exc()
+        return render(request, 'errorpage.html', todoFunct(request))
+
+
+def _shifts_report_period(request):
+    local_now = timezone.localtime()
+    preset = (request.GET.get('preset') or 'month').strip().lower()
+    if preset not in ('week', 'month', 'custom'):
+        preset = 'month'
+
+    start = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
+    end = local_now
+
+    if preset == 'week':
+        start = start - timedelta(days=start.weekday())
+    elif preset == 'month':
+        start = start.replace(day=1)
+    else:
+        fr = parse_date(request.GET.get('fr') or '')
+        to = parse_date(request.GET.get('to') or '')
+        if not fr or not to:
+            preset = 'month'
+            start = start.replace(day=1)
+        else:
+            if fr > to:
+                fr, to = to, fr
+            start = timezone.make_aware(datetime.combine(fr, time.min), timezone.get_current_timezone())
+            end = timezone.make_aware(datetime.combine(to, time.max), timezone.get_current_timezone())
+
+    return preset, start, end
+
+
+@login_required(login_url='login')
+def staff_shifts_report(request):
+    try:
+        todo = todoFunct(request)
+        ok, resp = _shift_enabled_or_redirect(todo)
+        if not ok:
+            return resp
+
+        duka = todo['duka']
+        preset, start, end = _shifts_report_period(request)
+        shifts = list(
+            ShiftSession.objects.filter(
+                Interprise=duka.id,
+                starts_at__gte=start,
+                starts_at__lte=end,
+            ).select_related('opened_by__user__user', 'closed_by__user__user').order_by('-starts_at')
+        )
+        rows, totals = build_shifts_period_report(duka, shifts)
+
+        todo.update({
+            'staff_page': 'shift_report',
+            'report_rows': rows,
+            'report_totals': totals,
+            'preset': preset,
+            'period_start': start,
+            'period_end': end,
+            'custom_fr': start.date().isoformat(),
+            'custom_to': end.date().isoformat(),
+        })
+        return render(request, 'staff/shifts_report.html', todo)
     except Exception:
         traceback.print_exc()
         return render(request, 'errorpage.html', todoFunct(request))
@@ -1006,31 +1079,17 @@ def shift_actor_sales(request):
             if not actor:
                 return JsonResponse({'success': False, 'msg': 'Staff actor not found'}, status=404)
 
-            first_name = (actor.user.user.first_name or '').strip() if actor.user and actor.user.user else ''
-            last_name = (actor.user.user.last_name or '').strip() if actor.user and actor.user.user else ''
-            actor_name = (f"{first_name} {last_name}").strip()
-            if not actor_name:
-                actor_name = (
-                    actor.user.user.get_full_name().strip()
-                    if actor.user and actor.user.user and actor.user.user.get_full_name()
-                    else ''
-                )
-            if not actor_name and actor.fanyakazi:
-                actor_name = (actor.fanyakazi.jina or '').strip()
-            if not actor_name:
-                actor_name = 'Unknown'
-
-            if actor.user_entp and actor.user_entp.Interprise:
-                actor_code = (actor.user_entp.Interprise.Intp_code or '').strip()
+        if actor.user_entp and actor.user_entp.Interprise:
+            actor_code = (actor.user_entp.Interprise.Intp_code or '').strip()
         else:
             actor_name = 'Wafanyakazi wote' if todo.get('useri') and getattr(todo.get('useri'), 'langSet', 1) == 0 else 'All staff'
 
         actor_sales = completed_sales_qs(duka, shift.starts_at, period_end)
         if not all_staff:
             actor_sales = actor_sales.filter(
-                Q(waiter_order_id=actor_id) |
-                (Q(waiter_order__isnull=True) & Q(By_id=actor_id))
-            )
+            Q(waiter_order_id=actor_id) |
+            (Q(waiter_order__isnull=True) & Q(By_id=actor_id))
+        )
 
         item_buckets = {}
         sold_lines = mauzoList.objects.filter(

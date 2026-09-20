@@ -220,8 +220,8 @@ hr {
 #imgBox img,
 #imgBox table {
     display: block;
-    width: 96px;
-    max-width: 96px;
+    width: 72px;
+    max-width: 72px;
     height: auto;
     image-rendering: pixelated;
     margin-left: auto !important;

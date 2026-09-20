@@ -50,12 +50,12 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>{% if useri.langSet == 0 %}Msimbo{% else %}Code{% endif %}</th>
-          <th>{% if useri.langSet == 0 %}Aina{% else %}Type{% endif %}</th>
-          <th>{% if useri.langSet == 0 %}Hali{% else %}Status{% endif %}</th>
-          <th>{% if useri.langSet == 0 %}Imeanza{% else %}Started{% endif %}</th>
-          <th>{% if useri.langSet == 0 %}Imefungwa{% else %}Closed{% endif %}</th>
-          <th>{% if useri.langSet == 0 %}Cash ya Kuanza{% else %}Opening Cash{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Msimbo{% else %}Code{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Hali{% else %}Status{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Imeanza{% else %}Started{% endif %}</th>
+          <th class="text-left" >{% if useri.langSet == 0 %}Imefungwa{% else %}Closed{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Cash ya Kuanza{% else %}Opening Cash{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Mauzo{% else %}Sales{% endif %}</th>
           <th></th>
         </tr>
       </thead>
@@ -64,7 +64,6 @@
         <tr>
           <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
           <td> <a href="/staff/shifts/view?sid={{ s.id }}">{{ s.code }}</a> </td>
-          <td>{{ s.shift_type }}</td>
           <td>
             {% if s.status == 'closed' %}
               <span class="badge badge-secondary">{% if useri.langSet == 0 %}Imefungwa{% else %}Closed{% endif %}</span>
@@ -80,6 +79,7 @@
                 document.write(moment('{{ s.ends_at|date:"r" }}').format('DD MMM YYYY HH:mm') + '</span>');
             </script> {% else %}<span class="text-muted">-</span>{% endif %}</td>
           <td>{{ s.opening_cash | floatformat:2 | intcomma }}</td>
+          <td>{{ s.sales_amount | floatformat:2 | intcomma }}</td>
           <td>
             <a href="/staff/shifts/view?sid={{ s.id }}" class="btn btn-outline-primary btn-sm">
               {% if useri.langSet == 0 %}Tazama{% else %}View{% endif %}

@@ -29,5 +29,8 @@
   <li class="nav-item">
     <a class="nav-link {% if staff_page == 'shifts' %}active{% else %}btn-outline-primary{% endif %}" href="/staff/shifts">{% if useri.langSet == 0 %}Shift za Watumiaji{% else %}User Shifts{% endif %}</a>
   </li>
+  <li class="nav-item">
+    <a class="nav-link {% if staff_page == 'shift_report' %}active{% else %}btn-outline-primary{% endif %}" href="/staff/shifts/report">{% if useri.langSet == 0 %}Ripoti za Shift{% else %}Shift Reports{% endif %}</a>
+  </li>
 
 </ul>
