@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>fanyaBiashara</title>
+{% include 'partials/pwa_head.html' %}
 
 <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> 
     
@@ -90,6 +91,11 @@
             </div>
           
             <h5 class="py-3 text-center" >{% if lang == 0 %}KUINGIA{% else %}LOGIN{% endif %}</h5>
+            <div class="text-center mb-2">
+              <button type="button" id="pwaInstallBtn" hidden class="btn btn-sm btn-outline-primary">
+                {% if lang == 0 %}Sakinisha app{% else %}Install app{% endif %}
+              </button>
+            </div>
 
             <form action="/login" method="POST" style="min-width: 300px;">
                 {% csrf_token %}

@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% if duka %}{{ duka.name }} – Waiter POS{% else %}Waiter POS{% endif %}</title>
+  {% include 'partials/pwa_head.html' with pwa_kind='waiter' %}
   <script src="{% static 'js/waiter_device_id.js' %}"></script>
   <script>
   (function () {
@@ -344,6 +345,9 @@
     {% else %}
       <h4>Waiter POS</h4>
     {% endif %}
+    <button type="button" id="pwaInstallBtn" hidden class="btn btn-sm btn-light mt-2">
+      Sakinisha app / Install
+    </button>
   </div>
 
   <div id="networkIndicator" class="network-indicator checking" role="status" aria-live="polite">

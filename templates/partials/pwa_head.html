@@ -1,0 +1,29 @@
+{% load static %}
+<link rel="manifest" href="{% if pwa_kind == 'waiter' %}{% url 'pwa_waiter_manifest' %}{% if biz_id %}?biz={{ biz_id }}{% endif %}{% else %}{% url 'pwa_manifest' %}{% endif %}">
+<meta name="theme-color" content="{% if pwa_kind == 'waiter' %}#1a1a2e{% else %}#1c1c1c{% endif %}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="{% if pwa_kind == 'waiter' %}Waiter POS{% else %}FanyaBiashara{% endif %}">
+<link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/pwa/icon-192.png">
+<style>
+  :root { --fb-pwa-progress: {% if pwa_kind == 'waiter' %}#F68A1F{% else %}#007BFF{% endif %}; }
+  #fb-pwa-progress {
+    position: fixed;
+    top: env(safe-area-inset-top, 0px);
+    left: 0;
+    height: 3px;
+    width: 0;
+    z-index: 2147483647;
+    pointer-events: none;
+    opacity: 0;
+    background: var(--fb-pwa-progress);
+    box-shadow: 0 0 8px var(--fb-pwa-progress);
+    transition: width .25s ease-out, opacity .2s ease;
+  }
+  #fb-pwa-progress.is-on { opacity: 1; }
+  #fb-pwa-progress.is-done { opacity: 0; transition: width .15s ease-out, opacity .35s ease .05s; }
+</style>
+<script src="{% static 'js/pwa-progress.js' %}"></script>
+<script src="{% static 'js/pwa-register.js' %}" defer></script>

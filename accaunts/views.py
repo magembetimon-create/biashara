@@ -4,6 +4,7 @@
 from genericpath import exists
 from ipaddress import ip_address
 import logging
+import os
 import traceback
 from typing import Dict
 from django.core.files import storage
@@ -26,8 +27,10 @@ from purchase.guest_compound_utils import (
     shop_has_compound_positions,
 )
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
+from django.templatetags.static import static
 from django.db.models import F
 from django.core import serializers
 from django.db.models import Q
@@ -341,6 +344,120 @@ def help(request):
 def welcome(request):
   lang = int(request.GET.get('lang',0))
   return render(request,'index.html',{'lang':lang})
+
+
+def _pwa_icon_urls(request):
+    """Same-origin icons (not GCS). Android WebAPK fails if icon URLs 404 or are cross-origin/private."""
+    origin = request.build_absolute_uri('/').rstrip('/')
+    return [
+        {
+            'src': origin + '/pwa/icon-192.png',
+            'sizes': '192x192',
+            'type': 'image/png',
+            'purpose': 'any',
+        },
+        {
+            'src': origin + '/pwa/icon-512.png',
+            'sizes': '512x512',
+            'type': 'image/png',
+            'purpose': 'any',
+        },
+        {
+            'src': origin + '/pwa/icon-maskable-512.png',
+            'sizes': '512x512',
+            'type': 'image/png',
+            'purpose': 'maskable',
+        },
+    ]
+
+
+def pwa_icon_file(request, filename):
+    allowed = {
+        'icon-192.png',
+        'icon-512.png',
+        'icon-maskable-512.png',
+        'apple-touch-icon.png',
+    }
+    if filename not in allowed:
+        return HttpResponse(status=404)
+    path = os.path.join(str(settings.BASE_DIR), 'static', 'pwa', filename)
+    if not os.path.isfile(path):
+        return HttpResponse(status=404)
+    resp = FileResponse(open(path, 'rb'), content_type='image/png')
+    resp['Cache-Control'] = 'public, max-age=86400'
+    return resp
+
+
+@never_cache
+def pwa_manifest(request):
+    payload = {
+        'id': '/login',
+        'name': 'FanyaBiashara',
+        'short_name': 'FanyaBiashara',
+        'description': 'Manage and connect to business',
+        'start_url': '/login',
+        'scope': '/',
+        'display': 'standalone',
+        'display_override': ['standalone', 'browser'],
+        'orientation': 'any',
+        'background_color': '#ffffff',
+        'theme_color': '#1c1c1c',
+        'icons': _pwa_icon_urls(request),
+    }
+    resp = JsonResponse(payload)
+    resp['Content-Type'] = 'application/manifest+json'
+    return resp
+
+
+@never_cache
+def pwa_waiter_manifest(request):
+    start = '/mauzo/waiter_pos'
+    biz = str(request.GET.get('biz') or '').strip()
+    if biz.isdigit():
+        start = f'/mauzo/waiter_pos?biz={biz}'
+    payload = {
+        'id': start.split('?')[0],
+        'name': 'Waiter POS',
+        'short_name': 'Waiter POS',
+        'description': 'Waiter ordering and printing',
+        'start_url': start,
+        'scope': '/',
+        'display': 'standalone',
+        'display_override': ['standalone', 'browser'],
+        'orientation': 'any',
+        'background_color': '#1a1a2e',
+        'theme_color': '#1a1a2e',
+        'icons': _pwa_icon_urls(request),
+    }
+    resp = JsonResponse(payload)
+    resp['Content-Type'] = 'application/manifest+json'
+    return resp
+
+
+PWA_SERVICE_WORKER_JS = """
+self.addEventListener('install', function () { self.skipWaiting(); });
+self.addEventListener('activate', function (event) {
+  event.waitUntil(self.clients.claim());
+});
+self.addEventListener('fetch', function (event) {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(fetch(event.request));
+});
+"""
+
+
+@never_cache
+def pwa_service_worker(request):
+    sw_path = os.path.join(str(settings.BASE_DIR), 'static', 'js', 'pwa-sw.js')
+    try:
+        with open(sw_path, 'r', encoding='utf-8') as fh:
+            body = fh.read()
+    except OSError:
+        body = PWA_SERVICE_WORKER_JS
+    resp = HttpResponse(body, content_type='application/javascript; charset=utf-8')
+    resp['Service-Worker-Allowed'] = '/'
+    resp['Cache-Control'] = 'no-cache'
+    return resp
 
 def login(request):
    

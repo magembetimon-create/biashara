@@ -29,6 +29,10 @@ urlpatterns=[
 
     path('userpwd',views.userpwd, name='userpwd'),
     path('logout',views.logout, name='logout'),
+    path('manifest.webmanifest', views.pwa_manifest, name='pwa_manifest'),
+    path('waiter-manifest.webmanifest', views.pwa_waiter_manifest, name='pwa_waiter_manifest'),
+    path('sw.js', views.pwa_service_worker, name='pwa_service_worker'),
+    path('pwa/<str:filename>', views.pwa_icon_file, name='pwa_icon_file'),
     path('userdetails',views.userdetails, name='userdetails'),
     path('ChangeUserPlace',views.ChangeUserPlace, name='ChangeUserPlace'),
     
