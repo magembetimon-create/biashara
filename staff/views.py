@@ -45,6 +45,7 @@ from staff.shift_report import (
     build_shifts_period_report,
     completed_sales_qs,
     shift_sales_amounts,
+    staff_display_name,
 )
 
 
@@ -1063,7 +1064,7 @@ def shift_actor_sales(request):
 
         duka = todo.get('duka')
         if not duka or sid <= 0 or actor_id < 0:
-            return JsonResponse({'success': False, 'msg': 'Invalid parameters'}, status=400)
+            return render(request, 'errorpage.html', todo)
 
         shift = ShiftSession.objects.get(pk=sid, Interprise=duka.id)
         period_end = shift.ends_at or timezone.now()
@@ -1072,17 +1073,15 @@ def shift_actor_sales(request):
         actor = None
         actor_name = ''
         actor_code = ''
-        if not all_staff:
+        if all_staff:
+            actor_name = 'Wafanyakazi wote' if todo.get('useri') and getattr(todo.get('useri'), 'langSet', 1) == 0 else 'All staff'
+        else:
             actor = InterprisePermissions.objects.filter(pk=actor_id, Interprise=duka.id).select_related(
                 'user__user', 'fanyakazi', 'user_entp__Interprise'
             ).first()
             if not actor:
-                return JsonResponse({'success': False, 'msg': 'Staff actor not found'}, status=404)
-
-        if actor.user_entp and actor.user_entp.Interprise:
-            actor_code = (actor.user_entp.Interprise.Intp_code or '').strip()
-        else:
-            actor_name = 'Wafanyakazi wote' if todo.get('useri') and getattr(todo.get('useri'), 'langSet', 1) == 0 else 'All staff'
+                return render(request, 'errorpage.html', todo)
+            actor_name = staff_display_name(actor)
 
         actor_sales = completed_sales_qs(duka, shift.starts_at, period_end)
         if not all_staff:
@@ -1140,10 +1139,10 @@ def shift_actor_sales(request):
         return render(request, 'staff/shift_actor_sales.html', todo)
 
     except ShiftSession.DoesNotExist:
-        return JsonResponse({'success': False, 'msg': 'Shift not found'}, status=404)
-    except Exception as e:
+        return render(request, 'errorpage.html', todoFunct(request))
+    except Exception:
         traceback.print_exc()
-        return JsonResponse({'success': False, 'msg': str(e)}, status=500)
+        return render(request, 'errorpage.html', todoFunct(request))
 
 
 @login_required(login_url='login')
