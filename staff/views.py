@@ -38,8 +38,14 @@ from management.models import (
     productChangeRecord,
     toaCash,
     wekaCash,
+    PhoneMailConfirm,
 )
-from accaunts.todos import Todos
+from accaunts.todos import (
+    Todos,
+    STAFF_TEMP_EMAIL_DOMAIN,
+    build_unique_staff_temp_email,
+    staff_temp_email_local_part,
+)
 from staff.shift_report import (
     build_shift_report,
     build_shifts_period_report,
@@ -171,6 +177,46 @@ def all_staff(request):
     except Exception:
         traceback.print_exc() 
         return render(request, 'errorpage.html', todoFunct(request))
+
+
+@login_required(login_url='login')
+def create_staff_temp_email(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'msg': 'Invalid method'}, status=405)
+    try:
+        todo = todoFunct(request)
+        allowed, perm_response = _check_admin_or_msaidizi(todo)
+        if not allowed:
+            return perm_response
+
+        raw_name = str(request.POST.get('username') or request.POST.get('name') or '').strip()
+        if not raw_name:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Andika jina au user name ili kutengeneza email.',
+                'msg_eng': 'Enter a name or username to create the email.',
+            }, status=400)
+
+        local = staff_temp_email_local_part(raw_name)
+        email = build_unique_staff_temp_email(local)
+        duration = timezone.now() + timedelta(days=3650)
+        PhoneMailConfirm.objects.create(
+            PhoneMail=email,
+            confirm=False,
+            code=0,
+            duration=duration,
+        )
+        return JsonResponse({
+            'success': True,
+            'email': email,
+            'username': email.split('@', 1)[0],
+            'domain': STAFF_TEMP_EMAIL_DOMAIN,
+            'msg_swa': 'Email ya kuingilia imetengenezwa. Mpe mfanyakazi aitumie kwenye /register.',
+            'msg_eng': 'Login email created. Give it to the staff member to use on /register.',
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'msg': str(e)}, status=500)
 
 
 @login_required(login_url='login')

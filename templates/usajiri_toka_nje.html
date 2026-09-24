@@ -77,6 +77,8 @@
     </table>
   </div>
 
+  <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 mb-1" id="ob-pager"></div>
+
   <div class="text-center py-3">
     <button type="button" id="ob-save-btn" class="btn btn-primary latoFont" disabled>
       {% if useri.langSet == 0 %}Ongeza Bidhaa{% else %}Add Items{% endif %}
@@ -97,6 +99,10 @@
     border-radius: 100%;
     vertical-align: middle;
     margin-right: 6px;
+  }
+  #ob-items-body tr.ob-row-selected,
+  #ob-items-body tr.ob-row-selected td {
+    background-color: #e9ecef !important;
   }
 </style>
 {% endblock %}

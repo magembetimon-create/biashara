@@ -35,6 +35,10 @@
         $('#form-worker').data('edit', 0);
         $('#form-worker').data('active_worker', 0);
         $('#form-worker').data('worker_value', 0);
+        $('#temp-email-username').val('');
+        $('#temp-email-result').addClass('d-none').text('');
+        $('#temp-email-feedback').text('');
+        $('#temp-email-panel').hide();
       "
       data-toggle="modal" data-target="#workers-modal">
       {% if useri.langSet == 0 %}Ongeza{% else %}Add{% endif %}
@@ -309,6 +313,36 @@
               </div>
             </div>
 
+            <p class="text-right mb-2">
+              <button type="button" class="btn btn-link btn-sm p-0 latoFont" id="toggle-temp-email-panel">
+                {% if useri.langSet == 0 %}temporary user email{% else %}temporary user email{% endif %}
+              </button>
+            </p>
+            <div id="temp-email-panel" class="border rounded p-3 mb-3" style="display:none;background:#f8f9fb;">
+              <p class="smallFont font-weight-bold mb-1">
+                {% if useri.langSet == 0 %}Email ya kuingilia (mfanyakazi bila email){% else %}Login email (staff without email){% endif %}
+              </p>
+              <p class="smallerFont text-muted mb-2">
+                {% if useri.langSet == 0 %}
+                  Tengeneza email ya muda kama <b>jina@fanyabiashara.com</b>. Mfanyakazi ataitumia kwenye /register, kisha anaweza kuibadilisha baadaye.
+                {% else %}
+                  Create a temporary email like <b>name@fanyabiashara.com</b>. The staff member uses it on /register and can change it later.
+                {% endif %}
+              </p>
+              <div class="input-group mb-2">
+                <input type="text" id="temp-email-username" class="form-control smallFont"
+                  placeholder="{% if useri.langSet == 0 %}user name, mf. jina la mfanyakazi{% else %}username, e.g. staff name{% endif %}">
+                <div class="input-group-append">
+                  <span class="input-group-text smallFont">@fanyabiashara.com</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-primary" id="create-temp-email-btn">
+                {% if useri.langSet == 0 %}Tengeneza email{% else %}Create email{% endif %}
+              </button>
+              <div id="temp-email-feedback" class="smallFont mt-2"></div>
+              <div id="temp-email-result" class="alert alert-success smallFont py-2 mt-2 mb-0 d-none"></div>
+            </div>
+
             <div class="row py-3">
               <div class="col-6 text-center">
                 <button type="button" class="btn btn-secondary latoFont smallFont" data-dismiss="modal">Close</button>
@@ -364,6 +398,48 @@ $(function() {
     }
   })
 })
+
+$('#toggle-temp-email-panel').on('click', function() {
+  $('#temp-email-panel').toggle(300);
+});
+
+$('#worker-jina').on('keyup change', function() {
+  if (!$('#temp-email-result').hasClass('d-none')) return;
+  var name = ($(this).val() || '').toString().trim();
+  if (!name) return;
+  var local = name.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  if (local) $('#temp-email-username').val(local);
+});
+
+$('#create-temp-email-btn').on('click', function() {
+  var btn = $(this);
+  var username = ($('#temp-email-username').val() || $('#worker-jina').val() || '').toString().trim();
+  var csrfToken = $('input[name=csrfmiddlewaretoken]').val();
+  $('#temp-email-feedback').removeClass('text-success').addClass('text-danger').text('');
+  if (!username) {
+    $('#temp-email-feedback').text('{% if useri.langSet == 0 %}Andika user name au jina la mfanyakazi.{% else %}Enter a username or employee name.{% endif %}');
+    return;
+  }
+  btn.prop('disabled', true);
+  $.ajax({
+    type: 'POST',
+    url: '{% url "staff_create_temp_email" %}',
+    data: { csrfmiddlewaretoken: csrfToken, username: username }
+  }).done(function(respo) {
+    btn.prop('disabled', false);
+    if (respo.success) {
+      $('#temp-email-feedback').removeClass('text-danger').addClass('text-success').text({% if useri.langSet == 0 %}respo.msg_swa || respo.msg_eng || ''{% else %}respo.msg_eng || respo.msg_swa || ''{% endif %});
+      $('#temp-email-result').removeClass('d-none').text(respo.email);
+      $('#temp-email-username').val(respo.username || username);
+    } else {
+      $('#temp-email-feedback').text({% if useri.langSet == 0 %}respo.msg_swa || respo.msg_eng || respo.msg || 'Error'{% else %}respo.msg_eng || respo.msg_swa || respo.msg || 'Error'{% endif %});
+    }
+  }).fail(function(xhr) {
+    btn.prop('disabled', false);
+    var response = xhr.responseJSON || {};
+    $('#temp-email-feedback').text({% if useri.langSet == 0 %}response.msg_swa || response.msg_eng || response.msg || 'Error'{% else %}response.msg_eng || response.msg_swa || response.msg || 'Error'{% endif %});
+  });
+});
 
 function AutoCompleteSelectHandler(ui) {
   var selectedObj = ui

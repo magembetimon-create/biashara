@@ -60,7 +60,14 @@ import xml.etree.ElementTree as ET
 import xmltodict
 # from DirectPayOnline import DPO
 
-from .todos import Todos,confirmMailF,sendSMS
+from .todos import (
+    Todos,
+    confirmMailF,
+    sendSMS,
+    is_staff_temp_login_email,
+    staff_temp_email_record,
+    normalize_staff_temp_email,
+)
 # Create your views here.
 
 logger = logging.getLogger(__name__)
@@ -117,73 +124,94 @@ def register(request):
         first_name= request.POST['f_name'] 
         last_name= request.POST['l_name'] 
 
-        mail= request.POST['mail'] 
+        mail= normalize_staff_temp_email(request.POST['mail'])
         password= request.POST['pwd'] 
         pers = int(request.POST['pers'])
         M = int(request.POST.get('male',0))
         F = int(request.POST.get('Female',0))
         lang = int(request.POST.get('lang',0))
-        code = int(request.POST.get('code',0))
-        mtaa = request.POST['kijiji'] 
+        code = int(request.POST.get('code',0) or 0)
+        mtaa = request.POST['kijiji']
+        skip_email = str(request.POST.get('skip_email', '0')).strip().lower() in ('1', 'true', 'yes', 'on')
+        is_temp_mail = is_staff_temp_login_email(mail)
 
-     
-
-        confirm = PhoneMailConfirm.objects.get(PhoneMail__icontains=mail,code=code,duration__gte=datetime.datetime.now(tz=timezone.utc))
-        confirm.confirm = True
-        confirm.save()
+        if is_temp_mail:
+            confirm = staff_temp_email_record(mail)
+            if confirm is None:
+                return JsonResponse({
+                    'success': False,
+                    'msg_swa': 'Email hii ya mfumo haijatengenezwa na admin. Tafadhali omba email ya kuingilia.',
+                    'msg_eng': 'This system email was not created by admin. Please request a login email first.',
+                })
+            if not confirm.confirm and not skip_email:
+                return JsonResponse({
+                    'success': False,
+                    'msg_swa': 'Tafadhali thibitisha email kwanza.',
+                    'msg_eng': 'Please verify the email first.',
+                })
+            confirm.confirm = True
+            confirm.save()
+        else:
+            confirm = PhoneMailConfirm.objects.get(PhoneMail__icontains=mail,code=code,duration__gte=datetime.datetime.now(tz=timezone.utc))
+            confirm.confirm = True
+            confirm.save()
 
         st=Mitaa.objects.get(pk=mtaa)
 
-        email_exists = UserExtend.objects.filter(user__email__icontains=mail)
-        
-        if email_exists.filter(regstatue=2).exists()  :
-            # messages.error(request,'Namba ya simu uliyoingiza Tayari inatumika !')
-            data = {
-              'success':False,
-              'msg_swa':'Anwani ya barua pepe tayari imeshasajiriwa tafadhari igiza akaunti nyingine',
-              'msg_eng':'The email address has already registered taken please use another email address'
-            }
+        existing_user = User.objects.filter(Q(username__iexact=mail) | Q(email__iexact=mail)).order_by('id').first()
+        existing_ext = UserExtend.objects.filter(user=existing_user).first() if existing_user else None
 
-            if PhoneMailConfirm.objects.filter(PhoneMail=mail,confirm=False):
-              data = {
-                'success':True
-              }
+        if existing_ext and existing_ext.regstatue == 2:
+            return JsonResponse({
+              'success': False,
+              'msg_swa': 'Anwani ya barua pepe tayari imeshasajiriwa tafadhari tumia akaunti nyingine',
+              'msg_eng': 'The email address has already been registered, please use another email address',
+            })
 
+        if existing_user:
+          user = existing_user
+          user.first_name = first_name
+          user.last_name = last_name
+          user.email = mail
+          if user.username != mail:
+            if User.objects.filter(username__iexact=mail).exclude(pk=user.id).exists():
+              return JsonResponse({
+                'success': False,
+                'msg_swa': 'Username hii tayari inatumika. Tafadhali tumia email nyingine.',
+                'msg_eng': 'This username is already in use. Please use another email.',
+              })
+            user.username = mail
+          if password:
+            user.set_password(password)
+          user.save()
+        else:
+          if User.objects.filter(username__iexact=mail).exists():
+            return JsonResponse({
+              'success': False,
+              'msg_swa': 'Username hii tayari inatumika. Tafadhali tumia email nyingine.',
+              'msg_eng': 'This username is already in use. Please use another email.',
+            })
+          user = User.objects.create_user(email=mail,username=mail,first_name=first_name, last_name=last_name, password=password)
 
-      
-            return JsonResponse(data)
+        ext = existing_ext or UserExtend(user=user)
+        ext.user = user
+        ext.regstatue = 1
+        if M:
+          ext.gender = 1
+        if F:
+          ext.gender = 0
+        ext.company = not pers
+        ext.mtaa = st
+        ext.langSet = lang
+        ext.save()
 
-        else:  
-          user = None
-          if email_exists.exists():
-             user  = email_exists.last().user
-          else:
-            user = User.objects.create_user(email=mail,username=mail,first_name=first_name, last_name=last_name, password=password )
-          
-          ext = UserExtend()
-          # user.save()
-          ext.regstatue = 1
-          ext.user = user
-          if M:
-            ext.gender = 1
-          if F:
-            ext.gender = 0  
+        return JsonResponse({
+          'success': True,
+          'id': ext.id
+        })
 
-          
-          ext.company = not pers
-
-          ext.mtaa = st
-          ext.langSet = lang
-          ext.save()
-
-          data = {
-            'success':True,
-            'id':ext.id
-            }
-
-          return JsonResponse(data)
-
-      except:
+      except Exception:
+          traceback.print_exc()
           data = {
             'success':False,
             'msg_swa':'Kitendo hakikufanikiwa kutokana na hitilafu tafadhari jaribu tena',
@@ -229,10 +257,35 @@ def confirmMail(request):
       if mail is None:
         mail = request.POST.get('phone')
         isMail = False
+      else:
+        mail = normalize_staff_temp_email(mail)
 
       if pwd:
          getmail = User.objects.get(email__icontains=mail)
          mail = getmail.email
+
+      if isMail and is_staff_temp_login_email(mail):
+        rec = staff_temp_email_record(mail)
+        if rec is None:
+          return JsonResponse({
+            'success': False,
+            'msg_swa': 'Email hii ya mfumo haijatengenezwa na admin. Tafadhali omba email ya kuingilia.',
+            'msg_eng': 'This system email was not created by admin. Please request a login email first.',
+          })
+        if UserExtend.objects.filter(user__email__iexact=mail, regstatue=2).exists():
+          return JsonResponse({
+            'success': False,
+            'msg_swa': 'Anwani ya barua pepe tayari imeshasajiriwa tafadhari tumia akaunti nyingine',
+            'msg_eng': 'The email address has already been registered, please use another email address',
+          })
+        rec.confirm = True
+        rec.save()
+        return JsonResponse({
+          'success': True,
+          'skip_email': True,
+          'mail': rec.PhoneMail,
+          'id': rec.id,
+        })
          
 
       conf = PhoneMailConfirm.objects.filter(PhoneMail__icontains=mail)
@@ -479,42 +532,28 @@ def login(request):
 
        
         if user is not None:
- 
-          Sessions = Session.objects.all()
-          otherLog = 0
-          for row in Sessions:
+          skip_device_otp = is_staff_temp_login_email(email)
+          other_sessions = []
+          for row in Session.objects.all():
               if str(row.get_decoded().get("_auth_user_id")) == str(user.id):
-                  # print('Same sessions')
-                  if code == 0:
-                     otherLog = 1
-                  else:   
-                     mail = PhoneMailConfirm.objects.get(PhoneMail__icontains=email,code=code,duration__gte=datetime.datetime.now(tz=timezone.utc))
-                     row.delete()
-          # request.session['logged'] = user.id     
-                  break 
-          
-          
-    
-        
-          if not otherLog:   
-            auth.login(request, user) 
-            return redirect("/userdash")
-          else:
+                  other_sessions.append(row)
+
+          if other_sessions and skip_device_otp:
+              for row in other_sessions:
+                  row.delete()
+          elif other_sessions and code == 0:
               conf = PhoneMailConfirm.objects.filter(PhoneMail__icontains=email)
               tm = datetime.datetime.now(tz=timezone.utc) + timedelta(seconds=80)
               randNum = random.randint(10000,99999)
               conf.update(code=randNum,duration=tm)
-              try:  
+              try:
                   confirmMailF({
                     'to':email,
                     'num':randNum,
                     'formail':True
-                  }) 
+                  })
               except:
-                 pass 
-              # print(randNum)
-            
-              
+                 pass
 
               todo = {
                   'lang':val,
@@ -523,6 +562,13 @@ def login(request):
                   'confirm':True
               }
               return render(request,'login.html',todo)
+          elif other_sessions:
+              PhoneMailConfirm.objects.get(PhoneMail__icontains=email,code=code,duration__gte=datetime.datetime.now(tz=timezone.utc))
+              for row in other_sessions:
+                  row.delete()
+
+          auth.login(request, user)
+          return redirect("/userdash")
         
         else:
             msg = "Invalid credidentials"

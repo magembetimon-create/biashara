@@ -1,5 +1,5 @@
 
-var kata = [], vijiji = [], valid = 0,validmail = false
+var kata = [], vijiji = [], valid = 0,validmail = false, timerI = null
 //confirmation on register
 
 
@@ -326,7 +326,11 @@ $('#submitBtn,#sendMailBtn').click(function(){
 			sendData.then(response=>{
 				
 				if(response.success){
-					
+					if(response.skip_email){
+						$('#loadMe').modal('hide')
+						submitRegisterForm(true)
+						return
+					}
 					msg = lang('Tafadhari andika namba ya uthibitisho iliyotmwa kupitia ','Please write verification code sent to ')+`: <u class="weight500 darkblue"> <i>${response.mail}</i></u>`
 					$('#loadMe').modal('hide')
 					
@@ -358,7 +362,7 @@ $('#submitBtn,#sendMailBtn').click(function(){
 })
 
 
-$('body').on('click','#tumabtn',function(){
+function submitRegisterForm(skipEmail){
 	const f_name=$('#f_name').val(),
 	      l_name = $('#l_name').val(),
 		  male=Number($('#Male').prop('checked')),
@@ -368,7 +372,7 @@ $('body').on('click','#tumabtn',function(){
 		  langi = $('#langSel').val(),
 		  pers = Number($('#PersonalA').prop('checked')),
 		  kijiji = $('#Kijiji').val(),
-		  code = $('#emailCheck').val(),
+		  code = skipEmail ? 0 : $('#emailCheck').val(),
 		  dt = {
 			data:{
 				f_name,
@@ -380,16 +384,18 @@ $('body').on('click','#tumabtn',function(){
 				mail,
 				lang:langi,
 				code,
-				pers
+				pers,
+				skip_email: skipEmail ? 1 : 0
 			},
 			url:'/register'
 		  }
 		  $('#confirmMailSpiner').prop('hidden',false)
+		  $('#loadMe').modal('show')
 		  const senddt = POSTREQUEST(dt)
 		  senddt.then(resp=>{
 			
 			if(resp.success){
-				clearTimeout(timerI)
+				if (timerI) clearTimeout(timerI)
 				$('#the_phone').data('val',resp.id)
 				$('#confirmMailSpiner').prop('hidden',true)
 				$('#ConfirmMailModal').modal('hide')
@@ -406,11 +412,10 @@ $('body').on('click','#tumabtn',function(){
 		  }).fail((jqXHR, exception)=>{
 			failRequest(jqXHR, exception)
 		})
+}
 
-
-
-		  
-
+$('body').on('click','#tumabtn',function(){
+	submitRegisterForm(false)
 })
 
 $('body').on('click','#sendPhone',function(){
@@ -482,14 +487,17 @@ $('body').on('click','#tumabtnPhone',function(){
 
 function failRequest(jqXHR, exception){
 	$('#loadMe').modal('hide')
-	if (exception === 'timeout' ||  jqXHR.status === 0) {
-		
-		toastr.error(lang("Tatitizo la mtandao tafadhari jaribu tena","Network error please try again"), lang('Haukufanikiwa','Error '), {timeOut: 7000});
-
+	hideLoading()
+	var response = jqXHR.responseJSON || {}
+	var msg = lang(response.msg_swa, response.msg_eng) || response.msg
+	if (!msg) {
+		if (exception === 'timeout' || jqXHR.status === 0) {
+			msg = lang("Tatizo la mtandao tafadhari jaribu tena","Network error please try again")
+		} else {
+			msg = lang("Kitendo hakikufanikiwa tafadhari jaribu tena","The action failed, please try again")
+		}
 	}
-$('#loadMe').modal('hide')
-hideLoading()
-			
+	toastr.error(msg, lang('Haukufanikiwa','Error '), {timeOut: 7000});
 }
 
 function countDown(){

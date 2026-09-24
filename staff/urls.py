@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path('all', views.all_staff, name='all_staff'),
+    path('create-temp-email', views.create_staff_temp_email, name='staff_create_temp_email'),
     path('add', views.add_staff, name='add_staff'),
     path('toggle-shift-management', views.set_shift_management_status, name='toggle_shift_management'),
     path('view', views.view_staff, name='view_staff'),

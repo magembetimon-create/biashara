@@ -1,8 +1,60 @@
-from management.models import Notifications,ainaMama,ainaBibi, UserExtend,Zones,Nchi,EmployeeAttachments,Kanda,Workers, customer_area, customer_in_cell,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji,ShiftSession,ShiftAssignment
+from management.models import Notifications,ainaMama,ainaBibi, UserExtend,Zones,Nchi,EmployeeAttachments,Kanda,Workers, customer_area, customer_in_cell,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji,ShiftSession,ShiftAssignment,PhoneMailConfirm
 from purchase.guest_compound_utils import count_compound_guest_orders, shop_has_compound_positions
 from django.utils import timezone
 from django.db.models import Q,F
 from datetime import date
+from django.contrib.auth.models import User
+import re
+
+STAFF_TEMP_EMAIL_DOMAIN = 'fanyabiashara.com'
+
+
+def normalize_staff_temp_email(mail):
+    return str(mail or '').strip().lower()
+
+
+def is_staff_temp_login_email(mail):
+    mail = normalize_staff_temp_email(mail)
+    if '@' not in mail:
+        return False
+    local, _, domain = mail.partition('@')
+    return bool(local) and domain == STAFF_TEMP_EMAIL_DOMAIN
+
+
+def staff_temp_email_record(mail):
+    mail = normalize_staff_temp_email(mail)
+    if not mail:
+        return None
+    return PhoneMailConfirm.objects.filter(PhoneMail__iexact=mail).order_by('-id').first()
+
+
+def staff_temp_email_local_part(raw):
+    text = str(raw or '').strip().lower()
+    text = re.sub(r'[^a-z0-9._]+', '', text.replace(' ', '').replace('-', ''))
+    text = text.strip('._')[:40]
+    if not text:
+        text = 'user'
+    if text[0].isdigit():
+        text = 'u' + text
+    return text
+
+
+def build_unique_staff_temp_email(local_part):
+    base = staff_temp_email_local_part(local_part)
+    n = 0
+    while True:
+        local = base if n == 0 else f'{base}{n + 1}'
+        email = f'{local}@{STAFF_TEMP_EMAIL_DOMAIN}'
+        taken = (
+            PhoneMailConfirm.objects.filter(PhoneMail__iexact=email).exists()
+            or User.objects.filter(email__iexact=email).exists()
+            or User.objects.filter(username__iexact=email).exists()
+        )
+        if not taken:
+            return email
+        n += 1
+        if n > 500:
+            raise ValueError('Could not allocate a unique login email')
 
 
 

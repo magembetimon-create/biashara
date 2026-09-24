@@ -8,6 +8,28 @@ const obSupplierOptions = () => {
 }
 
 const obEsc = (v) => String(v || '').replace(/[&<>"]/g, '')
+const OB_PAGE_SIZE = 50
+let OB_ALL_ITEMS = []
+let OB_PAGE = 1
+
+const obItemState = (row) => {
+  if (!row._ob) {
+    row._ob = {
+      checked: false,
+      sup: Number(row.msambaji_id) || 0,
+      idj: 0,
+      idr: 0,
+      rangi: [],
+    }
+  }
+  return row._ob
+}
+
+const obFindItem = (id) => OB_ALL_ITEMS.find((r) => String(r.id) === String(id))
+
+const obHighlightItem = (id, on) => {
+  $(`#ob-items-body tr[data-id="${id}"]`).toggleClass('ob-row-selected', !!on)
+}
 
 const obSelectedBranches = () =>
   $('.ob-branch-check:checked')
@@ -139,19 +161,92 @@ const obCollectRangi = ($first) => {
   return rangi
 }
 
+const obFlushVisibleItems = () => {
+  $('#ob-items-body tr.ob-item-row').each(function () {
+    const $row = $(this)
+    const id = $row.attr('data-id')
+    const item = obFindItem(id)
+    if (!item) return
+    const st = obItemState(item)
+    const $group = $(`#ob-items-body tr[data-id="${id}"]`)
+    st.checked = !!$row.find('.ob-row-check').prop('checked')
+    st.sup = Number($row.find('.ob-supplier').val()) || 0
+    st.idj = Number($group.find('.ob-qty-jum').val()) || 0
+    st.idr = Number($group.find('.ob-qty-reja').val()) || 0
+    st.rangi = obCollectRangi($row)
+  })
+}
+
+const obApplyState = (row) => {
+  const st = obItemState(row)
+  const $row = $(`#ob-items-body tr.ob-item-row[data-id="${row.id}"]`)
+  if (!$row.length) return
+  $row.find('.ob-row-check').prop('checked', !!st.checked)
+  if (st.sup) $row.find('.ob-supplier').val(String(st.sup))
+  const $group = $(`#ob-items-body tr[data-id="${row.id}"]`)
+  $group.find('.ob-qty-jum').val(st.idj || 0)
+  $group.find('.ob-qty-reja').val(st.idr || 0)
+  ;(st.rangi || []).forEach((cl) => {
+    if (cl.sized && cl.sized.length) {
+      cl.sized.forEach((sz) => {
+        const $tr = $group.filter(`[data-color-id="${cl.val}"][data-size-id="${sz.val}"]`)
+        $tr.find('.ob-sz-jum').val(sz.idadi_jum || 0)
+        $tr.find('.ob-sz-reja').val(sz.idadi_rej || 0)
+      })
+    } else {
+      const $tr = $group.filter(`[data-color-id="${cl.val}"]`)
+      $tr.find('.ob-cl-jum').val(cl.idadi_jum || 0)
+      $tr.find('.ob-cl-reja').val(cl.idadi_rej || 0)
+    }
+  })
+  obHighlightItem(row.id, st.checked)
+}
+
+const obSyncHeaderCheck = () => {
+  const $checks = $('#ob-items-body .ob-row-check')
+  const n = $checks.length
+  const c = $checks.filter(':checked').length
+  $('#ob-row-all').prop('checked', n > 0 && n === c)
+}
+
+const obRenderPager = (total, pages) => {
+  const $pager = $('#ob-pager')
+  if (!total) {
+    $pager.empty()
+    return
+  }
+  const start = (OB_PAGE - 1) * OB_PAGE_SIZE + 1
+  const end = Math.min(OB_PAGE * OB_PAGE_SIZE, total)
+  let nums = ''
+  let from = Math.max(1, OB_PAGE - 2)
+  let to = Math.min(pages, from + 4)
+  from = Math.max(1, to - 4)
+  for (let p = from; p <= to; p++) {
+    nums += `<button type="button" class="btn btn-sm ${p === OB_PAGE ? 'btn-primary' : 'btn-outline-secondary'} ob-page-btn mx-1" data-page="${p}">${p}</button>`
+  }
+  $pager.html(`
+    <div class="smallFont text-muted mb-2 mb-md-0">
+      ${lang('Inaonesha', 'Showing')} ${start}–${end} ${lang('kati ya', 'of')} ${total}
+    </div>
+    <div class="d-flex align-items-center flex-wrap">
+      <button type="button" class="btn btn-sm btn-outline-secondary ob-page-btn" data-page="${OB_PAGE - 1}" ${OB_PAGE <= 1 ? 'disabled' : ''}>‹</button>
+      ${nums}
+      <button type="button" class="btn btn-sm btn-outline-secondary ob-page-btn" data-page="${OB_PAGE + 1}" ${OB_PAGE >= pages ? 'disabled' : ''}>›</button>
+    </div>
+  `)
+}
+
 const obRenderRows = (items) => {
   if (!items || !items.length) {
     $('#ob-items-body').html(
       obPlaceholderRow(lang('Hakuna bidhaa zinazokosa kwenye tawi hili', 'No missing items found for this branch'))
     )
-    $('#ob-save-btn').prop('disabled', true)
+    $('#ob-save-btn').prop('disabled', !OB_ALL_ITEMS.some((r) => obItemState(r).checked))
     return
   }
   const supOpt = obSupplierOptions()
-  const showColorCol = items.some((r) => (r.colors || []).length)
-  const showSizeCol = items.some((r) => (r.colors || []).some((c) => (c.sizes || []).length))
-  window.OB_SHOW_COLOR = showColorCol
-  window.OB_SHOW_SIZE = showSizeCol
+  window.OB_SHOW_COLOR = items.some((r) => (r.colors || []).length)
+  window.OB_SHOW_SIZE = items.some((r) => (r.colors || []).some((c) => (c.sizes || []).length))
 
   let html = ''
   items.forEach((row) => {
@@ -186,8 +281,28 @@ const obRenderRows = (items) => {
   items.forEach((row) => {
     const $sel = $(`#ob-items-body tr.ob-item-row[data-id="${row.id}"] .ob-supplier`)
     if (row.msambaji_id) $sel.val(String(row.msambaji_id))
+    obApplyState(row)
   })
   $('#ob-save-btn').prop('disabled', false)
+  obSyncHeaderCheck()
+}
+
+const obShowPage = (page) => {
+  obFlushVisibleItems()
+  const total = OB_ALL_ITEMS.length
+  const pages = Math.max(1, Math.ceil(total / OB_PAGE_SIZE) || 1)
+  OB_PAGE = Math.min(Math.max(1, Number(page) || 1), pages)
+  if (!total) {
+    $('#ob-items-body').html(
+      obPlaceholderRow(lang('Hakuna bidhaa zinazokosa kwenye tawi hili', 'No missing items found for this branch'))
+    )
+    $('#ob-save-btn').prop('disabled', true)
+    obRenderPager(0, 1)
+    return
+  }
+  const start = (OB_PAGE - 1) * OB_PAGE_SIZE
+  obRenderRows(OB_ALL_ITEMS.slice(start, start + OB_PAGE_SIZE))
+  obRenderPager(total, pages)
 }
 
 const obGetItems = () => {
@@ -210,10 +325,14 @@ const obGetItems = () => {
       hideLoading()
       if (!resp.success) {
         toastr.error(lang(resp.message_swa || 'Imeshindwa', resp.message_eng || 'Failed'), '', { timeOut: 2200 })
+        OB_ALL_ITEMS = []
         $('#ob-items-body').html(obPlaceholderRow(lang(resp.message_swa || 'Imeshindwa', resp.message_eng || 'Failed')))
+        obRenderPager(0, 1)
         return
       }
-      obRenderRows(resp.items || [])
+      OB_ALL_ITEMS = resp.items || []
+      OB_PAGE = 1
+      obShowPage(1)
     })
     .fail(() => {
       $('#loadMe').modal('hide')
@@ -232,22 +351,41 @@ $(document).ready(() => {
     $('#ob-branch-all').prop('checked', all > 0 && n === all)
   })
   $('#ob-row-all').on('change', function () {
-    $('.ob-row-check').prop('checked', this.checked)
+    const on = this.checked
+    $('#ob-items-body .ob-row-check').each(function () {
+      $(this).prop('checked', on)
+      const id = $(this).closest('tr').attr('data-id')
+      const item = obFindItem(id)
+      if (item) obItemState(item).checked = on
+      obHighlightItem(id, on)
+    })
+  })
+  $('body').on('change', '.ob-row-check', function () {
+    const $tr = $(this).closest('tr')
+    const id = $tr.attr('data-id')
+    const on = this.checked
+    const item = obFindItem(id)
+    if (item) obItemState(item).checked = on
+    obHighlightItem(id, on)
+    obSyncHeaderCheck()
+  })
+  $('body').on('click', '.ob-page-btn', function () {
+    if ($(this).prop('disabled')) return
+    obShowPage($(this).data('page'))
   })
   $('#ob-get-btn').on('click', obGetItems)
   $('#ob-save-btn').on('click', function () {
+    obFlushVisibleItems()
     const items = []
-    $('.ob-item-row').each(function () {
-      const $row = $(this)
-      if (!$row.find('.ob-row-check').prop('checked')) return
-      const id = $row.attr('data-id')
-      const $group = $(`#ob-items-body tr[data-id="${id}"]`)
+    OB_ALL_ITEMS.forEach((row) => {
+      const st = obItemState(row)
+      if (!st.checked) return
       items.push({
-        itm: Number(id),
-        idj: Number($group.find('.ob-qty-jum').val()) || 0,
-        idr: Number($group.find('.ob-qty-reja').val()) || 0,
-        sup: Number($row.find('.ob-supplier').val()) || 0,
-        rangi: obCollectRangi($row),
+        itm: Number(row.id),
+        idj: Number(st.idj) || 0,
+        idr: Number(st.idr) || 0,
+        sup: Number(st.sup) || 0,
+        rangi: st.rangi || [],
       })
     })
     if (!items.length) {
