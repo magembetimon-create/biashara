@@ -15,6 +15,37 @@ window.__tbStatic = __tbStatic;
 var transferSubmitInFlight = false;
 var activeTransferRequestId = null;
 
+function updateTransferSummary() {
+    var lines = 0, cost = 0, value = 0, cur = ($('.trf-summary').data('cur') || '');
+    $('.sh_qty').each(function () {
+        var pos = $(this).data('pos');
+        var itmId = Number($('#search' + pos).data('itm')) || 0;
+        if (!itmId) return;
+        lines += 1;
+        var qty = Number($(this).val()) || 0;
+        var unitQty = Number($('#unit_sel' + pos).find('option:selected').val()) || 1;
+        if (unitQty <= 0) unitQty = 1;
+        var it = (typeof Items !== 'undefined' && Items.state)
+            ? Items.state.find(function (i) { return i.id === itmId; })
+            : null;
+        if (!it) return;
+        var pack = Number(it.uwiano) || 1;
+        if (pack <= 0) pack = 1;
+        var baseQty = qty * unitQty;
+        cost += (Number(it.Bei_kununua) / pack) * baseQty;
+        value += Number(it.Bei_kuuza) * baseQty;
+        if (it.curenci) cur = it.curenci;
+    });
+    $('#trf_sum_qty').text(lines);
+    $('#trf_sum_cost').text(Number(cost).toLocaleString());
+    $('#trf_sum_value').text(Number(value).toLocaleString());
+    $('.trf-sum-cur').text(cur ? (cur + '. ') : '');
+}
+
+$(document).ready(function () {
+    if (typeof updateTransferSummary === 'function') updateTransferSummary();
+});
+
 //Product search for sales
  //search product.............................................................................//
  var index=-1;	
@@ -409,7 +440,8 @@ let = opt=''
  })
 
  
- $(`#unit_sel${pos}`).html(opt); 
+ $(`#unit_sel${pos}`).html(opt);
+ if (typeof updateTransferSummary === 'function') updateTransferSummary();
 
 }
 
@@ -799,6 +831,7 @@ $('body').on('keyup','.bill-inputColor',function(){
                
            }
        }
+        if (typeof updateTransferSummary === 'function') updateTransferSummary();
      
     
     })
@@ -1118,7 +1151,7 @@ if(total_colored>0){
 
 
 //SHOW QTY EXCEEDED MSG WHEN USER EXCEED THE ACTUAL STOCK QTY
- $('body').on('keyup',`.sh_qty`,function(){
+ $('body').on('keyup input change',`.sh_qty`,function(){
     let pos = $(this).data('pos'),
         last_qty = Number($(this).val()) || 0 ,
         onsh = Number($(this).data('onshelf')), 
@@ -1142,9 +1175,14 @@ if(total_colored>0){
             $(`#idadi_imezidi${pos}`).html('')
 
         }
+        if (typeof updateTransferSummary === 'function') updateTransferSummary();
 
    
  })
+
+$('body').on('change', '#item_tr_tbody select[id^="unit_sel"]', function () {
+    if (typeof updateTransferSummary === 'function') updateTransferSummary();
+})
 
 
  //to add another item ............................//
@@ -1164,7 +1202,8 @@ $('body').off('click','#add-btn').on('click', '#add-btn', function () {
 
         pos=pos+1
         if(last_qty*uwiano<=onsh){
-        $('#item_tr_tbody').append(tablerow(pos))          
+        $('#item_tr_tbody').append(tablerow(pos))
+        if (typeof updateTransferSummary === 'function') updateTransferSummary();
         }
     
     }
@@ -1183,6 +1222,7 @@ $('body').off('click','.remove_bill_item_tr').on('click', '.remove_bill_item_tr'
                $('#item_tr_tbody').html(tablerow(1))
 
             }
+            if (typeof updateTransferSummary === 'function') updateTransferSummary();
 
         }
 
@@ -1192,105 +1232,67 @@ $('body').off('click','.remove_bill_item_tr').on('click', '.remove_bill_item_tr'
 
 //  PLACE TR DATA ON ITEM ADDITION.........................................//
 function tablerow(pos){
-    return tr=`
-      
-    <tr id="list_tr${pos}" data-pos=${pos} >
-    <td   class="   p-1 " >
-   
-      <!-- IMAGE -->
-      <div class="centerItem bg-light" id="imgplace${pos}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
-              <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-              <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
-            </svg>
+    return `
+    <tr id="list_tr${pos}" data-pos="${pos}">
+      <td class="p-1 align-top">
+        <div class="trf-thumb centerItem bg-light" id="imgplace${pos}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
+            <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+            <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+          </svg>
         </div>
-        </td>
-
-        <td>
-        <!-- ITEM NAME -->
-        <div class="suggest-holder  item-attr${pos} ">
+      </td>
+      <td class="align-top">
+        <div class="suggest-holder item-attr${pos}">
           <input
-          placeholder="${lang('Andika Jina la Bidhaa','Write Item name')} "
-          style="min-width: 210px;"
-          type="text" 
-          data-pos=${pos}
-          id = "search${pos}"
-          data-itm = 0
-          class="form-control text-capitalize weight500 darkblue border0  muhimu-b-kununua-zilizopo suggest-prompt${pos} suggest-prompt input-data latoFont" />
-         
-          <ul class="masaki masaki${pos}" data-hiarch=${pos} style="min-width: 350px;z-index:999999;max-height:250px;overflow-y:scroll"></ul>
-          <div class="smallFont" id="ItemDesc${pos}"></div>
+            placeholder="${lang('Andika Jina la Bidhaa','Write Item name')}"
+            type="text"
+            data-pos="${pos}"
+            id="search${pos}"
+            data-itm="0"
+            class="form-control text-capitalize weight500 darkblue border0 muhimu-b-kununua-zilizopo suggest-prompt${pos} suggest-prompt input-data latoFont" />
+          <ul class="masaki masaki${pos}" data-hiarch="${pos}" style="min-width: 350px;z-index:999999;max-height:250px;overflow-y:scroll"></ul>
         </div>
-        
-
-    </td>
-
-    <td class="p-1">
-        <!-- QUANTITY -->
-        <div class="input-group" style="max-width: 190px;">
-            <!-- UNITS -->
-            <select name="qty_unit${pos}" style="max-width: 80px;" id="unit_sel${pos}" class="input-group-prepend made-input latoFont smallerFont">
-                <option value=0 ></option>
-            </select>
-        <input type="number" data-sm=0 id="qty${pos}" data-onshelf=0 data-pos=${pos} class="form-control sh_qty border0 smallFont" >
-
-            <!-- Button trigger color modal -->
-           <div class=" input-group-append border" id="is_colored_item${pos}" >
-                <button  id="colored_items${pos}" title="${lang('Rangi','Color')}" class="btn btn-light colored_items btn-sm px-1" data-toggle="modal" data-pos=${pos}  data-target="#modal_color"  data-val=0>
-                    <img  width="20" src="${__tbStatic('pics/colors.svg')}"  />
-                </button>
+        <div class="smallerFont" id="ItemDesc${pos}"></div>
+        <div class="color-wrapper mt-1 text-right">
+          <div id="popColored${pos}" class="py-1 whiteBg p-1 text-left shrink-palet popColored rounded" style="cursor:pointer;display:none;">
+            <div class="row classic_div">
+              <div style="cursor: pointer;" class="smallerFont col-8 latoFont px-2">
+                ${lang('Rangi','Color')}(<span id="color_qt${pos}" class="text-danger">0</span>)
+              </div>
+              <p class="text-right col-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </p>
             </div>
-
-            <!-- Button to remove item from table -->
-        <button data-pos=${pos} class="btn-default remove_bill_item_tr  btn btn-sm text-danger position-absolute" style="right: -62px;top:12px">
-          <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" fill="currentColor" class="bi bi-dash-circle-dotted" viewBox="0 0 16 16">
-              <path d="M8 0c-.176 0-.35.006-.523.017l.064.998a7.117 7.117 0 0 1 .918 0l.064-.998A8.113 8.113 0 0 0 8 0zM6.44.152c-.346.069-.684.16-1.012.27l.321.948c.287-.098.582-.177.884-.237L6.44.153zm4.132.271a7.946 7.946 0 0 0-1.011-.27l-.194.98c.302.06.597.14.884.237l.321-.947zm1.873.925a8 8 0 0 0-.906-.524l-.443.896c.275.136.54.29.793.459l.556-.831zM4.46.824c-.314.155-.616.33-.905.524l.556.83a7.07 7.07 0 0 1 .793-.458L4.46.824zM2.725 1.985c-.262.23-.51.478-.74.74l.752.66c.202-.23.418-.446.648-.648l-.66-.752zm11.29.74a8.058 8.058 0 0 0-.74-.74l-.66.752c.23.202.447.418.648.648l.752-.66zm1.161 1.735a7.98 7.98 0 0 0-.524-.905l-.83.556c.169.253.322.518.458.793l.896-.443zM1.348 3.555c-.194.289-.37.591-.524.906l.896.443c.136-.275.29-.54.459-.793l-.831-.556zM.423 5.428a7.945 7.945 0 0 0-.27 1.011l.98.194c.06-.302.14-.597.237-.884l-.947-.321zM15.848 6.44a7.943 7.943 0 0 0-.27-1.012l-.948.321c.098.287.177.582.237.884l.98-.194zM.017 7.477a8.113 8.113 0 0 0 0 1.046l.998-.064a7.117 7.117 0 0 1 0-.918l-.998-.064zM16 8a8.1 8.1 0 0 0-.017-.523l-.998.064a7.11 7.11 0 0 1 0 .918l.998.064A8.1 8.1 0 0 0 16 8zM.152 9.56c.069.346.16.684.27 1.012l.948-.321a6.944 6.944 0 0 1-.237-.884l-.98.194zm15.425 1.012c.112-.328.202-.666.27-1.011l-.98-.194c-.06.302-.14.597-.237.884l.947.321zM.824 11.54a8 8 0 0 0 .524.905l.83-.556a6.999 6.999 0 0 1-.458-.793l-.896.443zm13.828.905c.194-.289.37-.591.524-.906l-.896-.443c-.136.275-.29.54-.459.793l.831.556zm-12.667.83c.23.262.478.51.74.74l.66-.752a7.047 7.047 0 0 1-.648-.648l-.752.66zm11.29.74c.262-.23.51-.478.74-.74l-.752-.66c-.201.23-.418.447-.648.648l.66.752zm-1.735 1.161c.314-.155.616-.33.905-.524l-.556-.83a7.07 7.07 0 0 1-.793.458l.443.896zm-7.985-.524c.289.194.591.37.906.524l.443-.896a6.998 6.998 0 0 1-.793-.459l-.556.831zm1.873.925c.328.112.666.202 1.011.27l.194-.98a6.953 6.953 0 0 1-.884-.237l-.321.947zm4.132.271a7.944 7.944 0 0 0 1.012-.27l-.321-.948a6.954 6.954 0 0 1-.884.237l.194.98zm-2.083.135a8.1 8.1 0 0 0 1.046 0l-.064-.998a7.11 7.11 0 0 1-.918 0l-.064.998zM4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7z"/>
-            </svg>
+            <div id="color_obj${pos}" style="-webkit-box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37); box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37);"></div>
+          </div>
+        </div>
+      </td>
+      <td class="p-1 align-top">
+        <div class="input-group trf-qty-group">
+          <select name="qty_unit${pos}" style="max-width: 80px;" id="unit_sel${pos}" class="input-group-prepend made-input latoFont smallerFont">
+            <option value="0"></option>
+          </select>
+          <input type="number" data-sm="0" id="qty${pos}" data-onshelf="0" data-pos="${pos}" class="form-control sh_qty border0 smallFont">
+          <div class="input-group-append border" id="is_colored_item${pos}">
+            <button type="button" id="colored_items${pos}" title="${lang('Rangi','Color')}" class="btn btn-light colored_items btn-sm px-1" data-toggle="modal" data-pos="${pos}" data-target="#modal_color" data-val="0">
+              <img width="20" src="${__tbStatic('pics/colors.svg')}" />
+            </button>
+          </div>
+        </div>
+        <div class="idadi_imezidi" id="idadi_imezidi${pos}"></div>
+      </td>
+      <td class="align-top text-center">
+        <button type="button" data-pos="${pos}" class="trf-remove-btn remove_bill_item_tr" title="${lang('Ondoa','Remove')}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-dash-circle-dotted" viewBox="0 0 16 16">
+            <path d="M8 0c-.176 0-.35.006-.523.017l.064.998a7.117 7.117 0 0 1 .918 0l.064-.998A8.113 8.113 0 0 0 8 0zM6.44.152c-.346.069-.684.16-1.012.27l.321.948c.287-.098.582-.177.884-.237L6.44.153zm4.132.271a7.946 7.946 0 0 0-1.011-.27l-.194.98c.302.06.597.14.884.237l.321-.947zm1.873.925a8 8 0 0 0-.906-.524l-.443.896c.275.136.54.29.793.459l.556-.831zM4.46.824c-.314.155-.616.33-.905.524l.556.83a7.07 7.07 0 0 1 .793-.458L4.46.824zM2.725 1.985c-.262.23-.51.478-.74.74l.752.66c.202-.23.418-.446.648-.648l-.66-.752zm11.29.74a8.058 8.058 0 0 0-.74-.74l-.66.752c.23.202.447.418.648.648l.752-.66zm1.161 1.735a7.98 7.98 0 0 0-.524-.905l-.83.556c.169.253.322.518.458.793l.896-.443zM1.348 3.555c-.194.289-.37.591-.524.906l.896.443c.136-.275.29-.54.459-.793l-.831-.556zM.423 5.428a7.945 7.945 0 0 0-.27 1.011l.98.194c.06-.302.14-.597.237-.884l-.947-.321zM15.848 6.44a7.943 7.943 0 0 0-.27-1.012l-.948.321c.098.287.177.582.237.884l.98-.194zM.017 7.477a8.113 8.113 0 0 0 0 1.046l.998-.064a7.117 7.117 0 0 1 0-.918l-.998-.064zM16 8a8.1 8.1 0 0 0-.017-.523l-.998.064a7.11 7.11 0 0 1 0 .918l.998.064A8.1 8.1 0 0 0 16 8zM.152 9.56c.069.346.16.684.27 1.012l.948-.321a6.944 6.944 0 0 1-.237-.884l-.98.194zm15.425 1.012c.112-.328.202-.666.27-1.011l-.98-.194c-.06.302-.14.597-.237.884l.947.321zM.824 11.54a8 8 0 0 0 .524.905l.83-.556a6.999 6.999 0 0 1-.458-.793l-.896.443zm13.828.905c.194-.289.37-.591.524-.906l-.896-.443c-.136.275-.29.54-.459.793l.831.556zm-12.667.83c.23.262.478.51.74.74l.66-.752a7.047 7.047 0 0 1-.648-.648l-.752.66zm11.29.74c.262-.23.51-.478.74-.74l-.752-.66c-.201.23-.418.447-.648.648l.66.752zm-1.735 1.161c.314-.155.616-.33.905-.524l-.556-.83a7.07 7.07 0 0 1-.793.458l.443.896zm-7.985-.524c.289.194.591.37.906.524l.443-.896a6.998 6.998 0 0 1-.793-.459l-.556.831zm1.873.925c.328.112.666.202 1.011.27l.194-.98a6.953 6.953 0 0 1-.884-.237l-.321.947zm4.132.271a7.944 7.944 0 0 0 1.012-.27l-.321-.948a6.954 6.954 0 0 1-.884.237l.194.98zm-2.083.135a8.1 8.1 0 0 0 1.046 0l-.064-.998a7.11 7.11 0 0 1-.918 0l-.064.998zM4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7z"/>
+          </svg>
         </button>
-
-        </div>
-
-        <div class="idadi_imezidi" id="idadi_imezidi${pos}">
-        </div>
-
-        <!-- DISPLAY SHOWED COLOR -->
-        <div class="color-wrapper mt-1 text-right" style="height: 35px;">
-          <div  id="popColored${pos}" class="py-2 whiteBg p-1 text-left shrink-palet popColored  rounded  "
-         
-       style="cursor:pointer;display: none;
-              ">
-
-        <div class="row classic_div">
-           <div style="cursor: pointer;"  class="smallerFont col-8 latoFont px-2">
-              ${lang('Rangi','Color')}(<span id="color_qt${pos}" class="text-danger" >0</span>)
-           </div>
-
-             <p class="text-right col-4">
-               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                   <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-                 </svg>
-             </p>
-        </div>
-        
-          
-        
-
-       <div id="color_obj${pos}" style="webkit-box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37); 
-                                         box-shadow: 0px 0px 9px -3px rgba(0,0,0,0.37);" >
-               
-
-       </div>
-
-       
-       </div>
-      </div>
-        
-    </td>
-</tr>
-       
+      </td>
+    </tr>
     `
-
-    
 }
 
 

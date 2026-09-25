@@ -1,0 +1,198 @@
+{% extends 'userdash.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block billcss %}
+<style>
+  .unseen-trf-page { min-height: 80vh; }
+  .unseen-trf-card {
+    border: 1px solid #e6ebf2;
+    border-radius: 10px;
+    background: #fff;
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+  .unseen-trf-head {
+    background: #f4f7fb;
+    border-bottom: 1px solid #e6ebf2;
+    padding: 12px 16px;
+  }
+  .unseen-trf-code {
+    font-weight: 700;
+    color: #0056d6;
+  }
+  .unseen-trf-meta {
+    font-size: 13px;
+    color: #5b6b82;
+  }
+  .unseen-trf-actions { margin-top: 8px; }
+</style>
+{% endblock %}
+
+{% block bidhaa %}
+<div class="Analytical tab_div whiteBg p-3 unseen-trf-page" id="general-panel">
+  {% csrf_token %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <h5 class="latoFont mb-2 mb-md-0">
+      {% if useri.langSet == 0 %}Mapokezi ambayo bado hayajaonekana{% else %}Unseen item receives{% endif %}
+      <span class="badge badge-primary ml-1">{{ unseen_count }}</span>
+    </h5>
+    <div class="d-flex flex-wrap align-items-center">
+      {% if pending_confirm_count %}
+      <button type="button" class="btn btn-danger btn-sm latoFont mr-2 mb-2 mb-md-0" id="unseen-confirm-all" data-ids="{{ pending_confirm_ids|join:',' }}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-all mr-1" viewBox="0 0 16 16">
+          <path d="M8.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L2.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093L8.95 4.995zm-.92 5.14.92.92a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 1 0-1.091-1.028L9.477 9.417l-.485-.486z"/>
+        </svg>
+        {% if useri.langSet == 0 %}Hakiki mapokezi yote{% else %}Confirm all receives{% endif %}
+      </button>
+      {% endif %}
+      <a href="/stoku/receiveNote" class="btn btn-outline-primary btn-sm latoFont">
+        {% if useri.langSet == 0 %}Notisi zote{% else %}All receive notes{% endif %}
+      </a>
+    </div>
+  </div>
+
+  <p class="smallFont text-muted mb-3">
+    {% if useri.langSet == 0 %}
+      Mapokezi yamepangwa kwa muda na namba ya uhamisho ili uone yote kwa pamoja. Thibitisha kila notisi au zote kwa pamoja.
+    {% else %}
+      Receives are grouped by time and transfer code so you can review them together. Confirm each note or all of them at once.
+    {% endif %}
+  </p>
+
+  {% for g in groups %}
+  <div class="unseen-trf-card" data-receive="{{ g.bill.id }}">
+    <div class="unseen-trf-head d-flex flex-wrap justify-content-between align-items-start">
+      <div>
+        <div class="unseen-trf-code">RC-{{ g.bill.transfer.code }}</div>
+        <div class="unseen-trf-meta mt-1">
+          <span>{% if useri.langSet == 0 %}Kutoka{% else %}From{% endif %}: <strong class="text-dark text-capitalize">{{ g.bill.transfer.Interprise.name }}</strong></span>
+          <span class="mx-1">→</span>
+          <span>{% if useri.langSet == 0 %}Kwenda{% else %}To{% endif %}: <strong class="text-dark text-capitalize">{{ g.bill.Interprise.name }}</strong></span>
+        </div>
+      </div>
+      <div class="text-md-right mt-2 mt-md-0">
+        <div class="unseen-trf-meta">
+          <script>
+            document.write(moment('{{ g.bill.transfer.tarehe | date:"r" }}').format('DD/MM/YYYY HH:mm'))
+          </script>
+        </div>
+        <div class="unseen-trf-actions">
+          {% if g.can_confirm %}
+          <button type="button" class="btn btn-sm btn-danger latoFont unseen-confirm-one" data-id="{{ g.bill.id }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
+              <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+              <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+            </svg>
+            {% if useri.langSet == 0 %}Hakiki kupokea{% else %}Confirm receive{% endif %}
+          </button>
+          {% elif g.user_confirmed %}
+          <span class="text-success smallFont latoFont unseen-confirmed-label">{% if useri.langSet == 0 %}Imethibitishwa{% else %}Confirmed{% endif %}</span>
+          {% endif %}
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'viewReceives' %}?item_valued={{ g.bill.id }}">
+            {% if useri.langSet == 0 %}Fungua notisi{% else %}Open note{% endif %}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered mb-0">
+        <thead class="smallFont">
+          <tr>
+            <th class="text-left" >{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
+            <th class="text-left" >{% if useri.langSet == 0 %}Kipimo{% else %}Unit{% endif %}</th>
+            <th class="text-right">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for itm in g.items %}
+          <tr>
+            <td class="text-capitalize">{{ itm.bidhaa.bidhaa_jina }}</td>
+            <td>{{ itm.bidhaa.vipimo }}</td>
+            <td class="text-right">{{ itm.idadi }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="text-muted smallFont px-3 py-3">
+              {% if useri.langSet == 0 %}Hakuna bidhaa kwenye pokezi hili.{% else %}No items on this receive.{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+(function () {
+  function csrfToken() {
+    return $('input[name=csrfmiddlewaretoken]').val();
+  }
+  function markCardConfirmed(id) {
+    var $card = $('.unseen-trf-card[data-receive="' + id + '"]');
+    $card.find('.unseen-confirm-one').replaceWith(
+      '<span class="text-success smallFont latoFont unseen-confirmed-label">' +
+      lang('Imethibitishwa', 'Confirmed') +
+      '</span>'
+    );
+  }
+  function confirmReceives(ids, $btn) {
+    if (!ids.length) return;
+    $btn.prop('disabled', true);
+    if ($('#loadMe').length) $('#loadMe').modal('show');
+    $.ajax({
+      type: 'POST',
+      url: '{% url "hakiki_oda" %}',
+      data: {
+        itm: ids.join(','),
+        csrfmiddlewaretoken: csrfToken()
+      },
+      success: function (respo) {
+        if (respo.success) {
+          toastr.success(lang(respo.msg_swa, respo.msg_eng), 'Success Alert', {timeOut: 2000});
+          (respo.ids || ids).forEach(markCardConfirmed);
+          if (!$('.unseen-confirm-one').length) {
+            $('#unseen-confirm-all').remove();
+          }
+        } else {
+          toastr.error(lang(respo.msg_swa, respo.msg_eng), 'Error Alert', {timeOut: 2000});
+          $btn.prop('disabled', false);
+        }
+        if ($('#loadMe').length) $('#loadMe').modal('hide');
+      },
+      error: function () {
+        toastr.error(lang('Kitendo hakikufanikiwa tafadhari jaribu tena', 'Action failed, please try again'), 'Error Alert', {timeOut: 2000});
+        $btn.prop('disabled', false);
+        if ($('#loadMe').length) $('#loadMe').modal('hide');
+      }
+    });
+  }
+
+  $(document).on('click', '.unseen-confirm-one', function () {
+    confirmReceives([$(this).data('id')], $(this));
+  });
+  $(document).on('click', '#unseen-confirm-all', function () {
+    var ids = String($(this).data('ids') || '')
+      .split(',')
+      .map(function (x) { return Number(x); })
+      .filter(function (x) { return x > 0; });
+    confirmReceives(ids, $(this));
+  });
+})();
+</script>
+{% endblock %}
+
+{% block dash-mapper %}
+ {% if useri.langSet == 0 %} Bidhaa  {% else %} Items {% endif %}
+{% endblock %}
+
+{% block nav-stock %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+{% block active-stock %} class="bi bi-shop text-primary font-weight-bold"{% endblock %}
+
+{% block dash-map %}<a href="#" class="tab_show" data-show="#general-panel">  {% if useri.langSet == 0 %}Mapokezi ambayo hayajaonekana{% else %} Unseen receives {% endif %}</a> {% endblock %}

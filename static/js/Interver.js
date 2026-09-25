@@ -274,18 +274,40 @@ function notificate(note, extraCount){
           ]
 
 
-const ntI= pop.find(x=>x.action) 
-// console.log(pop)
+const ntI= pop.find(x=>x.action)
+if (!ntI) {
+  $('#notify').fadeOut(200);
+  return;
+}
+
+const itmTrCount = (note || []).filter(n => n.itmTr).length
+let notifyHref = `/notify?vl=${nt1.note}`
+let notifyBody = lang(nt1.msg_swa, nt1.msg_eng)
+if (nt1.itmTr && itmTrCount > 1) {
+  notifyHref = '/stoku/unseenTransfers'
+  notifyBody = lang(
+    `Kuna <strong>${itmTrCount}</strong> hamisho bado hazijaonekana. Bofya kuona zote pamoja.`,
+    `There are <strong>${itmTrCount}</strong> unseen transfers. Tap to view them all together.`
+  )
+}
+const itmRcvCount = (note || []).filter(n => n.itmRcv).length
+if (nt1.itmRcv && itmRcvCount > 1) {
+  notifyHref = '/stoku/unseenReceives'
+  notifyBody = lang(
+    `Kuna <strong>${itmRcvCount}</strong> mapokezi bado hayajaonekana. Bofya kuona yote pamoja.`,
+    `There are <strong>${itmRcvCount}</strong> unseen item receives. Tap to view them all together.`
+  )
+}
 
    $('#notify').html(`<h6 style="color: beige;" >${ntI.note}</h6>
-   <a href="/notify?vl=${nt1.note}" class="d-flex" style="color: beige;">
+   <a href="${notifyHref}" class="d-flex" style="color: beige;">
    <div class="NoteIcon">
             <div id="NoteIcon"  class="rounded-circle p-2 pt-1 justify-content-center d-flex"  style="align-items:center;background-color: rgb(0, 51, 128);color:#fff;width:40px;height:40px" >
                  ${ntI.icon}
             </div>
      </div> 
      <div class="the-note pl-2 latoFont " id="the_note_msg" >
-          ${lang(nt1.msg_swa,nt1.msg_eng)}
+          ${notifyBody}
      </div>
     </a>`)
 

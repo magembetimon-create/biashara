@@ -5870,14 +5870,38 @@ def ondoa_oda(request):
 @login_required(login_url='login')
 def hakiki_oda(request): 
     if request.method == "POST":
-        itm = int(request.POST.get('itm'))
-        
-        received_confirm.objects.filter(receive=itm,user__user=request.user).update(confirmed=True,tarehe=datetime.datetime.now(tz=timezone.utc))
+        todo = todoFunct(request)
+        duka = todo['duka']
+        raw = request.POST.get('itm', '')
+        ids = []
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                ids = [int(x) for x in parsed]
+            else:
+                ids = [int(parsed)]
+        except (TypeError, ValueError, json.JSONDecodeError):
+            try:
+                ids = [int(x) for x in str(raw).split(',') if str(x).strip()]
+            except ValueError:
+                ids = []
+
+        valid_ids = list(
+            receive.objects.filter(pk__in=ids, Interprise=duka.id)
+            .exclude(transfer__order=True)
+            .values_list('id', flat=True)
+        )
+        received_confirm.objects.filter(
+            receive_id__in=valid_ids,
+            user__user=request.user,
+        ).update(confirmed=True, tarehe=datetime.datetime.now(tz=timezone.utc))
+        first_id = valid_ids[0] if valid_ids else 0
         data={
-            'success':True,
-            'msg_swa':'Uhakiki wa kupokea bidhaa umefanikiwa',
-            'msg_eng':'Receive confirmed successfully',
-            'bil':itm
+            'success': bool(valid_ids),
+            'msg_swa':'Uhakiki wa kupokea bidhaa umefanikiwa' if valid_ids else 'Notisi ya kupokea haikupatikana',
+            'msg_eng':'Receive confirmed successfully' if valid_ids else 'Receive note was not found',
+            'bil': first_id,
+            'ids': valid_ids,
         }
 
         return JsonResponse(data)
@@ -6068,10 +6092,163 @@ def viewtransfer(request):
         if not todo['duka'].Interprise:
             return redirect('/userdash')
         else:         
-           return  render(request,'transfer.html',todo)
+            return  render(request,'transfer.html',todo)
 
 @login_required(login_url='login')
-def bidhaaAina(request):  
+def unseenTransfers(request):
+    todo = todoFunct(request)
+    duka = todo['duka']
+    pent = todo.get('pent')
+    useri = todo['useri']
+    ent_ids = [duka]
+    if pent:
+        ent_ids.append(pent)
+
+    notice = Notifications.objects.filter(
+        Q(admin_read=False, Interprise__owner__user=request.user.id) |
+        Q(Incharge=useri.id, Incharge_reade=False) |
+        Q(admin_read=False, AnyUser_read=False, Incharge_reade=False),
+        Interprise__in=ent_ids,
+        itmTr=True,
+        itmTr_map__isnull=False,
+    ).select_related('itmTr_map')
+
+    if not notice.exists():
+        return redirect('/stoku/transferNote')
+
+    transfer_ids = list(notice.values_list('itmTr_map_id', flat=True).distinct())
+    receives = (
+        receive.objects.filter(transfer_id__in=transfer_ids)
+        .select_related(
+            'transfer',
+            'Interprise',
+            'transfer__Interprise',
+            'transfer__By__user__user',
+        )
+        .order_by('transfer__tarehe', 'transfer__code', 'id')
+    )
+
+    items_by_rcv = {}
+    stocks = bidhaa_stoku.objects.filter(
+        uhamisho__receive__in=receives
+    ).select_related('bidhaa', 'uhamisho', 'uhamisho__receive')
+    for li in stocks:
+        items_by_rcv.setdefault(li.uhamisho.receive_id, []).append(li)
+
+    groups = []
+    for rcv in receives:
+        groups.append({
+            'bill': rcv,
+            'items': items_by_rcv.get(rcv.id, []),
+        })
+
+    if not groups:
+        return redirect('/stoku/transferNote')
+
+    note_ids = list(notice.values_list('id', flat=True))
+    qs = Notifications.objects.filter(pk__in=note_ids)
+    if useri and (duka.owner == useri or (pent and pent.owner == useri)):
+        qs.update(admin_read=True)
+    qs.filter(Incharge=useri).update(Incharge_reade=True)
+    qs.update(AnyUser_read=True)
+
+    if len(groups) == 1:
+        return redirect('/stoku/viewTransfer?item_valued=' + str(groups[0]['bill'].id))
+
+    todo.update({
+        'groups': groups,
+        'unseen_count': len(groups),
+    })
+    if not duka.Interprise:
+        return redirect('/userdash')
+    return render(request, 'unseenTransfers.html', todo)
+
+@login_required(login_url='login')
+def unseenReceives(request):
+    todo = todoFunct(request)
+    duka = todo['duka']
+    pent = todo.get('pent')
+    useri = todo['useri']
+    ent_ids = [duka]
+    if pent:
+        ent_ids.append(pent)
+
+    notice = Notifications.objects.filter(
+        Q(admin_read=False, Interprise__owner__user=request.user.id) |
+        Q(Incharge=useri.id, Incharge_reade=False) |
+        Q(admin_read=False, AnyUser_read=False, Incharge_reade=False),
+        Interprise__in=ent_ids,
+        itmRcv=True,
+        itmRcv_map__isnull=False,
+    ).select_related('itmRcv_map')
+
+    if not notice.exists():
+        return redirect('/stoku/receiveNote')
+
+    receive_ids = list(notice.values_list('itmRcv_map_id', flat=True).distinct())
+    receives = (
+        receive.objects.filter(pk__in=receive_ids)
+        .select_related(
+            'transfer',
+            'Interprise',
+            'transfer__Interprise',
+            'transfer__By__user__user',
+        )
+        .order_by('transfer__tarehe', 'transfer__code', 'id')
+    )
+
+    items_by_rcv = {}
+    stocks = bidhaa_stoku.objects.filter(
+        uhamisho__receive__in=receives
+    ).select_related('bidhaa', 'uhamisho', 'uhamisho__receive')
+    for li in stocks:
+        items_by_rcv.setdefault(li.uhamisho.receive_id, []).append(li)
+
+    conf_map = {
+        c.receive_id: c
+        for c in received_confirm.objects.filter(receive__in=receives, user__user=request.user.id)
+    }
+
+    groups = []
+    pending_confirm_ids = []
+    for rcv in receives:
+        uc = conf_map.get(rcv.id)
+        is_order = bool(rcv.transfer and rcv.transfer.order)
+        can_confirm = (not is_order) and uc is not None and not uc.confirmed
+        if can_confirm:
+            pending_confirm_ids.append(rcv.id)
+        groups.append({
+            'bill': rcv,
+            'items': items_by_rcv.get(rcv.id, []),
+            'can_confirm': can_confirm,
+            'user_confirmed': bool(uc and uc.confirmed),
+        })
+
+    if not groups:
+        return redirect('/stoku/receiveNote')
+
+    note_ids = list(notice.values_list('id', flat=True))
+    qs = Notifications.objects.filter(pk__in=note_ids)
+    if useri and (duka.owner == useri or (pent and pent.owner == useri)):
+        qs.update(admin_read=True)
+    qs.filter(Incharge=useri).update(Incharge_reade=True)
+    qs.update(AnyUser_read=True)
+
+    if len(groups) == 1:
+        return redirect('/stoku/viewReceives?item_valued=' + str(groups[0]['bill'].id))
+
+    todo.update({
+        'groups': groups,
+        'unseen_count': len(groups),
+        'pending_confirm_ids': pending_confirm_ids,
+        'pending_confirm_count': len(pending_confirm_ids),
+    })
+    if not duka.Interprise:
+        return redirect('/userdash')
+    return render(request, 'unseenReceives.html', todo)
+
+@login_required(login_url='login')
+def bidhaaAina(request):
     todo = todoFunct(request)
     f = request.GET.get('f',0)
     sup = request.GET.get('sup',0)

@@ -1,0 +1,115 @@
+{% extends 'userdash.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block billcss %}
+<style>
+  .unseen-trf-page { min-height: 80vh; }
+  .unseen-trf-card {
+    border: 1px solid #e6ebf2;
+    border-radius: 10px;
+    background: #fff;
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+  .unseen-trf-head {
+    background: #f4f7fb;
+    border-bottom: 1px solid #e6ebf2;
+    padding: 12px 16px;
+  }
+  .unseen-trf-code {
+    font-weight: 700;
+    color: #0056d6;
+  }
+  .unseen-trf-meta {
+    font-size: 13px;
+    color: #5b6b82;
+  }
+</style>
+{% endblock %}
+
+{% block bidhaa %}
+<div class="Analytical tab_div whiteBg p-3 unseen-trf-page" id="general-panel">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <h5 class="latoFont mb-2 mb-md-0">
+      {% if useri.langSet == 0 %}Hamisho ambazo bado hazijaonekana{% else %}Unseen item transfers{% endif %}
+      <span class="badge badge-primary ml-1">{{ unseen_count }}</span>
+    </h5>
+    <a href="/stoku/transferNote" class="btn btn-outline-primary btn-sm latoFont">
+      {% if useri.langSet == 0 %}Notisi zote{% else %}All transfer notes{% endif %}
+    </a>
+  </div>
+
+  <p class="smallFont text-muted mb-3">
+    {% if useri.langSet == 0 %}
+      Hamisho zimepangwa kwa muda na namba ya uhamisho ili uone zote kwa pamoja.
+    {% else %}
+      Transfers are grouped by time and transfer code so you can review them together.
+    {% endif %}
+  </p>
+
+  {% for g in groups %}
+  <div class="unseen-trf-card">
+    <div class="unseen-trf-head d-flex flex-wrap justify-content-between align-items-start">
+      <div>
+        <div class="unseen-trf-code">TR-{{ g.bill.transfer.code }}</div>
+        <div class="unseen-trf-meta mt-1">
+          <span>{% if useri.langSet == 0 %}Kutoka{% else %}From{% endif %}: <strong class="text-dark text-capitalize">{{ g.bill.transfer.Interprise.name }}</strong></span>
+          <span class="mx-1">→</span>
+          <span>{% if useri.langSet == 0 %}Kwenda{% else %}To{% endif %}: <strong class="text-dark text-capitalize">{{ g.bill.Interprise.name }}</strong></span>
+        </div>
+      </div>
+      <div class="text-md-right mt-2 mt-md-0">
+        <div class="unseen-trf-meta">
+          <script>
+            document.write(moment('{{ g.bill.transfer.tarehe | date:"r" }}').format('DD/MM/YYYY HH:mm'))
+          </script>
+        </div>
+        <a class="btn btn-sm btn-outline-secondary mt-1" href="{% url 'viewTransfer' %}?item_valued={{ g.bill.id }}">
+          {% if useri.langSet == 0 %}Fungua notisi{% else %}Open note{% endif %}
+        </a>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered mb-0">
+        <thead class="smallFont">
+          <tr>
+            <th class="text-left" >{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
+            <th class="text-left" >{% if useri.langSet == 0 %}Kipimo{% else %}Unit{% endif %}</th>
+            <th class="text-right">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for itm in g.items %}
+          <tr>
+            <td class="text-capitalize">{{ itm.bidhaa.bidhaa_jina }}</td>
+            <td>{{ itm.bidhaa.vipimo }}</td>
+            <td class="text-right">{{ itm.idadi }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="text-muted smallFont px-3 py-3">
+              {% if useri.langSet == 0 %}Hakuna bidhaa kwenye hamisho hili.{% else %}No items on this transfer.{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block dash-mapper %}
+ {% if useri.langSet == 0 %} Bidhaa  {% else %} Items {% endif %}
+{% endblock %}
+
+{% block nav-stock %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+
+{% block active-stock %} class="bi bi-shop text-primary font-weight-bold"{% endblock %}
+
+{% block dash-map %}<a href="#" class="tab_show" data-show="#general-panel">  {% if useri.langSet == 0 %}Hamisho ambazo hazijaonekana{% else %} Unseen transfers {% endif %}</a> {% endblock %}

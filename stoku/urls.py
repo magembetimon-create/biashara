@@ -113,6 +113,8 @@ urlpatterns=[
     path('receiveNote',views.receiveNote, name='receiveNote'),
 
     path('viewTransfer',views.viewtransfer, name='viewTransfer'),
+    path('unseenTransfers',views.unseenTransfers, name='unseenTransfers'),
+    path('unseenReceives',views.unseenReceives, name='unseenReceives'),
     path('viewReceives',views.viewReceives, name='viewReceives'),
 
     path('markReceive',views.markReceive, name='markReceive'),
