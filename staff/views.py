@@ -1122,10 +1122,10 @@ def shift_actor_sales(request):
         if all_staff:
             actor_name = 'Wafanyakazi wote' if todo.get('useri') and getattr(todo.get('useri'), 'langSet', 1) == 0 else 'All staff'
         else:
-            actor = InterprisePermissions.objects.filter(pk=actor_id, Interprise=duka.id).select_related(
-                'user__user', 'fanyakazi', 'user_entp__Interprise'
-            ).first()
-            if not actor:
+        actor = InterprisePermissions.objects.filter(pk=actor_id, Interprise=duka.id).select_related(
+            'user__user', 'fanyakazi', 'user_entp__Interprise'
+        ).first()
+        if not actor:
                 return render(request, 'errorpage.html', todo)
             actor_name = staff_display_name(actor)
 
