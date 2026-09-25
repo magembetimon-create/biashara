@@ -396,7 +396,45 @@
 .waiter-cart-item .meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+#waiterPageRoot .waiter-cart-item .meta .waiterQty,
+#deviceDashboardRoot .waiter-cart-item .meta .waiterQty {
+  min-width: 38px;
+  min-height: 38px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+
+#waiterPageRoot .waiter-cart-item .meta .waiterQty:hover,
+#deviceDashboardRoot .waiter-cart-item .meta .waiterQty:hover {
+  background-color: #0069d9;
+  color: #fff;
+}
+
+#waiterPageRoot .waiter-cart-item .meta .waiterQty:disabled,
+#deviceDashboardRoot .waiter-cart-item .meta .waiterQty:disabled {
+  opacity: 0.45;
+  color: #fff;
+}
+
+#waiterPageRoot .waiter-cart-item .meta strong,
+#deviceDashboardRoot .waiter-cart-item .meta strong {
+  min-width: 26px;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .waiter-history-tabs {
@@ -559,6 +597,16 @@
     min-width: 30px;
     min-height: 30px;
     padding: 0;
+  }
+  #waiterPageRoot .waiter-cart-item .meta .waiterQty,
+  #deviceDashboardRoot .waiter-cart-item .meta .waiterQty {
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 1.05rem;
+  }
+  #waiterPageRoot .waiter-cart-item .meta strong,
+  #deviceDashboardRoot .waiter-cart-item .meta strong {
+    font-size: 1.1rem;
   }
   .waiter-table-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

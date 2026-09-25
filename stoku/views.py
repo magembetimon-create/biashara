@@ -5896,11 +5896,15 @@ def transferNote(request):
 
 @login_required(login_url='login')
 def receiveNote(request):
-    todo = receve_data(request)
-    if not todo['duka'].Interprise:
-        return redirect('/userdash')
-    else:     
-       return render(request,'receives.html',todo) 
+    try:
+        todo = receve_data(request)
+        if not todo['duka'].Interprise:
+            return redirect('/userdash')
+        else:     
+            return render(request,'receives.html',todo) 
+    except:
+        traceback.print_exc()
+        return render(request,'pagenotFound.html',todoFunct(request))
 
 @login_required(login_url='login')
 def viewReceives(request): 
