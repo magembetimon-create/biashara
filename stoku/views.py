@@ -69,6 +69,71 @@ def todoFunct(request):
   usr = Todos(request)
   return usr.todoF()
 
+def _qty_unit_display(base_qty, bidhaa):
+    try:
+        qty = float(base_qty or 0)
+    except (TypeError, ValueError):
+        qty = 0.0
+    units = [(getattr(bidhaa, 'vipimo', None) or '', 1.0)]
+    jum = float(getattr(bidhaa, 'idadi_jum', None) or 1)
+    if jum > 1:
+        units.append((getattr(bidhaa, 'vipimo_jum', None) or '', jum))
+    chosen = units[0]
+    for name, uq in units:
+        if uq > 0 and abs((qty / uq) - round(qty / uq)) < 1e-6 and uq >= chosen[1]:
+            chosen = (name, uq)
+    shown = qty / chosen[1] if chosen[1] else qty
+    return f"{shown:.2f}", chosen[0]
+
+
+def transfer_receive_item_rows(receives):
+    stocks = bidhaa_stoku.objects.filter(
+        uhamisho__receive__in=receives
+    ).select_related('bidhaa', 'uhamisho', 'uhamisho__receive')
+    colors = produ_colored.objects.filter(
+        bidhaa__uhamisho__receive__in=receives
+    ).select_related('color', 'received', 'bidhaa')
+    sizes = produ_size.objects.filter(
+        bidhaa__uhamisho__receive__in=receives
+    ).select_related('sized', 'received', 'bidhaa', 'sized__color')
+
+    colors_by_itm = {}
+    for c in colors:
+        colors_by_itm.setdefault(c.bidhaa_id, []).append(c)
+    sizes_by_color = {}
+    for s in sizes:
+        color_id = s.sized.color_id if s.sized else None
+        sizes_by_color.setdefault((s.bidhaa_id, color_id), []).append(s)
+
+    items_by_rcv = {}
+    for li in stocks:
+        rcv_id = li.uhamisho.receive_id if li.uhamisho else None
+        if not rcv_id:
+            continue
+        name = li.bidhaa.bidhaa_jina if li.bidhaa else ''
+        cols = colors_by_itm.get(li.id, [])
+        rows = []
+        if not cols:
+            base = li.uhamisho.qty if li.uhamisho else li.idadi
+            qty_s, unit = _qty_unit_display(base, li.bidhaa)
+            rows.append({'name': name, 'unit': unit, 'qty': qty_s, 'color': '', 'size': ''})
+        else:
+            for col in cols:
+                szs = sizes_by_color.get((li.id, col.color_id), [])
+                color_name = col.color.color_name if col.color else ''
+                if not szs:
+                    base = col.received.qty if col.received else col.idadi
+                    qty_s, unit = _qty_unit_display(base, li.bidhaa)
+                    rows.append({'name': name, 'unit': unit, 'qty': qty_s, 'color': color_name, 'size': ''})
+                else:
+                    for sz in szs:
+                        base = sz.received.qty if sz.received else sz.idadi
+                        qty_s, unit = _qty_unit_display(base, li.bidhaa)
+                        size_name = sz.sized.size if sz.sized else ''
+                        rows.append({'name': name, 'unit': unit, 'qty': qty_s, 'color': color_name, 'size': size_name})
+        items_by_rcv.setdefault(rcv_id, []).extend(rows)
+    return items_by_rcv
+
 @login_required(login_url='login')
 def getItems(request):
     try:
@@ -6128,18 +6193,16 @@ def unseenTransfers(request):
         .order_by('transfer__tarehe', 'transfer__code', 'id')
     )
 
-    items_by_rcv = {}
-    stocks = bidhaa_stoku.objects.filter(
-        uhamisho__receive__in=receives
-    ).select_related('bidhaa', 'uhamisho', 'uhamisho__receive')
-    for li in stocks:
-        items_by_rcv.setdefault(li.uhamisho.receive_id, []).append(li)
+    items_by_rcv = transfer_receive_item_rows(receives)
 
     groups = []
     for rcv in receives:
+        rows = items_by_rcv.get(rcv.id, [])
         groups.append({
             'bill': rcv,
-            'items': items_by_rcv.get(rcv.id, []),
+            'items': rows,
+            'has_color': any(r.get('color') for r in rows),
+            'has_size': any(r.get('size') for r in rows),
         })
 
     if not groups:
@@ -6197,12 +6260,7 @@ def unseenReceives(request):
         .order_by('transfer__tarehe', 'transfer__code', 'id')
     )
 
-    items_by_rcv = {}
-    stocks = bidhaa_stoku.objects.filter(
-        uhamisho__receive__in=receives
-    ).select_related('bidhaa', 'uhamisho', 'uhamisho__receive')
-    for li in stocks:
-        items_by_rcv.setdefault(li.uhamisho.receive_id, []).append(li)
+    items_by_rcv = transfer_receive_item_rows(receives)
 
     conf_map = {
         c.receive_id: c
@@ -6217,11 +6275,14 @@ def unseenReceives(request):
         can_confirm = (not is_order) and uc is not None and not uc.confirmed
         if can_confirm:
             pending_confirm_ids.append(rcv.id)
+        rows = items_by_rcv.get(rcv.id, [])
         groups.append({
             'bill': rcv,
-            'items': items_by_rcv.get(rcv.id, []),
+            'items': rows,
             'can_confirm': can_confirm,
             'user_confirmed': bool(uc and uc.confirmed),
+            'has_color': any(r.get('color') for r in rows),
+            'has_size': any(r.get('size') for r in rows),
         })
 
     if not groups:

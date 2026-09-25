@@ -76,6 +76,12 @@
         <thead class="smallFont">
           <tr>
             <th class="text-left" >{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
+            {% if g.has_color %}
+            <th>{% if useri.langSet == 0 %}Rangi{% else %}Color{% endif %}</th>
+            {% endif %}
+            {% if g.has_size %}
+            <th>{% if useri.langSet == 0 %}Size{% else %}Size{% endif %}</th>
+            {% endif %}
             <th class="text-left" >{% if useri.langSet == 0 %}Kipimo{% else %}Unit{% endif %}</th>
             <th class="text-right">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
           </tr>
@@ -83,13 +89,19 @@
         <tbody>
           {% for itm in g.items %}
           <tr>
-            <td class="text-capitalize">{{ itm.bidhaa.bidhaa_jina }}</td>
-            <td>{{ itm.bidhaa.vipimo }}</td>
-            <td class="text-right">{{ itm.idadi }}</td>
+            <td class="text-capitalize">{{ itm.name }}</td>
+            {% if g.has_color %}
+            <td>{% if itm.color %}{{ itm.color }}{% else %}---{% endif %}</td>
+            {% endif %}
+            {% if g.has_size %}
+            <td>{% if itm.size %}<span class="text-danger">{{ itm.size }}</span>{% else %}---{% endif %}</td>
+            {% endif %}
+            <td>{{ itm.unit }}</td>
+            <td class="text-right">{{ itm.qty }}</td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="3" class="text-muted smallFont px-3 py-3">
+            <td colspan="5" class="text-muted smallFont px-3 py-3">
               {% if useri.langSet == 0 %}Hakuna bidhaa kwenye hamisho hili.{% else %}No items on this transfer.{% endif %}
             </td>
           </tr>
