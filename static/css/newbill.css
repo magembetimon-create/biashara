@@ -133,3 +133,115 @@ code {
 .extend_bill_form{
   min-height: fit-content;
 }
+
+.nb-page { min-height: 80vh; }
+.nb-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.nb-head h4 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.25rem;
+}
+.nb-meta-card {
+  border: 1px solid #e6ebf2;
+  border-radius: 10px;
+  background: #fafbfd;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.nb-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5b6b82;
+  margin-bottom: 4px;
+}
+.nb-label.req { color: #c0392b; }
+.nb-table-wrap {
+  border: 1px solid #e6ebf2;
+  border-radius: 10px;
+  background: #fff;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 12px;
+}
+.nb-table-wrap #prod_table {
+  margin-bottom: 0;
+}
+.nb-table-wrap #prod_table > tbody > tr:first-child th,
+.nb-table-wrap #prod_table tr.bg-light th {
+  background: #f4f7fb;
+  font-size: 12px;
+  white-space: nowrap;
+  border-color: #e6ebf2;
+}
+.nb-table-wrap #prod_table tbody tr.bill_data:hover {
+  background: #f8fafc;
+}
+.nb-items-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+  margin: 8px 0 16px;
+  padding: 0 4px;
+}
+.nb-items-line {
+  font-size: 14px;
+  color: #5b6b82;
+  min-width: 0;
+  white-space: nowrap;
+  margin-right: auto;
+}
+.nb-items-line .nb-line-label {
+  font-weight: 600;
+}
+.nb-items-line strong {
+  color: #1c1c1c;
+  font-weight: 700;
+}
+.nb-items-line .nb-line-sep {
+  margin: 0 8px;
+  color: #c5ced8;
+}
+.nb-add-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+.nb-totals-card {
+  border: 1px solid #e6ebf2;
+  border-radius: 10px;
+  background: #fafbfd;
+  padding: 8px 4px;
+  margin: 8px 0 16px;
+  max-width: 520px;
+  margin-left: auto;
+}
+.nb-totals-card .border-bottom {
+  border-color: #edf1f6 !important;
+}
+.nb-save-wrap { text-align: right; padding-bottom: 28px; }
+.nb-save-wrap button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (max-width: 767px) {
+  .nb-items-bar { flex-wrap: wrap; }
+  .nb-save-wrap { width: 100%; }
+  .nb-save-wrap button { width: 100%; }
+  .nb-totals-card { max-width: none; }
+}

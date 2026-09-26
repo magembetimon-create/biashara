@@ -2,72 +2,48 @@
 {% load humanize %}
 {% load static %}
 {% block billcss %}
-<link rel="stylesheet" href="{% static 'css/newbill.css' %}">
+<link rel="stylesheet" href="{% static 'css/newbill.css' %}?v=nb4">
 {% endblock %}
 
 {% block all-bills %}
-<div class="whiteBg py-2" style="margin-top: -15px;">
-    <div class="row classic_div py-2 mx-2 border-bottom ">
-        <h4 class="col-7 ">
-
-            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-clipboard-plus" viewBox="0 0 16 16">
+<div class="whiteBg p-3 nb-page" style="margin-top: -15px;">
+    <div class="nb-head">
+        <h4 class="latoFont">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-clipboard-plus" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/>
                 <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
                 <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
               </svg>
-        
-            
                 {% if rudi %}
                 {% if useri.langSet == 0 %}Bill ya kufidia Bidhaa zilizorudishwa  {% else %} Bill to refund returned Item(s) {% endif %}      
               {% else %}
                 {% if useri.langSet == 0 %} Bili mpya   {% else %} New Bill {% endif %}
                {% endif %}
-            
-            </h4>
-            <h5 class="text-right col-5">
-                <a type="button" href="/purchase/AllBills" class="border0 btn btn-primary smallFont latoFont">
-                    {% if useri.langSet == 0 %}Bili Zote  {% else %}All Bills{% endif %}
-                </a>
-            </h5>
-    </div> 
-    
- 
- <div class="row classic_div px-3 py-2">
- <div class="col-md-6">
-     <div class="row mb-3">
-         <div class="col-4">
-             <strong>
-                <label class="text-danger " for="vendor_nami"> {% if useri.langSet == 0 %} Msambazaji  {% else %} Supplier {% endif %} <sup>*</sup> </label> 
-             </strong>
-         </div>
-         <div class="col-8">
+        </h4>
+        <a href="/purchase/AllBills" class="btn btn-outline-primary btn-sm latoFont">
+            {% if useri.langSet == 0 %}Bili Zote  {% else %}All Bills{% endif %}
+        </a>
+    </div>
+
+ <div class="nb-meta-card">
+     <div class="row">
+         <div class="col-md-4 mb-3 mb-md-0">
+             <label class="nb-label req" for="produ_sambazaji-kununua">{% if useri.langSet == 0 %} Msambazaji  {% else %} Supplier {% endif %} <sup>*</sup></label>
             <select id="produ_sambazaji-kununua" onchange=" if($(this).find('option:selected').data('value')!='0'){ $(this).selectpicker('setStyle', 'restore-border');$(this).selectpicker('setStyle', 'btn-light');}"  data-width="100%" class="selectpicker btn-sm muhimu-b-kununua rega form-control  robotoFont" data-live-search="true">
                 <option value=0 > {% if useri.langSet == 0 %}  Chagua Wasambazaji {% else %} Select supplier {% endif %}</option>
-            </select>   
-              
-              <p class=" text-right">
-                  <button data-toggle="modal" data-target="#wasambazaji-modal" class="btn latoFont btn-default btn-sm smallFont text-primary">
-                      +  {% if useri.langSet == 0 %} Ongeza  {% else %} Add {% endif %}
-                  </button>
-                </p>
-            
-            </div>
-     </div>
- 
-     <div class="row mb-2">
-         <div class="col-4">
-             <label class="text-danger " for="vendor_nami"> {% if useri.langSet == 0 %}  Namba ya Bili {% else %} Bill no {% endif %} <sup>*</sup> </label> 
+            </select>
+            <p class="text-right mb-0">
+                <button data-toggle="modal" data-target="#wasambazaji-modal" class="btn latoFont btn-default btn-sm smallFont text-primary">
+                    +  {% if useri.langSet == 0 %} Ongeza  {% else %} Add {% endif %}
+                </button>
+            </p>
          </div>
-         <div class="col-8">
+         <div class="col-md-4 mb-3 mb-md-0">
+             <label class="nb-label req" for="bill_no">{% if useri.langSet == 0 %}  Namba ya Bili {% else %} Bill no {% endif %} <sup>*</sup></label>
              <input type="text" id="bill_no" placeholder="BI-{{bill_no}}" class="form-control smallerFont">
          </div>
-     </div>
- 
-     <div class="row mb-2">
-         <div class="col-4">
-             <label class="text-danger " for="vendor_nami"> {% if useri.langSet == 0 %} Tarehe  {% else %} Date {% endif %} <sup>*</sup> </label> 
-         </div>
-         <div class="col-8">
+         <div class="col-md-4">
+             <label class="nb-label req" for="manunuzi-date">{% if useri.langSet == 0 %} Tarehe  {% else %} Date {% endif %} <sup>*</sup></label>
              <input type="date" id="manunuzi-date" name="manunuzi-date" class="form-control smallerFont">
              <script>
                  var date = new Date();
@@ -87,12 +63,11 @@
          </div>
      </div>
  </div>
- </div>
 
 
-<div class="row classic_div border-bottom" >
+<div class="row classic_div" >
 <div class="col-md-12"  >
-  <div class="mx-md-2  bgWhite px-1 py-3 table-responsive" style="padding-bottom:220px;margin-top:-10px;">
+  <div class="nb-table-wrap table-responsive px-1 py-2">
      <table id="prod_table" class=" table-bordered table table-sm" style="min-width: 1000px;" data-row=1>
          <tr class="bg-light smallFont">
            <th  colspan="2" > {% if useri.langSet == 0 %} Jina la Bidhaa  {% else %} Item Name {% endif %}</th>
@@ -415,14 +390,15 @@
         
      </table>
  </div>
- </div>
-
- <div class="row classic_div col-md-12">
-         <p class="text-right  col-6">
-         </p>
-
-
-     <p class="text-right  col-6">
+ <div class="nb-items-bar">
+    <p class="nb-items-line mb-0 latoFont" aria-live="polite">
+      <span class="nb-line-label">{% if useri.langSet == 0 %}Bidhaa{% else %}Items{% endif %}:</span>
+      <strong id="nb_sum_items">0</strong>
+      <span class="nb-line-sep">·</span>
+      <span class="nb-line-label">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}:</span>
+      <strong id="nb_sum_qty">0</strong>
+    </p>
+    <div class="nb-add-wrap">
         <span class="btn-group " role="group" aria-label="Basic example"> 
 
     <button class="btn btn-primary btn-sm latoFont " id="add_bill_item" style="border-radius:0">
@@ -436,7 +412,8 @@
           </svg>
        </button>
         </span>
-</p>
+    </div>
+ </div>
  </div>
 <!-- 
 <div class="row classic_div col-md-12">
@@ -524,7 +501,8 @@
 </div>
 
  
-<div class="border-bottom mx-3 mt-3">
+<div class="nb-totals-card">
+<div class="border-bottom mx-3 mt-1">
     <h6 class="text-right py-2 px-3">
         <span class=" latoFont" >
             {% if useri.langSet == 0 %}  Jumla bila VAT {% else %} Sub total {% endif %}:
@@ -573,6 +551,7 @@
             <strong data-total=0 id="total_bill_wth_expenses" class="figureColor">0</strong>
         </strong>
     </h5>
+</div>
 </div>
 
 
@@ -700,10 +679,14 @@
 {% else %}
     <form action="/purchase/addBill" data-rudi='{%if rudi %}1{% else %}0{% endif %}' data-rudi_val='{%if rudi %}{{ret.id}}{% else %}0{% endif %}'  method="POST" data-edit=0 data-bill=0 id="save_bill_data">
         {% csrf_token %}
-        <p class="text-center pt-3 pb-5" id="save_the_bill">
+        <p class="nb-save-wrap pt-3" id="save_the_bill">
 
-                <button type="submit" class="btn btn-primary btn-lg latoFont"   >
-                    Save   
+                <button type="submit" class="btn btn-primary latoFont">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-floppy mr-1" viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="M11 2H9v3h2z"/>
+                      <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.415A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z"/>
+                    </svg>
+                    {% if useri.langSet == 0 %}Save manunuzi{% else %}Save purchase{% endif %}
             </button>
 
         </p>
@@ -852,7 +835,7 @@
       <script>
           $('#loadMe').modal('show')
       </script>
-       <script src="{% static 'js/newbill.js' %}"></script>
+       <script src="{% static 'js/newbill.js' %}?v=nb1"></script>
     {% endblock %}    
 
 

@@ -430,6 +430,7 @@ def pwa_icon_file(request, filename):
         'icon-512.png',
         'icon-maskable-512.png',
         'apple-touch-icon.png',
+        'offline.png',
     }
     if filename not in allowed:
         return HttpResponse(status=404)
@@ -511,6 +512,13 @@ def pwa_service_worker(request):
     resp['Service-Worker-Allowed'] = '/'
     resp['Cache-Control'] = 'no-cache'
     return resp
+
+
+def pwa_offline(request):
+    resp = render(request, 'offline.html')
+    resp['Cache-Control'] = 'public, max-age=3600'
+    return resp
+
 
 def login(request):
    

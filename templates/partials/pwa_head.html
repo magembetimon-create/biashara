@@ -26,4 +26,21 @@
   #fb-pwa-progress.is-done { opacity: 0; transition: width .15s ease-out, opacity .35s ease .05s; }
 </style>
 <script src="{% static 'js/pwa-progress.js' %}"></script>
+<script>
+  (function () {
+    try {
+      var lang = null;
+      {% if useri %}
+      lang = '{{ useri.langSet }}';
+      {% elif lang == 0 or lang == '0' %}
+      lang = '0';
+      {% elif lang == 1 or lang == '1' %}
+      lang = '1';
+      {% endif %}
+      if (lang === '0' || lang === '1') {
+        localStorage.setItem('fb_lang', lang);
+      }
+    } catch (e) {}
+  })();
+</script>
 <script src="{% static 'js/pwa-register.js' %}" defer></script>

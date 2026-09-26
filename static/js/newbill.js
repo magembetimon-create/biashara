@@ -1977,10 +1977,34 @@ $('#total_vat_disp').text(vat_sum.toLocaleString())
 $('#total_bill_cash').text(bei_sum.toLocaleString())
 $('#total_bill_cash').data('total',bei_sum)
 
+if (typeof updateBillItemsPanel === 'function') updateBillItemsPanel()
+
 expenseSum()
 
 
  }
+
+function updateBillItemsPanel() {
+    if (!$('#nb_sum_items').length) return
+    var lines = 0, qty = 0
+    $('.bill_data').each(function () {
+        var pos = $(this).data('pos')
+        var item_data = $(this).data('jumin')
+        if (!$(this).data('jum')) {
+            item_data = $('#bill_item' + pos).data('rejin')
+        }
+        var itm = Number($(item_data).data('itm')) || 0
+        if (itm <= 0) return
+        lines += 1
+        var q = $(item_data).val()
+        if (q === '' || q == null) {
+            q = $(item_data).attr('placeholder')
+        }
+        qty += Number(q) || 0
+    })
+    $('#nb_sum_items').text(lines)
+    $('#nb_sum_qty').text(qty)
+}
 
 
  //SETTING THE PRICE.......................//
