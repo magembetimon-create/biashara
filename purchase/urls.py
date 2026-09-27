@@ -20,6 +20,7 @@ urlpatterns=[
     path('payManyBill',views.payManyBill, name='payManyBill'),
    
     path('viewbill',views.viewbill, name='viewbill'),
+    path('Billprint',views.Billprint, name='Billprint'),
     path('markBill',views.markBill, name='markBill'),
 
     path('bili_return',views.bili_return, name='bili_return'),

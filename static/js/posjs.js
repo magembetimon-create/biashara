@@ -677,16 +677,18 @@ function posItemCardHtml(pi, servedQtyMaps, dura, cartQtyByKey) {
     return `
             <li class="list-unstyled" ${IS_SERVICE && pi.idadi == svdQty ? 'hidden' : ''} >
                   <button class="itm_click" data-pos=${indx} data-itm=${pi.id} data-color=${pi.color_id} data-size=${pi.size_id} >
-                    <figure>
+                    <figure class="pos-item-figure">
                          ${picha}
-                 <div class="text-right" style="margin-top:-30px;z-index:9999" >
-                    <span data-qty=${cartqty} ${hidden} id="itmclickqty${indx}" class="bg-success border px-1" style="height:15px;width:15px;border-radius:50%;color:#fff" >
-                     ${cartqty}</span>
-                 </div>
-                      <h6 class="text-capitalize pt-2" >${siz} ${color} ${pi.name}</h6>
-                      <small>${pi.maelezo}</small>
-                     <small class="text-primary ml-2 text-italic"  ><i> ${pi.vipimo}</i>.</small><small>${Number(pi.idadi - svdQty).toLocaleString()}</small>
+                         <span data-qty=${cartqty} ${hidden} id="itmclickqty${indx}" class="pos-item-qty-badge bg-success border px-1">
+                           ${cartqty}
+                         </span>
                     </figure>
+                    <h6 class="pos-item-name text-capitalize">${siz} ${color} ${pi.name}</h6>
+                    <small class="pos-item-desc">${pi.maelezo || ''}</small>
+                    <div class="pos-item-stock">
+                      <small class="text-primary"><i>${pi.vipimo}</i></small>
+                      <small>${Number(pi.idadi - svdQty).toLocaleString()}</small>
+                    </div>
                     <div class="pos-product-price">
                      ${CURRENCII}. ${Number(pi.bei).toLocaleString()}
                          <svg width="24" height="24" viewBox="0 0 24 24">

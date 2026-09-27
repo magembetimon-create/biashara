@@ -122,6 +122,8 @@ function renderItemTrack(resp, from, to) {
     (unit ? ' · ' + lang('Kipimo', 'Unit') + ': ' + item.unit : '')
   )
 
+  const events = resp.events || []
+
   $('#itemTrackSummary').html(`
     <tr class="weight600" style="background-color: rgba(160, 57, 49, 0.13)">
       <td>${lang('Idadi kufungua','Opening qty')}</td>
@@ -140,12 +142,15 @@ function renderItemTrack(resp, from, to) {
       <td class="text-right">${floatValue(resp.close_qty)}</td>
     </tr>
     <tr>
+      <td class="text-muted">${lang('Miamala','Movements')}</td>
+      <td class="text-right text-muted">${events.length}</td>
+    </tr>
+    <tr>
       <td class="text-muted">${lang('Idadi sasa','Current qty')}</td>
       <td class="text-right text-muted">${floatValue(resp.current_qty)}</td>
     </tr>
   `)
 
-  const events = resp.events || []
   if (!events.length) {
     $('#itemTrackBody').html(`<tr><td colspan="7" class="text-muted">${lang('Hakuna miamala kwenye muda huu','No movements in this period')}</td></tr>`)
     return

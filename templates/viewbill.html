@@ -131,7 +131,7 @@
                       </div>
 
                       <div class="col-7 latoFont  pt-0">
-                        <span class="text-primary btn btn-default btn-sm smallFont px-0 latoFont">BIL-{{invo.code}}</span> | {{invo.date}}
+                        <span class="text-primary btn btn-default btn-sm smallFont px-0 latoFont">BIL-{{invo.code}}</span> | {{invo.date|date:'d/m/Y'}}{% if invo.tarehe %} {{invo.tarehe|date:'H:i'}}{% endif %}
                       </div>
 
                       <div class="col-5 text-right pt-1">
@@ -252,6 +252,32 @@
             
 
               {% endif %}
+
+            <div class="btn-group" role="group" aria-label="Print bill">
+              <button id="print_invo_btn" data-bill="1" data-paper="{{ cheo.receiptPaper|default:0 }}" data-lang="{% if useri.langSet == 0 %}0{% else %}1{% endif %}" type="button" data-invo="{{the_bill.id}}" class="btn btn-light border-secondary actionbtns btn-sm smallFont" title="{% if useri.langSet == 0 %}Chapisha manunuzi{% else %}Print purchase{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+                  <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                  <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+                </svg>
+                Print
+              </button>
+              <div class="btn-group" role="group">
+                <button type="button" class="btn btn-light border-secondary btn-sm smallFont dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                <div class="dropdown-menu dropdown-menu-right">
+                  <button class="btn btn-default actionbtns dropdown-item" data-bill="1" data-paper="{{ cheo.receiptPaper|default:0 }}" data-invo="{{the_bill.id}}" data-lang="0">Swahili</button>
+                  <button class="btn btn-default actionbtns dropdown-item" data-bill="1" data-paper="{{ cheo.receiptPaper|default:0 }}" data-invo="{{the_bill.id}}" data-lang="1">English</button>
+                  <div class="dropdown-divider"></div>
+                  <button class="btn btn-default dropdown-item" type="button" data-toggle="modal" data-target="#IvoSettingModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-settings">
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    {% if useri.langSet == 0 %}Rekebisha{% else %}Setting{% endif %}
+                  </button>
+                </div>
+              </div>
+            </div>
+
         {% if  the_bill.ilolipwa == 0 and the_bill.risiti == None %}
                   <a href="{% url 'editbill' %}?item_valued={{the_bill.id}}&back_to={{back}}" title="{% if useri.langSet == 0 %}  Mabadiliko {% else %}Edit {% endif %}" class=" btn-sm btn btn-light border-secondary smallFont latoFont">
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
@@ -358,7 +384,7 @@
                     <h6 class="text-right">
                     <strong> {% if useri.langSet == 0 %} Tarehe  {% else %}Bill Date  {% endif %}:</strong>
                     <label for="date" class="">
-                        {{the_bill.date|date:'d/m/Y'}}
+                        {{the_bill.date|date:'d/m/Y'}}{% if the_bill.tarehe %} {{the_bill.tarehe|date:'H:i'}}{% endif %}
                     </label>
 
                   </h6>
@@ -1609,6 +1635,8 @@ $('body').on("submit", "#saveMarkedBill" ,function(e){
 
 </script>
 
+
+ {% include "invoSettingModal.html" %}
 
  {% block forbilljs %}
  <script src="/static/js/paybill.js"></script>

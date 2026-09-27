@@ -581,12 +581,17 @@ $('body').on('click','.actionbtns',function(){
           ? Number(paperAttr)
           : getActiveReceiptPaper(),
         pu = Number($(this).data('pu'))||0,
+        bill = Number($(this).data('bill'))||0,
         theHref = $(this).data('href'),
 
-        url = pu?`/purchase/Risitiprint?qp=${invo}&lang=${lugha}&m=${min}`:`/mauzo/Invoprint?item_valued=${invo}&lang=${lugha}&m=${min}`,
+        url = bill
+          ? `/purchase/Billprint?item_valued=${invo}&lang=${lugha}&m=${min}`
+          : pu
+            ? `/purchase/Risitiprint?qp=${invo}&lang=${lugha}&m=${min}`
+            : `/mauzo/Invoprint?item_valued=${invo}&lang=${lugha}&m=${min}`,
         dtaInv = {
             dta:{
-                data:{i:pu?0:invo,p:pu?invo:0},
+                data:{i:(pu||bill)?0:invo,p:pu?invo:0},
                 url:'/mauzo/printforInv'
             },
             url

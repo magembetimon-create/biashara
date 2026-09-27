@@ -92,8 +92,12 @@
       <tbody>
             {% for bil in bili %}
         <tr>
-          <td class="text-center latoFont">BIL-{{bil.code}}</td>
-          <td class="text-center latoFont">{{bil.date}}</td>
+          <td class="text-center latoFont">
+            <a href="{% url 'viewbill' %}?back_to=AllBills&item_valued={{bil.id}}" class="text-primary">BIL-{{bil.code}}</a>
+          </td>
+          <td class="text-center latoFont">
+            {{bil.date|date:'d/m/Y'}}{% if bil.tarehe %} {{bil.tarehe|date:'H:i'}}{% endif %}
+          </td>
           <td class="text-center latoFont ">
               <a class="text-primary" href='#' >{{bil.supplier_id.jina|title}} </a>
             </td>

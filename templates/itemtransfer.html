@@ -3,7 +3,7 @@
 {% block billcss %}
 <link rel="stylesheet" href="{% static 'css/sales.css' %}">
 <style>
-  .trf-page { min-height: 80vh; }
+  .trf-page { min-height: 80vh; overflow: visible; }
   .trf-meta-card {
     border: 1px solid #e6ebf2;
     border-radius: 10px;
@@ -40,11 +40,14 @@
   .trf-table-wrap {
     border: 1px solid #e6ebf2;
     border-radius: 10px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
     background: #fff;
   }
-  #prod_table { margin-bottom: 0; width: 100%; }
+  .trf-page #prod_table {
+    margin-bottom: 0;
+    width: 100%;
+    min-width: 0 !important;
+  }
   #prod_table thead th {
     background: #f4f7fb;
     font-size: 12px;
@@ -55,8 +58,14 @@
   #prod_table tbody td {
     vertical-align: top;
     padding: 8px 6px;
+    overflow: visible;
   }
-  #prod_table tbody .suggest-holder { position: relative; min-width: 0; }
+  #prod_table tbody .suggest-holder {
+    position: relative;
+    min-width: 0;
+    overflow: visible;
+    z-index: 20;
+  }
   #prod_table tbody .suggest-holder .form-control,
   #prod_table tbody .trf-qty-group {
     height: 38px;
@@ -69,10 +78,13 @@
   #prod_table tbody .trf-qty-group .form-control { min-width: 0; }
   #prod_table tbody .color-wrapper { height: auto; min-height: 0; }
   #prod_table tbody .masaki {
-    min-width: 0 !important;
-    width: 100%;
-    max-width: 100%;
+    left: 0;
+    right: auto;
+    min-width: 320px !important;
+    width: max(100%, 320px);
+    max-width: min(560px, 72vw);
     box-sizing: border-box;
+    z-index: 999999 !important;
   }
   .trf-thumb {
     width: 52px;
@@ -200,6 +212,11 @@
       text-align: right;
     }
     #prod_table tbody .suggest-holder .form-control {
+      width: 100%;
+      max-width: 100%;
+    }
+    #prod_table tbody .masaki {
+      min-width: 0 !important;
       width: 100%;
       max-width: 100%;
     }

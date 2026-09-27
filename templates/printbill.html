@@ -1,0 +1,193 @@
+{% load humanize %}
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>BIL-{{ the_bill.code }}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <script src="{% static 'js/jquery.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/momentlocale.js' %}"></script>
+    <style>
+      body {
+        color: #000;
+        margin: 0;
+        font-family: 'Times New Roman', Times, serif;
+        background: #fff;
+      }
+      #invo_box { max-width: 1180px; margin: 0 auto; }
+      table { border-collapse: collapse !important; width: 100%; }
+      th, td { border: 1px solid #000; padding: 6px 8px; }
+      th { text-align: center; }
+      .no-print { margin: 8px; }
+      {% if paper_class == 'thermal58' %}
+      @page { size: 58mm auto; margin: 2mm; }
+      {% elif paper_class == 'thermal80' %}
+      @page { size: 80mm auto; margin: 2mm; }
+      {% else %}
+      @page { size: A4; margin: 7mm; }
+      {% endif %}
+      body.paper-thermal58, body.paper-thermal80 { font-size: 12px; }
+      body.paper-thermal58 #invo_box,
+      body.paper-thermal80 #invo_box { max-width: 100%; padding: 4px; }
+      body.paper-thermal58 .hide-thermal,
+      body.paper-thermal80 .hide-thermal { display: none !important; }
+      @media print {
+        .no-print { display: none !important; }
+        a { color: #000 !important; text-decoration: none !important; }
+      }
+    </style>
+  </head>
+  <body class="paper-{{ paper_class }}">
+    <div class="no-print text-right">
+      <button type="button" class="btn btn-sm btn-secondary" onclick="window.print()">Print</button>
+    </div>
+    <div id="invo_box" class="pt-3 pb-4 px-3">
+      <div class="text-center border-bottom pb-2 mb-3">
+        {% if duka.logo and duka.invo_logo %}
+          <div style="height:70px"><img src="{{ duka.logo.url }}" style="height:100%"></div>
+        {% endif %}
+        <h2 class="font-weight-bold mb-0">{{ duka.name|title }}</h2>
+        {% if duka.slogan %}<div>{{ duka.slogan }}</div>{% endif %}
+        {% if duka.jengo %}<div>{{ duka.jengo }}</div>{% endif %}
+        <div>
+          {{ duka.mtaa.mtaa|title }}
+          {% if duka.mtaa.kata %}, {{ duka.mtaa.kata.kata|title }}{% endif %}
+          {% if duka.mtaa.kata.wilaya %}, {{ duka.mtaa.kata.wilaya.wilaya|title }}{% endif %}
+        </div>
+        {% if duka.Intp_code %}<strong>{{ duka.Intp_code }}</strong>{% endif %}
+      </div>
+
+      <h3 class="text-danger mb-1">
+        {% if then.langSet == 0 %}BILI YA MANUNUZI{% else %}PURCHASE BILL{% endif %}
+      </h3>
+      <h4>BIL-{{ the_bill.code }}</h4>
+      <hr>
+
+      <div class="row">
+        <div class="col-6">
+          <div><strong>{% if then.langSet == 0 %}Tarehe{% else %}Date{% endif %}:</strong> {{ the_bill.date|date:'d/m/Y' }}{% if the_bill.tarehe %} {{ the_bill.tarehe|date:'H:i' }}{% endif %}</div>
+          <div><strong>{% if then.langSet == 0 %}Tarehe ya malipo{% else %}Due date{% endif %}:</strong> {{ the_bill.kulipa|date:'d/m/Y' }}</div>
+          <div>
+            <strong>{% if then.langSet == 0 %}Statasi{% else %}Status{% endif %}:</strong>
+            {% if the_bill.amount == the_bill.ilolipwa %}
+              {% if then.langSet == 0 %}IMELIPIWA{% else %}PAID{% endif %}
+            {% elif the_bill.ilolipwa > 0 %}
+              {% if then.langSet == 0 %}IMELIPWA KIASI{% else %}PART PAID{% endif %}
+            {% else %}
+              {% if then.langSet == 0 %}HAIJALIPIWA{% else %}UNPAID{% endif %}
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-6">
+          <strong>{% if then.langSet == 0 %}Kutoka{% else %}From{% endif %}:</strong><br>
+          {% if the_bill.supplier_id.where %}
+            {{ the_bill.supplier_id.where.name|title }}<br>
+            {{ the_bill.supplier_id.where.Intp_code }}
+          {% elif the_bill.supplier_id %}
+            {{ the_bill.supplier_id.jina|title }}<br>
+            {% if the_bill.supplier_id.address %}{{ the_bill.supplier_id.address|title }}<br>{% endif %}
+            {% if the_bill.supplier_id.simu1 %}+{{ the_bill.supplier_id.code }} {{ the_bill.supplier_id.simu1 }}{% endif %}
+          {% endif %}
+        </div>
+      </div>
+
+      <table class="mt-3 mb-2">
+        <thead>
+          <tr>
+            <th>{% if then.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
+            <th>{% if then.langSet == 0 %}Kipimo{% else %}Unit{% endif %}</th>
+            <th>{% if then.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+            <th>{% if then.langSet == 0 %}Bei{% else %}Price{% endif %}</th>
+            <th class="hide-thermal">{% if then.langSet == 0 %}Jumla{% else %}Subtotal{% endif %}</th>
+            <th class="hide-thermal">VAT</th>
+            <th>{% if then.langSet == 0 %}Jumla{% else %}Total{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for it in print_lines %}
+          <tr>
+            <td>{{ it.name }}</td>
+            <td class="text-center">{{ it.unit }}</td>
+            <td class="text-right">{{ it.qty|floatformat:'-2'|intcomma }}</td>
+            <td class="text-right">{{ it.price|floatformat:'-2'|intcomma }}</td>
+            <td class="text-right hide-thermal">{{ it.sub|floatformat:'-2'|intcomma }}</td>
+            <td class="text-right hide-thermal">{{ it.vat|floatformat:'-2'|intcomma }}</td>
+            <td class="text-right">{{ it.total|floatformat:'-2'|intcomma }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">{% if then.langSet == 0 %}Hakuna bidhaa{% else %}No items{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if matumizi %}
+      <h6 class="mt-3">{% if then.langSet == 0 %}Gharama nyingine{% else %}Other expenses{% endif %}</h6>
+      <table class="mb-2">
+        <thead>
+          <tr>
+            <th>{% if then.langSet == 0 %}Gharama{% else %}Expense{% endif %}</th>
+            <th>{% if then.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in matumizi %}
+          <tr>
+            <td>{{ e.matumizi.matumizi }} {% if e.maelezo %}<small>({{ e.maelezo }})</small>{% endif %}</td>
+            <td class="text-right">{{ e.kiasi|floatformat:'-2'|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      <div class="text-right mt-2">
+        {% if print_vat %}
+        <div class="hide-thermal">{% if then.langSet == 0 %}Jumla kwa bei{% else %}Sub total{% endif %}: {{ duka.currencii }} {{ print_sub|floatformat:'-2'|intcomma }}</div>
+        <div class="hide-thermal">VAT: {{ duka.currencii }} {{ print_vat|floatformat:'-2'|intcomma }}</div>
+        {% endif %}
+        <h5>
+          {% if then.langSet == 0 %}Jumla{% else %}Total{% endif %}:
+          {{ duka.currencii }} <strong>{{ the_bill.amount|floatformat:'-2'|intcomma }}</strong>
+        </h5>
+        <div>{% if then.langSet == 0 %}Ilolipwa{% else %}Paid{% endif %}: {{ duka.currencii }} {{ the_bill.ilolipwa|floatformat:'-2'|intcomma }}</div>
+      </div>
+
+      {% if malipo %}
+      <h6 class="mt-3">{% if then.langSet == 0 %}Malipo{% else %}Payments{% endif %}</h6>
+      <table>
+        <thead>
+          <tr>
+            <th>{% if then.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
+            <th>{% if then.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+            <th>{% if then.langSet == 0 %}Akaunti{% else %}Account{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in malipo %}
+          <tr>
+            <td>{{ m.tarehe|date:'d/m/Y H:i' }}</td>
+            <td class="text-right">{{ m.Amount|floatformat:'-2'|intcomma }}</td>
+            <td>{{ m.Akaunt.Akaunt_name }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      <hr>
+      <p>
+        {% if then.langSet == 0 %}Imetolewa na{% else %}Issued by{% endif %}:
+        <strong>{{ the_bill.By.user.user.first_name|title }} {{ the_bill.By.user.user.last_name|title }}</strong>
+      </p>
+      <p><strong>{% if then.langSet == 0 %}Sahihi{% else %}Signature{% endif %} ........................</strong></p>
+    </div>
+    <script>
+      setTimeout(function () { window.print(); }, 250);
+    </script>
+  </body>
+</html>

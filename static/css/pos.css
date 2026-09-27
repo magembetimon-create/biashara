@@ -23,10 +23,10 @@
 
 .pos-products-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
     grid-auto-rows: auto;
     align-content: start;
-    grid-gap: 0.75rem;
+    grid-gap: 10px;
     max-height: 90vh;
     overflow-x: hidden;
     overflow-y: auto;
@@ -35,62 +35,134 @@
 }
 .pos-products-list > li {
     align-self: start;
+    min-width: 0;
     min-height: 0;
     height: auto;
 }
 .pos-products-list > li button {
-    height: 100%;
-    background-color: #e6ebf1;
-    border: 0.2rem solid #e6ebf1;
-    border-radius: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 220px;
+    height: auto;
+    background-color: #fff;
+    border: 1px solid #e9edf4;
+    border-radius: 10px;
     color: #525f7f;
-    padding: 0;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-align: left;
 }
 .pos-products-list > li button:hover, .pos-products-list > li button:focus {
-    background-color: var(--whiteBg);
+    background-color: var(--whiteBg, #fff);
+    border-color: #aec6fb;
 }
-.pos-products-list > li button:hover svg, .pos-products-list > li button:focus svg {
+.pos-products-list > li button:hover .pos-product-price svg, .pos-products-list > li button:focus .pos-product-price svg {
     fill: #00bc81;
-    transform: scale(1.4);
+    transform: scale(1.15);
 }
 .pos-products-list > li button:focus {
     outline: none;
-    transform: scale(1.05);
 }
 .pos-products-list > li button:active {
-    transform: scale(0.95);
+    transform: scale(0.98);
 }
-.pos-products-list > li figure {
-    background: var(--whiteBg);
-    border-radius: 0.4rem;
+.pos-item-figure {
+    position: relative;
+    width: 100%;
+    height: 112px;
+    min-height: 112px;
+    flex-shrink: 0;
+    margin: 0 0 0.25rem 0;
+    box-sizing: border-box;
+    display: block;
     overflow: hidden;
-    padding-bottom: 1rem;
-    width:100%;
-    margin: 0;
-    /* padding-top:0.5rem ; */
-    
+    border-radius: 8px;
+    border: 1px solid #eff2f7;
+    background: #fbfcff;
 }
-.pos-products-list > li figure img, .pos-products-list > li figure svg {
-    max-width: 95%;
-    max-height: 95%;
+.pos-item-figure img {
+    width: 100%;
+    height: 100%;
+    display: block;
     object-fit: cover;
 }
-.pos-products-list > li h6 {
-    margin: 0;
-    margin: 0.5rem;
-    font-size: .93rem;
+.pos-item-qty-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 2;
+    min-width: 18px;
+    height: 18px;
+    line-height: 16px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 11px;
+    text-align: center;
 }
-.pos-products-list > li div {
-    padding: 0.5rem;
+.pos-item-name {
+    margin: 0.15rem 0 0.2rem;
+    font-size: 0.9rem;
+    min-height: 38px;
+    line-height: 1.25;
+}
+.pos-item-desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.75rem;
+    color: #6c757d;
+    min-height: 2em;
+}
+.pos-item-stock {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1;
+    margin-top: auto;
+    padding: 0.35rem 0 0;
+}
+.pos-product-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0 0;
     text-align: left;
-    line-height: 2rem;
-    font-weight: bold;
+    line-height: 1.3;
+    font-weight: 700;
+    color: #095;
 }
-.pos-products-list > li svg {
-    float: right;
+.pos-products-list > li .pos-product-price svg {
+    float: none;
+    flex-shrink: 0;
     fill: #525f7f;
-    margin-top: 0.25rem;
+    margin-top: 0;
     transition: all 0.15s ease-out;
+}
+
+@media (max-width: 991px) {
+    .pos-products-list {
+        grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+    }
+}
+@media (max-width: 767px) {
+    .pos-products-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .pos-products-list > li button {
+        min-height: 200px;
+    }
+    .pos-item-figure {
+        height: 96px;
+        min-height: 96px;
+    }
+    .pos-item-name {
+        min-height: 34px;
+        font-size: 0.85rem;
+    }
 }
 
 .itm_qty{

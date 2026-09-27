@@ -10,9 +10,9 @@
     <hr>
     <p class="text-muted smallFont mb-3">
       {% if useri.langSet == 0 %}
-        Chagua bidhaa na muda. Utapata kianzio, kuingia (manunuzi, kuongezwa, uzalishaji, kupokea), kutoka (mauzo, uharibifu, kupotea, uhamisho) na kufunga.
+        Chagua bidhaa na muda. Utapata kianzio, kisha kila kitendo (manunuzi, mauzo, uhamisho, n.k.) kwa tarehe yake, na kufunga.
       {% else %}
-        Choose an item and a period. You will see opening qty, inflows (purchases, additions, production, receives), outflows (sales, damage, loss, transfers) and closing qty.
+        Choose an item and a period. You will see opening qty, every inflow/outflow (each purchase, sale, transfer) by date, then closing qty.
       {% endif %}
     </p>
 
@@ -104,7 +104,7 @@
 {% endblock %}
 
 {% block billmpya %}
-<script src="{% static 'js/riports/InventoryRiport/itemTrack.js' %}"></script>
+<script src="{% static 'js/riports/InventoryRiport/itemTrack.js' %}?v=trk2"></script>
 {% endblock %}
 
 {% block dash-mapper %}

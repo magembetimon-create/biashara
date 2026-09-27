@@ -660,6 +660,70 @@ def addBill(request):
       else:  
             return render(request,'pagenotFound.html',todoFunct(request))
 
+def _stock_lines_for_bill(bill_id):
+      # Transfer copies keep manunuzi FK of the original bill, so listing all
+      # bidhaa_stoku for a bill would show each item twice (origin + received).
+      qs = bidhaa_stoku.objects.filter(manunuzi__manunuzi=bill_id).exclude(
+            manunuzi__idadi=F('manunuzi__rudi')
+      ).select_related('bidhaa', 'manunuzi').order_by('id')
+      seen = set()
+      lines = []
+      for row in qs:
+            mid = row.manunuzi_id
+            if not mid or mid in seen:
+                  continue
+            seen.add(mid)
+            lines.append(row)
+      return lines
+
+def _bill_print_lines(stock_rows, vatper):
+      vat_rate = Decimal(str(vatper or 0)) / Decimal('100')
+      lines = []
+      sub_t = Decimal('0')
+      vat_t = Decimal('0')
+      tot_t = Decimal('0')
+      for row in stock_rows:
+            ml = row.manunuzi
+            bd = row.bidhaa
+            if not ml or not bd:
+                  continue
+            uwiano = Decimal(str(bd.idadi_jum or 1)) or Decimal('1')
+            qty = Decimal(str(ml.idadi or 0)) - Decimal(str(ml.rudi or 0))
+            if qty <= 0:
+                  continue
+            bei = Decimal(str(row.Bei_kununua or 0))
+            line_tot = (bei * qty) / uwiano
+            if ml.vat_set and vat_rate:
+                  sub = line_tot / (Decimal('1') + vat_rate)
+                  vat = line_tot - sub
+            else:
+                  sub = line_tot
+                  vat = Decimal('0')
+            jumla_unit = (qty % uwiano) == 0
+            if jumla_unit:
+                  show_qty = qty / uwiano
+                  unit = bd.vipimo_jum or bd.vipimo or ''
+                  unit_price = (bei / (Decimal('1') + vat_rate)) if (ml.vat_set and vat_rate) else bei
+            else:
+                  show_qty = qty
+                  unit = bd.vipimo or ''
+                  unit_price = (bei / uwiano)
+                  if ml.vat_set and vat_rate:
+                        unit_price = unit_price / (Decimal('1') + vat_rate)
+            lines.append({
+                  'name': bd.bidhaa_jina or '',
+                  'unit': unit,
+                  'qty': show_qty,
+                  'price': unit_price,
+                  'sub': sub,
+                  'vat': vat,
+                  'total': line_tot,
+            })
+            sub_t += sub
+            vat_t += vat
+            tot_t += line_tot
+      return lines, sub_t, vat_t, tot_t
+
 @login_required(login_url='login')
 def getBilllist(request):
       if request.method == "POST":
@@ -668,7 +732,20 @@ def getBilllist(request):
          duka = todoFunct(request)['cheo']
          bill = manunuzi.objects.get(pk=intp,Interprise=duka.Interprise)
 
-         list_manunu = bidhaa_stoku.objects.select_related('manunuziList','bidhaa').filter(manunuzi__manunuzi=bill.id).values('id','bidhaa','bidhaa__bidhaa_jina','bidhaa__idadi_jum','bidhaa__vipimo','bidhaa__vipimo_jum','bidhaa__maelezo','manunuzi__jum','manunuzi__idadi','manunuzi__vat_included','Bei_kununua','manunuzi__vat_set')
+         list_manunu = [{
+            'id': row.id,
+            'bidhaa': row.bidhaa_id,
+            'bidhaa__bidhaa_jina': row.bidhaa.bidhaa_jina if row.bidhaa else '',
+            'bidhaa__idadi_jum': row.bidhaa.idadi_jum if row.bidhaa else 1,
+            'bidhaa__vipimo': row.bidhaa.vipimo if row.bidhaa else '',
+            'bidhaa__vipimo_jum': row.bidhaa.vipimo_jum if row.bidhaa else '',
+            'bidhaa__maelezo': row.bidhaa.maelezo if row.bidhaa else '',
+            'manunuzi__jum': row.manunuzi.jum if row.manunuzi else False,
+            'manunuzi__idadi': row.manunuzi.idadi if row.manunuzi else 0,
+            'manunuzi__vat_included': row.manunuzi.vat_included if row.manunuzi else False,
+            'Bei_kununua': row.Bei_kununua,
+            'manunuzi__vat_set': row.manunuzi.vat_set if row.manunuzi else False,
+         } for row in _stock_lines_for_bill(bill.id)]
 
          matum = rekodiMatumizi.objects.select_related('matumizi').filter(manunuzi_id=bill.id,Interprise=duka.Interprise).values('matumizi__matumizi','date','kiasi')
          itemImg=[]
@@ -706,7 +783,7 @@ def viewbill_funct(request,intp,back,lis_t):
 
             malipo = toaCash.objects.filter(Interprise=duka.Interprise.id,bill=intp)
 
-            list_manunu = bidhaa_stoku.objects.filter(manunuzi__manunuzi=bill.id).exclude(manunuzi__idadi=F('manunuzi__rudi'))
+            list_manunu = _stock_lines_for_bill(bill.id)
 
             matum = rekodiMatumizi.objects.filter(manunuzi_id=bill.id,Interprise=duka.Interprise)
             # user = UserExtend.objects.get(user = request.user.id )
@@ -770,6 +847,45 @@ def viewbill(request):
                 return render(request,'viewbill.html',todo)
       except:
            return render(request,'pagenotFound.html',todoFunct(request))
+
+def Billprint(request):
+      try:
+            from mauzo.receipt_format import (
+                  RECEIPT_THERMAL58,
+                  RECEIPT_THERMAL80,
+                  normalize_receipt_paper,
+                  receipt_paper_from_cheo,
+            )
+            lang = int(request.GET.get('lang', 0))
+            intp = request.GET.get('item_valued', '')
+            todo = viewbill_funct(request, intp, '', 1)
+            if not todo or not todo.get('duka') or not todo['duka'].Interprise:
+                  return redirect('/userdash')
+            m_raw = request.GET.get('m')
+            if m_raw is not None and str(m_raw).strip() != '':
+                  paper = normalize_receipt_paper(m_raw)
+            else:
+                  paper = receipt_paper_from_cheo(todo.get('cheo'))
+            if paper == RECEIPT_THERMAL80:
+                  paper_class = 'thermal80'
+            elif paper == RECEIPT_THERMAL58:
+                  paper_class = 'thermal58'
+            else:
+                  paper_class = 'a4'
+            vatper = getattr(todo['duka'], 'vatper', 0) or 0
+            print_lines, print_sub, print_vat, print_tot = _bill_print_lines(todo.get('list') or [], vatper)
+            todo.update({
+                  'then': {'langSet': lang, 'lipa': False},
+                  'print_lines': print_lines,
+                  'print_sub': print_sub,
+                  'print_vat': print_vat,
+                  'print_tot': print_tot,
+                  'paper_class': paper_class,
+            })
+            return render(request, 'printbill.html', todo)
+      except Exception:
+            traceback.print_exc()
+            return render(request, 'errorpage.html', todoFunct(request))
 
 @login_required(login_url='login')
 def bili_return(request):
@@ -1435,7 +1551,7 @@ def editbill(request):
             back= request.GET.get('back_to')
             bill = manunuzi.objects.get(pk=intp,Interprise=duka)
 
-            list_manunu = bidhaa_stoku.objects.filter(manunuzi__manunuzi=bill.id)
+            list_manunu = _stock_lines_for_bill(bill.id)
 
             matum = rekodiMatumizi.objects.filter(manunuzi_id=bill.id,Interprise=duka)
             user = UserExtend.objects.get(user = request.user.id )
