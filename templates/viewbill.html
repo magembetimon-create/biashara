@@ -397,7 +397,7 @@
                  {% if the_bill.supplier_id.where is not None %}   
                  <strong> {% if useri.langSet == 0 %} Kutoka  {% else %}From  {% endif %}:</strong>
                     <br>
-                    <label for="vendor_name">  <a href="{%  url 'buzinessProfile' %}?value={{the_bill.supplier_id.where.id}}">{{the_bill.supplier_id.where.name | title}}</a>  </label>
+                    <label for="vendor_name">  <a href="{% url 'VendorPurchases' %}?vnd={{the_bill.supplier_id.id}}" class="text-primary">{{the_bill.supplier_id.where.name | title}}</a>  </label>
                     <br>
                       <label for="vendor_name"> {{the_bill.supplier_id.where.Intp_code }} </label>
                      <br> 
@@ -412,7 +412,7 @@
                  {% else %}               
                     <strong> {% if useri.langSet == 0 %} Kutoka  {% else %}From  {% endif %}:</strong>
                     <br>
-                    <label for="vendor_name"> {{the_bill.supplier_id.jina | title}} </label>
+                    <label for="vendor_name"> <a href="{% url 'VendorPurchases' %}?vnd={{the_bill.supplier_id.id}}" class="text-primary">{{the_bill.supplier_id.jina | title}}</a> </label>
                     <br>
                     {% if the_bill.supplier_id.email != '' %}
                     <label for="vendor_name"> {{the_bill.supplier_id.email}} </label>

@@ -251,11 +251,9 @@
 
             
               <a  href="{% url 'posts' %}"  title=" {% if useri.langSet == 0 %}Machapisho ya Kibiashara {% else %} Business Posts{% endif %}" class="c-header-icon basket">
-                  <line x1="0.75" y1="5.083" x2="19.417" y2="5.083"/>
-                  <line x1="0.75" y1="22.333" x2="19.417" y2="22.333"/>
-              </svg> 
+          
 
-              <svg xmlns="http://www.w3.org/2000/svg" height="1.48em" fill="currentColor"  viewBox="0 -960 960 960" width="1.48em" stroke="currentColor" stroke-width=".1" >
+              <svg xmlns="http://www.w3.org/2000/svg" height="1.48em" fill="currentColor"  viewBox="0 -960 960 960" width="1.48em" stroke="currentColor" stroke-width="1.2" >
                 <path d="M320-600v-80h320v80H320ZM280-40q-33 0-56.5-23.5T200-120v-720q0-33 23.5-56.5T280-920h400q33 0 56.5 23.5T760-840v720q0 33-23.5 56.5T680-40H280Zm0-120v40h400v-40H280Zm0-80h400v-480H280v480Zm0-560h400v-40H280v40Zm0 0v-40 40Zm0 640v40-40Z"/>
                </svg>
 
@@ -264,18 +262,19 @@
      
             </div>
 
-            <div class="c-header-icon basket {% if duka.Interprise %}d-none d-md-inline{% endif %} " >
+            <div class="c-header-icon basket {% if duka.Interprise %}d-none d-md-flex{% endif %} " >
               <a href="/ecommerce/servedItems"  class="c-header-icon basket" title="{% if useri.langSet == 0 %} Bidhaa Muhimu {% else %} Saved Items {% endif %}">
-                <svg xmlns="http://www.w3.org/2000/svg" width="1.48em" height="1.48em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bookmark">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.48em" height="1.48em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bookmark">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                </svg>
+               
 
               </a>
             </div>
 
             <div class="c-header-icon basket " >
               <a href="/ecommerce/servedVendors"  class="c-header-icon basket" title="{% if useri.langSet == 0 %} Maduka Muhimu {% else %} Saved Vendors {% endif %}">
-              <svg xmlns="http://www.w3.org/2000/svg" width="1.48em" height="1.48em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1.48em" height="1.48em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 9l1-5h16l1 5"></path>
                 <path d="M4 9h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9z"></path>
                 <path d="M8 9v2"></path>
@@ -294,7 +293,7 @@
             <div class="c-header-icon basket " >
                             <a type="button" onclick="$('#smallSearchPop').fadeIn(300)"  >
                              
-                                <svg xmlns="http://www.w3.org/2000/svg" width="1.48em" height="1.48em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
                                   <circle cx="11" cy="11" r="8"></circle>
                                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                </svg>
@@ -634,7 +633,7 @@
           </div>
          <div class="c-header-icon basket  " >
           <a href="{% url 'notificationing' %}" class="c-header-icon basket">
-            <span class="c-badge c-badge--header-icon animated shake"  id="there_is_note" ></span>
+            <span class="c-badge c-badge--header-icon animated shake" id="there_is_note"{% if hub_pending %} style="display:block"{% endif %}>{% if hub_pending %}{{ hub_pending }}{% endif %}</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="1.38em" height="1.38em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -1281,6 +1280,14 @@ let shwCo = false
                 <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/>
               </svg>
               <span class="pl-2">{% if useri.langSet == 0 %} Wasambazaji {% else %} Vendors {% endif %}</span>
+            </a>
+          </li>
+          <li>
+            <a {% block active-vendor-statements-menu %} class="btn-default btn btn-sm " {% endblock %} href="/purchase/vendorStatements">
+              <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z"/>
+              </svg>
+              <span class="pl-2">{% if useri.langSet == 0 %} Taarifa za Wasambazaji {% else %} Vendor statements {% endif %}</span>
             </a>
           </li>
           <li>
@@ -1946,7 +1953,7 @@ $('.muamala-genu').click(function(){
               <strong>
                 {% if useri.langSet == 0 %}Status ya Shift:{% else %}Shift Status:{% endif %}
               </strong>
-              <span>{{ shift_status_swa }}</span>
+              <span>{% if useri.langSet == 0 %}{{ shift_status_swa }}{% else %}{{ shift_status_eng }}{% endif %}</span>
               {% if active_shift_assigned_name %}
               <span class="ml-2">
                 {% if useri.langSet == 0 %}Mhudumu:{% else %}Assigned to:{% endif %} {{ active_shift_assigned_name }}
@@ -1954,7 +1961,7 @@ $('.muamala-genu').click(function(){
               {% endif %}
               {% if not shift_operation_allowed %}
               <div class="mt-1">
-                {{ shift_operation_block_reason_swa }}
+                {% if useri.langSet == 0 %}{{ shift_operation_block_reason_swa }}{% else %}{{ shift_operation_block_reason_eng }}{% endif %}
               </div>
               {% endif %}
             </div>
@@ -6178,7 +6185,7 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     <script src="{% static 'js/usajiritokaNje.js' %}"></script>
     <script src="{% static 'js/dataTables.bootstrap4.min.js' %}"></script>
     <script src="{% static 'js/tabs.js' %}"></script>
-    <script src="{% static 'js/Interver.js' %}"></script>
+    <script src="{% static 'js/Interver.js' %}?v=nh-badge-2"></script>
     {% if compound_positions_enabled %}<script src="{% static 'js/compound_orders_panel.js' %}"></script>{% endif %}
 
   

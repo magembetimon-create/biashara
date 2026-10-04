@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
 # from graphene import NonNull
-from management.models import  UserExtend,stokAdjustment,ForPrintingPupose,InterpriseVisotrs,savedStockState,SaveAkauntState,ItemsState,ColorState,SizeState,production_color,toaCash,production_size, manunuziList,productionListDate,purchased_size,ColorChange,SizeChange,purchased_color,sale_return,productChangeRecord,transferList,rekodiMatumizi,SavedRiport,ChangedService,Cash_order_return,sale_return_mauzo_fidia,sa_col_ret,sa_size_ret,sa_ret,pu_ret,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,receiveList,transfer,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wekaCash
+from management.models import  UserExtend,stokAdjustment,ForPrintingPupose,InterpriseVisotrs,savedStockState,SaveAkauntState,ItemsState,ColorState,SizeState,production_color,toaCash,production_size, manunuziList,productionListDate,purchased_size,ColorChange,SizeChange,purchased_color,sale_return,productChangeRecord,transferList,rekodiMatumizi,MatumiziReceiptAttachment,SavedRiport,ChangedService,Cash_order_return,sale_return_mauzo_fidia,sa_col_ret,sa_size_ret,sa_ret,pu_ret,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,receiveList,transfer,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wekaCash
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
@@ -31,6 +31,7 @@ import pytz
 import datetime
 import re
 import json
+import traceback
 from django.db.models import Sum
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import is_naive, make_aware
@@ -1619,22 +1620,93 @@ def ExpensedData(request):
           worker_name=F('worker_recipient__jina'),
         )
         charges = toaCash.objects.filter(Interprise__in=br,tarehe__gte=tf,makato__gt=0).exclude(tarehe__gt=tt).annotate(duka=F('Interprise'),akaunti_id=F('Akaunt'),Na=F('by'),Aamount=F('Akaunt__Amount'))
-      
+
+        rec_rows = list(lst.values())
+        rec_ids = [r['id'] for r in rec_rows]
+        receipts = []
+        if rec_ids:
+          groups = {}
+          order = []
+          atts = MatumiziReceiptAttachment.objects.filter(
+            rekodi_matumizi_id__in=rec_ids,
+          ).select_related(
+            'rekodi_matumizi',
+            'rekodi_matumizi__matumizi',
+            'rekodi_matumizi__Interprise',
+          ).order_by('uploaded_at', 'id')
+          for att in atts:
+            if not att.image:
+              continue
+            rec = att.rekodi_matumizi
+            if not rec:
+              continue
+            key = att.image.name or f'att-{att.id}'
+            if key not in groups:
+              try:
+                url = att.image.url
+              except Exception:
+                url = ''
+              if url:
+                url = request.build_absolute_uri(url)
+              groups[key] = {
+                'id': att.id,
+                'url': url,
+                'amount': 0.0,
+                'rec_ids': set(),
+                'label': rec.matumizi.matumizi if rec.matumizi_id else '',
+                'kind': 'purchase' if rec.manunuzil or rec.manunuzi_id else 'expense',
+                'ref': f'EXP-{rec.id}',
+                'branch': rec.Interprise.name if rec.Interprise_id else '',
+                'duka': rec.Interprise_id,
+                'Na': rec.by_id,
+                'date': '',
+                'datetime': '',
+                'tarehe': rec.tarehe.isoformat() if rec.tarehe else '',
+              }
+              order.append(key)
+              dt = rec.tarehe
+              if dt:
+                groups[key]['datetime'] = dt.isoformat()
+                groups[key]['date'] = dt.date().isoformat() if hasattr(dt, 'date') else str(dt)
+            row = groups[key]
+            if rec.id not in row['rec_ids']:
+              row['rec_ids'].add(rec.id)
+              row['amount'] += float(rec.kiasi or 0)
+          for key in order:
+            row = groups[key]
+            receipts.append({
+              'id': row['id'],
+              'url': row['url'],
+              'amount': round(row['amount'], 2),
+              'label': row['label'],
+              'vendor': row['label'],
+              'kind': row['kind'],
+              'ref': row['ref'],
+              'branch': row['branch'],
+              'duka': row['duka'],
+              'Na': row['Na'],
+              'date': row['date'],
+              'datetime': row['datetime'],
+              'tarehe': row['tarehe'],
+              'covers': len(row['rec_ids']),
+            })
+
         data = {
-          'data':list(lst.values()),
-          'itms':list(charges.values()),
-          
-          'success':True
+          'data': rec_rows,
+          'itms': list(charges.values()),
+          'receipts': receipts,
+          'success': True,
         }
     
         return JsonResponse(data)  
-    except:
+    except Exception:
+      traceback.print_exc()
       data = {
         'success':False,
         'data':[],
         'pay':[],
-        'itms':[]
-
+        'itms':[],
+        'receipts':[],
       }
       return JsonResponse(data)
   else:

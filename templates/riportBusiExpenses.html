@@ -130,7 +130,7 @@
             </div>
         </div>
        
-        
+        {% include 'partials/expense_report_receipts_panel.html' %}
       
 <!-- DATE ITEMS, CATEGORIES , GROUPS SELECT -->
         <div class="panel row mt-3">
@@ -404,9 +404,10 @@
 {% endblock %}
 
 {% block billmpya %}
+<link rel="stylesheet" href="{% static 'css/customer_sales.css' %}">
    <script src="{% static 'js/riports/repots.js' %}">  </script>
    <script src="{% static 'js/riports/calender.js' %}">  </script>
-   <script src="{% static 'js/riports/purchases/expensesr.js' %}">  </script>
+   <script src="{% static 'js/riports/purchases/expensesr.js' %}?v=exp-rcpt-1">  </script>
 {% endblock %}
  
 {% block dash-mapper %}

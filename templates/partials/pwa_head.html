@@ -7,8 +7,56 @@
 <meta name="apple-mobile-web-app-title" content="{% if pwa_kind == 'waiter' %}Waiter POS{% else %}FanyaBiashara{% endif %}">
 <link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/pwa/icon-192.png">
+<meta name="fb-pwa-home" content="{% if pwa_kind == 'waiter' %}{% url 'waiter_device_dashboard' %}{% else %}{% url 'userdash' %}{% endif %}">
 <style>
   :root { --fb-pwa-progress: {% if pwa_kind == 'waiter' %}#F68A1F{% else %}#007BFF{% endif %}; }
+  .fb-pwa-back {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    margin: 0 2px 0 4px;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    line-height: 0;
+  }
+  .fb-pwa-back svg { width: 16px; height: 16px; display: block; }
+  .fb-pwa-back:hover,
+  .fb-pwa-back:focus {
+    background: rgba(0, 0, 0, 0.07);
+    outline: none;
+  }
+  body.dark .fb-pwa-back:hover,
+  body.dark .fb-pwa-back:focus,
+  body.theme-dark .fb-pwa-back:hover,
+  body.theme-dark .fb-pwa-back:focus {
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .fb-pwa-back--float {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    left: 10px;
+    z-index: 2147483645;
+    background: rgba(255, 255, 255, 0.94);
+    color: #222;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
+  }
+  body.theme-dark .fb-pwa-back--float,
+  body.dark .fb-pwa-back--float {
+    background: rgba(28, 28, 28, 0.94);
+    color: #eee;
+  }
+  @media (min-width: 768px) {
+    html.fb-pwa-standalone .fb-pwa-back {
+      display: inline-flex;
+    }
+  }
   #fb-pwa-progress {
     position: fixed;
     top: env(safe-area-inset-top, 0px);
@@ -29,6 +77,19 @@
 <script>
   (function () {
     try {
+      var standalone = (window.matchMedia && (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+        window.matchMedia('(display-mode: minimal-ui)').matches
+      )) || !!(window.navigator && window.navigator.standalone);
+      if (standalone) document.documentElement.classList.add('fb-pwa-standalone');
+    } catch (e) {}
+  })();
+</script>
+<script>
+  (function () {
+    try {
       var lang = null;
       {% if useri %}
       lang = '{{ useri.langSet }}';
@@ -44,3 +105,4 @@
   })();
 </script>
 <script src="{% static 'js/pwa-register.js' %}" defer></script>
+<script src="{% static 'js/pwa-back.js' %}" defer></script>

@@ -1,0 +1,27 @@
+<style>
+  .vendor-section-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; }
+  .vendor-section-nav a {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid #ced4da;
+    color: #333;
+    text-decoration: none;
+    font-size: 0.9rem;
+    background: #fff;
+  }
+  .vendor-section-nav a:hover { background: #f1f3f5; text-decoration: none; color: #111; }
+  .vendor-section-nav a.active {
+    background: #0d6efd;
+    color: #fff;
+    border-color: #0d6efd;
+  }
+</style>
+<nav class="vendor-section-nav" aria-label="{% if useri.langSet == 0 %}Wasambazaji{% else %}Vendors{% endif %}">
+  <a href="/purchase/vendors" class="{% if vendor_nav == 'vendors' %}active{% endif %}">
+    {% if useri.langSet == 0 %}Wasambazaji{% else %}Vendors{% endif %}
+  </a>
+  <a href="/purchase/vendorStatements" class="{% if vendor_nav == 'statements' %}active{% endif %}">
+    {% if useri.langSet == 0 %}Taarifa za Wasambazaji{% else %}Vendor statements{% endif %}
+  </a>
+</nav>

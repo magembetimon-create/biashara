@@ -5477,6 +5477,7 @@ def addtranfer(request):
                 rc.reasons = reason
                 if bool(oda):
                     rc.By = dukap
+                rc.admin_approved = False
                 rc.save()
 
                 # Record Notiications where to receive ......................................//

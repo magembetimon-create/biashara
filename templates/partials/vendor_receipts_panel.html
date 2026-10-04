@@ -1,0 +1,46 @@
+<button type="button" id="csReceiptsPanel" class="cs-receipt-panel cs-no-print text-left w-100 mb-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+      <div class="cs-receipt-panel-title">
+        {% if useri.langSet == 0 %}Risiti zilizopakiwa{% else %}Uploaded receipts{% endif %}
+      </div>
+      <div class="small text-muted">
+        {% if useri.langSet == 0 %}Malipo na bili kwa kipindi hiki{% else %}Payments and bills in this period{% endif %}
+      </div>
+    </div>
+    <div class="text-right">
+      <div class="cs-stat-value mb-0" id="csReceiptCount">0</div>
+      <div class="small font-weight-bold" id="csReceiptAmount">0</div>
+    </div>
+  </div>
+</button>
+
+<div class="modal fade" id="csReceiptsModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document" style="max-width:96vw;">
+    <div class="modal-content">
+      <div class="modal-header py-2 align-items-center">
+        <h6 class="modal-title mb-0">
+          {% if useri.langSet == 0 %}Risiti za malipo / bili{% else %}Payment / bill receipts{% endif %}
+        </h6>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+          <div class="cs-rcpt-layouts mb-2">
+            <span class="small font-weight-bold mr-2">{% if useri.langSet == 0 %}Mpangilio{% else %}Layout{% endif %}:</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary cs-rcpt-layout" data-cols="1" data-rows="1">1×1</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary cs-rcpt-layout" data-cols="1" data-rows="2">1×2</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary cs-rcpt-layout active" data-cols="2" data-rows="2">2×2</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary cs-rcpt-layout" data-cols="3" data-rows="2">3×2</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary cs-rcpt-layout" data-cols="3" data-rows="3">3×3</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary cs-rcpt-layout" data-cols="4" data-rows="2">4×2</button>
+          </div>
+          <button type="button" class="btn btn-sm btn-primary mb-2" id="csPrintReceiptsBtn">
+            {% if useri.langSet == 0 %}Chapisha risiti{% else %}Print receipts{% endif %}
+          </button>
+        </div>
+        <div id="csReceiptsGallery" class="cs-rcpt-gallery" data-cols="2" data-rows="2"></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -9,6 +9,7 @@
     </svg>
     {% if useri.langSet == 0 %}Wasambazaji{% else %}Vendors{% endif %}
   </h5>
+  {% include 'partials/vendor_section_nav.html' with vendor_nav='vendors' %}
 
   <div class="row mb-3" id="vendorDebtSummary"></div>
   <div class="mb-3 text-right" id="vendorBranchBar" hidden>

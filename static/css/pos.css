@@ -31,7 +31,14 @@
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 5rem;
+    padding-bottom: 0;
+}
+.pos-products-list::after {
+    content: "";
+    display: block;
+    grid-column: 1 / -1;
+    height: 14rem;
+    pointer-events: none;
 }
 .pos-products-list > li {
     align-self: start;

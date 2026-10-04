@@ -157,6 +157,9 @@ urlpatterns=[
     # Notifications
     path('notify',views.notify, name='notify'),
     path('notificationing',views.notificationing, name='notificationing'),
+    path('notificationing/pending', views.notification_pending, name='notification_pending'),
+    path('notificationing/preview', views.notification_preview, name='notification_preview'),
+    path('notificationing/approve', views.notification_approve, name='notification_approve'),
 
     # Chats
     path('getUserChats',views.getUserChats, name='getUserChats'),

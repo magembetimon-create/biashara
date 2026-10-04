@@ -76,9 +76,13 @@ urlpatterns=[
     path('purchaseRate',views.purchaseRate, name='purchaseRate'),
 
     path('vendors', views.vendors, name='vendors'),
+    path('vendorStatements', views.vendor_statements, name='vendor_statements'),
+    path('vendorStatements/data', views.vendor_statements_data, name='vendor_statements_data'),
     path('getVendors', views.getVendors, name='getVendors'),
     path('VendorPurchases', views.VendorPurchases, name='VendorPurchases'),
     path('VendorPurchases/statement-data', views.vendor_purchases_statement_data, name='vendor_purchases_statement_data'),
+    path('VendorPurchases/open-bills', views.vendor_purchases_open_bills, name='vendor_purchases_open_bills'),
+    path('VendorPurchases/pay', views.vendor_purchases_pay, name='vendor_purchases_pay'),
 
   
 ]

@@ -1,5 +1,6 @@
 from management.models import Notifications,ainaMama,ainaBibi, UserExtend,Zones,Nchi,EmployeeAttachments,Kanda,Workers, customer_area, customer_in_cell,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji,ShiftSession,ShiftAssignment,PhoneMailConfirm
 from purchase.guest_compound_utils import count_compound_guest_orders, shop_has_compound_positions
+from accaunts.notification_hub import hub_approval_counts
 from django.utils import timezone
 from django.db.models import Q,F
 from datetime import date
@@ -166,7 +167,7 @@ class Todos:
         shift_code = str(active_shift.code or active_shift.id)
         assigned_name = shift_data['active_shift_assigned_name']
         if assigned_name:
-          shift_data['shift_status_swa'] = f'Shift {shift_code} inaendelea, assigned to {assigned_name}'
+          shift_data['shift_status_swa'] = f'Shift {shift_code} inaendelea, imepangwa kwa {assigned_name}'
           shift_data['shift_status_eng'] = f'Shift {shift_code} is active and assigned to {assigned_name}'
         else:
           shift_data['shift_status_swa'] = f'Shift {shift_code} inaendelea'
@@ -187,7 +188,7 @@ class Todos:
       shift_code = str(active_shift.code or active_shift.id)
       assigned_name = shift_data['active_shift_assigned_name']
       if assigned_name:
-        shift_data['shift_status_swa'] = f'Shift {shift_code} inaendelea, assigned to {assigned_name}'
+        shift_data['shift_status_swa'] = f'Shift {shift_code} inaendelea, imepangwa kwa {assigned_name}'
         shift_data['shift_status_eng'] = f'Shift {shift_code} is active and assigned to {assigned_name}'
       else:
         shift_data['shift_status_swa'] = f'Shift {shift_code} inaendelea'
@@ -222,7 +223,8 @@ class Todos:
             'shift_status_swa':'Usimamizi wa shift haujawezeshwa',
             'shift_status_eng':'Shift management is disabled',
             'shift_operation_block_reason_swa':'',
-            'shift_operation_block_reason_eng':''
+            'shift_operation_block_reason_eng':'',
+            'hub_pending': 0,
       }
 
   def todoF(self):  
@@ -299,6 +301,12 @@ class Todos:
         shift_data = self._shift_context(duka, dukap)
         compound_positions_enabled = bool(duka and duka.Interprise and shop_has_compound_positions(duka))
         compound_orders_count = count_compound_guest_orders(duka) if compound_positions_enabled else 0
+        hub_pending = 0
+        if duka and duka.Interprise:
+          try:
+            hub_pending = int(hub_approval_counts(duka).get('total', 0) or 0)
+          except Exception:
+            hub_pending = 0
         todo = {
         'cheo':dukap,
         'duka':duka,
@@ -318,6 +326,7 @@ class Todos:
         'customer_table':customer_table,
         'compound_positions_enabled': compound_positions_enabled,
         'compound_orders_count': compound_orders_count,
+        'hub_pending': hub_pending,
         }
         todo.update(shift_data)
 

@@ -54,10 +54,12 @@ const MsgRead = document.getElementById('msgRead'),
 
 // POP NOTIICATIONS IF ANY ..............................................................//
 const pendingReceipts = Number(data.pendingExpenseReceipts || 0);
-    if ((data.notice && data.notice.length > 0) || pendingReceipts > 0) {
-      notificate(data.notice || [], pendingReceipts);
+const hubPending = Number(data.hubPending || 0);
+    if ((data.notice && data.notice.length > 0) || hubPending > 0) {
+      notificate(data.notice || [], hubPending);
 } else {
       $('#there_is_note').hide();
+      $('#notify').hide();
 }
 
 const compoundOrders = Number(data.compoundOrders || 0);
@@ -145,174 +147,16 @@ function billProcess(unpaid,halfpaid){
 
 
 
-function showReceiptNotifyPopup(count) {
-  const n = Number(count) || 0;
-  if (n <= 0) return;
-  const body = lang(
-    `<strong>${n}</strong> matumizi yanahitaji risiti. Bofya kupakia.`,
-    `<strong>${n}</strong> expense(s) need receipt uploads. Tap to upload.`,
-  );
-  $('#notify').html(`<h6 style="color: beige;">${lang('Risiti za matumizi', 'Expense receipts')}</h6>
-    <a href="/purchase/expenseReceiptsPending" class="d-flex" style="color: beige;">
-      <div class="NoteIcon">
-        <div class="rounded-circle p-2 pt-1 justify-content-center d-flex" style="align-items:center;background-color: rgb(200, 130, 0);color:#fff;width:40px;height:40px">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M3 0h10a1 1 0 0 1 1 1v14.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V1a1 1 0 0 1 1-1z"/>
-            <path d="M4 4h8v1H4V4zm0 3h8v1H4V7zm0 3h5v1H4v-1z"/>
-          </svg>
-        </div>
-      </div>
-      <div class="the-note pl-2 latoFont">${body}</div>
-    </a>`);
-  $('#notify').show(500);
-}
-
 function notificate(note, extraCount){
-
     extraCount = Number(extraCount || 0);
     const baseLen = note && note.length ? note.length : 0;
     const total = baseLen + extraCount;
+    $('#notify').empty().hide();
     if (total <= 0) {
-      $('#there_is_note').hide();
-      $('#notify').fadeOut(200);
+      $('#there_is_note').hide().text('');
       return;
     }
-    $('#there_is_note').text(total);
-    $('#there_is_note').show();
-
-    if (extraCount > 0) {
-      showReceiptNotifyPopup(extraCount);
-      return;
-    }
-
-    if (!note || !note.length) {
-      $('#notify').fadeOut(200);
-      return;
-    }
-    nt1 = note[0]
-
-   
-
-    pop=[
-        {
-            note:lang('Kuhamisha Bidhaa','Item Transfer'),
-            action:nt1.itmTr,
-            icon:`<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-arrow-90deg-up" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M4.854 1.146a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L4 2.707V12.5A2.5 2.5 0 0 0 6.5 15h8a.5.5 0 0 0 0-1h-8A1.5 1.5 0 0 1 5 12.5V2.707l3.146 3.147a.5.5 0 1 0 .708-.708l-4-4z"/>
-          </svg>`,
-            
-        },
-        {
-            note:lang('Kuediti Bidhaa','Item Editing'),
-            action:nt1.ItemEdit,
-            icon:`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
-            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
-            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
-          </svg>`,
-            
-        },
-        {
-            note:lang('Kuediti Aina ya Bidhaa','Items Category Editing'),
-            action:nt1.ItemCatEdit,
-            icon:`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
-            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
-            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
-          </svg>`,
-            
-        },
-        {
-            note:lang('Kupokea Bidhaa','Item Receive'),
-            action:nt1.itmRcv,
-            icon:`<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-arrow-90deg-down" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M4.854 14.854a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V3.5A2.5 2.5 0 0 1 6.5 1h8a.5.5 0 0 1 0 1h-8A1.5 1.5 0 0 0 5 3.5v9.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4z"/>
-          </svg>`,
-            
-        },
-        {
-            note:lang('Kurudisha bidhaa','Item Return'),
-            action:nt1.bilRtn,
-            icon:`<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-cart-dash-fill" viewBox="0 0 16 16">
-            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM6.5 7h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1 0-1z"/>
-          </svg>`,
-            
-        },
-        {
-            note:lang('Oda ya Mauzo','Sales Order'),
-            action:nt1.saO,
-            icon:`<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-cart-check" viewBox="0 0 16 16">
-            <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
-            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-          </svg>`,
-            
-        },
-        {
-            note:lang('Mzigo wa kusafirisha','Package delivery'),
-            action:nt1.pickUp,
-            icon:`<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
-            <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
-          </svg>`,
-            
-        },
-        {
-            note:lang('Mauzo Kurudi','Sales Return'),
-            action:nt1.saRtn,
-            icon:`<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-cart-x" viewBox="0 0 16 16">
-            <path d="M7.354 5.646a.5.5 0 1 0-.708.708L7.793 7.5 6.646 8.646a.5.5 0 1 0 .708.708L8.5 8.207l1.146 1.147a.5.5 0 0 0 .708-.708L9.207 7.5l1.147-1.146a.5.5 0 0 0-.708-.708L8.5 6.793 7.354 5.646z"/>
-            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-          </svg>`,
-            
-        },
-        {
-            note:lang('Oda ya manunuzi','Purchase Order'),
-            action:nt1.puO,
-            icon:`<svg xmlns="http://www.w3.org/2000/svg" height="30" width="30"  fill="currentColor">
-            <path d="M0 0h24v24H0zm18.31 6l-2.76 5z" fill="none"/>
-            <path d="M11 9h2V6h3V4h-3V1h-2v3H8v2h3v3zm-4 9c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-9.83-3.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.86-7.01L19.42 4h-.01l-1.1 2-2.76 5H8.53l-.13-.27L6.16 6l-.95-2-.94-2H1v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.13 0-.25-.11-.25-.25z"/>
-            </svg>`,
-            
-        },
-          ]
-
-
-const ntI= pop.find(x=>x.action)
-if (!ntI) {
-  $('#notify').fadeOut(200);
-  return;
-}
-
-const itmTrCount = (note || []).filter(n => n.itmTr).length
-let notifyHref = `/notify?vl=${nt1.note}`
-let notifyBody = lang(nt1.msg_swa, nt1.msg_eng)
-if (nt1.itmTr && itmTrCount > 1) {
-  notifyHref = '/stoku/unseenTransfers'
-  notifyBody = lang(
-    `Kuna <strong>${itmTrCount}</strong> hamisho bado hazijaonekana. Bofya kuona zote pamoja.`,
-    `There are <strong>${itmTrCount}</strong> unseen transfers. Tap to view them all together.`
-  )
-}
-const itmRcvCount = (note || []).filter(n => n.itmRcv).length
-if (nt1.itmRcv && itmRcvCount > 1) {
-  notifyHref = '/stoku/unseenReceives'
-  notifyBody = lang(
-    `Kuna <strong>${itmRcvCount}</strong> mapokezi bado hayajaonekana. Bofya kuona yote pamoja.`,
-    `There are <strong>${itmRcvCount}</strong> unseen item receives. Tap to view them all together.`
-  )
-}
-
-   $('#notify').html(`<h6 style="color: beige;" >${ntI.note}</h6>
-   <a href="${notifyHref}" class="d-flex" style="color: beige;">
-   <div class="NoteIcon">
-            <div id="NoteIcon"  class="rounded-circle p-2 pt-1 justify-content-center d-flex"  style="align-items:center;background-color: rgb(0, 51, 128);color:#fff;width:40px;height:40px" >
-                 ${ntI.icon}
-            </div>
-     </div> 
-     <div class="the-note pl-2 latoFont " id="the_note_msg" >
-          ${notifyBody}
-     </div>
-    </a>`)
-
-   $('#notify').show(500)
-
+    $('#there_is_note').text(total).css('display', 'block');
 }
 
 

@@ -1,0 +1,403 @@
+{% extends 'userdash.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block billcss %}
+<link rel="stylesheet" href="{% static 'css/notify.css' %}?v=nh-6">
+{% endblock %}
+
+{% block Dashboard %}
+<div class="py-2 px-3 whiteBg nh-page" style="margin-top: -15px;">
+  <h5 class="pt-3 px-1 nh-title">
+    <a href="{% url 'notificationing' %}" class="text-reset mr-1" title="Back">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>
+    </a>
+    {% if useri.langSet == 0 %}{{ title_swa }}{% else %}{{ title_eng }}{% endif %}
+    <span class="badge badge-danger">{{ hub_rows|length }}</span>
+  </h5>
+  <p class="text-muted small mb-3">
+    {% if useri.langSet == 0 %}
+      Miamala ambayo bado haijathibitishwa na admin{% if can_upload %}, au bado haina risiti ya vendor. Risiti inaweza kuwa ya malipo moja, malipo mengi ya bill moja, au malipo ya bill zaidi ya moja.{% endif %}
+    {% else %}
+      Transactions waiting for admin confirmation{% if can_upload %}, or a vendor receipt. A receipt can cover one payment, several payments on one bill, or payments across more than one bill.{% endif %}
+    {% endif %}
+  </p>
+  {% if hub_admin %}
+  <button type="button" class="nh-receipt-set btn btn-light border text-left d-flex align-items-start mb-3 py-2 px-2" data-toggle="modal" data-target="#nhReceiptSetModal">
+    <span class="nh-receipt-cog mr-2 mt-1" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </span>
+    <span class="small text-muted mb-0">
+      {% if require_purchase_receipt %}
+        {% if useri.langSet == 0 %}
+          Malipo ya manunuzi <strong>yanahitaji</strong> risiti ya vendor. Bonyeza kubadilisha.
+        {% else %}
+          Purchase payments <strong>require</strong> a vendor receipt. Click to change.
+        {% endif %}
+      {% else %}
+        {% if useri.langSet == 0 %}
+          Wezesha <strong>Kila malipo ya manunuzi yahitaji risiti</strong> ili malipo bila risiti yaonyeshwe hapa.
+        {% else %}
+          Enable <strong>Require vendor receipt for every purchase payment</strong> so payments without a receipt appear here.
+        {% endif %}
+      {% endif %}
+    </span>
+  </button>
+  {% endif %}
+  {% csrf_token %}
+
+  {% if hub_rows %}
+  <div class="table-responsive nh-feed">
+    <table class="table table-sm nh-pending-table smallFont mb-0">
+      <thead>
+        <tr>
+          <th class="text-left">{% if useri.langSet == 0 %}Rejea{% else %}Ref{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Aliyerekodi{% else %}Recorded by{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Maelezo{% else %}Details{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+          <th class="text-left"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in hub_rows %}
+        <tr data-id="{{ row.id }}"
+            data-bill="{{ row.bill_id|default:0 }}"
+            data-bill-ref="{{ row.bill_ref|default:'' }}"
+            data-vendor="{{ row.vendor|default:'' }}"
+            data-amount="{{ row.amount|default:'' }}"
+            data-ref="{{ row.ref }}">
+          <td class="text-left">
+            {% if row.print_id %}
+              <button type="button" class="btn btn-link p-0 text-left nh-open-preview"
+                data-id="{{ row.id }}"
+                data-print-id="{{ row.print_id }}"
+                data-print-kind="{{ row.print_kind }}">{{ row.ref }}</button>
+            {% else %}
+              {{ row.ref }}
+            {% endif %}
+          </td>
+          <td class="text-left">{% if row.date %}{{ row.date }}{% else %}—{% endif %}</td>
+          <td class="text-left">{{ row.by|default:"—" }}</td>
+          <td class="text-left">{{ row.extra|default:"" }}</td>
+          <td class="text-right">{% if row.amount %}{{ row.amount|floatformat:2|intcomma }} {{ duka.currencii }}{% endif %}</td>
+          <td class="text-right text-nowrap">
+            {% if can_upload %}
+              <label class="btn btn-sm btn-outline-primary mb-0">
+                {% if useri.langSet == 0 %}Pakia risiti{% else %}Upload receipt{% endif %}
+                <input type="file" class="nh-upload d-none" accept="image/*" multiple data-id="{{ row.id }}">
+              </label>
+            {% elif hub_admin %}
+              <button type="button" class="btn btn-sm btn-success nh-approve" data-id="{{ row.id }}">
+                {% if useri.langSet == 0 %}Thibitisha{% else %}Approve{% endif %}
+              </button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center text-muted py-5 nh-empty">
+    {% if useri.langSet == 0 %}Hakuna miamala inayosubiri{% else %}Nothing pending{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="modal fade" id="nhPreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title mb-0" id="nhPreviewTitle"></h6>
+        <div class="ml-auto d-flex align-items-center">
+          <button type="button" id="nhPreviewPrint" class="btn btn-sm btn-light border-secondary mr-2 actionbtns"
+            data-lang="{% if useri.langSet == 0 %}0{% else %}1{% endif %}"
+            data-paper="{{ cheo.receiptPaper|default:0 }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer mr-1" viewBox="0 0 16 16">
+              <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+              <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+            </svg>
+            {% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}
+          </button>
+          <button type="button" class="close ml-0" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+      </div>
+      <div class="modal-body p-0">
+        <div id="nhPreviewBody" class="nh-preview-body"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if hub_admin %}
+<div class="modal fade" id="nhReceiptSetModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title mb-0">{% if useri.langSet == 0 %}Mpangilio{% else %}Setting{% endif %}</h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" class="custom-control-input" id="nhRequireReceipt"{% if require_purchase_receipt %} checked{% endif %}>
+          <label class="custom-control-label small" for="nhRequireReceipt">
+            {% if useri.langSet == 0 %}Kila malipo ya manunuzi yahitaji risiti kutoka kwa vendor{% else %}Require vendor receipt for every purchase payment{% endif %}
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-light" data-dismiss="modal">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</button>
+        <button type="button" class="btn btn-sm btn-primary" id="nhSaveReceiptSet">{% if useri.langSet == 0 %}Hifadhi{% else %}Save{% endif %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if can_upload %}
+<div class="modal fade" id="nhCoverReceiptModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title mb-0">{% if useri.langSet == 0 %}Risiti inafunika malipo gani?{% else %}Which payments does this receipt cover?{% endif %}</h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body py-2">
+        <p class="small text-muted mb-2">
+          {% if useri.langSet == 0 %}
+            Chagua malipo yote yaliyo kwenye risiti hii. Unaweza kuchagua malipo ya bill moja au bill zaidi ya moja.
+          {% else %}
+            Tick every payment shown on this receipt. You can include several payments on one bill, or payments from more than one bill.
+          {% endif %}
+        </p>
+        <div id="nhCoverReceiptList" class="small"></div>
+        <div class="mt-2 font-weight-bold" id="nhCoverReceiptTotal"></div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-light" data-dismiss="modal">{% if useri.langSet == 0 %}Ghairi{% else %}Cancel{% endif %}</button>
+        <button type="button" class="btn btn-sm btn-primary" id="nhCoverReceiptSave">{% if useri.langSet == 0 %}Pakia risiti{% else %}Upload receipt{% endif %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+<script>
+(function(){
+  const kind = "{{ hub_kind|escapejs }}";
+  const csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+  const token = csrf ? csrf.value : '';
+  const lang0 = {{ useri.langSet|default:0 }};
+  function t(sw, en){ return lang0 === 0 ? sw : en; }
+
+  const previewUrl = "{% url 'notification_preview' %}";
+  const paper = "{{ cheo.receiptPaper|default:0 }}";
+  $(document).on('click', '.nh-open-preview', function(){
+    const btn = $(this);
+    const id = btn.data('id');
+    const printId = btn.data('print-id');
+    const printKind = String(btn.data('print-kind') || '');
+    $('#nhPreviewTitle').text(btn.text().trim());
+    const printBtn = $('#nhPreviewPrint');
+    printBtn.removeData('bill').removeData('invo').removeAttr('data-bill').removeAttr('data-invo').removeAttr('data-href');
+    printBtn.attr('data-paper', paper);
+    if (printKind === 'bill') {
+      printBtn.attr('data-bill', '1').attr('data-invo', printId).data({bill: 1, invo: printId});
+    } else if (printKind === 'invo') {
+      printBtn.attr('data-invo', printId).data({bill: 0, invo: printId});
+    } else {
+      printBtn.removeClass('actionbtns').addClass('nh-print-iframe');
+    }
+    if (printKind === 'bill' || printKind === 'invo') {
+      printBtn.addClass('actionbtns').removeClass('nh-print-iframe');
+    }
+    $('#nhPreviewBody').html('<div class="p-4 text-muted small">' + t('Inapakia...','Loading...') + '</div>');
+    $('#nhPreviewModal').modal('show');
+    $.get(previewUrl, { type: kind, id: id }).done(function(html){
+      $('#nhPreviewBody').html(html);
+    }).fail(function(){
+      $('#nhPreviewBody').html('<div class="p-4 text-danger">' + t('Imeshindikana','Failed') + '</div>');
+    });
+  });
+  $(document).on('click', '.nh-print-iframe', function(e){
+    e.preventDefault();
+    const html = document.getElementById('nhPreviewBody').innerHTML;
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write('<html><head><title>Print</title><link rel="stylesheet" href="{% static "css/bootstrap.min.css" %}"><style>.nh-preview-doc{font-family:Times New Roman,serif;padding:16px}.hub-prev-table{width:100%;border-collapse:collapse}.hub-prev-table th,.hub-prev-table td{border:1px solid #333;padding:6px 8px;font-size:13px}.hub-prev-table th{text-align:left;background:#1f2933;color:#fff}</style></head><body>' + html + '</body></html>');
+    w.document.close();
+    w.focus();
+    w.print();
+  });
+  $('#nhPreviewModal').on('hidden.bs.modal', function(){
+    $('#nhPreviewBody').empty();
+  });
+
+  $(document).on('click', '.nh-approve', function(){
+    const btn = $(this);
+    const id = btn.data('id');
+    btn.prop('disabled', true);
+    $.ajax({
+      type: 'POST',
+      url: "{% url 'notification_approve' %}",
+      data: { csrfmiddlewaretoken: token, type: kind, id: id }
+    }).done(function(data){
+      if (data && data.success) {
+        btn.closest('tr').fadeOut(200, function(){ $(this).remove(); });
+      } else {
+        alert((data && (lang0===0?data.swa:data.eng)) || t('Imeshindikana','Failed'));
+        btn.prop('disabled', false);
+      }
+    }).fail(function(){
+      alert(t('Imeshindikana','Failed'));
+      btn.prop('disabled', false);
+    });
+  });
+
+  let pendingUpload = null;
+  const curr = "{{ duka.currencii|escapejs }}";
+  function money(n){
+    const x = Number(n || 0);
+    return x.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + curr;
+  }
+  function collectPayRows(){
+    const rows = [];
+    $('.nh-pending-table tbody tr').each(function(){
+      const $tr = $(this);
+      rows.push({
+        id: Number($tr.data('id')),
+        bill: Number($tr.data('bill') || 0),
+        billRef: String($tr.data('bill-ref') || ''),
+        vendor: String($tr.data('vendor') || ''),
+        amount: $tr.data('amount'),
+        ref: String($tr.data('ref') || $tr.find('.nh-open-preview').text().trim() || ''),
+        date: $tr.find('td').eq(1).text().trim()
+      });
+    });
+    return rows;
+  }
+  function renderCoverList(primaryId, primaryBill){
+    const rows = collectPayRows();
+    let html = '';
+    rows.forEach(function(r){
+      const sameBill = primaryBill && r.bill === primaryBill;
+      const locked = r.id === primaryId;
+      const checked = locked || sameBill;
+      html += '<div class="custom-control custom-checkbox mb-1">'
+        + '<input type="checkbox" class="custom-control-input nh-cover-pay" id="nhCover'+r.id+'" value="'+r.id+'"'
+        + (checked ? ' checked' : '') + (locked ? ' disabled' : '') + '>'
+        + '<label class="custom-control-label" for="nhCover'+r.id+'">'
+        + '<strong>'+ r.ref +'</strong> · ' + money(r.amount)
+        + (r.vendor ? ' · '+r.vendor : '')
+        + '</label></div>';
+    });
+    $('#nhCoverReceiptList').html(html);
+    updateCoverTotal();
+  }
+  function selectedCoverIds(){
+    const ids = [];
+    $('.nh-cover-pay').each(function(){
+      if (this.checked || this.disabled) ids.push(Number(this.value));
+    });
+    return ids;
+  }
+  function updateCoverTotal(){
+    let tot = 0;
+    $('.nh-cover-pay').each(function(){
+      if (!(this.checked || this.disabled)) return;
+      const row = $('.nh-pending-table tbody tr[data-id="'+this.value+'"]');
+      tot += Number(row.data('amount') || 0);
+    });
+    $('#nhCoverReceiptTotal').text(t('Jumla iliyochaguliwa','Selected total') + ': ' + money(tot));
+  }
+  $(document).on('change', '.nh-cover-pay', updateCoverTotal);
+
+  function sendReceiptUpload(input, id, coverIds){
+    const fd = new FormData();
+    fd.append('csrfmiddlewaretoken', token);
+    fd.append('toa_cash_id', id);
+    (coverIds || [id]).forEach(function(cid){ fd.append('cover_ids', cid); });
+    for (let i = 0; i < input.files.length; i++) {
+      fd.append('images', input.files[i]);
+    }
+    $.ajax({
+      type: 'POST',
+      url: "{% url 'uploadExpenseReceipt' %}",
+      data: fd,
+      processData: false,
+      contentType: false
+    }).done(function(data){
+      if (data && data.success) {
+        const gone = (data.covered_ids && data.covered_ids.length) ? data.covered_ids : [id];
+        gone.forEach(function(pid){
+          $('.nh-pending-table tbody tr[data-id="'+pid+'"]').fadeOut(200, function(){ $(this).remove(); });
+        });
+        $('#nhCoverReceiptModal').modal('hide');
+      } else {
+        alert((data && (lang0===0?data.message_swa:data.message_eng)) || t('Imeshindikana','Failed'));
+      }
+      input.value = '';
+      pendingUpload = null;
+    }).fail(function(){
+      alert(t('Imeshindikana','Failed'));
+      input.value = '';
+      pendingUpload = null;
+    });
+  }
+
+  $(document).on('change', '.nh-upload', function(){
+    const input = this;
+    const id = Number($(input).data('id'));
+    if (!input.files || !input.files.length) return;
+    const $tr = $(input).closest('tr');
+    const bill = Number($tr.data('bill') || 0);
+    const others = collectPayRows().filter(function(r){ return r.id !== id; });
+    if (!others.length) {
+      sendReceiptUpload(input, id, [id]);
+      return;
+    }
+    pendingUpload = { input: input, id: id };
+    renderCoverList(id, bill);
+    $('#nhCoverReceiptModal').modal('show');
+  });
+  $('#nhCoverReceiptSave').on('click', function(){
+    if (!pendingUpload) return;
+    sendReceiptUpload(pendingUpload.input, pendingUpload.id, selectedCoverIds());
+  });
+  $('#nhCoverReceiptModal').on('hidden.bs.modal', function(){
+    if (pendingUpload && pendingUpload.input) pendingUpload.input.value = '';
+    pendingUpload = null;
+  });
+
+  $('#nhSaveReceiptSet').on('click', function(){
+    const btn = $(this);
+    const on = $('#nhRequireReceipt').prop('checked');
+    btn.prop('disabled', true);
+    $.ajax({
+      type: 'POST',
+      url: "{% url 'SetActivity' %}",
+      data: {
+        csrfmiddlewaretoken: token,
+        set: 'require_purchase_payment_receipt',
+        change: on ? 1 : 0
+      }
+    }).done(function(data){
+      if (data && data.success) {
+        window.location.reload();
+      } else {
+        alert((data && (lang0===0?data.msg_swa:data.msg_eng)) || t('Imeshindikana','Failed'));
+        btn.prop('disabled', false);
+      }
+    }).fail(function(){
+      alert(t('Imeshindikana','Failed'));
+      btn.prop('disabled', false);
+    });
+  });
+})();
+</script>
+{% endblock %}
+
+{% block dash-map %} {% if useri.langSet == 0 %}{{ title_swa }}{% else %}{{ title_eng }}{% endif %} {% endblock %}

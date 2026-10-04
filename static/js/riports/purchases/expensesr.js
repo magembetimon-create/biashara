@@ -32,7 +32,8 @@ function DuraTable(){
                                  txt:`${lang('Leo, Kuanzia<span class="brown">','Today, From<span class="brown">')}(${moment().startOf('day').format('dddd, DD/MM/YYYY HH:mm')})</span> <span style="color:green"> ${lang('Hadi sasa','Up to now')}</span>`, 
                                
                                  dtI:data.itms.filter(dy), 
-                                 dt:data.data.filter(dy), 
+                                 dt:data.data.filter(dy),
+                                 rcpts:(data.receipts||[]).filter(dy),
                                
 
 
@@ -46,6 +47,7 @@ function DuraTable(){
                              
                                  dtI:data.itms.filter(wkf),
                                  dt:data.data.filter(wkf),
+                                 rcpts:(data.receipts||[]).filter(wkf),
                             
 
                         
@@ -59,6 +61,7 @@ function DuraTable(){
                                  
                                  dtI:data.itms.filter(mthf),
                                  dt:data.data.filter(mthf),
+                                 rcpts:(data.receipts||[]).filter(mthf),
                                
 
                             
@@ -91,9 +94,9 @@ function createArray(name,from,to){
                      
                      dtI = Adt.dtI?.filter(ft)
                      dt = Adt.dt?.filter(ft)
-                    
+                     const rcpts = (Adt.rcpts||[]).filter(ft)
 
-                     theArr(dtI,dt,name,from,to)
+                     theArr(dtI,dt,name,from,to,rcpts)
                      
 
                 }else{
@@ -113,7 +116,7 @@ function createArray(name,from,to){
                         $("#loadMe").modal('hide');
                         hideLoading()
  
-                         theArr(data.itms,data.data,name,from,to)
+                         theArr(data.itms,data.data,name,from,to,data.receipts||[])
 
                      })
                         
@@ -128,7 +131,7 @@ function createArray(name,from,to){
 
 
                 }
-function theArr(dtI,dt,name,from,to){
+function theArr(dtI,dt,name,from,to,rcpts){
   let           
                 txt = moment().startOf('year').format() == from && moment().endOf('day').format() == moment(to).endOf('day').format() ? `</span> <span style="color:green"> ${lang('Hadi sasa','Up to now')}</span>` : `${lang('Hadi<span class="brown smallerFont">(','To<span class="brown smallerFont">(')} ${moment(to).endOf('day').format('dddd DD/MM/YYYY HH:mm')})</span>`
                  ar= { 
@@ -139,6 +142,7 @@ function theArr(dtI,dt,name,from,to){
                         txt:`${name},${lang('Kuanzia<span class="brown smallerFont">','From<span class="brown smallerFont">')} (${moment(from).startOf('day').format('dddd, DD/MM/YYYY')})</span>, ${txt}`, 
                         dt:dt,
                         dtI:dtI,
+                        rcpts:rcpts||[],
                
                     }
 
@@ -304,6 +308,9 @@ function placeDt(val){
 
                              ankara = Na==0?ankara:ankara.filter(s=>s.Na===Na)
                              itms = Na==0?itms:itms.filter(s=>s.Na===Na)
+                             let rcpts = Tawi==0?(theDT.rcpts||[]):(theDT.rcpts||[]).filter(d=>Number(d.duka)===Tawi)
+                             rcpts = Na==0?rcpts:rcpts.filter(s=>Number(s.Na)===Na)
+                             expUpdateReceipts(rcpts)
                             
 
                              let itmO = itms ,
@@ -1455,6 +1462,131 @@ function roadRiportSave(){
 
 
 }
+
+let expReceiptCache = []
+let expReceiptLayout = { cols: 2, rows: 2 }
+
+const expEsc = (value) => String(value || '').replace(/[&<>"']/g, (ch) => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+}[ch]))
+
+function expUpdateReceipts(list) {
+  expReceiptCache = list || []
+  const count = expReceiptCache.length
+  const amount = expReceiptCache.reduce((sum, row) => sum + Number(row.amount || 0), 0)
+  $('#expReceiptCount').text(count)
+  $('#expReceiptAmount').text(floatValue(amount))
+  if ($('#expReceiptsModal').hasClass('show')) {
+    expRenderReceiptsGallery()
+  }
+}
+
+function expReceiptCaption(row) {
+  const when = row.datetime || row.tarehe || row.date
+  const m = when ? moment(when) : null
+  const dateStr = m && m.isValid() ? m.format('DD/MM/YYYY HH:mm') : (row.date || '')
+  const kind = row.kind === 'purchase' ? lang('Manunuzi', 'Purchase') : lang('Matumizi', 'Expense')
+  return [row.label || row.vendor, row.ref, kind, row.branch, dateStr, floatValue(row.amount)].filter(Boolean).join(' · ')
+}
+
+function expApplyReceiptLayout() {
+  const gallery = document.getElementById('expReceiptsGallery')
+  if (!gallery) return
+  gallery.style.gridTemplateColumns = `repeat(${expReceiptLayout.cols}, minmax(0, 1fr))`
+  const cards = gallery.querySelectorAll('.cs-rcpt-card img')
+  const perPage = Math.max(1, expReceiptLayout.cols * expReceiptLayout.rows)
+  const h = perPage <= 1 ? 420 : (perPage <= 2 ? 320 : (perPage <= 4 ? 220 : 160))
+  cards.forEach((img) => { img.style.height = `${h}px` })
+}
+
+function expRenderReceiptsGallery() {
+  const gallery = $('#expReceiptsGallery')
+  if (!gallery.length) return
+  if (!expReceiptCache.length) {
+    gallery.html(`<p class="text-muted text-center py-4 mb-0">${lang('Hakuna risiti zilizopakiwa kwa kipindi hiki', 'No uploaded receipts in this period')}</p>`)
+    return
+  }
+  let html = ''
+  expReceiptCache.forEach((row) => {
+    html += `<div class="cs-rcpt-card">
+      <img src="${expEsc(row.url)}" alt="">
+      <div class="cs-rcpt-meta">${expEsc(expReceiptCaption(row))}</div>
+    </div>`
+  })
+  gallery.html(html)
+  expApplyReceiptLayout()
+}
+
+function expPrintReceipts() {
+  if (!expReceiptCache.length) {
+    toastr.info(lang('Hakuna risiti za kuchapisha', 'No receipts to print'), lang('Taarifa', 'Info'), { timeOut: 2000 })
+    return
+  }
+  const cols = expReceiptLayout.cols
+  const rows = expReceiptLayout.rows
+  const perPage = Math.max(1, cols * rows)
+  const title = lang('Risiti za matumizi', 'Expense receipts')
+  const shop = ($('#expensePrintDuka').val() || '').trim()
+  let pages = ''
+  for (let i = 0; i < expReceiptCache.length; i += perPage) {
+    const chunk = expReceiptCache.slice(i, i + perPage)
+    let cells = ''
+    chunk.forEach((row) => {
+      cells += `<div class="cell"><img src="${expEsc(row.url)}" alt=""><div class="cap">${expEsc(expReceiptCaption(row))}</div></div>`
+    })
+    pages += `<section class="page">${cells}</section>`
+  }
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+      h1 { font-size: 14pt; margin: 0 0 4px; }
+      .head { padding: 10mm 10mm 0; }
+      .page {
+        display: grid;
+        grid-template-columns: repeat(${cols}, minmax(0, 1fr));
+        grid-template-rows: repeat(${rows}, minmax(0, 1fr));
+        gap: 8px;
+        page-break-after: always;
+        padding: 10mm;
+        min-height: calc(100vh - 18mm);
+      }
+      .cell { border: 1px solid #ccc; display: flex; flex-direction: column; overflow: hidden; }
+      .cell img { width: 100%; flex: 1; object-fit: contain; background: #fafafa; }
+      .cap { font-size: 9pt; padding: 6px 8px; border-top: 1px solid #ddd; }
+      @media print { .page { min-height: 250mm; } }
+    </style></head><body>
+    <div class="head"><h1>${expEsc(shop)}</h1><div>${title}</div></div>
+    ${pages}
+    </body></html>`)
+  w.document.close()
+  w.focus()
+  w.print()
+}
+
+$(document).on('click', '#expReceiptsPanel', function () {
+  expRenderReceiptsGallery()
+  $('#expReceiptsModal').modal('show')
+})
+$(document).on('click', '.exp-rcpt-layout', function () {
+  expReceiptLayout = {
+    cols: Number(this.getAttribute('data-cols')) || 1,
+    rows: Number(this.getAttribute('data-rows')) || 1,
+  }
+  $('.exp-rcpt-layout').removeClass('active')
+  $(this).addClass('active')
+  expApplyReceiptLayout()
+})
+$(document).on('click', '#expPrintReceiptsBtn', function () {
+  expPrintReceipts()
+})
+
 
 
 

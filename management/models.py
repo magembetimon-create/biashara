@@ -145,6 +145,7 @@ class Interprise(models.Model):
     waiter_counter =  models.BooleanField(default=False)
     waiter_receipt_paper = models.PositiveSmallIntegerField(default=1)  # 1=58mm, 2=80mm POS
     shift_management_enabled = models.BooleanField(default=False)
+    require_purchase_payment_receipt = models.BooleanField(default=False)
     officeNo = models.CharField(max_length=200,blank=True)
     # tin_pic = models.ImageField(upload_to="pics",null=True,blank=True)
 
@@ -529,6 +530,9 @@ class manunuzi(models.Model):
     mark = models.BooleanField(default=False)
     markTitle = models.TextField(null=True,blank=True)
     markDesc = models.TextField(null=True,blank=True)
+    admin_approved = models.BooleanField(default=False)
+    admin_approved_at = models.DateTimeField(null=True,blank=True)
+    admin_approved_by = models.ForeignKey(InterprisePermissions,on_delete=models.SET_NULL,null=True,blank=True,related_name='purchases_approved')
 
 class manunuziList(models.Model):
     manunuzi=  models.ForeignKey(manunuzi,on_delete=models.CASCADE)  
@@ -559,6 +563,9 @@ class receive(models.Model):
     By = models.ForeignKey(InterprisePermissions,on_delete=models.CASCADE,null=True,blank=True)
     mark =   models.BooleanField(default=False) 
     markDesc = models.TextField(null=True,blank=True)
+    admin_approved = models.BooleanField(default=True)
+    admin_approved_at = models.DateTimeField(null=True,blank=True)
+    admin_approved_by = models.ForeignKey(InterprisePermissions,on_delete=models.SET_NULL,null=True,blank=True,related_name='receives_approved')
 
 class receiveList(models.Model):
     receive = models.ForeignKey(receive,on_delete=models.CASCADE)
@@ -1266,6 +1273,10 @@ class MatumiziReceiptAttachment(models.Model):
     )
     manunuzi = models.ForeignKey(
         manunuzi, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='receipt_attachments',
+    )
+    toa_cash = models.ForeignKey(
+        'toaCash', on_delete=models.CASCADE, null=True, blank=True,
         related_name='receipt_attachments',
     )
     image = models.ImageField(upload_to='matumizi_receipts/%Y/%m/')

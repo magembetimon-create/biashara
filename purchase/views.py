@@ -44,6 +44,7 @@ from django.template.defaultfilters import stringfilter
 register = template.Library()
 
 from accaunts.todos import Todos, updateOrder, shift_operation_block_payload
+from accaunts.notification_hub import apply_record_admin_flag
 from purchase.expense_receipt_utils import (
     count_pending_mandatory_expense_receipts,
     pending_mandatory_expense_receipts_list,
@@ -54,6 +55,11 @@ from purchase.vendor_utils import (
     vendor_debt_by_branch,
     vendor_debt_summary,
     vendor_statement_payload,
+    vendor_period_receipts,
+    allowed_vendor_scope_branches,
+    parse_requested_branch_ids,
+    vendor_unpaid_bills,
+    apply_vendor_fifo_payment,
     _parse_dt,
 )
 from purchase.guest_compound_utils import (
@@ -340,6 +346,7 @@ def addBill(request):
 
          manunu.amount = bill_sum
          manunu.By = entp
+         apply_record_admin_flag(manunu, entp)
 
          
                
@@ -1951,16 +1958,23 @@ def uploadExpenseReceipt(request):
         return JsonResponse({'success': False})
     try:
         todo = todoFunct(request)
-        if not _expense_can_record(todo):
+        duka = todo['duka']
+        cheo = todo['cheo']
+        rec_id = int(request.POST.get('rekodi_id') or 0)
+        man_id = int(request.POST.get('manunuzi_id') or 0)
+        toa_id = int(request.POST.get('toa_cash_id') or 0)
+        if not toa_id and not _expense_can_record(todo):
             return JsonResponse({
                 'success': False,
                 'message_swa': 'Hauna ruhusa',
                 'message_eng': 'No permission',
             })
-        duka = todo['duka']
-        cheo = todo['cheo']
-        rec_id = int(request.POST.get('rekodi_id') or 0)
-        man_id = int(request.POST.get('manunuzi_id') or 0)
+        if toa_id and not cheo:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Hauna ruhusa',
+                'message_eng': 'No permission',
+            })
         files = request.FILES.getlist('images') or request.FILES.getlist('image')
         if not files:
             one = request.FILES.get('image')
@@ -1973,6 +1987,9 @@ def uploadExpenseReceipt(request):
                 'message_eng': 'Select receipt image(s)',
             })
 
+        parent_kw = None
+        cover_pays = []
+        cover_pay_ids = []
         if rec_id:
             rec = rekodiMatumizi.objects.select_related('matumizi').get(pk=rec_id, Interprise=duka)
             if not rec.matumizi.attach_receipt:
@@ -1985,24 +2002,80 @@ def uploadExpenseReceipt(request):
         elif man_id:
             pu = manunuzi.objects.get(pk=man_id, Interprise=duka)
             parent_kw = {'manunuzi': pu}
+        elif toa_id:
+            cover_raw = request.POST.getlist('cover_ids') or request.POST.getlist('cover_ids[]')
+            cover_ids = []
+            for raw in cover_raw:
+                try:
+                    cid = int(raw)
+                except (TypeError, ValueError):
+                    continue
+                if cid and cid not in cover_ids:
+                    cover_ids.append(cid)
+            if toa_id not in cover_ids:
+                cover_ids.insert(0, toa_id)
+            cover_pays = list(
+                toaCash.objects.filter(
+                    pk__in=cover_ids,
+                    Interprise=duka,
+                    pu=True,
+                    bill__isnull=False,
+                    matumizi__isnull=True,
+                ).select_related('bill')
+            )
+            cover_pays.sort(key=lambda p: (0 if p.pk == toa_id else 1, p.pk))
+            if not cover_pays:
+                return JsonResponse({'success': False, 'message_swa': 'Haipatikani', 'message_eng': 'Not found'})
+            parent_kw = None
+            cover_pay_ids = [p.pk for p in cover_pays]
         else:
             return JsonResponse({'success': False, 'message_swa': 'Hitilafu', 'message_eng': 'Invalid request'})
 
         saved = []
+        covered = []
         for f in files[:20]:
             if not f or not getattr(f, 'size', 0):
                 continue
-            att = MatumiziReceiptAttachment(
-                Interprise=duka,
-                uploaded_by=cheo,
-                image=f,
-                **parent_kw,
-            )
-            att.save()
-            saved.append({
-                'id': att.id,
-                'url': request.build_absolute_uri(att.image.url) if att.image else '',
-            })
+            if toa_id and cover_pays:
+                first = None
+                for pay in cover_pays:
+                    if first is None:
+                        att = MatumiziReceiptAttachment(
+                            Interprise=duka,
+                            uploaded_by=cheo,
+                            image=f,
+                            toa_cash=pay,
+                            manunuzi=pay.bill,
+                        )
+                        att.save()
+                        first = att
+                    else:
+                        att = MatumiziReceiptAttachment(
+                            Interprise=duka,
+                            uploaded_by=cheo,
+                            toa_cash=pay,
+                            manunuzi=pay.bill,
+                        )
+                        att.image = first.image
+                        att.save()
+                    saved.append({
+                        'id': att.id,
+                        'pay_id': pay.pk,
+                        'url': request.build_absolute_uri(att.image.url) if att.image else '',
+                    })
+                covered = cover_pay_ids
+            else:
+                att = MatumiziReceiptAttachment(
+                    Interprise=duka,
+                    uploaded_by=cheo,
+                    image=f,
+                    **parent_kw,
+                )
+                att.save()
+                saved.append({
+                    'id': att.id,
+                    'url': request.build_absolute_uri(att.image.url) if att.image else '',
+                })
 
         if not saved:
             return JsonResponse({
@@ -2016,11 +2089,16 @@ def uploadExpenseReceipt(request):
             'message_swa': 'Risiti imepakiwa',
             'message_eng': 'Receipt uploaded',
             'attachments': saved,
+            'covered_ids': covered,
             'pending_count': count_pending_mandatory_expense_receipts(duka),
         })
     except rekodiMatumizi.DoesNotExist:
         return JsonResponse({'success': False, 'message_swa': 'Haipatikani', 'message_eng': 'Not found'})
     except manunuzi.DoesNotExist:
+        return JsonResponse({'success': False, 'message_swa': 'Haipatikani', 'message_eng': 'Not found'})
+    except toaCash.DoesNotExist:
+        return JsonResponse({'success': False, 'message_swa': 'Haipatikani', 'message_eng': 'Not found'})
+    except toaCash.DoesNotExist:
         return JsonResponse({'success': False, 'message_swa': 'Haipatikani', 'message_eng': 'Not found'})
     except Exception:
         traceback.print_exc()
@@ -5090,9 +5168,8 @@ def VendorPurchases(request):
         duka = todo['duka']
         vendor_id = int(request.GET.get('vnd', 0) or 0)
         vendor = wasambazaji.objects.get(pk=vendor_id, owner=duka.owner.user)
-        branch_ids, siblings, _, can_scope = vendor_branch_ids(duka, todo.get('cheo'), 0)
-        if not can_scope:
-            branch_ids = [duka.id]
+        allowed_branches, can_scope = allowed_vendor_scope_branches(duka, todo.get('cheo'))
+        branch_ids = [b['id'] for b in allowed_branches]
         if not branch_ids:
             branch_ids = [duka.id]
         num = manunuzi.objects.filter(
@@ -5103,7 +5180,7 @@ def VendorPurchases(request):
         ).count()
         branch_label = ''
         if vendor.where_id:
-            branch_label = next((b['name'] for b in siblings if b['id'] == vendor.where_id), '')
+            branch_label = next((b['name'] for b in allowed_branches if b['id'] == vendor.where_id), '')
             if not branch_label and vendor.where:
                 branch_label = vendor.where.name
         todo.update({
@@ -5111,6 +5188,8 @@ def VendorPurchases(request):
             'vendor_id': vendor.id,
             'num': num,
             'vendor_branch_name': branch_label,
+            'statement_branches': allowed_branches,
+            'can_scope_branches': can_scope or len(allowed_branches) > 1,
         })
         if not duka.Interprise:
             return redirect('/userdash')
@@ -5137,14 +5216,173 @@ def vendor_purchases_statement_data(request):
         if not t_fr_dt or not t_to_dt:
             return JsonResponse({'success': False, 'swa': 'Tarehe hazipo', 'eng': 'Dates are required'})
         cheo = todo.get('cheo')
-        branch_ids, _, _, can_scope = vendor_branch_ids(duka, cheo, 0)
-        if not can_scope:
+        allowed_branches, _ = allowed_vendor_scope_branches(duka, cheo)
+        allowed_ids = [b['id'] for b in allowed_branches] or [duka.id]
+        branch_ids = parse_requested_branch_ids(
+            request.POST.get('branches'),
+            allowed_ids,
+            allowed_ids,
+        )
+        if not branch_ids:
             branch_ids = [duka.id]
         payload = vendor_statement_payload(duka, vendor_id, t_fr_dt, t_to_dt, branch_ids)
+        receipts, receipt_amount = vendor_period_receipts(
+            duka, vendor_id, t_fr_dt, t_to_dt, branch_ids, request,
+        )
+        payload['receipts'] = receipts
+        payload['summary']['receipt_count'] = len(receipts)
+        payload['summary']['receipt_amount'] = receipt_amount
         return JsonResponse({'success': True, **payload})
     except wasambazaji.DoesNotExist:
         return JsonResponse({'success': False, 'swa': 'Vendor hajapatikana', 'eng': 'Vendor not found'})
     except Exception:
         traceback.print_exc()
         return JsonResponse({'success': False, 'swa': 'Hitilafu', 'eng': 'Something went wrong'})
+
+
+@login_required(login_url='login')
+def vendor_statements(request):
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    if not duka or not duka.Interprise:
+        return redirect('/userdash')
+    allowed_branches, can_scope = allowed_vendor_scope_branches(duka, todo.get('cheo'))
+    todo.update({
+        'statement_branches': allowed_branches,
+        'can_scope_branches': can_scope or len(allowed_branches) > 1,
+        'vendor_nav': 'statements',
+    })
+    return render(request, 'vendorStatements.html', todo)
+
+
+@login_required(login_url='login')
+def vendor_statements_data(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad Request'})
+    try:
+        todo = todoFunct(request)
+        duka = todo.get('duka')
+        if not duka or not duka.Interprise:
+            return JsonResponse({'success': False, 'swa': 'Hakuna ruhusa', 'eng': 'Not allowed'})
+        t_fr_dt = _parse_dt(request.POST.get('tFr'))
+        t_to_dt = _parse_dt(request.POST.get('tTo'))
+        if not t_fr_dt or not t_to_dt:
+            return JsonResponse({'success': False, 'swa': 'Tarehe hazipo', 'eng': 'Dates are required'})
+        cheo = todo.get('cheo')
+        allowed_branches, _ = allowed_vendor_scope_branches(duka, cheo)
+        allowed_ids = [b['id'] for b in allowed_branches] or [duka.id]
+        branch_ids = parse_requested_branch_ids(
+            request.POST.get('branches'),
+            allowed_ids,
+            allowed_ids,
+        )
+        if not branch_ids:
+            branch_ids = [duka.id]
+        payload = vendor_statement_payload(duka, 0, t_fr_dt, t_to_dt, branch_ids)
+        receipts, receipt_amount = vendor_period_receipts(
+            duka, 0, t_fr_dt, t_to_dt, branch_ids, request,
+        )
+        payload['receipts'] = receipts
+        payload['summary']['receipt_count'] = len(receipts)
+        payload['summary']['receipt_amount'] = receipt_amount
+        return JsonResponse({'success': True, **payload})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'swa': 'Hitilafu', 'eng': 'Something went wrong'})
+
+
+def _vendor_pay_context(request):
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    cheo = todo.get('cheo')
+    if not duka or not duka.Interprise:
+        return None, JsonResponse({'success': False, 'swa': 'Hakuna ruhusa', 'eng': 'Not allowed'})
+    try:
+        vendor_id = int(request.POST.get('vnd', 0) or 0)
+    except (TypeError, ValueError):
+        vendor_id = 0
+    if not vendor_id:
+        return None, JsonResponse({'success': False, 'swa': 'Chagua vendor', 'eng': 'Vendor required'})
+    try:
+        wasambazaji.objects.get(pk=vendor_id, owner=duka.owner.user)
+    except wasambazaji.DoesNotExist:
+        return None, JsonResponse({'success': False, 'swa': 'Vendor hajapatikana', 'eng': 'Vendor not found'})
+    allowed_branches, _ = allowed_vendor_scope_branches(duka, cheo)
+    allowed_ids = [b['id'] for b in allowed_branches] or [duka.id]
+    branch_ids = parse_requested_branch_ids(
+        request.POST.get('branches'),
+        allowed_ids,
+        allowed_ids,
+    )
+    if not branch_ids:
+        branch_ids = [duka.id]
+    return {
+        'todo': todo,
+        'duka': duka,
+        'cheo': cheo,
+        'vendor_id': vendor_id,
+        'branch_ids': branch_ids,
+    }, None
+
+
+@login_required(login_url='login')
+def vendor_purchases_open_bills(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad Request'})
+    ctx, err = _vendor_pay_context(request)
+    if err:
+        return err
+    bills, total = vendor_unpaid_bills(ctx['vendor_id'], ctx['branch_ids'])
+    return JsonResponse({
+        'success': True,
+        'bills': bills,
+        'total_due': float(total),
+    })
+
+
+@login_required(login_url='login')
+def vendor_purchases_pay(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad Request'})
+    ctx, err = _vendor_pay_context(request)
+    if err:
+        return err
+    try:
+        account_id = int(request.POST.get('ac', 0) or 0)
+    except (TypeError, ValueError):
+        account_id = 0
+    if not account_id:
+        return JsonResponse({'success': False, 'swa': 'Chagua akaunti', 'eng': 'Select an account'})
+    paid_set = bool(int(request.POST.get('paid_set', 0) or 0))
+    bal_set = bool(int(request.POST.get('bal_set', 0) or 0))
+    try:
+        result = apply_vendor_fifo_payment(
+            ctx['cheo'],
+            ctx['vendor_id'],
+            ctx['branch_ids'],
+            account_id,
+            request.POST.get('paid'),
+            paid_set,
+            request.POST.get('bal'),
+            bal_set,
+            request.POST.get('pay_d'),
+        )
+    except (TypeError, ValueError):
+        return JsonResponse({'success': False, 'swa': 'Kiasi si sahihi', 'eng': 'Invalid amount'})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'swa': 'Hitilafu', 'eng': 'Something went wrong'})
+    if not result.get('ok'):
+        return JsonResponse({
+            'success': False,
+            'swa': result.get('swa') or 'Hitilafu',
+            'eng': result.get('eng') or 'Something went wrong',
+        })
+    return JsonResponse({
+        'success': True,
+        'swa': result.get('swa'),
+        'eng': result.get('eng'),
+        'applied': result.get('applied'),
+        'allocated': result.get('allocated') or [],
+    })
 

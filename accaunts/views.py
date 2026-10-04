@@ -17,8 +17,17 @@ from django.core.files.storage import default_storage # Hii inahitajika kwa kufu
 from django.conf import settings
 # from graphql import visit
 from business import settings
-from management.models import Notifications,VistorsSavedItems,customer_in_cell,customer_area,Activator,invoice_desk,Activated,marketPlace,VistedBanners,marketBanner,deliveryBy,KulipaPI,PhoneMailConfirm,bidhaa,Zones,Mikoa,Mitaa,Wilaya,Kata,mahitaji,Interprise_Rating, UserExtend,EmployeeAttachments,InterpriseVisotrs, makampuni,savedStockState,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive, stokAdjustment,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji
+from management.models import Notifications,VistorsSavedItems,customer_in_cell,customer_area,Activator,invoice_desk,Activated,marketPlace,VistedBanners,marketBanner,deliveryBy,KulipaPI,PhoneMailConfirm,bidhaa,Zones,Mikoa,Mitaa,Wilaya,Kata,mahitaji,Interprise_Rating, UserExtend,EmployeeAttachments,InterpriseVisotrs, makampuni,savedStockState,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive, stokAdjustment,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji, wekaCash, toaCash, MatumiziReceiptAttachment
 from purchase.expense_receipt_utils import count_pending_mandatory_expense_receipts
+from accaunts.notification_hub import (
+    hub_approval_counts,
+    is_shop_admin,
+    pending_customer_payments_qs,
+    pending_noncash_payments_qs,
+    pending_purchase_payments_qs,
+    pending_purchases_qs,
+    pending_receives_qs,
+)
 from purchase.guest_compound_utils import (
     count_compound_guest_orders,
     get_guest_cell,
@@ -1256,7 +1265,10 @@ def SetActivity(request):
       todo = todoFunct(request)
       cheo = todo['cheo']
       duka = todo['duka']
-      if cheo.user == duka.owner:
+      allowed = cheo.user == duka.owner
+      if activity == 'require_purchase_payment_receipt':
+        allowed = is_shop_admin(cheo)
+      if allowed:
         actswa = 'Imewezeshwa'
         acteng = 'Enabled'
         if not prop:
@@ -5033,6 +5045,10 @@ def notificationing(request):
       'rd':rd,
       'a':a,
       'pending_expense_receipt_count': count_pending_mandatory_expense_receipts(duka),
+      'hub': hub_approval_counts(duka),
+      'hub_admin': is_shop_admin(todo.get('cheo')),
+      'qstr': request.GET.urlencode(),
+
 
       
     })
@@ -5040,6 +5056,284 @@ def notificationing(request):
     return render(request,'notifications.html',todo)
   # except:
   #   return render(request,'pagenotFound.html',todo)
+
+
+def _hub_person(perm):
+    if not perm or not getattr(perm, 'user', None) or not getattr(perm.user, 'user', None):
+        return ''
+    u = perm.user.user
+    return f'{(u.first_name or "")} {(u.last_name or "")}'.strip() or (u.username or '')
+
+
+@login_required(login_url='login')
+def notification_pending(request):
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    if not duka or not duka.Interprise:
+        return redirect('/userdash')
+    kind = (request.GET.get('type') or 'purchases').strip()
+    hub = hub_approval_counts(duka)
+    admin = is_shop_admin(todo.get('cheo'))
+    rows = []
+    title_swa = ''
+    title_eng = ''
+    if kind == 'receive':
+        title_swa, title_eng = 'Kupokea bidhaa', 'Items receive'
+        for rec in pending_receives_qs(duka).select_related('By__user__user', 'transfer').order_by('-pk')[:300]:
+            code = rec.transfer.code if rec.transfer_id else rec.pk
+            rows.append({
+                'id': rec.id,
+                'ref': f'TR-{code}',
+                'date': rec.transfer.tarehe if rec.transfer_id else None,
+                'by': _hub_person(rec.By),
+                'amount': '',
+                'extra': rec.reasons or '',
+                'print_id': rec.id,
+                'print_kind': 'receive',
+            })
+    elif kind == 'purchases':
+        title_swa, title_eng = 'Manunuzi', 'Purchases'
+        for bill in pending_purchases_qs(duka).select_related('By__user__user', 'supplier_id').order_by('-tarehe')[:300]:
+            rows.append({
+                'id': bill.id,
+                'ref': f'BILL-{bill.code}',
+                'date': bill.tarehe,
+                'by': _hub_person(bill.By),
+                'amount': bill.amount,
+                'extra': bill.supplier_id.jina if bill.supplier_id_id else '',
+                'print_id': bill.id,
+                'print_kind': 'bill',
+            })
+    elif kind == 'expenses':
+        return redirect('/purchase/expenseReceiptsPending')
+    elif kind == 'purchase_pay':
+        title_swa, title_eng = 'Malipo ya manunuzi (risiti)', 'Purchase payments (receipt)'
+        for pay in pending_purchase_payments_qs(duka).select_related(
+            'by__user__user', 'bill', 'bill__supplier_id', 'Akaunt'
+        ).order_by('-tarehe')[:300]:
+            vendor = ''
+            if pay.bill_id and pay.bill.supplier_id_id:
+                vendor = pay.bill.supplier_id.jina or ''
+            rows.append({
+                'id': pay.id,
+                'ref': f'PAY-{pay.id}' + (f' / BILL-{pay.bill.code}' if pay.bill_id else ''),
+                'date': pay.tarehe,
+                'by': _hub_person(pay.by),
+                'amount': pay.Amount,
+                'extra': ' · '.join(x for x in (
+                    f'BILL-{pay.bill.code}' if pay.bill_id else '',
+                    vendor,
+                    pay.Akaunt.Akaunt_name if pay.Akaunt_id else '',
+                ) if x),
+                'print_id': pay.bill_id,
+                'print_kind': 'bill' if pay.bill_id else '',
+                'bill_id': pay.bill_id or 0,
+                'bill_ref': f'BILL-{pay.bill.code}' if pay.bill_id else '',
+                'vendor': vendor,
+                'upload': True,
+            })
+    elif kind == 'customer_pay':
+        title_swa, title_eng = 'Malipo ya wateja', 'Customer payments'
+        for pay in pending_customer_payments_qs(duka).select_related('by__user__user', 'invo', 'Akaunt').order_by('-tarehe')[:300]:
+            rows.append({
+                'id': pay.id,
+                'ref': f'INVO-{pay.invo.code}' if pay.invo_id else f'PAY-{pay.id}',
+                'date': pay.tarehe,
+                'by': _hub_person(pay.by),
+                'amount': pay.Amount,
+                'extra': pay.Akaunt.Akaunt_name if pay.Akaunt_id else '',
+                'print_id': pay.invo_id,
+                'print_kind': 'invo' if pay.invo_id else '',
+            })
+    elif kind == 'noncash':
+        title_swa, title_eng = 'Malipo yasiyo ya cash', 'Non-cash payments'
+        for pay in pending_noncash_payments_qs(duka).select_related('by__user__user', 'invo', 'Akaunt').order_by('-tarehe')[:300]:
+            rows.append({
+                'id': pay.id,
+                'ref': f'INVO-{pay.invo.code}' if pay.invo_id else f'PAY-{pay.id}',
+                'date': pay.tarehe,
+                'by': _hub_person(pay.by),
+                'amount': pay.Amount,
+                'extra': (pay.Akaunt.Akaunt_name if pay.Akaunt_id else '') + (f' ({pay.Akaunt.aina})' if pay.Akaunt_id else ''),
+                'print_id': pay.invo_id,
+                'print_kind': 'invo' if pay.invo_id else '',
+            })
+    else:
+        return redirect('/notificationing')
+
+    todo.update({
+        'hub': hub,
+        'hub_admin': admin,
+        'hub_kind': kind,
+        'hub_rows': rows,
+        'title_swa': title_swa,
+        'title_eng': title_eng,
+        'can_upload': kind == 'purchase_pay',
+        'require_purchase_receipt': bool(getattr(duka, 'require_purchase_payment_receipt', False)),
+    })
+    return render(request, 'notification_pending.html', todo)
+
+
+@login_required(login_url='login')
+def notification_preview(request):
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    if not duka or not duka.Interprise:
+        return HttpResponse('Not allowed', status=403)
+    kind = (request.GET.get('type') or '').strip()
+    try:
+        rec_id = int(request.GET.get('id') or 0)
+    except (TypeError, ValueError):
+        rec_id = 0
+    if not rec_id:
+        return HttpResponse('Missing record', status=400)
+
+    try:
+        if kind == 'purchases':
+            from purchase.views import viewbill_funct, _bill_print_lines
+            bill = manunuzi.objects.filter(pk=rec_id, Interprise_id=duka.id).first()
+            if not bill:
+                return HttpResponse('Not found', status=404)
+            ctx = viewbill_funct(request, rec_id, '', 1)
+            vatper = getattr(ctx.get('duka') or duka, 'vatper', 0) or 0
+            print_lines, print_sub, print_vat, print_tot = _bill_print_lines(ctx.get('list') or [], vatper)
+            ctx.update({
+                'preview_kind': 'bill',
+                'print_lines': print_lines,
+                'print_sub': print_sub,
+                'print_vat': print_vat,
+                'print_tot': print_tot,
+            })
+            return render(request, 'hub_preview.html', ctx)
+
+        if kind == 'purchase_pay':
+            from purchase.views import viewbill_funct, _bill_print_lines
+            pay = toaCash.objects.select_related('Akaunt', 'by__user__user', 'bill').filter(
+                pk=rec_id, Interprise_id=duka.id
+            ).first()
+            if not pay or not pay.bill_id:
+                return HttpResponse('Not found', status=404)
+            ctx = viewbill_funct(request, pay.bill_id, '', 1)
+            vatper = getattr(ctx.get('duka') or duka, 'vatper', 0) or 0
+            print_lines, print_sub, print_vat, print_tot = _bill_print_lines(ctx.get('list') or [], vatper)
+            ctx.update({
+                'preview_kind': 'bill',
+                'print_lines': print_lines,
+                'print_sub': print_sub,
+                'print_vat': print_vat,
+                'print_tot': print_tot,
+                'hub_pay': pay,
+            })
+            return render(request, 'hub_preview.html', ctx)
+
+        if kind in ('customer_pay', 'noncash'):
+            pay = wekaCash.objects.select_related('Akaunt', 'by__user__user', 'invo').filter(
+                pk=rec_id, Interprise_id=duka.id
+            ).first()
+            if not pay or not pay.invo_id:
+                return HttpResponse('Not found', status=404)
+            invo = mauzoni.objects.select_related('By__user__user', 'customer_id').filter(pk=pay.invo_id, Interprise_id=duka.id).first()
+            if not invo:
+                return HttpResponse('Not found', status=404)
+            lines = []
+            for li in mauzoList.objects.select_related('produ__bidhaa').filter(mauzo=invo.id).exclude(idadi=F('returned')):
+                bd = li.produ.bidhaa if li.produ_id else None
+                qty = (li.idadi or 0) - (li.returned or 0)
+                uwiano = (bd.idadi_jum if bd else 1) or 1
+                unit = (bd.vipimo_jum if bd and qty and uwiano and qty % uwiano == 0 else (bd.vipimo if bd else '')) or ''
+                show_qty = (qty / uwiano) if bd and uwiano and qty % uwiano == 0 else qty
+                tot = qty * (li.bei or 0) / uwiano if uwiano else 0
+                lines.append({
+                    'name': bd.bidhaa_jina if bd else '',
+                    'unit': unit,
+                    'qty': show_qty,
+                    'price': li.bei or 0,
+                    'total': tot,
+                })
+            malipo = wekaCash.objects.select_related('Akaunt', 'by__user__user').filter(invo=invo.id).order_by('-pk')
+            todo.update({
+                'preview_kind': 'invo',
+                'the_bill': invo,
+                'print_lines': lines,
+                'malipo': malipo,
+                'hub_pay': pay,
+            })
+            return render(request, 'hub_preview.html', todo)
+
+        if kind == 'receive':
+            rec = receive.objects.select_related(
+                'By__user__user', 'transfer__Interprise', 'transfer__By__user__user'
+            ).filter(pk=rec_id, Interprise_id=duka.id).first()
+            if not rec:
+                return HttpResponse('Not found', status=404)
+            lines = []
+            for st in bidhaa_stoku.objects.select_related('bidhaa', 'uhamisho').filter(uhamisho__receive=rec.id):
+                bd = st.bidhaa
+                rl = st.uhamisho
+                qty = rl.qty if rl else st.idadi
+                uwiano = (rl.uwiano if rl else (bd.idadi_jum if bd else 1)) or 1
+                unit = (bd.vipimo_jum if bd and uwiano and qty and qty % uwiano == 0 else (bd.vipimo if bd else '')) or ''
+                show_qty = (qty / uwiano) if uwiano and qty and qty % uwiano == 0 else qty
+                lines.append({
+                    'name': bd.bidhaa_jina if bd else '',
+                    'unit': unit,
+                    'qty': show_qty,
+                })
+            todo.update({
+                'preview_kind': 'receive',
+                'the_bill': rec,
+                'print_lines': lines,
+            })
+            return render(request, 'hub_preview.html', todo)
+    except Exception:
+        traceback.print_exc()
+        return HttpResponse('Error', status=500)
+
+    return HttpResponse('Unknown type', status=400)
+
+
+@login_required(login_url='login')
+def notification_approve(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad request'})
+    todo = todoFunct(request)
+    duka = todo.get('duka')
+    cheo = todo.get('cheo')
+    if not duka or not duka.Interprise:
+        return JsonResponse({'success': False, 'swa': 'Hakuna ruhusa', 'eng': 'Not allowed'})
+    if not is_shop_admin(cheo):
+        return JsonResponse({'success': False, 'swa': 'Ni admin tu anayeweza kuidhinisha', 'eng': 'Only admin can approve'})
+    kind = (request.POST.get('type') or '').strip()
+    try:
+        rec_id = int(request.POST.get('id') or 0)
+    except (TypeError, ValueError):
+        rec_id = 0
+    if not rec_id:
+        return JsonResponse({'success': False, 'swa': 'Chagua rekodi', 'eng': 'Select a record'})
+    now = datetime.datetime.now(tz=timezone.utc)
+    updated = 0
+    if kind == 'receive':
+        updated = pending_receives_qs(duka).filter(pk=rec_id).update(
+            admin_approved=True, admin_approved_at=now, admin_approved_by=cheo,
+        )
+    elif kind == 'purchases':
+        updated = pending_purchases_qs(duka).filter(pk=rec_id).update(
+            admin_approved=True, admin_approved_at=now, admin_approved_by=cheo,
+        )
+    elif kind == 'customer_pay':
+        updated = pending_customer_payments_qs(duka).filter(pk=rec_id).update(admin_approve=True)
+    elif kind == 'noncash':
+        updated = pending_noncash_payments_qs(duka).filter(pk=rec_id).update(admin_approve=True)
+    else:
+        return JsonResponse({'success': False, 'swa': 'Aina batili', 'eng': 'Invalid type'})
+    if not updated:
+        return JsonResponse({'success': False, 'swa': 'Haikupatikana', 'eng': 'Not found'})
+    return JsonResponse({
+        'success': True,
+        'swa': 'Imethibitishwa',
+        'eng': 'Approved',
+        'hub': hub_approval_counts(duka),
+    })
 
 @login_required(login_url='login')
 def searchAll(request):
@@ -5373,6 +5667,7 @@ def traceChange(request):
         'pickup':pickup,
         'newPosts':len(banners),
         'pendingExpenseReceipts': count_pending_mandatory_expense_receipts(duka),
+        'hubPending': hub_approval_counts(duka).get('total', 0),
         'compoundOrders': count_compound_guest_orders(duka) if duka and duka.Interprise and shop_has_compound_positions(duka) else 0,
       }
 

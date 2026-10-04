@@ -36,7 +36,8 @@ from django.core.paginator import Paginator,EmptyPage
 
 
 
-from accaunts.todos import Todos , confirmMailF, updateOrder, shift_operation_block_payload
+from accaunts.todos import Todos, updateOrder, shift_operation_block_payload
+from accaunts.notification_hub import apply_weka_admin_flag
 from purchase.guest_compound_utils import (
     compound_guest_orders_qs,
     count_compound_guest_orders,
@@ -6361,7 +6362,8 @@ def  lipaInvo(request):
                               weka.mauzo=True
                               weka.invo = bill
                               if not wekakwa.onesha:
-                                    weka.usiri =True               
+                                    weka.usiri =True
+                              apply_weka_admin_flag(weka, duka)               
                               wekakwa.Amount =wekakwa.Amount + paid_amo   
                               wekakwa.save()              
                               weka.save()
@@ -6980,6 +6982,7 @@ def  addInvoice(request):
            
            if not wekakwa.onesha:
                  weka.usiri =True 
+           apply_weka_admin_flag(weka, entp)
 
         #      if bill_sum <=  beforweka :  
            if amount_set: 
@@ -7518,6 +7521,7 @@ def _apply_mauzo_payment(cheo, bill, wekakwa, paid_amo, pay_d, desc, extra=''):
     weka.invo = bill
     if not wekakwa.onesha:
         weka.usiri = True
+    apply_weka_admin_flag(weka, cheo)
     wekakwa.Amount = wekakwa.Amount + paid_amo
     wekakwa.save()
     weka.save()
