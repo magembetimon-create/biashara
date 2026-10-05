@@ -48,24 +48,25 @@ def owner_sibling_branches(duka):
 
 
 def allowed_vendor_scope_branches(duka, cheo):
-    """Branches of this duka's owner that the signed-in user may query."""
+    """Branches the signed-in user may query: Allow=True under the current duka owner."""
+    if not duka:
+        return [], False
     siblings = owner_sibling_branches(duka)
-    can_scope = bool(cheo and (cheo.owner or getattr(cheo, 'msaidizi', False) or int(cheo.admin or 0)))
-    if can_scope:
-        return siblings, True
+    user_id = getattr(cheo, 'user_id', None) if cheo else None
     perm_ids = set()
-    if cheo and cheo.user_id:
+    if user_id:
         perm_ids = set(
             InterprisePermissions.objects.filter(
-                user_id=cheo.user_id,
+                user_id=user_id,
+                Allow=True,
                 Interprise__owner_id=duka.owner_id,
                 Interprise__Interprise=True,
             ).values_list('Interprise_id', flat=True)
         )
-    allowed = [b for b in siblings if b['id'] in perm_ids or b['id'] == duka.id]
+    allowed = [b for b in siblings if b['id'] in perm_ids]
     if not allowed:
         allowed = [{'id': duka.id, 'name': duka.name}]
-    return allowed, False
+    return allowed, len(allowed) > 1
 
 
 def parse_requested_branch_ids(raw, allowed_ids, fallback_ids):
@@ -96,22 +97,14 @@ def parse_requested_branch_ids(raw, allowed_ids, fallback_ids):
 
 
 def vendor_branch_ids(duka, cheo, branch_param=-1):
-    siblings = list(
-        Interprise.objects.filter(owner_id=duka.owner_id, Interprise=True).values('id', 'name').order_by('name')
-    )
-    sibling_ids = [b['id'] for b in siblings]
-    if duka.id not in sibling_ids:
-        sibling_ids.append(duka.id)
-        siblings.append({'id': duka.id, 'name': duka.name})
-
-    can_scope = bool(cheo and (cheo.owner or getattr(cheo, 'msaidizi', False) or int(cheo.admin or 0)))
-    all_branches = branch_param == 0 and can_scope
-    if all_branches:
-        return sibling_ids, siblings, 0, can_scope
+    allowed, can_scope = allowed_vendor_scope_branches(duka, cheo)
+    allowed_ids = [b['id'] for b in allowed]
+    if branch_param == 0 and can_scope:
+        return allowed_ids, allowed, 0, can_scope
     branch_id = branch_param if branch_param > 0 else duka.id
-    if not can_scope or branch_id not in sibling_ids:
-        branch_id = duka.id
-    return [branch_id], siblings, branch_id, can_scope
+    if branch_id not in allowed_ids:
+        branch_id = duka.id if duka.id in allowed_ids else (allowed_ids[0] if allowed_ids else duka.id)
+    return [branch_id], allowed, branch_id, can_scope
 
 
 def _unpaid_vendor_bills_qs(branch_ids):

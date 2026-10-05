@@ -684,6 +684,7 @@ def _stock_lines_for_bill(bill_id):
       return lines
 
 def _bill_print_lines(stock_rows, vatper):
+      from accaunts.notification_hub import qty_unit_display
       vat_rate = Decimal(str(vatper or 0)) / Decimal('100')
       lines = []
       sub_t = Decimal('0')
@@ -706,17 +707,13 @@ def _bill_print_lines(stock_rows, vatper):
             else:
                   sub = line_tot
                   vat = Decimal('0')
-            jumla_unit = (qty % uwiano) == 0
-            if jumla_unit:
-                  show_qty = qty / uwiano
-                  unit = bd.vipimo_jum or bd.vipimo or ''
-                  unit_price = (bei / (Decimal('1') + vat_rate)) if (ml.vat_set and vat_rate) else bei
+            show_qty, unit = qty_unit_display(qty, bd, jum=bool(ml.jum))
+            if ml.jum and uwiano > 1:
+                  unit_price = bei
             else:
-                  show_qty = qty
-                  unit = bd.vipimo or ''
                   unit_price = (bei / uwiano)
-                  if ml.vat_set and vat_rate:
-                        unit_price = unit_price / (Decimal('1') + vat_rate)
+            if ml.vat_set and vat_rate:
+                  unit_price = unit_price / (Decimal('1') + vat_rate)
             lines.append({
                   'name': bd.bidhaa_jina or '',
                   'unit': unit,

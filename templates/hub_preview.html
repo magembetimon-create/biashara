@@ -69,7 +69,7 @@
             <tr>
               <td>{{ it.name }}</td>
               <td>{{ it.unit }}</td>
-              <td>{{ it.qty|floatformat:'-2'|intcomma }}</td>
+              <td>{{ it.qty }}</td>
               <td>{{ it.price|floatformat:'-2'|intcomma }}</td>
               <td>{{ it.sub|floatformat:'-2'|intcomma }}</td>
               <td>{{ it.vat|floatformat:'-2'|intcomma }}</td>
@@ -197,7 +197,7 @@
             <tr>
               <td>{{ it.name }}</td>
               <td>{{ it.unit }}</td>
-              <td>{{ it.qty|floatformat:'-2'|intcomma }}</td>
+              <td>{{ it.qty }}</td>
               <td>{{ it.price|floatformat:'-2'|intcomma }}</td>
               <td>{{ it.total|floatformat:'-2'|intcomma }}</td>
             </tr>
@@ -261,7 +261,7 @@
             <tr>
               <td>{{ it.name }}</td>
               <td>{{ it.unit }}</td>
-              <td>{{ it.qty|floatformat:'-2'|intcomma }}</td>
+              <td>{{ it.qty }}</td>
             </tr>
             {% empty %}
             <tr><td colspan="3">{% if useri.langSet == 0 %}Hakuna bidhaa{% else %}No items{% endif %}</td></tr>

@@ -130,6 +130,41 @@
   z-index: 1;
 }
 
+.nh-badge-info {
+  background: #0d6efd;
+}
+
+.nh-feed li.nh-unread {
+  background: rgba(232, 241, 255, 0.55);
+}
+
+.nh-feed li.nh-unread a {
+  color: inherit;
+}
+
+.mobile-bottom-nav__item {
+  position: relative;
+}
+.nh-m-badge {
+  position: absolute;
+  top: 0;
+  right: 6px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: #0d6efd;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 2px solid #fff;
+  line-height: 1;
+  z-index: 1;
+}
+
 .nh-feed {
   background: #fff;
   border-radius: 12px;
@@ -153,10 +188,71 @@
   vertical-align: middle;
   font-size: 13px;
   text-align: left;
+  white-space: normal;
+  word-break: break-word;
 }
 .nh-pending-table th.text-right,
 .nh-pending-table td.text-right {
   text-align: right;
+}
+
+@media (max-width: 767.98px) {
+  .nh-page {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  .nh-feed.table-responsive {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+  .nh-pending-table thead {
+    display: none;
+  }
+  .nh-pending-table,
+  .nh-pending-table tbody,
+  .nh-pending-table tr,
+  .nh-pending-table td {
+    display: block;
+    width: 100%;
+  }
+  .nh-pending-table tr {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    padding: 10px 12px 12px;
+  }
+  .nh-pending-table td {
+    text-align: left !important;
+    border: 0;
+    padding: 5px 0;
+  }
+  .nh-pending-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: #6c757d;
+    margin-bottom: 2px;
+  }
+  .nh-pending-table td.nh-pending-actions {
+    padding-top: 8px;
+  }
+  .nh-pending-table td.nh-pending-actions .btn {
+    width: 100%;
+    white-space: normal;
+  }
+  .nh-open-preview {
+    white-space: normal;
+    word-break: break-word;
+  }
+  .hub-prev-table {
+    display: block;
+    overflow-x: auto;
+  }
 }
 .nh-pending-table .nh-open-preview {
   font-weight: 600;

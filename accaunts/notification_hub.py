@@ -1,13 +1,14 @@
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Count, Exists, OuterRef, Q
 
 from management.models import (
     MatumiziReceiptAttachment,
+    Notifications,
     manunuzi,
     receive,
+    rekodiMatumizi,
     toaCash,
     wekaCash,
 )
-from purchase.expense_receipt_utils import count_pending_mandatory_expense_receipts
 
 
 def is_shop_admin(cheo):
@@ -20,6 +21,20 @@ def is_shop_admin(cheo):
     )
 
 
+def _saved_by_admin_q(field):
+    return (
+        Q(**{f'{field}__owner': True})
+        | Q(**{f'{field}__msaidizi': True})
+        | Q(**{f'{field}__fullcontrol': True})
+    )
+
+
+def exclude_saved_by_admin(qs, *fields):
+    for field in fields:
+        qs = qs.exclude(_saved_by_admin_q(field))
+    return qs
+
+
 def _branch_id(duka):
     if not duka or not getattr(duka, 'Interprise', False):
         return None
@@ -30,18 +45,25 @@ def pending_receives_qs(duka):
     bid = _branch_id(duka)
     if not bid:
         return receive.objects.none()
-    return receive.objects.filter(Interprise_id=bid, admin_approved=False)
+    return exclude_saved_by_admin(
+        receive.objects.filter(Interprise_id=bid, admin_approved=False),
+        'By',
+        'transfer__By',
+    )
 
 
 def pending_purchases_qs(duka):
     bid = _branch_id(duka)
     if not bid:
         return manunuzi.objects.none()
-    return manunuzi.objects.filter(
-        Interprise_id=bid,
-        order=False,
-        full_returned=False,
-        admin_approved=False,
+    return exclude_saved_by_admin(
+        manunuzi.objects.filter(
+            Interprise_id=bid,
+            order=False,
+            full_returned=False,
+            admin_approved=False,
+        ),
+        'By',
     )
 
 
@@ -52,24 +74,28 @@ def pending_purchase_payments_qs(duka):
     has_receipt = MatumiziReceiptAttachment.objects.filter(
         toa_cash_id=OuterRef('pk'),
     ).exclude(image='')
-    return toaCash.objects.filter(
-        Interprise_id=bid,
-        pu=True,
-        bill__isnull=False,
-        matumizi__isnull=True,
-    ).annotate(has_receipt=Exists(has_receipt)).filter(has_receipt=False)
+    return exclude_saved_by_admin(
+        toaCash.objects.filter(
+            Interprise_id=bid,
+            pu=True,
+            bill__isnull=False,
+            matumizi__isnull=True,
+        ).annotate(has_receipt=Exists(has_receipt)).filter(has_receipt=False),
+        'by',
+    )
 
 
 def pending_customer_payments_qs(duka):
     bid = _branch_id(duka)
     if not bid:
         return wekaCash.objects.none()
-    return wekaCash.objects.filter(
-        Interprise_id=bid,
-        invo__isnull=False,
-        admin_approve=False,
-    ).exclude(
-        Q(by__owner=True) | Q(by__msaidizi=True) | Q(by__fullcontrol=True)
+    return exclude_saved_by_admin(
+        wekaCash.objects.filter(
+            Interprise_id=bid,
+            invo__isnull=False,
+            admin_approve=False,
+        ),
+        'by',
     )
 
 
@@ -77,11 +103,31 @@ def pending_noncash_payments_qs(duka):
     bid = _branch_id(duka)
     if not bid:
         return wekaCash.objects.none()
-    return wekaCash.objects.filter(
-        Interprise_id=bid,
-        invo__isnull=False,
-        admin_approve=False,
-    ).exclude(Akaunt__aina__iexact='Cash')
+    return exclude_saved_by_admin(
+        wekaCash.objects.filter(
+            Interprise_id=bid,
+            invo__isnull=False,
+            admin_approve=False,
+        ).exclude(Akaunt__aina__iexact='Cash'),
+        'by',
+    )
+
+
+def pending_expense_receipts_qs(duka):
+    bid = _branch_id(duka)
+    if not bid:
+        return rekodiMatumizi.objects.none()
+    has_receipt = MatumiziReceiptAttachment.objects.filter(
+        rekodi_matumizi_id=OuterRef('pk'),
+        Interprise_id=OuterRef('Interprise_id'),
+    ).exclude(image='')
+    return exclude_saved_by_admin(
+        rekodiMatumizi.objects.filter(
+            Interprise_id=bid,
+            matumizi__attach_receipt=True,
+        ).annotate(has_receipt=Exists(has_receipt)).filter(has_receipt=False),
+        'by',
+    )
 
 
 def apply_weka_admin_flag(weka, cheo):
@@ -104,7 +150,7 @@ def apply_record_admin_flag(obj, cheo):
 
 
 def hub_approval_counts(duka):
-    expenses = count_pending_mandatory_expense_receipts(duka)
+    expenses = pending_expense_receipts_qs(duka).count()
     receive_n = pending_receives_qs(duka).count()
     purchases = pending_purchases_qs(duka).count()
     pay_receipts = pending_purchase_payments_qs(duka).count()
@@ -120,3 +166,94 @@ def hub_approval_counts(duka):
         'total': receive_n + purchases + expenses + pay_receipts + len(cust_ids | non_ids),
         'require_purchase_receipt': bool(getattr(duka, 'require_purchase_payment_receipt', False)),
     }
+
+
+def unread_info_filter(useri, request_user):
+    uid = getattr(useri, 'id', None)
+    ru = getattr(request_user, 'id', None)
+    return (
+        Q(admin_read=False, Interprise__owner__user_id=ru)
+        | Q(Incharge_id=uid, Incharge_reade=False)
+        | Q(admin_read=False, AnyUser_read=False, Incharge_reade=False)
+    )
+
+
+def is_info_notification_unread(nt, useri, request_user):
+    ru = getattr(request_user, 'id', None)
+    uid = getattr(useri, 'id', None)
+    owner_user_id = None
+    try:
+        owner_user_id = nt.Interprise.owner.user_id
+    except Exception:
+        owner_user_id = None
+    if ru and owner_user_id == ru and not nt.admin_read:
+        return True
+    if uid and nt.Incharge_id == uid and not nt.Incharge_reade:
+        return True
+    if not nt.admin_read and not nt.AnyUser_read and not nt.Incharge_reade:
+        return True
+    return False
+
+
+def info_unread_counts(duka, useri, request_user):
+    keys = ('all', 'ed', 'ced', 'po', 'it', 'so', 'ir', 'rt', 'rd', 'pk')
+    empty = {k: 0 for k in keys}
+    if not duka:
+        return empty
+    qs = Notifications.objects.filter(Interprise_id=duka.id).filter(
+        unread_info_filter(useri, request_user)
+    )
+    data = qs.aggregate(
+        all=Count('pk'),
+        ed=Count('pk', filter=Q(ItemEdit=True)),
+        ced=Count('pk', filter=Q(ItemCatEdit=True)),
+        po=Count('pk', filter=Q(puO=True)),
+        it=Count('pk', filter=Q(itmTr=True)),
+        so=Count('pk', filter=Q(saO=True)),
+        ir=Count('pk', filter=Q(itmRcv=True)),
+        rt=Count('pk', filter=Q(bilRtn=True)),
+        rd=Count('pk', filter=Q(saRtn=True)),
+        pk=Count('pk', filter=Q(pickUp=True)),
+    )
+    return {k: int(data.get(k) or 0) for k in keys}
+
+
+def qty_unit_display(base_qty, bidhaa, jum=None):
+    """Show qty/unit using jumla vs rejareja ratio, like viewbill / viewTransfer."""
+    try:
+        qty = float(base_qty or 0)
+    except (TypeError, ValueError):
+        qty = 0.0
+    uw = 1.0
+    try:
+        uw = float(getattr(bidhaa, 'idadi_jum', None) or 1) or 1.0
+    except (TypeError, ValueError):
+        uw = 1.0
+    reja = (getattr(bidhaa, 'vipimo', None) or '').strip()
+    jumla = (getattr(bidhaa, 'vipimo_jum', None) or '').strip()
+
+    def _n(n):
+        if abs(n - round(n)) < 1e-6:
+            return str(int(round(n)))
+        return ('%.2f' % n).rstrip('0').rstrip('.')
+
+    if uw <= 1:
+        return _n(qty), reja
+
+    packs = int(qty // uw) if uw else 0
+    rem = qty - (packs * uw)
+    if abs(rem) < 1e-6:
+        rem = 0.0
+
+    if jum is False:
+        return _n(qty), reja
+    if jum is True:
+        if rem:
+            return f'{_n(packs)} + {_n(rem)}', f'{jumla} + {reja}'.strip(' +')
+        return _n(qty / uw if uw else qty), (jumla or reja)
+
+    if packs >= 1 and rem == 0:
+        return _n(qty / uw), (jumla or reja)
+    if packs >= 1 and rem > 0:
+        return f'{_n(packs)} + {_n(rem)}', f'{jumla} + {reja}'.strip(' +')
+    return _n(qty), reja

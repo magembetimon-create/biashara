@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block billcss %}
-<link rel="stylesheet" href="{% static 'css/notify.css' %}?v=nh-3">
+<link rel="stylesheet" href="{% static 'css/notify.css' %}?v=nh-4">
 {% endblock %}
 
 {% block Dashboard %}
@@ -15,91 +15,111 @@
           {% if useri.langSet == 0 %}Notifikesheni{% else %}Notifications{% endif %}
   </h5>
 
+  {% if hub.total %}
   <div class="nh-section">
     <h6>{% if useri.langSet == 0 %}Admin approval inahitajika{% else %}Admin approval required{% endif %}
-      {% if hub.total %}<span class="badge badge-danger ml-1" style="font-size:10px;vertical-align:2px">{{ hub.total }}</span>{% endif %}
+      <span class="badge badge-danger ml-1" style="font-size:10px;vertical-align:2px">{{ hub.total }}</span>
     </h6>
     <div class="nh-grid">
+      {% if hub.receive %}
       <a class="nh-card approve" href="{% url 'notification_pending' %}?type=receive">
         <span class="nh-icon-wrap">
-          {% if hub.receive %}<span class="nh-badge">{{ hub.receive }}</span>{% endif %}
+          <span class="nh-badge">{{ hub.receive }}</span>
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.854 14.854a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V3.5A2.5 2.5 0 0 1 6.5 1h8a.5.5 0 0 1 0 1h-8A1.5 1.5 0 0 0 5 3.5v9.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Kupokea bidhaa{% else %}Items receive{% endif %}</span>
       </a>
+      {% endif %}
+      {% if hub.purchases %}
       <a class="nh-card approve" href="{% url 'notification_pending' %}?type=purchases">
         <span class="nh-icon-wrap">
-          {% if hub.purchases %}<span class="nh-badge">{{ hub.purchases }}</span>{% endif %}
+          <span class="nh-badge">{{ hub.purchases }}</span>
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.17 14.75l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.86-7.01L19.42 4h-.01l-1.1 2-2.76 5H8.53l-.13-.27L6.16 6l-.95-2-.94-2H1v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.13 0-.25-.11-.25-.25z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Manunuzi{% else %}Purchases{% endif %}</span>
       </a>
+      {% endif %}
+      {% if hub.expenses %}
       <a class="nh-card approve" href="{% url 'expenseReceiptsPending' %}">
         <span class="nh-icon-wrap">
-          {% if hub.expenses %}<span class="nh-badge">{{ hub.expenses }}</span>{% endif %}
+          <span class="nh-badge">{{ hub.expenses }}</span>
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/><path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Risiti za matumizi{% else %}Expense receipts{% endif %}</span>
       </a>
+      {% endif %}
+      {% if hub.purchase_pay %}
       <a class="nh-card approve" href="{% url 'notification_pending' %}?type=purchase_pay">
         <span class="nh-icon-wrap">
-          {% if hub.purchase_pay %}<span class="nh-badge">{{ hub.purchase_pay }}</span>{% endif %}
+          <span class="nh-badge">{{ hub.purchase_pay }}</span>
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7z"/><path d="M2 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Malipo ya manunuzi{% else %}Purchase payments{% endif %}</span>
       </a>
+      {% endif %}
+      {% if hub.customer_pay %}
       <a class="nh-card approve" href="{% url 'notification_pending' %}?type=customer_pay">
         <span class="nh-icon-wrap">
-          {% if hub.customer_pay %}<span class="nh-badge">{{ hub.customer_pay }}</span>{% endif %}
+          <span class="nh-badge">{{ hub.customer_pay }}</span>
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Malipo ya wateja{% else %}Customer payments{% endif %}</span>
       </a>
+      {% endif %}
+      {% if hub.noncash %}
       <a class="nh-card approve" href="{% url 'notification_pending' %}?type=noncash">
         <span class="nh-icon-wrap">
-          {% if hub.noncash %}<span class="nh-badge">{{ hub.noncash }}</span>{% endif %}
+          <span class="nh-badge">{{ hub.noncash }}</span>
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M11 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1z"/><path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm13 2v5H1V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1zm-1 9H2a1 1 0 0 1-1-1v-1h14v1a1 1 0 0 1-1 1z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Malipo yasiyo cash{% else %}Non-cash payments{% endif %}</span>
       </a>
+      {% endif %}
     </div>
   </div>
+  {% endif %}
 
   <div class="nh-section">
     <h6>{% if useri.langSet == 0 %}Kuangalia tu — hakuna approval{% else %}For review — no approval needed{% endif %}</h6>
     <div class="nh-grid">
       <a class="nh-card {% if a == 1 %}active{% endif %}" href="{% url 'notificationing' %}">
         <span class="nh-icon-wrap">
+          {% if unread.all %}<span class="nh-badge nh-badge-info">{{ unread.all }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Zote{% else %}All{% endif %}</span>
       </a>
       <a class="nh-card {% if ed == 1 %}active{% endif %}" href="{% url 'notificationing' %}?ed=1">
         <span class="nh-icon-wrap">
+          {% if unread.ed %}<span class="nh-badge nh-badge-info">{{ unread.ed }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Kuediti bidhaa{% else %}Item editing{% endif %}</span>
       </a>
       <a class="nh-card {% if ced == 1 %}active{% endif %}" href="{% url 'notificationing' %}?ced=1">
         <span class="nh-icon-wrap">
+          {% if unread.ced %}<span class="nh-badge nh-badge-info">{{ unread.ced }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm2-3h7a.5.5 0 0 1 .5.5v1h-8v-1a.5.5 0 0 1 .5-.5zM1 6.5A1.5 1.5 0 0 1 2.5 5h11A1.5 1.5 0 0 1 15 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5v-8zM7.354 8.146a.5.5 0 1 0-.708.708L7.793 10l-1.147 1.146a.5.5 0 0 0 .708.708L8.5 10.707l1.146 1.147a.5.5 0 0 0 .708-.708L9.207 10l1.147-1.146a.5.5 0 0 0-.708-.708L8.5 9.293 7.354 8.146z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Kuediti aina{% else %}Category editing{% endif %}</span>
       </a>
       <a class="nh-card {% if po == 1 %}active{% endif %}" href="{% url 'notificationing' %}?po=1">
         <span class="nh-icon-wrap">
+          {% if unread.po %}<span class="nh-badge nh-badge-info">{{ unread.po }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9h2V6h3V4h-3V1h-2v3H8v2h3v3z"/><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM8.1 13l.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03L22 4h-2.16l-3.86 7.01H9.53L6.16 4 5.21 2H1v2h2l3.6 7.59L5.25 14.04c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.13 0-.25-.11-.25-.25L7.17 14.75 8.1 13z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Oda ya manunuzi{% else %}Purchase order{% endif %}</span>
       </a>
       <a class="nh-card {% if it == 1 %}active{% endif %}" href="{% url 'notificationing' %}?it=1">
         <span class="nh-icon-wrap">
+          {% if unread.it %}<span class="nh-badge nh-badge-info">{{ unread.it }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.854 1.146a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L4 2.707V12.5A2.5 2.5 0 0 0 6.5 15h8a.5.5 0 0 0 0-1h-8A1.5 1.5 0 0 1 5 12.5V2.707l3.146 3.147a.5.5 0 1 0 .708-.708l-4-4z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Kuhamisha bidhaa{% else %}Item transfer{% endif %}</span>
       </a>
       <a class="nh-card {% if so == 1 %}active{% endif %}" href="{% url 'notificationing' %}?so=1">
         <span class="nh-icon-wrap">
+          {% if unread.so %}<span class="nh-badge nh-badge-info">{{ unread.so }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/><path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Oda ya mauzo{% else %}Sales order{% endif %}</span>
@@ -126,7 +146,7 @@
 
    <ul class=" px-3 classic_div nh-feed" id="notifications_list" >
        {% for nt in notice %}
-          <li class="border-y list-unstyled px-2 border-bottom">
+          <li class="border-y list-unstyled px-2 border-bottom{% if nt.unread %} nh-unread{% endif %}">
               
               <a href="{% url 'notify' %}?vl={{nt.note}}" style="color: var(--fontColor);" class="p-2">
                 <h6 style="font-weight: 600;color:var(--fontColor)"> 
@@ -287,6 +307,7 @@
 
   <div class="mobile-bottom-nav__item  ">
       <a href="/notificationing" class="{% if a == 1 %}text-primary{% endif %} " >
+        {% if unread.all %}<span class="nh-m-badge">{{ unread.all }}</span>{% endif %}
         <div class="text-center  " >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-list-ul" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
@@ -303,6 +324,7 @@
 
   <div class="mobile-bottom-nav__item ">
       <a href="/notificationing?ed=1" class="{% if ed == 1 %}text-primary{% endif %}">
+        {% if unread.ed %}<span class="nh-m-badge">{{ unread.ed }}</span>{% endif %}
         <div class="text-center " >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
             <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
@@ -321,6 +343,7 @@
 
   <div class="mobile-bottom-nav__item ">
       <a href="/notificationing?ced=1" class="{% if ced == 1 %}text-primary{% endif %}">
+        {% if unread.ced %}<span class="nh-m-badge">{{ unread.ced }}</span>{% endif %}
         <div class="text-center " >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
             <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
@@ -339,6 +362,7 @@
 
   <div class="mobile-bottom-nav__item  ">
       <a href="/notificationing?po=1" class="{% if po == 1 %} text-primary{% endif %}">
+        {% if unread.po %}<span class="nh-m-badge">{{ unread.po }}</span>{% endif %}
         <div class="text-center" >
           
           <svg xmlns="http://www.w3.org/2000/svg" height="17" width="17" viewBox="0 0 24 24" fill="currentColor">
@@ -359,6 +383,7 @@
 
   <div class="mobile-bottom-nav__item  ">
       <a href="/notificationing?so=1" class="{% if so == 1 %}text-primary{% endif %}">
+        {% if unread.so %}<span class="nh-m-badge">{{ unread.so }}</span>{% endif %}
         <div class="text-center" >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-cart-check" viewBox="0 0 16 16">
             <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
@@ -375,6 +400,7 @@
 
   <div class="mobile-bottom-nav__item  ">
       <a href="/notificationing?it=1" class="{% if it == 1 %}text-primary{% endif %}">
+        {% if unread.it %}<span class="nh-m-badge">{{ unread.it }}</span>{% endif %}
         <div class="text-center" >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-arrow-90deg-up" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M4.854 1.146a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L4 2.707V12.5A2.5 2.5 0 0 0 6.5 15h8a.5.5 0 0 0 0-1h-8A1.5 1.5 0 0 1 5 12.5V2.707l3.146 3.147a.5.5 0 1 0 .708-.708l-4-4z"/>
@@ -392,6 +418,7 @@
 
   <div class="mobile-bottom-nav__item  ">
       <a href="/notificationing?ir=1" class="{% if ir == 1 %}text-primary{% endif %}">
+        {% if unread.ir %}<span class="nh-m-badge">{{ unread.ir }}</span>{% endif %}
         <div class="text-center" >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-arrow-90deg-down" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M4.854 14.854a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V3.5A2.5 2.5 0 0 1 6.5 1h8a.5.5 0 0 1 0 1h-8A1.5 1.5 0 0 0 5 3.5v9.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4z"/>
@@ -409,6 +436,7 @@
 
   <div class="mobile-bottom-nav__item  ">
       <a href="/notificationing?rt=1" class="{% if rt == 1 %}text-primary{% endif %}">
+        {% if unread.rt %}<span class="nh-m-badge">{{ unread.rt }}</span>{% endif %}
         <div class="text-center" >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-cart-dash-fill" viewBox="0 0 16 16">
             <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM6.5 7h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1 0-1z"/>
@@ -425,6 +453,7 @@
   </div>
   <div class="mobile-bottom-nav__item  ">
       <a href="/notificationing?rd=1" class="{% if rd == 1 %}text-primary{% endif %}">
+        {% if unread.rd %}<span class="nh-m-badge">{{ unread.rd }}</span>{% endif %}
         <div class="text-center" >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-cart-x" viewBox="0 0 16 16">
             <path d="M7.354 5.646a.5.5 0 1 0-.708.708L7.793 7.5 6.646 8.646a.5.5 0 1 0 .708.708L8.5 8.207l1.146 1.147a.5.5 0 0 0 .708-.708L9.207 7.5l1.147-1.146a.5.5 0 0 0-.708-.708L8.5 6.793 7.354 5.646z"/>

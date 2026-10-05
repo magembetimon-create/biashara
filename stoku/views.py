@@ -44,6 +44,7 @@ from django.core.cache import cache
 # Create your views here.
 
 
+from accaunts.notification_hub import apply_record_admin_flag
 from accaunts.todos import Todos,updateOrder,shift_operation_block_payload
 from .item_excel import (
     bulk_import_items,
@@ -5477,7 +5478,7 @@ def addtranfer(request):
                 rc.reasons = reason
                 if bool(oda):
                     rc.By = dukap
-                rc.admin_approved = False
+                apply_record_admin_flag(rc, dukap)
                 rc.save()
 
                 # Record Notiications where to receive ......................................//

@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block billcss %}
-<link rel="stylesheet" href="{% static 'css/notify.css' %}?v=nh-6">
+<link rel="stylesheet" href="{% static 'css/notify.css' %}?v=nh-7">
 {% endblock %}
 
 {% block Dashboard %}
@@ -70,7 +70,7 @@
             data-vendor="{{ row.vendor|default:'' }}"
             data-amount="{{ row.amount|default:'' }}"
             data-ref="{{ row.ref }}">
-          <td class="text-left">
+          <td class="text-left" data-label="{% if useri.langSet == 0 %}Rejea{% else %}Ref{% endif %}">
             {% if row.print_id %}
               <button type="button" class="btn btn-link p-0 text-left nh-open-preview"
                 data-id="{{ row.id }}"
@@ -80,11 +80,13 @@
               {{ row.ref }}
             {% endif %}
           </td>
-          <td class="text-left">{% if row.date %}{{ row.date }}{% else %}—{% endif %}</td>
-          <td class="text-left">{{ row.by|default:"—" }}</td>
-          <td class="text-left">{{ row.extra|default:"" }}</td>
-          <td class="text-right">{% if row.amount %}{{ row.amount|floatformat:2|intcomma }} {{ duka.currencii }}{% endif %}</td>
-          <td class="text-right text-nowrap">
+          <td class="text-left nh-row-date" data-label="{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}"{% if row.date %} data-iso="{{ row.date|date:'c' }}"{% endif %}>
+            {% if row.date %}{{ row.date }}{% else %}—{% endif %}
+          </td>
+          <td class="text-left" data-label="{% if useri.langSet == 0 %}Aliyerekodi{% else %}Recorded by{% endif %}">{{ row.by|default:"—" }}</td>
+          <td class="text-left" data-label="{% if useri.langSet == 0 %}Maelezo{% else %}Details{% endif %}">{{ row.extra|default:"" }}</td>
+          <td class="text-right" data-label="{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}">{% if row.amount %}{{ row.amount|floatformat:2|intcomma }} {{ duka.currencii }}{% endif %}</td>
+          <td class="text-right nh-pending-actions" data-label="">
             {% if can_upload %}
               <label class="btn btn-sm btn-outline-primary mb-0">
                 {% if useri.langSet == 0 %}Pakia risiti{% else %}Upload receipt{% endif %}
@@ -192,6 +194,12 @@
   const token = csrf ? csrf.value : '';
   const lang0 = {{ useri.langSet|default:0 }};
   function t(sw, en){ return lang0 === 0 ? sw : en; }
+  $('.nh-row-date[data-iso]').each(function(){
+    const iso = $(this).attr('data-iso');
+    if (iso && window.moment) {
+      $(this).text(moment(iso).format('DD/MM/YYYY HH:mm'));
+    }
+  });
 
   const previewUrl = "{% url 'notification_preview' %}";
   const paper = "{{ cheo.receiptPaper|default:0 }}";

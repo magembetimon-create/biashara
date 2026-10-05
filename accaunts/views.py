@@ -21,12 +21,15 @@ from management.models import Notifications,VistorsSavedItems,customer_in_cell,c
 from purchase.expense_receipt_utils import count_pending_mandatory_expense_receipts
 from accaunts.notification_hub import (
     hub_approval_counts,
+    info_unread_counts,
+    is_info_notification_unread,
     is_shop_admin,
     pending_customer_payments_qs,
     pending_noncash_payments_qs,
     pending_purchase_payments_qs,
     pending_purchases_qs,
     pending_receives_qs,
+    qty_unit_display,
 )
 from purchase.guest_compound_utils import (
     count_compound_guest_orders,
@@ -4880,7 +4883,7 @@ def notificationing(request):
       
 
     num = Notice.count()
-    Noti = Notice.order_by("-pk")
+    Noti = Notice.select_related('Interprise__owner', 'Incharge__user').order_by("-pk")
 
     
     p=Paginator(Noti,10)
@@ -5026,7 +5029,8 @@ def notificationing(request):
           'saO':nt.saO,
           'saRtn':nt.saRtn,
           'puO':nt.puO,
-         
+          'pickUp':nt.pickUp,
+          'unread': is_info_notification_unread(nt, todo.get('useri'), request.user),
         })
 
     todo.update({
@@ -5047,6 +5051,7 @@ def notificationing(request):
       'pending_expense_receipt_count': count_pending_mandatory_expense_receipts(duka),
       'hub': hub_approval_counts(duka),
       'hub_admin': is_shop_admin(todo.get('cheo')),
+      'unread': info_unread_counts(duka, todo.get('useri'), request.user),
       'qstr': request.GET.urlencode(),
 
 
@@ -5079,13 +5084,15 @@ def notification_pending(request):
     title_eng = ''
     if kind == 'receive':
         title_swa, title_eng = 'Kupokea bidhaa', 'Items receive'
-        for rec in pending_receives_qs(duka).select_related('By__user__user', 'transfer').order_by('-pk')[:300]:
+        for rec in pending_receives_qs(duka).select_related(
+            'By__user__user', 'transfer', 'transfer__By__user__user',
+        ).order_by('-pk')[:300]:
             code = rec.transfer.code if rec.transfer_id else rec.pk
             rows.append({
                 'id': rec.id,
                 'ref': f'TR-{code}',
                 'date': rec.transfer.tarehe if rec.transfer_id else None,
-                'by': _hub_person(rec.By),
+                'by': _hub_person(rec.By) or _hub_person(getattr(rec.transfer, 'By', None)),
                 'amount': '',
                 'extra': rec.reasons or '',
                 'print_id': rec.id,
@@ -5240,8 +5247,7 @@ def notification_preview(request):
                 bd = li.produ.bidhaa if li.produ_id else None
                 qty = (li.idadi or 0) - (li.returned or 0)
                 uwiano = (bd.idadi_jum if bd else 1) or 1
-                unit = (bd.vipimo_jum if bd and qty and uwiano and qty % uwiano == 0 else (bd.vipimo if bd else '')) or ''
-                show_qty = (qty / uwiano) if bd and uwiano and qty % uwiano == 0 else qty
+                show_qty, unit = qty_unit_display(qty, bd, jum=bool(getattr(li, 'jum', None)))
                 tot = qty * (li.bei or 0) / uwiano if uwiano else 0
                 lines.append({
                     'name': bd.bidhaa_jina if bd else '',
@@ -5271,9 +5277,7 @@ def notification_preview(request):
                 bd = st.bidhaa
                 rl = st.uhamisho
                 qty = rl.qty if rl else st.idadi
-                uwiano = (rl.uwiano if rl else (bd.idadi_jum if bd else 1)) or 1
-                unit = (bd.vipimo_jum if bd and uwiano and qty and qty % uwiano == 0 else (bd.vipimo if bd else '')) or ''
-                show_qty = (qty / uwiano) if uwiano and qty and qty % uwiano == 0 else qty
+                show_qty, unit = qty_unit_display(qty, bd)
                 lines.append({
                     'name': bd.bidhaa_jina if bd else '',
                     'unit': unit,

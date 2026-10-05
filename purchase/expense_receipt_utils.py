@@ -1,4 +1,4 @@
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Q
 
 from management.models import MatumiziReceiptAttachment, rekodiMatumizi
 
@@ -26,7 +26,9 @@ def pending_mandatory_expense_receipts_qs(duka):
         matumizi__attach_receipt=True,
     ).annotate(
         has_receipt=Exists(_expense_receipt_exists_subquery()),
-    ).filter(has_receipt=False)
+    ).filter(has_receipt=False).exclude(
+        Q(by__owner=True) | Q(by__msaidizi=True) | Q(by__fullcontrol=True)
+    )
 
 
 def count_pending_mandatory_expense_receipts(duka):
