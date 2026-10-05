@@ -215,6 +215,8 @@
   body.small-search-open { overflow: hidden; }
   body.theme-dark .small-search-bar { background: #1c2850; }
   body.theme-dark .small-search-backdrop { background: rgba(2, 6, 23, 0.72); }
+  #imgSearchModal { z-index: 1200; }
+  .modal-backdrop.img-search-backdrop { z-index: 1190; }
   .img-subfilter-row { margin-top: 8px; }
   .img-subfilter-label {
     font-size: 11px;
@@ -1184,7 +1186,15 @@ function closeSmallSearch(){
 $(function(){
   $('#smallSearchBackdrop').on('click', closeSmallSearch);
   $(document).on('keydown', function(e){
-    if (e.key === 'Escape' && $('#smallSearchPop').is(':visible')) closeSmallSearch();
+    if (e.key === 'Escape' && $('#smallSearchPop').is(':visible') && !$('#imgSearchModal').hasClass('show')) {
+      closeSmallSearch();
+    }
+  });
+  $(document).on('shown.bs.modal', '#imgSearchModal', function(){
+    $('.modal-backdrop').last().addClass('img-search-backdrop');
+  });
+  $(document).on('hidden.bs.modal', '#imgSearchModal', function(){
+    $('.modal-backdrop.img-search-backdrop').removeClass('img-search-backdrop');
   });
 });
 </script>
