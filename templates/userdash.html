@@ -170,6 +170,51 @@
     background: #243463;
     color: #93c5fd;
   }
+  .small-search-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    width: 100%;
+    height: 100%;
+  }
+  .small-search-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.58);
+  }
+  .small-search-sheet {
+    position: relative;
+    z-index: 1;
+    padding: 10px 10px 14px;
+  }
+  .small-search-bar {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.28);
+    min-height: 54px;
+    padding: 6px 6px 6px 8px;
+    width: 100%;
+  }
+  .small-search-close {
+    flex-shrink: 0;
+    background: transparent;
+    color: #334155;
+    border: 0;
+    border-radius: 10px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .small-search-close svg { stroke: currentColor; }
+  body.theme-dark .small-search-close { color: #cbd5e1; }
+  body.small-search-open { overflow: hidden; }
+  body.theme-dark .small-search-bar { background: #1c2850; }
+  body.theme-dark .small-search-backdrop { background: rgba(2, 6, 23, 0.72); }
   .img-subfilter-row { margin-top: 8px; }
   .img-subfilter-label {
     font-size: 11px;
@@ -291,7 +336,7 @@
 
            
             <div class="c-header-icon basket " >
-                            <a type="button" onclick="$('#smallSearchPop').fadeIn(300)"  >
+                            <a type="button" href="#" class="openSmallSearchBtn" onclick="openSmallSearch(); return false;">
                              
                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
                                   <circle cx="11" cy="11" r="8"></circle>
@@ -854,9 +899,10 @@ let shwCo = false
   
 <!-- POP FOR SMALL MEDIA SEARCH -->
 
-<div class="d-lg-none " id="smallSearchPop" style="display:none;width:100%;height:100%;top:0;right:0;position:fixed;z-index:99" >
-  <div class="centerItem  whiteBg" style="width: 100%;height:70px;"> 
-    <div class="d-flex bordered round shadowed" style="min-width: 320px;border-radius:7px" >
+<div class="d-lg-none small-search-overlay" id="smallSearchPop" style="display:none;" aria-hidden="true">
+  <div class="small-search-backdrop" id="smallSearchBackdrop"></div>
+  <div class="small-search-sheet">
+  <div class="small-search-bar">
         <span class="  centerItem p-1 SearchSvg" id
         ="SearchSvgS" >
 
@@ -1109,22 +1155,39 @@ let shwCo = false
           </div>
         </div>
 
-        <button onclick="$('#smallSearchPop').fadeOut(300)" class="btn btn-default fontColor largeFont btn-sm" >
-          <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x">
+        <button type="button" id="smallSearchClose" class="small-search-close" onclick="closeSmallSearch()" aria-label="{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg> 
+          </svg>
         </button>
     </div>
-  </div>
  
   <div id="serchAutoCompleteSmall"  class="serchAutoComplete position-absolute bg-light classic_div shadow pb-3 round  " style="overflow-y:auto;max-height:400px ;width:100%;" >
       <ul class="list-unstyled px-2" >
         
       </ul>
   </div>
-
+  </div>
 </div>
+<script>
+function openSmallSearch(){
+  $('#smallSearchPop').stop(true, true).fadeIn(180, function(){
+    $('#searchInputForAllSmall').trigger('focus');
+  }).attr('aria-hidden', 'false');
+  $('body').addClass('small-search-open');
+}
+function closeSmallSearch(){
+  $('#smallSearchPop').stop(true, true).fadeOut(160).attr('aria-hidden', 'true');
+  $('body').removeClass('small-search-open');
+}
+$(function(){
+  $('#smallSearchBackdrop').on('click', closeSmallSearch);
+  $(document).on('keydown', function(e){
+    if (e.key === 'Escape' && $('#smallSearchPop').is(':visible')) closeSmallSearch();
+  });
+});
+</script>
 
 
 <!-- SHOW ON HOVER OVER STOCK................................................................................. -->
