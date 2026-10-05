@@ -92,6 +92,12 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT', '5432'),
+        # Reuse DB connections. Public Cloud SQL IP + new TCP/TLS per request
+        # makes every page slow even with few users.
+        'CONN_MAX_AGE': int(os.getenv('CONN_MAX_AGE', '60')),
+        'OPTIONS': {
+            'connect_timeout': 5,
+        },
     }
 }
 
