@@ -16,10 +16,18 @@
     <span class="badge badge-danger">{{ hub_rows|length }}</span>
   </h5>
   <p class="text-muted small mb-3">
+    {% if hub_kind == 'adjust' %}
+      {% if useri.langSet == 0 %}
+        Marekebisho ya kuongeza au kupunguza bidhaa yanayosubiri uthibitisho wako. Unaweza kuthibitisha moja au zaidi ya moja kwa pamoja.
+      {% else %}
+        Add/reduce stock adjustments waiting for your confirmation. You can confirm one or several at once.
+      {% endif %}
+    {% else %}
     {% if useri.langSet == 0 %}
       Miamala ambayo bado haijathibitishwa na admin{% if can_upload %}, au bado haina risiti ya vendor. Risiti inaweza kuwa ya malipo moja, malipo mengi ya bill moja, au malipo ya bill zaidi ya moja.{% endif %}
     {% else %}
       Transactions waiting for admin confirmation{% if can_upload %}, or a vendor receipt. A receipt can cover one payment, several payments on one bill, or payments across more than one bill.{% endif %}
+    {% endif %}
     {% endif %}
   </p>
   {% if hub_admin %}
@@ -50,10 +58,21 @@
   {% csrf_token %}
 
   {% if hub_rows %}
+  {% if can_hub_approve %}
+  <div class="d-flex flex-wrap align-items-center mb-2 nh-bulk-bar">
+    <button type="button" class="btn btn-sm btn-success" id="nhApproveSelected">
+      {% if useri.langSet == 0 %}Thibitisha zilizochaguliwa{% else %}Approve selected{% endif %}
+    </button>
+    <span class="small text-muted ml-2" id="nhSelectedCount"></span>
+  </div>
+  {% endif %}
   <div class="table-responsive nh-feed">
     <table class="table table-sm nh-pending-table smallFont mb-0">
       <thead>
         <tr>
+          {% if can_hub_approve %}<th class="text-left" style="width:36px">
+            <input type="checkbox" id="nhCheckAll" title="{% if useri.langSet == 0 %}Chagua zote{% else %}Select all{% endif %}">
+          </th>{% endif %}
           <th class="text-left">{% if useri.langSet == 0 %}Rejea{% else %}Ref{% endif %}</th>
           <th class="text-left">{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
           <th class="text-left">{% if useri.langSet == 0 %}Aliyerekodi{% else %}Recorded by{% endif %}</th>
@@ -70,6 +89,11 @@
             data-vendor="{{ row.vendor|default:'' }}"
             data-amount="{{ row.amount|default:'' }}"
             data-ref="{{ row.ref }}">
+          {% if can_hub_approve %}
+          <td class="text-left" data-label="">
+            <input type="checkbox" class="nh-row-check" value="{{ row.id }}">
+          </td>
+          {% endif %}
           <td class="text-left" data-label="{% if useri.langSet == 0 %}Rejea{% else %}Ref{% endif %}">
             {% if row.print_id %}
               <button type="button" class="btn btn-link p-0 text-left nh-open-preview"
@@ -92,7 +116,7 @@
                 {% if useri.langSet == 0 %}Pakia risiti{% else %}Upload receipt{% endif %}
                 <input type="file" class="nh-upload d-none" accept="image/*" multiple data-id="{{ row.id }}">
               </label>
-            {% elif hub_admin %}
+            {% elif can_hub_approve %}
               <button type="button" class="btn btn-sm btn-success nh-approve" data-id="{{ row.id }}">
                 {% if useri.langSet == 0 %}Thibitisha{% else %}Approve{% endif %}
               </button>
@@ -216,6 +240,8 @@
       printBtn.attr('data-bill', '1').attr('data-invo', printId).data({bill: 1, invo: printId});
     } else if (printKind === 'invo') {
       printBtn.attr('data-invo', printId).data({bill: 0, invo: printId});
+    } else if (printKind === 'adjust') {
+      printBtn.removeClass('actionbtns').addClass('nh-print-iframe').attr('data-href', '/stoku/printAdjst?item_valued=' + printId);
     } else {
       printBtn.removeClass('actionbtns').addClass('nh-print-iframe');
     }
@@ -244,25 +270,51 @@
     $('#nhPreviewBody').empty();
   });
 
-  $(document).on('click', '.nh-approve', function(){
-    const btn = $(this);
-    const id = btn.data('id');
-    btn.prop('disabled', true);
+  function selectedHubIds(){
+    const ids = [];
+    $('.nh-row-check:checked').each(function(){ ids.push(Number(this.value)); });
+    return ids;
+  }
+  function updateSelectedCount(){
+    const n = selectedHubIds().length;
+    $('#nhSelectedCount').text(n ? (t(n + ' zimechaguliwa', n + ' selected')) : '');
+  }
+  $('#nhCheckAll').on('change', function(){
+    $('.nh-row-check').prop('checked', this.checked);
+    updateSelectedCount();
+  });
+  $(document).on('change', '.nh-row-check', updateSelectedCount);
+  function approveHubIds(ids, doneBtn){
+    if (!ids.length) {
+      alert(t('Chagua angalau moja','Select at least one'));
+      return;
+    }
+    if (doneBtn) doneBtn.prop('disabled', true);
     $.ajax({
       type: 'POST',
       url: "{% url 'notification_approve' %}",
-      data: { csrfmiddlewaretoken: token, type: kind, id: id }
+      data: { csrfmiddlewaretoken: token, type: kind, ids: ids.join(',') }
     }).done(function(data){
       if (data && data.success) {
-        btn.closest('tr').fadeOut(200, function(){ $(this).remove(); });
+        ids.forEach(function(id){
+          $('.nh-pending-table tbody tr[data-id="'+id+'"]').fadeOut(200, function(){ $(this).remove(); });
+        });
+        updateSelectedCount();
       } else {
         alert((data && (lang0===0?data.swa:data.eng)) || t('Imeshindikana','Failed'));
-        btn.prop('disabled', false);
+        if (doneBtn) doneBtn.prop('disabled', false);
       }
     }).fail(function(){
       alert(t('Imeshindikana','Failed'));
-      btn.prop('disabled', false);
+      if (doneBtn) doneBtn.prop('disabled', false);
     });
+  }
+  $('#nhApproveSelected').on('click', function(){
+    approveHubIds(selectedHubIds(), $(this));
+  });
+  $(document).on('click', '.nh-approve', function(){
+    const btn = $(this);
+    approveHubIds([btn.data('id')], btn);
   });
 
   let pendingUpload = null;

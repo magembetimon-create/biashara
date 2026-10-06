@@ -304,7 +304,7 @@ class Todos:
         hub_pending = 0
         if duka and duka.Interprise:
           try:
-            hub_pending = int(hub_approval_counts(duka).get('total', 0) or 0)
+            hub_pending = int(hub_approval_counts(duka, dukap).get('total', 0) or 0)
           except Exception:
             hub_pending = 0
         todo = {

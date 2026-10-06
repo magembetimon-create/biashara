@@ -1049,7 +1049,19 @@ def print_shift(request):
         paper = str(request.GET.get('paper', 'large') or 'large').strip().lower()
         from mauzo.receipt_format import shift_paper_class
         paper_size = shift_paper_class(paper)
-        include_items = str(items or '1').strip().lower() not in ('0', 'false', 'no', 'off', '')
+        def _print_flag(name, default='1'):
+            raw = request.GET.get(name, default)
+            return str(raw if raw is not None else default).strip().lower() not in (
+                '0', 'false', 'no', 'off', '',
+            )
+
+        include_items = _print_flag('items', str(items or '1'))
+        show_qty = _print_flag('qty')
+        show_value = _print_flag('val')
+        show_worth = _print_flag('worth')
+        if not (show_qty or show_value or show_worth):
+            show_qty = True
+        stock_metric_count = int(show_qty) + int(show_value) + int(show_worth)
 
         if not sid:
             return JsonResponse({'success': False, 'msg': 'Invalid shift ID'}, status=400)
@@ -1077,6 +1089,12 @@ def print_shift(request):
             'stock_value_totals': report['stock_value_totals'],
             'useri': useri,
             'include_items': include_items,
+            'show_qty': show_qty,
+            'show_value': show_value,
+            'show_worth': show_worth,
+            'stock_metric_count': stock_metric_count,
+            'show_stock_subhead': stock_metric_count > 1,
+            'stock_colspan': 3 + (7 * stock_metric_count) + (2 if show_qty else 0),
             'lang': lang,
             'paper_size': paper_size,
             'sales_breakdown_rows': report['sales_breakdown_rows'],

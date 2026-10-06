@@ -6,6 +6,7 @@ from management.models import (
     manunuzi,
     receive,
     rekodiMatumizi,
+    stockAdjst_confirm,
     toaCash,
     wekaCash,
 )
@@ -149,13 +150,27 @@ def apply_record_admin_flag(obj, cheo):
     return obj
 
 
-def hub_approval_counts(duka):
+def pending_adjusts_qs(cheo, duka):
+    if not cheo or not duka or not getattr(duka, 'Interprise', False):
+        return stockAdjst_confirm.objects.none()
+    return stockAdjst_confirm.objects.filter(
+        userP_id=cheo.id,
+        confirmed=False,
+        dinied=False,
+        userP__Allow=True,
+        adjs__Interprise_id=duka.id,
+        adjs__isnull=False,
+    )
+
+
+def hub_approval_counts(duka, cheo=None):
     expenses = pending_expense_receipts_qs(duka).count()
     receive_n = pending_receives_qs(duka).count()
     purchases = pending_purchases_qs(duka).count()
     pay_receipts = pending_purchase_payments_qs(duka).count()
     cust_ids = set(pending_customer_payments_qs(duka).values_list('pk', flat=True))
     non_ids = set(pending_noncash_payments_qs(duka).values_list('pk', flat=True))
+    adjust_n = pending_adjusts_qs(cheo, duka).count()
     return {
         'receive': receive_n,
         'purchases': purchases,
@@ -163,7 +178,8 @@ def hub_approval_counts(duka):
         'purchase_pay': pay_receipts,
         'customer_pay': len(cust_ids),
         'noncash': len(non_ids),
-        'total': receive_n + purchases + expenses + pay_receipts + len(cust_ids | non_ids),
+        'adjust': adjust_n,
+        'total': receive_n + purchases + expenses + pay_receipts + len(cust_ids | non_ids) + adjust_n,
         'require_purchase_receipt': bool(getattr(duka, 'require_purchase_payment_receipt', False)),
     }
 

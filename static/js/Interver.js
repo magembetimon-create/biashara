@@ -85,11 +85,7 @@ if(data.chat.length>0){
     $('#chats_shake').hide()         
 }
 
-//SHOW ADJ NOTES
-
-if(data.adj?.length>0){
-    adjss(data.adj)
-}
+//SHOW ADJ NOTES — hub badge only, no popup
 
 if(data?.pickup.length>0) pickUp(data.pickup)
 
@@ -250,14 +246,6 @@ function popChat(chat,owner){
    
 
 
-}
-
-
-//adjustemts....
-function adjss(adj){
-   $('#adjst_notify').show(300)
-   $('#adj_by').html(`${adj[0].f_name} ${adj[0].l_name}`)
-   $('#adjs_href').attr('href',`/stoku/viewAdjst?item_valued=${adj[0].adjs_id}&un=${Number(adj[0].Return)}`)
 }
 
 

@@ -17,7 +17,7 @@
 
   {% if hub.total %}
   <div class="nh-section">
-    <h6>{% if useri.langSet == 0 %}Admin approval inahitajika{% else %}Admin approval required{% endif %}
+    <h6>{% if useri.langSet == 0 %}Approval inahitajika{% else %}Approval required{% endif %}
       <span class="badge badge-danger ml-1" style="font-size:10px;vertical-align:2px">{{ hub.total }}</span>
     </h6>
     <div class="nh-grid">
@@ -28,6 +28,15 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.854 14.854a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V3.5A2.5 2.5 0 0 1 6.5 1h8a.5.5 0 0 1 0 1h-8A1.5 1.5 0 0 0 5 3.5v9.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Kupokea bidhaa{% else %}Items receive{% endif %}</span>
+      </a>
+      {% endif %}
+      {% if hub.adjust %}
+      <a class="nh-card approve" href="{% url 'notification_pending' %}?type=adjust">
+        <span class="nh-icon-wrap">
+          <span class="nh-badge">{{ hub.adjust }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M0 0h24v24H0zm0 0h24v24H0z" fill="none"/><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM5.5 7.5h2v-2H9v2h2V9H9v2H7.5V9h-2V7.5zM19 19H5L19 5v14zm-2-2v-1.5h-5V17h5z"/></svg>
+        </span>
+        <span class="nh-label">{% if useri.langSet == 0 %}Marekebisho stoku{% else %}Stock adjustments{% endif %}</span>
       </a>
       {% endif %}
       {% if hub.purchases %}

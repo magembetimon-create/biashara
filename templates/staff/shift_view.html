@@ -234,126 +234,199 @@
   </div>
   {% endif %}
 
+<style>
+  #stockValueWrap {
+    max-height: 70vh;
+    overflow: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    --sv-head-h: 34px;
+  }
+  #stockValueTable {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  #stockValueTable thead th {
+    position: sticky;
+    background: #f4f6fb;
+    z-index: 4;
+    box-shadow: inset 0 -1px 0 #dee2e6;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  #stockValueTable thead tr:first-child th { top: 0; z-index: 5; }
+  #stockValueTable thead tr:first-child th[rowspan] { z-index: 6; }
+  #stockValueTable thead tr:nth-child(2) th { top: var(--sv-head-h); z-index: 4; }
+  #stockValueTable.sv-one-metric thead tr:nth-child(2) { display: none; }
+  #stockValueTable.sv-one-metric thead tr:first-child th { top: 0; }
+  #stockValueTable.sv-hide-qty .sv-qty { display: none !important; }
+  #stockValueTable.sv-hide-value .sv-value { display: none !important; }
+  #stockValueTable.sv-hide-worth .sv-worth { display: none !important; }
+  #stockValueTable tfoot td {
+    position: sticky;
+    bottom: 0;
+    background: #eef2ff;
+    z-index: 3;
+    box-shadow: inset 0 1px 0 #dee2e6;
+  }
+  .sv-col-toggles .custom-control { min-width: 7.5rem; }
+  #stockValueSearch { max-width: 280px; }
+  body.theme-dark #stockValueWrap { border-color: #334155; }
+  body.theme-dark #stockValueTable thead th {
+    background: #1c2850;
+    color: #e2e8f0;
+    box-shadow: inset 0 -1px 0 #334155;
+  }
+  body.theme-dark #stockValueTable tfoot td {
+    background: #243463;
+    box-shadow: inset 0 1px 0 #334155;
+  }
+</style>
   <div class="row mt-2">
     <div class="col-12">
-      <h6>{% if useri.langSet == 0 %}Muhtasari wa Bidhaa{% else %}Stock Value Panel{% endif %}</h6>
-      <div class="table-responsive">
+      <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+        <h6 class="mb-2 mb-md-0">
+          {% if useri.langSet == 0 %}Muhtasari wa Bidhaa{% else %}Stock Value Panel{% endif %}
+          <span class="small text-muted font-weight-normal">{{ stock_value_rows|length }} {% if useri.langSet == 0 %}bidhaa{% else %}items{% endif %}</span>
+        </h6>
+        <div class="d-flex flex-wrap align-items-center">
+          <input type="search" class="form-control form-control-sm mr-3 mb-1" id="stockValueSearch" autocomplete="off"
+            placeholder="{% if useri.langSet == 0 %}Tafuta bidhaa...{% else %}Search item...{% endif %}">
+          <div class="sv-col-toggles d-flex flex-wrap" id="stockValueColToggles">
+          <div class="custom-control custom-checkbox mr-3 mb-1">
+            <input type="checkbox" class="custom-control-input sv-col-toggle" id="svShowQty" data-sv-col="qty" checked>
+            <label class="custom-control-label" for="svShowQty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</label>
+          </div>
+          <div class="custom-control custom-checkbox mr-3 mb-1">
+            <input type="checkbox" class="custom-control-input sv-col-toggle" id="svShowValue" data-sv-col="value" checked>
+            <label class="custom-control-label" for="svShowValue">{% if useri.langSet == 0 %}Ghalama (Value){% else %}Value{% endif %}</label>
+          </div>
+          <div class="custom-control custom-checkbox mb-1">
+            <input type="checkbox" class="custom-control-input sv-col-toggle" id="svShowWorth" data-sv-col="worth" checked>
+            <label class="custom-control-label" for="svShowWorth">{% if useri.langSet == 0 %}Thamani (Worth){% else %}Worth{% endif %}</label>
+          </div>
+          </div>
+        </div>
+      </div>
+      <div class="table-responsive" id="stockValueWrap">
         <table class="table table-sm table-hover table-bordered" id="stockValueTable">
           <thead>
             <tr>
               <th rowspan="2" class="text-left" >#</th>
               <th class="text-left" rowspan="2">{% if useri.langSet == 0 %}Bidhaa{% else %}Item name{% endif %}</th>
               <th class="text-left" rowspan="2">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
-              <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Stock Before{% else %}Stock Before{% endif %}</th>
-              <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Added{% else %}Added{% endif %}</th>
-              <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Reduction{% else %}Reduction{% endif %}</th>
-              <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Transferred Items{% else %}Transferred Items{% endif %}</th>
-              <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Bidhaa Zilizopokelewa{% else %}Item Received{% endif %}</th>
-              
-              <th class="text-center" colspan="3">{% if useri.langSet == 0 %}Sold{% else %}Sold{% endif %}</th>
-              <th class="text-center" rowspan="2">{% if useri.langSet == 0 %}Inayotarajiwa{% else %}Expected{% endif %}</th>
-              <th class="text-center" colspan="3">{% if useri.langSet == 0 %}{% if movement.stock_frozen %}Stoku ya kufunga{% else %}Stoku ya Sasa{% endif %}{% else %}{% if movement.stock_frozen %}Closing Stock{% else %}Current Stock{% endif %}{% endif %}</th>
-              <th class="text-center" rowspan="2">{% if useri.langSet == 0 %}Tofauti{% else %}Diff{% endif %}</th>
+              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Stock Before{% else %}Stock Before{% endif %}</th>
+              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Added{% else %}Added{% endif %}</th>
+              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Reduction{% else %}Reduction{% endif %}</th>
+              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizohamishwa{% else %}Transferred{% endif %}</th>
+              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizopokelewa{% else %}Received{% endif %}</th>
+              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Sold{% else %}Sold{% endif %}</th>
+              <th class="text-center sv-qty" rowspan="2">{% if useri.langSet == 0 %}Inayotarajiwa{% else %}Expected{% endif %}</th>
+              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}{% if movement.stock_frozen %}Stoku ya kufunga{% else %}Stoku ya Sasa{% endif %}{% else %}{% if movement.stock_frozen %}Closing Stock{% else %}Current Stock{% endif %}{% endif %}</th>
+              <th class="text-center sv-qty" rowspan="2">{% if useri.langSet == 0 %}Tofauti{% else %}Diff{% endif %}</th>
             </tr>
             <tr>
-              <th class="text-left">Qty</th>
-              <th class="text-left">Value</th>
-              <th class="text-left">Worth</th>
-              <th class="text-left">Qty</th>
-              <th class="text-left">Value</th>
-              <th class="text-left">Worth</th>
-              <th class="text-left">Qty</th>
-              <th class="text-left">Value</th>
-              <th class="text-left">Worth</th>
-              <th class="text-left">Qty</th>
-              <th class="text-left">Value</th>
-              <th class="text-left">Worth</th>
-              <th class="text-left">Qty</th>
-              <th class="text-left">Value</th>
-              <th class="text-left">Worth</th>
-              <th class="text-left">Qty</th>
-              <th class="text-left">Value</th>
-              <th class="text-left">Worth</th>
-              <th class="text-left">Qty</th>
-              <th class="text-left">Value</th>
-              <th class="text-left">Worth</th>
+              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
             </tr>
           </thead>
           <tbody>
             {% for s in stock_value_rows %}
-            <tr>
+            <tr class="sv-item-row" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }}">
               <td>{{ forloop.counter }}</td>
               <td>{{ s.item_name }}</td>
               <td>{{ s.units|default:'-' }}</td>
-              <td>{{ s.before_qty|floatformat:2|intcomma }}</td>
-              <td>{{ s.before_value|floatformat:2|intcomma }}</td>
-              <td>{{ s.before_worth|floatformat:2|intcomma }}</td>
-              <td>{{ s.added_qty|floatformat:2|intcomma }}</td>
-              <td>{{ s.added_value|floatformat:2|intcomma }}</td>
-              <td>{{ s.added_worth|floatformat:2|intcomma }}</td>
-
-
-              <td>{{ s.reduction_qty|floatformat:2|intcomma }}</td>
-              <td>{{ s.reduction_value|floatformat:2|intcomma }}</td>
-              <td>{{ s.reduction_worth|floatformat:2|intcomma }}</td>
-
-              <td>{{ s.transferred_qty|floatformat:2|intcomma }}</td>
-              <td>{{ s.transferred_value|floatformat:2|intcomma }}</td>
-              <td>{{ s.transferred_worth|floatformat:2|intcomma }}</td>    
-
-              <td>{{ s.received_qty|floatformat:2|intcomma }}</td>
-              <td>{{ s.received_value|floatformat:2|intcomma }}</td>
-              <td>{{ s.received_worth|floatformat:2|intcomma }}</td>
-
-              <td>{{ s.sold_qty|floatformat:2|intcomma }}</td>
-              <td>{{ s.sold_value|floatformat:2|intcomma }}</td>
-              <td>{{ s.sold_worth|floatformat:2|intcomma }}</td>
-              <td>{{ s.expected_qty|floatformat:2|intcomma }}</td>
-              <td>{{ s.current_qty|floatformat:2|intcomma }}</td>
-              <td>{{ s.current_value|floatformat:2|intcomma }}</td>
-              <td>{{ s.current_worth|floatformat:2|intcomma }}</td>
-              <td {% if s.variance_qty %}class="text-danger font-weight-bold"{% endif %}>{{ s.variance_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ s.before_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ s.before_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ s.before_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ s.added_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ s.added_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ s.added_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ s.reduction_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ s.reduction_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ s.reduction_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ s.transferred_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ s.transferred_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ s.transferred_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ s.received_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ s.received_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ s.received_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ s.sold_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ s.sold_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ s.sold_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ s.expected_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ s.current_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ s.current_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ s.current_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty{% if s.variance_qty %} text-danger font-weight-bold{% endif %}">{{ s.variance_qty|floatformat:2|intcomma }}</td>
             </tr>
             {% empty %}
             <tr><td colspan="26" class="text-muted">No stock data</td></tr>
             {% endfor %}
+            <tr id="svNoMatch" style="display:none">
+              <td colspan="26" class="text-muted text-center py-3">
+                {% if useri.langSet == 0 %}Hakuna bidhaa inayolingana na utafutaji{% else %}No items match this search{% endif %}
+              </td>
+            </tr>
           </tbody>
           <tfoot>
             <tr class="font-weight-bold">
               <td class="text-left">{% if useri.langSet == 0 %}Jumla{% else %}Totals{% endif %}</td>
               <td></td>
               <td></td>
-              <td>{{ stock_value_totals.before_qty|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.before_value|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.before_worth|floatformat:2|intcomma }}</td>
-             
-              <td>{{ stock_value_totals.added_qty|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.added_value|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.added_worth|floatformat:2|intcomma }}</td>
-             
-              <td>{{ stock_value_totals.reduction_qty|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.reduction_value|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.reduction_worth|floatformat:2|intcomma }}</td>
-             
-              <td>{{ stock_value_totals.transferred_qty|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.transferred_value|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.transferred_worth|floatformat:2|intcomma }}</td>
-             
-              <td>{{ stock_value_totals.received_qty|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.received_value|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.received_worth|floatformat:2|intcomma }}</td>
-             
-              <td>{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.expected_qty|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.current_qty|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.current_value|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.current_worth|floatformat:2|intcomma }}</td>
-              <td>{{ stock_value_totals.variance_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ stock_value_totals.before_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ stock_value_totals.before_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ stock_value_totals.before_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ stock_value_totals.added_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ stock_value_totals.added_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ stock_value_totals.added_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ stock_value_totals.reduction_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ stock_value_totals.reduction_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ stock_value_totals.reduction_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ stock_value_totals.transferred_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ stock_value_totals.transferred_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ stock_value_totals.transferred_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ stock_value_totals.received_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ stock_value_totals.received_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ stock_value_totals.received_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ stock_value_totals.expected_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ stock_value_totals.current_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ stock_value_totals.current_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ stock_value_totals.current_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ stock_value_totals.variance_qty|floatformat:2|intcomma }}</td>
             </tr>
           </tfoot>
         </table>
+      </div>
+      <div class="d-flex flex-wrap align-items-center justify-content-between mt-2 px-1" id="svPager">
+        <span class="small text-muted" id="svPageInfo"></span>
+        <div>
+          <button type="button" class="btn btn-sm btn-light border" id="svPrev">{% if useri.langSet == 0 %}Iliyotangulia{% else %}Previous{% endif %}</button>
+          <button type="button" class="btn btn-sm btn-light border" id="svNext">{% if useri.langSet == 0 %}Ifuatayo{% else %}Next{% endif %}</button>
+        </div>
       </div>
       <p class="small text-muted mt-2">
         {% if useri.langSet == 0 %}
@@ -527,6 +600,150 @@
 
 <script>
 var defaultClosingCash = '{{ payments.current_cash|floatformat:2 }}';
+var SV_COL_KEY = 'shiftStockValueCols';
+
+function getStockValueCols() {
+  var cols = { qty: true, value: true, worth: true };
+  try {
+    var saved = JSON.parse(localStorage.getItem(SV_COL_KEY) || 'null');
+    if (saved && typeof saved === 'object') {
+      cols.qty = saved.qty !== false;
+      cols.value = saved.value !== false;
+      cols.worth = saved.worth !== false;
+    }
+  } catch (e) {}
+  if (!cols.qty && !cols.value && !cols.worth) cols.qty = true;
+  return cols;
+}
+
+function saveStockValueCols(cols) {
+  try { localStorage.setItem(SV_COL_KEY, JSON.stringify(cols)); } catch (e) {}
+}
+
+function setStockValueHeadOffset() {
+  var wrap = document.getElementById('stockValueWrap');
+  var first = document.querySelector('#stockValueTable thead tr:first-child th.sv-group');
+  if (!wrap || !first) return;
+  wrap.style.setProperty('--sv-head-h', Math.ceil(first.getBoundingClientRect().height) + 'px');
+}
+
+var SV_PAGE_SIZE = 80;
+var svPage = 1;
+var svSearchTimer = null;
+
+function applyStockValueCols() {
+  var table = document.getElementById('stockValueTable');
+  var cols = getStockValueCols();
+  var metricCount = Number(!!cols.qty) + Number(!!cols.value) + Number(!!cols.worth);
+  var oneMetric = metricCount <= 1;
+  if (table) {
+    table.classList.toggle('sv-one-metric', oneMetric);
+    table.classList.toggle('sv-hide-qty', !cols.qty);
+    table.classList.toggle('sv-hide-value', !cols.value);
+    table.classList.toggle('sv-hide-worth', !cols.worth);
+  }
+  ['qty', 'value', 'worth'].forEach(function(key) {
+    var box = document.querySelector('.sv-col-toggle[data-sv-col="' + key + '"]');
+    if (box) box.checked = !!cols[key];
+  });
+  document.querySelectorAll('#stockValueTable .sv-group').forEach(function(th) {
+    var metrics = (th.getAttribute('data-sv-metrics') || '').split(',');
+    var n = metrics.filter(function(m) { return cols[m]; }).length;
+    th.colSpan = Math.max(n, 1);
+    th.style.display = n ? '' : 'none';
+  });
+  document.querySelectorAll('#stockValueTable thead tr:first-child th[rowspan]').forEach(function(th) {
+    th.rowSpan = oneMetric ? 1 : 2;
+  });
+  setStockValueHeadOffset();
+}
+
+function renderStockValuePage() {
+  var rows = document.querySelectorAll('#stockValueTable tbody tr.sv-item-row');
+  var q = ((document.getElementById('stockValueSearch') || {}).value || '').toLowerCase().trim();
+  var matched = [];
+  rows.forEach(function(tr) {
+    var hay = tr.getAttribute('data-sv-search') || '';
+    var ok = !q || hay.indexOf(q) !== -1;
+    if (ok) matched.push(tr);
+    tr.style.display = 'none';
+  });
+  var total = matched.length;
+  var pages = Math.max(1, Math.ceil(total / SV_PAGE_SIZE) || 1);
+  if (svPage > pages) svPage = pages;
+  if (svPage < 1) svPage = 1;
+  var start = (svPage - 1) * SV_PAGE_SIZE;
+  matched.slice(start, start + SV_PAGE_SIZE).forEach(function(tr) {
+    tr.style.display = '';
+  });
+  var none = document.getElementById('svNoMatch');
+  if (none) none.style.display = (rows.length && !total) ? '' : 'none';
+  var info = document.getElementById('svPageInfo');
+  var pager = document.getElementById('svPager');
+  if (info) {
+    if (!rows.length) {
+      info.textContent = '';
+    } else if (!total) {
+      info.textContent = '0 / ' + rows.length;
+    } else {
+      var from = start + 1;
+      var to = Math.min(start + SV_PAGE_SIZE, total);
+      info.textContent = from + '–' + to + ' / ' + total;
+    }
+  }
+  if (pager) pager.style.display = rows.length ? '' : 'none';
+  var prev = document.getElementById('svPrev');
+  var next = document.getElementById('svNext');
+  if (prev) prev.disabled = svPage <= 1;
+  if (next) next.disabled = svPage >= pages || !total;
+}
+
+function initStockValueCols() {
+  applyStockValueCols();
+  renderStockValuePage();
+  document.querySelectorAll('.sv-col-toggle').forEach(function(box) {
+    box.addEventListener('change', function() {
+      var cols = {
+        qty: document.getElementById('svShowQty').checked,
+        value: document.getElementById('svShowValue').checked,
+        worth: document.getElementById('svShowWorth').checked
+      };
+      if (!cols.qty && !cols.value && !cols.worth) {
+        box.checked = true;
+        return;
+      }
+      saveStockValueCols(cols);
+      applyStockValueCols();
+    });
+  });
+  var search = document.getElementById('stockValueSearch');
+  if (search) {
+    search.addEventListener('input', function() {
+      clearTimeout(svSearchTimer);
+      svSearchTimer = setTimeout(function() {
+        svPage = 1;
+        renderStockValuePage();
+      }, 120);
+    });
+  }
+  var prev = document.getElementById('svPrev');
+  var next = document.getElementById('svNext');
+  if (prev) prev.addEventListener('click', function() {
+    svPage -= 1;
+    renderStockValuePage();
+    var wrap = document.getElementById('stockValueWrap');
+    if (wrap) wrap.scrollTop = 0;
+  });
+  if (next) next.addEventListener('click', function() {
+    svPage += 1;
+    renderStockValuePage();
+    var wrap = document.getElementById('stockValueWrap');
+    if (wrap) wrap.scrollTop = 0;
+  });
+  window.addEventListener('resize', setStockValueHeadOffset);
+}
+
+document.addEventListener('DOMContentLoaded', initStockValueCols);
 
 function filterActivityTable(query) {
   var q = query.toLowerCase();
@@ -551,7 +768,12 @@ function submitPrint() {
     return;
   }
 
-  var url = '/staff/shifts/print?sid=' + shiftId + '&lang=' + lang + '&items=' + includeItems + '&paper=' + encodeURIComponent(paper);
+  var cols = getStockValueCols();
+  var url = '/staff/shifts/print?sid=' + shiftId + '&lang=' + lang + '&items=' + includeItems
+    + '&paper=' + encodeURIComponent(paper)
+    + '&qty=' + (cols.qty ? '1' : '0')
+    + '&val=' + (cols.value ? '1' : '0')
+    + '&worth=' + (cols.worth ? '1' : '0');
   window.open(url, '_blank');
   $('#printOptionsModal').modal('hide');
 }

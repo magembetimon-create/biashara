@@ -274,5 +274,53 @@
           <strong>{{ the_bill.By.user.user.first_name|title }} {{ the_bill.By.user.user.last_name|title }}</strong>
         </p>
         {% endif %}
+
+      {% elif preview_kind == 'adjust' %}
+        <h5 class="text-danger border-bottom pb-2">
+          {% if adj_undo %}
+            {% if useri.langSet == 0 %}KUTENGUA MAREKEBISHO STOKU{% else %}UNDO STOCK ADJUSTMENT{% endif %}
+          {% elif the_bill.Ongezwa %}
+            {% if useri.langSet == 0 %}KUONGEZA BIDHAA STOKU{% else %}ADD ITEMS TO STOCK{% endif %}
+          {% else %}
+            {% if useri.langSet == 0 %}KUPUNGUZA BIDHAA STOKU{% else %}REDUCE ITEMS FROM STOCK{% endif %}
+          {% endif %}
+        </h5>
+        <div class="row py-3">
+          <div class="col-md-7">
+            {% if the_bill.Na %}
+            <div>
+              <strong>{% if useri.langSet == 0 %}Aliyerekodi{% else %}Recorded by{% endif %}:</strong>
+              {{ the_bill.Na.user.user.first_name|title }} {{ the_bill.Na.user.user.last_name|title }}
+            </div>
+            {% endif %}
+            {% if the_bill.desc %}
+            <div class="mt-1">{{ the_bill.desc }}</div>
+            {% endif %}
+          </div>
+          <div class="col-md-5 text-md-right">
+            <h6>ADJ-{{ the_bill.code }}</h6>
+            <div>{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}: {{ the_bill.date|date:'d/m/Y H:i' }}</div>
+          </div>
+        </div>
+        <table class="hub-prev-table">
+          <thead>
+            <tr>
+              <th>{% if useri.langSet == 0 %}Jina la Bidhaa{% else %}Item Name{% endif %}</th>
+              <th>{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
+              <th>{% if useri.langSet == 0 %}Idadi{% else %}Quantity{% endif %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in print_lines %}
+            <tr>
+              <td>{{ it.name }}</td>
+              <td>{{ it.unit }}</td>
+              <td>{{ it.qty }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3">{% if useri.langSet == 0 %}Hakuna bidhaa{% else %}No items{% endif %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
       {% endif %}
     </div>

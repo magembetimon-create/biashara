@@ -24,6 +24,7 @@ from accaunts.notification_hub import (
     info_unread_counts,
     is_info_notification_unread,
     is_shop_admin,
+    pending_adjusts_qs,
     pending_customer_payments_qs,
     pending_noncash_payments_qs,
     pending_purchase_payments_qs,
@@ -5049,7 +5050,7 @@ def notificationing(request):
       'rd':rd,
       'a':a,
       'pending_expense_receipt_count': count_pending_mandatory_expense_receipts(duka),
-      'hub': hub_approval_counts(duka),
+      'hub': hub_approval_counts(duka, todo.get('cheo')),
       'hub_admin': is_shop_admin(todo.get('cheo')),
       'unread': info_unread_counts(duka, todo.get('useri'), request.user),
       'qstr': request.GET.urlencode(),
@@ -5077,8 +5078,9 @@ def notification_pending(request):
     if not duka or not duka.Interprise:
         return redirect('/userdash')
     kind = (request.GET.get('type') or 'purchases').strip()
-    hub = hub_approval_counts(duka)
-    admin = is_shop_admin(todo.get('cheo'))
+    cheo = todo.get('cheo')
+    hub = hub_approval_counts(duka, cheo)
+    admin = is_shop_admin(cheo)
     rows = []
     title_swa = ''
     title_eng = ''
@@ -5165,6 +5167,36 @@ def notification_pending(request):
                 'print_id': pay.invo_id,
                 'print_kind': 'invo' if pay.invo_id else '',
             })
+    elif kind == 'adjust':
+        title_swa, title_eng = 'Marekebisho ya stoku', 'Stock adjustments'
+        for conf in pending_adjusts_qs(cheo, duka).select_related(
+            'adjs', 'adjs__Na__user__user',
+        ).order_by('-pk')[:300]:
+            adj = conf.adjs
+            if adj.full_Return or conf.Return:
+                extra_sw = 'Kutengua'
+                extra_en = 'Undo'
+            elif adj.Ongezwa:
+                extra_sw = 'Kuongeza'
+                extra_en = 'Added'
+            else:
+                extra_sw = 'Kupunguza'
+                extra_en = 'Reduced'
+            extra = extra_en if todo.get('useri') and todo['useri'].langSet else extra_sw
+            if todo.get('useri') and todo['useri'].langSet == 0:
+                extra = extra_sw
+            if adj.desc:
+                extra = f'{extra} · {adj.desc[:80]}'
+            rows.append({
+                'id': conf.id,
+                'ref': f'ADJ-{adj.code}',
+                'date': adj.date,
+                'by': _hub_person(adj.Na),
+                'amount': '',
+                'extra': extra,
+                'print_id': adj.id,
+                'print_kind': 'adjust',
+            })
     else:
         return redirect('/notificationing')
 
@@ -5176,6 +5208,7 @@ def notification_pending(request):
         'title_swa': title_swa,
         'title_eng': title_eng,
         'can_upload': kind == 'purchase_pay',
+        'can_hub_approve': admin or kind == 'adjust',
         'require_purchase_receipt': bool(getattr(duka, 'require_purchase_payment_receipt', False)),
     })
     return render(request, 'notification_pending.html', todo)
@@ -5289,6 +5322,33 @@ def notification_preview(request):
                 'print_lines': lines,
             })
             return render(request, 'hub_preview.html', todo)
+
+        if kind == 'adjust':
+            from management.models import productChangeRecord
+            conf = pending_adjusts_qs(todo.get('cheo'), duka).select_related(
+                'adjs', 'adjs__Na__user__user',
+            ).filter(pk=rec_id).first()
+            adj = conf.adjs if conf else stokAdjustment.objects.filter(
+                pk=rec_id, Interprise_id=duka.id,
+            ).select_related('Na__user__user').first()
+            if not adj or adj.Interprise_id != duka.id:
+                return HttpResponse('Not found', status=404)
+            lines = []
+            for ch in productChangeRecord.objects.select_related('prod__bidhaa').filter(adjst=adj.id):
+                bd = ch.prod.bidhaa if ch.prod_id else None
+                show_qty, unit = qty_unit_display(ch.qty, bd)
+                lines.append({
+                    'name': bd.bidhaa_jina if bd else '',
+                    'unit': unit,
+                    'qty': show_qty,
+                })
+            todo.update({
+                'preview_kind': 'adjust',
+                'the_bill': adj,
+                'print_lines': lines,
+                'adj_undo': bool(getattr(conf, 'Return', False) or adj.full_Return),
+            })
+            return render(request, 'hub_preview.html', todo)
     except Exception:
         traceback.print_exc()
         return HttpResponse('Error', status=500)
@@ -5305,29 +5365,47 @@ def notification_approve(request):
     cheo = todo.get('cheo')
     if not duka or not duka.Interprise:
         return JsonResponse({'success': False, 'swa': 'Hakuna ruhusa', 'eng': 'Not allowed'})
-    if not is_shop_admin(cheo):
-        return JsonResponse({'success': False, 'swa': 'Ni admin tu anayeweza kuidhinisha', 'eng': 'Only admin can approve'})
     kind = (request.POST.get('type') or '').strip()
+    if kind != 'adjust' and not is_shop_admin(cheo):
+        return JsonResponse({'success': False, 'swa': 'Ni admin tu anayeweza kuidhinisha', 'eng': 'Only admin can approve'})
+    ids = []
+    raw_ids = request.POST.get('ids') or ''
+    if raw_ids:
+        for part in str(raw_ids).split(','):
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                ids.append(int(part))
+            except (TypeError, ValueError):
+                pass
     try:
         rec_id = int(request.POST.get('id') or 0)
     except (TypeError, ValueError):
         rec_id = 0
-    if not rec_id:
+    if rec_id:
+        ids.append(rec_id)
+    ids = list(dict.fromkeys(ids))
+    if not ids:
         return JsonResponse({'success': False, 'swa': 'Chagua rekodi', 'eng': 'Select a record'})
     now = datetime.datetime.now(tz=timezone.utc)
     updated = 0
     if kind == 'receive':
-        updated = pending_receives_qs(duka).filter(pk=rec_id).update(
+        updated = pending_receives_qs(duka).filter(pk__in=ids).update(
             admin_approved=True, admin_approved_at=now, admin_approved_by=cheo,
         )
     elif kind == 'purchases':
-        updated = pending_purchases_qs(duka).filter(pk=rec_id).update(
+        updated = pending_purchases_qs(duka).filter(pk__in=ids).update(
             admin_approved=True, admin_approved_at=now, admin_approved_by=cheo,
         )
     elif kind == 'customer_pay':
-        updated = pending_customer_payments_qs(duka).filter(pk=rec_id).update(admin_approve=True)
+        updated = pending_customer_payments_qs(duka).filter(pk__in=ids).update(admin_approve=True)
     elif kind == 'noncash':
-        updated = pending_noncash_payments_qs(duka).filter(pk=rec_id).update(admin_approve=True)
+        updated = pending_noncash_payments_qs(duka).filter(pk__in=ids).update(admin_approve=True)
+    elif kind == 'adjust':
+        updated = pending_adjusts_qs(cheo, duka).filter(pk__in=ids).update(
+            tarehe=now, confirmed=True, dinied=False,
+        )
     else:
         return JsonResponse({'success': False, 'swa': 'Aina batili', 'eng': 'Invalid type'})
     if not updated:
@@ -5336,7 +5414,8 @@ def notification_approve(request):
         'success': True,
         'swa': 'Imethibitishwa',
         'eng': 'Approved',
-        'hub': hub_approval_counts(duka),
+        'hub': hub_approval_counts(duka, cheo),
+        'updated': updated,
     })
 
 @login_required(login_url='login')
@@ -5671,7 +5750,7 @@ def traceChange(request):
         'pickup':pickup,
         'newPosts':len(banners),
         'pendingExpenseReceipts': count_pending_mandatory_expense_receipts(duka),
-        'hubPending': hub_approval_counts(duka).get('total', 0),
+        'hubPending': hub_approval_counts(duka, todo.get('cheo')).get('total', 0),
         'compoundOrders': count_compound_guest_orders(duka) if duka and duka.Interprise and shop_has_compound_positions(duka) else 0,
       }
 
