@@ -401,10 +401,25 @@ function applyPosCatalog(data, append) {
     initPosBarcodeScanner()
 }
 
+function loadPosCustomers() {
+    const csrfToken = $('input[name=csrfmiddlewaretoken]').val()
+    return POSTREQUEST({
+        data: {
+            csrfmiddlewaretoken: csrfToken,
+        },
+        url: '/mauzo/getCustomers',
+    }).then(function (data) {
+        if (data && Array.isArray(data.wateja) && typeof customers !== 'undefined') {
+            customers.state = data.wateja
+        }
+    }).catch(function () {})
+}
+
 function loadPosCatalog() {
     const csrfToken = $('input[name=csrfmiddlewaretoken]').val()
     const firstLimit = 20
     const nextLimit = 80
+    loadPosCustomers()
 
     function postPage(offset, limit, first) {
         return POSTREQUEST({
@@ -1851,6 +1866,17 @@ $('.save_pos_data').unbind("click").click(function(){
                     if($('#inayolipwa_invoice').val()!=''){
                         amount = Number($('#inayolipwa_invoice').val()) || 0
                         amount_set =true
+                    }
+
+                    let paidNow = inalipiwa ? (amount_set ? Number(amount) : Number(invo_am)) : 0
+                    const unpaidCredit = !Number(oda) && ((Number(invo_am) - paidNow) > 0.009)
+                    if(unpaidCredit && Number(custom) < 1){
+                        alert(lang(
+                            'Mkopo unaruhusiwa kwa wateja waliosave tu. Tafadhali chagua mteja kutoka list ya wateja, au hifadhi kama order.',
+                            'Credit is allowed only for saved customers. Select a customer from the customer list, or save as an order.'
+                        ))
+                        redborder('#lim_num')
+                        return
                     }
                   
             const   data={

@@ -190,3 +190,50 @@ select.itm_qty{
    display: inline-block;
    text-wrap: nowrap;
 }
+
+#Checkout_modal .modal-body {
+    overflow: visible;
+}
+#Checkout_modal .suggest-holder2n {
+    position: relative;
+    z-index: 5;
+    width: 100%;
+}
+#Checkout_modal .masaki,
+#Checkout_modal .masaki2n {
+    z-index: 2000;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    left: 0;
+    right: auto;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+    border-radius: 6px;
+}
+#Checkout_modal .masaki2n li {
+    padding: 6px 8px;
+}
+#Checkout_modal .masaki2n li a.suggest-name {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#Checkout_modal .masaki2n li a.d-block {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 8px;
+    padding: 2px 8px 6px !important;
+    overflow: hidden;
+}
+#Checkout_modal .masaki2n .suggest-description {
+    float: none !important;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

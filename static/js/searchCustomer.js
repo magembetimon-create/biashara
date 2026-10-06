@@ -2,10 +2,11 @@
  //search customer.............................................................................//
  var index=-1;	
  $('body').on('keyup','.suggest-holder2n input', function(){
+ $(this).data('cust', 0)
  // Clear the ul   
  $(`.masaki2n`).empty();
 
- let custm = customers.state
+ let custm = (typeof customers !== 'undefined' && Array.isArray(customers.state)) ? customers.state : []
   
  // Cache the search term
  var search = $(this).val();
@@ -18,7 +19,7 @@
  // Loop through the array
  for(let i in custm ){
 
- if(custm[i].jina.match(search)){
+ if(custm[i] && String(custm[i].jina || '').match(search)){
      let li=`<li data-value=${custm[i].id} >
      <a  class='suggest-name latoFont pl-2 text-capitalize' style="color:" data-value=${custm[i].id}  >${custm[i].jina} </a> 
         <a class="d-block" style='padding:7px'>
@@ -47,7 +48,10 @@
  $('body').off('click','.masaki2n li').on('click','.masaki2n li', function(){
      let valu = $(this).data('value')
       let itm = it=>it.id === valu
-     const custmi = customers.state.filter(itm)
+     const custmi = (customers.state || []).filter(itm)
+     if(!custmi.length){
+         return
+     }
 
      $('.suggest-holder2n input').val((custmi[0].jina))
      $('.suggest-holder2n input').data('cust',custmi[0].id)

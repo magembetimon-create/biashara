@@ -6564,11 +6564,41 @@ def  addInvoice(request):
          if bool(rudi):
               sr = sale_return.objects.filter(pk=rudi_val,Interprise=entp.Interprise)
               if sr.exists():
-                    bil_am = float(bill_sum)
                     ret_am = float(sr.last().amount) 
                     ret_pd = float(sr.last().ilolipwa)
-                    ret_dn= ret_am - ret_pd
-                    rudi_am=ret_dn
+                    rudi_am = ret_am - ret_pd
+
+         try:
+               sup_pk = int(sup or 0)
+         except (TypeError, ValueError):
+               sup_pk = 0
+
+         paid_now = 0.0
+         if bool(rudi):
+               paid_now = min(float(rudi_am or 0), float(bill_sum or 0))
+         elif bool(inalipwa):
+               paid_now = float(amount if amount_set else bill_sum)
+         remaining = round(float(bill_sum) - paid_now, 2)
+
+         if not bool(oda) and remaining > 0.009:
+               saved_ok = (
+                     not bool(toLabor)
+                     and wateja.objects.filter(pk=sup_pk, Interprise__owner=entp.Interprise.owner.id).exists()
+               )
+               if not saved_ok and edit and getattr(mauzi, 'saved_custom', False) and mauzi.customer_id_id:
+                     saved_ok = True
+               if not saved_ok:
+                     return JsonResponse({
+                           'success': False,
+                           'message_swa': 'Mkopo unaruhusiwa kwa wateja waliosave tu. Tafadhali chagua mteja kutoka list ya wateja, au hifadhi kama order.',
+                           'message_eng': 'Credit is allowed only for saved customers. Select a customer from the customer list, or save as an order.',
+                     })
+
+         if bool(rudi):
+              sr = sale_return.objects.filter(pk=rudi_val,Interprise=entp.Interprise)
+              if sr.exists():
+                    bil_am = float(bill_sum)
+                    ret_dn = rudi_am
 
                     if bil_am >= ret_dn:
                           sr.update(ilolipwa=F('amount'))
@@ -6981,8 +7011,8 @@ def  addInvoice(request):
            weka.invo = mauzi
            
            if not wekakwa.onesha:
-                 weka.usiri =True 
-           apply_weka_admin_flag(weka, entp)
+                 weka.usiri =True
+           weka.admin_approve = True
 
         #      if bill_sum <=  beforweka :  
            if amount_set: 

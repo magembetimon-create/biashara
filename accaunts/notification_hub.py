@@ -86,16 +86,25 @@ def pending_purchase_payments_qs(duka):
     )
 
 
+def _followup_customer_pay_qs(duka):
+    """Later payments on a saved invoice for a registered /mauzo/customer — not POS checkout."""
+    bid = _branch_id(duka)
+    if not bid:
+        return wekaCash.objects.none()
+    from django.db.models.functions import Trim
+    return wekaCash.objects.filter(
+        Interprise_id=bid,
+        invo__isnull=False,
+        invo__customer_id__isnull=False,
+    ).annotate(_pay_from=Trim('kutoka')).exclude(_pay_from__iexact='Sales')
+
+
 def pending_customer_payments_qs(duka):
     bid = _branch_id(duka)
     if not bid:
         return wekaCash.objects.none()
     return exclude_saved_by_admin(
-        wekaCash.objects.filter(
-            Interprise_id=bid,
-            invo__isnull=False,
-            admin_approve=False,
-        ),
+        _followup_customer_pay_qs(duka).filter(admin_approve=False),
         'by',
     )
 
@@ -105,11 +114,9 @@ def pending_noncash_payments_qs(duka):
     if not bid:
         return wekaCash.objects.none()
     return exclude_saved_by_admin(
-        wekaCash.objects.filter(
-            Interprise_id=bid,
-            invo__isnull=False,
-            admin_approve=False,
-        ).exclude(Akaunt__aina__iexact='Cash'),
+        _followup_customer_pay_qs(duka).filter(admin_approve=False).exclude(
+            Akaunt__aina__iexact='Cash',
+        ),
         'by',
     )
 

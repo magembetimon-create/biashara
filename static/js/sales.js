@@ -145,6 +145,7 @@ function buildSalesImageMap() {
  //search customer.............................................................................//
  var index=-1;	
  $('body').on('keyup','.suggest-holder2n input', function(){
+ $(this).data('cust', 0)
  // Clear the ul   
  $(`.masaki2n`).empty();
 
@@ -1938,6 +1939,27 @@ $('.save_bill_data').unbind('submit').submit(function (e) {
     if($('#inayolipwa_invoice').val()!=''){
         amount = Number($('#inayolipwa_invoice').val()) || 0
         amount_set =true
+    }
+
+    if($('#lim_num').val()!='' || Boolean(edit)){
+        let paidNow = 0
+        if(Number(rudi)){
+            paidNow = Number(invo_am)
+        }else if(inalipiwa){
+            paidNow = amount_set ? Number(amount) : Number(invo_am)
+        }
+        const unpaidCredit = !Boolean(edit) && !Number(oda) && ((Number(invo_am) - paidNow) > 0.009)
+        if(unpaidCredit && Number(custom) < 1){
+            alert(lang(
+                'Mkopo unaruhusiwa kwa wateja waliosave tu. Tafadhali chagua mteja kutoka list ya wateja, au hifadhi kama order.',
+                'Credit is allowed only for saved customers. Select a customer from the customer list, or save as an order.'
+            ))
+            redborder('#lim_num')
+            if(typeof topslider !== 'undefined' && topslider.top){
+                topslider.top()
+            }
+            return
+        }
     }
 
 
