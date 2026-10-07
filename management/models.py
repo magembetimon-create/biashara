@@ -144,6 +144,8 @@ class Interprise(models.Model):
     sales =  models.BooleanField(default=True)
     waiter_counter =  models.BooleanField(default=False)
     waiter_receipt_paper = models.PositiveSmallIntegerField(default=1)  # 1=58mm, 2=80mm POS
+    # Orders before this local time count on the previous service day (night shifts).
+    waiter_service_cutover = models.TimeField(default=datetime.time(0, 0))
     shift_management_enabled = models.BooleanField(default=False)
     require_purchase_payment_receipt = models.BooleanField(default=False)
     officeNo = models.CharField(max_length=200,blank=True)

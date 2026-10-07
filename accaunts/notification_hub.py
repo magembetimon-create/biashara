@@ -5,6 +5,7 @@ from management.models import (
     Notifications,
     manunuzi,
     receive,
+    received_confirm,
     rekodiMatumizi,
     stockAdjst_confirm,
     toaCash,
@@ -191,6 +192,58 @@ def hub_approval_counts(duka, cheo=None):
     }
 
 
+def branch_notification_count(duka, cheo, useri, request_user):
+    """Hub pending + unread info for one branch (no receive double-count)."""
+    if not duka or not getattr(duka, 'Interprise', False):
+        return 0
+    hub = 0
+    info = 0
+    try:
+        hub = int(hub_approval_counts(duka, cheo).get('total', 0) or 0)
+    except Exception:
+        hub = 0
+    try:
+        info = int(info_unread_counts(duka, useri, request_user).get('all', 0) or 0)
+    except Exception:
+        info = 0
+    return hub + info
+
+
+def exclude_pending_receive_info(qs, *dukas):
+    """Receive items that wait for hub approval must not also appear as info notices."""
+    pending = Q()
+    for duka in dukas:
+        if not duka:
+            continue
+        pending |= Q(itmRcv=True, itmRcv_map_id__in=pending_receives_qs(duka).values('pk'))
+    if pending:
+        qs = qs.exclude(pending)
+    return qs
+
+
+def mark_receive_info_notes_read(duka, receive_ids):
+    if not duka or not receive_ids:
+        return 0
+    return Notifications.objects.filter(
+        Interprise_id=duka.id,
+        itmRcv=True,
+        itmRcv_map_id__in=list(receive_ids),
+    ).update(admin_read=True, AnyUser_read=True, Incharge_reade=True)
+
+
+def mark_receive_peer_confirms(receive_ids, when=None):
+    """Hub admin approve also closes Hakiki kupokea on viewReceives."""
+    if not receive_ids:
+        return 0
+    if when is None:
+        from django.utils import timezone as dj_tz
+        when = dj_tz.now()
+    return received_confirm.objects.filter(receive_id__in=list(receive_ids)).update(
+        confirmed=True,
+        tarehe=when,
+    )
+
+
 def unread_info_filter(useri, request_user):
     uid = getattr(useri, 'id', None)
     ru = getattr(request_user, 'id', None)
@@ -202,6 +255,8 @@ def unread_info_filter(useri, request_user):
 
 
 def is_info_notification_unread(nt, useri, request_user):
+    if getattr(nt, 'itmRcv', False):
+        return False
     ru = getattr(request_user, 'id', None)
     uid = getattr(useri, 'id', None)
     owner_user_id = None
@@ -225,7 +280,8 @@ def info_unread_counts(duka, useri, request_user):
         return empty
     qs = Notifications.objects.filter(Interprise_id=duka.id).filter(
         unread_info_filter(useri, request_user)
-    )
+    ).exclude(itmRcv=True)
+    qs = exclude_pending_receive_info(qs, duka)
     data = qs.aggregate(
         all=Count('pk'),
         ed=Count('pk', filter=Q(ItemEdit=True)),

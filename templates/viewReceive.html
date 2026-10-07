@@ -171,7 +171,7 @@
                   {% endif %}
                   
                   
-                  {% if not the_bill.transfer.order and not uc.confirmed and uc != None %}
+                  {% if not the_bill.transfer.order and not the_bill.admin_approved and not uc.confirmed and uc != None %}
                   <button class="btn btn-sm btn-danger" id="hakiki_oda" data-transfer={{the_bill.id}} action="\stoku\hakiki_oda">
                     
                     <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16">
@@ -355,13 +355,39 @@
                      </div>
 
                      <div class="col-md-5">
-                      {% if cm.count > 0 %}
+                      {% if cm.count > 0 or the_bill.admin_approved %}
                       <p class="pl-2 Assitant smallFont">
-                        {% if useri.langSet == 0 %} Uthibitisho wa kupokea na: {% else %} Receive comfirmed By: {% endif %}   
+                        {% if useri.langSet == 0 %} Uthibitisho wa kupokea na: {% else %} Receive confirmed By: {% endif %}   
                       </p>
                       {% endif %}
                       <ul class="list-unstyled " style="max-width:190px ;padding-left:18px;margin-top:-7px" >
+                          {% if the_bill.admin_approved and the_bill.admin_approved_by %}
+                            <li class="row pt-2 mt-2" style="border-radius:7px ;-webkit-box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.58);
+                            -moz-box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.58);
+                            box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.58);">
+                               <div class="col-3">
+                                 {% if the_bill.admin_approved_by.user.picha %}
+                                <img style="width:30px;height:30px;" class="rounded-circle userimage"  src="{{ the_bill.admin_approved_by.user.picha.url }}" alt="">
+                                {% else %}
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                                  </svg>
+                              {% endif %}
+                              </div>
+                               <div class="col-9">
+                                 <p class="latoFont smallerFont " >
+                                      <span class="font-weight-bold" > {{the_bill.admin_approved_by.user.user.first_name | title}}   {{the_bill.admin_approved_by.user.user.last_name | title}}</span>
+                                    <br>
+                                    <script>
+                                      document.write(moment('{{the_bill.admin_approved_at | date:"r" }}').format('DD/MM/YYYY HH:mm:ss'))
+                                    </script>
+                                 </p>
+                               </div>
+                            </li>
+                          {% endif %}
                           {% for r in cm %}
+                          {% if not the_bill.admin_approved_by_id or r.user_id != the_bill.admin_approved_by.user_id %}
                             <li class="row pt-2 mt-2" style="border-radius:7px ;-webkit-box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.58);
                             -moz-box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.58);
                             box-shadow: 0px 0px 5px -2px rgba(0,0,0,0.58);">
@@ -389,6 +415,7 @@
                                </div>
                                
                             </li>
+                          {% endif %}
                           {% endfor %}
                       </ul>
                      </div>

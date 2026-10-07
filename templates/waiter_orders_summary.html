@@ -23,14 +23,7 @@
           &larr; {% if useri.langSet == 0 %}Orodha ya Wahudumu{% else %}Waiter List{% endif %}
         </a>
         {% endif %}
-        <div class="btn-group btn-group-sm" role="group">
-          <a href="/mauzo/waiter_orders_summary" class="btn btn-primary">
-            {% if useri.langSet == 0 %}Oda za Wahudumu{% else %}Waiter Orders{% endif %}
-          </a>
-          <a href="/mauzo/waiter_clearing_list" class="btn btn-outline-primary">
-            {% if useri.langSet == 0 %}Historia ya Malipo{% else %}Clearing Records{% endif %}
-          </a>
-        </div>
+        {% include 'includes/waiter_manager_tabs.html' with waiter_tab='orders' %}
       </div>
     </div>
 

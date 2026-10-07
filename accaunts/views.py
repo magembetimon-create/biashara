@@ -20,10 +20,13 @@ from business import settings
 from management.models import Notifications,VistorsSavedItems,customer_in_cell,customer_area,Activator,invoice_desk,Activated,marketPlace,VistedBanners,marketBanner,deliveryBy,KulipaPI,PhoneMailConfirm,bidhaa,Zones,Mikoa,Mitaa,Wilaya,Kata,mahitaji,Interprise_Rating, UserExtend,EmployeeAttachments,InterpriseVisotrs, makampuni,savedStockState,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive, stokAdjustment,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji, wekaCash, toaCash, MatumiziReceiptAttachment
 from purchase.expense_receipt_utils import count_pending_mandatory_expense_receipts
 from accaunts.notification_hub import (
+    exclude_pending_receive_info,
     hub_approval_counts,
     info_unread_counts,
     is_info_notification_unread,
     is_shop_admin,
+    mark_receive_info_notes_read,
+    mark_receive_peer_confirms,
     pending_adjusts_qs,
     pending_customer_payments_qs,
     pending_noncash_payments_qs,
@@ -4881,6 +4884,7 @@ def notificationing(request):
       saO=so,saRtn = rd,itmTr=it,itmRcv=ir,puO=po,bilRtn=rt,ItemEdit=ed,ItemCatEdit=ced,pickUp=pk,
       Interprise=duka.id
       )
+    Notice = exclude_pending_receive_info(Notice, duka)
       
 
     num = Notice.count()
@@ -5394,6 +5398,9 @@ def notification_approve(request):
         updated = pending_receives_qs(duka).filter(pk__in=ids).update(
             admin_approved=True, admin_approved_at=now, admin_approved_by=cheo,
         )
+        if updated:
+            mark_receive_info_notes_read(duka, ids)
+            mark_receive_peer_confirms(ids, now)
     elif kind == 'purchases':
         updated = pending_purchases_qs(duka).filter(pk__in=ids).update(
             admin_approved=True, admin_approved_at=now, admin_approved_by=cheo,
@@ -5523,7 +5530,8 @@ def traceChange(request):
       # import os
       # print(os.getenv("COMPANY_TOKEN"))
 
-      notice = Notifications.objects.filter(Q(admin_read=False,Interprise__owner__user=request.user.id)|Q(Incharge=todo['useri'].id,Incharge_reade=False)|Q(admin_read=False,AnyUser_read=False,Incharge_reade=False),Interprise__in=[entId,pent]).select_related('Incharge__user')
+      notice = Notifications.objects.filter(Q(admin_read=False,Interprise__owner__user=request.user.id)|Q(Incharge=todo['useri'].id,Incharge_reade=False)|Q(admin_read=False,AnyUser_read=False,Incharge_reade=False),Interprise__in=[entId,pent]).exclude(itmRcv=True).select_related('Incharge__user')
+      notice = exclude_pending_receive_info(notice, duka, pent)
       chalst = chats.objects.filter(Q(to__to__owner=todo['useri'].id,admin_read=False)|Q(Anyuser_read=False),to__to__in=[duka.id,pent.id]).select_related('By', 'By__user', 'From', 'to').annotate(
          f_name=F('By__user__first_name'),
         #  imgBy=F('By__picha'),

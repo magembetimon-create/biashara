@@ -44,7 +44,7 @@ from django.core.cache import cache
 # Create your views here.
 
 
-from accaunts.notification_hub import apply_record_admin_flag
+from accaunts.notification_hub import apply_record_admin_flag, exclude_pending_receive_info
 from accaunts.todos import Todos,updateOrder,shift_operation_block_payload
 from .item_excel import (
     bulk_import_items,
@@ -5491,6 +5491,10 @@ def addtranfer(request):
                     notice.admin_read = True
                 else:
                     notice.Incharge_reade = True
+                if getattr(rc, 'admin_approved', False):
+                    notice.admin_read = True
+                    notice.AnyUser_read = True
+                    notice.Incharge_reade = True
 
                 notice.Incharge = todo['useri']    
                 notice.save()
@@ -6246,6 +6250,7 @@ def unseenReceives(request):
         itmRcv=True,
         itmRcv_map__isnull=False,
     ).select_related('itmRcv_map')
+    notice = exclude_pending_receive_info(notice, duka, pent)
 
     if not notice.exists():
         return redirect('/stoku/receiveNote')
@@ -6274,7 +6279,12 @@ def unseenReceives(request):
     for rcv in receives:
         uc = conf_map.get(rcv.id)
         is_order = bool(rcv.transfer and rcv.transfer.order)
-        can_confirm = (not is_order) and uc is not None and not uc.confirmed
+        can_confirm = (
+            (not is_order)
+            and uc is not None
+            and not uc.confirmed
+            and not getattr(rcv, 'admin_approved', False)
+        )
         if can_confirm:
             pending_confirm_ids.append(rcv.id)
         rows = items_by_rcv.get(rcv.id, [])
@@ -6282,7 +6292,7 @@ def unseenReceives(request):
             'bill': rcv,
             'items': rows,
             'can_confirm': can_confirm,
-            'user_confirmed': bool(uc and uc.confirmed),
+            'user_confirmed': bool((uc and uc.confirmed) or getattr(rcv, 'admin_approved', False)),
             'has_color': any(r.get('color') for r in rows),
             'has_size': any(r.get('size') for r in rows),
         })

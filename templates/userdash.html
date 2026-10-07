@@ -74,7 +74,7 @@
        
 
 
-<link rel="stylesheet" href="{% static 'css/userdashslider.css' %}">
+<link rel="stylesheet" href="{% static 'css/userdashslider.css' %}?v=br-note-2">
 <link rel="stylesheet" href="{% static 'css/mediascreen.css' %}">
 <link rel="stylesheet" href="{% static 'css/usedashanimations.css' %}">
 
@@ -3780,7 +3780,10 @@ $('.muamala-genu').click(function(){
   
       <div id="navbar-pop"  class="{% if duka.Interprise %}partialBar{% else %}FullBar{% endif %}" style="z-index: 3;max-width: 100%;">
 
-      <a class="nav-opt p-2" href="#home" onclick="openNav()"> {{duka | title}} 
+      <a class="nav-opt p-2 d-inline-flex align-items-center" href="#home" onclick="openNav()"> {{duka | title}}
+        {% if matawi_notice_total %}
+        <span class="branch-note-badge ml-1" title="{% if useri.langSet == 0 %}Notification za matawi mengine{% else %}Other branch notifications{% endif %}">{{ matawi_notice_total }}</span>
+        {% endif %}
 
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
         class="bi bi-chevron-down ml-1" viewBox="0 0 16 16">
@@ -3796,16 +3799,7 @@ $('.muamala-genu').click(function(){
                     {% if useri.langSet == 0 %} Kitendo {% else %}Action {% endif %}
                 </a>
                 <div id="QuickMenuDropDown" class="dropdown-menu whiteBg fontColor smallFont" aria-labelledby="dropdownMenuButton">
-                {% if shift_operation_allowed %}
-                  <a class="dropdown-item" href="/mauzo/POStab">
-                  <img src="{% static 'pics/pos-1.svg' %}" style="width: 1.6em;" alt="" srcset="">
-                    POS {% if useri.langSet == 0 %} Mauzo {% else %}Sales {% endif %}
-                  </a>
-
-                  {% if duka.waiter_counter %}
-                  <div class="dropdown-divider"></div>
-                
-
+                {% if duka.waiter_counter %}
                   <a class="dropdown-item d-flex justify-content-between align-items-center" href="/mauzo/waiter_orders_summary" id="waiterOrdersNavLink">
                     <span>
                       <img src="{% static 'pics/pos-1.svg' %}" style="width: 1.6em;" alt="" srcset="">
@@ -3813,7 +3807,16 @@ $('.muamala-genu').click(function(){
                     </span>
                     <span id="waiterOrdersNavBadge" class="badge badge-danger{% if not waiter_uncleared_waiters_count %} d-none{% endif %}">{{ waiter_uncleared_waiters_count }}</span>
                   </a>
+                  {% if shift_operation_allowed %}
+                  <div class="dropdown-divider"></div>
                   {% endif %}
+                {% endif %}
+                {% if shift_operation_allowed %}
+                  <a class="dropdown-item" href="/mauzo/POStab">
+                  <img src="{% static 'pics/pos-1.svg' %}" style="width: 1.6em;" alt="" srcset="">
+                    POS {% if useri.langSet == 0 %} Mauzo {% else %}Sales {% endif %}
+                  </a>
+
                   <div class="dropdown-divider"></div>
 
                   <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'grouped_items_sales_track' %}" id="groupedSalesTrackNavLink">
@@ -3973,6 +3976,9 @@ $('.muamala-genu').click(function(){
         <h6 class="text-center">
           <a href="{% if duka.Interprise %}{% url 'buzinessProfile' %}?value={{duka.id}}{% else %}/userprofile{% endif %}">
             {{duka| title}}
+            {% if current_notice_count %}
+            <span class="branch-note-badge">{{ current_notice_count }}</span>
+            {% endif %}
           </a>
           
         </h6>
@@ -4008,8 +4014,12 @@ $('.muamala-genu').click(function(){
 
             <li class="py-2 border-bottom"  data-value={{ac.id}} >
               <a href="/interpnav/{{ac.Interprise.id}} ">
-                  <span  style="font-size:16px;color:#777">{{ac.Interprise.name  |title }}</span>
-                  <br/>
+                  <span class="d-flex align-items-start justify-content-between pr-2">
+                    <span style="font-size:16px;color:#777">{{ac.Interprise.name  |title }}</span>
+                    {% if ac.notice_count %}
+                    <span class="branch-note-badge">{{ ac.notice_count }}</span>
+                    {% endif %}
+                  </span>
                   <span class="smallerFont">{{ac.Interprise.mtaa.mtaa | title }}, {{ac.Interprise.mtaa.kata.kata | title }}, 
                     {{ac.Interprise.mtaa.kata.wilaya.wilaya | title }}, {{ac.Interprise.mtaa.kata.wilaya.mkoa.mkoa | title }}, 
                      {{ac.Interprise.mtaa.kata.wilaya.mkoa.kanda.nchi.name | title }} 

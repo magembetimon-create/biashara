@@ -8,7 +8,7 @@ import json
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
-from management.models import UserExtend,Interprise_Rating,ForPrintingPupose,ChangedServiceFrom,invoice_desk,HudumaNyingine,ChangedServiceTo,ChangedService,Kanda,Workers,Notifications,deliveryAgents,productionList,deliveryBy,salePuMatch,manunuzi,remainedFromOda, manunuziList,order_from,order_to,bidhaa_aina,sale_return,user_customers,businessReg,sale_return_mauzo_fidia,sa_ret,sa_col_ret,sa_size_ret,picha_bidhaa,Cash_order_return,Interprise,toaCash,bei_za_bidhaa,bidhaa,Interprise_contacts,wekaCash,produ_size,color_produ,produ_colored,bidhaa_stoku,wateja,customer_Interprise,sales_color,sales_size,mauzoni,mauzoList,InterprisePermissions,PaymentAkaunts,customer_in_cell,waiterPayments,WaiterPosDeviceSession,waiter_clearing
+from management.models import UserExtend,Interprise_Rating,ForPrintingPupose,ChangedServiceFrom,invoice_desk,HudumaNyingine,ChangedServiceTo,ChangedService,Kanda,Workers,Notifications,deliveryAgents,productionList,deliveryBy,salePuMatch,manunuzi,remainedFromOda, manunuziList,order_from,order_to,bidhaa_aina,sale_return,user_customers,businessReg,sale_return_mauzo_fidia,sa_ret,sa_col_ret,sa_size_ret,picha_bidhaa,Cash_order_return,Interprise,toaCash,bei_za_bidhaa,bidhaa,Interprise_contacts,wekaCash,produ_size,color_produ,produ_colored,bidhaa_stoku,wateja,customer_Interprise,sales_color,sales_size,mauzoni,mauzoList,InterprisePermissions,PaymentAkaunts,customer_in_cell,waiterPayments,WaiterPosDeviceSession,waiter_clearing,ShiftSession
 from management.models import customer_area
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
@@ -4783,8 +4783,289 @@ def waiter_cleared_report_order_items(request):
       })
 
 
+def _waiter_cutover_time(duka):
+      raw = getattr(duka, 'waiter_service_cutover', None)
+      if raw:
+            return raw
+      return datetime.time(0, 0)
+
+
+def _waiter_aware_local(day, clock):
+      naive = datetime.datetime.combine(day, clock)
+      tz = dj_timezone.get_current_timezone()
+      if dj_timezone.is_naive(naive):
+            return dj_timezone.make_aware(naive, tz)
+      return dj_timezone.localtime(naive, tz)
+
+
+def _waiter_event_at(sale):
+      event_at = sale.Packed_at or sale.tarehe
+      if not event_at:
+            return None
+      if dj_timezone.is_naive(event_at):
+            return dj_timezone.make_aware(event_at, dj_timezone.get_current_timezone())
+      return event_at
+
+
+def _waiter_service_date_from_cutover(event_at, cutover):
+      local_at = dj_timezone.localtime(event_at)
+      offset = timedelta(hours=cutover.hour, minutes=cutover.minute, seconds=cutover.second)
+      return (local_at - offset).date()
+
+
+def _waiter_current_service_date(duka):
+      cutover = _waiter_cutover_time(duka)
+      if getattr(duka, 'shift_management_enabled', False):
+            active = ShiftSession.objects.filter(
+                  Interprise=duka,
+                  status='open',
+            ).order_by('-starts_at').first()
+            if active and active.starts_at:
+                  return dj_timezone.localtime(active.starts_at).date()
+      return _waiter_service_date_from_cutover(dj_timezone.now(), cutover)
+
+
+def _waiter_service_period_meta(period_key, duka, custom_from='', custom_to=''):
+      today = _waiter_current_service_date(duka)
+      period_key = str(period_key or 'day').strip().lower()
+
+      if period_key == 'week':
+            start = today - timedelta(days=today.weekday())
+            return {'key': 'week', 'start': start, 'end': today}
+      if period_key == 'month':
+            return {'key': 'month', 'start': today.replace(day=1), 'end': today}
+      if period_key == 'year':
+            return {'key': 'year', 'start': today.replace(month=1, day=1), 'end': today}
+      if period_key == 'custom':
+            try:
+                  start_date = datetime.datetime.strptime(str(custom_from or '').strip(), '%Y-%m-%d').date()
+                  end_date = datetime.datetime.strptime(str(custom_to or '').strip(), '%Y-%m-%d').date()
+            except Exception:
+                  return {'key': 'day', 'start': today, 'end': today}
+            if end_date < start_date:
+                  start_date, end_date = end_date, start_date
+            return {'key': 'custom', 'start': start_date, 'end': end_date}
+      return {'key': 'day', 'start': today, 'end': today}
+
+
+def _waiter_shifts_covering(duka, range_start, range_end):
+      if not getattr(duka, 'shift_management_enabled', False):
+            return []
+      return list(
+            ShiftSession.objects.filter(
+                  Interprise=duka,
+                  starts_at__lte=range_end,
+            ).filter(
+                  Q(ends_at__isnull=True) | Q(ends_at__gte=range_start)
+            ).order_by('starts_at')
+      )
+
+
+def _waiter_service_date_for_event(event_at, shifts, cutover):
+      local_at = dj_timezone.localtime(event_at)
+      matched = None
+      for shift in shifts:
+            if not shift.starts_at:
+                  continue
+            start = dj_timezone.localtime(shift.starts_at)
+            end = dj_timezone.localtime(shift.ends_at) if shift.ends_at else dj_timezone.now()
+            if start <= local_at <= end:
+                  matched = shift
+      if matched:
+            return dj_timezone.localtime(matched.starts_at).date(), matched
+      return _waiter_service_date_from_cutover(event_at, cutover), None
+
+
+def _waiter_line_net_qty(line):
+      return Decimal(str(line.idadi or 0)) - Decimal(str(line.returned or 0)) - Decimal(str(line.serviceReturn or 0))
+
+
+def _waiter_item_buckets_from_lines(lines):
+      buckets = {}
+      for line in lines:
+            net_qty = _waiter_line_net_qty(line)
+            if net_qty <= 0:
+                  continue
+            bidhaa_obj = line.produ.bidhaa if line.produ and line.produ.bidhaa else None
+            bidhaa_id = bidhaa_obj.id if bidhaa_obj else (line.produ_id or 0)
+            item_name = bidhaa_obj.bidhaa_jina if bidhaa_obj else f"Item #{line.produ_id}"
+            item_units = bidhaa_obj.vipimo if bidhaa_obj else '-'
+            key = (bidhaa_id, item_name, item_units)
+            if key not in buckets:
+                  buckets[key] = {
+                        'item_name': item_name,
+                        'units': item_units or '-',
+                        'qty': Decimal('0'),
+                        'amount': Decimal('0'),
+                  }
+            buckets[key]['qty'] += net_qty
+            buckets[key]['amount'] += net_qty * Decimal(str(line.bei or 0))
+      rows = sorted(buckets.values(), key=lambda x: (x['item_name'] or '').lower())
+      return rows, {
+            'qty': sum((row['qty'] for row in rows), Decimal('0')),
+            'amount': sum((row['amount'] for row in rows), Decimal('0')),
+      }
+
+
+def _waiter_service_matched_sales(duka, period_meta):
+      cutover = _waiter_cutover_time(duka)
+      start = period_meta['start']
+      end = period_meta['end']
+      pad_start = _waiter_aware_local(start, cutover) - timedelta(days=1)
+      pad_end = _waiter_aware_local(end + timedelta(days=1), cutover) + timedelta(hours=14)
+      shifts = _waiter_shifts_covering(duka, pad_start, pad_end)
+
+      qs = mauzoni.objects.filter(
+            Interprise=duka,
+            waiter_order__isnull=False,
+            full_returned=False,
+            ignore=False,
+            printed_number__gt=0,
+      ).filter(
+            Q(Packed_at__gte=pad_start, Packed_at__lt=pad_end)
+            | Q(Packed_at__isnull=True, tarehe__gte=pad_start, tarehe__lt=pad_end)
+      ).select_related(
+            'waiter_order__fanyakazi',
+            'waiter_order__user__user',
+            'waiter_order__user_entp__Interprise',
+            'customer_in__area',
+      )
+
+      matched = []
+      for sale in qs:
+            event_at = _waiter_event_at(sale)
+            if not event_at:
+                  continue
+            service_date, shift_obj = _waiter_service_date_for_event(event_at, shifts, cutover)
+            if service_date < start or service_date > end:
+                  continue
+            matched.append({
+                  'sale': sale,
+                  'waiter_id': sale.waiter_order_id,
+                  'service_date': service_date,
+                  'shift_obj': shift_obj,
+                  'event_at': dj_timezone.localtime(event_at),
+                  'amount': float(sale.amount or 0),
+            })
+      return matched
+
+
+def _waiter_service_report_data(duka, period_meta, selected_waiter_id=0):
+      matched = _waiter_service_matched_sales(duka, period_meta)
+      sale_ids = [row['sale'].id for row in matched]
+      qty_by_sale = {}
+      lines = mauzoList.objects.filter(mauzo_id__in=sale_ids).select_related('produ__bidhaa') if sale_ids else []
+      for line in lines:
+            net_qty = _waiter_line_net_qty(line)
+            if net_qty <= 0:
+                  continue
+            qty_by_sale[line.mauzo_id] = qty_by_sale.get(line.mauzo_id, Decimal('0')) + net_qty
+
+      waiter_map = {}
+      day_map = {}
+      selected_orders = []
+
+      for row in matched:
+            sale = row['sale']
+            waiter_id = row['waiter_id']
+            waiter = sale.waiter_order
+            amount = row['amount']
+            local_at = row['event_at']
+            service_date = row['service_date']
+            items_qty = float(qty_by_sale.get(sale.id, 0) or 0)
+
+            bucket = waiter_map.get(waiter_id)
+            if not bucket:
+                  bucket = {
+                        'waiter_id': waiter_id,
+                        'waiter_name': _waiter_person_name(waiter, 'Waiter'),
+                        'waiter_code': '',
+                        'cheo': str(getattr(waiter, 'cheo', '') or '').strip() or '-',
+                        'orders_count': 0,
+                        'items_qty': 0.0,
+                        'total_amount': 0.0,
+                        'first_at': local_at,
+                        'last_at': local_at,
+                        'overnight': False,
+                  }
+                  try:
+                        bucket['waiter_code'] = str(waiter.user_entp.Interprise.Intp_code or '').strip()
+                  except Exception:
+                        bucket['waiter_code'] = ''
+                  waiter_map[waiter_id] = bucket
+
+            bucket['orders_count'] += 1
+            bucket['items_qty'] += items_qty
+            bucket['total_amount'] += amount
+            if local_at < bucket['first_at']:
+                  bucket['first_at'] = local_at
+            if local_at > bucket['last_at']:
+                  bucket['last_at'] = local_at
+            if local_at.date() != service_date:
+                  bucket['overnight'] = True
+
+            day_row = day_map.get(service_date)
+            if not day_row:
+                  day_row = {
+                        'service_date': service_date,
+                        'orders_count': 0,
+                        'items_qty': 0.0,
+                        'total_amount': 0.0,
+                        'waiters': set(),
+                  }
+                  day_map[service_date] = day_row
+            day_row['orders_count'] += 1
+            day_row['items_qty'] += items_qty
+            day_row['total_amount'] += amount
+            day_row['waiters'].add(waiter_id)
+
+            if selected_waiter_id and waiter_id == selected_waiter_id:
+                  table_name = '-'
+                  place_name = '-'
+                  try:
+                        if sale.customer_in:
+                              table_name = str(sale.customer_in.name or '').strip() or '-'
+                              place_name = str(sale.customer_in.area.name or '').strip() if sale.customer_in.area else '-'
+                  except Exception:
+                        table_name = '-'
+                        place_name = '-'
+                  selected_orders.append({
+                        'id': sale.id,
+                        'code': sale.code,
+                        'amount': amount,
+                        'items_qty': items_qty,
+                        'table': table_name,
+                        'place': place_name,
+                        'event_at': local_at,
+                        'service_date': service_date,
+                        'shift_code': str(row['shift_obj'].code or row['shift_obj'].id) if row['shift_obj'] else '',
+                  })
+
+      rows = sorted(waiter_map.values(), key=lambda r: (-r['total_amount'], -r['orders_count'], r['waiter_name'].lower()))
+      day_rows = []
+      for day_key in sorted(day_map.keys(), reverse=True):
+            item = day_map[day_key]
+            day_rows.append({
+                  'service_date': item['service_date'],
+                  'orders_count': item['orders_count'],
+                  'items_qty': item['items_qty'],
+                  'total_amount': item['total_amount'],
+                  'waiters_count': len(item['waiters']),
+            })
+
+      totals = {
+            'waiters': len(rows),
+            'orders': sum(r['orders_count'] for r in rows),
+            'items_qty': sum(r['items_qty'] for r in rows),
+            'amount': sum(r['total_amount'] for r in rows),
+      }
+      selected_orders.sort(key=lambda x: x['event_at'] or datetime.datetime.min, reverse=True)
+      selected_waiter = waiter_map.get(selected_waiter_id)
+      return rows, day_rows, totals, selected_orders, selected_waiter
+
+
 @login_required(login_url='login')
-def waiter_clearing_list(request):
+def waiter_service_report(request):
       todo = newInvo_funct(request)
       duka = todo.get('duka')
       cheo = todo.get('cheo')
@@ -4792,8 +5073,141 @@ def waiter_clearing_list(request):
       if not duka or not duka.waiter_counter:
             return redirect('/userdash')
 
-      can_view = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_check_up', False)))
-      if not can_view:
+      can_edit_cutover = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_check_up', False)))
+
+      if request.method == 'POST' and can_edit_cutover and str(request.POST.get('save_cutover') or '') == '1':
+            raw = str(request.POST.get('waiter_service_cutover') or '').strip()
+            parsed = None
+            for fmt in ('%H:%M', '%H:%M:%S'):
+                  try:
+                        parsed = datetime.datetime.strptime(raw, fmt).time()
+                        break
+                  except Exception:
+                        parsed = None
+            if parsed is not None:
+                  duka.waiter_service_cutover = parsed
+                  duka.save(update_fields=['waiter_service_cutover'])
+            qs = request.GET.urlencode()
+            return redirect('/mauzo/waiter_service_report' + (('?' + qs) if qs else ''))
+
+      period_key = str(request.GET.get('period', 'day') or 'day').strip().lower()
+      custom_from = str(request.GET.get('from', '') or '').strip()
+      custom_to = str(request.GET.get('to', '') or '').strip()
+      period_meta = _waiter_service_period_meta(period_key, duka, custom_from, custom_to)
+
+      try:
+            selected_waiter_id = int(request.GET.get('waiter', 0) or 0)
+      except Exception:
+            selected_waiter_id = 0
+
+      rows, day_rows, totals, selected_orders, selected_waiter = _waiter_service_report_data(
+            duka, period_meta, selected_waiter_id
+      )
+      if selected_waiter_id and not selected_waiter:
+            selected_waiter_id = 0
+            selected_orders = []
+
+      cutover = _waiter_cutover_time(duka)
+      query_base = f"period={period_meta['key']}"
+      if period_meta['key'] == 'custom':
+            query_base += f"&from={period_meta['start'].isoformat()}&to={period_meta['end'].isoformat()}"
+
+      todo.update({
+            'period': period_meta['key'],
+            'period_start': period_meta['start'],
+            'period_end': period_meta['end'],
+            'custom_from': custom_from or (period_meta['start'].isoformat() if period_meta['key'] == 'custom' else ''),
+            'custom_to': custom_to or (period_meta['end'].isoformat() if period_meta['key'] == 'custom' else ''),
+            'waiter_service_cutover': cutover.strftime('%H:%M'),
+            'can_edit_cutover': can_edit_cutover,
+            'shift_grouping': bool(getattr(duka, 'shift_management_enabled', False)),
+            'report_rows': rows,
+            'day_rows': day_rows,
+            'report_totals': totals,
+            'selected_waiter_id': selected_waiter_id,
+            'selected_waiter': selected_waiter,
+            'selected_orders': selected_orders,
+            'query_base': query_base,
+      })
+      return render(request, 'waiter_service_report.html', todo)
+
+
+@login_required(login_url='login')
+def waiter_service_report_items(request):
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+      if not duka or not duka.waiter_counter:
+            return JsonResponse({'success': False, 'msg': 'Waiter counter is disabled'})
+
+      period_key = str(request.GET.get('period', 'day') or 'day').strip().lower()
+      custom_from = str(request.GET.get('from', '') or '').strip()
+      custom_to = str(request.GET.get('to', '') or '').strip()
+      period_meta = _waiter_service_period_meta(period_key, duka, custom_from, custom_to)
+
+      try:
+            waiter_id = int(request.GET.get('waiter', 0) or 0)
+      except Exception:
+            waiter_id = 0
+      try:
+            order_id = int(request.GET.get('order', 0) or 0)
+      except Exception:
+            order_id = 0
+      day_raw = str(request.GET.get('day', '') or '').strip()
+      service_day = None
+      if day_raw:
+            try:
+                  service_day = datetime.datetime.strptime(day_raw, '%Y-%m-%d').date()
+            except Exception:
+                  service_day = None
+
+      matched = _waiter_service_matched_sales(duka, period_meta)
+      sale_ids = []
+      title = ''
+      for row in matched:
+            if waiter_id and row['waiter_id'] != waiter_id:
+                  continue
+            if service_day and row['service_date'] != service_day:
+                  continue
+            if order_id and row['sale'].id != order_id:
+                  continue
+            sale_ids.append(row['sale'].id)
+            if order_id:
+                  title = str(row['sale'].code or '')
+            elif waiter_id and not title:
+                  title = _waiter_person_name(row['sale'].waiter_order, 'Waiter')
+
+      if service_day and not order_id and not waiter_id:
+            title = service_day.strftime('%d/%m/%Y')
+
+      lines = mauzoList.objects.filter(mauzo_id__in=sale_ids).select_related('produ__bidhaa') if sale_ids else []
+      item_rows, totals = _waiter_item_buckets_from_lines(lines)
+      payload_rows = []
+      for item in item_rows:
+            payload_rows.append({
+                  'item_name': item['item_name'],
+                  'units': item['units'],
+                  'qty': float(item['qty']),
+                  'amount': float(item['amount']),
+            })
+
+      return JsonResponse({
+            'success': True,
+            'title': title,
+            'rows': payload_rows,
+            'totals': {
+                  'qty': float(totals['qty']),
+                  'amount': float(totals['amount']),
+            },
+            'currency': str(getattr(duka, 'currencii', '') or ''),
+      })
+
+
+@login_required(login_url='login')
+def waiter_clearing_list(request):
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+
+      if not duka or not duka.waiter_counter:
             return redirect('/userdash')
 
       qs = waiter_clearing.objects.filter(

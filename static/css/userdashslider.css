@@ -1014,6 +1014,25 @@ box-shadow: 0px 0px 11px -7px #000000, 0px 0px 11px -7px #000000;
   color: var(--fontColor);
 }
 
+.branch-note-badge {
+  display: inline-block;
+  min-width: 14px;
+  height: 13px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: #dc3545;
+  color: #fff !important;
+  font-size: 9px;
+  line-height: 13px;
+  text-align: center;
+  font-weight: 600;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+#navbar-pop .branch-note-badge {
+  margin-left: 6px;
+}
+
 .Company_Sidenav .closebtn {
   position: absolute;
   top: 20px;

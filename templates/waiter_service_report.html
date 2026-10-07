@@ -1,0 +1,387 @@
+{% extends 'userdash.html' %}
+{% load humanize %}
+
+{% block Dashboard %}
+<div class="whiteBg py-4" style="min-height: 80vh;">
+  <div class="classic_div" style="max-width: 1100px; margin: 0 auto;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="mb-1">
+          {% if useri.langSet == 0 %}Ripoti ya Huduma ya Wahudumu{% else %}Waiter Service Report{% endif %}
+        </h5>
+        <div class="text-muted small">
+          {% if useri.langSet == 0 %}
+            Oda zinahesabiwa kwa siku ya huduma (zamu), si tu tarehe ya kalenda.
+          {% else %}
+            Orders are grouped by service day (shift), not only calendar date.
+          {% endif %}
+        </div>
+      </div>
+      <div class="mt-2 mt-md-0">
+        {% include 'includes/waiter_manager_tabs.html' with waiter_tab='report' %}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <a class="btn btn-sm {% if period == 'day' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=day">
+        {% if useri.langSet == 0 %}Siku{% else %}Day{% endif %}
+      </a>
+      <a class="btn btn-sm {% if period == 'week' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=week">
+        {% if useri.langSet == 0 %}Wiki{% else %}Week{% endif %}
+      </a>
+      <a class="btn btn-sm {% if period == 'month' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=month">
+        {% if useri.langSet == 0 %}Mwezi{% else %}Month{% endif %}
+      </a>
+      <a class="btn btn-sm {% if period == 'year' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=year">
+        {% if useri.langSet == 0 %}Mwaka{% else %}Year{% endif %}
+      </a>
+      <button type="button" class="btn btn-sm {% if period == 'custom' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-toggle="collapse" data-target="#waiterServiceCustomDates">
+        {% if useri.langSet == 0 %}Tarehe maalum{% else %}Custom date{% endif %}
+      </button>
+    </div>
+
+    <div class="collapse{% if period == 'custom' %} show{% endif %} mb-3" id="waiterServiceCustomDates">
+      <form method="get" class="form-row align-items-end">
+        <input type="hidden" name="period" value="custom">
+        <div class="col-md-4 mb-2">
+          <label class="small mb-1">{% if useri.langSet == 0 %}Kuanzia{% else %}From{% endif %}</label>
+          <input type="date" name="from" class="form-control form-control-sm" value="{{ custom_from }}" required>
+        </div>
+        <div class="col-md-4 mb-2">
+          <label class="small mb-1">{% if useri.langSet == 0 %}Mpaka{% else %}To{% endif %}</label>
+          <input type="date" name="to" class="form-control form-control-sm" value="{{ custom_to }}" required>
+        </div>
+        <div class="col-md-4 mb-2">
+          <button type="submit" class="btn btn-sm btn-primary btn-block">
+            {% if useri.langSet == 0 %}Tumia kipindi{% else %}Apply period{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body py-3">
+        <form method="post" action="/mauzo/waiter_service_report?{{ query_base }}" class="form-row align-items-end">
+          {% csrf_token %}
+          <input type="hidden" name="save_cutover" value="1">
+          <div class="col-md-4 mb-2">
+            <label class="small mb-1" for="waiter_service_cutover">
+              {% if useri.langSet == 0 %}Saa ya kuanza siku ya huduma{% else %}Service-day start time{% endif %}
+            </label>
+            <input type="time" class="form-control form-control-sm" id="waiter_service_cutover" name="waiter_service_cutover" value="{{ waiter_service_cutover }}" {% if not can_edit_cutover %}disabled{% endif %}>
+          </div>
+          {% if can_edit_cutover %}
+          <div class="col-md-3 mb-2">
+            <button type="submit" class="btn btn-sm btn-outline-primary btn-block">
+              {% if useri.langSet == 0 %}Hifadhi saa{% else %}Save time{% endif %}
+            </button>
+          </div>
+          {% endif %}
+          <div class="col-12">
+            <div class="small text-muted">
+              {% if shift_grouping %}
+                {% if useri.langSet == 0 %}
+                  Zamu zilizofunguliwa zinaongoza: oda kati ya 14:00 na 02:30 zinahesabiwa kwenye tarehe zamu ilipoanza.
+                  Oda nje ya zamu zinafuata saa ya kuanza siku ya huduma.
+                {% else %}
+                  Opened shifts take priority: orders from 14:00 to 02:30 count on the date the shift started.
+                  Orders outside a shift use the service-day start time.
+                {% endif %}
+              {% else %}
+                {% if useri.langSet == 0 %}
+                  Weka 00:00 kwa zamu ya mchana (siku ya kalenda). Kwa usiku weka muda wa kufungwa, mfano 05:00, ili oda za 02:30 zihesabiwe kwenye siku iliyopita.
+                {% else %}
+                  Use 00:00 for daytime shifts (calendar day). For overnight work set closing time, e.g. 05:00, so 02:30 orders count on the previous service day.
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <p class="mb-3">
+      {% if useri.langSet == 0 %}Kipindi cha huduma{% else %}Service period{% endif %}:
+      <strong>{{ period_start|date:"d M Y" }}{% if period_start != period_end %} – {{ period_end|date:"d M Y" }}{% endif %}</strong>
+    </p>
+
+    <div class="row mb-3">
+      <div class="col-md-4 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}</div>
+          <div class="h4 mb-0">{{ report_totals.waiters|intcomma }}</div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</div>
+          <div class="h4 mb-0">{{ report_totals.orders|intcomma }}</div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</div>
+          <div class="h4 mb-0">{{ duka.currencii }} {{ report_totals.amount|floatformat:0|intcomma }}</div>
+        </div>
+      </div>
+    </div>
+
+    {% if selected_waiter_id and selected_waiter %}
+    <div class="mb-3">
+      <a href="/mauzo/waiter_service_report?{{ query_base }}" class="btn btn-outline-secondary btn-sm">
+        &larr; {% if useri.langSet == 0 %}Orodha ya wahudumu{% else %}Waiter list{% endif %}
+      </a>
+    </div>
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header">
+        <strong>{{ selected_waiter.waiter_name|title }}</strong>
+        <span class="small text-muted">
+          {{ selected_waiter.orders_count|intcomma }}
+          {% if useri.langSet == 0 %}oda{% else %}orders{% endif %}
+          · {{ duka.currencii }} {{ selected_waiter.total_amount|floatformat:0|intcomma }}
+        </span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Order{% endif %}</th>
+              <th class="text-left">{% if useri.langSet == 0 %}Siku ya huduma{% else %}Service day{% endif %}</th>
+              <th class="text-left">{% if useri.langSet == 0 %}Muda halisi{% else %}Actual time{% endif %}</th>
+              <th class="text-left d-none d-md-table-cell">{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}</th>
+              <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
+              <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for od in selected_orders %}
+            <tr>
+              <td>{{ od.code }}</td>
+              <td>{{ od.service_date|date:"d/m/Y" }}</td>
+              <td>
+                <script>document.write(moment('{{ od.event_at|date:"r" }}').format('DD/MM/YYYY HH:mm'));</script>
+              </td>
+              <td class="d-none d-md-table-cell">{{ od.table }} / {{ od.place }}</td>
+              <td>
+                <button type="button" class="btn btn-link p-0 waiter-items-open" data-order="{{ od.id }}" data-waiter="{{ selected_waiter_id }}">
+                  {{ od.items_qty|floatformat:2|intcomma }}
+                </button>
+              </td>
+              <td>{{ duka.currencii }} {{ od.amount|floatformat:0|intcomma }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">
+                {% if useri.langSet == 0 %}Hakuna oda katika kipindi hiki.{% else %}No orders in this period.{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body p-0">
+        {% if report_rows %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th class="text-left">#</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Mhudumu{% else %}Waiter{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Kuanza – Kumaliza{% else %}First – Last{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in report_rows %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                  <a href="/mauzo/waiter_service_report?{{ query_base }}&waiter={{ row.waiter_id }}">{{ row.waiter_name|title }}</a>
+                  {% if row.overnight %}
+                  <span class="badge badge-info ml-1">{% if useri.langSet == 0 %}Usiku{% else %}Overnight{% endif %}</span>
+                  {% endif %}
+                  <div class="small text-muted">{{ row.cheo }}</div>
+                </td>
+                <td>{{ row.orders_count|intcomma }}</td>
+                <td>
+                  <button type="button" class="btn btn-link p-0 waiter-items-open" data-waiter="{{ row.waiter_id }}">
+                    {{ row.items_qty|floatformat:2|intcomma }}
+                  </button>
+                </td>
+                <td>{{ duka.currencii }} {{ row.total_amount|floatformat:0|intcomma }}</td>
+                <td class="small">
+                  <script>document.write(moment('{{ row.first_at|date:"r" }}').format('DD/MM HH:mm'));</script>
+                  –
+                  <script>document.write(moment('{{ row.last_at|date:"r" }}').format('DD/MM HH:mm'));</script>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+          {% if useri.langSet == 0 %}Hakuna oda za wahudumu katika kipindi hiki.{% else %}There are no waiter orders in this period.{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if period != 'day' and day_rows %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header">
+        <strong>{% if useri.langSet == 0 %}Kwa siku ya huduma{% else %}By service day{% endif %}</strong>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th class="text-left">{% if useri.langSet == 0 %}Siku ya huduma{% else %}Service day{% endif %}</th>
+              <th class="text-left">{% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}</th>
+              <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</th>
+              <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
+              <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for day in day_rows %}
+            <tr>
+              <td>
+                <a href="/mauzo/waiter_service_report?period=custom&from={{ day.service_date|date:'Y-m-d' }}&to={{ day.service_date|date:'Y-m-d' }}">
+                  {{ day.service_date|date:"d M Y" }}
+                </a>
+              </td>
+              <td>{{ day.waiters_count|intcomma }}</td>
+              <td>{{ day.orders_count|intcomma }}</td>
+              <td>
+                <button type="button" class="btn btn-link p-0 waiter-items-open" data-day="{{ day.service_date|date:'Y-m-d' }}">
+                  {{ day.items_qty|floatformat:2|intcomma }}
+                </button>
+              </td>
+              <td>{{ duka.currencii }} {{ day.total_amount|floatformat:0|intcomma }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade" id="waiterServiceItemsModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title" id="waiterServiceItemsTitle">
+          {% if useri.langSet == 0 %}Bidhaa zilizohudumiwa{% else %}Served items{% endif %}
+        </h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="small text-muted mb-2" id="waiterServiceItemsMeta"></div>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered table-striped mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th class="text-left">{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Vipimo{% else %}Unit{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody id="waiterServiceItemsBody">
+              <tr><td colspan="4" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Inapakia...{% else %}Loading...{% endif %}</td></tr>
+            </tbody>
+            <tfoot>
+              <tr class="font-weight-bold">
+                <td colspan="2">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
+                <td id="waiterServiceItemsQtyTotal">0</td>
+                <td id="waiterServiceItemsAmountTotal">0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var period = '{{ period }}';
+  var fromDate = '{{ custom_from }}';
+  var toDate = '{{ custom_to }}';
+  var currency = '{{ duka.currencii }}';
+  var loadingText = '{% if useri.langSet == 0 %}Inapakia...{% else %}Loading...{% endif %}';
+  var emptyText = '{% if useri.langSet == 0 %}Hakuna bidhaa.{% else %}No items found.{% endif %}';
+  var errorText = '{% if useri.langSet == 0 %}Imeshindikana kupakia.{% else %}Failed to load.{% endif %}';
+  var titleBase = '{% if useri.langSet == 0 %}Bidhaa zilizohudumiwa{% else %}Served items{% endif %}';
+
+  function money(n) {
+    var num = Number(n || 0);
+    return (currency ? currency + ' ' : '') + num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+
+  function qty(n) {
+    return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+
+  $(document).on('click', '.waiter-items-open', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var btn = this;
+      var waiter = btn.getAttribute('data-waiter') || '';
+      var day = btn.getAttribute('data-day') || '';
+      var order = btn.getAttribute('data-order') || '';
+      var url = '/mauzo/waiter_service_report_items?period=' + encodeURIComponent(period);
+      if (period === 'custom') {
+        url += '&from=' + encodeURIComponent(fromDate) + '&to=' + encodeURIComponent(toDate);
+      }
+      if (waiter) url += '&waiter=' + encodeURIComponent(waiter);
+      if (day) url += '&day=' + encodeURIComponent(day);
+      if (order) url += '&order=' + encodeURIComponent(order);
+
+      document.getElementById('waiterServiceItemsTitle').textContent = titleBase;
+      document.getElementById('waiterServiceItemsMeta').textContent = '';
+      document.getElementById('waiterServiceItemsBody').innerHTML = '<tr><td colspan="4" class="text-muted text-center py-3">' + loadingText + '</td></tr>';
+      document.getElementById('waiterServiceItemsQtyTotal').textContent = '0';
+      document.getElementById('waiterServiceItemsAmountTotal').textContent = money(0);
+      $('#waiterServiceItemsModal').appendTo('body').modal('show');
+
+      fetch(url).then(function (res) { return res.json(); }).then(function (data) {
+        if (!data || !data.success) {
+          document.getElementById('waiterServiceItemsBody').innerHTML = '<tr><td colspan="4" class="text-muted text-center py-3">' + errorText + '</td></tr>';
+          return;
+        }
+        if (data.title) {
+          document.getElementById('waiterServiceItemsTitle').textContent = titleBase + ' — ' + data.title;
+        }
+        var rows = data.rows || [];
+        if (!rows.length) {
+          document.getElementById('waiterServiceItemsBody').innerHTML = '<tr><td colspan="4" class="text-muted text-center py-3">' + emptyText + '</td></tr>';
+        } else {
+          var html = '';
+          rows.forEach(function (row) {
+            html += '<tr><td>' + (row.item_name || '-') + '</td><td>' + (row.units || '-') + '</td><td>' + qty(row.qty) + '</td><td>' + money(row.amount) + '</td></tr>';
+          });
+          document.getElementById('waiterServiceItemsBody').innerHTML = html;
+        }
+        var totals = data.totals || {};
+        document.getElementById('waiterServiceItemsQtyTotal').textContent = qty(totals.qty);
+        document.getElementById('waiterServiceItemsAmountTotal').textContent = money(totals.amount);
+      }).catch(function () {
+        document.getElementById('waiterServiceItemsBody').innerHTML = '<tr><td colspan="4" class="text-muted text-center py-3">' + errorText + '</td></tr>';
+      });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,11 @@
+<div class="btn-group btn-group-sm" role="group">
+  <a href="/mauzo/waiter_orders_summary" class="btn {% if waiter_tab == 'orders' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    {% if useri.langSet == 0 %}Oda za Wahudumu{% else %}Waiter Orders{% endif %}
+  </a>
+  <a href="/mauzo/waiter_clearing_list" class="btn {% if waiter_tab == 'clearing' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    {% if useri.langSet == 0 %}Historia ya Malipo{% else %}Clearing Records{% endif %}
+  </a>
+  <a href="/mauzo/waiter_service_report" class="btn {% if waiter_tab == 'report' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    {% if useri.langSet == 0 %}Ripoti ya Huduma{% else %}Service Report{% endif %}
+  </a>
+</div>

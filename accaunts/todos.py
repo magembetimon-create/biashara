@@ -1,6 +1,6 @@
 from management.models import Notifications,ainaMama,ainaBibi, UserExtend,Zones,Nchi,EmployeeAttachments,Kanda,Workers, customer_area, customer_in_cell,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji,ShiftSession,ShiftAssignment,PhoneMailConfirm
 from purchase.guest_compound_utils import count_compound_guest_orders, shop_has_compound_positions
-from accaunts.notification_hub import hub_approval_counts
+from accaunts.notification_hub import branch_notification_count, hub_approval_counts
 from django.utils import timezone
 from django.db.models import Q,F
 from datetime import date
@@ -225,6 +225,8 @@ class Todos:
             'shift_operation_block_reason_swa':'',
             'shift_operation_block_reason_eng':'',
             'hub_pending': 0,
+            'matawi_notice_total': 0,
+            'current_notice_count': 0,
       }
 
   def todoF(self):  
@@ -246,9 +248,25 @@ class Todos:
           duka = dukap.Interprise
 
         huduma = HudumaNyingine.objects.filter(Interprise=duka.id)
-        matawi = InterprisePermissions.objects.filter(user=user.id,Interprise__owner=duka.owner)
+        matawi = InterprisePermissions.objects.filter(user=user.id,Interprise__owner=duka.owner).select_related(
+          'Interprise__mtaa__kata__wilaya__mkoa__kanda__nchi',
+        )
         if p.exists():
           matawi = matawi.exclude(pk=dukap.id)
+        matawi_notice_total = 0
+        for ac in matawi:
+          try:
+            n = branch_notification_count(ac.Interprise, ac, user, used)
+          except Exception:
+            n = 0
+          ac.notice_count = n
+          matawi_notice_total += n
+        current_notice_count = 0
+        if duka and getattr(duka, 'Interprise', False):
+          try:
+            current_notice_count = branch_notification_count(duka, dukap, user, used)
+          except Exception:
+            current_notice_count = 0
         Puorder = manunuzi.objects.filter(Interprise__in=[duka.id,pent.id],order=True)
        
         ukomo = duka.Interprise and (duka.usage > 0 or duka.marketing > 0) and duka.bill_tobePaid < date.today()
@@ -327,6 +345,8 @@ class Todos:
         'compound_positions_enabled': compound_positions_enabled,
         'compound_orders_count': compound_orders_count,
         'hub_pending': hub_pending,
+        'matawi_notice_total': matawi_notice_total,
+        'current_notice_count': current_notice_count,
         }
         todo.update(shift_data)
 
