@@ -17,22 +17,55 @@
           {% endif %}
         </div>
       </div>
-      <div class="mt-2 mt-md-0">
+      <div class="mt-2 mt-md-0 d-flex align-items-center flex-wrap" style="gap:6px;">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#waiterServicePrintModal">
+          {% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}
+        </button>
         {% include 'includes/waiter_manager_tabs.html' with waiter_tab='report' %}
       </div>
     </div>
 
+    {% if counter_branches|length > 1 %}
     <div class="mb-3">
-      <a class="btn btn-sm {% if period == 'day' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=day">
+      <label class="small text-muted mb-1 d-block">
+        {% if useri.langSet == 0 %}Counter / tawi{% else %}Counter / branch{% endif %}
+      </label>
+      <div class="btn-group btn-group-sm flex-wrap">
+        <a class="btn {% if scope == 'current' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period={{ period }}{% if period == 'custom' %}&from={{ custom_from }}&to={{ custom_to }}{% endif %}">
+          {{ duka.name }}
+        </a>
+        {% for br in counter_branches %}
+          {% if br.id != duka.id %}
+          <a class="btn {% if scope == 'branch' and scope_branch_id == br.id %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period={{ period }}&branch={{ br.id }}{% if period == 'custom' %}&from={{ custom_from }}&to={{ custom_to }}{% endif %}">
+            {{ br.name }}
+          </a>
+          {% endif %}
+        {% endfor %}
+        <a class="btn {% if scope == 'all' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period={{ period }}&scope=all{% if period == 'custom' %}&from={{ custom_from }}&to={{ custom_to }}{% endif %}">
+          {% if useri.langSet == 0 %}Counter zote{% else %}All counters{% endif %}
+        </a>
+      </div>
+      <div class="small text-muted mt-1">
+        {% if useri.langSet == 0 %}
+          Wahudumu wale wale wanaweza kuhudumia counter tofauti (vinywaji, jikoni, pompe). Chagua counter moja au zote.
+        {% else %}
+          The same waiters can serve different counters (drinks, kitchen, spirits). Choose one counter or all.
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="mb-3">
+      <a class="btn btn-sm {% if period == 'day' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=day{{ scope_query }}">
         {% if useri.langSet == 0 %}Siku{% else %}Day{% endif %}
       </a>
-      <a class="btn btn-sm {% if period == 'week' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=week">
+      <a class="btn btn-sm {% if period == 'week' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=week{{ scope_query }}">
         {% if useri.langSet == 0 %}Wiki{% else %}Week{% endif %}
       </a>
-      <a class="btn btn-sm {% if period == 'month' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=month">
+      <a class="btn btn-sm {% if period == 'month' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=month{{ scope_query }}">
         {% if useri.langSet == 0 %}Mwezi{% else %}Month{% endif %}
       </a>
-      <a class="btn btn-sm {% if period == 'year' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=year">
+      <a class="btn btn-sm {% if period == 'year' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/mauzo/waiter_service_report?period=year{{ scope_query }}">
         {% if useri.langSet == 0 %}Mwaka{% else %}Year{% endif %}
       </a>
       <button type="button" class="btn btn-sm {% if period == 'custom' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-toggle="collapse" data-target="#waiterServiceCustomDates">
@@ -41,8 +74,10 @@
     </div>
 
     <div class="collapse{% if period == 'custom' %} show{% endif %} mb-3" id="waiterServiceCustomDates">
-      <form method="get" class="form-row align-items-end">
+        <form method="get" class="form-row align-items-end">
         <input type="hidden" name="period" value="custom">
+        {% if scope == 'all' %}<input type="hidden" name="scope" value="all">{% endif %}
+        {% if scope == 'branch' and scope_branch_id %}<input type="hidden" name="branch" value="{{ scope_branch_id }}">{% endif %}
         <div class="col-md-4 mb-2">
           <label class="small mb-1">{% if useri.langSet == 0 %}Kuanzia{% else %}From{% endif %}</label>
           <input type="date" name="from" class="form-control form-control-sm" value="{{ custom_from }}" required>
@@ -103,6 +138,9 @@
     <p class="mb-3">
       {% if useri.langSet == 0 %}Kipindi cha huduma{% else %}Service period{% endif %}:
       <strong>{{ period_start|date:"d M Y" }}{% if period_start != period_end %} – {{ period_end|date:"d M Y" }}{% endif %}</strong>
+      {% if selected_branch_label %}
+      · {{ selected_branch_label }}
+      {% endif %}
     </p>
 
     <div class="row mb-3">
@@ -126,7 +164,7 @@
       </div>
     </div>
 
-    {% if selected_waiter_id and selected_waiter %}
+    {% if selected_waiter %}
     <div class="mb-3">
       <a href="/mauzo/waiter_service_report?{{ query_base }}" class="btn btn-outline-secondary btn-sm">
         &larr; {% if useri.langSet == 0 %}Orodha ya wahudumu{% else %}Waiter list{% endif %}
@@ -139,6 +177,7 @@
           {{ selected_waiter.orders_count|intcomma }}
           {% if useri.langSet == 0 %}oda{% else %}orders{% endif %}
           · {{ duka.currencii }} {{ selected_waiter.total_amount|floatformat:0|intcomma }}
+          {% if selected_waiter.branch_label %} · {{ selected_waiter.branch_label }}{% endif %}
         </span>
       </div>
       <div class="table-responsive">
@@ -146,6 +185,9 @@
           <thead class="thead-light">
             <tr>
               <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Order{% endif %}</th>
+              {% if show_branch_col %}
+              <th class="text-left">{% if useri.langSet == 0 %}Counter{% else %}Counter{% endif %}</th>
+              {% endif %}
               <th class="text-left">{% if useri.langSet == 0 %}Siku ya huduma{% else %}Service day{% endif %}</th>
               <th class="text-left">{% if useri.langSet == 0 %}Muda halisi{% else %}Actual time{% endif %}</th>
               <th class="text-left d-none d-md-table-cell">{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}</th>
@@ -157,13 +199,16 @@
             {% for od in selected_orders %}
             <tr>
               <td>{{ od.code }}</td>
+              {% if show_branch_col %}
+              <td>{{ od.branch_name }}</td>
+              {% endif %}
               <td>{{ od.service_date|date:"d/m/Y" }}</td>
               <td>
                 <script>document.write(moment('{{ od.event_at|date:"r" }}').format('DD/MM/YYYY HH:mm'));</script>
               </td>
               <td class="d-none d-md-table-cell">{{ od.table }} / {{ od.place }}</td>
               <td>
-                <button type="button" class="btn btn-link p-0 waiter-items-open" data-order="{{ od.id }}" data-waiter="{{ selected_waiter_id }}">
+                <button type="button" class="btn btn-link p-0 waiter-items-open" data-order="{{ od.id }}" data-person="{{ selected_person_id }}" data-waiter="{{ selected_waiter_id }}">
                   {{ od.items_qty|floatformat:2|intcomma }}
                 </button>
               </td>
@@ -171,7 +216,7 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="6" class="text-center text-muted py-4">
+              <td colspan="{% if show_branch_col %}7{% else %}6{% endif %}" class="text-center text-muted py-4">
                 {% if useri.langSet == 0 %}Hakuna oda katika kipindi hiki.{% else %}No orders in this period.{% endif %}
               </td>
             </tr>
@@ -190,6 +235,9 @@
               <tr>
                 <th class="text-left">#</th>
                 <th class="text-left">{% if useri.langSet == 0 %}Mhudumu{% else %}Waiter{% endif %}</th>
+                {% if show_branch_col %}
+                <th class="text-left">{% if useri.langSet == 0 %}Counter{% else %}Counter{% endif %}</th>
+                {% endif %}
                 <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</th>
                 <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
                 <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
@@ -201,15 +249,18 @@
               <tr>
                 <td>{{ forloop.counter }}</td>
                 <td>
-                  <a href="/mauzo/waiter_service_report?{{ query_base }}&waiter={{ row.waiter_id }}">{{ row.waiter_name|title }}</a>
+                  <a href="/mauzo/waiter_service_report?{{ query_base }}{% if row.person_id %}&person={{ row.person_id }}{% else %}&waiter={{ row.waiter_id }}{% endif %}">{{ row.waiter_name|title }}</a>
                   {% if row.overnight %}
                   <span class="badge badge-info ml-1">{% if useri.langSet == 0 %}Usiku{% else %}Overnight{% endif %}</span>
                   {% endif %}
                   <div class="small text-muted">{{ row.cheo }}</div>
                 </td>
+                {% if show_branch_col %}
+                <td class="small">{{ row.branch_label }}</td>
+                {% endif %}
                 <td>{{ row.orders_count|intcomma }}</td>
                 <td>
-                  <button type="button" class="btn btn-link p-0 waiter-items-open" data-waiter="{{ row.waiter_id }}">
+                  <button type="button" class="btn btn-link p-0 waiter-items-open" data-person="{{ row.person_id }}" data-waiter="{{ row.waiter_id }}">
                     {{ row.items_qty|floatformat:2|intcomma }}
                   </button>
                 </td>
@@ -252,7 +303,7 @@
             {% for day in day_rows %}
             <tr>
               <td>
-                <a href="/mauzo/waiter_service_report?period=custom&from={{ day.service_date|date:'Y-m-d' }}&to={{ day.service_date|date:'Y-m-d' }}">
+                <a href="/mauzo/waiter_service_report?period=custom&from={{ day.service_date|date:'Y-m-d' }}&to={{ day.service_date|date:'Y-m-d' }}{{ scope_query }}">
                   {{ day.service_date|date:"d M Y" }}
                 </a>
               </td>
@@ -315,11 +366,37 @@
   </div>
 </div>
 
+<div class="modal fade" id="waiterServicePrintModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title">{% if useri.langSet == 0 %}Chapisha ripoti{% else %}Print report{% endif %}</h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label class="small mb-1">{% if useri.langSet == 0 %}Aina ya karatasi{% else %}Paper size{% endif %}</label>
+        <select id="waiterServicePrintPaper" class="form-control form-control-sm">
+          <option value="large">{% if useri.langSet == 0 %}Karatasi Kubwa (A4){% else %}Large Paper (A4){% endif %}</option>
+          <option value="thermal58">{% if useri.langSet == 0 %}Thermal 58mm{% else %}Thermal 58mm{% endif %}</option>
+          <option value="thermal80">{% if useri.langSet == 0 %}POS 80mm{% else %}POS 80mm{% endif %}</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{% if useri.langSet == 0 %}Ghairi{% else %}Cancel{% endif %}</button>
+        <button type="button" class="btn btn-primary btn-sm" id="waiterServicePrintGo">{% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 (function () {
   var period = '{{ period }}';
   var fromDate = '{{ custom_from }}';
   var toDate = '{{ custom_to }}';
+  var scopeQuery = '{{ scope_query|escapejs }}';
   var currency = '{{ duka.currencii }}';
   var loadingText = '{% if useri.langSet == 0 %}Inapakia...{% else %}Loading...{% endif %}';
   var emptyText = '{% if useri.langSet == 0 %}Hakuna bidhaa.{% else %}No items found.{% endif %}';
@@ -340,13 +417,15 @@
       e.stopPropagation();
       var btn = this;
       var waiter = btn.getAttribute('data-waiter') || '';
+      var person = btn.getAttribute('data-person') || '';
       var day = btn.getAttribute('data-day') || '';
       var order = btn.getAttribute('data-order') || '';
-      var url = '/mauzo/waiter_service_report_items?period=' + encodeURIComponent(period);
+      var url = '/mauzo/waiter_service_report_items?period=' + encodeURIComponent(period) + scopeQuery;
       if (period === 'custom') {
         url += '&from=' + encodeURIComponent(fromDate) + '&to=' + encodeURIComponent(toDate);
       }
-      if (waiter) url += '&waiter=' + encodeURIComponent(waiter);
+      if (person && person !== '0') url += '&person=' + encodeURIComponent(person);
+      else if (waiter) url += '&waiter=' + encodeURIComponent(waiter);
       if (day) url += '&day=' + encodeURIComponent(day);
       if (order) url += '&order=' + encodeURIComponent(order);
 
@@ -381,6 +460,14 @@
       }).catch(function () {
         document.getElementById('waiterServiceItemsBody').innerHTML = '<tr><td colspan="4" class="text-muted text-center py-3">' + errorText + '</td></tr>';
       });
+  });
+
+  $('#waiterServicePrintGo').on('click', function () {
+    var paper = document.getElementById('waiterServicePrintPaper').value || 'large';
+    var url = '/mauzo/waiter_service_report_print?' + '{{ query_base|escapejs }}' + '&paper=' + encodeURIComponent(paper);
+    {% if selected_person_id %}url += '&person={{ selected_person_id }}';{% elif selected_waiter_id %}url += '&waiter={{ selected_waiter_id }}';{% endif %}
+    window.open(url, '_blank');
+    $('#waiterServicePrintModal').modal('hide');
   });
 })();
 </script>

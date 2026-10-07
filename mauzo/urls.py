@@ -26,6 +26,7 @@ urlpatterns=[
     path('waiter_clearing_list',views.waiter_clearing_list, name='waiter_clearing_list'),
     path('waiter_service_report',views.waiter_service_report, name='waiter_service_report'),
     path('waiter_service_report_items',views.waiter_service_report_items, name='waiter_service_report_items'),
+    path('waiter_service_report_print',views.waiter_service_report_print, name='waiter_service_report_print'),
     path('waiter_clear_order',views.waiter_clear_order, name='waiter_clear_order'),
     path('waiter_print_order',views.waiter_print_order, name='waiter_print_order'),
     path('waiter_Invoprint',views.waiter_Invoprint, name='waiter_Invoprint'),

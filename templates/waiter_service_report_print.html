@@ -1,0 +1,146 @@
+{% load humanize %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="{% if useri.langSet == 0 %}sw{% else %}en{% endif %}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if useri.langSet == 0 %}Ripoti ya Huduma ya Wahudumu{% else %}Waiter Service Report{% endif %}</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #111; margin: 0; background: #fff; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .actions { margin-bottom: 12px; }
+    .actions button, .actions a {
+      display: inline-block; padding: 6px 10px; margin-right: 6px; border: 1px solid #0d6efd;
+      background: #0d6efd; color: #fff; border-radius: 4px; text-decoration: none; font-size: 12px; cursor: pointer;
+    }
+    .actions a.alt { background: #fff; color: #0d6efd; }
+    h4 { margin: 0 0 6px; }
+    .meta { color: #444; margin-bottom: 14px; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 18px; }
+    th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+    th { background: #f3f3f3; }
+    tfoot td { font-weight: bold; background: #fafafa; }
+    .summary { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .summary div { border: 1px solid #ddd; padding: 8px 12px; min-width: 140px; }
+    .label { color: #666; font-size: 11px; }
+    body.paper-thermal58, body.paper-thermal, body.paper-thermal80 { font-family: monospace; font-size: 11px; }
+    body.paper-thermal58 .wrap, body.paper-thermal .wrap { max-width: 58mm; padding: 6px; }
+    body.paper-thermal80 .wrap { max-width: 72mm; padding: 8px; }
+    @media print {
+      .actions { display: none; }
+      .wrap { max-width: 100%; padding: 0; }
+    }
+  </style>
+</head>
+<body class="paper-{{ paper_size|default:'large' }}">
+  <div class="wrap">
+    <div class="actions">
+      <a class="alt" href="javascript:window.close();">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</a>
+      <button type="button" onclick="window.print()">{% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}</button>
+    </div>
+    <h4>{{ duka.name }}</h4>
+    <div class="meta">
+      {% if useri.langSet == 0 %}Ripoti ya Huduma ya Wahudumu{% else %}Waiter Service Report{% endif %}
+      · {{ period_start|date:"d M Y" }}{% if period_start != period_end %} – {{ period_end|date:"d M Y" }}{% endif %}
+      {% if selected_branch_label %} · {{ selected_branch_label }}{% endif %}
+    </div>
+    <div class="summary">
+      <div><div class="label">{% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}</div><strong>{{ report_totals.waiters|intcomma }}</strong></div>
+      <div><div class="label">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</div><strong>{{ report_totals.orders|intcomma }}</strong></div>
+      <div><div class="label">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</div><strong>{{ report_totals.items_qty|floatformat:2|intcomma }}</strong></div>
+      <div><div class="label">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</div><strong>{{ duka.currencii }} {{ report_totals.amount|floatformat:0|intcomma }}</strong></div>
+    </div>
+
+    {% if selected_waiter %}
+    <h4>{{ selected_waiter.waiter_name|title }}</h4>
+    {% if selected_waiter.branch_label %}<div class="meta">{{ selected_waiter.branch_label }}</div>{% endif %}
+    <table>
+      <thead>
+        <tr>
+          <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Order{% endif %}</th>
+          {% if show_branch_col %}<th class="text-left">{% if useri.langSet == 0 %}Counter{% else %}Counter{% endif %}</th>{% endif %}
+          <th class="text-left">{% if useri.langSet == 0 %}Siku{% else %}Day{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for od in selected_orders %}
+        <tr>
+          <td>{{ od.code }}</td>
+          {% if show_branch_col %}<td>{{ od.branch_name }}</td>{% endif %}
+          <td>{{ od.service_date|date:"d/m/Y" }}</td>
+          <td>{{ od.items_qty|floatformat:2|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ od.amount|floatformat:0|intcomma }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">{% if useri.langSet == 0 %}Hakuna oda.{% else %}No orders.{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <table>
+      <thead>
+        <tr>
+          <th class="text-left">#</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Mhudumu{% else %}Waiter{% endif %}</th>
+          {% if show_branch_col %}<th class="text-left">{% if useri.langSet == 0 %}Counter{% else %}Counter{% endif %}</th>{% endif %}
+          <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report_rows %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ row.waiter_name|title }}</td>
+          {% if show_branch_col %}<td>{{ row.branch_label }}</td>{% endif %}
+          <td>{{ row.orders_count|intcomma }}</td>
+          <td>{{ row.items_qty|floatformat:2|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ row.total_amount|floatformat:0|intcomma }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">{% if useri.langSet == 0 %}Hakuna oda.{% else %}No orders.{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="{% if show_branch_col %}3{% else %}2{% endif %}">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
+          <td>{{ report_totals.orders|intcomma }}</td>
+          <td>{{ report_totals.items_qty|floatformat:2|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ report_totals.amount|floatformat:0|intcomma }}</td>
+        </tr>
+      </tfoot>
+    </table>
+    {% if period != 'day' and day_rows %}
+    <h4>{% if useri.langSet == 0 %}Kwa siku ya huduma{% else %}By service day{% endif %}</h4>
+    <table>
+      <thead>
+        <tr>
+          <th class="text-left">{% if useri.langSet == 0 %}Siku{% else %}Day{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for day in day_rows %}
+        <tr>
+          <td>{{ day.service_date|date:"d M Y" }}</td>
+          <td>{{ day.waiters_count|intcomma }}</td>
+          <td>{{ day.orders_count|intcomma }}</td>
+          <td>{{ day.items_qty|floatformat:2|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ day.total_amount|floatformat:0|intcomma }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% endif %}
+  </div>
+  <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 400); });</script>
+</body>
+</html>

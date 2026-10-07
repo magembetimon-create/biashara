@@ -4861,6 +4861,50 @@ def _waiter_shifts_covering(duka, range_start, range_end):
       )
 
 
+def _waiter_counter_branches(duka, cheo):
+      qs = sibling_interprises_qs(duka).filter(waiter_counter=True)
+      if not qs.exists() and duka and duka.waiter_counter:
+            return [duka]
+      if cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_check_up', False) or getattr(cheo, 'msaidizi', False)):
+            branches = list(qs)
+      else:
+            allowed_ids = set(assignable_branches_qs(cheo).filter(waiter_counter=True).values_list('id', flat=True))
+            branches = [b for b in qs if b.id in allowed_ids]
+      if duka and duka.id not in {b.id for b in branches} and duka.waiter_counter:
+            branches = [duka] + branches
+      return branches
+
+
+def _waiter_report_scope(request, duka, cheo):
+      available = _waiter_counter_branches(duka, cheo)
+      available_ids = {b.id for b in available}
+      scope = str(request.GET.get('scope', '') or '').strip().lower()
+      try:
+            branch_id = int(request.GET.get('branch', 0) or 0)
+      except Exception:
+            branch_id = 0
+      if scope == 'all' and len(available) > 1:
+            return available, 'all', 0
+      if branch_id and branch_id in available_ids:
+            return [b for b in available if b.id == branch_id], 'branch', branch_id
+      current = [b for b in available if b.id == duka.id] or [duka]
+      return current, 'current', duka.id
+
+
+def _waiter_scope_query(scope, branch_id):
+      if scope == 'all':
+            return '&scope=all'
+      if scope == 'branch' and branch_id:
+            return f'&branch={int(branch_id)}'
+      return ''
+
+
+def _waiter_person_map_key(waiter):
+      if waiter and waiter.user_id:
+            return ('user', int(waiter.user_id))
+      return ('perm', int(waiter.pk) if waiter else 0)
+
+
 def _waiter_service_date_for_event(event_at, shifts, cutover):
       local_at = dj_timezone.localtime(event_at)
       matched = None
@@ -4907,16 +4951,32 @@ def _waiter_item_buckets_from_lines(lines):
       }
 
 
-def _waiter_service_matched_sales(duka, period_meta):
-      cutover = _waiter_cutover_time(duka)
+def _waiter_service_matched_sales(dukas, period_meta):
+      dukas = [d for d in (dukas or []) if d]
+      if not dukas:
+            return []
       start = period_meta['start']
       end = period_meta['end']
-      pad_start = _waiter_aware_local(start, cutover) - timedelta(days=1)
-      pad_end = _waiter_aware_local(end + timedelta(days=1), cutover) + timedelta(hours=14)
-      shifts = _waiter_shifts_covering(duka, pad_start, pad_end)
+      cutovers = [_waiter_cutover_time(d) for d in dukas]
+      min_cut = min(cutovers)
+      max_cut = max(cutovers)
+      pad_start = _waiter_aware_local(start, min_cut) - timedelta(days=1)
+      pad_end = _waiter_aware_local(end + timedelta(days=1), max_cut) + timedelta(hours=14)
+
+      shifts_by_duka = {d.id: [] for d in dukas}
+      enabled_ids = [d.id for d in dukas if getattr(d, 'shift_management_enabled', False)]
+      if enabled_ids:
+            shift_qs = ShiftSession.objects.filter(
+                  Interprise_id__in=enabled_ids,
+                  starts_at__lte=pad_end,
+            ).filter(
+                  Q(ends_at__isnull=True) | Q(ends_at__gte=pad_start)
+            ).order_by('starts_at')
+            for shift in shift_qs:
+                  shifts_by_duka.setdefault(shift.Interprise_id, []).append(shift)
 
       qs = mauzoni.objects.filter(
-            Interprise=duka,
+            Interprise__in=dukas,
             waiter_order__isnull=False,
             full_returned=False,
             ignore=False,
@@ -4925,6 +4985,7 @@ def _waiter_service_matched_sales(duka, period_meta):
             Q(Packed_at__gte=pad_start, Packed_at__lt=pad_end)
             | Q(Packed_at__isnull=True, tarehe__gte=pad_start, tarehe__lt=pad_end)
       ).select_related(
+            'Interprise',
             'waiter_order__fanyakazi',
             'waiter_order__user__user',
             'waiter_order__user_entp__Interprise',
@@ -4936,12 +4997,17 @@ def _waiter_service_matched_sales(duka, period_meta):
             event_at = _waiter_event_at(sale)
             if not event_at:
                   continue
+            branch = sale.Interprise
+            cutover = _waiter_cutover_time(branch)
+            shifts = shifts_by_duka.get(branch.id, [])
             service_date, shift_obj = _waiter_service_date_for_event(event_at, shifts, cutover)
             if service_date < start or service_date > end:
                   continue
             matched.append({
                   'sale': sale,
                   'waiter_id': sale.waiter_order_id,
+                  'branch_id': branch.id,
+                  'branch_name': str(branch.name or '').strip() or '-',
                   'service_date': service_date,
                   'shift_obj': shift_obj,
                   'event_at': dj_timezone.localtime(event_at),
@@ -4950,8 +5016,8 @@ def _waiter_service_matched_sales(duka, period_meta):
       return matched
 
 
-def _waiter_service_report_data(duka, period_meta, selected_waiter_id=0):
-      matched = _waiter_service_matched_sales(duka, period_meta)
+def _waiter_service_report_data(dukas, period_meta, selected_waiter_id=0, selected_person_id=0):
+      matched = _waiter_service_matched_sales(dukas, period_meta)
       sale_ids = [row['sale'].id for row in matched]
       qty_by_sale = {}
       lines = mauzoList.objects.filter(mauzo_id__in=sale_ids).select_related('produ__bidhaa') if sale_ids else []
@@ -4964,23 +5030,34 @@ def _waiter_service_report_data(duka, period_meta, selected_waiter_id=0):
       waiter_map = {}
       day_map = {}
       selected_orders = []
+      perm_user_cache = {}
+      if selected_waiter_id and not selected_person_id:
+            perm_user_cache[selected_waiter_id] = InterprisePermissions.objects.filter(
+                  pk=selected_waiter_id
+            ).values_list('user_id', flat=True).first()
 
       for row in matched:
             sale = row['sale']
-            waiter_id = row['waiter_id']
             waiter = sale.waiter_order
             amount = row['amount']
             local_at = row['event_at']
             service_date = row['service_date']
             items_qty = float(qty_by_sale.get(sale.id, 0) or 0)
+            kind, key = _waiter_person_map_key(waiter)
+            map_key = f'{kind}:{key}'
+            person_id = key if kind == 'user' else 0
 
-            bucket = waiter_map.get(waiter_id)
+            bucket = waiter_map.get(map_key)
             if not bucket:
                   bucket = {
-                        'waiter_id': waiter_id,
+                        'map_key': map_key,
+                        'person_id': person_id,
+                        'waiter_id': row['waiter_id'],
+                        'waiter_ids': set(),
                         'waiter_name': _waiter_person_name(waiter, 'Waiter'),
                         'waiter_code': '',
                         'cheo': str(getattr(waiter, 'cheo', '') or '').strip() or '-',
+                        'branch_names': [],
                         'orders_count': 0,
                         'items_qty': 0.0,
                         'total_amount': 0.0,
@@ -4992,8 +5069,11 @@ def _waiter_service_report_data(duka, period_meta, selected_waiter_id=0):
                         bucket['waiter_code'] = str(waiter.user_entp.Interprise.Intp_code or '').strip()
                   except Exception:
                         bucket['waiter_code'] = ''
-                  waiter_map[waiter_id] = bucket
+                  waiter_map[map_key] = bucket
 
+            bucket['waiter_ids'].add(row['waiter_id'])
+            if row['branch_name'] and row['branch_name'] not in bucket['branch_names']:
+                  bucket['branch_names'].append(row['branch_name'])
             bucket['orders_count'] += 1
             bucket['items_qty'] += items_qty
             bucket['total_amount'] += amount
@@ -5017,9 +5097,17 @@ def _waiter_service_report_data(duka, period_meta, selected_waiter_id=0):
             day_row['orders_count'] += 1
             day_row['items_qty'] += items_qty
             day_row['total_amount'] += amount
-            day_row['waiters'].add(waiter_id)
+            day_row['waiters'].add(map_key)
 
-            if selected_waiter_id and waiter_id == selected_waiter_id:
+            selected = False
+            if selected_person_id:
+                  selected = kind == 'user' and key == selected_person_id
+            elif selected_waiter_id:
+                  selected = row['waiter_id'] == selected_waiter_id
+                  if not selected and kind == 'user':
+                        selected = perm_user_cache.get(selected_waiter_id) == waiter.user_id
+
+            if selected:
                   table_name = '-'
                   place_name = '-'
                   try:
@@ -5036,12 +5124,16 @@ def _waiter_service_report_data(duka, period_meta, selected_waiter_id=0):
                         'items_qty': items_qty,
                         'table': table_name,
                         'place': place_name,
+                        'branch_name': row['branch_name'],
                         'event_at': local_at,
                         'service_date': service_date,
                         'shift_code': str(row['shift_obj'].code or row['shift_obj'].id) if row['shift_obj'] else '',
                   })
 
       rows = sorted(waiter_map.values(), key=lambda r: (-r['total_amount'], -r['orders_count'], r['waiter_name'].lower()))
+      for r in rows:
+            r['branch_label'] = ', '.join(r['branch_names'])
+            r['waiter_ids'] = list(r['waiter_ids'])
       day_rows = []
       for day_key in sorted(day_map.keys(), reverse=True):
             item = day_map[day_key]
@@ -5060,8 +5152,68 @@ def _waiter_service_report_data(duka, period_meta, selected_waiter_id=0):
             'amount': sum(r['total_amount'] for r in rows),
       }
       selected_orders.sort(key=lambda x: x['event_at'] or datetime.datetime.min, reverse=True)
-      selected_waiter = waiter_map.get(selected_waiter_id)
+      selected_waiter = None
+      if selected_person_id:
+            selected_waiter = next((r for r in rows if r.get('person_id') == selected_person_id), None)
+      elif selected_waiter_id:
+            selected_waiter = next((r for r in rows if selected_waiter_id in (r.get('waiter_ids') or []) or r.get('waiter_id') == selected_waiter_id), None)
       return rows, day_rows, totals, selected_orders, selected_waiter
+
+
+def _waiter_service_report_page_data(request, todo):
+      duka = todo.get('duka')
+      cheo = todo.get('cheo')
+      scoped, scope, branch_id = _waiter_report_scope(request, duka, cheo)
+      period_key = str(request.GET.get('period', 'day') or 'day').strip().lower()
+      custom_from = str(request.GET.get('from', '') or '').strip()
+      custom_to = str(request.GET.get('to', '') or '').strip()
+      period_meta = _waiter_service_period_meta(period_key, duka, custom_from, custom_to)
+      try:
+            selected_waiter_id = int(request.GET.get('waiter', 0) or 0)
+      except Exception:
+            selected_waiter_id = 0
+      try:
+            selected_person_id = int(request.GET.get('person', 0) or 0)
+      except Exception:
+            selected_person_id = 0
+      rows, day_rows, totals, selected_orders, selected_waiter = _waiter_service_report_data(
+            scoped, period_meta, selected_waiter_id, selected_person_id
+      )
+      if (selected_waiter_id or selected_person_id) and not selected_waiter:
+            selected_waiter_id = 0
+            selected_person_id = 0
+            selected_orders = []
+      scope_query = _waiter_scope_query(scope, branch_id)
+      query_base = f"period={period_meta['key']}{scope_query}"
+      if period_meta['key'] == 'custom':
+            query_base += f"&from={period_meta['start'].isoformat()}&to={period_meta['end'].isoformat()}"
+      selected_label = ''
+      if scope == 'all':
+            selected_label = 'All counters' if todo.get('useri') and getattr(todo.get('useri'), 'langSet', 1) != 0 else 'Counter zote'
+      elif scoped:
+            selected_label = scoped[0].name
+      return {
+            'scoped_branches': scoped,
+            'counter_branches': _waiter_counter_branches(duka, cheo),
+            'scope': scope,
+            'scope_branch_id': branch_id,
+            'scope_query': scope_query,
+            'show_branch_col': len(scoped) > 1,
+            'selected_branch_label': selected_label,
+            'period': period_meta['key'],
+            'period_start': period_meta['start'],
+            'period_end': period_meta['end'],
+            'custom_from': custom_from or (period_meta['start'].isoformat() if period_meta['key'] == 'custom' else ''),
+            'custom_to': custom_to or (period_meta['end'].isoformat() if period_meta['key'] == 'custom' else ''),
+            'report_rows': rows,
+            'day_rows': day_rows,
+            'report_totals': totals,
+            'selected_waiter_id': selected_waiter_id,
+            'selected_person_id': selected_person_id or (selected_waiter.person_id if selected_waiter else 0),
+            'selected_waiter': selected_waiter,
+            'selected_orders': selected_orders,
+            'query_base': query_base,
+      }
 
 
 @login_required(login_url='login')
@@ -5090,55 +5242,43 @@ def waiter_service_report(request):
             qs = request.GET.urlencode()
             return redirect('/mauzo/waiter_service_report' + (('?' + qs) if qs else ''))
 
-      period_key = str(request.GET.get('period', 'day') or 'day').strip().lower()
-      custom_from = str(request.GET.get('from', '') or '').strip()
-      custom_to = str(request.GET.get('to', '') or '').strip()
-      period_meta = _waiter_service_period_meta(period_key, duka, custom_from, custom_to)
-
-      try:
-            selected_waiter_id = int(request.GET.get('waiter', 0) or 0)
-      except Exception:
-            selected_waiter_id = 0
-
-      rows, day_rows, totals, selected_orders, selected_waiter = _waiter_service_report_data(
-            duka, period_meta, selected_waiter_id
-      )
-      if selected_waiter_id and not selected_waiter:
-            selected_waiter_id = 0
-            selected_orders = []
-
+      page = _waiter_service_report_page_data(request, todo)
       cutover = _waiter_cutover_time(duka)
-      query_base = f"period={period_meta['key']}"
-      if period_meta['key'] == 'custom':
-            query_base += f"&from={period_meta['start'].isoformat()}&to={period_meta['end'].isoformat()}"
-
+      todo.update(page)
       todo.update({
-            'period': period_meta['key'],
-            'period_start': period_meta['start'],
-            'period_end': period_meta['end'],
-            'custom_from': custom_from or (period_meta['start'].isoformat() if period_meta['key'] == 'custom' else ''),
-            'custom_to': custom_to or (period_meta['end'].isoformat() if period_meta['key'] == 'custom' else ''),
             'waiter_service_cutover': cutover.strftime('%H:%M'),
             'can_edit_cutover': can_edit_cutover,
             'shift_grouping': bool(getattr(duka, 'shift_management_enabled', False)),
-            'report_rows': rows,
-            'day_rows': day_rows,
-            'report_totals': totals,
-            'selected_waiter_id': selected_waiter_id,
-            'selected_waiter': selected_waiter,
-            'selected_orders': selected_orders,
-            'query_base': query_base,
       })
       return render(request, 'waiter_service_report.html', todo)
+
+
+@login_required(login_url='login')
+def waiter_service_report_print(request):
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+      if not duka or not duka.waiter_counter:
+            return redirect('/userdash')
+      page = _waiter_service_report_page_data(request, todo)
+      from mauzo.receipt_format import shift_paper_class
+      paper = str(request.GET.get('paper', 'large') or 'large').strip().lower()
+      todo.update(page)
+      todo.update({
+            'paper_size': shift_paper_class(paper),
+            'shift_grouping': bool(getattr(duka, 'shift_management_enabled', False)),
+      })
+      return render(request, 'waiter_service_report_print.html', todo)
 
 
 @login_required(login_url='login')
 def waiter_service_report_items(request):
       todo = newInvo_funct(request)
       duka = todo.get('duka')
+      cheo = todo.get('cheo')
       if not duka or not duka.waiter_counter:
             return JsonResponse({'success': False, 'msg': 'Waiter counter is disabled'})
 
+      scoped, _scope, _branch_id = _waiter_report_scope(request, duka, cheo)
       period_key = str(request.GET.get('period', 'day') or 'day').strip().lower()
       custom_from = str(request.GET.get('from', '') or '').strip()
       custom_to = str(request.GET.get('to', '') or '').strip()
@@ -5148,6 +5288,10 @@ def waiter_service_report_items(request):
             waiter_id = int(request.GET.get('waiter', 0) or 0)
       except Exception:
             waiter_id = 0
+      try:
+            person_id = int(request.GET.get('person', 0) or 0)
+      except Exception:
+            person_id = 0
       try:
             order_id = int(request.GET.get('order', 0) or 0)
       except Exception:
@@ -5160,11 +5304,15 @@ def waiter_service_report_items(request):
             except Exception:
                   service_day = None
 
-      matched = _waiter_service_matched_sales(duka, period_meta)
+      matched = _waiter_service_matched_sales(scoped, period_meta)
       sale_ids = []
       title = ''
       for row in matched:
-            if waiter_id and row['waiter_id'] != waiter_id:
+            waiter = row['sale'].waiter_order
+            kind, key = _waiter_person_map_key(waiter)
+            if person_id and not (kind == 'user' and key == person_id):
+                  continue
+            if waiter_id and not person_id and row['waiter_id'] != waiter_id:
                   continue
             if service_day and row['service_date'] != service_day:
                   continue
@@ -5173,8 +5321,8 @@ def waiter_service_report_items(request):
             sale_ids.append(row['sale'].id)
             if order_id:
                   title = str(row['sale'].code or '')
-            elif waiter_id and not title:
-                  title = _waiter_person_name(row['sale'].waiter_order, 'Waiter')
+            elif (person_id or waiter_id) and not title:
+                  title = _waiter_person_name(waiter, 'Waiter')
 
       if service_day and not order_id and not waiter_id:
             title = service_day.strftime('%d/%m/%Y')
