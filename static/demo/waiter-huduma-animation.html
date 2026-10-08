@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jinsi mfumo wa wahudumu unavyofanya kazi</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a2330;
+      --line: #2c3a4d;
+      --text: #e8eef6;
+      --muted: #9bb0c7;
+      --accent: #3d8bfd;
+      --ok: #2ec27e;
+      --night: #7c6cff;
+      --day: #f0b429;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: Segoe UI, Arial, sans-serif; }
+    .stage {
+      width: min(1120px, 96vw);
+      margin: 0 auto;
+      min-height: 100%;
+      padding: 28px 16px 40px;
+      display: flex;
+      flex-direction: column;
+    }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+    h1 { font-size: 22px; margin: 0; }
+    .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .controls button {
+      background: var(--card); color: var(--text); border: 1px solid var(--line);
+      border-radius: 8px; padding: 8px 12px; cursor: pointer; margin-left: 6px;
+    }
+    .controls button.primary { background: var(--accent); border-color: var(--accent); }
+    .scene {
+      flex: 1;
+      background: linear-gradient(180deg, #182231, #121820);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 28px;
+      min-height: 520px;
+      position: relative;
+      overflow: hidden;
+    }
+    .caption {
+      position: absolute; left: 28px; right: 28px; bottom: 22px;
+      background: rgba(15,20,25,.82); border: 1px solid var(--line);
+      border-radius: 12px; padding: 14px 16px; font-size: 17px; line-height: 1.4;
+    }
+    .progress { height: 4px; background: #243040; border-radius: 99px; margin: 14px 0 0; overflow: hidden; }
+    .bar { height: 100%; width: 0; background: var(--accent); transition: width .35s linear; }
+    .row { display: flex; gap: 16px; align-items: stretch; }
+    .card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+      flex: 1; transform: translateY(16px); opacity: 0; animation: in .5s ease forwards;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 15px; color: var(--muted); font-weight: 600; }
+    .pill { display: inline-block; padding: 3px 8px; border-radius: 99px; font-size: 11px; background: #24364d; }
+    .pill.ok { background: #1c4a36; color: #8de8ba; }
+    .pill.night { background: #322a6b; color: #c9c0ff; }
+    .person {
+      width: 64px; height: 64px; border-radius: 50%; background: #2b4d78; display: grid; place-items: center;
+      font-weight: 700; margin-bottom: 10px;
+    }
+    .path { display: flex; align-items: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+    .node {
+      background: #223044; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-width: 140px;
+      text-align: center; font-size: 13px;
+    }
+    .arrow { color: var(--accent); font-size: 22px; }
+    .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table th, .table td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    @keyframes in { to { transform: none; opacity: 1; } }
+    .hidden { display: none; }
+    .clock { font-size: 28px; font-weight: 700; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <header>
+      <div>
+        <h1>Mfumo wa wahudumu — uhuishaji mfupi</h1>
+        <div class="sub">Oda, zamu ya usiku/mchana, counter nyingi, ripoti na print</div>
+      </div>
+      <div class="controls">
+        <button id="prev">Nyuma</button>
+        <button id="play" class="primary">Cheza</button>
+        <button id="next">Mbele</button>
+      </div>
+    </header>
+    <div class="scene" id="scene"></div>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+  </div>
+  <script>
+    const scenes = [
+      {
+        html: `
+          <div class="row">
+            <div class="card">
+              <div class="person">MT</div>
+              <strong>Mhudumu</strong>
+              <div class="sub">Anachukua oda kwenye meza / counter</div>
+            </div>
+            <div class="card" style="animation-delay:.12s">
+              <h3>Oda</h3>
+              <div>FLYING FISH × 2</div>
+              <div>CHIPS × 1</div>
+              <div class="pill ok" style="margin-top:10px">Inaprint → stock inatoka</div>
+            </div>
+          </div>
+          <div class="path">
+            <div class="node">Meza 4</div><div class="arrow">→</div>
+            <div class="node">Oda ya mhudumu</div><div class="arrow">→</div>
+            <div class="node">Cashier / POS</div>
+          </div>`,
+        cap: '1. Mhudumu anaweka oda. Baada ya print, bidhaa zinahesabiwa kama zilizohudumiwa.'
+      },
+      {
+        html: `
+          <div class="row">
+            <div class="card">
+              <h3>Zamu ya mchana</h3>
+              <div class="clock">08:00 – 18:30</div>
+              <div class="sub">Tarehe moja ya kalenda = siku moja ya huduma</div>
+              <span class="pill" style="margin-top:10px;background:#4a3a12;color:#ffd37a">Mchana</span>
+            </div>
+            <div class="card" style="animation-delay:.12s">
+              <h3>Zamu ya usiku</h3>
+              <div class="clock">14:00 – 02:30</div>
+              <div class="sub">Tarehe mbili, lakini siku moja ya kazi</div>
+              <span class="pill night">Usiku</span>
+            </div>
+          </div>`,
+        cap: '2. Ripoti haitumii tarehe ya kalenda peke yake. Oda za 02:30 zinahesabiwa kwenye siku zamu ilipoanza.'
+      },
+      {
+        html: `
+          <div class="row">
+            <div class="card"><h3>Counter</h3><strong>Vinywaji baridi / bia</strong></div>
+            <div class="card" style="animation-delay:.1s"><h3>Counter</h3><strong>Jikoni (vyakula)</strong></div>
+            <div class="card" style="animation-delay:.2s"><h3>Counter</h3><strong>Pompe kali</strong></div>
+          </div>
+          <div class="path">
+            <div class="node">Mhudumu yule yule</div><div class="arrow">→</div>
+            <div class="node">Anaweza kuhudumia counter zote</div><div class="arrow">→</div>
+            <div class="node">Kila oda inakaa kwenye counter yake</div>
+          </div>`,
+        cap: '3. Matawi/counter ni Interprise tofauti, mmiliki mmoja. Mhudumu anaonekana mara moja kwenye “Counter zote”.'
+      },
+      {
+        html: `
+          <div class="card">
+            <h3>Ripoti ya huduma</h3>
+            <table class="table">
+              <tr><th>Mhudumu</th><th>Counter</th><th>Oda</th><th>Items</th><th>Amount</th></tr>
+              <tr><td>Magembe Timon</td><td>Vinywaji, Jikoni</td><td>12</td><td>21</td><td>65,500</td></tr>
+              <tr><td>Mashala Mbute</td><td>Pompe</td><td>8</td><td>15</td><td>42,000</td></tr>
+            </table>
+            <div class="sub">Bofya Items → orodha ya bidhaa, kipimo, idadi, amount. Chapisha A4 / 58mm / 80mm.</div>
+          </div>`,
+        cap: '4. Manager anaona oda, items na kiasi kwa siku, wiki, mwezi, mwaka au tarehe maalum — kisha anaprint.'
+      }
+    ];
+
+    let i = 0, timer = null;
+    const scene = document.getElementById('scene');
+    const bar = document.getElementById('bar');
+    const playBtn = document.getElementById('play');
+
+    function render() {
+      const s = scenes[i];
+      scene.innerHTML = s.html + '<div class="caption">' + s.cap + '</div>';
+      bar.style.width = ((i + 1) / scenes.length * 100) + '%';
+    }
+    function next() { i = (i + 1) % scenes.length; render(); }
+    function prev() { i = (i - 1 + scenes.length) % scenes.length; render(); }
+    function play() {
+      if (timer) { clearInterval(timer); timer = null; playBtn.textContent = 'Cheza'; return; }
+      playBtn.textContent = 'Simamisha';
+      timer = setInterval(() => { next(); if (i === 0) play(); }, 5200);
+    }
+    document.getElementById('next').onclick = () => { if (timer) play(); next(); };
+    document.getElementById('prev').onclick = () => { if (timer) play(); prev(); };
+    playBtn.onclick = play;
+    render();
+    play();
+  </script>
+</body>
+</html>

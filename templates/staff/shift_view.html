@@ -318,15 +318,17 @@
               <th class="text-left" rowspan="2">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
               <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Stock Before{% else %}Stock Before{% endif %}</th>
               <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Added{% else %}Added{% endif %}</th>
+              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizonunuliwa{% else %}Purchased{% endif %}</th>
               <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Reduction{% else %}Reduction{% endif %}</th>
               <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizohamishwa{% else %}Transferred{% endif %}</th>
               <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizopokelewa{% else %}Received{% endif %}</th>
               <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Sold{% else %}Sold{% endif %}</th>
-              <th class="text-center sv-qty" rowspan="2">{% if useri.langSet == 0 %}Inayotarajiwa{% else %}Expected{% endif %}</th>
               <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}{% if movement.stock_frozen %}Stoku ya kufunga{% else %}Stoku ya Sasa{% endif %}{% else %}{% if movement.stock_frozen %}Closing Stock{% else %}Current Stock{% endif %}{% endif %}</th>
-              <th class="text-center sv-qty" rowspan="2">{% if useri.langSet == 0 %}Tofauti{% else %}Diff{% endif %}</th>
             </tr>
             <tr>
+              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
               <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
               <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
               <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
@@ -362,6 +364,9 @@
               <td class="sv-qty">{{ s.added_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ s.added_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ s.added_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ s.purchased_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ s.purchased_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ s.purchased_worth|floatformat:2|intcomma }}</td>
               <td class="sv-qty">{{ s.reduction_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ s.reduction_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ s.reduction_worth|floatformat:2|intcomma }}</td>
@@ -374,17 +379,15 @@
               <td class="sv-qty">{{ s.sold_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ s.sold_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ s.sold_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ s.expected_qty|floatformat:2|intcomma }}</td>
               <td class="sv-qty">{{ s.current_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ s.current_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ s.current_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty{% if s.variance_qty %} text-danger font-weight-bold{% endif %}">{{ s.variance_qty|floatformat:2|intcomma }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="26" class="text-muted">No stock data</td></tr>
+            <tr><td colspan="27" class="text-muted">No stock data</td></tr>
             {% endfor %}
             <tr id="svNoMatch" style="display:none">
-              <td colspan="26" class="text-muted text-center py-3">
+              <td colspan="27" class="text-muted text-center py-3">
                 {% if useri.langSet == 0 %}Hakuna bidhaa inayolingana na utafutaji{% else %}No items match this search{% endif %}
               </td>
             </tr>
@@ -400,6 +403,9 @@
               <td class="sv-qty">{{ stock_value_totals.added_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ stock_value_totals.added_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ stock_value_totals.added_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ stock_value_totals.purchased_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ stock_value_totals.purchased_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ stock_value_totals.purchased_worth|floatformat:2|intcomma }}</td>
               <td class="sv-qty">{{ stock_value_totals.reduction_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ stock_value_totals.reduction_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ stock_value_totals.reduction_worth|floatformat:2|intcomma }}</td>
@@ -412,11 +418,9 @@
               <td class="sv-qty">{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ stock_value_totals.expected_qty|floatformat:2|intcomma }}</td>
               <td class="sv-qty">{{ stock_value_totals.current_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ stock_value_totals.current_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ stock_value_totals.current_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ stock_value_totals.variance_qty|floatformat:2|intcomma }}</td>
             </tr>
           </tfoot>
         </table>
@@ -430,9 +434,9 @@
       </div>
       <p class="small text-muted mt-2">
         {% if useri.langSet == 0 %}
-        Inayotarajiwa = Kabla + Added + Received − Sold − Reduction − Transferred. Tofauti inaonyesha mabadiliko yasiyorekodiwa (ununuzi, grouped items, au muda kati ya shift). Mauzo ya waiter yanahesabiwa wakati wa print ya kwanza (punguzo la stock), si wakati wa kuokoa oda.
+        Added = kuongeza idadi. Zilizonunuliwa = manunuzi. Reduction = kupunguza (tumika, haribika, potea, expire, others). Mauzo ya waiter yanahesabiwa wakati wa print ya kwanza. Bidhaa grouped hazioneshwi; mauzo yake yanahesabiwa kwenye bidhaa wanachama.
         {% else %}
-        Expected = Before + Added + Received − Sold − Reduction − Transferred. Diff shows untracked changes (purchases, grouped items, or time between shifts). Waiter sales count at first print (when stock is deducted), not when the order is saved.
+        Added = quantity added. Purchased = purchases. Reduction = reduce (used, damaged, lost, expired, other). Waiter sales count at first print. Grouped items are hidden; their sales are counted on member products.
         {% endif %}
       </p>
     </div>

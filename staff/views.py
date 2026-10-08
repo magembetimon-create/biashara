@@ -1094,7 +1094,7 @@ def print_shift(request):
             'show_worth': show_worth,
             'stock_metric_count': stock_metric_count,
             'show_stock_subhead': stock_metric_count > 1,
-            'stock_colspan': 3 + (7 * stock_metric_count) + (2 if show_qty else 0),
+            'stock_colspan': 3 + (8 * stock_metric_count),
             'lang': lang,
             'paper_size': paper_size,
             'sales_breakdown_rows': report['sales_breakdown_rows'],

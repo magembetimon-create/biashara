@@ -5995,8 +5995,8 @@ def receiveNote(request):
         todo = receve_data(request)
         if not todo['duka'].Interprise:
             return redirect('/userdash')
-        else:     
-            return render(request,'receives.html',todo) 
+        else:
+            return render(request,'receives.html',todo)
     except:
         traceback.print_exc()
         return render(request,'pagenotFound.html',todoFunct(request))
@@ -6163,7 +6163,7 @@ def viewtransfer(request):
         if not todo['duka'].Interprise:
             return redirect('/userdash')
         else:         
-            return  render(request,'transfer.html',todo)
+           return  render(request,'transfer.html',todo)
 
 @login_required(login_url='login')
 def unseenTransfers(request):
@@ -6321,7 +6321,7 @@ def unseenReceives(request):
     return render(request, 'unseenReceives.html', todo)
 
 @login_required(login_url='login')
-def bidhaaAina(request):
+def bidhaaAina(request):  
     todo = todoFunct(request)
     f = request.GET.get('f',0)
     sup = request.GET.get('sup',0)

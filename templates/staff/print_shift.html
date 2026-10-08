@@ -522,17 +522,16 @@
             <th {% if show_stock_subhead %}rowspan="2"{% endif %}>{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
             <th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Stock Before{% else %}Stock Before{% endif %}</th>
             <th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Added{% else %}Added{% endif %}</th>
+            <th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Zilizonunuliwa{% else %}Purchased{% endif %}</th>
             <th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Reduction{% else %}Reduction{% endif %}</th>
             <th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Zilizohamishwa{% else %}Transferred{% endif %}</th>
             <th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Zilizopokelewa{% else %}Received{% endif %}</th>
             <th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Sold{% else %}Sold{% endif %}</th>
-            {% if show_qty %}<th {% if show_stock_subhead %}rowspan="2"{% endif %}>{% if useri.langSet == 0 %}Inayotarajiwa{% else %}Expected{% endif %}</th>{% endif %}
             <th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}{% if movement.stock_frozen %}Stoku ya kufunga{% else %}Current Stock{% endif %}{% else %}{% if movement.stock_frozen %}Closing Stock{% else %}Current Stock{% endif %}{% endif %}</th>
-            {% if show_qty %}<th {% if show_stock_subhead %}rowspan="2"{% endif %}>{% if useri.langSet == 0 %}Tofauti{% else %}Diff{% endif %}</th>{% endif %}
           </tr>
           {% if show_stock_subhead %}
           <tr>
-            {% for _ in "xxxxxxx" %}
+            {% for _ in "xxxxxxxx" %}
               {% if show_qty %}<th>{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>{% endif %}
               {% if show_value %}<th>{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>{% endif %}
               {% if show_worth %}<th>{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>{% endif %}
@@ -552,6 +551,9 @@
             {% if show_qty %}<td>{{ s.added_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_value %}<td>{{ s.added_value|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_worth %}<td>{{ s.added_worth|floatformat:2|intcomma }}</td>{% endif %}
+            {% if show_qty %}<td>{{ s.purchased_qty|floatformat:2|intcomma }}</td>{% endif %}
+            {% if show_value %}<td>{{ s.purchased_value|floatformat:2|intcomma }}</td>{% endif %}
+            {% if show_worth %}<td>{{ s.purchased_worth|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_qty %}<td>{{ s.reduction_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_value %}<td>{{ s.reduction_value|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_worth %}<td>{{ s.reduction_worth|floatformat:2|intcomma }}</td>{% endif %}
@@ -564,11 +566,9 @@
             {% if show_qty %}<td>{{ s.sold_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_value %}<td>{{ s.sold_value|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_worth %}<td>{{ s.sold_worth|floatformat:2|intcomma }}</td>{% endif %}
-            {% if show_qty %}<td>{{ s.expected_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_qty %}<td>{{ s.current_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_value %}<td>{{ s.current_value|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_worth %}<td>{{ s.current_worth|floatformat:2|intcomma }}</td>{% endif %}
-            {% if show_qty %}<td>{{ s.variance_qty|floatformat:2|intcomma }}</td>{% endif %}
           </tr>
           {% empty %}
           <tr><td colspan="{{ stock_colspan }}" class="no-data">No stock data</td></tr>
@@ -585,6 +585,9 @@
             {% if show_qty %}<td>{{ stock_value_totals.added_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_value %}<td>{{ stock_value_totals.added_value|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_worth %}<td>{{ stock_value_totals.added_worth|floatformat:2|intcomma }}</td>{% endif %}
+            {% if show_qty %}<td>{{ stock_value_totals.purchased_qty|floatformat:2|intcomma }}</td>{% endif %}
+            {% if show_value %}<td>{{ stock_value_totals.purchased_value|floatformat:2|intcomma }}</td>{% endif %}
+            {% if show_worth %}<td>{{ stock_value_totals.purchased_worth|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_qty %}<td>{{ stock_value_totals.reduction_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_value %}<td>{{ stock_value_totals.reduction_value|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_worth %}<td>{{ stock_value_totals.reduction_worth|floatformat:2|intcomma }}</td>{% endif %}
@@ -597,11 +600,9 @@
             {% if show_qty %}<td>{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_value %}<td>{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_worth %}<td>{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>{% endif %}
-            {% if show_qty %}<td>{{ stock_value_totals.expected_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_qty %}<td>{{ stock_value_totals.current_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_value %}<td>{{ stock_value_totals.current_value|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_worth %}<td>{{ stock_value_totals.current_worth|floatformat:2|intcomma }}</td>{% endif %}
-            {% if show_qty %}<td>{{ stock_value_totals.variance_qty|floatformat:2|intcomma }}</td>{% endif %}
           </tr>
         </tfoot>
       </table>

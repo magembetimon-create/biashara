@@ -433,6 +433,7 @@ def build_shift_report(duka, shift):
         adjst__date__lte=period_end,
     ).filter(
         Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True)
+        | Q(adjst__expire=True) | Q(adjst__others=True)
     ).values_list('prod_id', 'qty')
     for prod_id, qty in reduction_rows:
         reduction_qty_map[prod_id] += Decimal(qty or 0)
@@ -469,18 +470,36 @@ def build_shift_report(duka, shift):
     for prod_id, qty in received_rows:
         received_qty_map[prod_id] += Decimal(qty or 0)
 
+    purchased_qty_map = defaultdict(lambda: Decimal('0'))
+    purchased_rows = bidhaa_stoku.objects.filter(
+        Interprise=duka.id,
+        is_grouped_item=False,
+        manunuzi__isnull=False,
+        manunuzi__manunuzi__order=False,
+        manunuzi__manunuzi__tarehe__gte=starts_at,
+        manunuzi__manunuzi__tarehe__lte=period_end,
+    ).values_list('id', 'manunuzi__idadi', 'manunuzi__rudi')
+    for prod_id, qty, rudi in purchased_rows:
+        net_qty = Decimal(qty or 0) - Decimal(rudi or 0)
+        if net_qty:
+            purchased_qty_map[prod_id] += net_qty
+
     live_items = list(
-        bidhaa_stoku.objects.filter(Interprise=duka.id).select_related('bidhaa').order_by('bidhaa__bidhaa_jina')
+        bidhaa_stoku.objects.filter(
+            Interprise=duka.id,
+            is_grouped_item=False,
+        ).select_related('bidhaa').order_by('bidhaa__bidhaa_jina')
     )
     items_by_id = {itm.id: itm for itm in live_items}
 
     relevant_ids = set(items_by_id.keys()) | set(before_qty_map.keys()) | set(closing_qty_map.keys())
     relevant_ids |= set(sold_qty_map.keys()) | set(added_qty_map.keys()) | set(reduction_qty_map.keys())
     relevant_ids |= set(transferred_qty_map.keys()) | set(received_qty_map.keys())
+    relevant_ids |= set(purchased_qty_map.keys())
 
     missing_ids = [iid for iid in relevant_ids if iid not in items_by_id]
     if missing_ids:
-        for itm in bidhaa_stoku.objects.filter(pk__in=missing_ids).select_related('bidhaa'):
+        for itm in bidhaa_stoku.objects.filter(pk__in=missing_ids, is_grouped_item=False).select_related('bidhaa'):
             items_by_id[itm.id] = itm
 
     stock_items = list(items_by_id.values())
@@ -497,6 +516,9 @@ def build_shift_report(duka, shift):
         bidhaa_groups.items(),
         key=lambda x: ((x[1][0].bidhaa.bidhaa_jina or '') if x[1][0].bidhaa else '').lower(),
     ):
+        items = [itm for itm in items if not getattr(itm, 'is_grouped_item', False)]
+        if not items:
+            continue
         first_item = items[0]
         item_name = first_item.bidhaa.bidhaa_jina if first_item.bidhaa else ''
         units = first_item.bidhaa.vipimo if first_item.bidhaa else ''
@@ -514,16 +536,16 @@ def build_shift_report(duka, shift):
                 c_qty = Decimal(itm.idadi or 0)
             b_qty = before_qty_map[iid]
             a_qty = added_qty_map[iid]
+            p_qty = purchased_qty_map[iid]
             s_qty = sold_qty_map[iid]
             r_qty = reduction_qty_map[iid]
             t_qty = transferred_qty_map[iid]
             rc_qty = received_qty_map[iid]
-            expected_qty = b_qty + a_qty + rc_qty - s_qty - r_qty - t_qty
-            variance_qty = c_qty - expected_qty
 
             c_val, c_worth = _money(c_qty, buy_price, sales_price, ratio)
             b_val, b_worth = _money(b_qty, buy_price, sales_price, ratio)
             a_val, a_worth = _money(a_qty, buy_price, sales_price, ratio)
+            p_val, p_worth = _money(p_qty, buy_price, sales_price, ratio)
             s_val, s_worth = _money(s_qty, buy_price, sales_price, ratio)
             r_val, r_worth = _money(r_qty, buy_price, sales_price, ratio)
             t_val, t_worth = _money(t_qty, buy_price, sales_price, ratio)
@@ -538,6 +560,9 @@ def build_shift_report(duka, shift):
             buckets['added_qty'] += a_qty
             buckets['added_value'] += a_val
             buckets['added_worth'] += a_worth
+            buckets['purchased_qty'] += p_qty
+            buckets['purchased_value'] += p_val
+            buckets['purchased_worth'] += p_worth
             buckets['sold_qty'] += s_qty
             buckets['sold_value'] += s_val
             buckets['sold_worth'] += s_worth
@@ -550,13 +575,11 @@ def build_shift_report(duka, shift):
             buckets['received_qty'] += rc_qty
             buckets['received_value'] += rc_val
             buckets['received_worth'] += rc_worth
-            buckets['expected_qty'] += expected_qty
-            buckets['variance_qty'] += variance_qty
 
         has_activity = any(
             buckets[k] for k in (
-                'before_qty', 'added_qty', 'sold_qty', 'reduction_qty',
-                'transferred_qty', 'received_qty', 'current_qty', 'variance_qty',
+                'before_qty', 'added_qty', 'purchased_qty', 'sold_qty', 'reduction_qty',
+                'transferred_qty', 'received_qty', 'current_qty',
             )
         )
         if not has_activity:
