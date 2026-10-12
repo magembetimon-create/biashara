@@ -488,7 +488,7 @@ def build_shift_report(duka, shift):
         bidhaa_stoku.objects.filter(
             Interprise=duka.id,
             is_grouped_item=False,
-        ).select_related('bidhaa').order_by('bidhaa__bidhaa_jina')
+        ).select_related('bidhaa__bidhaa_aina').order_by('bidhaa__bidhaa_jina')
     )
     items_by_id = {itm.id: itm for itm in live_items}
 
@@ -499,7 +499,7 @@ def build_shift_report(duka, shift):
 
     missing_ids = [iid for iid in relevant_ids if iid not in items_by_id]
     if missing_ids:
-        for itm in bidhaa_stoku.objects.filter(pk__in=missing_ids, is_grouped_item=False).select_related('bidhaa'):
+        for itm in bidhaa_stoku.objects.filter(pk__in=missing_ids, is_grouped_item=False).select_related('bidhaa__bidhaa_aina'):
             items_by_id[itm.id] = itm
 
     stock_items = list(items_by_id.values())
@@ -585,9 +585,23 @@ def build_shift_report(duka, shift):
         if not has_activity:
             continue
 
+        aina = first_item.bidhaa.bidhaa_aina if first_item.bidhaa else None
+        price_item = next(
+            (i for i in items if not getattr(i, 'inapacha', False) and Decimal(i.idadi or 0) > 0),
+            None,
+        ) or next((i for i in items if Decimal(i.idadi or 0) > 0), None) or first_item
+        added_in_qty = buckets['added_qty'] + buckets['purchased_qty'] + buckets['received_qty']
+        reduced_in_qty = buckets['reduction_qty'] + buckets['transferred_qty']
         row = {
             'item_name': item_name,
             'units': units,
+            'bidhaa_id': first_item.bidhaa_id,
+            'aina_id': aina.id if aina else -1,
+            'aina_name': (aina.aina if aina else '') or '',
+            'sales_price': Decimal(price_item.Bei_kuuza or 0),
+            'is_service': bool(getattr(first_item, 'service', False)),
+            'added_in_qty': added_in_qty,
+            'reduced_in_qty': reduced_in_qty,
             **buckets,
         }
         stock_value_rows.append(row)

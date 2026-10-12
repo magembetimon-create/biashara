@@ -184,6 +184,66 @@
             </tfoot>
           </table>
         </div>
+        {% if can_reconcile %}
+        <div class="mt-2 mb-2">
+          <button type="button" class="btn btn-outline-primary btn-sm" id="shiftReconToggle" onclick="toggleShiftRecon()">
+            {% if useri.langSet == 0 %}Reconciliation{% else %}Reconciliation{% endif %}
+          </button>
+        </div>
+        {{ recon_rows|json_script:"shiftReconData" }}
+        <div class="row mt-2" id="shiftReconWrap">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header py-2 d-flex flex-wrap align-items-center justify-content-between">
+                <strong>{% if useri.langSet == 0 %}Linganisha Stoku (Reconciliation){% else %}Stock Reconciliation{% endif %}</strong>
+                <small class="text-muted">{% if useri.langSet == 0 %}Mauzo yatarekodiwa kwa{% else %}Sales will be recorded as{% endif %} {{ recon_recorder_name|default:'-' }}</small>
+              </div>
+              <div class="card-body pt-2">
+                <ul id="reconCategsList" class="list-unstyled d-flex pt-1 mb-2"></ul>
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                  <input type="search" class="form-control form-control-sm mb-1" id="reconSearch" autocomplete="off"
+                    style="max-width:280px"
+                    placeholder="{% if useri.langSet == 0 %}Tafuta bidhaa...{% else %}Search item...{% endif %}">
+                  <button type="button" class="btn btn-primary btn-sm mb-1" id="reconSaveBtn" onclick="saveShiftRecon()">
+                    {% if useri.langSet == 0 %}Hifadhi tofauti kama mauzo{% else %}Save difference as sales{% endif %}
+                  </button>
+                </div>
+                <div class="table-responsive" style="max-height:70vh;">
+                  <table class="table table-sm table-bordered table-hover mb-0" id="reconTable">
+                    <thead>
+                      <tr>
+                        <th class="text-left">{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Stock Before{% else %}Stock Before{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Added{% else %}Added{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Reduced{% else %}Reduced{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Sold{% else %}Sold{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Current Stock{% else %}Current Stock{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Jumla{% else %}Amount{% endif %}</th>
+                      </tr>
+                    </thead>
+                    <tbody id="reconTableBody"></tbody>
+                    <tfoot>
+                      <tr class="font-weight-bold">
+                        <td colspan="8" class="text-left">{% if useri.langSet == 0 %}Jumla ya mauzo{% else %}Total sales{% endif %}</td>
+                        <td id="reconTotalAmount">0.00</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                <p class="small text-muted mt-2 mb-0">
+                  {% if useri.langSet == 0 %}
+                  Sold haiwezi kuwa pungufu ya iliyorekodiwa. Tofauti (uliyojaza − mfumo) itahifadhiwa kama mauzo ya aliyekabidhiwa zamu, bila mhudumu.
+                  {% else %}
+                  Sold cannot be below the system qty. The difference (entered − system) is saved as the shift recorder's sales, not waiter sales.
+                  {% endif %}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
       </div>
   {% if mobile_payments %}
   <div class="row mt-2">
@@ -282,6 +342,13 @@
     background: #243463;
     box-shadow: inset 0 1px 0 #334155;
   }
+  #shiftReconWrap { display: none; }
+  #shiftReconWrap.is-open { display: block; }
+  #reconCategsList { overflow-x: auto; }
+  #reconCategsList .categsBtn { white-space: nowrap; min-width: 9rem; }
+  #reconTable input.form-control { min-width: 5.5rem; }
+  #reconTable tbody tr.recon-changed { background: #fff8e6; }
+  body.theme-dark #reconTable tbody tr.recon-changed { background: #3a3420; }
 </style>
   <div class="row mt-2">
     <div class="col-12">
@@ -860,5 +927,239 @@ function submitCloseShift() {
       confirmBtn.textContent = defaultBtnText;
     });
 }
+
+var RECON_UNCATEG = -1;
+var RECON_CATEG = 0;
+var RECON_ROWS = [];
+
+function reconNum(v) {
+  var n = parseFloat(v);
+  return Number.isFinite(n) ? n : 0;
+}
+function reconRound(v) {
+  return Math.round(reconNum(v) * 10000) / 10000;
+}
+function reconFmt(v) {
+  return reconRound(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function reconExpectedCurrent(row) {
+  return reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty) - reconNum(row.sold_qty));
+}
+function reconMaxSold(row) {
+  return reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty));
+}
+function loadReconRows() {
+  var el = document.getElementById('shiftReconData');
+  if (!el) return [];
+  try { return JSON.parse(el.textContent || '[]'); } catch (e) { return []; }
+}
+function reconUserSold(row) {
+  if (row.user_sold == null || row.user_sold === '') return reconNum(row.sold_qty);
+  return reconNum(row.user_sold);
+}
+function renderReconCategories() {
+  var list = document.getElementById('reconCategsList');
+  if (!list) return;
+  var cats = [];
+  var seen = {};
+  RECON_ROWS.forEach(function(r) {
+    var id = r.aina_id == null || r.aina_id === '' ? RECON_UNCATEG : Number(r.aina_id);
+    if (seen[id]) return;
+    seen[id] = true;
+    cats.push({
+      id: id,
+      aina: id === RECON_UNCATEG
+        ? '{% if useri.langSet == 0 %}Bila Aina{% else %}Uncategorized{% endif %}'
+        : (r.aina_name || '{% if useri.langSet == 0 %}Bila Aina{% else %}Uncategorized{% endif %}')
+    });
+  });
+  cats.sort(function(a, b) { return String(a.aina).localeCompare(String(b.aina)); });
+  var html = '<li class="py-1 pr-1"><button type="button" data-aina="0" class="btn border categsBtn recon-categ-btn text-left text-capitalize latoFont btn-block btn-default">{% if useri.langSet == 0 %}Aina Zote{% else %}All Categories{% endif %}</button></li>';
+  cats.forEach(function(c) {
+    html += '<li class="py-1 pr-1"><button type="button" data-aina="' + c.id + '" class="btn border categsBtn recon-categ-btn text-left text-capitalize latoFont btn-block btn-light">' + c.aina + '</button></li>';
+  });
+  list.innerHTML = html;
+}
+function reconVisibleRows() {
+  var q = ((document.getElementById('reconSearch') || {}).value || '').toLowerCase().trim();
+  return RECON_ROWS.filter(function(r) {
+    var ainaId = r.aina_id == null || r.aina_id === '' ? RECON_UNCATEG : Number(r.aina_id);
+    if (Number(RECON_CATEG) && Number(RECON_CATEG) !== ainaId) return false;
+    if (q && (String(r.item_name || '').toLowerCase().indexOf(q) === -1) && (String(r.units || '').toLowerCase().indexOf(q) === -1)) return false;
+    return true;
+  });
+}
+function updateReconTotals() {
+  var total = 0;
+  document.querySelectorAll('#reconTableBody tr[data-bidhaa]').forEach(function(tr) {
+    var bid = Number(tr.getAttribute('data-bidhaa'));
+    var row = RECON_ROWS.find(function(r) { return Number(r.bidhaa_id) === bid; });
+    if (!row) return;
+    var sold = reconUserSold(row);
+    total += sold * reconNum(row.sales_price);
+    var amt = tr.querySelector('.recon-amount');
+    if (amt) amt.textContent = reconFmt(sold * reconNum(row.sales_price));
+    tr.classList.toggle('recon-changed', reconRound(sold) > reconRound(row.sold_qty));
+  });
+  var tot = document.getElementById('reconTotalAmount');
+  if (tot) tot.textContent = reconFmt(total);
+}
+function renderReconTable() {
+  var body = document.getElementById('reconTableBody');
+  if (!body) return;
+  var rows = reconVisibleRows();
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="9" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna bidhaa{% else %}No items{% endif %}</td></tr>';
+    updateReconTotals();
+    return;
+  }
+  body.innerHTML = rows.map(function(r) {
+    var maxSold = reconMaxSold(r);
+    var expCur = reconExpectedCurrent(r);
+    var soldVal = r.user_sold != null && r.user_sold !== '' ? reconRound(r.user_sold) : '';
+    var curVal = r.user_current != null && r.user_current !== '' ? reconRound(r.user_current) : '';
+    return '<tr data-bidhaa="' + r.bidhaa_id + '"' + (soldVal !== '' && reconRound(soldVal) > reconRound(r.sold_qty) ? ' class="recon-changed"' : '') + '>'
+      + '<td>' + (r.item_name || '') + '</td>'
+      + '<td>' + (r.units || '-') + '</td>'
+      + '<td>' + reconFmt(r.before_qty) + '</td>'
+      + '<td>' + reconFmt(r.added_qty) + '</td>'
+      + '<td>' + reconFmt(r.reduced_qty) + '</td>'
+      + '<td><input type="number" min="' + r.sold_qty + '" max="' + maxSold + '" step="0.01" class="form-control form-control-sm recon-sold" placeholder="' + reconFmt(r.sold_qty) + '" value="' + soldVal + '"></td>'
+      + '<td><input type="number" min="0" max="' + reconRound(reconNum(r.before_qty) + reconNum(r.added_qty) - reconNum(r.reduced_qty) - reconNum(r.sold_qty)) + '" step="0.01" class="form-control form-control-sm recon-current" placeholder="' + reconFmt(expCur) + '" value="' + curVal + '"></td>'
+      + '<td>' + reconFmt(r.sales_price) + '</td>'
+      + '<td class="recon-amount">' + reconFmt(reconUserSold(r) * reconNum(r.sales_price)) + '</td>'
+      + '</tr>';
+  }).join('');
+  updateReconTotals();
+}
+function reconRowFromTr(tr) {
+  var bid = Number(tr.getAttribute('data-bidhaa'));
+  return RECON_ROWS.find(function(r) { return Number(r.bidhaa_id) === bid; });
+}
+function onReconSoldInput(inp) {
+  var tr = inp.closest('tr');
+  var row = reconRowFromTr(tr);
+  if (!row) return;
+  var sys = reconNum(row.sold_qty);
+  var maxSold = reconMaxSold(row);
+  if (inp.value === '') {
+    row.user_sold = '';
+    row.user_current = '';
+    tr.querySelector('.recon-current').value = '';
+    updateReconTotals();
+    return;
+  }
+  var sold = reconNum(inp.value);
+  if (sold < sys) sold = sys;
+  if (sold > maxSold) sold = maxSold;
+  sold = reconRound(sold);
+  inp.value = sold;
+  var cur = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty) - sold);
+  tr.querySelector('.recon-current').value = cur;
+  row.user_sold = sold;
+  row.user_current = cur;
+  updateReconTotals();
+}
+function onReconCurrentInput(inp) {
+  var tr = inp.closest('tr');
+  var row = reconRowFromTr(tr);
+  if (!row) return;
+  var sys = reconNum(row.sold_qty);
+  var maxSold = reconMaxSold(row);
+  var maxCur = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty) - sys);
+  if (inp.value === '') {
+    row.user_sold = '';
+    row.user_current = '';
+    tr.querySelector('.recon-sold').value = '';
+    updateReconTotals();
+    return;
+  }
+  var cur = reconNum(inp.value);
+  if (cur < 0) cur = 0;
+  if (cur > maxCur) cur = maxCur;
+  cur = reconRound(cur);
+  inp.value = cur;
+  var sold = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty) - cur);
+  if (sold < sys) sold = sys;
+  if (sold > maxSold) sold = maxSold;
+  tr.querySelector('.recon-sold').value = sold;
+  row.user_sold = sold;
+  row.user_current = cur;
+  updateReconTotals();
+}
+function toggleShiftRecon() {
+  var wrap = document.getElementById('shiftReconWrap');
+  if (!wrap) return;
+  wrap.classList.toggle('is-open');
+  if (wrap.classList.contains('is-open')) {
+    if (!RECON_ROWS.length) {
+      RECON_ROWS = loadReconRows();
+      renderReconCategories();
+      renderReconTable();
+    }
+    wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+function saveShiftRecon() {
+  var items = [];
+  RECON_ROWS.forEach(function(row) {
+    var sold = reconUserSold(row);
+    if (reconRound(sold) > reconRound(row.sold_qty)) {
+      items.push({ bidhaa_id: row.bidhaa_id, sold_qty: sold });
+    }
+  });
+  if (!items.length) {
+    alert('{% if useri.langSet == 0 %}Hakuna tofauti ya kuhifadhi. Jaza sold au current stock ya bidhaa zilizokosekana.{% else %}No difference to save. Fill sold or current stock for missing items.{% endif %}');
+    return;
+  }
+  var btn = document.getElementById('reconSaveBtn');
+  if (btn) btn.disabled = true;
+  var form = new FormData();
+  form.append('sid', '{{ shift.id }}');
+  form.append('items', JSON.stringify(items));
+  $('#loadMe').modal('show');
+  fetch('/staff/shifts/reconcile', {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'},
+    body: form
+  })
+    .then(function(resp) { return resp.json(); })
+    .then(function(data) {
+      if (data.success) {
+        location.reload();
+      } else {
+        $('#loadMe').modal('hide');
+        if (typeof hideLoading === 'function') hideLoading();
+        alert(data.msg_swa || data.msg_eng || data.msg || 'Failed');
+      }
+    })
+    .catch(function() {
+      $('#loadMe').modal('hide');
+      if (typeof hideLoading === 'function') hideLoading();
+      alert('Network error');
+    })
+    .finally(function() { if (btn) btn.disabled = false; });
+}
+document.addEventListener('click', function(ev) {
+  var btn = ev.target.closest && ev.target.closest('#reconCategsList .recon-categ-btn');
+  if (!btn) return;
+  document.querySelectorAll('#reconCategsList .recon-categ-btn').forEach(function(b) {
+    b.classList.remove('text-primary', 'border-primary');
+  });
+  var ain = btn.getAttribute('data-aina');
+  if (Number(ain)) btn.classList.add('text-primary', 'border-primary');
+  RECON_CATEG = Number(ain) || 0;
+  renderReconTable();
+});
+document.addEventListener('input', function(ev) {
+  if (ev.target.classList.contains('recon-sold')) onReconSoldInput(ev.target);
+  if (ev.target.classList.contains('recon-current')) onReconCurrentInput(ev.target);
+});
+document.addEventListener('change', function(ev) {
+  if (ev.target.id === 'reconSearch') renderReconTable();
+});
+document.addEventListener('keyup', function(ev) {
+  if (ev.target.id === 'reconSearch') renderReconTable();
+});
 </script>
 {% endblock %}

@@ -7,6 +7,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
 from django.db.models import Q, Sum, F
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
@@ -45,6 +46,7 @@ from accaunts.todos import (
     STAFF_TEMP_EMAIL_DOMAIN,
     build_unique_staff_temp_email,
     staff_temp_email_local_part,
+    updateOrder,
 )
 from staff.shift_report import (
     build_shift_report,
@@ -945,6 +947,29 @@ def shift_view(request):
         activities = report['activities']
         shift_team_rows = report['shift_team_rows']
 
+        recon_rows = []
+        for s in report['stock_value_rows']:
+            if s.get('is_service'):
+                continue
+            recon_rows.append({
+                'bidhaa_id': s.get('bidhaa_id'),
+                'item_name': s.get('item_name') or '',
+                'units': s.get('units') or '',
+                'aina_id': s.get('aina_id') if s.get('aina_id') is not None else -1,
+                'aina_name': s.get('aina_name') or '',
+                'before_qty': float(s.get('before_qty') or 0),
+                'added_qty': float(s.get('added_in_qty') or 0),
+                'reduced_qty': float(s.get('reduced_in_qty') or 0),
+                'sold_qty': float(s.get('sold_qty') or 0),
+                'current_qty': float(s.get('current_qty') or 0),
+                'sales_price': float(s.get('sales_price') or 0),
+            })
+        recorder = (
+            ShiftAssignment.objects.filter(shift=shift, role='recorder', active=True)
+            .select_related('staff__user__user', 'staff__fanyakazi', 'staff__user_entp__Interprise')
+            .first()
+        )
+        recorder_staff = recorder.staff if recorder else shift.opened_by
         todo.update({
             'staff_page': 'shifts',
             'shift': shift,
@@ -960,12 +985,340 @@ def shift_view(request):
             'stock_value_totals': report['stock_value_totals'],
             'sales_breakdown_rows': report['sales_breakdown_rows'],
             'sales_breakdown_totals': report['sales_breakdown_totals'],
+            'recon_rows': recon_rows,
+            'recon_recorder_name': staff_display_name(recorder_staff) if recorder_staff else '',
+            'can_reconcile': _can_reconcile_shift(todo, shift),
         })
 
         return render(request, 'staff/shift_view.html', todo)
     except Exception:
         traceback.print_exc()
         return render(request, 'errorpage.html', todoFunct(request))
+
+
+def _can_reconcile_shift(todo, shift):
+    """Assigned staff can always recon an open shift.
+
+    Admin (owner) may recon only when Staff Management is disabled on /staff/all.
+    When Staff Management is on, only the person assigned to this shift.
+    """
+    if not shift or str(shift.status or '') == 'closed':
+        return False
+    cheo = todo.get('cheo')
+    duka = todo.get('duka')
+    if not cheo or not duka:
+        return False
+    is_assigned = ShiftAssignment.objects.filter(shift=shift, staff=cheo, active=True).exists()
+    if is_assigned:
+        return True
+    staff_mgmt_on = bool(getattr(duka, 'shift_management_enabled', False))
+    if staff_mgmt_on:
+        return False
+    useri = todo.get('useri')
+    is_admin = bool(getattr(cheo, 'owner', False) or (getattr(duka, 'owner', None) and duka.owner == useri))
+    return is_admin
+
+
+def _shift_recorder_staff(shift):
+    rec = (
+        ShiftAssignment.objects.filter(shift=shift, role='recorder', active=True)
+        .select_related('staff__user__user', 'staff__fanyakazi', 'staff__user_entp__Interprise')
+        .first()
+    )
+    return rec.staff if rec else shift.opened_by
+
+
+def _next_sale_invoice_code(duka):
+    last = mauzoni.objects.filter(Interprise=duka.id).order_by('-id').first()
+    invono = int(last.Invo_no) if last and last.Invo_no else 0
+    nxt = invono + 1
+    if nxt < 10:
+        code = '0000' + str(invono)
+    elif nxt < 100:
+        code = '000' + str(invono)
+    elif nxt < 1000:
+        code = '00' + str(invono)
+    elif nxt < 10000:
+        code = '0' + str(invono)
+    else:
+        code = str(invono)
+    return nxt, code
+
+
+def _stock_batches_for_bidhaa(duka, bidhaa_id):
+    return bidhaa_stoku.objects.filter(
+        Interprise=duka.id,
+        bidhaa_id=bidhaa_id,
+        is_grouped_item=False,
+        service=False,
+        idadi__gt=0,
+    )
+
+
+def _take_from_stock_batch(batch, take, bidhaa_id, duka, request):
+    avail = Decimal(batch.idadi or 0)
+    take = Decimal(str(take or 0))
+    if take <= 0 or avail <= 0:
+        return Decimal('0')
+    if take > avail:
+        take = avail
+    batch.idadi = avail - take
+    batch.save(update_fields=['idadi'])
+
+    color_need = take
+    for col in produ_colored.objects.filter(bidhaa=batch, idadi__gt=0).order_by('id'):
+        if color_need <= 0:
+            break
+        cavail = Decimal(col.idadi or 0)
+        ctake = cavail if cavail <= color_need else color_need
+        col.idadi = cavail - ctake
+        col.save(update_fields=['idadi'])
+        color_need -= ctake
+        size_need = ctake
+        for sz in produ_size.objects.filter(bidhaa=batch, idadi__gt=0).order_by('id'):
+            if size_need <= 0:
+                break
+            savail = Decimal(sz.idadi or 0)
+            stake = savail if savail <= size_need else size_need
+            sz.idadi = savail - stake
+            sz.save(update_fields=['idadi'])
+            size_need -= stake
+
+    if Decimal(batch.idadi or 0) == 0:
+        others = _stock_batches_for_bidhaa(duka, bidhaa_id).exclude(pk=batch.id)
+        if others.exists():
+            nxt = others.filter(inapacha=False).first() or others.first()
+            if nxt and nxt.inapacha:
+                nxt.inapacha = False
+                nxt.save(update_fields=['inapacha'])
+            if not batch.inapacha:
+                batch.inapacha = True
+                batch.save(update_fields=['inapacha'])
+            updateOrder({'itm': batch, 'request': request, 'out': True, 'other': nxt})
+    return take
+
+
+def _consume_bidhaa_qty(duka, bidhaa_id, extra_qty, request):
+    """Reduce live bidhaa_stoku rows for one bidhaa, then link each take to mauzoList.produ.
+
+    Table shows distinct bidhaa; save must pick stock objects:
+    if one row has idadi >= qty, deduct from that row only;
+    otherwise walk remaining rows (2, 1, 2 ...) until qty is covered.
+    """
+    remaining = Decimal(str(extra_qty or 0))
+    used = []
+    if remaining <= 0:
+        return used
+
+    qs = _stock_batches_for_bidhaa(duka, bidhaa_id)
+    enough = list(qs.filter(idadi__gte=remaining).order_by('inapacha', '-idadi', 'id'))
+    if enough:
+        batch = enough[0]
+        taken = _take_from_stock_batch(batch, remaining, bidhaa_id, duka, request)
+        if taken > 0:
+            used.append((batch, taken))
+            remaining -= taken
+        if remaining > Decimal('0.0001'):
+            raise ValueError('OUT_OF_STOCK')
+        return used
+
+    for batch in qs.order_by('inapacha', 'id'):
+        if remaining <= 0:
+            break
+        avail = Decimal(batch.idadi or 0)
+        if avail <= 0:
+            continue
+        if remaining <= avail:
+            taken = _take_from_stock_batch(batch, remaining, bidhaa_id, duka, request)
+            if taken > 0:
+                used.append((batch, taken))
+                remaining -= taken
+            break
+        taken = _take_from_stock_batch(batch, avail, bidhaa_id, duka, request)
+        if taken > 0:
+            used.append((batch, taken))
+            remaining -= taken
+
+    if remaining > Decimal('0.0001'):
+        raise ValueError('OUT_OF_STOCK')
+    return used
+
+
+@login_required(login_url='login')
+def shift_reconcile(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'msg': 'Invalid method'}, status=405)
+    try:
+        todo = todoFunct(request)
+        ok, resp = _shift_enabled_or_redirect(todo)
+        if not ok:
+            return JsonResponse({'success': False, 'msg': 'Invalid business context'}, status=403)
+
+        duka = todo['duka']
+        cheo = todo['cheo']
+        sid = int(request.POST.get('sid', 0) or 0)
+        shift = ShiftSession.objects.get(pk=sid, Interprise=duka.id)
+        if str(shift.status or '') == 'closed':
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Reconciliation inaruhusiwa tu wakati shift bado haijafungwa.',
+                'msg_eng': 'Reconciliation is allowed only while the shift is still open.',
+            }, status=400)
+
+        if not _can_reconcile_shift(todo, shift):
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Hauna ruhusa ya kufanya reconciliation ya shift hii.',
+                'msg_eng': 'You are not allowed to reconcile this shift.',
+            }, status=403)
+
+        try:
+            payload = json.loads(request.POST.get('items', '[]') or '[]')
+        except (TypeError, ValueError, json.JSONDecodeError):
+            payload = []
+        if not isinstance(payload, list) or not payload:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Hakuna bidhaa za kuhifadhi.',
+                'msg_eng': 'No items to save.',
+            })
+
+        report = build_shift_report(duka, shift)
+        by_bidhaa = {row.get('bidhaa_id'): row for row in report['stock_value_rows'] if row.get('bidhaa_id')}
+        extras = []
+        for item in payload:
+            bidhaa_id = int(item.get('bidhaa_id') or 0)
+            row = by_bidhaa.get(bidhaa_id)
+            if not row or row.get('is_service'):
+                continue
+            system_sold = Decimal(str(row.get('sold_qty') or 0))
+            before = Decimal(str(row.get('before_qty') or 0))
+            added_in = Decimal(str(row.get('added_in_qty') or 0))
+            reduced_in = Decimal(str(row.get('reduced_in_qty') or 0))
+            max_sold = before + added_in - reduced_in
+            user_sold = Decimal(str(item.get('sold_qty') or system_sold))
+            if user_sold < system_sold:
+                return JsonResponse({
+                    'success': False,
+                    'msg_swa': f"Idadi ya mauzo ya {row.get('item_name')} haiwezi kuwa pungufu ya iliyorekodiwa ({system_sold}).",
+                    'msg_eng': f"Sold qty for {row.get('item_name')} cannot be below system qty ({system_sold}).",
+                })
+            if user_sold > max_sold + Decimal('0.0001'):
+                return JsonResponse({
+                    'success': False,
+                    'msg_swa': f"Idadi ya mauzo ya {row.get('item_name')} inazidi stoku inayopatikana.",
+                    'msg_eng': f"Sold qty for {row.get('item_name')} exceeds available stock.",
+                })
+            extra = user_sold - system_sold
+            if extra <= 0:
+                continue
+            extras.append((row, extra))
+
+        if not extras:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Hakuna tofauti ya kuhifadhi. Jaza idadi halisi iliyouzwa au stoku ya sasa.',
+                'msg_eng': 'No extra sales to save. Fill actual sold qty or counted stock.',
+            })
+
+        recorder = _shift_recorder_staff(shift) or cheo
+        recorder_name = staff_display_name(recorder) if recorder else (cheo.user.user.get_full_name() if cheo and cheo.user else 'Recorder')
+        cash_acc = PaymentAkaunts.objects.filter(Interprise=duka.id, aina__iexact='Cash').order_by('id').first()
+        if not cash_acc:
+            cash_acc = PaymentAkaunts.objects.filter(Interprise=duka.id).order_by('id').first()
+
+        now = timezone.now()
+        with transaction.atomic():
+            invono, invo_str = _next_sale_invoice_code(duka)
+            sale = mauzoni()
+            sale.Interprise = duka
+            sale.code = invo_str
+            sale.amount = Decimal('0')
+            sale.ilolipwa = Decimal('0')
+            sale.date = now.date()
+            sale.kulipa = now.date()
+            sale.tarehe = now
+            sale.full_paid = True
+            sale.Invo_no = invono
+            sale.mteja_jina = (recorder_name or '')[:100]
+            sale.order = False
+            sale.service = False
+            sale.cart = False
+            sale.By = recorder
+            sale.akaunt = cash_acc
+            sale.save()
+
+            total = Decimal('0')
+            for row, extra in extras:
+                used = _consume_bidhaa_qty(duka, row['bidhaa_id'], extra, request)
+                if not used:
+                    raise ValueError('OUT_OF_STOCK')
+                price = Decimal(str(row.get('sales_price') or 0))
+                for batch, qty in used:
+                    line = mauzoList()
+                    line.mauzo = sale
+                    line.produ = batch
+                    line.idadi = qty
+                    line.bei = price
+                    line.bei_og = price
+                    line.jum = True
+                    line.save()
+                    total += qty * price
+
+            sale.amount = total
+            sale.ilolipwa = total
+            sale.save(update_fields=['amount', 'ilolipwa'])
+
+            if cash_acc and total > 0:
+                before = Decimal(str(cash_acc.Amount or 0))
+                cash_acc.Amount = before + total
+                cash_acc.save(update_fields=['Amount'])
+                weka = wekaCash()
+                weka.Interprise = duka
+                weka.tarehe = now
+                weka.Akaunt = cash_acc
+                weka.Amount = total
+                weka.before = before
+                weka.After = before + total
+                weka.kutoka = 'Sales '
+                weka.maelezo = f'Shift recon {shift.code}'
+                weka.by = recorder
+                weka.mauzo = True
+                weka.invo = sale
+                weka.admin_approve = True
+                weka.save()
+
+            ShiftActivity.objects.create(
+                shift=shift,
+                event_type='STOCK_RECON',
+                amount=total,
+                event_ref_id=sale.id,
+                details=f'{len(extras)} items',
+                by=cheo,
+            )
+
+        return JsonResponse({
+            'success': True,
+            'sale_id': sale.id,
+            'amount': float(total),
+            'lines': len(extras),
+            'msg_swa': f'Mauzo ya reconciliation yamehifadhiwa. Jumla {total:.2f}.',
+            'msg_eng': f'Reconciliation sales saved. Total {total:.2f}.',
+        })
+    except ShiftSession.DoesNotExist:
+        return JsonResponse({'success': False, 'msg': 'Shift not found'}, status=404)
+    except ValueError as e:
+        if str(e) == 'OUT_OF_STOCK':
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Stoku haitoshi kurekodi tofauti hii. Hakiki idadi uliyojaza.',
+                'msg_eng': 'Not enough stock to record this difference. Check the qty you entered.',
+            })
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'msg': str(e)}, status=500)
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'msg': str(e)}, status=500)
 
 
 @login_required(login_url='login')
