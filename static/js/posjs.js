@@ -1966,7 +1966,7 @@ $('.save_pos_data').unbind("click").click(function(){
                              toastr.success(lang(respo.message_swa,respo.message_eng), 'Success Alert', {timeOut: 2000});
                              $('#pos_saved_modal').modal('show')
                             }else{
-                             toastr.error(lang(respo.message_swa,respo.message_eng), 'Error Alert', {timeOut: 3000});
+                             toastr.error(lang(respo.message_swa,respo.message_eng), 'Error Alert', {timeOut: respo.item ? 8000 : 3000});
                          }
             }
             )

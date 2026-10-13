@@ -67,6 +67,7 @@ var bidhaa__ = class Bizaa{
   }
   //var n=false 
  var BillItems =new bidhaa__([]),PICHA = []
+ var The_price = new bidhaa__([])
  var NEWBILL_IMG_MAP = {}
  var NEWBILL_SEARCH_TIMERS = {}
  var NEWBILL_SEARCH_DEBOUNCE_MS = window.NEWBILL_SEARCH_DEBOUNCE_MS || 120
@@ -172,9 +173,20 @@ function renderNewbillSuggestions(pos, rawSearch) {
 
     })
  }
-   
+
+ function loadPurchaseUnitPrices(){
+    var csrfToken = $('input[name=csrfmiddlewaretoken]').val()
+    $.ajax({
+      type: "POST",
+      url: "/mauzo/Bei_tu",
+      data: {csrfmiddlewaretoken:csrfToken},
+    }).done(function(data){
+        The_price.state = data.bei || []
+    })
+ }
 
  getColor_Size()
+ loadPurchaseUnitPrices()
 
 // });
 
@@ -372,26 +384,44 @@ function placedata(pos,id){
             $(`#bill_kuuza_jum${pos}`).attr('placeholder',parseInt(itms[i].Bei_kuuza_jum).toLocaleString())
             $(`#bill_kuuza_rej${pos}`).attr('placeholder',parseInt(itms[i].Bei_kuuza).toLocaleString())
 
-            //The units ....................................//
-            let unts=` <button  data-jum=false data-units='${itms[i].bidhaa__vipimo}' data-pos=${pos} data-show=".rej-panel${pos}" data-hide=.jum-panel${pos}  class="btn-light btn btn-sm setPu dropdown-item "  >${titleCase(itms[i].bidhaa__vipimo)}</button>  `
+            $(`.idadi-rej-panel${pos} input`).data('unit', 1)
+            $(`.idadi-jum-panel${pos} input`).data('unit', Number(itms[i].bidhaa__idadi_jum) || 1)
 
-                   if(Number(itms[i].bidhaa__idadi_jum)>1){
-                      unts+=`  
-                          <hr>            
-                          <button  data-jum=true data-units='${itms[i].bidhaa__vipimo_jum}' data-pos=${pos} data-show=".jum-panel${pos}" data-hide=.rej-panel${pos} class="btn-primary btn btn-sm setPu dropdown-item ">${titleCase(itms[i].bidhaa__vipimo_jum)}</button>
-                      ` 
-                   }
-                   $(`#idadi_prod${pos}`).html(unts)
-
-                   $(`#dropbtn${pos}`).prop('disabled',false)
-              
-
-            // $(`.setPufirst${pos}`).text(itms[i].bidhaa__vipimo_jum)
-            // $(`.setPusecond${pos}`).text(itms[i].bidhaa__vipimo)
-
-            // $(`.setPufirst${pos}`).data('units',itms[i].bidhaa__vipimo_jum)
-            // $(`.setPusecond${pos}`).data('units',itms[i].bidhaa__vipimo)
-
+            let jumRatio = Number(itms[i].bidhaa__idadi_jum) || 1
+            let smallPu = jumRatio > 1 ? Number(itms[i].Bei_kununua) / jumRatio : Number(itms[i].Bei_kununua)
+            let units = [{
+                id: 0,
+                unit: itms[i].bidhaa__vipimo,
+                price: smallPu,
+                qty: 1,
+                made: false,
+                jum: false
+            }]
+            if (jumRatio > 1) {
+                units.push({
+                    id: 0,
+                    unit: itms[i].bidhaa__vipimo_jum,
+                    price: Number(itms[i].Bei_kununua),
+                    qty: jumRatio,
+                    made: false,
+                    jum: true
+                })
+            }
+            const madone = (The_price.state || []).filter(m => Number(m.item_id) === Number(itms[i].bidhaa)).map(u => {
+                let pu = Number(u.bei_kununua || 0)
+                if (!(pu > 0)) pu = smallPu * Number(u.idadi || 1)
+                return {
+                    id: u.id,
+                    unit: u.jina,
+                    price: pu,
+                    sale: Number(u.bei || 0),
+                    qty: Number(u.idadi || 1),
+                    made: true,
+                    jum: false
+                }
+            })
+            units = [...units, ...madone]
+            puUnitPrices(itms[i].bidhaa__vipimo, pos, units)
 
             if(parseInt(itms[i].bidhaa__idadi_jum)>1){
 
@@ -455,13 +485,9 @@ $('body').on('click','.item-re-write',function(){
 
 $('body').on('click','.setPu',function(){
     let pos=$(this).data('pos'),
-        jum=$(this).data('jum')
-
-   $(this).addClass('btn-primary')
-   $(this).removeClass('btn-light')
-
-   $(this).siblings('.setPu').removeClass('btn-primary')
-   $(this).siblings('.setPu').addClass('btn-light')
+        jum=$(this).data('jum'),
+        qty = Number($(this).data('qty')) || 1,
+        bei = Number($(this).data('bei'))
 
   $($(this).data('show')).show()
   $($(this).data('hide')).hide()
@@ -470,17 +496,26 @@ $('body').on('click','.setPu',function(){
 
   if(jum){
       $(`#popColored${pos}`).hide()
+      if (bei) {
+          $(`#bill_bei_jum${pos}`).data('val', bei)
+          $(`#bill_bei_jum${pos}`).attr('placeholder', Number(bei).toLocaleString())
+      }
   }else{
+      $(`#rej_item_qty${pos}`).data('unit', qty)
+      if (bei) {
+          $(`#bill_bei_rej${pos}`).data('val', bei)
+          $(`#bill_bei_rej${pos}`).attr('placeholder', Number(bei).toLocaleString())
+      }
       if($(`#colored_items${pos}`).data('color')!=undefined || $(`#colored_items${pos}`).data('size')!=undefined){
       $(`#popColored${pos}`).show()
 
       }
   }
 
-  $(`.idadi-units_disp${$(this).data('pos')}`).text($(this).data('units'))
-  $(`.units_disp${$(this).data('pos')}`).text(`@${$(this).data('units')}`)
+  $(`.idadi-units_disp${pos}`).text($(this).data('units'))
+  $(`.units_disp${pos}`).text(`@${$(this).data('units')}`)
 
-  calculateSum ()
+  setBillData(pos)
 })
 
 $('body').on('keyup',`.item-bill-jum_idadi,.item-bill-rej_idadi`,function(){
@@ -806,6 +841,12 @@ $('#save_bill_data').unbind('submit').submit(function (e) {
                 
                 if ($(item_data).val()!=''){
                     idadi = Number($(item_data).val())
+                }
+
+                var uwiano = Number($(item_data).data('unit')) || 1
+                if (!jum && uwiano > 1) {
+                    idadi = idadi * uwiano
+                    bei = bei / uwiano
                 }
 
 
@@ -2146,11 +2187,11 @@ function tablerow(pos){
          </div>
 
          <div class=" jum-panel${pos}   idadi-jum-panel${pos}" style="padding-left: 0;" >
-           <input type="number" data-sale="#bill_kuuza_jum${pos}" data-itm=0 data-expire="#expire${pos}" class=" form-control smallFont item-bill-jum_idadi" id="jum_item_qty${pos}" data-pos=${pos}  data-tot_wth_vat='#jum-total${pos}' data-vat_allow="#vatallow-jum${pos}" data-bei='#bill_bei_jum${pos}' data-vat='#vat-disp-jum${pos}' data-jum='#jum-actual-total${pos}' style="width: 71px;">  
+           <input type="number" data-unit=1 data-sale="#bill_kuuza_jum${pos}" data-itm=0 data-expire="#expire${pos}" class=" form-control smallFont item-bill-jum_idadi" id="jum_item_qty${pos}" data-pos=${pos}  data-tot_wth_vat='#jum-total${pos}' data-vat_allow="#vatallow-jum${pos}" data-bei='#bill_bei_jum${pos}' data-vat='#vat-disp-jum${pos}' data-jum='#jum-actual-total${pos}' style="width: 71px;">  
          </div>
 
          <div class="  rej-panel${pos} idadi-rej-panel${pos}"  style="display: none;padding-left:0">
-           <input type="number" data-sale="#bill_kuuza_rej${pos}" data-itm=0 data-expire="#expire${pos}" id="rej_item_qty${pos}" class=" smallFont form-control item-bill-rej_idadi" data-pos=${pos} data-tot_wth_vat='#rej-total${pos}' data-vat_allow="#vatallow-rej${pos}" data-bei='#bill_bei_rej${pos}' data-vat='#vat-disp-rej${pos}' data-jum='#rej-actual-total${pos}' style=" width: 71px;">  
+           <input type="number" data-unit=1 data-sale="#bill_kuuza_rej${pos}" data-itm=0 data-expire="#expire${pos}" id="rej_item_qty${pos}" class=" smallFont form-control item-bill-rej_idadi" data-pos=${pos} data-tot_wth_vat='#rej-total${pos}' data-vat_allow="#vatallow-rej${pos}" data-bei='#bill_bei_rej${pos}' data-vat='#vat-disp-rej${pos}' data-jum='#rej-actual-total${pos}' style=" width: 71px;">  
          </div>
 
          <!-- Button trigger color modal -->
@@ -2349,3 +2390,133 @@ function tablerow(pos){
 
     
 }
+
+function puUnitPrices(sm_u, pos, units){
+    var drp = ''
+    var fx = (typeof FIXED_VALUE !== 'undefined') ? FIXED_VALUE : 2
+    units.forEach(function(u) {
+        var showSel = u.jum ? ('.jum-panel' + pos) : ('.rej-panel' + pos)
+        var hideSel = u.jum ? ('.rej-panel' + pos) : ('.jum-panel' + pos)
+        drp += `
+        <div class="btn-group px-0 dropdown-item" role="group" aria-label="Basic example">
+        <button data-jum=${u.jum ? 'true' : 'false'} data-units='${u.unit}' data-sm="${sm_u}" data-bei=${u.price} data-qty=${u.qty} data-pos=${pos} data-show="${showSel}" data-hide="${hideSel}" class="text-left smallFont btn btn-sm border-bottom latoFont setPu text-capitalize">${u.unit} <span>(<span class="text-primary">${sm_u}</span>: <span class="text-danger">${Number(u.qty).toFixed(fx)}</span>)</span></button>
+        `
+        if (u.made) {
+            drp += `<button type="button" data-toggle="modal" data-target="#units_modal" class="btn settingsUnit pr-1" data-sm='${sm_u}' data-units='${u.unit}' data-bei=${u.price} data-sale=${u.sale || 0} data-pos=${pos} data-qty=${u.qty} data-val=${u.id}>
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+                   <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                   <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+                   </svg>
+                 </button>
+                 <button type="button" data-action="/mauzo/removeUnit" class="btn removeUnit text-danger px-1" data-sm='${sm_u}' data-units='${u.unit}' data-bei=${u.price} data-pos=${pos} data-qty=${u.qty} data-val=${u.id}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-circle" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z"/>
+                </svg>
+                 </button>`
+        }
+        drp += `</div>`
+    })
+    drp += `<button data-pos=${pos} class="dropdown-item btn-sm latoFont uni_for_idadi text-primary" data-sm='${sm_u}' data-toggle="modal" data-target="#units_modal">+ ${lang('Ongeza kipimo','Add Unit')}</button>`
+    $(`#dropbtn${pos}`).prop('disabled', false)
+    $(`#idadi_prod${pos}`).html(drp)
+}
+
+$('#submit_Units').unbind('submit').submit(function(e){
+    e.preventDefault()
+    var edit = Number($(this).data('edit')),
+        val = $(this).data('val')
+
+    if (Boolean(edit) && $('#unit_name').val()=='') $('#unit_name').val($('#unit_name').attr('placeholder'))
+    if (Boolean(edit) && $('#unit_qty').val()=='') $('#unit_qty').val($('#unit_qty').attr('placeholder'))
+    if (Boolean(edit) && $('#unit_price').val()=='') $('#unit_price').val($('#unit_price').data('bei'))
+    if (Boolean(edit) && $('#unit_sale_price').val()=='') $('#unit_sale_price').val($('#unit_sale_price').data('bei'))
+
+    var csrfToken = $('input[name=csrfmiddlewaretoken]').val(),
+        unit_name = $('#unit_name').val(),
+        pos = $(this).data('pos'),
+        unit_qty = $('#unit_qty').val(),
+        unit_price = $('#unit_price').val(),
+        unit_sale_price = $('#unit_sale_price').val(),
+        itm = $(`#rej_item_qty${pos}`).data('itm') || $(`#jum_item_qty${pos}`).data('itm')
+
+    var data = {
+        data: {
+            edit: edit,
+            val: val,
+            name: unit_name,
+            qty: Number(unit_qty),
+            price: Number(unit_price),
+            sale_price: Number(unit_sale_price),
+            itm: itm,
+            purchase: 1,
+            csrfmiddlewaretoken: csrfToken
+        },
+        url: $(this).attr('action'),
+        pos: pos
+    }
+
+    if (unit_name!='') {
+        if (data.data.qty!='' && data.data.qty>0) {
+            if (unit_price!='' && Number(unit_price)>0) {
+                if (unit_sale_price!='' && Number(unit_sale_price)>0) {
+                    $(this).children().find('input').val('')
+                    $(this).children().find('small').prop('hidden', true)
+                    $('#units_modal').modal('hide')
+                    $('#loadMe').modal('show')
+                    $.ajax({
+                        type: "POST",
+                        url: data.url,
+                        data: data.data,
+                        success: function (r) {
+                            $('#loadMe').modal('hide')
+                            hideLoading()
+                            if (r.success) {
+                                toastr.success(lang(r.swa, r.eng), 'Success Alert', {timeOut: 2000})
+                                puUnitPrices(r.sm, data.pos, r.price)
+                                loadPurchaseUnitPrices()
+                            } else {
+                                toastr.error(lang(r.swa, r.eng), 'error Alert', {timeOut: 2000})
+                            }
+                        },
+                        error: function () {
+                            $('#loadMe').modal('hide')
+                            hideLoading()
+                        }
+                    })
+                } else {
+                    $('#price_sale_Bei').prop('hidden', false)
+                }
+            } else {
+                $('#price_Bei').prop('hidden', false)
+            }
+        } else {
+            $('#price_idadi_help').prop('hidden', false)
+        }
+    } else {
+        $('#price_jina_help').prop('hidden', false)
+    }
+})
+
+$('body').off('click','.removeUnit').on('click','.removeUnit',function(){
+    var pos = $(this).data('pos'),
+        val = $(this).data('val'),
+        itm = $(`#rej_item_qty${pos}`).data('itm') || $(`#jum_item_qty${pos}`).data('itm')
+    var csrfToken = $('input[name=csrfmiddlewaretoken]').val()
+    if (confirm(lang('Ondoa kipimo','remove item unit'))) {
+        $.ajax({
+            type: "POST",
+            url: $(this).data('action'),
+            data: { val: val, csrfmiddlewaretoken: csrfToken, itm: itm },
+            success: function (r) {
+                if (r.success) {
+                    toastr.success(lang(r.swa, r.eng), 'Success Alert', {timeOut: 2000})
+                    placedata(pos, itm)
+                    loadPurchaseUnitPrices()
+                } else {
+                    toastr.error(lang(r.swa, r.eng), 'error Alert', {timeOut: 2000})
+                }
+            }
+        })
+    }
+})

@@ -998,6 +998,7 @@ class bei_za_bidhaa(models.Model):
     jina = models.CharField(max_length=100,null=True,blank=True) 
     idadi = models.DecimalField(max_digits=10,decimal_places=5)
     bei = models.DecimalField(max_digits=20,decimal_places=10)
+    bei_kununua = models.DecimalField(max_digits=20, decimal_places=10, default=0)
     item = models.ForeignKey(bidhaa,on_delete=models.CASCADE)
     
 class salePuMatch(models.Model):

@@ -199,7 +199,13 @@
                 <small class="text-muted">{% if useri.langSet == 0 %}Mauzo yatarekodiwa kwa{% else %}Sales will be recorded as{% endif %} {{ recon_recorder_name|default:'-' }}</small>
               </div>
               <div class="card-body pt-2">
-                <ul id="reconCategsList" class="list-unstyled d-flex pt-1 mb-2"></ul>
+                <div class="d-flex align-items-start mb-2">
+                  <ul id="reconCategsList" class="list-unstyled d-flex pt-1 mb-0 flex-grow-1"></ul>
+                  <div class="pl-3 pt-1 text-right recon-total-box flex-shrink-0">
+                    <small class="text-muted d-block">{% if useri.langSet == 0 %}Jumla ya mauzo{% else %}Total sales{% endif %}</small>
+                    <strong id="reconTotalAmount">0.00</strong>
+                  </div>
+                </div>
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
                   <input type="search" class="form-control form-control-sm mb-1" id="reconSearch" autocomplete="off"
                     style="max-width:280px"
@@ -208,7 +214,7 @@
                     {% if useri.langSet == 0 %}Hifadhi tofauti kama mauzo{% else %}Save difference as sales{% endif %}
                   </button>
                 </div>
-                <div class="table-responsive" style="max-height:70vh;">
+                <div class="table-responsive" id="reconTableWrap">
                   <table class="table table-sm table-bordered table-hover mb-0" id="reconTable">
                     <thead>
                       <tr>
@@ -224,12 +230,6 @@
                       </tr>
                     </thead>
                     <tbody id="reconTableBody"></tbody>
-                    <tfoot>
-                      <tr class="font-weight-bold">
-                        <td colspan="8" class="text-left">{% if useri.langSet == 0 %}Jumla ya mauzo{% else %}Total sales{% endif %}</td>
-                        <td id="reconTotalAmount">0.00</td>
-                      </tr>
-                    </tfoot>
                   </table>
                 </div>
                 <p class="small text-muted mt-2 mb-0">
@@ -344,10 +344,47 @@
   }
   #shiftReconWrap { display: none; }
   #shiftReconWrap.is-open { display: block; }
-  #reconCategsList { overflow-x: auto; }
+  #reconCategsList { overflow-x: auto; min-width: 0; }
+  .recon-total-box { white-space: nowrap; min-width: 7.5rem; }
+  .recon-total-box strong { font-size: 1.05rem; }
   #reconCategsList .categsBtn { white-space: nowrap; min-width: 9rem; }
+  #reconCategsList .recon-categ-count {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    opacity: 0.85;
+  }
+  #reconCategsList .recon-categ-count.is-edited { color: #c79100; opacity: 1; }
+  body.theme-dark #reconCategsList .recon-categ-count.is-edited { color: #ffd666; }
+  #reconTableWrap {
+    max-height: 70vh;
+    overflow: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+  }
+  #reconTable {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  #reconTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #f4f6fb;
+    box-shadow: inset 0 -1px 0 #dee2e6;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
   #reconTable input.form-control { min-width: 5.5rem; }
   #reconTable tbody tr.recon-changed { background: #fff8e6; }
+  body.theme-dark #reconTableWrap { border-color: #334155; }
+  body.theme-dark #reconTable thead th {
+    background: #1c2850;
+    color: #e2e8f0;
+    box-shadow: inset 0 -1px 0 #334155;
+  }
   body.theme-dark #reconTable tbody tr.recon-changed { background: #3a3420; }
 </style>
   <div class="row mt-2">
@@ -957,13 +994,54 @@ function reconUserSold(row) {
   if (row.user_sold == null || row.user_sold === '') return reconNum(row.sold_qty);
   return reconNum(row.user_sold);
 }
+function reconAinaId(row) {
+  return row.aina_id == null || row.aina_id === '' ? RECON_UNCATEG : Number(row.aina_id);
+}
+function reconRowIsEdited(row) {
+  return (row.user_sold != null && row.user_sold !== '') || (row.user_current != null && row.user_current !== '');
+}
+function reconCategStats() {
+  var all = RECON_ROWS.length;
+  var allEdited = 0;
+  var byCat = {};
+  RECON_ROWS.forEach(function(r) {
+    var id = reconAinaId(r);
+    if (!byCat[id]) byCat[id] = { total: 0, edited: 0 };
+    byCat[id].total += 1;
+    if (reconRowIsEdited(r)) {
+      byCat[id].edited += 1;
+      allEdited += 1;
+    }
+  });
+  return { all: all, allEdited: allEdited, byCat: byCat };
+}
+function updateReconCategoryCounts() {
+  var stats = reconCategStats();
+  document.querySelectorAll('#reconCategsList .recon-categ-btn').forEach(function(btn) {
+    var ain = Number(btn.getAttribute('data-aina'));
+    var countEl = btn.querySelector('.recon-categ-count');
+    if (!countEl) return;
+    var edited = 0;
+    var total = 0;
+    if (!ain) {
+      edited = stats.allEdited;
+      total = stats.all;
+    } else {
+      var s = stats.byCat[ain] || { total: 0, edited: 0 };
+      edited = s.edited;
+      total = s.total;
+    }
+    countEl.textContent = edited + '/' + total;
+    countEl.classList.toggle('is-edited', edited > 0);
+  });
+}
 function renderReconCategories() {
   var list = document.getElementById('reconCategsList');
   if (!list) return;
   var cats = [];
   var seen = {};
   RECON_ROWS.forEach(function(r) {
-    var id = r.aina_id == null || r.aina_id === '' ? RECON_UNCATEG : Number(r.aina_id);
+    var id = reconAinaId(r);
     if (seen[id]) return;
     seen[id] = true;
     cats.push({
@@ -974,11 +1052,12 @@ function renderReconCategories() {
     });
   });
   cats.sort(function(a, b) { return String(a.aina).localeCompare(String(b.aina)); });
-  var html = '<li class="py-1 pr-1"><button type="button" data-aina="0" class="btn border categsBtn recon-categ-btn text-left text-capitalize latoFont btn-block btn-default">{% if useri.langSet == 0 %}Aina Zote{% else %}All Categories{% endif %}</button></li>';
+  var html = '<li class="py-1 pr-1"><button type="button" data-aina="0" class="btn border categsBtn recon-categ-btn text-left text-capitalize latoFont btn-block btn-default"><span class="d-block recon-categ-name">{% if useri.langSet == 0 %}Aina Zote{% else %}All Categories{% endif %}</span><small class="recon-categ-count">0/0</small></button></li>';
   cats.forEach(function(c) {
-    html += '<li class="py-1 pr-1"><button type="button" data-aina="' + c.id + '" class="btn border categsBtn recon-categ-btn text-left text-capitalize latoFont btn-block btn-light">' + c.aina + '</button></li>';
+    html += '<li class="py-1 pr-1"><button type="button" data-aina="' + c.id + '" class="btn border categsBtn recon-categ-btn text-left text-capitalize latoFont btn-block btn-light"><span class="d-block recon-categ-name">' + c.aina + '</span><small class="recon-categ-count">0/0</small></button></li>';
   });
   list.innerHTML = html;
+  updateReconCategoryCounts();
 }
 function reconVisibleRows() {
   var q = ((document.getElementById('reconSearch') || {}).value || '').toLowerCase().trim();
@@ -999,10 +1078,11 @@ function updateReconTotals() {
     total += sold * reconNum(row.sales_price);
     var amt = tr.querySelector('.recon-amount');
     if (amt) amt.textContent = reconFmt(sold * reconNum(row.sales_price));
-    tr.classList.toggle('recon-changed', reconRound(sold) > reconRound(row.sold_qty));
+    tr.classList.toggle('recon-changed', reconRowIsEdited(row));
   });
   var tot = document.getElementById('reconTotalAmount');
   if (tot) tot.textContent = reconFmt(total);
+  updateReconCategoryCounts();
 }
 function renderReconTable() {
   var body = document.getElementById('reconTableBody');
@@ -1018,7 +1098,7 @@ function renderReconTable() {
     var expCur = reconExpectedCurrent(r);
     var soldVal = r.user_sold != null && r.user_sold !== '' ? reconRound(r.user_sold) : '';
     var curVal = r.user_current != null && r.user_current !== '' ? reconRound(r.user_current) : '';
-    return '<tr data-bidhaa="' + r.bidhaa_id + '"' + (soldVal !== '' && reconRound(soldVal) > reconRound(r.sold_qty) ? ' class="recon-changed"' : '') + '>'
+    return '<tr data-bidhaa="' + r.bidhaa_id + '"' + (reconRowIsEdited(r) ? ' class="recon-changed"' : '') + '>'
       + '<td>' + (r.item_name || '') + '</td>'
       + '<td>' + (r.units || '-') + '</td>'
       + '<td>' + reconFmt(r.before_qty) + '</td>'

@@ -475,6 +475,7 @@ def build_shift_report(duka, shift):
         Interprise=duka.id,
         is_grouped_item=False,
         manunuzi__isnull=False,
+        manunuzi__manunuzi__Interprise=duka.id,
         manunuzi__manunuzi__order=False,
         manunuzi__manunuzi__tarehe__gte=starts_at,
         manunuzi__manunuzi__tarehe__lte=period_end,

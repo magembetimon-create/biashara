@@ -180,10 +180,10 @@
                               </div>
 
                         <div class=" jum-panel1   idadi-jum-panel1" style="padding-left: 0;" >
-                            <input type="number" data-sm='' data-sale="#bill_kuuza_jum1" data-itm=0 data-expire="#expire1" class=" form-control item-bill-jum_idadi smallFont" id="jum_item_qty1" data-pos=1 data-tot_wth_vat='#jum-total1' data-vat_allow="#vatallow-jum1" data-bei='#bill_bei_jum1' data-vat='#vat-disp-jum1' data-jum='#jum-actual-total1' style=" width:71px;">  
+                            <input type="number" data-sm='' data-unit=1 data-sale="#bill_kuuza_jum1" data-itm=0 data-expire="#expire1" class=" form-control item-bill-jum_idadi smallFont" id="jum_item_qty1" data-pos=1 data-tot_wth_vat='#jum-total1' data-vat_allow="#vatallow-jum1" data-bei='#bill_bei_jum1' data-vat='#vat-disp-jum1' data-jum='#jum-actual-total1' style=" width:71px;">  
                         </div>
                         <div class="  rej-panel1 idadi-rej-panel1"  style="display: none;padding-left:0">
-                            <input type="number" data-sm='' data-sale="#bill_kuuza_rej1" data-itm=0 data-expire="#expire1" id="rej_item_qty1" class=" form-control smallFont item-bill-rej_idadi" data-pos=1 data-tot_wth_vat='#rej-total1' data-vat_allow="#vatallow-rej1" data-bei='#bill_bei_rej1' data-vat='#vat-disp-rej1' data-jum='#rej-actual-total1' style="width: 71px">  
+                            <input type="number" data-sm='' data-unit=1 data-sale="#bill_kuuza_rej1" data-itm=0 data-expire="#expire1" id="rej_item_qty1" class=" form-control smallFont item-bill-rej_idadi" data-pos=1 data-tot_wth_vat='#rej-total1' data-vat_allow="#vatallow-rej1" data-bei='#bill_bei_rej1' data-vat='#vat-disp-rej1' data-jum='#rej-actual-total1' style="width: 71px">  
                         </div>
                
                             <!-- Button trigger color modal -->
@@ -829,13 +829,114 @@
 </div>
 </div>
 
-
+<div class="modal fade" id="units_modal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% if useri.langSet == 0 %}Ongeza Kipimo{% else %}Add Quantity Unit{% endif %}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+            </div>
+            <div class="modal-body">
+                <form action="/mauzo/addUnits" data-val=0 data-edit=0 data-pos=0 id="submit_Units" class="px-2">
+                    <div class="form-group mb-3">
+                      <label for="unit_name" class="brown">
+                        {% if useri.langSet == 0 %}Jina la Kipimo{% else %}Quantity Unit Name{% endif %}
+                        <sup>*</sup>
+                    </label>
+                      <input type="text" class="form-control" name="unit_name" id="unit_name" aria-describedby="price_jina_help" placeholder="">
+                      <small id="price_jina_help" hidden class="form-text text-danger">
+                        {% if useri.langSet == 0 %}Tafadhari Andika Jina{% else %}Please write name{% endif %}
+                      </small>
+                    </div>
+                    <div class="form-group mb-3">
+                      <label for="unit_qty" class="brown">
+                        {% if useri.langSet == 0 %}Idadi kwa kipimo kidogo{% else %}Quantities by smallest Unit{% endif %}
+                       <sup>*</sup>
+                    </label>
+                      <div class="input-group">
+                          <div class="input-group-prepend border">
+                              <span class="text-primary latoFont px-2" id="sm_unit"></span>
+                          </div>
+                          <input type="number" class="form-control" name="unit_qty" id="unit_qty" aria-describedby="price_idadi_help" placeholder="">
+                      </div>
+                        <small id="price_idadi_help" hidden class="form-text text-danger">
+                        {% if useri.langSet == 0 %}Tafadhari Andika idadi{% else %}Please write quantity{% endif %}
+                        </small>
+                    </div>
+                    <div class="form-group mb-2">
+                      <label for="unit_price" class="brown">
+                        {% if useri.langSet == 0 %}Bei ya kununulia{% else %}Purchase Unit Price{% endif %}
+                        <sup>*</sup>
+                    </label>
+                      <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+                        <label class="mt-1 text-danger" for="unit_price"></label>
+                        <div class="box-pointer d-inline "></div>
+                      </div>
+                      <input type="number" class="form-control money-fomat" name="unit_price" data-bei=0 id="unit_price" aria-describedby="price_Bei" placeholder="">
+                        <small id="price_Bei" hidden class="form-text text-danger">
+                        {% if useri.langSet == 0 %}Tafadhari Andika Bei{% else %}Please write Price{% endif %}
+                        </small>
+                    </div>
+                    <div class="form-group mb-2">
+                      <label for="unit_sale_price" class="brown">
+                        {% if useri.langSet == 0 %}Bei ya kuuzia{% else %}Sales Unit Price{% endif %}
+                        <sup>*</sup>
+                    </label>
+                      <div class="show_curency_block show_curency position-absolute text-danger   px-3" style="display: none ;">
+                        <label class="mt-1 text-danger" for="unit_sale_price"></label>
+                        <div class="box-pointer d-inline "></div>
+                      </div>
+                      <input type="number" class="form-control money-fomat" name="unit_sale_price" data-bei=0 id="unit_sale_price" aria-describedby="price_sale_Bei" placeholder="">
+                        <small id="price_sale_Bei" hidden class="form-text text-danger">
+                        {% if useri.langSet == 0 %}Tafadhari Andika Bei ya kuuzia{% else %}Please write Sales Price{% endif %}
+                        </small>
+                    </div>
+                    <div class="form-group mt-2 text-center">
+                        <button class="btn btn-primary smallFont latoFont">
+                              {% if useri.langSet == 0 %}Save Kipimo{% else %}Save Unit{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
     {% block forbilljs %}
       <script>
           $('#loadMe').modal('show')
       </script>
-       <script src="{% static 'js/newbill.js' %}?v=nb1"></script>
+       <script src="{% static 'js/newbill.js' %}?v=nb4"></script>
+       <script>
+    $('body').on('click','.uni_for_idadi',function(){
+        $('#sm_unit').text($(this).data('sm'))
+        $('#submit_Units').data('pos',$(this).data('pos'))
+        $('#submit_Units').data('val',0)
+        $('#submit_Units').data('edit',0)
+        $('#unit_name').attr('placeholder','')
+        $('#unit_qty').attr('placeholder','')
+        $('#unit_price').attr('placeholder','')
+        $('#unit_price').data('bei',0)
+        $('#unit_sale_price').attr('placeholder','')
+        $('#unit_sale_price').data('bei',0)
+        $('#price_Bei,#price_sale_Bei,#price_jina_help,#price_idadi_help').prop('hidden', true)
+    })
+    $('body').on('click','.settingsUnit',function(){
+        $('#sm_unit').text($(this).data('sm'))
+        $('#submit_Units').data('pos',$(this).data('pos'))
+        $('#submit_Units').data('val',$(this).data('val'))
+        $('#submit_Units').data('edit',1)
+        $('#unit_name').attr('placeholder',$(this).data('units'))
+        $('#unit_qty').attr('placeholder',Number($(this).data('qty')).toFixed(2))
+        $('#unit_price').attr('placeholder',Number($(this).data('bei')).toLocaleString())
+        $('#unit_price').data('bei',Number($(this).data('bei')))
+        $('#unit_sale_price').attr('placeholder',Number($(this).data('sale')).toLocaleString())
+        $('#unit_sale_price').data('bei',Number($(this).data('sale')))
+        $('#price_Bei,#price_sale_Bei,#price_jina_help,#price_idadi_help').prop('hidden', true)
+    })
+       </script>
     {% endblock %}    
 
 

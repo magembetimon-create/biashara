@@ -46,7 +46,6 @@ from accaunts.todos import (
     STAFF_TEMP_EMAIL_DOMAIN,
     build_unique_staff_temp_email,
     staff_temp_email_local_part,
-    updateOrder,
 )
 from staff.shift_report import (
     build_shift_report,
@@ -55,6 +54,7 @@ from staff.shift_report import (
     shift_sales_amounts,
     staff_display_name,
 )
+from stoku.stock_consume import consume_bidhaa_qty, stock_out_error, stock_short_messages
 
 
 def todoFunct(request):
@@ -1045,105 +1045,6 @@ def _next_sale_invoice_code(duka):
     return nxt, code
 
 
-def _stock_batches_for_bidhaa(duka, bidhaa_id):
-    return bidhaa_stoku.objects.filter(
-        Interprise=duka.id,
-        bidhaa_id=bidhaa_id,
-        is_grouped_item=False,
-        service=False,
-        idadi__gt=0,
-    )
-
-
-def _take_from_stock_batch(batch, take, bidhaa_id, duka, request):
-    avail = Decimal(batch.idadi or 0)
-    take = Decimal(str(take or 0))
-    if take <= 0 or avail <= 0:
-        return Decimal('0')
-    if take > avail:
-        take = avail
-    batch.idadi = avail - take
-    batch.save(update_fields=['idadi'])
-
-    color_need = take
-    for col in produ_colored.objects.filter(bidhaa=batch, idadi__gt=0).order_by('id'):
-        if color_need <= 0:
-            break
-        cavail = Decimal(col.idadi or 0)
-        ctake = cavail if cavail <= color_need else color_need
-        col.idadi = cavail - ctake
-        col.save(update_fields=['idadi'])
-        color_need -= ctake
-        size_need = ctake
-        for sz in produ_size.objects.filter(bidhaa=batch, idadi__gt=0).order_by('id'):
-            if size_need <= 0:
-                break
-            savail = Decimal(sz.idadi or 0)
-            stake = savail if savail <= size_need else size_need
-            sz.idadi = savail - stake
-            sz.save(update_fields=['idadi'])
-            size_need -= stake
-
-    if Decimal(batch.idadi or 0) == 0:
-        others = _stock_batches_for_bidhaa(duka, bidhaa_id).exclude(pk=batch.id)
-        if others.exists():
-            nxt = others.filter(inapacha=False).first() or others.first()
-            if nxt and nxt.inapacha:
-                nxt.inapacha = False
-                nxt.save(update_fields=['inapacha'])
-            if not batch.inapacha:
-                batch.inapacha = True
-                batch.save(update_fields=['inapacha'])
-            updateOrder({'itm': batch, 'request': request, 'out': True, 'other': nxt})
-    return take
-
-
-def _consume_bidhaa_qty(duka, bidhaa_id, extra_qty, request):
-    """Reduce live bidhaa_stoku rows for one bidhaa, then link each take to mauzoList.produ.
-
-    Table shows distinct bidhaa; save must pick stock objects:
-    if one row has idadi >= qty, deduct from that row only;
-    otherwise walk remaining rows (2, 1, 2 ...) until qty is covered.
-    """
-    remaining = Decimal(str(extra_qty or 0))
-    used = []
-    if remaining <= 0:
-        return used
-
-    qs = _stock_batches_for_bidhaa(duka, bidhaa_id)
-    enough = list(qs.filter(idadi__gte=remaining).order_by('inapacha', '-idadi', 'id'))
-    if enough:
-        batch = enough[0]
-        taken = _take_from_stock_batch(batch, remaining, bidhaa_id, duka, request)
-        if taken > 0:
-            used.append((batch, taken))
-            remaining -= taken
-        if remaining > Decimal('0.0001'):
-            raise ValueError('OUT_OF_STOCK')
-        return used
-
-    for batch in qs.order_by('inapacha', 'id'):
-        if remaining <= 0:
-            break
-        avail = Decimal(batch.idadi or 0)
-        if avail <= 0:
-            continue
-        if remaining <= avail:
-            taken = _take_from_stock_batch(batch, remaining, bidhaa_id, duka, request)
-            if taken > 0:
-                used.append((batch, taken))
-                remaining -= taken
-            break
-        taken = _take_from_stock_batch(batch, avail, bidhaa_id, duka, request)
-        if taken > 0:
-            used.append((batch, taken))
-            remaining -= taken
-
-    if remaining > Decimal('0.0001'):
-        raise ValueError('OUT_OF_STOCK')
-    return used
-
-
 @login_required(login_url='login')
 def shift_reconcile(request):
     if request.method != 'POST':
@@ -1250,9 +1151,15 @@ def shift_reconcile(request):
 
             total = Decimal('0')
             for row, extra in extras:
-                used = _consume_bidhaa_qty(duka, row['bidhaa_id'], extra, request)
+                used = consume_bidhaa_qty(
+                    duka,
+                    row['bidhaa_id'],
+                    extra,
+                    request,
+                    item_name=row.get('item_name') or '',
+                )
                 if not used:
-                    raise ValueError('OUT_OF_STOCK')
+                    raise stock_out_error(row.get('item_name') or '', extra, 0)
                 price = Decimal(str(row.get('sales_price') or 0))
                 for batch, qty in used:
                     line = mauzoList()
@@ -1308,11 +1215,13 @@ def shift_reconcile(request):
     except ShiftSession.DoesNotExist:
         return JsonResponse({'success': False, 'msg': 'Shift not found'}, status=404)
     except ValueError as e:
-        if str(e) == 'OUT_OF_STOCK':
+        named = stock_short_messages(e)
+        if named:
             return JsonResponse({
                 'success': False,
-                'msg_swa': 'Stoku haitoshi kurekodi tofauti hii. Hakiki idadi uliyojaza.',
-                'msg_eng': 'Not enough stock to record this difference. Check the qty you entered.',
+                'msg_swa': named['msg_swa'],
+                'msg_eng': named['msg_eng'],
+                'item': named.get('item') or '',
             })
         traceback.print_exc()
         return JsonResponse({'success': False, 'msg': str(e)}, status=500)
