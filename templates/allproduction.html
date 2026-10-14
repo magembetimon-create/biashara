@@ -41,7 +41,7 @@
 {% if prdn_num > 0 %}
 {% load humanize %}
 <div class="table-responsive pb-5">
-<table class="table table-hover " style="color: rgb(92, 92, 92);min-width:700px;">
+<table class="table table-hover txn-list" style="color: rgb(92, 92, 92);">
 <thead>
 <tr>
 <th class="latoFont" scope="col">
@@ -86,24 +86,18 @@
 <tbody>
   {% for bil in bili %}
 <tr>
-<td class="text-center latoFont">PROD-{{bil.prd.code}}</td>
 <td class="text-center latoFont">
- 
-
-   <script>
-    document.write(moment('{{bil.prd.Recodeddate | date:"r" }}').format('DD/MM/YYYY, HH:MM'))
-  </script>
- 
+  {% if bil.prd.endDate %}
+  <a class="txn-code-link" href="{% url 'productonReport' %}?pr={{bil.prd.id}}">PROD-{{bil.prd.code}}</a>
+  {% else %}
+  <a class="txn-code-link" href="{% url 'productionUsedItems' %}?pr={{bil.prd.id}}">PROD-{{bil.prd.code}}</a>
+  {% endif %}
 </td>
+<td class="text-center latoFont">{{bil.prd.Recodeddate|date:"d/m/Y H:i"}}</td>
 
 <td class="text-center  brown latoFont ">
     {% if  bil.prd.complete  %}
-       
-     
-       <script>
-         document.write(moment('{{bil.prd.endDate | date:"r" }}').format('DD/MM/YYYY, HH:MM'))
-      </script>
-      
+       {{bil.prd.endDate|date:"d/m/Y H:i"}}
     {% else %}
     {% if useri.langSet == 0 %} Uzalishaji Unaendelea ..  {% else %} Production in progress {% endif %}
      {% endif %}

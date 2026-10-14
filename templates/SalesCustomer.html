@@ -150,7 +150,7 @@
     </p>
 
     <div class="cs-statement-wrap pb-3">
-      <table class="table table-hover table-sm mb-0" id="csStatementTable">
+      <table class="table table-hover table-sm mb-0 txn-list" id="csStatementTable">
         <thead>
           <tr>
             <th class="text-left">{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
@@ -354,7 +354,7 @@
     currency: "{{ duka.currencii|escapejs }}",
   };
 </script>
-<script src="{% static 'js/customer_sales_statement.js' %}"></script>
+<script src="{% static 'js/customer_sales_statement.js' %}?v=cs2"></script>
 <script src="{% static 'js/customer_sales_pay.js' %}"></script>
 {% if can_edit_customer %}
 <script src="{% static 'js/customer_sales_edit.js' %}"></script>

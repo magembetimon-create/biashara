@@ -59,7 +59,7 @@
  {% if bil_num > 0 %}
           {% load humanize %}
 <div class="table-responsive pb-5">
- <table class="table table-hover " style="min-width: 700px;" >
+ <table class="table table-hover txn-list" >
       <thead>
         <tr>
           <th class="latoFont" scope="col">
@@ -93,10 +93,10 @@
             {% for bil in bili %}
         <tr>
           <td class="text-center latoFont">
-            <a href="{% url 'viewbill' %}?back_to=AllBills&item_valued={{bil.id}}" class="text-primary">BIL-{{bil.code}}</a>
+            <a href="{% url 'viewbill' %}?back_to=AllBills&item_valued={{bil.id}}" class="txn-code-link">BIL-{{bil.code}}</a>
           </td>
           <td class="text-center latoFont">
-            {{bil.date|date:'d/m/Y'}}{% if bil.tarehe %} {{bil.tarehe|date:'H:i'}}{% endif %}
+            {% if bil.tarehe %}{{bil.tarehe|date:"d/m/Y H:i"}}{% elif bil.date %}{{bil.date|date:"d/m/Y"}}{% endif %}
           </td>
           <td class="text-center latoFont ">
               <a class="text-primary" href='#' >{{bil.supplier_id.jina|title}} </a>

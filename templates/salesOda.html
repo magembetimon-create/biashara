@@ -162,7 +162,7 @@
      {% if bil_num > 0 %}
       {% load humanize %}
       <div class="table-responsive pb-5">
-     <table class="table table-hover " style="color: rgb(92, 92, 92);min-width:1000px">
+     <table class="table table-hover txn-list" style="color: rgb(92, 92, 92);">
           <thead>
             <tr>
               <th class="latoFont" scope="col">
@@ -198,8 +198,8 @@
           <tbody>
                 {% for bil in bili %}
             <tr>
-              <td class="text-center latoFont">ORD-{{bil.code}}</td>
-              <td class="text-center latoFont">{{bil.date}}</td>
+              <td class="text-center latoFont"><a class="txn-code-link" href="{% url 'viewOda' %}?item_valued={{bil.id}}&back_to='allbill'">ORD-{{bil.code}}</a></td>
+              <td class="text-center latoFont">{{bil.tarehe|date:"d/m/Y H:i"}}</td>
 
               <td class="text-center text-primary latoFont ">
                   {% if bil.saved_custom   %}

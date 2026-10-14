@@ -54,7 +54,7 @@
  {% if bil_num > 0 %}
  {% load humanize %}
  <div class="table-responsive pb-5">
-      <table class="table table-hover " style="color: rgb(92, 92, 92);">
+      <table class="table table-hover txn-list" style="color: rgb(92, 92, 92);">
            <thead>
              <tr  >
                <th class="latoFont" scope="col">
@@ -90,12 +90,12 @@
            <tbody>
                  {% for bil in bili %}
              <tr class="noWordCut" >
-               <td class="text-center latoFont">PUO-{{bil.code}}</td>
+               <td class="text-center latoFont"><a class="txn-code-link" href="{% url 'viewOdered' %}?value={{bil.Interprise.id}}&pu={{bil.id}}&en={{entp}}">PUO-{{bil.code}}</a></td>
                <td class="text-center latoFont">
                   {% if  bil.cart %}
                     {% if useri.langSet == 0 %} Bado  {% else %}Yet {% endif %}
                   {% else %}              
-                   {{bil.date | date:'d/m/Y' }}
+                   {{bil.tarehe | date:'d/m/Y H:i' }}
                   {% endif %} 
                   
                 </td>
@@ -104,9 +104,7 @@
                 {% if  bil.cart %}
                     {% if useri.langSet == 0 %} Bado  {% else %}Yet {% endif %}
                 {% else %}
-                  <script>
-                      document.write(moment('{{bil.expected_date|date:"r"}}').format('DD/MM/YYYY HH:mm'))
-                  </script>
+                  {{bil.expected_date|date:"d/m/Y H:i"}}
                 {% endif %}
                   
               </td>

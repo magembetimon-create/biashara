@@ -14,7 +14,7 @@
 
     {% if  worker %}
     <div  id="worker_table" class="container-fluid" >
-      <table id="table-bidhaa" class="table table-bordered smallFont" style="width:100%">
+      <table id="table-bidhaa" class="table table-bordered smallFont txn-list" style="width:100%">
         <thead>
             <tr class="smallFont">
                 <th>#</th>
@@ -33,8 +33,8 @@
           {% for wk in worker %}
            <tr>
              <td> {{forloop.counter}} </td>
-             <td> {{wk.worker.workerId}}</td>
-             <td> {{wk.worker.jina}}</td>
+             <td> <a class="txn-code-link" href="/production/labourtasks?wrk={{wk.worker.id}}">{{wk.worker.workerId}}</a></td>
+             <td> <a class="txn-code-link" href="/production/labourtasks?wrk={{wk.worker.id}}">{{wk.worker.jina}}</a></td>
              <td> {{wk.worker.kazi}}</td>
              <td> <div class="text-center">
               <a href="/production/labourtasks?wrk={{wk.worker.id}}" class="btn btn-primary border0 btn-sm latoFont smallerFont">
@@ -68,8 +68,10 @@
 {% block billmpya %}
 
   <script src="{% static 'js/lugha.js' %}"></script>
+  <script src="{% static 'js/txn-list.js' %}?v=tl3"></script>
   <script>
     $('#table-bidhaa').DataTable();
+    if (typeof enhanceTxnTable === 'function') enhanceTxnTable(document.getElementById('table-bidhaa'));
   </script>
 {% endblock %}
  

@@ -11,11 +11,11 @@
  {% if bil_num > 0 %}
           {% load humanize %}
 <div class="table-responsive pb-5">
- <table class="table table-hover smallFont">
+ <table class="table table-hover smallFont txn-list">
       <thead>
         <tr>
           <th class="" scope="col">
-            {% if useri.langSet == 0 %}  # {% else %} # {% endif %}
+            {% if useri.langSet == 0 %}  Matumizi# {% else %} Expense# {% endif %}
           
           </th>
           <th class="" scope="col">
@@ -49,12 +49,16 @@
       <tbody>
             {% for bil in bili %}
         <tr>
-          <td class="text-center ">EXP-{{bil.id}}</td>
-          <td class="text-center "> 
-            <script>
-            document.write(moment('{{bil.tarehe | date:"r" }}').format('MMM DD YYYY, HH:mm'))
-          </script>
-        </td>
+          <td class="text-center ">
+            {% if bil.manunuzi_id %}
+              <a class="txn-code-link" href="{% url 'viewbill' %}?item_valued={{bil.manunuzi_id.id}}">EXP-{{bil.id}}</a>
+            {% elif bil.adjst %}
+              <a class="txn-code-link" href="{% url 'viewAdjst' %}?item_valued={{bil.adjst.id}}">EXP-{{bil.id}}</a>
+            {% else %}
+              EXP-{{bil.id}}
+            {% endif %}
+          </td>
+          <td class="text-center ">{{bil.tarehe|date:"d/m/Y H:i"}}</td>
 
           <td class="text-center  " style="color:rgb(122, 55, 28);font-weight:600" > {{bil.kiasi| floatformat:'-2' |intcomma }}</td>
 

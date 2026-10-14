@@ -135,6 +135,7 @@ const csRenderTable = (transactions) => {
     </tr>`;
   });
   $('#csStatementBody').html(html);
+  if (typeof enhanceTxnTable === 'function') enhanceTxnTable(document.getElementById('csStatementTable'));
 };
 
 const csFinishLoading = () => {

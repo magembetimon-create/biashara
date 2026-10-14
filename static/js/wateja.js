@@ -78,7 +78,7 @@ function placedataTotable(data){
         })
     }
 
-    let tb = `<table id="table-bidhaa" class="table table-bordered smallFont" style="width:100%">
+    let tb = `<table id="table-bidhaa" class="table table-bordered smallFont txn-list" style="width:100%">
     <thead>
         <tr class="smallFont">
             <th>#</th>
@@ -106,7 +106,7 @@ function placedataTotable(data){
         tb+=`<tr>
            <td>${n}</td>
            
-             <td class="text-capitalize" >${w.jina}</td>
+             <td class="text-capitalize" ><a class="txn-code-link" href="/mauzo/CustomerSales?cst=${w.id}">${w.jina}</a></td>
              <td class="text-capitalize" >${w.address}</td>
              <td>${w.code} ${w.simu1}</td>`
             if(w.simu2){
@@ -145,6 +145,7 @@ function placedataTotable(data){
     $('#table-bidhaa').DataTable({
         order: [[6, 'desc']]
     });
+    if (typeof enhanceTxnTable === 'function') enhanceTxnTable($('#table-bidhaa')[0])
 
     $('#loadMe').modal('hide')
     hideLoading()

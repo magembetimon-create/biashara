@@ -1,0 +1,93 @@
+.txn-code-link {
+  color: #0d6efd !important;
+  font-weight: 600;
+  text-decoration: none;
+  word-break: break-word;
+}
+.txn-code-link:hover { text-decoration: underline; }
+
+@media (max-width: 767.98px) {
+  .txn-list-wrap,
+  .table-responsive:has(table.txn-list),
+  .dataTables_wrapper:has(table.txn-list) {
+    overflow: visible !important;
+  }
+  .table-responsive table.txn-list,
+  .txn-list-wrap table.txn-list,
+  table.table.table-hover.txn-list,
+  table.txn-list,
+  table.txn-list tbody {
+    display: block;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border: 0 !important;
+    margin-bottom: 0;
+  }
+  table.txn-list thead {
+    display: none;
+  }
+  table.txn-list tbody tr {
+    display: block;
+    width: 100% !important;
+    background: #fff;
+    border: 1px solid #e6ebf2;
+    border-radius: 10px;
+    margin: 0 0 12px;
+    padding: 0;
+    box-shadow: 0 1px 4px rgba(16, 24, 40, 0.06);
+  }
+  table.txn-list tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    text-align: right !important;
+    border: 0 !important;
+    border-bottom: 1px dashed #eef2f6 !important;
+    padding: 8px 12px !important;
+    white-space: normal !important;
+    vertical-align: top;
+  }
+  table.txn-list tbody td:last-child {
+    border-bottom: 0 !important;
+    justify-content: flex-end;
+  }
+  table.txn-list tbody td.txn-action-cell,
+  table.txn-list tbody td:has(.bi-eye),
+  table.txn-list tbody td:has(.fa-eye) {
+    display: none !important;
+  }
+  table.txn-list tbody td:has(+ td.txn-action-cell),
+  table.txn-list tbody td:has(+ td:has(.bi-eye)),
+  table.txn-list tbody td:has(+ td:has(.fa-eye)) {
+    border-bottom: 0 !important;
+  }
+  table.txn-list tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #5b6b82;
+    text-align: left;
+    flex: 0 0 42%;
+    font-size: 12px;
+  }
+  table.txn-list tbody td.txn-title-cell,
+  table.txn-list tbody td:first-child {
+    background: #f4f7fb;
+    border-radius: 10px 10px 0 0;
+    font-size: 15px;
+  }
+  table.txn-list tbody td[data-label="#"] {
+    display: none !important;
+  }
+  table.txn-list tbody td.txn-action-cell::before {
+    content: none;
+    flex: 0;
+  }
+  .dataTables_wrapper {
+    overflow: visible !important;
+  }
+}

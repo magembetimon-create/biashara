@@ -55,7 +55,7 @@ getInservs()
 
         
             trp = ` 
-            <table id="table-bidhaa" class="table table-bordered smallFont" style="width:100%">
+            <table id="table-bidhaa" class="table table-bordered smallFont txn-list" style="width:100%">
             <thead>
                 <tr class="smallFont ">
                     
@@ -80,12 +80,12 @@ getInservs()
 
                 trp+=`<tr>
                          <td>${num} </td>    
-                         <td>${s.code} </td>    
+                         <td><a class="txn-code-link" href="/mauzo/viewServing?item_valued=${s.id}">${s.code}</a></td>    
                          <td class="text-capitalize  weight600" style="color:blue">${s.mteja_jina} </td>    
                          <td class="brown weight600">${Number(s.amount).toLocaleString()} </td>    
                          <td class=" darkblue weight600"  >${Number(s.ilolipwa).toLocaleString()} </td>    
-                         <td class="brown" >${moment(s.servFrom).format('MMM DD, YYYY HH:mm')} </td>    
-                         <td class="brown weight600" >${moment(s.servTo).format('MMM DD, YYYY HH:mm')} </td>    
+                         <td class="brown" >${moment(s.servFrom).format('DD/MM/YYYY HH:mm')} </td>    
+                         <td class="brown weight600" >${moment(s.servTo).format('DD/MM/YYYY HH:mm')} </td>    
                          <td class="text-capitalize"> <a href="#"> ${s.NaF}  ${s.NaL}</a></td>    
                          <td >${s.desc|| lang('Hakuna','Null')} </td>    
                          <td  >
@@ -105,6 +105,7 @@ getInservs()
             $('#products_list').html(trp)
 
             $('#table-bidhaa').DataTable();
+            if (typeof enhanceTxnTable === 'function') enhanceTxnTable($('#table-bidhaa')[0])
 
 
             

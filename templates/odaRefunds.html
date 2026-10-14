@@ -55,7 +55,7 @@
        {% if bil_num > 0 %}
                 {% load humanize %}
       <div class="table-responsive pb-5">
-       <table class="table table-hover " style="color: rgb(92, 92, 92);">
+       <table class="table table-hover txn-list" style="color: rgb(92, 92, 92);">
             <thead>
               <tr>
                 <th class="latoFont" scope="col">
@@ -87,16 +87,16 @@
             <tbody>
                   {% for bil in bili %}
               <tr>
-                <td class="text-center latoFont">ARTN-{{bil.code}}</td>
+                <td class="text-center latoFont"><a class="txn-code-link" href="{% url 'viewRef' %}?item_valued={{bil.id}}&back_to='allbill'">ARTN-{{bil.code}}</a></td>
                 
                 <td class="text-center latoFont">
                   {% if bil.ivo.order %}
-                    ORD-{{bil.ivo.code}}
+                    <a class="txn-code-link" href="{% url 'viewOda' %}?item_valued={{bil.ivo.id}}">ORD-{{bil.ivo.code}}</a>
                   {% else %}  
-                    INVO-{{bil.ivo.code}}
+                    <a class="txn-code-link" href="{% url 'viewInvo' %}?item_valued={{bil.ivo.id}}">INVO-{{bil.ivo.code}}</a>
                   {% endif %}
                 </td>
-                <td class="text-center latoFont">{{bil.date}}</td>
+                <td class="text-center latoFont">{{bil.date|date:"d/m/Y"}}</td>
 
                 <td class="text-center text-primary latoFont ">
                     {% if bil.saved_custom   %}

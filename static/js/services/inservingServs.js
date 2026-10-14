@@ -93,7 +93,7 @@ getInservs()
        ],
         
              trp = ` 
-            <table id="table-bidhaa" class="table table-bordered smallFont" style="width:100%">
+            <table id="table-bidhaa" class="table table-bordered smallFont txn-list" style="width:100%">
             <thead>
                 <tr class="smallerFont ">
                     
@@ -177,12 +177,12 @@ getInservs()
                 num+=1
                 trp+=`<tr>
                          <td>${num} </td>    
-                         <td class="text-capitalize" ><a href="#">${s.code || lang('Hakuna','Null')} </a></td>    
-                         <td class="text-capitalize" ><a href="#">${s.bidhaa} </a></td>    
+                         <td class="text-capitalize" ><a class="txn-code-link" href="/mauzo/viewServing?item_valued=${s.mauzo_id}">${s.code || lang('Hakuna','Null')}</a></td>    
+                         <td class="text-capitalize" ><a class="txn-code-link" href="/mauzo/viewServing?item_valued=${s.mauzo_id}">${s.bidhaa}</a></td>    
                          <td class="text-capitalize  weight600" style="color:blue">${s.mteja} </td>    
                     
-                         <td class="brown" >${moment(s.From).format('MMM DD, YYYY HH:mm')} </td>    
-                         <td class="brown weight600" >${moment(s.To).format('MMM DD, YYYY HH:mm')} </td>    
+                         <td class="brown" >${moment(s.From).format('DD/MM/YYYY HH:mm')} </td>    
+                         <td class="brown weight600" >${moment(s.To).format('DD/MM/YYYY HH:mm')} </td>    
                          <td class="brown ">${Number(s.bei).toLocaleString()} </td>    
                        
                          <td > <a href="#"> ${s.vipimo}</a> </td>    
@@ -212,6 +212,7 @@ getInservs()
             $('#products_list').html(trp)
 
             $('#table-bidhaa').DataTable();
+            if (typeof enhanceTxnTable === 'function') enhanceTxnTable($('#table-bidhaa')[0])
 
                       
 const sajiriwa = document.getElementById('servNum'),

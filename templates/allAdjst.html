@@ -74,7 +74,7 @@
        {% if adj_num > 0 %}
                 {% load humanize %}
       <div class="table-responsive pb-5">
-       <table class="table table-hover " >
+       <table class="table table-hover txn-list" >
             <thead>
               <tr>
                 <th class="latoFont" scope="col">
@@ -114,14 +114,8 @@
             <tbody>
                   {% for bil in bili %}
               <tr>
-                <td class="text-center latoFont">ADJ-{{bil.ad.code}}</td>
-                <td class="text-center latoFont">
-                   <script>
-                    document.write(moment('{{bil.ad.date | date:"r" }}').format('DD/MM/YYYY HH:mm '))
-                  </script> 
-                  
-
-                </td>
+                <td class="text-center latoFont"><a class="txn-code-link" href="{% url 'viewAdjst' %}?item_valued={{bil.ad.id}}&back_to='allbill'&un={{un}}">ADJ-{{bil.ad.code}}</a></td>
+                <td class="text-center latoFont">{{bil.ad.date|date:"d/m/Y H:i"}}</td>
 
                 <td class="text-center text-primary latoFont ">
                     {% if not bil.ad.Ongezwa  %}
