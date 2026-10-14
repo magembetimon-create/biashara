@@ -5,6 +5,7 @@ from . import views
 urlpatterns=[
     path('mauzo',views.mauzo, name='mauzo'),
     path('POStab',views.POStab, name='POStab'),
+    path('pos_customer_display', views.pos_customer_display, name='pos_customer_display'),
     path('waiterpage',views.waiterpage, name='waiterpage'),
     path('waiter_counter_activate',views.waiter_counter_activate, name='waiter_counter_activate'),
     path('waiter_items_data',views.waiter_items_data, name='waiter_items_data'),

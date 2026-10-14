@@ -297,6 +297,7 @@
   }
 
   function bindEvents() {
+    $('#items-excel-ai-modal, #items-excel-modal').appendTo('body');
     $('#btn-items-excel-template').on('click', downloadTemplate);
     $('#btn-items-excel-download').on('click', downloadCurrentItems);
 

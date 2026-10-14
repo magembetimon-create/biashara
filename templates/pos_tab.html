@@ -5,7 +5,7 @@
 
 {% block billcss %}
 <link rel="stylesheet" href="{% static 'css/sales.css' %}">
-<link rel="stylesheet" href="{% static 'css/pos.css' %}?v=posg6">
+<link rel="stylesheet" href="{% static 'css/pos.css' %}?v=posg7">
 {% endblock %}
 
 
@@ -24,7 +24,13 @@
 
         <div id="ItemListView" class="col-md-9 border-right pt-1" data-serv="{{serv}}" >
                            <!-- SEARCH BAR  FOR LAGEr DEVICES -->
-                           <div class="d-flex ml-2  round shadowed classic_div bordered" style="width: 90%;border-radius:7px" >
+                           <div class="d-flex align-items-stretch ml-2 pos-search-row">
+                           <button type="button" class="pos-cfd-open-btn" onclick="openPosCustomerDisplay()" title="{% if useri.langSet == 0 %}Skrini ya mteja{% else %}Customer screen{% endif %}">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                               <path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75c.167-.333.25-.833.25-1.5H2s-2 0-2-2V4zm1.398-.855a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3H2c-.325 0-.502.078-.602.145z"/>
+                             </svg>
+                           </button>
+                           <div class="d-flex flex-grow-1 round shadowed classic_div bordered pos-search-bar" >
                             <span class="  centerItem pl-2 p-1 SearchSvg fontColor "  id="SearchSvgL22">
                               <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -76,6 +82,7 @@
                             
                 
                         
+                          </div>
                           </div>
               <ul id="categsList" style="overflow-x: auto;" class="list-unstyled  d-flex pt-2">
                 
@@ -819,7 +826,13 @@ class="c-menu__item style-none is-active  showingpop2"
 {% block active-mauzo %} class="bi bi-cart-check text-primary" {% endblock %}
 
 {% block for_pos %}
-<script src="{% static 'js/posjs.js' %}?v=pos30"></script>
+<script>
+  window.POS_SHOP_NAME = "{{ duka.name|escapejs }}";
+  window.POS_CURRENCY = "{{ duka.currencii|escapejs }}";
+  window.POS_SHOP_LOGO = "{% if duka.logo %}{{ duka.logo.url|escapejs }}{% endif %}";
+</script>
+<script src="{% static 'js/pos_customer_display.js' %}?v=cfd1"></script>
+<script src="{% static 'js/posjs.js' %}?v=pos31"></script>
 <script src="{% static 'js/searchCustomer.js' %}?v=cust3"></script>
 {% endblock %}
 

@@ -296,6 +296,27 @@ $('#group_select').change(function(){
     if(Number($(this).val())>0)$(this).addClass('darkblue')
 })
 
+function fillTaxonomyMergeSelect($sel, items, currentId, labelKey) {
+    let html = ''
+    ;(items || []).forEach(function (itm) {
+        if (Number(itm.id) === Number(currentId)) return
+        const label = String(itm[labelKey] || '').replace(/[&\/\\#,+$~%"*?<>{}`]/g, '')
+        if (!label) return
+        html += '<option value="' + itm.id + '">' + label + '</option>'
+    })
+    $sel.html(html)
+    if ($sel.selectpicker) {
+        $sel.selectpicker('refresh')
+        $sel.selectpicker('val', [])
+    }
+}
+
+function selectedMergeIds(sel) {
+    const v = $(sel).val()
+    if (!v) return ''
+    return Array.isArray(v) ? v.join(',') : String(v)
+}
+
 $('body').on('click','.edit_group',function(){
     const name = $(this).data('name'),
           id = $(this).data('id'),
@@ -315,16 +336,43 @@ $('body').on('click','.edit_group',function(){
 
 })
 
+$('#kundi-modal').on('shown.bs.modal', function () {
+    const edit = Number($('#mahitaji-form').data('edit')) || 0
+    const val = Number($('#mahitaji-form').data('id')) || 0
+    if (edit && val) {
+        $('#kundi-merge-wrap').prop('hidden', false)
+        fillTaxonomyMergeSelect($('#kundi-merge-ids'), pcategs.state, val, 'mahitaji')
+    } else {
+        $('#kundi-merge-wrap').prop('hidden', true)
+        fillTaxonomyMergeSelect($('#kundi-merge-ids'), [], 0, 'mahitaji')
+    }
+})
+
+$('#kundi-modal').on('hidden.bs.modal', function () {
+    $('#mahitaji-form').data('edit', 0)
+    $('#mahitaji-form').data('id', 0)
+    $('#kundi-name').val('')
+    $('#kundi-merge-wrap').prop('hidden', true)
+    if ($('#kundi-merge-ids').selectpicker) $('#kundi-merge-ids').selectpicker('val', [])
+})
+
 $('#mahitaji-form').submit(function(e){
     e.preventDefault()
     const url=$(this).attr("action"),
          mahitaji = $('#kundi-name').val(),
          group = $('#group_select').find('option:selected').val(),
          edit = $(this).data('edit'),
-         val = $(this).data('id')
+         val = $(this).data('id'),
+         merge_ids = selectedMergeIds('#kundi-merge-ids')
 
 
     if(mahitaji!='' && group > 0 ){
+        if (merge_ids && !confirm(lang(
+            'Makundi uliyochagua yatafutwa na aina/bidhaa zake ziingie kwenye kundi hili. Endelea?',
+            'Selected groups will be deleted and their categories/items will move into this group. Continue?'
+        ))) {
+            return
+        }
         var csrfToken =   $('input[name=csrfmiddlewaretoken]').val()
 
         var data={
@@ -333,6 +381,7 @@ $('#mahitaji-form').submit(function(e){
              group,
              edit,
              val,
+             merge_ids,
             csrfmiddlewaretoken:csrfToken, 
         } ,    
             url:url,
@@ -475,6 +524,25 @@ $('#stoku-nje-form').submit(function(e){
 })
 
 
+$('#aina-modal').on('shown.bs.modal', function () {
+    const edit = Number($('#aina-form').data('edit')) || 0
+    const val = Number($('#aina-form').data('value')) || 0
+    if (edit && val) {
+        $('#aina-merge-wrap').prop('hidden', false)
+        fillTaxonomyMergeSelect($('#aina-merge-ids'), Categs.state, val, 'aina')
+    } else {
+        $('#aina-merge-wrap').prop('hidden', true)
+        fillTaxonomyMergeSelect($('#aina-merge-ids'), [], 0, 'aina')
+    }
+})
+
+$('#aina-modal').on('hidden.bs.modal', function () {
+    $('#aina-form').data({ value: 0, edit: 0 })
+    $('#aina-name').val('')
+    $('#aina-merge-wrap').prop('hidden', true)
+    if ($('#aina-merge-ids').selectpicker) $('#aina-merge-ids').selectpicker('val', [])
+})
+
 // save Aina.............................................
 $('#aina-form').submit(function(e){
     e.preventDefault()
@@ -483,10 +551,17 @@ $('#aina-form').submit(function(e){
          mahiVal=Number($('#mahi-data').val()),
          newP = Number($('#new_p_categ').prop('checked')) || 0,
          newPc = $('#pCategNew').val(),
-         selPPc = Number($('#group_select2').val()) || 0
+         selPPc = Number($('#group_select2').val()) || 0,
+         merge_ids = selectedMergeIds('#aina-merge-ids')
 
    
          if(aina!='' && (mahiVal || (newP && newPc!='' && selPPc)) ){
+           if (merge_ids && !confirm(lang(
+               'Aina ulizochagua zitafutwa na bidhaa zake ziingie kwenye aina hii. Endelea?',
+               'Selected categories will be deleted and their items will move into this category. Continue?'
+           ))) {
+               return
+           }
            $('#aina-modal').modal('hide')
            $('#loadMe').modal('show')
 
@@ -498,7 +573,8 @@ $('#aina-form').submit(function(e){
                         mahi:mahiVal,
                         newP,
                         newPc,
-                        selPPc
+                        selPPc,
+                        merge_ids
                         
                     } ,    
                         url,

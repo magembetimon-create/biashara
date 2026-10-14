@@ -56,6 +56,15 @@ from .item_excel import (
     group_import_rows,
     parse_uploaded_xlsx,
 )
+from .merge_taxonomy import _id_list, merge_categories, merge_groups
+from .item_classify import (
+    apply_classify_rows,
+    build_ai_classify_prompt,
+    build_classify_xlsx_bytes,
+    fetch_classify_rows,
+    parse_classify_xlsx,
+    workbook_is_classify,
+)
 from .grouped_items_utils import (
     should_reduce_stock_for_mauzolist,
     get_grouped_items_for_duka,
@@ -606,11 +615,15 @@ def OngezaMahitaji(request):
                 group=int(request.POST.get('group'))
                 edit = int(request.POST.get('edit'))
                 val = int(request.POST.get('val'))
+                merge_ids = _id_list(request.POST.get('merge_ids'))
 
                 ainamam = ainaMama.objects.get(pk=group)
                 
                 mahi=mahitaji()
-                other = mahitaji.objects.filter(mahitaji__icontains=name,Interprise=entp.Interprise.id).exclude(pk=val).exists()
+                other_qs = mahitaji.objects.filter(mahitaji__iexact=name,Interprise=entp.Interprise.id).exclude(pk=val)
+                if merge_ids:
+                    other_qs = other_qs.exclude(pk__in=merge_ids)
+                other = other_qs.exists()
                 if edit:  
                     mahi = mahitaji.objects.get(pk=val,Interprise=entp.Interprise)    
 
@@ -625,13 +638,29 @@ def OngezaMahitaji(request):
                         'message_eng':'The same Parent Category name  exists'
                     }
 
-                else:
-                    mahi.save()    
+                elif other and edit:
                     data={
-                        'success':True,
-                        'message_swa':'Kundi la bidhaa limeongezwa',
-                        'message_eng':'Parent category added successfully'                    
+                        'success':False,
+                        'message_swa':'Tayari kuna kundi lingine lenye jina kama hili',
+                        'message_eng':'Another group with this name already exists'
                     }
+                else:
+                    mahi.save()
+                    merged = 0
+                    if edit and merge_ids:
+                        merged = merge_groups(mahi, merge_ids)
+                    if merged:
+                        data={
+                            'success':True,
+                            'message_swa': f'Kundi limesasishwa na kundi {merged} limeunganishwa',
+                            'message_eng': f'Group updated and {merged} group(s) merged'
+                        }
+                    else:
+                        data={
+                            'success':True,
+                            'message_swa':'Kundi la bidhaa limeongezwa',
+                            'message_eng':'Parent category added successfully'
+                        }
                 return JsonResponse(data) 
 
               else:
@@ -1071,12 +1100,19 @@ def OngezaAina(request):
 
 
 
-                aina.Interprise = todoFunct(request)['cheo'].Interprise
-                aina.aina = name
+                merge_ids = _id_list(request.POST.get('merge_ids'))
+                shop = todoFunct(request)['cheo'].Interprise
+                name_clash = bidhaa_aina.objects.filter(aina=name, Interprise=shop)
+                if edit and val > 0:
+                    name_clash = name_clash.exclude(pk=val)
+                if merge_ids:
+                    name_clash = name_clash.exclude(pk__in=merge_ids)
 
+                aina.Interprise = shop
+                aina.aina = name
                 aina.mahi = Pcateg
-              
-                if bidhaa_aina.objects.filter(aina=name,Interprise=todoFunct(request)['cheo'].Interprise).exists():
+
+                if name_clash.exists():
                     data={
                         'success':False,
                         'swa':'Tayari kuna aina ya bidhaa yenye jina kama hili',
@@ -1084,12 +1120,22 @@ def OngezaAina(request):
                     }
 
                 else:
-                    aina.save()    
-                    data={
-                        'success':True,
-                        'swa':'Aina ya  bidhaa imeongezwa kikamilifu',
-                        'eng':'new Product category added successfully'                    
-                    }
+                    aina.save()
+                    merged = 0
+                    if edit and val > 0 and merge_ids:
+                        merged = merge_categories(aina, merge_ids)
+                    if merged:
+                        data={
+                            'success':True,
+                            'swa': f'Aina imesasishwa na aina {merged} zimeunganishwa',
+                            'eng': f'Category updated and {merged} categor{"y" if merged == 1 else "ies"} merged'
+                        }
+                    else:
+                        data={
+                            'success':True,
+                            'swa':'Aina ya  bidhaa imeongezwa kikamilifu',
+                            'eng':'new Product category added successfully'
+                        }
                 return JsonResponse(data) 
              else:
                 data={
@@ -2401,6 +2447,12 @@ def itemsExcelImportFile(request):
                 'message_eng': 'Use .xlsx or .zip (Excel + images)',
             })
         xlsx_file, image_map = extract_import_bundle(upload)
+        if workbook_is_classify(xlsx_file):
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Faili hili ni la kupanga Kundi/Aina/Chapa. Tumia kitufe cha "Panga kategoria", si Pakia Excel ya bidhaa mpya.',
+                'message_eng': 'This file classifies Group/Category/Brand. Use "Classify items", not Upload Excel for new items.',
+            })
         rows = parse_uploaded_xlsx(xlsx_file)
         if not rows:
             return JsonResponse({
@@ -2455,6 +2507,163 @@ def itemsExcelImportFile(request):
             'done': done,
             'message_swa': f"Imeongezwa {summary['created']} bidhaa, {summary['failed']} hazikufanikiwa",
             'message_eng': f"Added {summary['created']} items, {summary['failed']} failed",
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message_swa': 'Imeshindikana kusoma faili la Excel',
+            'message_eng': 'Failed to read Excel file',
+        })
+
+
+def _can_classify_items(intp):
+    return bool(intp and (intp.owner or (intp.product_edit and not intp.viewi)))
+
+
+@login_required(login_url='login')
+def itemsClassifyExport(request):
+    if request.method != 'GET':
+        return render(request, 'pagenotFound.html', todoFunct(request))
+    try:
+        todo = todoFunct(request)
+        intp = todo['cheo'].Interprise
+        lang_swa = _items_excel_lang_swa(todo)
+        rows = fetch_classify_rows(intp)
+        if not rows:
+            return HttpResponse(
+                'No items to export' if not lang_swa else 'Hakuna bidhaa za kupakua',
+                status=404,
+            )
+        content = build_classify_xlsx_bytes(rows, lang_swa=lang_swa, intp=intp)
+        stamp = datetime.datetime.now().strftime('%Y-%m-%d')
+        filename = f"{'panga_kategoria' if lang_swa else 'classify_items'}_{stamp}.xlsx"
+        return _items_excel_download_response(content, filename)
+    except Exception:
+        traceback.print_exc()
+        return render(request, 'pagenotFound.html', todoFunct(request))
+
+
+@login_required(login_url='login')
+def itemsClassifyAiPrompt(request):
+    try:
+        todo = todoFunct(request)
+        lang_swa = _items_excel_lang_swa(todo)
+        if request.method == 'POST':
+            business = (request.POST.get('business') or '').strip()
+        else:
+            business = (request.GET.get('business') or '').strip()
+        prompt = build_ai_classify_prompt(
+            lang_swa=lang_swa,
+            business_description=business,
+        )
+        return JsonResponse({
+            'success': True,
+            'prompt': prompt,
+            'lang_swa': lang_swa,
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message_swa': 'Imeshindikana kutengeneza maelekezo',
+            'message_eng': 'Could not build the prompt',
+        }, status=500)
+
+
+@login_required(login_url='login')
+def itemsClassifyImportFile(request):
+    if request.method != 'POST':
+        return render(request, 'pagenotFound.html', todoFunct(request))
+    try:
+        todo = todoFunct(request)
+        duka = todo['duka']
+        intp = todo['cheo']
+        if not intp or not duka.Interprise:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Duka halipatikani',
+                'message_eng': 'Shop not found',
+            })
+        if not _can_classify_items(intp):
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Hauna ruhusa ya kuhariri bidhaa',
+                'message_eng': 'You have no permission to edit items',
+            })
+        upload = request.FILES.get('file')
+        if not upload:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Chagua faili la Excel',
+                'message_eng': 'Choose an Excel file',
+            })
+        name = (upload.name or '').lower()
+        if not name.endswith('.xlsx'):
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Tumia faili la .xlsx la kupanga kategoria',
+                'message_eng': 'Use the .xlsx classification file',
+            })
+        if not workbook_is_classify(upload):
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Faili si template ya kupanga Kundi/Aina/Chapa. Pakua template kutoka "Panga kategoria".',
+                'message_eng': 'This is not the Group/Category/Brand template. Download it from "Classify items".',
+            })
+        rows = parse_classify_xlsx(upload)
+        if not rows:
+            return JsonResponse({
+                'success': False,
+                'message_swa': 'Hakuna mistari yenye ID ya bidhaa',
+                'message_eng': 'No rows with item IDs found',
+            })
+        preview_only = request.POST.get('preview') == '1' or request.GET.get('preview') == '1'
+        if preview_only:
+            preview = []
+            for r in rows[:20]:
+                preview.append({
+                    'row': r.get('_row_num', 0),
+                    'bidhaa_id': r.get('bidhaa_id'),
+                    'jina_la_bidhaa': r.get('jina_la_bidhaa', ''),
+                    'kundi': r.get('kundi', ''),
+                    'aina': r.get('aina', ''),
+                    'chapa': r.get('chapa', ''),
+                })
+            return JsonResponse({
+                'success': True,
+                'count': len(rows),
+                'preview': preview,
+            })
+        try:
+            offset = max(0, int(request.POST.get('offset') or 0))
+        except (TypeError, ValueError):
+            offset = 0
+        try:
+            limit = int(request.POST.get('limit') or 80)
+        except (TypeError, ValueError):
+            limit = 80
+        limit = max(1, min(limit, 80))
+        total = len(rows)
+        batch = rows[offset:offset + limit]
+        summary = apply_classify_rows(duka, intp, batch)
+        processed = offset + len(batch)
+        done = processed >= total
+        updated = summary['updated']
+        failed = summary['failed']
+        return JsonResponse({
+            'success': updated > 0 or (done and failed == 0),
+            'updated': updated,
+            'failed': failed,
+            'skipped': summary['skipped'],
+            'results': summary['results'],
+            'offset': offset,
+            'limit': limit,
+            'processed': processed,
+            'total': total,
+            'done': done,
+            'message_swa': f"Imesasishwa {updated}, {failed} hazikufanikiwa, {summary['skipped']} zimeachwa",
+            'message_eng': f"Updated {updated}, {failed} failed, {summary['skipped']} skipped",
         })
     except Exception:
         traceback.print_exc()

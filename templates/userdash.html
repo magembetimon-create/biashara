@@ -4599,7 +4599,19 @@ $('.muamala-genu').click(function(){
 
           </div>
 
-
+          <div class="form-group mb-3 aina-merge-wrap" id="aina-merge-wrap" hidden>
+            <label for="aina-merge-ids" class="smallFont brown">
+              {% if useri.langSet == 0 %}Unganisha aina nyingine kwenye hii{% else %}Merge other categories into this one{% endif %}
+            </label>
+            <select id="aina-merge-ids" class="form-control selectpicker" multiple data-live-search="true" data-actions-box="true" data-none-selected-text="{% if useri.langSet == 0 %}Chagua aina za kuunganisha{% else %}Select categories to merge{% endif %}"></select>
+            <small class="form-text text-muted">
+              {% if useri.langSet == 0 %}
+                Aina ulizochagua zitafutwa. Bidhaa zake zitaingia kwenye aina hii; stoku haitabadilika.
+              {% else %}
+                Selected categories will be deleted. Their items move into this category; stock stays the same.
+              {% endif %}
+            </small>
+          </div>
 
           <div class="row">
             <div class="col-6"></div>
@@ -5165,7 +5177,19 @@ $('.muamala-genu').click(function(){
             </select>
           </div>
 
-
+          <div class="form-group kundi-merge-wrap" id="kundi-merge-wrap" hidden>
+            <label for="kundi-merge-ids" class="smallFont brown">
+              {% if useri.langSet == 0 %}Unganisha makundi mengine kwenye hili{% else %}Merge other groups into this one{% endif %}
+            </label>
+            <select id="kundi-merge-ids" class="form-control selectpicker" multiple data-live-search="true" data-actions-box="true" data-none-selected-text="{% if useri.langSet == 0 %}Chagua makundi ya kuunganisha{% else %}Select groups to merge{% endif %}"></select>
+            <small class="form-text text-muted">
+              {% if useri.langSet == 0 %}
+                Makundi uliyochagua yatafutwa. Aina na bidhaa zake zitaingia kwenye kundi hili; stoku haitabadilika.
+              {% else %}
+                Selected groups will be deleted. Their categories and items move into this group; stock stays the same.
+              {% endif %}
+            </small>
+          </div>
 
           <p class="text-right">
               <button type="submit" class="btn btn-primary latoFont float-right">
@@ -6260,7 +6284,7 @@ if ( $('[type="date"]').prop('type') != 'date' ) {
     {% if duka.Interprise %}
       <script src="{% static 'js/variant_utils.js' %}"></script>
       <script src="{% static 'js/customer_branches.js' %}"></script>
-      <script src="{% static 'js/stoku.js' %}"></script>
+      <script src="{% static 'js/stoku.js' %}?v=mrg1"></script>
     {% endif %}  
 
     {% block forItems %}{% endblock %}

@@ -298,6 +298,13 @@ def  POStab(request):
        return render(request,'pos_tab.html',todo)
 
 @login_required(login_url='login')
+def pos_customer_display(request):
+    todo = newInvo_funct(request)
+    if not todo['duka'].Interprise:
+        return redirect('/userdash')
+    return render(request, 'pos_customer_display.html', todo)
+
+@login_required(login_url='login')
 def waiterpage(request):
       todo = newInvo_funct(request)
       # if not todo['duka'].Interprise:

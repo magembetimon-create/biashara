@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ duka.name }}</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #0b1020;
+      color: #f4f7ff;
+      overflow: hidden;
+    }
+    #cfdRoot { height: 100%; }
+    .cfd-idle {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      background:
+        radial-gradient(ellipse at top, rgba(79,117,240,.28), transparent 55%),
+        #0b1020;
+    }
+    .cfd-logo {
+      max-height: 92px;
+      max-width: 220px;
+      object-fit: contain;
+      margin-bottom: 18px;
+    }
+    .cfd-shop {
+      font-size: clamp(2.2rem, 6vw, 4.4rem);
+      font-weight: 700;
+      letter-spacing: .04em;
+      margin: 0 0 12px;
+      color: #f6e2a8;
+      text-transform: uppercase;
+    }
+    .cfd-welcome { font-size: 1.25rem; color: #c5d1ff; margin: 0; }
+    .cfd-paid { font-size: 2rem; margin-top: 18px; color: #fff; }
+    .cfd-cart { height: 100%; display: flex; flex-direction: column; }
+    .cfd-head {
+      padding: 16px 22px;
+      background: #121a33;
+      font-size: 1.15rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #f6e2a8;
+    }
+    .cfd-list {
+      list-style: none;
+      margin: 0;
+      padding: 8px 18px 18px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .cfd-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      font-size: 1.35rem;
+    }
+    .cfd-name strong { display: block; }
+    .cfd-name small { color: #9db0e6; font-size: .85rem; }
+    .cfd-qty { color: #c5d1ff; min-width: 4rem; text-align: right; }
+    .cfd-line { font-weight: 700; min-width: 7rem; text-align: right; }
+    .cfd-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px 22px;
+      background: #15224a;
+      font-size: 1.15rem;
+    }
+    .cfd-foot strong { font-size: 2.1rem; color: #f6e2a8; }
+  </style>
+</head>
+<body>
+  <div id="cfdRoot"></div>
+  <script>
+    window.POS_SHOP_NAME = "{{ duka.name|escapejs }}";
+    window.POS_CURRENCY = "{{ duka.currencii|escapejs }}";
+    window.POS_SHOP_LOGO = "{% if duka.logo %}{{ duka.logo.url|escapejs }}{% endif %}";
+  </script>
+  <script src="{% static 'js/pos_customer_display.js' %}?v=cfd1"></script>
+  <script>
+    initPosCustomerDisplay({
+      welcome: "{% if useri.langSet == 0 %}Karibu{% else %}Welcome{% endif %}",
+      thanksTitle: "{% if useri.langSet == 0 %}Asante{% else %}Thank you{% endif %}",
+      thanksSub: "{% if useri.langSet == 0 %}Karibu tena{% else %}Please come again{% endif %}",
+      totalLabel: "{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}"
+    });
+  </script>
+</body>
+</html>
