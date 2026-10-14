@@ -610,6 +610,20 @@ def build_shift_report(duka, shift):
         for k, v in buckets.items():
             stock_value_totals[k] += v
 
+    def _qty_used(key):
+        try:
+            return abs(Decimal(stock_value_totals.get(key) or 0)) > 0
+        except Exception:
+            return False
+
+    stock_optional_groups = {
+        'added': _qty_used('added_qty'),
+        'purchased': _qty_used('purchased_qty'),
+        'reduction': _qty_used('reduction_qty'),
+        'transferred': _qty_used('transferred_qty'),
+        'received': _qty_used('received_qty'),
+    }
+
     stock_now = total_current_qty if (is_closed and closing_qty_map) else (
         bidhaa_stoku.objects.filter(Interprise=duka.id).aggregate(sum=Sum('idadi'))['sum'] or 0
     )
@@ -639,6 +653,7 @@ def build_shift_report(duka, shift):
         'mobile_payments_total': mobile_payments_total,
         'stock_value_rows': stock_value_rows,
         'stock_value_totals': stock_value_totals,
+        'stock_optional_groups': stock_optional_groups,
         'sales_breakdown_rows': sales_breakdown_rows,
         'sales_breakdown_totals': sales_breakdown_totals,
     }

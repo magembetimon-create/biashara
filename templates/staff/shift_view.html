@@ -220,11 +220,11 @@
                       <tr>
                         <th class="text-left">{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
                         <th class="text-left">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
-                        <th class="text-left">{% if useri.langSet == 0 %}Stock Before{% else %}Stock Before{% endif %}</th>
-                        <th class="text-left">{% if useri.langSet == 0 %}Added{% else %}Added{% endif %}</th>
-                        <th class="text-left">{% if useri.langSet == 0 %}Reduced{% else %}Reduced{% endif %}</th>
-                        <th class="text-left">{% if useri.langSet == 0 %}Sold{% else %}Sold{% endif %}</th>
-                        <th class="text-left">{% if useri.langSet == 0 %}Current Stock{% else %}Current Stock{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Stoku ya Awali{% else %}Stock Before{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Zilizongezwa{% else %}Added{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Zilizopunguzwa{% else %}Reduced{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Zilizouzwa{% else %}Sold{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Stoku ya Sasa{% else %}Current Stock{% endif %}</th>
                         <th class="text-left">{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}</th>
                         <th class="text-left">{% if useri.langSet == 0 %}Jumla{% else %}Amount{% endif %}</th>
                       </tr>
@@ -234,7 +234,7 @@
                 </div>
                 <p class="small text-muted mt-2 mb-0">
                   {% if useri.langSet == 0 %}
-                  Sold haiwezi kuwa pungufu ya iliyorekodiwa. Tofauti (uliyojaza − mfumo) itahifadhiwa kama mauzo ya aliyekabidhiwa zamu, bila mhudumu.
+                  Zilizouzwa haiwezi kuwa pungufu ya iliyorekodiwa. Tofauti (uliyojaza − mfumo) itahifadhiwa kama mauzo ya aliyekabidhiwa zamu, bila mhudumu.
                   {% else %}
                   Sold cannot be below the system qty. The difference (entered − system) is saved as the shift recorder's sales, not waiter sales.
                   {% endif %}
@@ -332,6 +332,20 @@
   }
   .sv-col-toggles .custom-control { min-width: 7.5rem; }
   #stockValueSearch { max-width: 280px; }
+  #stockValueTable.sv-hide-added .sv-mov-added,
+  #stockValueTable.sv-hide-purchased .sv-mov-purchased,
+  #stockValueTable.sv-hide-reduction .sv-mov-reduction,
+  #stockValueTable.sv-hide-transferred .sv-mov-transferred,
+  #stockValueTable.sv-hide-received .sv-mov-received { display: none !important; }
+  #svCategsList { overflow-x: auto; min-width: 0; }
+  #svCategsList .categsBtn { white-space: nowrap; min-width: 9rem; }
+  #svCategsList .sv-categ-count {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    opacity: 0.85;
+  }
   body.theme-dark #stockValueWrap { border-color: #334155; }
   body.theme-dark #stockValueTable thead th {
     background: #1c2850;
@@ -392,7 +406,7 @@
       <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
         <h6 class="mb-2 mb-md-0">
           {% if useri.langSet == 0 %}Muhtasari wa Bidhaa{% else %}Stock Value Panel{% endif %}
-          <span class="small text-muted font-weight-normal">{{ stock_value_rows|length }} {% if useri.langSet == 0 %}bidhaa{% else %}items{% endif %}</span>
+          <span class="small text-muted font-weight-normal" id="svItemCount">{{ stock_value_rows|length }} {% if useri.langSet == 0 %}bidhaa{% else %}items{% endif %}</span>
         </h6>
         <div class="d-flex flex-wrap align-items-center">
           <input type="search" class="form-control form-control-sm mr-3 mb-1" id="stockValueSearch" autocomplete="off"
@@ -413,41 +427,42 @@
           </div>
         </div>
       </div>
+      <ul id="svCategsList" class="list-unstyled d-flex pt-1 mb-2"></ul>
       <div class="table-responsive" id="stockValueWrap">
-        <table class="table table-sm table-hover table-bordered" id="stockValueTable">
+        <table class="table table-sm table-hover table-bordered{% if not stock_optional_groups.added %} sv-hide-added{% endif %}{% if not stock_optional_groups.purchased %} sv-hide-purchased{% endif %}{% if not stock_optional_groups.reduction %} sv-hide-reduction{% endif %}{% if not stock_optional_groups.transferred %} sv-hide-transferred{% endif %}{% if not stock_optional_groups.received %} sv-hide-received{% endif %}" id="stockValueTable">
           <thead>
             <tr>
               <th rowspan="2" class="text-left" >#</th>
               <th class="text-left" rowspan="2">{% if useri.langSet == 0 %}Bidhaa{% else %}Item name{% endif %}</th>
               <th class="text-left" rowspan="2">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
-              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Stock Before{% else %}Stock Before{% endif %}</th>
-              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Added{% else %}Added{% endif %}</th>
-              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizonunuliwa{% else %}Purchased{% endif %}</th>
-              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Reduction{% else %}Reduction{% endif %}</th>
-              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizohamishwa{% else %}Transferred{% endif %}</th>
-              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizopokelewa{% else %}Received{% endif %}</th>
-              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Sold{% else %}Sold{% endif %}</th>
+              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Stoku ya Awali{% else %}Stock Before{% endif %}</th>
+              <th class="text-center sv-group sv-mov-added" data-sv-group="added" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizongezwa{% else %}Added{% endif %}</th>
+              <th class="text-center sv-group sv-mov-purchased" data-sv-group="purchased" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizonunuliwa{% else %}Purchased{% endif %}</th>
+              <th class="text-center sv-group sv-mov-reduction" data-sv-group="reduction" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizopunguzwa{% else %}Reduction{% endif %}</th>
+              <th class="text-center sv-group sv-mov-transferred" data-sv-group="transferred" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizohamishwa{% else %}Transferred{% endif %}</th>
+              <th class="text-center sv-group sv-mov-received" data-sv-group="received" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizopokelewa{% else %}Received{% endif %}</th>
+              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizouzwa{% else %}Sold{% endif %}</th>
               <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}{% if movement.stock_frozen %}Stoku ya kufunga{% else %}Stoku ya Sasa{% endif %}{% else %}{% if movement.stock_frozen %}Closing Stock{% else %}Current Stock{% endif %}{% endif %}</th>
             </tr>
             <tr>
               <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
               <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
               <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
-              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
-              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
-              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
-              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
-              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
-              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
-              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
-              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
-              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
-              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
-              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
-              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
-              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
-              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
-              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty sv-mov-added">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value sv-mov-added">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth sv-mov-added">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty sv-mov-purchased">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value sv-mov-purchased">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth sv-mov-purchased">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty sv-mov-reduction">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value sv-mov-reduction">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth sv-mov-reduction">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty sv-mov-transferred">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value sv-mov-transferred">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth sv-mov-transferred">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty sv-mov-received">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value sv-mov-received">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth sv-mov-received">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
               <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
               <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
               <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
@@ -458,28 +473,28 @@
           </thead>
           <tbody>
             {% for s in stock_value_rows %}
-            <tr class="sv-item-row" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }}">
+            <tr class="sv-item-row" data-sv-aina="{{ s.aina_id|default:'-1' }}" data-sv-aina-name="{{ s.aina_name|default:'' }}" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }} {{ s.aina_name|default:''|lower }}">
               <td>{{ forloop.counter }}</td>
               <td>{{ s.item_name }}</td>
               <td>{{ s.units|default:'-' }}</td>
               <td class="sv-qty">{{ s.before_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ s.before_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ s.before_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ s.added_qty|floatformat:2|intcomma }}</td>
-              <td class="sv-value">{{ s.added_value|floatformat:2|intcomma }}</td>
-              <td class="sv-worth">{{ s.added_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ s.purchased_qty|floatformat:2|intcomma }}</td>
-              <td class="sv-value">{{ s.purchased_value|floatformat:2|intcomma }}</td>
-              <td class="sv-worth">{{ s.purchased_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ s.reduction_qty|floatformat:2|intcomma }}</td>
-              <td class="sv-value">{{ s.reduction_value|floatformat:2|intcomma }}</td>
-              <td class="sv-worth">{{ s.reduction_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ s.transferred_qty|floatformat:2|intcomma }}</td>
-              <td class="sv-value">{{ s.transferred_value|floatformat:2|intcomma }}</td>
-              <td class="sv-worth">{{ s.transferred_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ s.received_qty|floatformat:2|intcomma }}</td>
-              <td class="sv-value">{{ s.received_value|floatformat:2|intcomma }}</td>
-              <td class="sv-worth">{{ s.received_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty sv-mov-added">{{ s.added_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value sv-mov-added">{{ s.added_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth sv-mov-added">{{ s.added_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty sv-mov-purchased">{{ s.purchased_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value sv-mov-purchased">{{ s.purchased_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth sv-mov-purchased">{{ s.purchased_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty sv-mov-reduction">{{ s.reduction_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value sv-mov-reduction">{{ s.reduction_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth sv-mov-reduction">{{ s.reduction_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty sv-mov-transferred">{{ s.transferred_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value sv-mov-transferred">{{ s.transferred_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth sv-mov-transferred">{{ s.transferred_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty sv-mov-received">{{ s.received_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value sv-mov-received">{{ s.received_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth sv-mov-received">{{ s.received_worth|floatformat:2|intcomma }}</td>
               <td class="sv-qty">{{ s.sold_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ s.sold_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ s.sold_worth|floatformat:2|intcomma }}</td>
@@ -504,21 +519,21 @@
               <td class="sv-qty">{{ stock_value_totals.before_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ stock_value_totals.before_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ stock_value_totals.before_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ stock_value_totals.added_qty|floatformat:2|intcomma }}</td>
-              <td class="sv-value">{{ stock_value_totals.added_value|floatformat:2|intcomma }}</td>
-              <td class="sv-worth">{{ stock_value_totals.added_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ stock_value_totals.purchased_qty|floatformat:2|intcomma }}</td>
-              <td class="sv-value">{{ stock_value_totals.purchased_value|floatformat:2|intcomma }}</td>
-              <td class="sv-worth">{{ stock_value_totals.purchased_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ stock_value_totals.reduction_qty|floatformat:2|intcomma }}</td>
-              <td class="sv-value">{{ stock_value_totals.reduction_value|floatformat:2|intcomma }}</td>
-              <td class="sv-worth">{{ stock_value_totals.reduction_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ stock_value_totals.transferred_qty|floatformat:2|intcomma }}</td>
-              <td class="sv-value">{{ stock_value_totals.transferred_value|floatformat:2|intcomma }}</td>
-              <td class="sv-worth">{{ stock_value_totals.transferred_worth|floatformat:2|intcomma }}</td>
-              <td class="sv-qty">{{ stock_value_totals.received_qty|floatformat:2|intcomma }}</td>
-              <td class="sv-value">{{ stock_value_totals.received_value|floatformat:2|intcomma }}</td>
-              <td class="sv-worth">{{ stock_value_totals.received_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty sv-mov-added">{{ stock_value_totals.added_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value sv-mov-added">{{ stock_value_totals.added_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth sv-mov-added">{{ stock_value_totals.added_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty sv-mov-purchased">{{ stock_value_totals.purchased_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value sv-mov-purchased">{{ stock_value_totals.purchased_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth sv-mov-purchased">{{ stock_value_totals.purchased_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty sv-mov-reduction">{{ stock_value_totals.reduction_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value sv-mov-reduction">{{ stock_value_totals.reduction_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth sv-mov-reduction">{{ stock_value_totals.reduction_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty sv-mov-transferred">{{ stock_value_totals.transferred_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value sv-mov-transferred">{{ stock_value_totals.transferred_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth sv-mov-transferred">{{ stock_value_totals.transferred_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty sv-mov-received">{{ stock_value_totals.received_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value sv-mov-received">{{ stock_value_totals.received_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth sv-mov-received">{{ stock_value_totals.received_worth|floatformat:2|intcomma }}</td>
               <td class="sv-qty">{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>
@@ -538,7 +553,7 @@
       </div>
       <p class="small text-muted mt-2">
         {% if useri.langSet == 0 %}
-        Added = kuongeza idadi. Zilizonunuliwa = manunuzi. Reduction = kupunguza (tumika, haribika, potea, expire, others). Mauzo ya waiter yanahesabiwa wakati wa print ya kwanza. Bidhaa grouped hazioneshwi; mauzo yake yanahesabiwa kwenye bidhaa wanachama.
+        Zilizongezwa = kuongeza idadi. Zilizonunuliwa = manunuzi. Zilizopunguzwa = kupunguza (tumika, haribika, potea, expire, others). Mauzo ya waiter yanahesabiwa wakati wa print ya kwanza. Bidhaa grouped hazioneshwi; mauzo yake yanahesabiwa kwenye bidhaa wanachama.
         {% else %}
         Added = quantity added. Purchased = purchases. Reduction = reduce (used, damaged, lost, expired, other). Waiter sales count at first print. Grouped items are hidden; their sales are counted on member products.
         {% endif %}
@@ -738,6 +753,8 @@ function setStockValueHeadOffset() {
 var SV_PAGE_SIZE = 80;
 var svPage = 1;
 var svSearchTimer = null;
+var SV_CATEG = 0;
+var SV_UNCATEG = -1;
 
 function applyStockValueCols() {
   var table = document.getElementById('stockValueTable');
@@ -757,8 +774,10 @@ function applyStockValueCols() {
   document.querySelectorAll('#stockValueTable .sv-group').forEach(function(th) {
     var metrics = (th.getAttribute('data-sv-metrics') || '').split(',');
     var n = metrics.filter(function(m) { return cols[m]; }).length;
+    var group = th.getAttribute('data-sv-group');
+    var groupHidden = !!(group && table && table.classList.contains('sv-hide-' + group));
     th.colSpan = Math.max(n, 1);
-    th.style.display = n ? '' : 'none';
+    th.style.display = (n && !groupHidden) ? '' : 'none';
   });
   document.querySelectorAll('#stockValueTable thead tr:first-child th[rowspan]').forEach(function(th) {
     th.rowSpan = oneMetric ? 1 : 2;
@@ -766,13 +785,48 @@ function applyStockValueCols() {
   setStockValueHeadOffset();
 }
 
+function svAinaId(tr) {
+  var raw = tr.getAttribute('data-sv-aina');
+  if (raw == null || raw === '') return SV_UNCATEG;
+  var n = Number(raw);
+  return isNaN(n) ? SV_UNCATEG : n;
+}
+function renderSvCategories() {
+  var list = document.getElementById('svCategsList');
+  if (!list) return;
+  var rows = document.querySelectorAll('#stockValueTable tbody tr.sv-item-row');
+  var cats = [];
+  var seen = {};
+  var all = 0;
+  rows.forEach(function(tr) {
+    all += 1;
+    var id = svAinaId(tr);
+    if (seen[id]) {
+      seen[id].total += 1;
+      return;
+    }
+    var name = (tr.getAttribute('data-sv-aina-name') || '').trim();
+    if (!name || id === SV_UNCATEG) name = '{% if useri.langSet == 0 %}Bila Aina{% else %}Uncategorized{% endif %}';
+    var rec = { id: id, aina: name, total: 1 };
+    seen[id] = rec;
+    cats.push(rec);
+  });
+  cats.sort(function(a, b) { return String(a.aina).localeCompare(String(b.aina)); });
+  var html = '<li class="py-1 pr-1"><button type="button" data-aina="0" class="btn border categsBtn sv-categ-btn text-left text-capitalize latoFont btn-block btn-default"><span class="d-block">{% if useri.langSet == 0 %}Aina Zote{% else %}All Categories{% endif %}</span><small class="sv-categ-count">' + all + '</small></button></li>';
+  cats.forEach(function(c) {
+    html += '<li class="py-1 pr-1"><button type="button" data-aina="' + c.id + '" class="btn border categsBtn sv-categ-btn text-left text-capitalize latoFont btn-block btn-light"><span class="d-block">' + c.aina + '</span><small class="sv-categ-count">' + c.total + '</small></button></li>';
+  });
+  list.innerHTML = html;
+}
 function renderStockValuePage() {
   var rows = document.querySelectorAll('#stockValueTable tbody tr.sv-item-row');
   var q = ((document.getElementById('stockValueSearch') || {}).value || '').toLowerCase().trim();
   var matched = [];
   rows.forEach(function(tr) {
     var hay = tr.getAttribute('data-sv-search') || '';
-    var ok = !q || hay.indexOf(q) !== -1;
+    var ainaId = svAinaId(tr);
+    var okCat = !Number(SV_CATEG) || Number(SV_CATEG) === ainaId;
+    var ok = okCat && (!q || hay.indexOf(q) !== -1);
     if (ok) matched.push(tr);
     tr.style.display = 'none';
   });
@@ -808,6 +862,7 @@ function renderStockValuePage() {
 
 function initStockValueCols() {
   applyStockValueCols();
+  renderSvCategories();
   renderStockValuePage();
   document.querySelectorAll('.sv-col-toggle').forEach(function(box) {
     box.addEventListener('change', function() {
@@ -852,6 +907,26 @@ function initStockValueCols() {
 }
 
 document.addEventListener('DOMContentLoaded', initStockValueCols);
+document.addEventListener('click', function(ev) {
+  var btn = ev.target.closest && ev.target.closest('#svCategsList .sv-categ-btn');
+  if (!btn) return;
+  document.querySelectorAll('#svCategsList .sv-categ-btn').forEach(function(b) {
+    b.classList.remove('text-primary', 'border-primary');
+    b.classList.add('btn-light');
+    b.classList.remove('btn-default');
+  });
+  var ain = btn.getAttribute('data-aina');
+  if (Number(ain)) btn.classList.add('text-primary', 'border-primary');
+  else {
+    btn.classList.add('btn-default');
+    btn.classList.remove('btn-light');
+  }
+  SV_CATEG = Number(ain) || 0;
+  svPage = 1;
+  renderStockValuePage();
+  var wrap = document.getElementById('stockValueWrap');
+  if (wrap) wrap.scrollTop = 0;
+});
 
 function filterActivityTable(query) {
   var q = query.toLowerCase();

@@ -983,6 +983,7 @@ def shift_view(request):
             'mobile_payments_total': report['mobile_payments_total'],
             'stock_value_rows': report['stock_value_rows'],
             'stock_value_totals': report['stock_value_totals'],
+            'stock_optional_groups': report.get('stock_optional_groups') or {},
             'sales_breakdown_rows': report['sales_breakdown_rows'],
             'sales_breakdown_totals': report['sales_breakdown_totals'],
             'recon_rows': recon_rows,
@@ -1349,6 +1350,7 @@ def print_shift(request):
             'mobile_payments_total': report['mobile_payments_total'],
             'stock_value_rows': report['stock_value_rows'],
             'stock_value_totals': report['stock_value_totals'],
+            'stock_optional_groups': report.get('stock_optional_groups') or {},
             'useri': useri,
             'include_items': include_items,
             'show_qty': show_qty,
@@ -1356,7 +1358,11 @@ def print_shift(request):
             'show_worth': show_worth,
             'stock_metric_count': stock_metric_count,
             'show_stock_subhead': stock_metric_count > 1,
-            'stock_colspan': 3 + (8 * stock_metric_count),
+            'stock_colspan': 3 + (
+                (3 + sum(1 for k in ('added', 'purchased', 'reduction', 'transferred', 'received')
+                         if (report.get('stock_optional_groups') or {}).get(k)))
+                * stock_metric_count
+            ),
             'lang': lang,
             'paper_size': paper_size,
             'sales_breakdown_rows': report['sales_breakdown_rows'],
