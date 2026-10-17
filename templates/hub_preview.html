@@ -17,7 +17,11 @@
             <h5>BIL-{{ the_bill.code }}</h5>
             <div>
               <strong>{% if useri.langSet == 0 %}Tarehe{% else %}Bill Date{% endif %}:</strong>
-              {{ the_bill.date|date:'d/m/Y' }}{% if the_bill.tarehe %} {{ the_bill.tarehe|date:'H:i' }}{% endif %}
+              {% if the_bill.tarehe %}
+                <span class="nh-local-dt" data-iso="{{ the_bill.tarehe|date:'c' }}" data-fmt="datetime">{{ the_bill.tarehe|date:'d/m/Y H:i' }}</span>
+              {% else %}
+                {{ the_bill.date|date:'d/m/Y' }}
+              {% endif %}
             </div>
           </div>
         </div>
@@ -127,7 +131,7 @@
           <tbody>
             {% for m in malipo %}
             <tr>
-              <td>{{ m.tarehe|date:'d/m/Y H:i' }}</td>
+              <td><span class="nh-local-dt" data-iso="{{ m.tarehe|date:'c' }}" data-fmt="datetime">{{ m.tarehe|date:'d/m/Y H:i' }}</span></td>
               <td>{{ m.Amount|floatformat:'-2'|intcomma }}</td>
               <td>{{ m.Akaunt.Akaunt_name }}</td>
               <td>{{ m.by.user.user.first_name|title }} {{ m.by.user.user.last_name|title }}</td>
@@ -154,7 +158,7 @@
             <h5>INVO-{{ the_bill.code }}</h5>
             <div>
               <strong>{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}:</strong>
-              {{ the_bill.tarehe|date:'d/m/Y H:i' }}
+              <span class="nh-local-dt" data-iso="{{ the_bill.tarehe|date:'c' }}" data-fmt="datetime">{{ the_bill.tarehe|date:'d/m/Y H:i' }}</span>
             </div>
           </div>
         </div>
@@ -222,7 +226,7 @@
           <tbody>
             {% for m in malipo %}
             <tr>
-              <td>{{ m.tarehe|date:'d/m/Y H:i' }}</td>
+              <td><span class="nh-local-dt" data-iso="{{ m.tarehe|date:'c' }}" data-fmt="datetime">{{ m.tarehe|date:'d/m/Y H:i' }}</span></td>
               <td>{{ m.Amount|floatformat:'-2'|intcomma }}</td>
               <td>{{ m.Akaunt.Akaunt_name }}{% if m.Akaunt.aina %} ({{ m.Akaunt.aina }}){% endif %}</td>
             </tr>
@@ -245,7 +249,9 @@
           </div>
           <div class="col-md-5 text-md-right">
             <h6>RC-{{ the_bill.transfer.code }}</h6>
-            <div>{% if useri.langSet == 0 %}Kurekodiwa{% else %}Recorded on{% endif %}: {{ the_bill.transfer.tarehe|date:'d/m/Y H:i' }}</div>
+            <div>{% if useri.langSet == 0 %}Kurekodiwa{% else %}Recorded on{% endif %}:
+              <span class="nh-local-dt" data-iso="{{ the_bill.transfer.tarehe|date:'c' }}" data-fmt="datetime">{{ the_bill.transfer.tarehe|date:'d/m/Y H:i' }}</span>
+            </div>
           </div>
         </div>
         <table class="hub-prev-table">
@@ -299,7 +305,9 @@
           </div>
           <div class="col-md-5 text-md-right">
             <h6>ADJ-{{ the_bill.code }}</h6>
-            <div>{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}: {{ the_bill.date|date:'d/m/Y H:i' }}</div>
+            <div>{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}:
+              <span class="nh-local-dt" data-iso="{{ the_bill.date|date:'c' }}" data-fmt="datetime">{{ the_bill.date|date:'d/m/Y H:i' }}</span>
+            </div>
           </div>
         </div>
         <table class="hub-prev-table">
