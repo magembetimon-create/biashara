@@ -472,6 +472,7 @@ def vendor_statement_payload(duka, vendor_id, t_fr_dt, t_to_dt, branch_ids):
             'closing_balance': closing,
         },
         'transactions': transactions,
+        'last_payment': last_vendor_payment(duka, vendor_id, branch_ids),
     }
 
 
@@ -664,7 +665,8 @@ def _parse_pay_date(raw):
 
 def _money(value, default='0'):
     try:
-        return Decimal(str(value if value is not None else default))
+        text = str(value if value is not None else default).replace(',', '').replace(' ', '')
+        return Decimal(text or default)
     except Exception:
         return Decimal(default)
 
@@ -797,3 +799,92 @@ def apply_vendor_fifo_payment(cheo, vendor_id, branch_ids, account_id, paid, pai
         'swa': 'Malipo ya bili yamefanikiwa',
         'eng': 'Bill payment recorded successfully',
     }
+
+
+def vendor_toa_group(seed):
+    if not seed:
+        return []
+    if not seed.tarehe:
+        return [seed]
+    window = datetime.timedelta(seconds=4)
+    qs = toaCash.objects.filter(
+        pu=True,
+        by_id=seed.by_id,
+        Akaunt_id=seed.Akaunt_id,
+        tarehe__gte=seed.tarehe - window,
+        tarehe__lte=seed.tarehe + window,
+    )
+    vendor_id = None
+    if seed.bill_id:
+        vendor_id = getattr(seed.bill, 'supplier_id_id', None)
+    if vendor_id:
+        qs = qs.filter(bill__supplier_id_id=vendor_id)
+    return list(qs.select_related('Akaunt', 'by__user__user', 'bill__supplier_id').order_by('pk'))
+
+
+def _vendor_pay_person(perm):
+    if not perm or not getattr(perm, 'user', None) or not getattr(perm.user, 'user', None):
+        return ''
+    u = perm.user.user
+    return f'{(u.first_name or "")} {(u.last_name or "")}'.strip() or (u.username or '')
+
+
+def serialize_vendor_last_payment(rows):
+    if not rows:
+        return None
+    first = rows[0]
+    total = sum(float(r.Amount or 0) for r in rows)
+    account = first.Akaunt
+    vendor = first.bill.supplier_id if first.bill_id else None
+    dt = min((r.tarehe for r in rows if r.tarehe), default=first.tarehe)
+    return {
+        'id': first.id,
+        'ids': [r.id for r in rows],
+        'amount': round(total, 2),
+        'date': dt.date().isoformat() if dt else '',
+        'datetime': dt.isoformat() if dt else '',
+        'account': (account.Akaunt_name if account else '') or '',
+        'account_id': first.Akaunt_id,
+        'by': _vendor_pay_person(first.by),
+        'desc': (first.maelezo or '')[:200],
+        'vendor': (vendor.jina if vendor else '') or '',
+        'vendor_id': vendor.id if vendor else None,
+    }
+
+
+def last_vendor_payment(duka, vendor_id, branch_ids):
+    qs = toaCash.objects.filter(
+        pu=True,
+        bill__isnull=False,
+        Interprise_id__in=list(branch_ids or [duka.id]),
+        bill__order=False,
+    )
+    if vendor_id:
+        qs = qs.filter(bill__supplier_id_id=vendor_id)
+    seed = qs.select_related('Akaunt', 'by__user__user', 'bill__supplier_id').order_by('-tarehe', '-pk').first()
+    if not seed:
+        return None
+    return serialize_vendor_last_payment(vendor_toa_group(seed))
+
+
+@transaction.atomic
+def reverse_vendor_payment_group(rows):
+    if not rows:
+        return 0
+    for toa in rows:
+        amt = toa.Amount or Decimal('0')
+        bill = toa.bill
+        if bill:
+            paid = (bill.ilolipwa or Decimal('0')) - amt
+            if paid < 0:
+                paid = Decimal('0')
+            bill.ilolipwa = paid
+            bill.full_paid = paid >= (bill.amount or Decimal('0')) and paid > 0
+            bill.save(update_fields=['ilolipwa', 'full_paid'])
+        if toa.Akaunt_id:
+            ac = PaymentAkaunts.objects.select_for_update().get(pk=toa.Akaunt_id)
+            ac.Amount = (ac.Amount or Decimal('0')) + amt
+            ac.save(update_fields=['Amount'])
+        MatumiziReceiptAttachment.objects.filter(toa_cash_id=toa.id).delete()
+        toa.delete()
+    return len(rows)

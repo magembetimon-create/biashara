@@ -48,6 +48,7 @@ from accaunts.todos import (
     staff_temp_email_local_part,
 )
 from staff.shift_report import (
+    _money,
     build_shift_report,
     build_shifts_period_report,
     completed_sales_qs,
@@ -901,27 +902,65 @@ def new_shift(request):
         shift_team = Workers.objects.filter(Interprise=duka.id).order_by('jina')
 
         accounts = PaymentAkaunts.objects.filter(Interprise=duka.id, aina__iexact='Cash').order_by('Akaunt_name')
-        stock_items = bidhaa_stoku.objects.filter(Interprise=duka.id).select_related('bidhaa').order_by('bidhaa__bidhaa_jina')
-        shift_start_default = timezone.localtime(timezone.now()).strftime('%Y-%m-%dT%H:%M')
-        cash_amount_total = accounts.aggregate(sum=Sum('Amount'))['sum'] or 0
+        stock_qs = bidhaa_stoku.objects.filter(
+            Interprise=duka.id,
+            is_grouped_item=False,
+        ).select_related('bidhaa__bidhaa_aina')
+        bidhaa_groups = {}
+        for itm in stock_qs:
+            bidhaa_groups.setdefault(itm.bidhaa_id, []).append(itm)
 
-        registered_items = stock_items.count()
+        stock_rows = []
+        total_qty = Decimal('0')
         total_buy_value = Decimal('0')
         total_expected_sales = Decimal('0')
-        for itm in stock_items:
-            qty = Decimal(itm.idadi or 0)
-            total_buy_value += qty * Decimal(itm.Bei_kununua or 0)
-            total_expected_sales += qty * Decimal(itm.Bei_kuuza or 0)
+        for _bid, items in sorted(
+            bidhaa_groups.items(),
+            key=lambda x: ((x[1][0].bidhaa.bidhaa_jina or '') if x[1] and x[1][0].bidhaa else '').lower(),
+        ):
+            first = items[0]
+            bidhaa_obj = first.bidhaa if first else None
+            aina = bidhaa_obj.bidhaa_aina if bidhaa_obj else None
+            qty = Decimal('0')
+            value = Decimal('0')
+            worth = Decimal('0')
+            for itm in items:
+                q = Decimal(itm.idadi or 0)
+                ratio = Decimal(itm.bidhaa.idadi_jum or 1) if itm.bidhaa else Decimal('1')
+                v, w = _money(q, Decimal(itm.Bei_kununua or 0), Decimal(itm.Bei_kuuza or 0), ratio)
+                qty += q
+                value += v
+                worth += w
+            stock_rows.append({
+                'item_name': bidhaa_obj.bidhaa_jina if bidhaa_obj else '',
+                'units': bidhaa_obj.vipimo if bidhaa_obj else '',
+                'aina_id': aina.id if aina else -1,
+                'aina_name': (aina.aina if aina else '') or '',
+                'qty': qty,
+                'value': value,
+                'worth': worth,
+            })
+            total_qty += qty
+            total_buy_value += value
+            total_expected_sales += worth
+
+        shift_start_default = timezone.localtime(timezone.now()).strftime('%Y-%m-%dT%H:%M')
+        cash_amount_total = accounts.aggregate(sum=Sum('Amount'))['sum'] or 0
 
         todo.update({
             'staff_page': 'shifts',
             'access_users': access_users,
             'shift_team': shift_team,
             'accounts': accounts,
-            'stock_items': stock_items,
+            'stock_rows': stock_rows,
+            'stock_totals': {
+                'qty': total_qty,
+                'value': total_buy_value,
+                'worth': total_expected_sales,
+            },
             'shift_start_default': shift_start_default,
             'cash_amount_total': cash_amount_total,
-            'registered_items': registered_items,
+            'registered_items': len(stock_rows),
             'total_buy_value': total_buy_value,
             'total_expected_sales': total_expected_sales,
         })
@@ -1415,7 +1454,8 @@ def shift_actor_sales(request):
                 return render(request, 'errorpage.html', todo)
             actor_name = staff_display_name(actor)
 
-        actor_sales = completed_sales_qs(duka, shift.starts_at, period_end)
+        shift_sales = completed_sales_qs(duka, shift.starts_at, period_end)
+        actor_sales = shift_sales
         if not all_staff:
             actor_sales = actor_sales.filter(
                 Q(waiter_order_id=actor_id) |
@@ -1423,34 +1463,102 @@ def shift_actor_sales(request):
             )
 
         item_buckets = {}
+        item_staff = {}
         sold_lines = mauzoList.objects.filter(
-            mauzo_id__in=actor_sales.values_list('id', flat=True)
-        ).select_related('produ__bidhaa')
+            mauzo_id__in=shift_sales.values_list('id', flat=True)
+        ).select_related(
+            'produ__bidhaa',
+            'mauzo__waiter_order__user__user',
+            'mauzo__waiter_order__user_entp__Interprise',
+            'mauzo__waiter_order__fanyakazi',
+            'mauzo__By__user__user',
+            'mauzo__By__user_entp__Interprise',
+            'mauzo__By__fanyakazi',
+        )
 
         for line in sold_lines:
             net_qty = Decimal(line.idadi or 0) - Decimal(line.returned or 0) - Decimal(line.serviceReturn or 0)
             if net_qty <= 0:
                 continue
 
+            sale = line.mauzo
+            matches_actor = all_staff or (
+                (sale.waiter_order_id and sale.waiter_order_id == actor_id) or
+                (not sale.waiter_order_id and sale.By_id == actor_id)
+            )
+
             bidhaa_obj = line.produ.bidhaa if line.produ and line.produ.bidhaa else None
             bidhaa_id = bidhaa_obj.id if bidhaa_obj else (line.produ_id or 0)
             item_name = bidhaa_obj.bidhaa_jina if bidhaa_obj else f"Item #{line.produ_id}"
             item_units = bidhaa_obj.vipimo if bidhaa_obj else '-'
-            key = (bidhaa_id, item_name, item_units)
+            item_key = str(bidhaa_id) if bidhaa_id else ('n:' + (item_name or ''))
+            amount = net_qty * Decimal(line.bei or 0)
 
-            if key not in item_buckets:
-                item_buckets[key] = {
+            if matches_actor:
+                bucket_key = (item_key, item_name, item_units)
+                if bucket_key not in item_buckets:
+                    item_buckets[bucket_key] = {
+                        'item_key': item_key,
+                        'item_name': item_name,
+                        'units': item_units,
+                        'qty': Decimal('0'),
+                        'amount': Decimal('0'),
+                    }
+                item_buckets[bucket_key]['qty'] += net_qty
+                item_buckets[bucket_key]['amount'] += amount
+
+            actor = sale.waiter_order if sale.waiter_order_id else sale.By
+            staff_id = actor.id if actor else 0
+            if item_key not in item_staff:
+                item_staff[item_key] = {
                     'item_name': item_name,
                     'units': item_units,
                     'qty': Decimal('0'),
                     'amount': Decimal('0'),
+                    'staff_map': {},
                 }
-
-            amount = net_qty * Decimal(line.bei or 0)
-            item_buckets[key]['qty'] += net_qty
-            item_buckets[key]['amount'] += amount
+            item_staff[item_key]['qty'] += net_qty
+            item_staff[item_key]['amount'] += amount
+            staff_map = item_staff[item_key]['staff_map']
+            if staff_id not in staff_map:
+                staff_map[staff_id] = {
+                    'actor_id': actor.id if actor else None,
+                    'name': staff_display_name(actor),
+                    'qty': Decimal('0'),
+                    'amount': Decimal('0'),
+                    'sales_count': 0,
+                    '_sales': set(),
+                }
+            staff_map[staff_id]['qty'] += net_qty
+            staff_map[staff_id]['amount'] += amount
+            if sale.id not in staff_map[staff_id]['_sales']:
+                staff_map[staff_id]['_sales'].add(sale.id)
+                staff_map[staff_id]['sales_count'] += 1
 
         item_rows = sorted(item_buckets.values(), key=lambda x: (x['item_name'] or '').lower())
+        for row in item_rows:
+            staff_map = (item_staff.get(row['item_key']) or {}).get('staff_map') or {}
+            row['staff_count'] = len(staff_map)
+        item_staff_payload = {}
+        for key, data in item_staff.items():
+            staff_rows = []
+            for srow in data['staff_map'].values():
+                staff_rows.append({
+                    'actor_id': srow['actor_id'],
+                    'name': srow['name'],
+                    'qty': float(srow['qty']),
+                    'amount': float(srow['amount']),
+                    'sales_count': srow['sales_count'],
+                })
+            staff_rows.sort(key=lambda x: (x['name'] or '').lower())
+            item_staff_payload[key] = {
+                'item_name': data['item_name'],
+                'units': data['units'],
+                'qty': float(data['qty']),
+                'amount': float(data['amount']),
+                'staff': staff_rows,
+            }
+
         totals = {
             'qty': sum((row['qty'] for row in item_rows), Decimal('0')),
             'amount': sum((row['amount'] for row in item_rows), Decimal('0')),
@@ -1464,6 +1572,7 @@ def shift_actor_sales(request):
             'actor_id': actor_id,
             'all_staff': all_staff,
             'item_rows': item_rows,
+            'item_staff_json': json.dumps(item_staff_payload),
             'totals': totals,
             'should_print': should_print,
             'paper_size': paper_size,

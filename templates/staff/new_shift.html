@@ -106,44 +106,366 @@
     </div>
 
     <div class="col-12">
-      <h6>{% if useri.langSet == 0 %}Bidhaa Zote{% else %}All Items{% endif %}</h6>
-      <input type="text" class="form-control form-control-sm mb-2" id="stockSearch"
-        placeholder="{% if useri.langSet == 0 %}Tafuta bidhaa...{% else %}Search items...{% endif %}"
-        onkeyup="filterStockTable(this.value)">
-      <div class="table-responsive" style="max-height: 360px; overflow-y:auto;">
-        <table class="table table-sm table-hover" id="stockTable">
+      <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+        <h6 class="mb-2 mb-md-0">
+          {% if useri.langSet == 0 %}Bidhaa Zote{% else %}All Items{% endif %}
+          <span class="small text-muted font-weight-normal" id="nsItemCount">{{ stock_rows|length }} {% if useri.langSet == 0 %}bidhaa{% else %}items{% endif %}</span>
+        </h6>
+        <div class="d-flex flex-wrap align-items-center">
+          <input type="search" class="form-control form-control-sm mr-3 mb-1" id="nsStockSearch" autocomplete="off"
+            placeholder="{% if useri.langSet == 0 %}Tafuta bidhaa...{% else %}Search item...{% endif %}">
+          <div class="sv-col-toggles d-flex flex-wrap">
+            <div class="custom-control custom-checkbox mr-3 mb-1">
+              <input type="checkbox" class="custom-control-input ns-col-toggle" id="nsShowQty" data-ns-col="qty" checked>
+              <label class="custom-control-label" for="nsShowQty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3 mb-1">
+              <input type="checkbox" class="custom-control-input ns-col-toggle" id="nsShowValue" data-ns-col="value" checked>
+              <label class="custom-control-label" for="nsShowValue">{% if useri.langSet == 0 %}Ghalama (Value){% else %}Value{% endif %}</label>
+            </div>
+            <div class="custom-control custom-checkbox mb-1">
+              <input type="checkbox" class="custom-control-input ns-col-toggle" id="nsShowWorth" data-ns-col="worth" checked>
+              <label class="custom-control-label" for="nsShowWorth">{% if useri.langSet == 0 %}Thamani (Worth){% else %}Worth{% endif %}</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ul id="nsCategsList" class="list-unstyled d-flex pt-1 mb-2"></ul>
+      <div class="table-responsive" id="nsStockWrap">
+        <table class="table table-sm table-hover table-bordered mb-0" id="nsStockTable">
+          <colgroup>
+            <col class="ns-col-idx">
+            <col class="ns-col-item">
+            <col class="ns-col-units">
+            <col class="ns-col-qty ns-qty">
+            <col class="ns-col-value ns-value">
+            <col class="ns-col-worth ns-worth">
+          </colgroup>
           <thead>
             <tr>
-              <th class="text-left" >{% if useri.langSet == 0 %}Item{% else %}Item{% endif %}</th>
-              <th class="text-left" >{% if useri.langSet == 0 %}Units{% else %}Units{% endif %}</th>
-              <th class="text-left" >{% if useri.langSet == 0 %}Qty{% else %}Qty{% endif %}</th>
+              <th class="ns-idx">#</th>
+              <th class="ns-item">{% if useri.langSet == 0 %}Bidhaa{% else %}Item name{% endif %}</th>
+              <th class="ns-units">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
+              <th class="ns-num ns-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="ns-num ns-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="ns-num ns-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
             </tr>
           </thead>
           <tbody>
-            {% for s in stock_items %}
-            <tr>
-              <td>{{ s.bidhaa.bidhaa_jina }}</td>
-              <td>{{ s.bidhaa.vipimo|default:'-' }}</td>
-              <td>{{ s.idadi }}</td>
+            {% for s in stock_rows %}
+            <tr class="ns-item-row" data-ns-aina="{{ s.aina_id|default:'-1' }}" data-ns-aina-name="{{ s.aina_name|default:'' }}" data-ns-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }} {{ s.aina_name|default:''|lower }}">
+              <td class="ns-idx">{{ forloop.counter }}</td>
+              <td class="ns-item">{{ s.item_name }}</td>
+              <td class="ns-units">{{ s.units|default:'-' }}</td>
+              <td class="ns-num ns-qty">{{ s.qty|floatformat:2|intcomma }}</td>
+              <td class="ns-num ns-value">{{ s.value|floatformat:2|intcomma }}</td>
+              <td class="ns-num ns-worth">{{ s.worth|floatformat:2|intcomma }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="3" class="text-muted">No stock</td></tr>
+            <tr><td colspan="6" class="text-muted">No stock</td></tr>
             {% endfor %}
+            <tr id="nsNoMatch" style="display:none">
+              <td colspan="6" class="text-muted text-center py-3">
+                {% if useri.langSet == 0 %}Hakuna bidhaa inayolingana na utafutaji{% else %}No items match this search{% endif %}
+              </td>
+            </tr>
           </tbody>
+          <tfoot>
+            <tr class="font-weight-bold">
+              <td class="ns-idx"></td>
+              <td class="ns-item">{% if useri.langSet == 0 %}Jumla{% else %}Totals{% endif %}</td>
+              <td class="ns-units"></td>
+              <td class="ns-num ns-qty">{{ stock_totals.qty|floatformat:2|intcomma }}</td>
+              <td class="ns-num ns-value">{{ stock_totals.value|floatformat:2|intcomma }}</td>
+              <td class="ns-num ns-worth">{{ stock_totals.worth|floatformat:2|intcomma }}</td>
+            </tr>
+          </tfoot>
         </table>
+      </div>
+      <div class="d-flex flex-wrap align-items-center justify-content-between mt-2 px-1" id="nsPager">
+        <span class="small text-muted" id="nsPageInfo"></span>
+        <div>
+          <button type="button" class="btn btn-sm btn-light border" id="nsPrev">{% if useri.langSet == 0 %}Iliyotangulia{% else %}Previous{% endif %}</button>
+          <button type="button" class="btn btn-sm btn-light border" id="nsNext">{% if useri.langSet == 0 %}Ifuatayo{% else %}Next{% endif %}</button>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<style>
+  #nsStockWrap {
+    max-height: 70vh;
+    overflow: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+  }
+  #nsStockWrap .table-hover,
+  #nsStockTable {
+    min-width: 0 !important;
+    margin-bottom: 0;
+    width: 100% !important;
+    max-width: 100%;
+    table-layout: fixed !important;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  #nsStockTable .ns-col-idx { width: 4.5%; }
+  #nsStockTable .ns-col-item { width: 38%; }
+  #nsStockTable .ns-col-units { width: 12%; }
+  #nsStockTable .ns-col-qty { width: 12.5%; }
+  #nsStockTable .ns-col-value { width: 16.5%; }
+  #nsStockTable .ns-col-worth { width: 16.5%; }
+  #nsStockTable th,
+  #nsStockTable td {
+    vertical-align: middle;
+    min-width: 0;
+  }
+  #nsStockTable .ns-idx {
+    text-align: left;
+    white-space: nowrap;
+  }
+  #nsStockTable .ns-item {
+    text-align: left;
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  #nsStockTable .ns-units {
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #nsStockTable .ns-num {
+    text-align: right;
+    white-space: nowrap;
+  }
+  #nsStockTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #f4f6fb;
+    box-shadow: inset 0 -1px 0 #dee2e6;
+    white-space: nowrap;
+  }
+  #nsStockTable tfoot td {
+    position: sticky;
+    bottom: 0;
+    background: #eef2ff;
+    z-index: 3;
+    box-shadow: inset 0 1px 0 #dee2e6;
+  }
+  #nsStockSearch { max-width: 280px; }
+  .sv-col-toggles .custom-control { min-width: 7.5rem; }
+  #nsCategsList { overflow-x: auto; min-width: 0; }
+  #nsCategsList .categsBtn { white-space: nowrap; min-width: 9rem; }
+  #nsCategsList .ns-categ-count {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    opacity: 0.85;
+  }
+  #nsStockTable.ns-hide-qty .ns-qty { display: none !important; }
+  #nsStockTable.ns-hide-value .ns-value { display: none !important; }
+  #nsStockTable.ns-hide-worth .ns-worth { display: none !important; }
+  body.theme-dark #nsStockWrap { border-color: #334155; }
+  body.theme-dark #nsStockTable thead th {
+    background: #1c2850;
+    color: #e2e8f0;
+    box-shadow: inset 0 -1px 0 #334155;
+  }
+  body.theme-dark #nsStockTable tfoot td {
+    background: #243463;
+    box-shadow: inset 0 1px 0 #334155;
+  }
+</style>
+
 <script>
-function filterStockTable(query) {
-  var q = query.toLowerCase();
-  var rows = document.querySelectorAll('#stockTable tbody tr');
-  rows.forEach(function(row) {
-    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+var NS_COL_KEY = 'shiftStockValueCols';
+var NS_PAGE_SIZE = 80;
+var nsPage = 1;
+var nsSearchTimer = null;
+var NS_CATEG = 0;
+var NS_UNCATEG = -1;
+
+function getNsCols() {
+  var cols = { qty: true, value: true, worth: true };
+  try {
+    var saved = JSON.parse(localStorage.getItem(NS_COL_KEY) || 'null');
+    if (saved && typeof saved === 'object') {
+      cols.qty = saved.qty !== false;
+      cols.value = saved.value !== false;
+      cols.worth = saved.worth !== false;
+    }
+  } catch (e) {}
+  if (!cols.qty && !cols.value && !cols.worth) cols.qty = true;
+  return cols;
+}
+function saveNsCols(cols) {
+  try { localStorage.setItem(NS_COL_KEY, JSON.stringify(cols)); } catch (e) {}
+}
+function applyNsCols() {
+  var table = document.getElementById('nsStockTable');
+  var cols = getNsCols();
+  if (table) {
+    table.classList.toggle('ns-hide-qty', !cols.qty);
+    table.classList.toggle('ns-hide-value', !cols.value);
+    table.classList.toggle('ns-hide-worth', !cols.worth);
+  }
+  var metricCount = Number(!!cols.qty) + Number(!!cols.value) + Number(!!cols.worth);
+  var metricShare = metricCount ? (45 / metricCount) : 0;
+  var widths = {
+    idx: 5,
+    item: metricCount ? 38 : 72,
+    units: metricCount ? 12 : 23,
+    qty: cols.qty ? metricShare : 0,
+    value: cols.value ? metricShare : 0,
+    worth: cols.worth ? metricShare : 0
+  };
+  Object.keys(widths).forEach(function(key) {
+    var col = document.querySelector('#nsStockTable col.ns-col-' + key);
+    if (col) col.style.width = widths[key] + '%';
+  });
+  ['qty', 'value', 'worth'].forEach(function(key) {
+    var box = document.querySelector('.ns-col-toggle[data-ns-col="' + key + '"]');
+    if (box) box.checked = !!cols[key];
   });
 }
+function nsAinaId(tr) {
+  var raw = tr.getAttribute('data-ns-aina');
+  if (raw == null || raw === '') return NS_UNCATEG;
+  var n = Number(raw);
+  return isNaN(n) ? NS_UNCATEG : n;
+}
+function renderNsCategories() {
+  var list = document.getElementById('nsCategsList');
+  if (!list) return;
+  var rows = document.querySelectorAll('#nsStockTable tbody tr.ns-item-row');
+  var cats = [];
+  var seen = {};
+  var all = 0;
+  rows.forEach(function(tr) {
+    all += 1;
+    var id = nsAinaId(tr);
+    if (seen[id]) {
+      seen[id].total += 1;
+      return;
+    }
+    var name = (tr.getAttribute('data-ns-aina-name') || '').trim();
+    if (!name || id === NS_UNCATEG) name = '{% if useri.langSet == 0 %}Bila Aina{% else %}Uncategorized{% endif %}';
+    var rec = { id: id, aina: name, total: 1 };
+    seen[id] = rec;
+    cats.push(rec);
+  });
+  cats.sort(function(a, b) { return String(a.aina).localeCompare(String(b.aina)); });
+  var html = '<li class="py-1 pr-1"><button type="button" data-aina="0" class="btn border categsBtn ns-categ-btn text-left text-capitalize latoFont btn-block btn-default"><span class="d-block">{% if useri.langSet == 0 %}Aina Zote{% else %}All Categories{% endif %}</span><small class="ns-categ-count">' + all + '</small></button></li>';
+  cats.forEach(function(c) {
+    html += '<li class="py-1 pr-1"><button type="button" data-aina="' + c.id + '" class="btn border categsBtn ns-categ-btn text-left text-capitalize latoFont btn-block btn-light"><span class="d-block">' + c.aina + '</span><small class="ns-categ-count">' + c.total + '</small></button></li>';
+  });
+  list.innerHTML = html;
+}
+function renderNsStockPage() {
+  var rows = document.querySelectorAll('#nsStockTable tbody tr.ns-item-row');
+  var q = ((document.getElementById('nsStockSearch') || {}).value || '').toLowerCase().trim();
+  var matched = [];
+  rows.forEach(function(tr) {
+    var hay = tr.getAttribute('data-ns-search') || '';
+    var ainaId = nsAinaId(tr);
+    var okCat = !Number(NS_CATEG) || Number(NS_CATEG) === ainaId;
+    var ok = okCat && (!q || hay.indexOf(q) !== -1);
+    if (ok) matched.push(tr);
+    tr.style.display = 'none';
+  });
+  var total = matched.length;
+  var pages = Math.max(1, Math.ceil(total / NS_PAGE_SIZE) || 1);
+  if (nsPage > pages) nsPage = pages;
+  if (nsPage < 1) nsPage = 1;
+  var start = (nsPage - 1) * NS_PAGE_SIZE;
+  matched.slice(start, start + NS_PAGE_SIZE).forEach(function(tr) {
+    tr.style.display = '';
+  });
+  var none = document.getElementById('nsNoMatch');
+  if (none) none.style.display = (rows.length && !total) ? '' : 'none';
+  var info = document.getElementById('nsPageInfo');
+  var pager = document.getElementById('nsPager');
+  if (info) {
+    if (!rows.length) info.textContent = '';
+    else if (!total) info.textContent = '0 / ' + rows.length;
+    else info.textContent = (start + 1) + '–' + Math.min(start + NS_PAGE_SIZE, total) + ' / ' + total;
+  }
+  if (pager) pager.style.display = rows.length ? '' : 'none';
+  var prev = document.getElementById('nsPrev');
+  var next = document.getElementById('nsNext');
+  if (prev) prev.disabled = nsPage <= 1;
+  if (next) next.disabled = nsPage >= pages || !total;
+}
+function initNsStockTable() {
+  applyNsCols();
+  renderNsCategories();
+  renderNsStockPage();
+  document.querySelectorAll('.ns-col-toggle').forEach(function(box) {
+    box.addEventListener('change', function() {
+      var cols = {
+        qty: document.getElementById('nsShowQty').checked,
+        value: document.getElementById('nsShowValue').checked,
+        worth: document.getElementById('nsShowWorth').checked
+      };
+      if (!cols.qty && !cols.value && !cols.worth) {
+        box.checked = true;
+        return;
+      }
+      saveNsCols(cols);
+      applyNsCols();
+    });
+  });
+  var search = document.getElementById('nsStockSearch');
+  if (search) {
+    search.addEventListener('input', function() {
+      clearTimeout(nsSearchTimer);
+      nsSearchTimer = setTimeout(function() {
+        nsPage = 1;
+        renderNsStockPage();
+      }, 120);
+    });
+  }
+  var prev = document.getElementById('nsPrev');
+  var next = document.getElementById('nsNext');
+  if (prev) prev.addEventListener('click', function() {
+    nsPage -= 1;
+    renderNsStockPage();
+    var wrap = document.getElementById('nsStockWrap');
+    if (wrap) wrap.scrollTop = 0;
+  });
+  if (next) next.addEventListener('click', function() {
+    nsPage += 1;
+    renderNsStockPage();
+    var wrap = document.getElementById('nsStockWrap');
+    if (wrap) wrap.scrollTop = 0;
+  });
+}
+document.addEventListener('DOMContentLoaded', initNsStockTable);
+document.addEventListener('click', function(ev) {
+  var btn = ev.target.closest && ev.target.closest('#nsCategsList .ns-categ-btn');
+  if (!btn) return;
+  document.querySelectorAll('#nsCategsList .ns-categ-btn').forEach(function(b) {
+    b.classList.remove('text-primary', 'border-primary');
+    b.classList.add('btn-light');
+    b.classList.remove('btn-default');
+  });
+  var ain = btn.getAttribute('data-aina');
+  if (Number(ain)) btn.classList.add('text-primary', 'border-primary');
+  else {
+    btn.classList.add('btn-default');
+    btn.classList.remove('btn-light');
+  }
+  NS_CATEG = Number(ain) || 0;
+  nsPage = 1;
+  renderNsStockPage();
+  var wrap = document.getElementById('nsStockWrap');
+  if (wrap) wrap.scrollTop = 0;
+});
 
 $('#StartShiftForm').on('submit', function(e) {
   e.preventDefault();

@@ -8,6 +8,50 @@ let csStatementCache = {
   periodLabel: '',
 };
 
+let csLastRange = { tFr: null, tTo: null, label: '' };
+
+const csSelectedBranches = () => {
+  const checks = document.querySelectorAll('.cs-branch-check');
+  if (!checks.length) {
+    return Array.isArray(window.CS_ALLOWED_BRANCHES) && window.CS_ALLOWED_BRANCHES.length
+      ? window.CS_ALLOWED_BRANCHES.slice()
+      : [window.CS_CURRENT_BRANCH_ID];
+  }
+  const ids = [];
+  checks.forEach((el) => {
+    if (el.checked) ids.push(Number(el.value));
+  });
+  if (!ids.length && window.CS_CURRENT_BRANCH_ID) {
+    return [window.CS_CURRENT_BRANCH_ID];
+  }
+  return ids;
+};
+
+const csShowBranchCol = () => csSelectedBranches().length > 1;
+
+const csColSpan = () => (csShowBranchCol() ? 11 : 10);
+
+const csSyncBranchAll = () => {
+  const checks = document.querySelectorAll('.cs-branch-check');
+  const all = document.getElementById('csBranchAll');
+  if (!all || !checks.length) return;
+  all.checked = Array.from(checks).every((el) => el.checked);
+};
+
+const csSyncBranchColumn = () => {
+  if (csShowBranchCol()) $('.cs-branch-col').removeClass('d-none');
+  else $('.cs-branch-col').addClass('d-none');
+};
+
+const csBranchCell = (row) => {
+  if (!csShowBranchCol()) return '';
+  if (row.kind === 'opening') return `<td class="small text-muted cs-branch-col">—</td>`;
+  const name = (row.branch || '').trim();
+  return `<td class="small text-capitalize cs-branch-col">${name || '—'}</td>`;
+};
+
+window.csSelectedBranches = csSelectedBranches;
+
 const csFmt = (value) => Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
 const csFmtQty = (value) => {
@@ -56,12 +100,24 @@ const csItemCell = (row) => {
   if (row.kind === 'opening') {
     return `<span class="text-muted">${lang('Salio la mwanzo', 'Opening balance')}</span>`;
   }
+  if (row.kind === 'payment' || row.kind === 'prepaid') {
+    const account = (row.item || '').trim();
+    return account
+      ? `<span class="text-capitalize">${account}</span>`
+      : '<span class="text-muted">--</span>';
+  }
   const name = row.item || '—';
   if (row.kind === 'line' && row.invo_id) {
     return `<button type="button" class="cs-invo-ref viewInvo btn btn-link btn-sm p-0 align-baseline text-primary text-left"
       data-val="${row.invo_id}" data-toggle="modal" data-target="#ShowTheInvo">${name}</button>`;
   }
   return name;
+};
+
+const csRecordedByCell = (row) => {
+  if (row.kind === 'opening') return `<td class="small text-muted">—</td>`;
+  const name = (row.recorded_by || '').trim();
+  return `<td class="small text-capitalize">${name || '—'}</td>`;
 };
 
 const csPrintAmount = (value) => {
@@ -113,17 +169,21 @@ const csUpdateSummary = (summary, periodLabel) => {
 const csRenderTable = (transactions) => {
   const rows = transactions || [];
   if (!rows.length) {
+    csSyncBranchColumn();
     $('#csStatementBody').html(
-      `<tr><td colspan="9" class="text-center text-muted py-4">${lang('Hakuna miamala kwa kipindi hiki', 'No transactions in this period')}</td></tr>`
+      `<tr><td colspan="${csColSpan()}" class="text-center text-muted py-4">${lang('Hakuna miamala kwa kipindi hiki', 'No transactions in this period')}</td></tr>`
     );
     return;
   }
 
+  csSyncBranchColumn();
   let html = '';
   rows.forEach((row) => {
     const trClass = row.kind === 'opening' ? 'cs-opening-row' : row.kind === 'order' ? 'cs-order-row' : '';
     html += `<tr class="${trClass}">
       <td class="text-nowrap small">${csFormatDateTime(row)}</td>
+      ${csRecordedByCell(row)}
+      ${csBranchCell(row)}
       <td>${csKindLabel(row.kind)}</td>
       <td class="small">${csItemCell(row)}</td>
       <td class="small text-muted">${row.units || '—'}</td>
@@ -148,6 +208,7 @@ const csFinishLoading = () => {
 };
 
 const csLoadStatement = (tFr, tTo, periodLabel) => {
+  csLastRange = { tFr, tTo, label: periodLabel || '' };
   $('#loadMe').modal('show');
   return POSTREQUEST({
     url: CS_DATA_URL,
@@ -155,6 +216,7 @@ const csLoadStatement = (tFr, tTo, periodLabel) => {
       cust: CS_CUSTOMER_ID,
       tFr,
       tTo,
+      branches: JSON.stringify(csSelectedBranches()),
     },
   })
     .then((resp) => {
@@ -170,6 +232,7 @@ const csLoadStatement = (tFr, tTo, periodLabel) => {
         periodLabel: periodLabel || $('#csPeriodLabel').text(),
       };
       csRenderTable(resp.transactions);
+      if (typeof csRenderLastPay === 'function') csRenderLastPay(resp.last_payment);
     })
     .catch(() => {
       csFinishLoading();
@@ -189,17 +252,7 @@ window.csApplyPreset = (key, label, tFr, tTo) => {
 };
 
 window.csReloadStatement = () => {
-  const label = $('#csPeriodLabel').text() || lang('Mwezi Huu', 'This Month');
-  const preset = csActivePreset;
-  if (preset === 'today') {
-    csLoadStatement(moment().startOf('day').format(), moment().format(), label);
-  } else if (preset === 'week') {
-    csLoadStatement(moment().startOf('isoWeek').format(), moment().format(), label);
-  } else if (preset === 'month') {
-    csLoadStatement(moment().startOf('month').format(), moment().format(), label);
-  } else {
-    window.location.reload();
-  }
+  window.location.reload();
 };
 
 window.csApplyCustomRange = () => {
@@ -259,9 +312,17 @@ window.csPrintStatement = () => {
   let ledgerRows = '';
   transactions.forEach((row) => {
     const trClass = row.kind === 'opening' ? ' class="opening"' : '';
-    const item = row.kind === 'opening' ? lang('Salio la mwanzo', 'Opening balance') : (row.item || '—');
+    const item = row.kind === 'opening'
+      ? lang('Salio la mwanzo', 'Opening balance')
+      : (row.kind === 'payment' || row.kind === 'prepaid' ? ((row.item || '').trim() || '--') : (row.item || '—'));
+    const recorded = row.kind === 'opening' ? '—' : ((row.recorded_by || '').trim() || '—');
+    const branchCell = csShowBranchCol()
+      ? `<td>${row.kind === 'opening' ? '—' : ((row.branch || '').trim() || '—')}</td>`
+      : '';
     ledgerRows += `<tr${trClass}>
       <td>${csFormatDateTime(row)}</td>
+      <td>${recorded}</td>
+      ${branchCell}
       <td>${csKindLabel(row.kind)}</td>
       <td>${item}</td>
       <td>${row.units || '—'}</td>
@@ -304,6 +365,8 @@ window.csPrintStatement = () => {
     <table class="ledger">
       <thead><tr>
         <th>${lang('Tarehe', 'Date')}</th>
+        <th>${lang('Aliyerekodi', 'By')}</th>
+        ${csShowBranchCol() ? `<th>${lang('Tawi', 'Branch')}</th>` : ''}
         <th>${lang('Aina', 'Type')}</th>
         <th>${lang('Bidhaa', 'Item')}</th>
         <th>${lang('Vipimo', 'Units')}</th>
@@ -329,6 +392,24 @@ $(document).ready(() => {
 
   $('#csCustomDateSubmit').on('click', csApplyCustomRange);
   $('#csPrintStatementBtn').on('click', () => csPrintStatement());
+
+  $(document).on('change', '#csBranchAll', function () {
+    const on = this.checked;
+    $('.cs-branch-check').prop('checked', on);
+    if (csLastRange.tFr && csLastRange.tTo) {
+      csLoadStatement(csLastRange.tFr, csLastRange.tTo, csLastRange.label);
+    }
+  });
+  $(document).on('change', '.cs-branch-check', function () {
+    csSyncBranchAll();
+    if (!csSelectedBranches().length && window.CS_CURRENT_BRANCH_ID) {
+      $(`.cs-branch-check[value="${CS_CURRENT_BRANCH_ID}"]`).prop('checked', true);
+      csSyncBranchAll();
+    }
+    if (csLastRange.tFr && csLastRange.tTo) {
+      csLoadStatement(csLastRange.tFr, csLastRange.tTo, csLastRange.label);
+    }
+  });
 
   $('#ShowTheInvo').on('hidden.bs.modal', () => {
     $('#Invo_loader').hide();

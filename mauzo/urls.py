@@ -65,6 +65,8 @@ urlpatterns=[
     path('CustomerSales/statement-data',views.customer_sales_statement_data, name='customer_sales_statement_data'),
     path('CustomerSales/unpaid-invoices',views.customer_sales_unpaid_invoices, name='customer_sales_unpaid_invoices'),
     path('CustomerSales/record-payment',views.customer_sales_record_payment, name='customer_sales_record_payment'),
+    path('CustomerSales/delete-payment',views.customer_sales_delete_payment, name='customer_sales_delete_payment'),
+    path('CustomerSales/edit-payment',views.customer_sales_edit_payment, name='customer_sales_edit_payment'),
     
     # path('getInvo',views.getInvo, name='getInvo'),
     path('addInvoice',views.addInvoice, name='addInvoice'),

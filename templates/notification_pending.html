@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block billcss %}
-<link rel="stylesheet" href="{% static 'css/notify.css' %}?v=nh-7">
+<link rel="stylesheet" href="{% static 'css/notify.css' %}?v=nh-8">
 {% endblock %}
 
 {% block Dashboard %}
@@ -18,9 +18,9 @@
   <p class="text-muted small mb-3">
     {% if hub_kind == 'adjust' %}
       {% if useri.langSet == 0 %}
-        Marekebisho ya kuongeza au kupunguza bidhaa yanayosubiri uthibitisho wako. Unaweza kuthibitisha moja au zaidi ya moja kwa pamoja.
+        Marekebisho ya kuongeza au kupunguza bidhaa yanayosubiri uthibitisho wako. Bonyeza muamala kuangalia taarifa, kisha thibitisha kwenye modal.
       {% else %}
-        Add/reduce stock adjustments waiting for your confirmation. You can confirm one or several at once.
+        Add/reduce stock adjustments waiting for your confirmation. Open a transaction to review it, then approve from the modal.
       {% endif %}
     {% else %}
     {% if useri.langSet == 0 %}
@@ -58,42 +58,29 @@
   {% csrf_token %}
 
   {% if hub_rows %}
-  {% if can_hub_approve %}
-  <div class="d-flex flex-wrap align-items-center mb-2 nh-bulk-bar">
-    <button type="button" class="btn btn-sm btn-success" id="nhApproveSelected">
-      {% if useri.langSet == 0 %}Thibitisha zilizochaguliwa{% else %}Approve selected{% endif %}
-    </button>
-    <span class="small text-muted ml-2" id="nhSelectedCount"></span>
-  </div>
-  {% endif %}
   <div class="table-responsive nh-feed">
     <table class="table table-sm nh-pending-table smallFont mb-0">
       <thead>
         <tr>
-          {% if can_hub_approve %}<th class="text-left" style="width:36px">
-            <input type="checkbox" id="nhCheckAll" title="{% if useri.langSet == 0 %}Chagua zote{% else %}Select all{% endif %}">
-          </th>{% endif %}
           <th class="text-left">{% if useri.langSet == 0 %}Rejea{% else %}Ref{% endif %}</th>
           <th class="text-left">{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
           <th class="text-left">{% if useri.langSet == 0 %}Aliyerekodi{% else %}Recorded by{% endif %}</th>
           <th class="text-left">{% if useri.langSet == 0 %}Maelezo{% else %}Details{% endif %}</th>
           <th class="text-right">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
-          <th class="text-left"></th>
+          {% if can_upload %}<th class="text-left"></th>{% endif %}
         </tr>
       </thead>
       <tbody>
         {% for row in hub_rows %}
-        <tr data-id="{{ row.id }}"
+        <tr class="nh-open-row{% if row.print_id %} nh-row-click{% endif %}"
+            data-id="{{ row.id }}"
+            data-print-id="{{ row.print_id|default:'' }}"
+            data-print-kind="{{ row.print_kind|default:'' }}"
             data-bill="{{ row.bill_id|default:0 }}"
             data-bill-ref="{{ row.bill_ref|default:'' }}"
             data-vendor="{{ row.vendor|default:'' }}"
             data-amount="{{ row.amount|default:'' }}"
             data-ref="{{ row.ref }}">
-          {% if can_hub_approve %}
-          <td class="text-left" data-label="">
-            <input type="checkbox" class="nh-row-check" value="{{ row.id }}">
-          </td>
-          {% endif %}
           <td class="text-left" data-label="{% if useri.langSet == 0 %}Rejea{% else %}Ref{% endif %}">
             {% if row.print_id %}
               <button type="button" class="btn btn-link p-0 text-left nh-open-preview"
@@ -110,18 +97,14 @@
           <td class="text-left" data-label="{% if useri.langSet == 0 %}Aliyerekodi{% else %}Recorded by{% endif %}">{{ row.by|default:"—" }}</td>
           <td class="text-left" data-label="{% if useri.langSet == 0 %}Maelezo{% else %}Details{% endif %}">{{ row.extra|default:"" }}</td>
           <td class="text-right" data-label="{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}">{% if row.amount %}{{ row.amount|floatformat:2|intcomma }} {{ duka.currencii }}{% endif %}</td>
+          {% if can_upload %}
           <td class="text-right nh-pending-actions" data-label="">
-            {% if can_upload %}
-              <label class="btn btn-sm btn-outline-primary mb-0">
-                {% if useri.langSet == 0 %}Pakia risiti{% else %}Upload receipt{% endif %}
-                <input type="file" class="nh-upload d-none" accept="image/*" multiple data-id="{{ row.id }}">
-              </label>
-            {% elif can_hub_approve %}
-              <button type="button" class="btn btn-sm btn-success nh-approve" data-id="{{ row.id }}">
-                {% if useri.langSet == 0 %}Thibitisha{% else %}Approve{% endif %}
-              </button>
-            {% endif %}
+            <label class="btn btn-sm btn-outline-primary mb-0">
+              {% if useri.langSet == 0 %}Pakia risiti{% else %}Upload receipt{% endif %}
+              <input type="file" class="nh-upload d-none" accept="image/*" multiple data-id="{{ row.id }}">
+            </label>
           </td>
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
@@ -155,6 +138,13 @@
       <div class="modal-body p-0">
         <div id="nhPreviewBody" class="nh-preview-body"></div>
       </div>
+      {% if can_hub_approve and not can_upload %}
+      <div class="modal-footer py-2 justify-content-end">
+        <button type="button" class="btn btn-sm btn-success" id="nhPreviewApprove" data-id="">
+          {% if useri.langSet == 0 %}Thibitisha{% else %}Approve{% endif %}
+        </button>
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -227,12 +217,9 @@
 
   const previewUrl = "{% url 'notification_preview' %}";
   const paper = "{{ cheo.receiptPaper|default:0 }}";
-  $(document).on('click', '.nh-open-preview', function(){
-    const btn = $(this);
-    const id = btn.data('id');
-    const printId = btn.data('print-id');
-    const printKind = String(btn.data('print-kind') || '');
-    $('#nhPreviewTitle').text(btn.text().trim());
+  function openHubPreview(id, printId, printKind, title){
+    $('#nhPreviewTitle').text(title || '');
+    $('#nhPreviewApprove').attr('data-id', id).prop('disabled', false);
     const printBtn = $('#nhPreviewPrint');
     printBtn.removeData('bill').removeData('invo').removeAttr('data-bill').removeAttr('data-invo').removeAttr('data-href');
     printBtn.attr('data-paper', paper);
@@ -255,6 +242,17 @@
     }).fail(function(){
       $('#nhPreviewBody').html('<div class="p-4 text-danger">' + t('Imeshindikana','Failed') + '</div>');
     });
+  }
+  $(document).on('click', '.nh-open-preview', function(e){
+    e.stopPropagation();
+    const btn = $(this);
+    openHubPreview(btn.data('id'), btn.data('print-id'), String(btn.data('print-kind') || ''), btn.text().trim());
+  });
+  $(document).on('click', 'tr.nh-row-click', function(e){
+    if ($(e.target).closest('.nh-pending-actions, .nh-upload, label').length) return;
+    const $tr = $(this);
+    const title = $tr.data('ref') || $tr.find('.nh-open-preview').text().trim();
+    openHubPreview($tr.data('id'), $tr.data('print-id'), String($tr.data('print-kind') || ''), title);
   });
   $(document).on('click', '.nh-print-iframe', function(e){
     e.preventDefault();
@@ -268,22 +266,9 @@
   });
   $('#nhPreviewModal').on('hidden.bs.modal', function(){
     $('#nhPreviewBody').empty();
+    $('#nhPreviewApprove').attr('data-id', '').prop('disabled', false);
   });
 
-  function selectedHubIds(){
-    const ids = [];
-    $('.nh-row-check:checked').each(function(){ ids.push(Number(this.value)); });
-    return ids;
-  }
-  function updateSelectedCount(){
-    const n = selectedHubIds().length;
-    $('#nhSelectedCount').text(n ? (t(n + ' zimechaguliwa', n + ' selected')) : '');
-  }
-  $('#nhCheckAll').on('change', function(){
-    $('.nh-row-check').prop('checked', this.checked);
-    updateSelectedCount();
-  });
-  $(document).on('change', '.nh-row-check', updateSelectedCount);
   function approveHubIds(ids, doneBtn){
     if (!ids.length) {
       alert(t('Chagua angalau moja','Select at least one'));
@@ -299,7 +284,7 @@
         ids.forEach(function(id){
           $('.nh-pending-table tbody tr[data-id="'+id+'"]').fadeOut(200, function(){ $(this).remove(); });
         });
-        updateSelectedCount();
+        $('#nhPreviewModal').modal('hide');
       } else {
         alert((data && (lang0===0?data.swa:data.eng)) || t('Imeshindikana','Failed'));
         if (doneBtn) doneBtn.prop('disabled', false);
@@ -309,12 +294,11 @@
       if (doneBtn) doneBtn.prop('disabled', false);
     });
   }
-  $('#nhApproveSelected').on('click', function(){
-    approveHubIds(selectedHubIds(), $(this));
-  });
-  $(document).on('click', '.nh-approve', function(){
+  $('#nhPreviewApprove').on('click', function(){
     const btn = $(this);
-    approveHubIds([btn.data('id')], btn);
+    const id = Number(btn.attr('data-id') || 0);
+    if (!id) return;
+    approveHubIds([id], btn);
   });
 
   let pendingUpload = null;

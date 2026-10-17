@@ -257,6 +257,12 @@
 .nh-pending-table .nh-open-preview {
   font-weight: 600;
 }
+.nh-pending-table tr.nh-row-click {
+  cursor: pointer;
+}
+.nh-pending-table tr.nh-row-click:hover {
+  background: #f8fafc;
+}
 .nh-preview-body {
   max-height: 70vh;
   overflow: auto;

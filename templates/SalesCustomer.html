@@ -103,7 +103,26 @@
       </div>
     </div>
 
+    {% include 'partials/statement_last_pay.html' %}
+
     <div class="cs-duration-bar cs-no-print">
+      {% if statement_branches|length > 1 %}
+      <div class="cs-branch-filter w-100 mb-1">
+        <span class="small font-weight-bold mr-2">{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}:</span>
+        <label class="smallFont mb-0 mr-2">
+          <input type="checkbox" id="csBranchAll" checked>
+          {% if useri.langSet == 0 %}Matawi yote{% else %}All branches{% endif %}
+        </label>
+        <div class="d-inline-flex flex-wrap align-items-center" id="csBranchList">
+          {% for b in statement_branches %}
+          <label class="cs-branch-chip smallFont mb-1 mr-2 px-2 py-1 border rounded">
+            <input type="checkbox" class="cs-branch-check" value="{{ b.id }}" {% if b.id == duka.id %}data-current="1"{% endif %} checked>
+            {{ b.name }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
       <span class="small font-weight-bold mr-1 d-none d-sm-inline">{% if useri.langSet == 0 %}Muda{% else %}Period{% endif %}:</span>
       <button type="button" class="btn btn-sm cs-preset-btn btn-outline-secondary" data-preset="today"
         onclick="return csApplyPreset('today','{% if useri.langSet == 0 %}Leo{% else %}Today{% endif %}',moment().startOf('day').format(),moment().format())">
@@ -154,6 +173,8 @@
         <thead>
           <tr>
             <th class="text-left">{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
+            <th class="text-left">{% if useri.langSet == 0 %}Aliyerekodi{% else %}By{% endif %}</th>
+            <th class="text-left cs-branch-col d-none">{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}</th>
             <th class="text-left">{% if useri.langSet == 0 %}Aina{% else %}Type{% endif %}</th>
             <th class="text-left">{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
             <th class="text-left">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
@@ -165,7 +186,7 @@
           </tr>
         </thead>
         <tbody id="csStatementBody">
-          <tr><td colspan="9" class="text-center text-muted py-4">{% if useri.langSet == 0 %}Inapakia…{% else %}Loading…{% endif %}</td></tr>
+          <tr><td colspan="10" class="text-center text-muted py-4 cs-empty-row">{% if useri.langSet == 0 %}Inapakia…{% else %}Loading…{% endif %}</td></tr>
         </tbody>
       </table>
     </div>
@@ -246,7 +267,7 @@
           <div class="form-group">
             <label class="smallFont weight600">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %} *</label>
             <div class="input-group input-group-sm">
-              <input type="number" step="any" id="cs-lipa-kiasi" class="form-control money-fomat" data-debt="0">
+              <input type="text" inputmode="decimal" id="cs-lipa-kiasi" class="form-control money-fomat js-money-input" data-debt="0" autocomplete="off">
               <div class="input-group-append">
                 <button type="button" class="btn btn-light btn-sm" onclick="$('#cs-kama-change').toggle(300)">{% if useri.langSet == 0 %}Chenji{% else %}Change{% endif %}</button>
               </div>
@@ -258,7 +279,7 @@
           <div class="row d-none" id="cs-kama-change">
             <div class="col-6 form-group">
               <label class="smallFont">{% if useri.langSet == 0 %}Kiasi kilichotolewa{% else %}Cash given{% endif %}</label>
-              <input type="number" id="cs-kiasi-lipwa" class="form-control form-control-sm money-fomat">
+              <input type="text" inputmode="decimal" id="cs-kiasi-lipwa" class="form-control form-control-sm money-fomat js-money-input" autocomplete="off">
             </div>
             <div class="col-6 form-group">
               <label class="smallFont">{% if useri.langSet == 0 %}Chenji{% else %}Change{% endif %}</label>
@@ -342,9 +363,14 @@
   var CS_DATA_URL = "{% url 'customer_sales_statement_data' %}";
   var CS_CUSTOMER_ID = {{ customer_id }};
   var CS_CURRENCY = "{{ duka.currencii }}";
+  var CS_CURRENT_BRANCH_ID = {{ duka.id }};
+  var CS_ALLOWED_BRANCHES = [{% for b in statement_branches %}{{ b.id }}{% if not forloop.last %}, {% endif %}{% endfor %}];
   var CUSTOMER_BRANCH_OPTIONS_URL = "{% url 'customer_branch_options' %}";
   var CS_UNPAID_URL = "{% url 'customer_sales_unpaid_invoices' %}";
   var CS_PAY_URL = "{% url 'customer_sales_record_payment' %}";
+  var CS_PAY_EDIT_URL = "{% url 'customer_sales_edit_payment' %}";
+  var CS_PAY_DELETE_URL = "{% url 'customer_sales_delete_payment' %}";
+  var CS_CAN_MANAGE_PAYMENTS = {% if can_manage_payments %}true{% else %}false{% endif %};
   var CS_CUSTOMER_META = {
     jina: "{{ mteja.jina|escapejs }}",
     address: "{{ mteja.address|default:''|escapejs }}",
@@ -354,8 +380,10 @@
     currency: "{{ duka.currencii|escapejs }}",
   };
 </script>
-<script src="{% static 'js/customer_sales_statement.js' %}?v=cs2"></script>
-<script src="{% static 'js/customer_sales_pay.js' %}"></script>
+<script src="{% static 'js/money_input.js' %}?v=m1"></script>
+<script src="{% static 'js/customer_sales_statement.js' %}?v=cs8"></script>
+<script src="{% static 'js/statement_last_pay.js' %}?v=lp3"></script>
+<script src="{% static 'js/customer_sales_pay.js' %}?v=cs9"></script>
 {% if can_edit_customer %}
 <script src="{% static 'js/customer_sales_edit.js' %}"></script>
 {% endif %}

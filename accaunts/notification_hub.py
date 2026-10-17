@@ -171,23 +171,73 @@ def pending_adjusts_qs(cheo, duka):
     )
 
 
+def pending_staff_receive_confirms_qs(cheo, duka):
+    """Receives this staff member was assigned to confirm (not admin approval)."""
+    if not cheo or not duka or not getattr(duka, 'Interprise', False):
+        return received_confirm.objects.none()
+    user_ext_id = getattr(cheo, 'user_id', None)
+    if not user_ext_id:
+        return received_confirm.objects.none()
+    return received_confirm.objects.filter(
+        user_id=user_ext_id,
+        confirmed=False,
+        receive__Interprise_id=duka.id,
+        receive__admin_approved=False,
+        receive__transfer__order=False,
+    )
+
+
+HUB_STAFF_TYPES = ('receive', 'adjust')
+HUB_ADMIN_TYPES = (
+    'receive',
+    'adjust',
+    'purchases',
+    'expenses',
+    'purchase_pay',
+    'customer_pay',
+    'noncash',
+)
+
+
+def hub_can_see_type(cheo, kind):
+    if is_shop_admin(cheo):
+        return kind in HUB_ADMIN_TYPES
+    return kind in HUB_STAFF_TYPES
+
+
 def hub_approval_counts(duka, cheo=None):
-    expenses = pending_expense_receipts_qs(duka).count()
-    receive_n = pending_receives_qs(duka).count()
-    purchases = pending_purchases_qs(duka).count()
-    pay_receipts = pending_purchase_payments_qs(duka).count()
-    cust_ids = set(pending_customer_payments_qs(duka).values_list('pk', flat=True))
-    non_ids = set(pending_noncash_payments_qs(duka).values_list('pk', flat=True))
+    admin = is_shop_admin(cheo)
     adjust_n = pending_adjusts_qs(cheo, duka).count()
+    if admin:
+        expenses = pending_expense_receipts_qs(duka).count()
+        receive_n = pending_receives_qs(duka).count()
+        purchases = pending_purchases_qs(duka).count()
+        pay_receipts = pending_purchase_payments_qs(duka).count()
+        cust_ids = set(pending_customer_payments_qs(duka).values_list('pk', flat=True))
+        non_ids = set(pending_noncash_payments_qs(duka).values_list('pk', flat=True))
+        customer_pay = len(cust_ids)
+        noncash = len(non_ids)
+        total = receive_n + purchases + expenses + pay_receipts + len(cust_ids | non_ids) + adjust_n
+    else:
+        expenses = 0
+        receive_n = pending_staff_receive_confirms_qs(cheo, duka).count()
+        purchases = 0
+        pay_receipts = 0
+        customer_pay = 0
+        noncash = 0
+        total = receive_n + adjust_n
+    visible = {k: True for k in (HUB_ADMIN_TYPES if admin else HUB_STAFF_TYPES)}
     return {
         'receive': receive_n,
         'purchases': purchases,
         'expenses': expenses,
         'purchase_pay': pay_receipts,
-        'customer_pay': len(cust_ids),
-        'noncash': len(non_ids),
+        'customer_pay': customer_pay,
+        'noncash': noncash,
         'adjust': adjust_n,
-        'total': receive_n + purchases + expenses + pay_receipts + len(cust_ids | non_ids) + adjust_n,
+        'total': total,
+        'admin': admin,
+        'visible': visible,
         'require_purchase_receipt': bool(getattr(duka, 'require_purchase_payment_receipt', False)),
     }
 

@@ -62,6 +62,7 @@
       </div>
     </div>
 
+    {% include 'partials/statement_last_pay.html' %}
     {% include 'partials/vendor_receipts_panel.html' %}
 
     <div class="cs-duration-bar cs-no-print">
@@ -189,6 +190,9 @@
   var CS_DATA_URL = "{% url 'vendor_statements_data' %}";
   var CS_ALL_VENDORS = true;
   var CS_VENDOR_ID = 0;
+  var CS_PAY_EDIT_URL = "{% url 'vendor_purchases_edit_payment' %}";
+  var CS_PAY_DELETE_URL = "{% url 'vendor_purchases_delete_payment' %}";
+  var CS_CAN_MANAGE_PAYMENTS = {% if can_manage_payments %}true{% else %}false{% endif %};
   var CS_CURRENCY = "{{ duka.currencii }}";
   var CS_CURRENT_BRANCH_ID = {{ duka.id }};
   var CS_ALLOWED_BRANCHES = [{% for b in statement_branches %}{{ b.id }}{% if not forloop.last %}, {% endif %}{% endfor %}];
@@ -201,7 +205,9 @@
     currency: "{{ duka.currencii|escapejs }}",
   };
 </script>
-<script src="{% static 'js/vendor_purchases_statement.js' %}?v=vendor-rcpt-1"></script>
+<script src="{% static 'js/money_input.js' %}?v=m1"></script>
+<script src="{% static 'js/vendor_purchases_statement.js' %}?v=vendor-lp2"></script>
+<script src="{% static 'js/statement_last_pay.js' %}?v=lp3"></script>
 {% endblock %}
 
 {% block dash-mapper %}

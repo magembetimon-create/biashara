@@ -1,0 +1,55 @@
+<div id="csLastPayPanel" class="cs-last-pay d-none cs-no-print mb-3">
+  <div class="d-flex align-items-start justify-content-between">
+    <div class="pr-2">
+      <div class="cs-last-pay-kicker">{% if useri.langSet == 0 %}Malipo ya mwisho{% else %}Last payment{% endif %}</div>
+      <div id="csLastPayAmount" class="cs-last-pay-amount"></div>
+      <div id="csLastPayMeta" class="cs-last-pay-meta small text-muted"></div>
+    </div>
+    <div class="dropdown" id="csLastPayMenu" hidden>
+      <button type="button" class="btn btn-light btn-sm cs-last-pay-dots" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{% if useri.langSet == 0 %}Chaguo{% else %}Options{% endif %}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+        </svg>
+      </button>
+      <div class="dropdown-menu dropdown-menu-right">
+        <a class="dropdown-item" href="#" id="csLastPayEdit">{% if useri.langSet == 0 %}Hariri malipo{% else %}Edit payment{% endif %}</a>
+        <a class="dropdown-item text-danger" href="#" id="csLastPayDelete">{% if useri.langSet == 0 %}Futa malipo{% else %}Delete payment{% endif %}</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="csLastPayEditModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title">{% if useri.langSet == 0 %}Hariri malipo{% else %}Edit payment{% endif %}</h6>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="smallFont text-danger weight600">{% if useri.langSet == 0 %}Akaunti{% else %}Account{% endif %} *</label>
+          <select id="cs-lastpay-akaunti" class="form-control form-control-sm machaguo-pesa selectpicker" data-live-search="true">
+            <option value="">{% if useri.langSet == 0 %}--Chagua akaunti--{% else %}--Select account--{% endif %}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="smallFont text-danger weight600">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %} *</label>
+          <input type="text" inputmode="decimal" id="cs-lastpay-kiasi" class="form-control form-control-sm js-money-input" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="smallFont text-danger">{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %} *</label>
+          <input type="date" class="form-control form-control-sm" id="cs-lastpay-date">
+        </div>
+        <div class="form-group mb-0">
+          <label class="smallFont">{% if useri.langSet == 0 %}Maelezo{% else %}Description{% endif %}</label>
+          <textarea class="form-control form-control-sm" id="cs-lastpay-elezo" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</button>
+        <button type="button" class="btn btn-primary btn-sm" id="csLastPaySave">{% if useri.langSet == 0 %}Hifadhi{% else %}Save{% endif %}</button>
+      </div>
+    </div>
+  </div>
+</div>

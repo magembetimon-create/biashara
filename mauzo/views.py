@@ -37,7 +37,7 @@ from django.core.paginator import Paginator,EmptyPage
 
 
 from accaunts.todos import Todos, updateOrder, shift_operation_block_payload
-from accaunts.notification_hub import apply_weka_admin_flag
+from accaunts.notification_hub import apply_weka_admin_flag, is_shop_admin
 from purchase.guest_compound_utils import (
     compound_guest_orders_qs,
     count_compound_guest_orders,
@@ -66,6 +66,7 @@ from stoku.customer_branch_utils import (
     debts_by_customer,
     sibling_interprises_qs,
 )
+from purchase.vendor_utils import parse_requested_branch_ids
 
 def todoFunct(request):
   usr = Todos(request)
@@ -7833,12 +7834,46 @@ def _cs_parse_dt(value):
     return dt
 
 
-def _cs_customer_invoices(todo, customer_id):
+def _cs_statement_branch_choices(todo, customer_id):
+    cheo = todo.get('cheo')
     duka = todo['duka']
-    return mauzoni.objects.filter(
+    if cheo:
+        allowed = list(assignable_branches_qs(cheo).values('id', 'name'))
+    else:
+        allowed = [{'id': duka.id, 'name': duka.name}]
+    allowed_ids = {b['id'] for b in allowed}
+    cust_ids = set(
+        customer_Interprise.objects.filter(mteja_id=customer_id, branch_id__in=allowed_ids).values_list(
+            'branch_id', flat=True
+        )
+    )
+    if not cust_ids:
+        home_id = wateja.objects.filter(pk=customer_id).values_list('Interprise_id', flat=True).first()
+        if home_id and home_id in allowed_ids:
+            cust_ids = {home_id}
+        elif duka.id in allowed_ids:
+            cust_ids = {duka.id}
+    return [b for b in allowed if b['id'] in cust_ids]
+
+
+def _cs_resolve_branch_ids(todo, customer_id, raw_branches):
+    choices = _cs_statement_branch_choices(todo, customer_id)
+    allowed_ids = [b['id'] for b in choices] or [todo['duka'].id]
+    branch_ids = parse_requested_branch_ids(raw_branches, allowed_ids, allowed_ids)
+    if not branch_ids:
+        branch_ids = [todo['duka'].id] if todo['duka'].id in allowed_ids else allowed_ids[:1]
+    return branch_ids
+
+
+def _cs_customer_invoices(todo, customer_id, branch_ids=None):
+    duka = todo['duka']
+    qs = mauzoni.objects.filter(
         customer_id=customer_id,
         Interprise__owner=duka.owner.id,
     ).exclude(full_returned=True)
+    if branch_ids:
+        qs = qs.filter(Interprise_id__in=list(branch_ids))
+    return qs
 
 
 def _cs_balance_invoices_qs(invoices_qs):
@@ -7858,8 +7893,40 @@ def _cs_line_qty_debt(line):
     return qty, price, round(qty * price, 2)
 
 
-def _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt):
-    invoices_qs = _cs_customer_invoices(todo, customer_id)
+def _cs_recorded_by(row, fname_key='BFname', lname_key='BLname', username_key='BUname'):
+    first = str(row.get(fname_key) or '').strip()
+    last = str(row.get(lname_key) or '').strip()
+    name = ' '.join(part for part in (first, last) if part)
+    if name:
+        return name
+    if username_key:
+        return str(row.get(username_key) or '').strip()
+    return ''
+
+
+def _cs_payment_account_label(pay):
+    name = str(pay.get('Akaunt_name') or '').strip()
+    aina = str(pay.get('Akaunt_aina') or '').strip()
+    if name and aina and aina.lower() not in name.lower():
+        return f'{name} ({aina})'
+    return name or aina or ''
+
+
+def _cs_payment_group_key(pay):
+    """Bulk (Mkupuo) allocations share one ledger row; single payments stay separate."""
+    desc = str(pay.get('maelezo') or '').strip()
+    pending = bool(pay.get('invo_order')) and not bool(pay.get('invo_derivered'))
+    branch_id = pay.get('invo_branch_id') or pay.get('Interprise_id')
+    if desc.startswith('Mkupuo:'):
+        dt = pay.get('tarehe')
+        bucket = int(dt.timestamp() // 3) if dt else 0
+        mk = re.split(r'\.\s+(?:INVO-|ORD-|Agizo\s)', desc, maxsplit=1)[0].strip()
+        return ('mkupuo', mk, pay.get('by_id'), pay.get('Akaunt_id'), bucket, pending, branch_id)
+    return ('pay', pay.get('id'))
+
+
+def _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt, branch_ids=None):
+    invoices_qs = _cs_customer_invoices(todo, customer_id, branch_ids=branch_ids)
     balance_qs = _cs_balance_invoices_qs(invoices_qs)
 
     debt_agg = balance_qs.filter(amount__gt=F('ilolipwa')).aggregate(
@@ -7892,29 +7959,41 @@ def _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt):
         .annotate(
             BFname=F('By__user__user__first_name'),
             BLname=F('By__user__user__last_name'),
+            BUname=F('By__user__user__username'),
         )
         .values(
             'id', 'code', 'amount', 'ilolipwa', 'tarehe', 'date',
-            'order', 'derivered', 'service', 'desc', 'BFname', 'BLname',
+            'order', 'derivered', 'service', 'desc', 'BFname', 'BLname', 'BUname',
+            'Interprise_id', 'Interprise__name',
         )
     )
+    pay_qs = wekaCash.objects.filter(
+        invo__customer_id=customer_id,
+        invo__Interprise__owner=todo['duka'].owner.id,
+        tarehe__gte=t_fr_dt,
+        tarehe__lte=t_to_dt,
+    )
+    if branch_ids:
+        pay_qs = pay_qs.filter(invo__Interprise_id__in=list(branch_ids))
     period_payments = list(
-        wekaCash.objects.filter(
-            invo__customer_id=customer_id,
-            invo__Interprise__owner=todo['duka'].owner.id,
-            tarehe__gte=t_fr_dt,
-            tarehe__lte=t_to_dt,
-        )
+        pay_qs
         .annotate(
             invo_code=F('invo__code'),
             invo_order=F('invo__order'),
             invo_derivered=F('invo__derivered'),
+            invo_branch_id=F('invo__Interprise_id'),
+            invo_branch_name=F('invo__Interprise__name'),
             BFname=F('by__user__user__first_name'),
             BLname=F('by__user__user__last_name'),
+            BUname=F('by__user__user__username'),
+            Akaunt_name=F('Akaunt__Akaunt_name'),
+            Akaunt_aina=F('Akaunt__aina'),
         )
         .values(
             'id', 'Amount', 'tarehe', 'maelezo', 'kutoka', 'invo_id', 'invo_code',
-            'invo_order', 'invo_derivered', 'BFname', 'BLname',
+            'invo_order', 'invo_derivered', 'BFname', 'BLname', 'BUname',
+            'by_id', 'Akaunt_id', 'Akaunt_name', 'Akaunt_aina',
+            'invo_branch_id', 'invo_branch_name',
         )
     )
 
@@ -7963,6 +8042,8 @@ def _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt):
                 'datetime': dt.isoformat() if dt else '',
                 'item': str(line.get('item_name') or '').strip() or '—',
                 'units': str(units).strip(),
+                'recorded_by': _cs_recorded_by(inv),
+                'branch': str(inv.get('Interprise__name') or '').strip(),
                 'price': price,
                 'qty': qty,
                 'debt': 0.0 if pending else line_debt,
@@ -7994,6 +8075,8 @@ def _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt):
                 'datetime': dt.isoformat() if dt else '',
                 'item': item_label,
                 'units': '',
+                'recorded_by': _cs_recorded_by(inv),
+                'branch': str(inv.get('Interprise__name') or '').strip(),
                 'price': amt,
                 'qty': 1.0,
                 'debt': 0.0 if pending else round(amt, 2),
@@ -8002,27 +8085,53 @@ def _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt):
                 'balance_delta': -round(amt, 2) if not pending else 0.0,
             })
 
-    pay_rows = []
+    pay_groups = {}
+    pay_order = []
     for pay in period_payments:
+        key = _cs_payment_group_key(pay)
         dt = pay['tarehe']
-        desc = (pay.get('maelezo') or pay.get('kutoka') or '').strip()
-        if not desc and pay.get('invo_code'):
-            desc = f"INVO-{pay['invo_code']}"
         credit = float(pay['Amount'] or 0)
         pending_invo = bool(pay.get('invo_order')) and not bool(pay.get('invo_derivered'))
-        kind = 'prepaid' if pending_invo else 'payment'
-        if pending_invo and (not desc or (pay.get('invo_code') and desc == f"INVO-{pay['invo_code']}")):
-            desc = f"Agizo INVO-{pay['invo_code']}" if pay.get('invo_code') else 'Malipo agizo'
+        if key not in pay_groups:
+            pay_groups[key] = {
+                'id': pay['id'],
+                'invo_id': pay.get('invo_id'),
+                'dt': dt,
+                'credit': 0.0,
+                'pending': pending_invo,
+                'recorded_by': _cs_recorded_by(pay),
+                'account': _cs_payment_account_label(pay),
+                'branch': str(pay.get('invo_branch_name') or '').strip(),
+            }
+            pay_order.append(key)
+        grp = pay_groups[key]
+        grp['credit'] += credit
+        if dt and (not grp['dt'] or dt < grp['dt']):
+            grp['dt'] = dt
+            grp['id'] = pay['id']
+        if not grp.get('recorded_by'):
+            grp['recorded_by'] = _cs_recorded_by(pay)
+        if not grp.get('account'):
+            grp['account'] = _cs_payment_account_label(pay)
+
+    pay_rows = []
+    for key in pay_order:
+        grp = pay_groups[key]
+        dt = grp['dt']
+        credit = round(grp['credit'], 2)
+        kind = 'prepaid' if grp['pending'] else 'payment'
         pay_rows.append({
             'sort': dt.isoformat() if dt else '',
             'sort_sub': 2,
             'kind': kind,
-            'id': pay['id'],
-            'invo_id': pay.get('invo_id'),
+            'id': grp['id'],
+            'invo_id': grp.get('invo_id'),
             'date': dt.date().isoformat() if dt else '',
             'datetime': dt.isoformat() if dt else '',
-            'item': desc or '—',
+            'item': (grp.get('account') or '').strip(),
             'units': '',
+            'recorded_by': grp.get('recorded_by') or '',
+            'branch': grp.get('branch') or '',
             'price': 0.0,
             'qty': 0.0,
             'debt': 0.0,
@@ -8043,6 +8152,8 @@ def _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt):
             'datetime': t_fr_dt.date().isoformat(),
             'item': '',
             'units': '',
+            'recorded_by': '',
+            'branch': '',
             'price': 0.0,
             'qty': 0.0,
             'debt': 0.0,
@@ -8065,6 +8176,8 @@ def _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt):
             'datetime': row['datetime'],
             'item': row['item'],
             'units': row.get('units', ''),
+            'recorded_by': (row.get('recorded_by') or '').strip(),
+            'branch': row.get('branch') or '',
             'price': row['price'],
             'qty': row['qty'],
             'debt': row['debt'],
@@ -8090,6 +8203,8 @@ def _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt):
             'closing_balance': closing,
         },
         'transactions': transactions,
+        'last_payment': _cs_last_payment(todo, customer_id, branch_ids=branch_ids),
+        'can_manage_payments': is_shop_admin(todo.get('cheo')),
     }
 
 
@@ -8110,7 +8225,8 @@ def customer_sales_statement_data(request):
         t_to_dt = _cs_parse_dt(request.POST.get('tTo'))
         if not t_fr_dt or not t_to_dt:
             return JsonResponse({'success': False, 'swa': 'Tarehe hazipo', 'eng': 'Dates are required'})
-        payload = _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt)
+        branch_ids = _cs_resolve_branch_ids(todo, customer_id, request.POST.get('branches'))
+        payload = _cs_statement_payload(todo, customer_id, t_fr_dt, t_to_dt, branch_ids=branch_ids)
         return JsonResponse({'success': True, **payload})
     except wateja.DoesNotExist:
         return JsonResponse({'success': False, 'swa': 'Mteja hajapatikana', 'eng': 'Customer not found'})
@@ -8119,9 +8235,9 @@ def customer_sales_statement_data(request):
         return JsonResponse({'success': False, 'swa': 'Hitilafu', 'eng': 'Something went wrong'})
 
 
-def _cs_unpaid_invoices_qs(todo, customer_id):
+def _cs_unpaid_invoices_qs(todo, customer_id, branch_ids=None):
     owner_id = todo['duka'].owner.id
-    return (
+    qs = (
         mauzoni.objects.filter(
             customer_id=customer_id,
             Interprise__owner_id=owner_id,
@@ -8130,6 +8246,9 @@ def _cs_unpaid_invoices_qs(todo, customer_id):
         .filter(amount__gt=F('ilolipwa'))
         .order_by('tarehe', 'pk')
     )
+    if branch_ids:
+        qs = qs.filter(Interprise_id__in=list(branch_ids))
+    return qs
 
 
 def _invo_code_tag(bill):
@@ -8143,7 +8262,113 @@ def _clip_weka_note(text, limit=500):
     return text[: max(0, limit - 3)] + '...'
 
 
-def _apply_mauzo_payment(cheo, bill, wekakwa, paid_amo, pay_d, desc, extra=''):
+def _cs_pay_datetime(pay_d):
+    now = datetime.datetime.now(tz=timezone.utc)
+    if not pay_d:
+        return now
+    try:
+        d = datetime.datetime.strptime(str(pay_d)[:10], '%Y-%m-%d')
+        return datetime.datetime(d.year, d.month, d.day, now.hour, now.minute, now.second, tzinfo=timezone.utc)
+    except Exception:
+        return now
+
+
+def _parse_money_post(raw):
+    text = str(raw or '0').replace(',', '').replace(' ', '')
+    try:
+        return Decimal(text or '0')
+    except Exception:
+        return Decimal('0')
+
+
+def _cs_weka_group(seed):
+    if not seed:
+        return []
+    if not seed.invo_id:
+        return [seed]
+    desc = str(seed.maelezo or '').strip()
+    if desc.startswith('Mkupuo:') and seed.tarehe:
+        mk = re.split(r'\.\s+(?:INVO-|ORD-|Agizo\s)', desc, maxsplit=1)[0].strip()
+        window = datetime.timedelta(seconds=4)
+        qs = wekaCash.objects.filter(
+            invo__customer_id=seed.invo.customer_id if seed.invo_id else None,
+            by_id=seed.by_id,
+            Akaunt_id=seed.Akaunt_id,
+            maelezo__startswith=mk[:80],
+            tarehe__gte=seed.tarehe - window,
+            tarehe__lte=seed.tarehe + window,
+        )
+        return list(qs.select_related('Akaunt', 'by__user__user', 'invo').order_by('pk'))
+    return [seed]
+
+
+def _cs_serialize_last_payment(rows):
+    if not rows:
+        return None
+    first = rows[0]
+    total = sum(float(r.Amount or 0) for r in rows)
+    dt = min((r.tarehe for r in rows if r.tarehe), default=first.tarehe)
+    ac = first.Akaunt
+    by = first.by
+    by_name = ''
+    try:
+        u = by.user.user
+        by_name = f'{(u.first_name or "")} {(u.last_name or "")}'.strip() or (u.username or '')
+    except Exception:
+        by_name = ''
+    desc = str(first.maelezo or '')
+    if desc.startswith('Mkupuo:'):
+        desc = ''
+    return {
+        'id': first.id,
+        'ids': [r.id for r in rows],
+        'amount': round(total, 2),
+        'date': dt.date().isoformat() if dt else '',
+        'datetime': dt.isoformat() if dt else '',
+        'account': (ac.Akaunt_name if ac else '') or '',
+        'account_id': first.Akaunt_id,
+        'by': by_name,
+        'desc': desc[:200],
+    }
+
+
+def _cs_last_payment(todo, customer_id, branch_ids=None):
+    qs = wekaCash.objects.filter(
+        invo__customer_id=customer_id,
+        invo__Interprise__owner=todo['duka'].owner.id,
+        invo__isnull=False,
+    )
+    if branch_ids:
+        qs = qs.filter(invo__Interprise_id__in=list(branch_ids))
+    seed = qs.select_related('Akaunt', 'by__user__user', 'invo').order_by('-tarehe', '-pk').first()
+    if not seed:
+        return None
+    return _cs_serialize_last_payment(_cs_weka_group(seed))
+
+
+@transaction.atomic
+def _cs_reverse_weka_group(rows):
+    customer_id = None
+    for weka in rows:
+        amt = weka.Amount or Decimal('0')
+        invo = weka.invo
+        if invo:
+            customer_id = invo.customer_id_id
+            paid = (invo.ilolipwa or Decimal('0')) - amt
+            if paid < 0:
+                paid = Decimal('0')
+            invo.ilolipwa = paid
+            invo.full_paid = paid >= (invo.amount or Decimal('0')) and paid > 0
+            invo.save(update_fields=['ilolipwa', 'full_paid'])
+        if weka.Akaunt_id:
+            ac = PaymentAkaunts.objects.select_for_update().get(pk=weka.Akaunt_id)
+            ac.Amount = (ac.Amount or Decimal('0')) - amt
+            ac.save(update_fields=['Amount'])
+        weka.delete()
+    return customer_id
+
+
+def _apply_mauzo_payment(cheo, bill, wekakwa, paid_amo, pay_d, desc, extra='', paid_at=None):
     paid_amo = Decimal(str(paid_amo))
     if paid_amo <= 0:
         return False
@@ -8180,7 +8405,7 @@ def _apply_mauzo_payment(cheo, bill, wekakwa, paid_amo, pay_d, desc, extra=''):
     weka.After = beforweka + paid_amo
     weka.kutoka = 'Service Income' if is_service else 'Goods Sales'
     weka.maelezo = _clip_weka_note('. '.join(note_parts))
-    weka.tarehe = datetime.datetime.now(tz=timezone.utc)
+    weka.tarehe = paid_at or _cs_pay_datetime(pay_d)
     weka.by = cheo
     weka.Interprise = bill.Interprise
     weka.mauzo = not is_service
@@ -8204,9 +8429,10 @@ def customer_sales_unpaid_invoices(request):
         todo = todoFunct(request)
         customer_id = int(request.POST.get('cust', 0) or 0)
         wateja.objects.get(pk=customer_id, Interprise__owner=todo['duka'].owner.id)
+        branch_ids = _cs_resolve_branch_ids(todo, customer_id, request.POST.get('branches'))
         rows = []
         total = Decimal('0')
-        for inv in _cs_unpaid_invoices_qs(todo, customer_id):
+        for inv in _cs_unpaid_invoices_qs(todo, customer_id, branch_ids=branch_ids):
             debt = inv.amount - inv.ilolipwa
             total += debt
             rows.append({
@@ -8229,20 +8455,24 @@ def customer_sales_unpaid_invoices(request):
         return JsonResponse({'success': False, 'swa': 'Hitilafu', 'eng': 'Something went wrong'})
 
 
-@login_required(login_url='login')
 @csrf_exempt
+@login_required(login_url='login')
 def customer_sales_record_payment(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad request'})
     try:
         todo = todoFunct(request)
-        if todo.get('shift_management_enabled') and not todo.get('shift_operation_allowed'):
-            return JsonResponse(shift_operation_block_payload(todo), status=403)
         cheo = todo['cheo']
+        if (
+            todo.get('shift_management_enabled')
+            and not todo.get('shift_operation_allowed')
+            and not is_shop_admin(cheo)
+        ):
+            return JsonResponse(shift_operation_block_payload(todo), status=403)
         customer_id = int(request.POST.get('cust', 0) or 0)
         mteja = wateja.objects.get(pk=customer_id, Interprise__owner=todo['duka'].owner.id)
         ac_id = int(request.POST.get('invo_ac_id', 0) or 0)
-        paid_amo = Decimal(str(request.POST.get('invo_amo', 0) or 0))
+        paid_amo = _parse_money_post(request.POST.get('invo_amo', 0))
         pay_d = request.POST.get('pay_d')
         desc = request.POST.get('lipaElezo', '') or ''
 
@@ -8261,7 +8491,8 @@ def customer_sales_record_payment(request):
             })
 
         wekakwa = PaymentAkaunts.objects.get(pk=ac_id, Interprise__owner=cheo.Interprise.owner)
-        invoices = list(_cs_unpaid_invoices_qs(todo, customer_id))
+        branch_ids = _cs_resolve_branch_ids(todo, customer_id, request.POST.get('branches'))
+        invoices = list(_cs_unpaid_invoices_qs(todo, customer_id, branch_ids=branch_ids))
         if not invoices:
             return JsonResponse({
                 'success': False,
@@ -8303,7 +8534,10 @@ def customer_sales_record_payment(request):
                     break
                 owed = bill.amount - bill.ilolipwa
                 pay_this = min(remaining, owed)
-                if not _apply_mauzo_payment(cheo, bill, wekakwa, pay_this, pay_d, desc, extra=mkupuo):
+                if not _apply_mauzo_payment(
+                    cheo, bill, wekakwa, pay_this, pay_d, desc, extra=mkupuo,
+                    paid_at=_cs_pay_datetime(pay_d),
+                ):
                     raise ValueError('payment_failed')
                 remaining -= pay_this
                 allocations.append({
@@ -8336,6 +8570,135 @@ def customer_sales_record_payment(request):
         })
 
 
+def _cs_manage_pay_guard(todo):
+    if not is_shop_admin(todo.get('cheo')):
+        return JsonResponse({
+            'success': False,
+            'msg_swa': 'Ni admin tu anayeweza kuhariri au kufuta malipo',
+            'msg_eng': 'Only admin can edit or delete payments',
+        })
+    return None
+
+
+@csrf_exempt
+@login_required(login_url='login')
+def customer_sales_delete_payment(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad request'})
+    todo = todoFunct(request)
+    blocked = _cs_manage_pay_guard(todo)
+    if blocked:
+        return blocked
+    try:
+        customer_id = int(request.POST.get('cust', 0) or 0)
+        wateja.objects.get(pk=customer_id, Interprise__owner=todo['duka'].owner.id)
+        rec_id = int(request.POST.get('id', 0) or 0)
+        seed = wekaCash.objects.filter(
+            pk=rec_id,
+            invo__customer_id=customer_id,
+            invo__Interprise__owner=todo['duka'].owner.id,
+        ).select_related('invo', 'Akaunt').first()
+        if not seed:
+            return JsonResponse({'success': False, 'msg_swa': 'Malipo hayajapatikana', 'msg_eng': 'Payment not found'})
+        with transaction.atomic():
+            _cs_reverse_weka_group(_cs_weka_group(seed))
+        return JsonResponse({
+            'success': True,
+            'msg_swa': 'Malipo yamefutwa',
+            'msg_eng': 'Payment deleted',
+        })
+    except wateja.DoesNotExist:
+        return JsonResponse({'success': False, 'msg_swa': 'Mteja hajapatikana', 'msg_eng': 'Customer not found'})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'msg_swa': 'Imeshindikana', 'msg_eng': 'Failed'})
+
+
+@csrf_exempt
+@login_required(login_url='login')
+def customer_sales_edit_payment(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad request'})
+    todo = todoFunct(request)
+    blocked = _cs_manage_pay_guard(todo)
+    if blocked:
+        return blocked
+    try:
+        cheo = todo['cheo']
+        customer_id = int(request.POST.get('cust', 0) or 0)
+        rec_id = int(request.POST.get('id', 0) or 0)
+        paid_amo = _parse_money_post(request.POST.get('invo_amo') or request.POST.get('paid'))
+        ac_id = int(request.POST.get('invo_ac_id') or request.POST.get('ac') or 0)
+        pay_d = request.POST.get('pay_d')
+        desc = request.POST.get('lipaElezo', '') or ''
+        mteja = wateja.objects.get(pk=customer_id, Interprise__owner=todo['duka'].owner.id)
+        seed = wekaCash.objects.filter(
+            pk=rec_id,
+            invo__customer_id=customer_id,
+            invo__Interprise__owner=todo['duka'].owner.id,
+        ).select_related('invo').first()
+        if not seed:
+            return JsonResponse({'success': False, 'msg_swa': 'Malipo hayajapatikana', 'msg_eng': 'Payment not found'})
+        if paid_amo <= 0 or not ac_id:
+            return JsonResponse({'success': False, 'msg_swa': 'Weka kiasi na akaunti', 'msg_eng': 'Enter amount and account'})
+        wekakwa = PaymentAkaunts.objects.get(pk=ac_id, Interprise__owner=cheo.Interprise.owner)
+        branch_ids = _cs_resolve_branch_ids(todo, customer_id, request.POST.get('branches'))
+        with transaction.atomic():
+            _cs_reverse_weka_group(_cs_weka_group(seed))
+            invoices = list(_cs_unpaid_invoices_qs(todo, customer_id, branch_ids=branch_ids))
+            total_debt = sum((inv.amount - inv.ilolipwa for inv in invoices), Decimal('0'))
+            if paid_amo > total_debt:
+                raise ValueError('overpay')
+            paid_codes = []
+            preview = paid_amo
+            for bill in invoices:
+                if preview <= 0:
+                    break
+                owed = bill.amount - bill.ilolipwa
+                pay_this = min(preview, owed)
+                if pay_this > 0:
+                    paid_codes.append(str(bill.code))
+                    preview -= pay_this
+            mkupuo = ''
+            if len(paid_codes) > 1:
+                mkupuo = 'Mkupuo: ' + ', '.join(f'INVO-{c}' for c in paid_codes)
+                cust_name = str(mteja.jina or '').strip()
+                if cust_name:
+                    mkupuo += f' ({cust_name})'
+            remaining = paid_amo
+            paid_at = _cs_pay_datetime(pay_d)
+            for bill in invoices:
+                if remaining <= 0:
+                    break
+                owed = bill.amount - bill.ilolipwa
+                pay_this = min(remaining, owed)
+                if not _apply_mauzo_payment(
+                    cheo, bill, wekakwa, pay_this, pay_d, desc, extra=mkupuo, paid_at=paid_at,
+                ):
+                    raise ValueError('payment_failed')
+                remaining -= pay_this
+        return JsonResponse({
+            'success': True,
+            'msg_swa': 'Malipo yamehaririwa',
+            'msg_eng': 'Payment updated',
+        })
+    except ValueError as err:
+        if str(err) == 'overpay':
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Kiasi kinazidi jumla ya deni la mteja',
+                'msg_eng': 'Amount exceeds total customer debt',
+            })
+        return JsonResponse({'success': False, 'msg_swa': 'Imeshindikana', 'msg_eng': 'Failed'})
+    except wateja.DoesNotExist:
+        return JsonResponse({'success': False, 'msg_swa': 'Mteja hajapatikana', 'msg_eng': 'Customer not found'})
+    except PaymentAkaunts.DoesNotExist:
+        return JsonResponse({'success': False, 'msg_swa': 'Akaunti haijapatikana', 'msg_eng': 'Account not found'})
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'msg_swa': 'Imeshindikana', 'msg_eng': 'Failed'})
+
+
 # CUSTOMERS & SALES
 @login_required(login_url='login')
 def CustomerSales(request):
@@ -8349,22 +8712,21 @@ def CustomerSales(request):
         if cheo and not cheo.owner:
             if not customer_visible_on_branch(mteja.id, duka.id, duka.owner.id):
                 return render(request, 'errorpage.html', todo)
-        num = _cs_customer_invoices(todo, mteja.id).count()
+        statement_branches = _cs_statement_branch_choices(todo, mteja.id)
+        allowed_ids = [b['id'] for b in statement_branches] or [duka.id]
+        num = _cs_customer_invoices(todo, mteja.id, branch_ids=allowed_ids).count()
         can_edit_customer = bool(cheo and cheo.owner)
 
-        branch_names = ', '.join(
-            customer_Interprise.objects.filter(mteja=mteja)
-            .select_related('branch')
-            .order_by('branch__name')
-            .values_list('branch__name', flat=True)
-        )
+        branch_names = ', '.join(b['name'] for b in statement_branches if b.get('name'))
 
         todo.update({
             'mteja': mteja,
             'num': num,
             'customer_id': mteja.id,
             'can_edit_customer': can_edit_customer,
+            'can_manage_payments': is_shop_admin(cheo),
             'customer_branch_names': branch_names,
+            'statement_branches': statement_branches,
         })
         if not duka.Interprise:
             return redirect('/userdash')

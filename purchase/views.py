@@ -60,8 +60,11 @@ from purchase.vendor_utils import (
     parse_requested_branch_ids,
     vendor_unpaid_bills,
     apply_vendor_fifo_payment,
+    reverse_vendor_payment_group,
+    vendor_toa_group,
     _parse_dt,
 )
+from accaunts.notification_hub import is_shop_admin
 from purchase.guest_compound_utils import (
     clear_guest_cart_session,
     get_guest_cell,
@@ -5187,6 +5190,7 @@ def VendorPurchases(request):
             'vendor_branch_name': branch_label,
             'statement_branches': allowed_branches,
             'can_scope_branches': can_scope or len(allowed_branches) > 1,
+            'can_manage_payments': is_shop_admin(todo.get('cheo')),
         })
         if not duka.Interprise:
             return redirect('/userdash')
@@ -5229,6 +5233,7 @@ def vendor_purchases_statement_data(request):
         payload['receipts'] = receipts
         payload['summary']['receipt_count'] = len(receipts)
         payload['summary']['receipt_amount'] = receipt_amount
+        payload['can_manage_payments'] = is_shop_admin(cheo)
         return JsonResponse({'success': True, **payload})
     except wasambazaji.DoesNotExist:
         return JsonResponse({'success': False, 'swa': 'Vendor hajapatikana', 'eng': 'Vendor not found'})
@@ -5248,6 +5253,7 @@ def vendor_statements(request):
         'statement_branches': allowed_branches,
         'can_scope_branches': can_scope or len(allowed_branches) > 1,
         'vendor_nav': 'statements',
+        'can_manage_payments': is_shop_admin(todo.get('cheo')),
     })
     return render(request, 'vendorStatements.html', todo)
 
@@ -5282,6 +5288,7 @@ def vendor_statements_data(request):
         payload['receipts'] = receipts
         payload['summary']['receipt_count'] = len(receipts)
         payload['summary']['receipt_amount'] = receipt_amount
+        payload['can_manage_payments'] = is_shop_admin(cheo)
         return JsonResponse({'success': True, **payload})
     except Exception:
         traceback.print_exc()
@@ -5337,6 +5344,7 @@ def vendor_purchases_open_bills(request):
     })
 
 
+@csrf_exempt
 @login_required(login_url='login')
 def vendor_purchases_pay(request):
     if request.method != 'POST':
@@ -5382,4 +5390,103 @@ def vendor_purchases_pay(request):
         'applied': result.get('applied'),
         'allocated': result.get('allocated') or [],
     })
+
+
+def _vendor_manage_pay_guard(cheo):
+    if not is_shop_admin(cheo):
+        return JsonResponse({
+            'success': False,
+            'swa': 'Ni admin tu anayeweza kuhariri au kufuta malipo',
+            'eng': 'Only admin can edit or delete payments',
+        })
+    return None
+
+
+@csrf_exempt
+@login_required(login_url='login')
+def vendor_purchases_delete_payment(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad Request'})
+    ctx, err = _vendor_pay_context(request)
+    if err:
+        return err
+    blocked = _vendor_manage_pay_guard(ctx['cheo'])
+    if blocked:
+        return blocked
+    try:
+        rec_id = int(request.POST.get('id', 0) or 0)
+    except (TypeError, ValueError):
+        rec_id = 0
+    seed = toaCash.objects.filter(
+        pk=rec_id,
+        pu=True,
+        bill__supplier_id_id=ctx['vendor_id'],
+    ).select_related('bill', 'Akaunt').first()
+    if not seed:
+        return JsonResponse({'success': False, 'swa': 'Malipo hayajapatikana', 'eng': 'Payment not found'})
+    try:
+        reverse_vendor_payment_group(vendor_toa_group(seed))
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'swa': 'Imeshindikana', 'eng': 'Failed'})
+    return JsonResponse({'success': True, 'swa': 'Malipo yamefutwa', 'eng': 'Payment deleted'})
+
+
+@csrf_exempt
+@login_required(login_url='login')
+def vendor_purchases_edit_payment(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'swa': 'Ombi batili', 'eng': 'Bad Request'})
+    ctx, err = _vendor_pay_context(request)
+    if err:
+        return err
+    blocked = _vendor_manage_pay_guard(ctx['cheo'])
+    if blocked:
+        return blocked
+    try:
+        rec_id = int(request.POST.get('id', 0) or 0)
+        account_id = int(request.POST.get('ac') or request.POST.get('invo_ac_id') or 0)
+    except (TypeError, ValueError):
+        rec_id = 0
+        account_id = 0
+    seed = toaCash.objects.filter(
+        pk=rec_id,
+        pu=True,
+        bill__supplier_id_id=ctx['vendor_id'],
+    ).select_related('bill', 'Akaunt').first()
+    if not seed:
+        return JsonResponse({'success': False, 'swa': 'Malipo hayajapatikana', 'eng': 'Payment not found'})
+    if not account_id:
+        return JsonResponse({'success': False, 'swa': 'Chagua akaunti', 'eng': 'Select an account'})
+    try:
+        with transaction.atomic():
+            reverse_vendor_payment_group(vendor_toa_group(seed))
+            result = apply_vendor_fifo_payment(
+                ctx['cheo'],
+                ctx['vendor_id'],
+                ctx['branch_ids'],
+                account_id,
+                request.POST.get('paid') or request.POST.get('invo_amo'),
+                True,
+                request.POST.get('bal'),
+                False,
+                request.POST.get('pay_d'),
+            )
+            if not result.get('ok'):
+                raise ValueError(result.get('swa') or 'fail')
+    except ValueError as err:
+        return JsonResponse({
+            'success': False,
+            'swa': str(err) if str(err) != 'fail' else 'Imeshindikana',
+            'eng': result.get('eng') if 'result' in locals() else 'Failed',
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'swa': 'Imeshindikana', 'eng': 'Failed'})
+    return JsonResponse({
+        'success': True,
+        'swa': 'Malipo yamehaririwa',
+        'eng': 'Payment updated',
+    })
+
 

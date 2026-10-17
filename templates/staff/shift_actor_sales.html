@@ -130,6 +130,35 @@
     .right {
       text-align: right;
     }
+
+    .item-row {
+      cursor: pointer;
+    }
+
+    .item-row:hover td {
+      background: #eef6ff;
+    }
+
+    .table-hint {
+      color: #666;
+      font-size: 12px;
+      margin: 0 0 8px;
+    }
+
+    .breakdown-modal-card {
+      max-width: 560px;
+    }
+
+    .breakdown-item-name {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .breakdown-item-meta {
+      color: #555;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
     {% endif %}
 
     {% if paper_size == 'thermal58' or paper_size == 'thermal' or paper_size == 'thermal80' %}
@@ -209,7 +238,8 @@
         display: none;
       }
 
-      .paper-modal {
+      .paper-modal,
+      .breakdown-modal {
         display: none !important;
       }
     }
@@ -297,32 +327,36 @@
       <button type="button" class="btn" onclick="openPaperPrintModal()">{% if useri.langSet == 0 %}Print{% else %}Print{% endif %}</button>
     </div>
 
+    <p class="table-hint">{% if useri.langSet == 0 %}Bonyeza bidhaa kuona Item Breakdown per Staff.{% else %}Click an item to see Item Breakdown per Staff.{% endif %}</p>
+
     <table>
       <thead>
         <tr>
           <th>{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
           <th>{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
+          <th class="right">{% if useri.langSet == 0 %}Staff{% else %}Staff{% endif %}</th>
           <th class="right">{% if useri.langSet == 0 %}Qty{% else %}Qty{% endif %}</th>
           <th class="right">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
         </tr>
       </thead>
       <tbody>
         {% for row in item_rows %}
-        <tr>
+        <tr class="item-row" data-item-key="{{ row.item_key }}" onclick="openItemStaffBreakdown(this)">
           <td>{{ row.item_name }}</td>
           <td>{{ row.units|default:'-' }}</td>
+          <td class="right">{{ row.staff_count|default:0 }}</td>
           <td class="right">{{ row.qty|floatformat:2|intcomma }}</td>
           <td class="right">{{ row.amount|floatformat:2|intcomma }}</td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="4" class="right">{% if useri.langSet == 0 %}Hakuna bidhaa zilizopatikana{% else %}No items found{% endif %}</td>
+          <td colspan="5" class="right">{% if useri.langSet == 0 %}Hakuna bidhaa zilizopatikana{% else %}No items found{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="2">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
+          <td colspan="3">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
           <td class="right">{{ totals.qty|floatformat:2|intcomma }}</td>
           <td class="right">{{ totals.amount|floatformat:2|intcomma }}</td>
         </tr>
@@ -330,6 +364,36 @@
     </table>
   </div>
   {% endif %}
+
+  <div id="itemStaffModal" class="paper-modal" aria-hidden="true" onclick="onItemStaffModalBackdrop(event)">
+    <div class="paper-modal-card breakdown-modal-card" role="dialog" aria-labelledby="itemStaffModalTitle">
+      <div class="paper-modal-title" id="itemStaffModalTitle">Item Breakdown per Staff</div>
+      <div class="breakdown-item-name" id="itemStaffName"></div>
+      <div class="breakdown-item-meta" id="itemStaffMeta"></div>
+      <table>
+        <thead>
+          <tr>
+            <th>{% if useri.langSet == 0 %}Mhusika{% else %}Staff{% endif %}</th>
+            <th class="right">{% if useri.langSet == 0 %}Mauzo{% else %}Sales{% endif %}</th>
+            <th class="right">{% if useri.langSet == 0 %}Qty{% else %}Qty{% endif %}</th>
+            <th class="right">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody id="itemStaffBody"></tbody>
+        <tfoot>
+          <tr>
+            <td>{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
+            <td class="right" id="itemStaffTotalSales"></td>
+            <td class="right" id="itemStaffTotalQty"></td>
+            <td class="right" id="itemStaffTotalAmount"></td>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="paper-modal-actions" style="margin-top:12px;">
+        <button type="button" class="btn" onclick="closeItemStaffBreakdown()">{% if useri.langSet == 0 %}Funga{% else %}Close{% endif %}</button>
+      </div>
+    </div>
+  </div>
 
   <div id="paperPrintModal" class="paper-modal" aria-hidden="true">
     <div class="paper-modal-card">
@@ -370,6 +434,59 @@
       var paper = document.getElementById('paperSizeSelect').value || 'large';
       var url = '/staff/shifts/actor-sales?sid={{ shift.id }}&actor={{ actor_id }}&print=1&paper=' + encodeURIComponent(paper);
       window.location.href = url;
+    }
+
+    var ITEM_STAFF = {{ item_staff_json|default:'{}'|safe }};
+    var ITEM_UNITS_LABEL = '{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}';
+    var ITEM_NONE_LABEL = '{% if useri.langSet == 0 %}Hakuna mchanganuo{% else %}No breakdown{% endif %}';
+
+    function fmtNum(n) {
+      var num = Number(n || 0);
+      return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function openItemStaffBreakdown(tr) {
+      var key = tr && tr.getAttribute('data-item-key');
+      var data = ITEM_STAFF[key];
+      if (!data) return;
+      document.getElementById('itemStaffName').textContent = data.item_name || '';
+      document.getElementById('itemStaffMeta').textContent = ITEM_UNITS_LABEL + ': ' + (data.units || '-');
+      var body = document.getElementById('itemStaffBody');
+      body.innerHTML = '';
+      var staff = data.staff || [];
+      var salesTotal = 0;
+      if (!staff.length) {
+        var empty = document.createElement('tr');
+        empty.innerHTML = '<td colspan="4">' + ITEM_NONE_LABEL + '</td>';
+        body.appendChild(empty);
+      } else {
+        staff.forEach(function(row) {
+          salesTotal += Number(row.sales_count || 0);
+          var trEl = document.createElement('tr');
+          trEl.innerHTML =
+            '<td></td>' +
+            '<td class="right"></td>' +
+            '<td class="right"></td>' +
+            '<td class="right"></td>';
+          trEl.children[0].textContent = row.name || '-';
+          trEl.children[1].textContent = String(row.sales_count || 0);
+          trEl.children[2].textContent = fmtNum(row.qty);
+          trEl.children[3].textContent = fmtNum(row.amount);
+          body.appendChild(trEl);
+        });
+      }
+      document.getElementById('itemStaffTotalSales').textContent = String(salesTotal);
+      document.getElementById('itemStaffTotalQty').textContent = fmtNum(data.qty);
+      document.getElementById('itemStaffTotalAmount').textContent = fmtNum(data.amount);
+      document.getElementById('itemStaffModal').classList.add('show');
+    }
+
+    function closeItemStaffBreakdown() {
+      document.getElementById('itemStaffModal').classList.remove('show');
+    }
+
+    function onItemStaffModalBackdrop(ev) {
+      if (ev.target && ev.target.id === 'itemStaffModal') closeItemStaffBreakdown();
     }
   </script>
 </body>

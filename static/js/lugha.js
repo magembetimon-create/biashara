@@ -59,22 +59,33 @@ $('.searchBarBtn').click(function (e) {
 
       const url = $(this).attr('href'),
              valued = SMALLMEDIA?$('#searchInputForAllSmall').val():$('#searchInputForAll').val(),
+             isTxn = Number($(this).data('txn')) || 0,
              data = {
                 data:{ 
                   duka:$(this).data('duka') | 0,
                   ankara:$(this).data('ankara') | 0,
                   adj:$(this).data('adj') | 0,
+                  txn: isTxn,
                   partner:$(this).data('partner') | 0,
                   valued:valued 
               },
                   url:'/searchAll'
              }
-              LoadToDB(data)    
              if(valued==''){
-                  location.replace(url)
-             }else{
-
+                  if(isTxn){
+                    toastr.error(
+                      lang('Andika namba ya muamala, mfano INVO-0001, BIL-0001, PROD-001.','Enter a transaction code, e.g. INVO-0001, BIL-0001, PROD-001.'),
+                      lang('Haikufanikiwa','Error Alert'),
+                      {timeOut: 2500}
+                    );
+                    return;
+                  }
+                  if(url && url !== '#'){
+                    location.replace(url)
+                  }
+                  return;
              }
+              LoadToDB(data)
 
 });
 

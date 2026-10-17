@@ -343,6 +343,7 @@ const csLoadStatement = (tFr, tTo, periodLabel) => {
       };
       csLastRange = { tFr, tTo, label: csStatementCache.periodLabel };
       csRenderTable(resp.transactions);
+      if (typeof csRenderLastPay === 'function') csRenderLastPay(resp.last_payment);
       csUpdateReceipts(csStatementCache.receipts, csStatementCache.summary);
       if ($('#csReceiptsModal').hasClass('show')) {
         csRenderReceiptsGallery();
@@ -363,6 +364,10 @@ window.csApplyPreset = (key, label, tFr, tTo) => {
   csSetActivePreset(key);
   csLoadStatement(tFr, tTo, label);
   return false;
+};
+
+window.csReloadStatement = () => {
+  window.location.reload();
 };
 
 window.csApplyCustomRange = () => {
@@ -503,7 +508,7 @@ const vpToday = () => {
 const vpPayAmount = (totalDue) => {
   const raw = $('#bill-lipwa-amount').val();
   if (raw === '' || raw == null) return Number(totalDue) || 0;
-  return Number(raw) || 0;
+  return typeof parseMoneyInput === 'function' ? parseMoneyInput(raw) : Number(String(raw).replace(/,/g, '')) || 0;
 };
 
 const vpAllocate = (bills, amount) => {
@@ -546,7 +551,7 @@ const vpOnPayInputs = () => {
   const paid = vpPayAmount(totalDue);
   const balRaw = $('#ac-baki-amount').val();
   const balSet = balRaw !== '' && balRaw != null;
-  const bal = Number(balRaw) || 0;
+  const bal = typeof parseMoneyInput === 'function' ? parseMoneyInput(balRaw) : Number(String(balRaw).replace(/,/g, '')) || 0;
 
   $('#paid_set').val(paidSet ? 1 : 0);
   $('#bal_set').val(balSet ? 1 : 0);
@@ -633,6 +638,12 @@ const vpSubmitPay = (e) => {
   const formData = new FormData(form);
   formData.set('branches', JSON.stringify(csSelectedBranches()));
   formData.set('pay_d', vpToday());
+  const paidNum = vpPayAmount(Number($('#bill-lipwa-amount').data('amount')) || 0);
+  formData.set('paid', paidNum);
+  const balRaw = $('#ac-baki-amount').val();
+  if (balRaw) {
+    formData.set('bal', typeof parseMoneyInput === 'function' ? parseMoneyInput(balRaw) : balRaw);
+  }
   $('#save_pay_btn').prop('disabled', true);
   $('#loadMe').modal('show');
   $.ajax({
@@ -652,12 +663,8 @@ const vpSubmitPay = (e) => {
       }
       $('#lipiaBill').modal('hide');
       toastr.success(lang(data.swa, data.eng), lang('Imefanikiwa', 'Success'), { timeOut: 2500 });
-      try {
-        if (typeof getAkaunts !== 'undefined' && getAkaunts.getdata) getAkaunts.getdata();
-      } catch (err) { /* ignore */ }
-      if (csLastRange.tFr && csLastRange.tTo) {
-        csLoadStatement(csLastRange.tFr, csLastRange.tTo, csLastRange.label);
-      }
+      if (typeof window.csReloadStatement === 'function') window.csReloadStatement();
+      else window.location.reload();
     })
     .fail(() => {
       csFinishLoading();
@@ -709,8 +716,8 @@ $(document).ready(() => {
   if (!csAllVendors()) {
     $('#csPayVendorBtn').on('click', () => vpOpenPayModal());
     $('#malipo-akaunti').on('changed.bs.select change', vpOnPayInputs);
-    $('#bill-lipwa-amount').on('keyup change', vpOnPayInputs);
-    $('#ac-baki-amount').on('keyup change', vpOnPayInputs);
+    $('#bill-lipwa-amount').on('keyup change input', vpOnPayInputs);
+    $('#ac-baki-amount').on('keyup change input', vpOnPayInputs);
     $('#vendorPayForm').on('submit', vpSubmitPay);
   }
 });

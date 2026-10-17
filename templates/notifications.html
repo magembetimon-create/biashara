@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block billcss %}
-<link rel="stylesheet" href="{% static 'css/notify.css' %}?v=nh-4">
+<link rel="stylesheet" href="{% static 'css/notify.css' %}?v=nh-5">
 {% endblock %}
 
 {% block Dashboard %}
@@ -15,70 +15,69 @@
           {% if useri.langSet == 0 %}Notifikesheni{% else %}Notifications{% endif %}
   </h5>
 
-  {% if hub.total %}
   <div class="nh-section">
     <h6>{% if useri.langSet == 0 %}Approval inahitajika{% else %}Approval required{% endif %}
-      <span class="badge badge-danger ml-1" style="font-size:10px;vertical-align:2px">{{ hub.total }}</span>
+      {% if hub.total %}<span class="badge badge-danger ml-1" style="font-size:10px;vertical-align:2px">{{ hub.total }}</span>{% endif %}
     </h6>
     <div class="nh-grid">
-      {% if hub.receive %}
+      {% if hub.visible.receive %}
       <a class="nh-card approve" href="{% url 'notification_pending' %}?type=receive">
         <span class="nh-icon-wrap">
-          <span class="nh-badge">{{ hub.receive }}</span>
+          {% if hub.receive %}<span class="nh-badge">{{ hub.receive }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.854 14.854a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V3.5A2.5 2.5 0 0 1 6.5 1h8a.5.5 0 0 1 0 1h-8A1.5 1.5 0 0 0 5 3.5v9.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Kupokea bidhaa{% else %}Items receive{% endif %}</span>
       </a>
       {% endif %}
-      {% if hub.adjust %}
+      {% if hub.visible.adjust %}
       <a class="nh-card approve" href="{% url 'notification_pending' %}?type=adjust">
         <span class="nh-icon-wrap">
-          <span class="nh-badge">{{ hub.adjust }}</span>
+          {% if hub.adjust %}<span class="nh-badge">{{ hub.adjust }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M0 0h24v24H0zm0 0h24v24H0z" fill="none"/><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM5.5 7.5h2v-2H9v2h2V9H9v2H7.5V9h-2V7.5zM19 19H5L19 5v14zm-2-2v-1.5h-5V17h5z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Marekebisho stoku{% else %}Stock adjustments{% endif %}</span>
       </a>
       {% endif %}
-      {% if hub.purchases %}
+      {% if hub.visible.purchases %}
       <a class="nh-card approve" href="{% url 'notification_pending' %}?type=purchases">
         <span class="nh-icon-wrap">
-          <span class="nh-badge">{{ hub.purchases }}</span>
+          {% if hub.purchases %}<span class="nh-badge">{{ hub.purchases }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.17 14.75l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.86-7.01L19.42 4h-.01l-1.1 2-2.76 5H8.53l-.13-.27L6.16 6l-.95-2-.94-2H1v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.13 0-.25-.11-.25-.25z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Manunuzi{% else %}Purchases{% endif %}</span>
       </a>
       {% endif %}
-      {% if hub.expenses %}
+      {% if hub.visible.expenses %}
       <a class="nh-card approve" href="{% url 'expenseReceiptsPending' %}">
         <span class="nh-icon-wrap">
-          <span class="nh-badge">{{ hub.expenses }}</span>
+          {% if hub.expenses %}<span class="nh-badge">{{ hub.expenses }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/><path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Risiti za matumizi{% else %}Expense receipts{% endif %}</span>
       </a>
       {% endif %}
-      {% if hub.purchase_pay %}
+      {% if hub.visible.purchase_pay %}
       <a class="nh-card approve" href="{% url 'notification_pending' %}?type=purchase_pay">
         <span class="nh-icon-wrap">
-          <span class="nh-badge">{{ hub.purchase_pay }}</span>
+          {% if hub.purchase_pay %}<span class="nh-badge">{{ hub.purchase_pay }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7z"/><path d="M2 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Malipo ya manunuzi{% else %}Purchase payments{% endif %}</span>
       </a>
       {% endif %}
-      {% if hub.customer_pay %}
+      {% if hub.visible.customer_pay %}
       <a class="nh-card approve" href="{% url 'notification_pending' %}?type=customer_pay">
         <span class="nh-icon-wrap">
-          <span class="nh-badge">{{ hub.customer_pay }}</span>
+          {% if hub.customer_pay %}<span class="nh-badge">{{ hub.customer_pay }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Malipo ya wateja{% else %}Customer payments{% endif %}</span>
       </a>
       {% endif %}
-      {% if hub.noncash %}
+      {% if hub.visible.noncash %}
       <a class="nh-card approve" href="{% url 'notification_pending' %}?type=noncash">
         <span class="nh-icon-wrap">
-          <span class="nh-badge">{{ hub.noncash }}</span>
+          {% if hub.noncash %}<span class="nh-badge">{{ hub.noncash }}</span>{% endif %}
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M11 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1z"/><path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm13 2v5H1V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1zm-1 9H2a1 1 0 0 1-1-1v-1h14v1a1 1 0 0 1-1 1z"/></svg>
         </span>
         <span class="nh-label">{% if useri.langSet == 0 %}Malipo yasiyo cash{% else %}Non-cash payments{% endif %}</span>
@@ -86,7 +85,6 @@
       {% endif %}
     </div>
   </div>
-  {% endif %}
 
   <div class="nh-section">
     <h6>{% if useri.langSet == 0 %}Kuangalia tu — hakuna approval{% else %}For review — no approval needed{% endif %}</h6>

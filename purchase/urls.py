@@ -83,6 +83,8 @@ urlpatterns=[
     path('VendorPurchases/statement-data', views.vendor_purchases_statement_data, name='vendor_purchases_statement_data'),
     path('VendorPurchases/open-bills', views.vendor_purchases_open_bills, name='vendor_purchases_open_bills'),
     path('VendorPurchases/pay', views.vendor_purchases_pay, name='vendor_purchases_pay'),
+    path('VendorPurchases/delete-payment', views.vendor_purchases_delete_payment, name='vendor_purchases_delete_payment'),
+    path('VendorPurchases/edit-payment', views.vendor_purchases_edit_payment, name='vendor_purchases_edit_payment'),
 
   
 ]

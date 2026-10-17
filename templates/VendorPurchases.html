@@ -93,6 +93,7 @@
       </div>
     </div>
 
+    {% include 'partials/statement_last_pay.html' %}
     {% include 'partials/vendor_receipts_panel.html' %}
 
     <div class="cs-duration-bar cs-no-print">
@@ -271,7 +272,7 @@
 
           <div class="form-group mb-3">
             <label class="text-danger">{% if useri.langSet == 0 %}Kiasi kinacholipwa{% else %}Amount{% endif %} <sup>*</sup></label>
-            <input type="number" step="any" name="paid" data-amount="0" id="bill-lipwa-amount" class="input-data form-control money-fomat" placeholder="">
+            <input type="text" inputmode="decimal" name="paid" data-amount="0" id="bill-lipwa-amount" class="input-data form-control money-fomat js-money-input" placeholder="" autocomplete="off">
             <small id="helperId" hidden class="text-danger">
               {% if useri.langSet == 0 %}Kiasi kinacholipwa kimezidi kiasi kilichopo kwenye akaunti{% else %}Amount exceeds the selected account balance{% endif %}
             </small>
@@ -282,7 +283,7 @@
 
           <div class="form-group mb-3">
             <label>{% if useri.langSet == 0 %}Inayobaki kwenye Akaunt{% else %}Account Balance{% endif %}</label>
-            <input type="number" step="any" name="bal" data-amount="0" id="ac-baki-amount" class="money-fomat form-control input-data" placeholder="">
+            <input type="text" inputmode="decimal" name="bal" data-amount="0" id="ac-baki-amount" class="money-fomat form-control input-data js-money-input" placeholder="" autocomplete="off">
             <small id="helpedId" hidden class="text-danger">
               {% if useri.langSet == 0 %}Kiasi kinachobaki kinazidi kiasi halisi cha akaunti baada ya malipo{% else %}The remaining balance exceeds the actual balance after payment{% endif %}
             </small>
@@ -308,6 +309,9 @@
   var CS_DATA_URL = "{% url 'vendor_purchases_statement_data' %}";
   var CS_OPEN_BILLS_URL = "{% url 'vendor_purchases_open_bills' %}";
   var CS_PAY_URL = "{% url 'vendor_purchases_pay' %}";
+  var CS_PAY_EDIT_URL = "{% url 'vendor_purchases_edit_payment' %}";
+  var CS_PAY_DELETE_URL = "{% url 'vendor_purchases_delete_payment' %}";
+  var CS_CAN_MANAGE_PAYMENTS = {% if can_manage_payments %}true{% else %}false{% endif %};
   var CS_VENDOR_ID = {{ vendor_id }};
   var CS_CURRENCY = "{{ duka.currencii }}";
   var CS_CURRENT_BRANCH_ID = {{ duka.id }};
@@ -321,7 +325,9 @@
     currency: "{{ duka.currencii|escapejs }}",
   };
 </script>
-<script src="{% static 'js/vendor_purchases_statement.js' %}?v=vendor-rcpt-1"></script>
+<script src="{% static 'js/money_input.js' %}?v=m1"></script>
+<script src="{% static 'js/vendor_purchases_statement.js' %}?v=vendor-lp2"></script>
+<script src="{% static 'js/statement_last_pay.js' %}?v=lp3"></script>
 {% endblock %}
 
 {% block dash-mapper %}

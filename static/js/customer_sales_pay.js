@@ -19,7 +19,7 @@ const csPopulatePayAccounts = () => {
 
 const csValidatePayAmount = () => {
   const debt = Number(csUnpaidTotalDebt) || 0;
-  let amo = Number($('#cs-lipa-kiasi').val());
+  let amo = typeof moneyValue === 'function' ? moneyValue('#cs-lipa-kiasi') : Number($('#cs-lipa-kiasi').val());
   if (!$('#cs-lipa-kiasi').val()) amo = 0;
   const ac = Number($('#cs-invo-ac-id').val()) || 0;
   if (amo > 0 && amo <= debt && ac > 0) {
@@ -40,7 +40,10 @@ const csLoadUnpaidInvoices = () => {
   );
   return POSTREQUEST({
     url: CS_UNPAID_URL,
-    data: { cust: CS_CUSTOMER_ID },
+    data: {
+      cust: CS_CUSTOMER_ID,
+      branches: JSON.stringify(typeof csSelectedBranches === 'function' ? csSelectedBranches() : (window.csSelectedBranches ? window.csSelectedBranches() : [])),
+    },
   }).then((resp) => {
     if (!resp.success) {
       $('#csUnpaidInvoicesBody').html(
@@ -111,8 +114,8 @@ $(document).ready(() => {
   $('body').on('keyup input', '#cs-lipa-kiasi', csValidatePayAmount);
 
   $('body').on('keyup input', '#cs-kiasi-lipwa', function () {
-    let amt = Number($('#cs-lipa-kiasi').val()) || Number($('#cs-lipa-kiasi').data('debt'));
-    const paid = Number($(this).val()) || 0;
+    let amt = (typeof moneyValue === 'function' ? moneyValue('#cs-lipa-kiasi') : Number($('#cs-lipa-kiasi').val())) || Number($('#cs-lipa-kiasi').data('debt'));
+    const paid = typeof moneyValue === 'function' ? moneyValue(this) : Number($(this).val()) || 0;
     if (paid > amt) {
       $('#cs-kiasi-chenji').val((paid - amt).toLocaleString()).css({ background: 'blue', color: '#fff' });
     } else {
@@ -132,9 +135,10 @@ $(document).ready(() => {
       data: {
         cust: CS_CUSTOMER_ID,
         invo_ac_id: $('#cs-invo-ac-id').val(),
-        invo_amo: $('#cs-invo-amo').val(),
+        invo_amo: (typeof moneyValue === 'function' ? moneyValue('#cs-lipa-kiasi') : $('#cs-invo-amo').val()),
         pay_d: $('#cs-pay-d').val(),
         lipaElezo: $('#cs-lipa-elezo').val(),
+        branches: JSON.stringify(typeof csSelectedBranches === 'function' ? csSelectedBranches() : (window.csSelectedBranches ? window.csSelectedBranches() : [])),
       },
     })
       .then((data) => {
@@ -153,12 +157,18 @@ $(document).ready(() => {
           });
         }
       })
-      .catch(() => {
+      .catch((xhr) => {
         if (typeof csFinishLoading === 'function') csFinishLoading();
         else {
           $('#loadMe').modal('hide');
           hideLoading();
         }
+        const data = xhr && xhr.responseJSON;
+        toastr.error(
+          lang((data && (data.msg_swa || data.swa)) || 'Hitilafu', (data && (data.msg_eng || data.eng)) || 'Failed'),
+          lang('Haikufanikiwa', 'Error'),
+          { timeOut: 3500 }
+        );
       });
   });
 });

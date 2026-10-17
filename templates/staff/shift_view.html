@@ -392,6 +392,11 @@
     vertical-align: middle;
   }
   #reconTable input.form-control { min-width: 5.5rem; }
+  #reconTable input.recon-sold.redborder,
+  #reconTable input.recon-current.redborder {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.12rem rgba(220, 53, 69, 0.25);
+  }
   #reconTable tbody tr.recon-changed { background: #fff8e6; }
   body.theme-dark #reconTableWrap { border-color: #334155; }
   body.theme-dark #reconTable thead th {
@@ -1069,6 +1074,18 @@ function reconUserSold(row) {
   if (row.user_sold == null || row.user_sold === '') return reconNum(row.sold_qty);
   return reconNum(row.user_sold);
 }
+function reconSoldTooLow(row, sold) {
+  if (sold === '' || sold == null) return false;
+  return reconRound(sold) < reconRound(row.sold_qty);
+}
+function reconSoldTooHigh(row, sold) {
+  if (sold === '' || sold == null) return false;
+  return reconRound(sold) > reconMaxSold(row);
+}
+function reconMarkSoldInput(inp, invalid) {
+  if (!inp) return;
+  inp.classList.toggle('redborder', !!invalid);
+}
 function reconAinaId(row) {
   return row.aina_id == null || row.aina_id === '' ? RECON_UNCATEG : Number(row.aina_id);
 }
@@ -1179,7 +1196,7 @@ function renderReconTable() {
       + '<td>' + reconFmt(r.before_qty) + '</td>'
       + '<td>' + reconFmt(r.added_qty) + '</td>'
       + '<td>' + reconFmt(r.reduced_qty) + '</td>'
-      + '<td><input type="number" min="' + r.sold_qty + '" max="' + maxSold + '" step="0.01" class="form-control form-control-sm recon-sold" placeholder="' + reconFmt(r.sold_qty) + '" value="' + soldVal + '"></td>'
+      + '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm recon-sold' + (reconSoldTooLow(r, r.user_sold) || reconSoldTooHigh(r, r.user_sold) ? ' redborder' : '') + '" placeholder="' + reconFmt(r.sold_qty) + '" value="' + soldVal + '"></td>'
       + '<td><input type="number" min="0" max="' + reconRound(reconNum(r.before_qty) + reconNum(r.added_qty) - reconNum(r.reduced_qty) - reconNum(r.sold_qty)) + '" step="0.01" class="form-control form-control-sm recon-current" placeholder="' + reconFmt(expCur) + '" value="' + curVal + '"></td>'
       + '<td>' + reconFmt(r.sales_price) + '</td>'
       + '<td class="recon-amount">' + reconFmt(reconUserSold(r) * reconNum(r.sales_price)) + '</td>'
@@ -1195,8 +1212,7 @@ function onReconSoldInput(inp) {
   var tr = inp.closest('tr');
   var row = reconRowFromTr(tr);
   if (!row) return;
-  var sys = reconNum(row.sold_qty);
-  var maxSold = reconMaxSold(row);
+  reconMarkSoldInput(inp, false);
   if (inp.value === '') {
     row.user_sold = '';
     row.user_current = '';
@@ -1205,8 +1221,34 @@ function onReconSoldInput(inp) {
     return;
   }
   var sold = reconNum(inp.value);
-  if (sold < sys) sold = sys;
-  if (sold > maxSold) sold = maxSold;
+  row.user_sold = sold;
+  if (!reconSoldTooLow(row, sold) && !reconSoldTooHigh(row, sold)) {
+    var cur = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty) - sold);
+    tr.querySelector('.recon-current').value = cur;
+    row.user_current = cur;
+  }
+  updateReconTotals();
+}
+function onReconSoldBlur(inp) {
+  var tr = inp.closest('tr');
+  var row = reconRowFromTr(tr);
+  if (!row) return;
+  if (inp.value === '') {
+    reconMarkSoldInput(inp, false);
+    row.user_sold = '';
+    row.user_current = '';
+    tr.querySelector('.recon-current').value = '';
+    updateReconTotals();
+    return;
+  }
+  var sold = reconNum(inp.value);
+  row.user_sold = sold;
+  var invalid = reconSoldTooLow(row, sold) || reconSoldTooHigh(row, sold);
+  reconMarkSoldInput(inp, invalid);
+  if (invalid) {
+    updateReconTotals();
+    return;
+  }
   sold = reconRound(sold);
   inp.value = sold;
   var cur = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty) - sold);
@@ -1256,6 +1298,20 @@ function toggleShiftRecon() {
   }
 }
 function saveShiftRecon() {
+  var badNames = [];
+  RECON_ROWS.forEach(function(row) {
+    if (row.user_sold == null || row.user_sold === '') return;
+    if (reconSoldTooLow(row, row.user_sold) || reconSoldTooHigh(row, row.user_sold)) {
+      badNames.push(row.item_name || ('#' + row.bidhaa_id));
+      document.querySelectorAll('#reconTableBody tr[data-bidhaa="' + row.bidhaa_id + '"] .recon-sold').forEach(function(el) {
+        reconMarkSoldInput(el, true);
+      });
+    }
+  });
+  if (badNames.length) {
+    alert('{% if useri.langSet == 0 %}Sold qty haiwezi kuwa pungufu ya iliyorekodiwa wala kuzidi stoku. Rekodi: {% else %}Sold qty cannot be below recorded qty or above stock. Check: {% endif %}' + badNames.join(', '));
+    return;
+  }
   var items = [];
   RECON_ROWS.forEach(function(row) {
     var sold = reconUserSold(row);
@@ -1309,6 +1365,9 @@ document.addEventListener('click', function(ev) {
 document.addEventListener('input', function(ev) {
   if (ev.target.classList.contains('recon-sold')) onReconSoldInput(ev.target);
   if (ev.target.classList.contains('recon-current')) onReconCurrentInput(ev.target);
+});
+document.addEventListener('focusout', function(ev) {
+  if (ev.target.classList.contains('recon-sold')) onReconSoldBlur(ev.target);
 });
 document.addEventListener('change', function(ev) {
   if (ev.target.id === 'reconSearch') renderReconTable();

@@ -17,11 +17,12 @@ from django.core.files.storage import default_storage # Hii inahitajika kwa kufu
 from django.conf import settings
 # from graphql import visit
 from business import settings
-from management.models import Notifications,VistorsSavedItems,customer_in_cell,customer_area,Activator,invoice_desk,Activated,marketPlace,VistedBanners,marketBanner,deliveryBy,KulipaPI,PhoneMailConfirm,bidhaa,Zones,Mikoa,Mitaa,Wilaya,Kata,mahitaji,Interprise_Rating, UserExtend,EmployeeAttachments,InterpriseVisotrs, makampuni,savedStockState,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive, stokAdjustment,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji, wekaCash, toaCash, MatumiziReceiptAttachment
+from management.models import Notifications,VistorsSavedItems,customer_in_cell,customer_area,Activator,invoice_desk,Activated,marketPlace,VistedBanners,marketBanner,deliveryBy,KulipaPI,PhoneMailConfirm,bidhaa,Zones,Mikoa,Mitaa,Wilaya,Kata,mahitaji,Interprise_Rating, UserExtend,EmployeeAttachments,InterpriseVisotrs, makampuni,savedStockState,Kanda,Workers,sales_color,sales_size,AnswerTo,stockAdjst_confirm,question_to,chatTo,chats,Interprise,deliveryAgents,bei_za_bidhaa, color_produ,mauzoList,order_from,bidhaa_sifa, key_sifa,produ_colored,produ_size,picha_bidhaa,bidhaa_stoku,picha_bidhaa,bidhaa_aina, receive, stokAdjustment,user_Interprise,HudumaNyingine,Huduma_za_kifedha,businessReg,manunuzi,Interprise_contacts,InterprisePermissions,PaymentAkaunts, mauzoni,staff_akaunt_permissions, wasambazaji, wekaCash, toaCash, MatumiziReceiptAttachment, transfer, production, ShiftSession
 from purchase.expense_receipt_utils import count_pending_mandatory_expense_receipts
 from accaunts.notification_hub import (
     exclude_pending_receive_info,
     hub_approval_counts,
+    hub_can_see_type,
     info_unread_counts,
     is_info_notification_unread,
     is_shop_admin,
@@ -33,6 +34,7 @@ from accaunts.notification_hub import (
     pending_purchase_payments_qs,
     pending_purchases_qs,
     pending_receives_qs,
+    pending_staff_receive_confirms_qs,
     qty_unit_display,
 )
 from purchase.guest_compound_utils import (
@@ -5081,18 +5083,31 @@ def notification_pending(request):
     duka = todo.get('duka')
     if not duka or not duka.Interprise:
         return redirect('/userdash')
-    kind = (request.GET.get('type') or 'purchases').strip()
+    kind = (request.GET.get('type') or '').strip()
     cheo = todo.get('cheo')
     hub = hub_approval_counts(duka, cheo)
     admin = is_shop_admin(cheo)
+    if not hub_can_see_type(cheo, kind):
+        return redirect('/notificationing')
     rows = []
     title_swa = ''
     title_eng = ''
     if kind == 'receive':
         title_swa, title_eng = 'Kupokea bidhaa', 'Items receive'
-        for rec in pending_receives_qs(duka).select_related(
-            'By__user__user', 'transfer', 'transfer__By__user__user',
-        ).order_by('-pk')[:300]:
+        if admin:
+            rec_qs = pending_receives_qs(duka).select_related(
+                'By__user__user', 'transfer', 'transfer__By__user__user',
+            ).order_by('-pk')[:300]
+        else:
+            rec_qs = [
+                c.receive for c in pending_staff_receive_confirms_qs(cheo, duka).select_related(
+                    'receive__By__user__user',
+                    'receive__transfer',
+                    'receive__transfer__By__user__user',
+                ).order_by('-pk')[:300]
+                if c.receive_id
+            ]
+        for rec in rec_qs:
             code = rec.transfer.code if rec.transfer_id else rec.pk
             rows.append({
                 'id': rec.id,
@@ -5212,7 +5227,7 @@ def notification_pending(request):
         'title_swa': title_swa,
         'title_eng': title_eng,
         'can_upload': kind == 'purchase_pay',
-        'can_hub_approve': admin or kind == 'adjust',
+        'can_hub_approve': admin or kind in ('adjust', 'receive'),
         'require_purchase_receipt': bool(getattr(duka, 'require_purchase_payment_receipt', False)),
     })
     return render(request, 'notification_pending.html', todo)
@@ -5309,6 +5324,11 @@ def notification_preview(request):
             ).filter(pk=rec_id, Interprise_id=duka.id).first()
             if not rec:
                 return HttpResponse('Not found', status=404)
+            cheo = todo.get('cheo')
+            if not is_shop_admin(cheo) and not pending_staff_receive_confirms_qs(
+                cheo, duka
+            ).filter(receive_id=rec_id).exists():
+                return HttpResponse('Not allowed', status=403)
             lines = []
             for st in bidhaa_stoku.objects.select_related('bidhaa', 'uhamisho').filter(uhamisho__receive=rec.id):
                 bd = st.bidhaa
@@ -5370,8 +5390,8 @@ def notification_approve(request):
     if not duka or not duka.Interprise:
         return JsonResponse({'success': False, 'swa': 'Hakuna ruhusa', 'eng': 'Not allowed'})
     kind = (request.POST.get('type') or '').strip()
-    if kind != 'adjust' and not is_shop_admin(cheo):
-        return JsonResponse({'success': False, 'swa': 'Ni admin tu anayeweza kuidhinisha', 'eng': 'Only admin can approve'})
+    if not hub_can_see_type(cheo, kind):
+        return JsonResponse({'success': False, 'swa': 'Hakuna ruhusa', 'eng': 'Not allowed'})
     ids = []
     raw_ids = request.POST.get('ids') or ''
     if raw_ids:
@@ -5395,12 +5415,17 @@ def notification_approve(request):
     now = datetime.datetime.now(tz=timezone.utc)
     updated = 0
     if kind == 'receive':
-        updated = pending_receives_qs(duka).filter(pk__in=ids).update(
-            admin_approved=True, admin_approved_at=now, admin_approved_by=cheo,
-        )
-        if updated:
-            mark_receive_info_notes_read(duka, ids)
-            mark_receive_peer_confirms(ids, now)
+        if is_shop_admin(cheo):
+            updated = pending_receives_qs(duka).filter(pk__in=ids).update(
+                admin_approved=True, admin_approved_at=now, admin_approved_by=cheo,
+            )
+            if updated:
+                mark_receive_info_notes_read(duka, ids)
+                mark_receive_peer_confirms(ids, now)
+        else:
+            updated = pending_staff_receive_confirms_qs(cheo, duka).filter(
+                receive_id__in=ids,
+            ).update(confirmed=True, tarehe=now)
     elif kind == 'purchases':
         updated = pending_purchases_qs(duka).filter(pk__in=ids).update(
             admin_approved=True, admin_approved_at=now, admin_approved_by=cheo,
@@ -5425,16 +5450,126 @@ def notification_approve(request):
         'updated': updated,
     })
 
-@login_required(login_url='login')
+def _txn_search_url(duka, raw):
+  """Resolve INVO-0001, BIL-0001, PROD-001, ADJ-, TR-, RC-, SHIFT- to the view URL."""
+  if not duka or not raw:
+    return None
+  text = str(raw).strip()
+  if not text:
+    return None
+  match = re.match(r'^([A-Za-z]+)[-_\s]*(.*)$', text)
+  if not match:
+    return None
+  prefix = (match.group(1) or '').upper()
+  rest = (match.group(2) or '').strip()
+  if not rest and prefix not in ('SHIFT',):
+    return None
+  duka_id = getattr(duka, 'id', duka)
+
+  def _code_candidates(code):
+    codes = []
+    for val in (code,):
+      if val and val not in codes:
+        codes.append(val)
+    digits = re.sub(r'\D', '', code or '')
+    if digits:
+      core = digits.lstrip('0') or '0'
+      for n in (4, 5, 6):
+        padded = core.zfill(n)
+        if padded not in codes:
+          codes.append(padded)
+      if core not in codes:
+        codes.append(core)
+    return codes
+
+  def _sale(code, order=None):
+    qs = mauzoni.objects.filter(Interprise=duka_id, code__iexact=code)
+    if not qs.exists():
+      qs = mauzoni.objects.filter(Interprise=duka_id, code__in=_code_candidates(code))
+    if order is True:
+      qs = qs.filter(order=True)
+    return qs.order_by('-id').first()
+
+  def _purchase(code, is_order=None):
+    qs = manunuzi.objects.filter(Interprise=duka_id, code__iexact=code)
+    if not qs.exists():
+      qs = manunuzi.objects.filter(Interprise=duka_id, code__in=_code_candidates(code))
+    if is_order is True:
+      qs = qs.filter(order=True)
+    elif is_order is False:
+      qs = qs.filter(order=False)
+    return qs.order_by('-id').first()
+
+  if prefix in ('INVO', 'SAL', 'SALE', 'RECEIPT'):
+    inv = _sale(rest)
+    if inv:
+      if inv.order:
+        return '/mauzo/viewOda?item_valued=' + str(inv.id)
+      return '/mauzo/viewInvo?item_valued=' + str(inv.id)
+  elif prefix in ('ORD', 'ORDER'):
+    inv = _sale(rest, order=True) or _sale(rest)
+    if inv:
+      return '/mauzo/viewOda?item_valued=' + str(inv.id)
+  elif prefix in ('BIL', 'BILL', 'PU'):
+    bill = _purchase(rest)
+    if bill:
+      if bill.order:
+        return '/purchase/viewOdered?value=' + str(bill.Interprise_id) + '&pu=' + str(bill.id)
+      return '/purchase/viewbill?item_valued=' + str(bill.id)
+  elif prefix == 'PUO':
+    bill = _purchase(rest, is_order=True) or _purchase(rest)
+    if bill:
+      return '/purchase/viewOdered?value=' + str(bill.Interprise_id) + '&pu=' + str(bill.id)
+  elif prefix in ('PROD', 'PRODUXN', 'BATCH'):
+    prd = (
+      production.objects.filter(Interprise=duka_id, code__iexact=rest).order_by('-id').first()
+      or production.objects.filter(Interprise=duka_id, code__in=_code_candidates(rest)).order_by('-id').first()
+    )
+    if prd:
+      return '/production/productonReport?pr=' + str(prd.id)
+  elif prefix == 'ADJ':
+    adjst = (
+      stokAdjustment.objects.filter(Interprise=duka_id, code__iexact=rest).order_by('-id').first()
+      or stokAdjustment.objects.filter(Interprise=duka_id, code__in=_code_candidates(rest)).order_by('-id').first()
+    )
+    if adjst:
+      return '/stoku/viewAdjst?item_valued=' + str(adjst.id)
+  elif prefix in ('TR', 'TRF', 'TRANS', 'TRANSFER'):
+    recv = (
+      receive.objects.filter(transfer__Interprise=duka_id, transfer__code__iexact=rest).order_by('-id').first()
+      or receive.objects.filter(transfer__Interprise=duka_id, transfer__code__in=_code_candidates(rest)).order_by('-id').first()
+    )
+    if recv:
+      return '/stoku/viewTransfer?item_valued=' + str(recv.id)
+  elif prefix in ('RC', 'RCV', 'RECV', 'RECEIVE'):
+    recv = (
+      receive.objects.filter(Interprise=duka_id, transfer__code__iexact=rest).order_by('-id').first()
+      or receive.objects.filter(Interprise=duka_id, transfer__code__in=_code_candidates(rest)).order_by('-id').first()
+    )
+    if recv:
+      return '/stoku/viewReceives?item_valued=' + str(recv.id)
+  elif prefix == 'SHIFT':
+    shift = (
+      ShiftSession.objects.filter(Interprise=duka_id, code__iexact=text).first()
+      or ShiftSession.objects.filter(Interprise=duka_id, code__iexact='SHIFT-' + rest).first()
+      or ShiftSession.objects.filter(Interprise=duka_id, code__iexact=rest).first()
+    )
+    if shift:
+      return '/staff/shifts/view?sid=' + str(shift.id)
+  return None
+
+
 def searchAll(request):
   if request.method == "POST":
 
     try:
       todo = todoFunct(request)
       cheo = todo['cheo']
+      duka = getattr(cheo, 'Interprise', None) or todo.get('duka')
       shp = int(request.POST.get('duka',0))
       invo = int(request.POST.get('ankara',0))
       adj = int(request.POST.get('adj',0))
+      txn = int(request.POST.get('txn',0))
       usr = int(request.POST.get('partner',0))
       onshelf = int(request.POST.get('onshelf',0))
       code = int(request.POST.get('code',0))
@@ -5453,6 +5588,14 @@ def searchAll(request):
              'success':True,
              'url':'/buzinessProfile?value='+str(shop.id)
         }
+
+      if txn:
+        txn_url = _txn_search_url(duka, valu)
+        if txn_url:
+          data = {
+            'success': True,
+            'url': txn_url,
+          }
 
       if invo :
         inv = mauzoni.objects.get(code__iexact=valu,Interprise=cheo.Interprise) 

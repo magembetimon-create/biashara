@@ -1,31 +1,34 @@
 (function (window, $) {
   var DATE_HEAD = /tarehe|date|kuanzia|hadi|\bfrom\b|\bto\b|completion|starting|ordered|receive|kuagiza|kumaliza|kuanza/i;
-  var SKIP_DATE = /bado|yet|progress|endelea|n\/a|null|hakuna|^—$|^-$/i;
+  var SKIP_DATE = /bado|yet|progress|endelea|n\/a|null|hakuna|loading|inapakia|^—$|^-$|^…$/i;
+  var DATE_FMTS = [
+    'YYYY-MM-DDTHH:mm:ss.SSSSSSZ',
+    'YYYY-MM-DDTHH:mm:ssZ',
+    'YYYY-MM-DDTHH:mm:ss',
+    'YYYY-MM-DD HH:mm:ss',
+    'YYYY-MM-DD HH:mm',
+    'YYYY-MM-DD',
+    'DD/MM/YYYY HH:mm:ss',
+    'DD/MM/YYYY HH:mm',
+    'DD/MM/YYYY, HH:mm',
+    'DD, MMMM YYYY, HH:mm',
+    'MMM DD, YYYY HH:mm',
+    'MMMM DD, YYYY, h:mm a',
+    'MMM. DD, YYYY, h:mm a'
+  ];
 
   function parseTxnMoment(text) {
     if (typeof moment === 'undefined') return null;
     var raw = String(text || '').replace(/\s+/g, ' ').trim();
-    if (!raw) return null;
-    var m = moment(raw);
-    if (!m.isValid()) {
-      m = moment(raw, [
-        'DD/MM/YYYY HH:mm:ss',
-        'DD/MM/YYYY HH:mm',
-        'DD/MM/YYYY, HH:mm',
-        'DD, MMMM YYYY, HH:mm',
-        'MMM DD, YYYY HH:mm',
-        'MMMM DD, YYYY, h:mm a',
-        'MMM. DD, YYYY, h:mm a',
-        'YYYY-MM-DD HH:mm:ss',
-        'YYYY-MM-DD'
-      ], true);
-    }
+    if (!raw || !/\d/.test(raw) || SKIP_DATE.test(raw)) return null;
+    var m = moment(raw, DATE_FMTS, true);
     return m.isValid() ? m : null;
   }
 
   function formatDateCell($td) {
     if ($td.data('txnDated')) return;
     if ($td.find('input,select,button.btn-link').length) return;
+    if (Number($td.attr('colspan') || 1) > 1) return;
     var text = $td.text().replace(/\s+/g, ' ').trim();
     if (!text || SKIP_DATE.test(text)) return;
     var m = parseTxnMoment(text);
