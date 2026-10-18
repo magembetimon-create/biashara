@@ -531,10 +531,6 @@ def build_shift_report(duka, shift):
             sales_price = Decimal(itm.Bei_kuuza or 0)
             iid = itm.id
 
-            if is_closed and closing_qty_map:
-                c_qty = closing_qty_map.get(iid, Decimal(itm.idadi or 0))
-            else:
-                c_qty = Decimal(itm.idadi or 0)
             b_qty = before_qty_map[iid]
             a_qty = added_qty_map[iid]
             p_qty = purchased_qty_map[iid]
@@ -542,6 +538,13 @@ def build_shift_report(duka, shift):
             r_qty = reduction_qty_map[iid]
             t_qty = transferred_qty_map[iid]
             rc_qty = received_qty_map[iid]
+            # Opening + in − out. Never use live stock for a closed shift:
+            # later lots/purchases would inflate Closing Stock (e.g. 35 − 15 sold → 54).
+            reconstructed = b_qty + a_qty + p_qty + rc_qty - s_qty - r_qty - t_qty
+            if is_closed:
+                c_qty = reconstructed
+            else:
+                c_qty = Decimal(itm.idadi or 0)
 
             c_val, c_worth = _money(c_qty, buy_price, sales_price, ratio)
             b_val, b_worth = _money(b_qty, buy_price, sales_price, ratio)
@@ -624,8 +627,8 @@ def build_shift_report(duka, shift):
         'received': _qty_used('received_qty'),
     }
 
-    stock_now = total_current_qty if (is_closed and closing_qty_map) else (
-        bidhaa_stoku.objects.filter(Interprise=duka.id).aggregate(sum=Sum('idadi'))['sum'] or 0
+    stock_now = total_current_qty if is_closed else (
+        bidhaa_stoku.objects.filter(Interprise=duka.id, is_grouped_item=False).aggregate(sum=Sum('idadi'))['sum'] or 0
     )
 
     return {
@@ -639,7 +642,7 @@ def build_shift_report(duka, shift):
             'used_qty': used_qty,
             'damaged_qty': damaged_qty,
             'stock_now': stock_now,
-            'stock_frozen': bool(is_closed and closing_qty_map),
+            'stock_frozen': bool(is_closed),
         },
         'payments': {
             'opening_cash': opening_cash,
