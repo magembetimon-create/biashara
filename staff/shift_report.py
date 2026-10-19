@@ -596,6 +596,15 @@ def build_shift_report(duka, shift):
         ) or next((i for i in items if Decimal(i.idadi or 0) > 0), None) or first_item
         added_in_qty = buckets['added_qty'] + buckets['purchased_qty'] + buckets['received_qty']
         reduced_in_qty = buckets['reduction_qty'] + buckets['transferred_qty']
+        buckets['available_qty'] = buckets['before_qty'] + added_in_qty - reduced_in_qty
+        buckets['available_value'] = (
+            buckets['before_value'] + buckets['added_value'] + buckets['purchased_value']
+            + buckets['received_value'] - buckets['reduction_value'] - buckets['transferred_value']
+        )
+        buckets['available_worth'] = (
+            buckets['before_worth'] + buckets['added_worth'] + buckets['purchased_worth']
+            + buckets['received_worth'] - buckets['reduction_worth'] - buckets['transferred_worth']
+        )
         row = {
             'item_name': item_name,
             'units': units,

@@ -526,6 +526,7 @@
             {% if stock_optional_groups.reduction %}<th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Zilizopunguzwa{% else %}Reduction{% endif %}</th>{% endif %}
             {% if stock_optional_groups.transferred %}<th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Zilizohamishwa{% else %}Transferred{% endif %}</th>{% endif %}
             {% if stock_optional_groups.received %}<th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Zilizopokelewa{% else %}Received{% endif %}</th>{% endif %}
+            <th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Jumla kabla ya mauzo{% else %}Total before sales{% endif %}</th>
             <th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}Zilizouzwa{% else %}Sold{% endif %}</th>
             <th colspan="{{ stock_metric_count }}">{% if useri.langSet == 0 %}{% if movement.stock_frozen %}Stoku ya kufunga{% else %}Stoku ya Sasa{% endif %}{% else %}{% if movement.stock_frozen %}Closing Stock{% else %}Current Stock{% endif %}{% endif %}</th>
           </tr>
@@ -539,6 +540,9 @@
             {% if stock_optional_groups.reduction %}{% if show_qty %}<th>{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>{% endif %}{% if show_value %}<th>{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>{% endif %}{% if show_worth %}<th>{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>{% endif %}{% endif %}
             {% if stock_optional_groups.transferred %}{% if show_qty %}<th>{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>{% endif %}{% if show_value %}<th>{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>{% endif %}{% if show_worth %}<th>{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>{% endif %}{% endif %}
             {% if stock_optional_groups.received %}{% if show_qty %}<th>{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>{% endif %}{% if show_value %}<th>{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>{% endif %}{% if show_worth %}<th>{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>{% endif %}{% endif %}
+            {% if show_qty %}<th>{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>{% endif %}
+            {% if show_value %}<th>{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>{% endif %}
+            {% if show_worth %}<th>{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>{% endif %}
             {% if show_qty %}<th>{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>{% endif %}
             {% if show_value %}<th>{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>{% endif %}
             {% if show_worth %}<th>{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>{% endif %}
@@ -562,6 +566,9 @@
             {% if stock_optional_groups.reduction %}{% if show_qty %}<td>{{ s.reduction_qty|floatformat:2|intcomma }}</td>{% endif %}{% if show_value %}<td>{{ s.reduction_value|floatformat:2|intcomma }}</td>{% endif %}{% if show_worth %}<td>{{ s.reduction_worth|floatformat:2|intcomma }}</td>{% endif %}{% endif %}
             {% if stock_optional_groups.transferred %}{% if show_qty %}<td>{{ s.transferred_qty|floatformat:2|intcomma }}</td>{% endif %}{% if show_value %}<td>{{ s.transferred_value|floatformat:2|intcomma }}</td>{% endif %}{% if show_worth %}<td>{{ s.transferred_worth|floatformat:2|intcomma }}</td>{% endif %}{% endif %}
             {% if stock_optional_groups.received %}{% if show_qty %}<td>{{ s.received_qty|floatformat:2|intcomma }}</td>{% endif %}{% if show_value %}<td>{{ s.received_value|floatformat:2|intcomma }}</td>{% endif %}{% if show_worth %}<td>{{ s.received_worth|floatformat:2|intcomma }}</td>{% endif %}{% endif %}
+            {% if show_qty %}<td>{{ s.available_qty|floatformat:2|intcomma }}</td>{% endif %}
+            {% if show_value %}<td>{{ s.available_value|floatformat:2|intcomma }}</td>{% endif %}
+            {% if show_worth %}<td>{{ s.available_worth|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_qty %}<td>{{ s.sold_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_value %}<td>{{ s.sold_value|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_worth %}<td>{{ s.sold_worth|floatformat:2|intcomma }}</td>{% endif %}
@@ -586,6 +593,9 @@
             {% if stock_optional_groups.reduction %}{% if show_qty %}<td>{{ stock_value_totals.reduction_qty|floatformat:2|intcomma }}</td>{% endif %}{% if show_value %}<td>{{ stock_value_totals.reduction_value|floatformat:2|intcomma }}</td>{% endif %}{% if show_worth %}<td>{{ stock_value_totals.reduction_worth|floatformat:2|intcomma }}</td>{% endif %}{% endif %}
             {% if stock_optional_groups.transferred %}{% if show_qty %}<td>{{ stock_value_totals.transferred_qty|floatformat:2|intcomma }}</td>{% endif %}{% if show_value %}<td>{{ stock_value_totals.transferred_value|floatformat:2|intcomma }}</td>{% endif %}{% if show_worth %}<td>{{ stock_value_totals.transferred_worth|floatformat:2|intcomma }}</td>{% endif %}{% endif %}
             {% if stock_optional_groups.received %}{% if show_qty %}<td>{{ stock_value_totals.received_qty|floatformat:2|intcomma }}</td>{% endif %}{% if show_value %}<td>{{ stock_value_totals.received_value|floatformat:2|intcomma }}</td>{% endif %}{% if show_worth %}<td>{{ stock_value_totals.received_worth|floatformat:2|intcomma }}</td>{% endif %}{% endif %}
+            {% if show_qty %}<td>{{ stock_value_totals.available_qty|floatformat:2|intcomma }}</td>{% endif %}
+            {% if show_value %}<td>{{ stock_value_totals.available_value|floatformat:2|intcomma }}</td>{% endif %}
+            {% if show_worth %}<td>{{ stock_value_totals.available_worth|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_qty %}<td>{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_value %}<td>{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>{% endif %}
             {% if show_worth %}<td>{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>{% endif %}

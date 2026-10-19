@@ -223,6 +223,7 @@
                         <th class="text-left">{% if useri.langSet == 0 %}Stoku ya Awali{% else %}Stock Before{% endif %}</th>
                         <th class="text-left">{% if useri.langSet == 0 %}Zilizongezwa{% else %}Added{% endif %}</th>
                         <th class="text-left">{% if useri.langSet == 0 %}Zilizopunguzwa{% else %}Reduced{% endif %}</th>
+                        <th class="text-left">{% if useri.langSet == 0 %}Jumla kabla ya mauzo{% else %}Total before sales{% endif %}</th>
                         <th class="text-left">{% if useri.langSet == 0 %}Zilizouzwa{% else %}Sold{% endif %}</th>
                         <th class="text-left">{% if useri.langSet == 0 %}Stoku ya Sasa{% else %}Current Stock{% endif %}</th>
                         <th class="text-left">{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}</th>
@@ -446,6 +447,7 @@
               <th class="text-center sv-group sv-mov-reduction" data-sv-group="reduction" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizopunguzwa{% else %}Reduction{% endif %}</th>
               <th class="text-center sv-group sv-mov-transferred" data-sv-group="transferred" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizohamishwa{% else %}Transferred{% endif %}</th>
               <th class="text-center sv-group sv-mov-received" data-sv-group="received" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizopokelewa{% else %}Received{% endif %}</th>
+              <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Jumla kabla ya mauzo{% else %}Total before sales{% endif %}</th>
               <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizouzwa{% else %}Sold{% endif %}</th>
               <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}{% if movement.stock_frozen %}Stoku ya kufunga{% else %}Stoku ya Sasa{% endif %}{% else %}{% if movement.stock_frozen %}Closing Stock{% else %}Current Stock{% endif %}{% endif %}</th>
             </tr>
@@ -468,6 +470,9 @@
               <th class="text-left sv-qty sv-mov-received">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
               <th class="text-left sv-value sv-mov-received">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
               <th class="text-left sv-worth sv-mov-received">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+              <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+              <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
               <th class="text-left sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
               <th class="text-left sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
               <th class="text-left sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
@@ -500,6 +505,9 @@
               <td class="sv-qty sv-mov-received">{{ s.received_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value sv-mov-received">{{ s.received_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth sv-mov-received">{{ s.received_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ s.available_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ s.available_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ s.available_worth|floatformat:2|intcomma }}</td>
               <td class="sv-qty">{{ s.sold_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ s.sold_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ s.sold_worth|floatformat:2|intcomma }}</td>
@@ -508,10 +516,10 @@
               <td class="sv-worth">{{ s.current_worth|floatformat:2|intcomma }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="27" class="text-muted">No stock data</td></tr>
+            <tr><td colspan="30" class="text-muted">No stock data</td></tr>
             {% endfor %}
             <tr id="svNoMatch" style="display:none">
-              <td colspan="27" class="text-muted text-center py-3">
+              <td colspan="30" class="text-muted text-center py-3">
                 {% if useri.langSet == 0 %}Hakuna bidhaa inayolingana na utafutaji{% else %}No items match this search{% endif %}
               </td>
             </tr>
@@ -539,6 +547,9 @@
               <td class="sv-qty sv-mov-received">{{ stock_value_totals.received_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value sv-mov-received">{{ stock_value_totals.received_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth sv-mov-received">{{ stock_value_totals.received_worth|floatformat:2|intcomma }}</td>
+              <td class="sv-qty">{{ stock_value_totals.available_qty|floatformat:2|intcomma }}</td>
+              <td class="sv-value">{{ stock_value_totals.available_value|floatformat:2|intcomma }}</td>
+              <td class="sv-worth">{{ stock_value_totals.available_worth|floatformat:2|intcomma }}</td>
               <td class="sv-qty">{{ stock_value_totals.sold_qty|floatformat:2|intcomma }}</td>
               <td class="sv-value">{{ stock_value_totals.sold_value|floatformat:2|intcomma }}</td>
               <td class="sv-worth">{{ stock_value_totals.sold_worth|floatformat:2|intcomma }}</td>
@@ -1181,7 +1192,7 @@ function renderReconTable() {
   if (!body) return;
   var rows = reconVisibleRows();
   if (!rows.length) {
-    body.innerHTML = '<tr><td colspan="9" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna bidhaa{% else %}No items{% endif %}</td></tr>';
+    body.innerHTML = '<tr><td colspan="10" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna bidhaa{% else %}No items{% endif %}</td></tr>';
     updateReconTotals();
     return;
   }
@@ -1196,6 +1207,7 @@ function renderReconTable() {
       + '<td>' + reconFmt(r.before_qty) + '</td>'
       + '<td>' + reconFmt(r.added_qty) + '</td>'
       + '<td>' + reconFmt(r.reduced_qty) + '</td>'
+      + '<td>' + reconFmt(reconMaxSold(r)) + '</td>'
       + '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm recon-sold' + (reconSoldTooLow(r, r.user_sold) || reconSoldTooHigh(r, r.user_sold) ? ' redborder' : '') + '" placeholder="' + reconFmt(r.sold_qty) + '" value="' + soldVal + '"></td>'
       + '<td><input type="number" min="0" max="' + reconRound(reconNum(r.before_qty) + reconNum(r.added_qty) - reconNum(r.reduced_qty) - reconNum(r.sold_qty)) + '" step="0.01" class="form-control form-control-sm recon-current" placeholder="' + reconFmt(expCur) + '" value="' + curVal + '"></td>'
       + '<td>' + reconFmt(r.sales_price) + '</td>'
