@@ -320,7 +320,6 @@ def confirmMail(request):
               
             confirmMailF(cnf)
 
-
         else: 
                 # modified here ...........//
                 url = "https://messaging-service.co.tz/api/sms/v1/text/single"
@@ -342,7 +341,12 @@ def confirmMail(request):
                 # print(response.text)      
       except Exception as err:
         print(err)
-        
+        return JsonResponse({
+          'success': False,
+          'msg_swa': 'Barua pepe ya uthibitisho haikutumika. Tafadhali jaribu tena.',
+          'msg_eng': 'The verification email could not be sent. Please try again.',
+        })
+
       dura = None
       if conf.exists():
         conf.update(duration = tm,code = randNum,confirm=False)
