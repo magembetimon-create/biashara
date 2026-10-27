@@ -119,17 +119,73 @@ def _amounts_in_windows(windows, qs, date_field='tarehe', amount_field='Amount')
     return amounts
 
 
+def _dec(value):
+    return Decimal(str(value or 0))
+
+
+def shift_payment_flows(duka, starts_at, period_end):
+    """Cash-drawer and report figures for one shift window.
+
+    Cash deposit = money taken from cash into another payment account
+    (toaCash.deposit_to), matching /akaunting/cash-deposits.
+    Expenses = recorded operating expenses (toaCash.matumizi).
+    Cash in/out = movements on Cash payment accounts only, used for expected till.
+    """
+    expenses = toaCash.objects.filter(
+        Interprise=duka.id,
+        tarehe__gte=starts_at,
+        tarehe__lte=period_end,
+        matumizi__isnull=False,
+    ).aggregate(sum=Sum('Amount'))['sum'] or 0
+    deposits = toaCash.objects.filter(
+        Interprise=duka.id,
+        tarehe__gte=starts_at,
+        tarehe__lte=period_end,
+        deposit_to__isnull=False,
+    ).aggregate(sum=Sum('Amount'))['sum'] or 0
+    cash_in = wekaCash.objects.filter(
+        Interprise=duka.id,
+        tarehe__gte=starts_at,
+        tarehe__lte=period_end,
+        Akaunt__aina__iexact='Cash',
+    ).aggregate(sum=Sum('Amount'))['sum'] or 0
+    cash_out = toaCash.objects.filter(
+        Interprise=duka.id,
+        tarehe__gte=starts_at,
+        tarehe__lte=period_end,
+        Akaunt__aina__iexact='Cash',
+    ).aggregate(sum=Sum('Amount'))['sum'] or 0
+    return {
+        'expenses': _dec(expenses),
+        'deposits': _dec(deposits),
+        'cash_in': _dec(cash_in),
+        'cash_out': _dec(cash_out),
+    }
+
+
+def expected_cash_from_flows(opening, flows):
+    return _dec(opening) + _dec(flows.get('cash_in')) - _dec(flows.get('cash_out'))
+
+
 def build_shifts_period_report(duka, shifts):
     now = timezone.now()
     windows = _shift_time_windows(shifts, now)
     sales_map = shift_sales_amounts(duka, shifts)
     expenses_map = _amounts_in_windows(
         windows,
-        toaCash.objects.filter(Interprise=duka.id),
+        toaCash.objects.filter(Interprise=duka.id, matumizi__isnull=False),
     )
     deposits_map = _amounts_in_windows(
         windows,
-        wekaCash.objects.filter(Interprise=duka.id),
+        toaCash.objects.filter(Interprise=duka.id, deposit_to__isnull=False),
+    )
+    cash_in_map = _amounts_in_windows(
+        windows,
+        wekaCash.objects.filter(Interprise=duka.id, Akaunt__aina__iexact='Cash'),
+    )
+    cash_out_map = _amounts_in_windows(
+        windows,
+        toaCash.objects.filter(Interprise=duka.id, Akaunt__aina__iexact='Cash'),
     )
 
     rows = []
@@ -139,6 +195,7 @@ def build_shifts_period_report(duka, shifts):
         'sales': Decimal('0'),
         'expenses': Decimal('0'),
         'deposits': Decimal('0'),
+        'cash_in': Decimal('0'),
         'balance': Decimal('0'),
         'count': 0,
         'open_count': 0,
@@ -146,39 +203,44 @@ def build_shifts_period_report(duka, shifts):
     }
 
     for shift in shifts:
-        sales = Decimal(str(sales_map.get(shift.id, 0) or 0))
-        expenses = Decimal(str(expenses_map.get(shift.id, 0) or 0))
-        deposits = Decimal(str(deposits_map.get(shift.id, 0) or 0))
-        opening = Decimal(str(shift.opening_cash or 0))
-        balance = opening + deposits - expenses
+        sales = _dec(sales_map.get(shift.id, 0))
+        expenses = _dec(expenses_map.get(shift.id, 0))
+        deposits = _dec(deposits_map.get(shift.id, 0))
+        cash_in = _dec(cash_in_map.get(shift.id, 0))
+        cash_out = _dec(cash_out_map.get(shift.id, 0))
+        opening = _dec(shift.opening_cash)
+        balance = expected_cash_from_flows(opening, {'cash_in': cash_in, 'cash_out': cash_out})
         if shift.status == 'closed' and shift.actual_closing_cash is not None:
-            closing = Decimal(str(shift.actual_closing_cash))
-        elif shift.status == 'closed' and shift.expected_closing_cash is not None:
-            closing = Decimal(str(shift.expected_closing_cash))
+            closing = _dec(shift.actual_closing_cash)
         else:
             closing = balance
 
-        row = {
+        rows.append({
             'shift': shift,
             'opening': opening,
             'closing': closing,
             'sales': sales,
             'expenses': expenses,
             'deposits': deposits,
+            'cash_in': cash_in,
             'balance': balance,
-        }
-        rows.append(row)
-        totals['opening'] += opening
-        totals['closing'] += closing
+        })
         totals['sales'] += sales
         totals['expenses'] += expenses
         totals['deposits'] += deposits
-        totals['balance'] += balance
+        totals['cash_in'] += cash_in
         totals['count'] += 1
         if shift.status == 'closed':
             totals['closed_count'] += 1
         else:
             totals['open_count'] += 1
+
+    dated = [r for r in rows if getattr(r['shift'], 'starts_at', None)]
+    dated.sort(key=lambda r: r['shift'].starts_at)
+    if dated:
+        totals['opening'] = dated[0]['opening']
+        totals['closing'] = dated[-1]['closing']
+        totals['balance'] = dated[-1]['balance']
 
     return rows, totals
 
@@ -399,28 +461,21 @@ def build_shift_report(duka, shift):
         adjst__date__lte=period_end,
     ).filter(Q(adjst__haribika=True) | Q(adjst__potea=True)).aggregate(sum=Sum('qty'))['sum'] or 0
 
-    expenses = toaCash.objects.filter(
-        Interprise=duka.id,
-        tarehe__gte=starts_at,
-        tarehe__lte=period_end,
-    ).aggregate(sum=Sum('Amount'))['sum'] or 0
-
-    deposits = wekaCash.objects.filter(
-        Interprise=duka.id,
-        tarehe__gte=starts_at,
-        tarehe__lte=period_end,
-    ).aggregate(sum=Sum('Amount'))['sum'] or 0
+    flows = shift_payment_flows(duka, starts_at, period_end)
+    expenses = flows['expenses']
+    deposits = flows['deposits']
 
     cash_accounts = PaymentAkaunts.objects.filter(Interprise=duka.id, aina__iexact='Cash').order_by('Akaunt_name')
     opening_cash = shift.opening_cash
     live_cash = cash_accounts.aggregate(sum=Sum('Amount'))['sum'] or 0
     current_cash = shift.actual_closing_cash if is_closed and shift.actual_closing_cash is not None else live_cash
-    expected_cash = Decimal(opening_cash) + Decimal(deposits) - Decimal(expenses)
+    expected_cash = expected_cash_from_flows(opening_cash, flows)
 
     mobile_payments = wekaCash.objects.filter(
         Interprise=duka.id,
         tarehe__gte=starts_at,
         tarehe__lte=period_end,
+        kuhamisha=False,
     ).exclude(
         Akaunt__aina__iexact='Cash'
     ).select_related('Akaunt', 'by__fanyakazi').order_by('tarehe')
@@ -655,6 +710,7 @@ def build_shift_report(duka, shift):
         },
         'payments': {
             'opening_cash': opening_cash,
+            'cash_in': flows['cash_in'],
             'expenses': expenses,
             'deposits': deposits,
             'expected_cash': expected_cash,

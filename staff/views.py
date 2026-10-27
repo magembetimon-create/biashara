@@ -52,6 +52,8 @@ from staff.shift_report import (
     build_shift_report,
     build_shifts_period_report,
     completed_sales_qs,
+    expected_cash_from_flows,
+    shift_payment_flows,
     shift_sales_amounts,
     staff_display_name,
 )
@@ -1299,17 +1301,8 @@ def close_shift(request):
             }, status=403)
 
         period_end = timezone.now()
-        expenses = toaCash.objects.filter(
-            Interprise=duka.id,
-            tarehe__gte=shift.starts_at,
-            tarehe__lte=period_end,
-        ).aggregate(sum=Sum('Amount'))['sum'] or 0
-        deposits = wekaCash.objects.filter(
-            Interprise=duka.id,
-            tarehe__gte=shift.starts_at,
-            tarehe__lte=period_end,
-        ).aggregate(sum=Sum('Amount'))['sum'] or 0
-        expected = Decimal(shift.opening_cash) + Decimal(deposits) - Decimal(expenses)
+        flows = shift_payment_flows(duka, shift.starts_at, period_end)
+        expected = expected_cash_from_flows(shift.opening_cash, flows)
 
         shift.status = 'closed'
         shift.ends_at = period_end

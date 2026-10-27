@@ -33,6 +33,7 @@ from django.utils import timezone as dj_timezone
 import traceback
 
 from accaunts.todos import Todos, shift_operation_block_payload
+from staff.shift_report import expected_cash_from_flows, shift_payment_flows
 
 def todoFunct(request):
   usr = Todos(request)
@@ -732,10 +733,10 @@ def closeShift(request):
                 })
 
             close_dt = datetime.datetime.now(tz=timezone.utc)
-            income = wekaCash.objects.filter(Interprise=duka, tarehe__gte=shift.starts_at, tarehe__lte=close_dt).aggregate(Sum('Amount'))['Amount__sum'] or Decimal('0')
-            expenditure = toaCash.objects.filter(Interprise=duka, tarehe__gte=shift.starts_at, tarehe__lte=close_dt).aggregate(Sum('Amount'))['Amount__sum'] or Decimal('0')
-
-            expected = Decimal(str(shift.opening_cash)) + Decimal(str(income)) - Decimal(str(expenditure))
+            flows = shift_payment_flows(duka, shift.starts_at, close_dt)
+            expected = expected_cash_from_flows(shift.opening_cash, flows)
+            income = flows['cash_in']
+            expenditure = flows['cash_out']
             actual_raw = (request.POST.get('actual_closing_cash') or '').strip()
             actual = _sum_cash_accounts(duka) if actual_raw == '' else Decimal(str(actual_raw))
             variance = actual - expected

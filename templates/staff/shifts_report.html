@@ -75,6 +75,12 @@
     </div>
     <div class="col-md-4 col-lg-2 mb-2">
       <div class="classic_div p-3 h-100">
+        <div class="text-muted smallFont mb-1">{% if useri.langSet == 0 %}Cash iliyoingia{% else %}Cash received{% endif %}</div>
+        <div class="weight600">{{ report_totals.cash_in|floatformat:2|intcomma }}</div>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-2 mb-2">
+      <div class="classic_div p-3 h-100">
         <div class="text-muted smallFont mb-1">{% if useri.langSet == 0 %}Matumizi{% else %}Expenses{% endif %}</div>
         <div class="weight600 text-danger">{{ report_totals.expenses|floatformat:2|intcomma }}</div>
       </div>
@@ -104,6 +110,7 @@
           <th class="text-right">{% if useri.langSet == 0 %}Kuanza{% else %}Opening{% endif %}</th>
           <th class="text-right">{% if useri.langSet == 0 %}Kufunga{% else %}Closing{% endif %}</th>
           <th class="text-right">{% if useri.langSet == 0 %}Mauzo{% else %}Sales{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Cash iliyoingia{% else %}Cash in{% endif %}</th>
           <th class="text-right">{% if useri.langSet == 0 %}Matumizi{% else %}Expenses{% endif %}</th>
           <th class="text-right">{% if useri.langSet == 0 %}Deposit{% else %}Deposit{% endif %}</th>
           <th class="text-right">{% if useri.langSet == 0 %}Balance{% else %}Balance{% endif %}</th>
@@ -129,13 +136,14 @@
           <td class="text-right">{{ row.opening|floatformat:2|intcomma }}</td>
           <td class="text-right">{{ row.closing|floatformat:2|intcomma }}</td>
           <td class="text-right">{{ row.sales|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ row.cash_in|floatformat:2|intcomma }}</td>
           <td class="text-right">{{ row.expenses|floatformat:2|intcomma }}</td>
           <td class="text-right">{{ row.deposits|floatformat:2|intcomma }}</td>
           <td class="text-right weight600">{{ row.balance|floatformat:2|intcomma }}</td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="10" class="text-center text-muted py-4">
+          <td colspan="11" class="text-center text-muted py-4">
             {% if useri.langSet == 0 %}Hakuna shift zilizoanza katika kipindi hiki.{% else %}No shifts started in this period.{% endif %}
           </td>
         </tr>
@@ -148,6 +156,7 @@
           <td class="text-right">{{ report_totals.opening|floatformat:2|intcomma }}</td>
           <td class="text-right">{{ report_totals.closing|floatformat:2|intcomma }}</td>
           <td class="text-right">{{ report_totals.sales|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ report_totals.cash_in|floatformat:2|intcomma }}</td>
           <td class="text-right">{{ report_totals.expenses|floatformat:2|intcomma }}</td>
           <td class="text-right">{{ report_totals.deposits|floatformat:2|intcomma }}</td>
           <td class="text-right">{{ report_totals.balance|floatformat:2|intcomma }}</td>
@@ -158,9 +167,9 @@
   </div>
   <p class="small text-muted staff-no-print">
     {% if useri.langSet == 0 %}
-      Mauzo ni yale yaliyokamilika (POS na oda za waiter zilizoprint). Matumizi na cash deposit ni miamala ya pesa ndani ya muda wa shift. Balance = cash ya kuanza + deposit − matumizi. Kufunga ni cash halisi ikiwa shift imefungwa, vinginevyo ni balance inayotarajiwa.
+      Cash ya kuanza/kufunga ya kipindi ni shift ya kwanza na ya mwisho, si jumla ya shift zote. Mauzo ni POS na oda za waiter zilizoprint. Cash iliyoingia ni pesa iliyowekwa kwenye akaunti ya Cash (POS, clearance). Cash deposit ni kuhamisha pesa kutoka Cash kwenda akaunti nyingine, kama kwenye modal ya Cash Deposit. Matumizi ni matumizi yaliyorekodiwa. Balance inayotarajiwa = cash ya kuanza + cash iliyoingia − pesa zote zilizotoka kwenye Cash. Malipo anayorekodi waiter hayanaingii akaunti; yanaingia tu baada ya clearance.
     {% else %}
-      Sales are completed POS and printed waiter orders. Expenses and cash deposits are cash movements during the shift. Balance = opening + deposits − expenses. Closing is actual cash if the shift is closed, otherwise expected balance.
+      Period opening/closing are the first and last shift, not the sum of every shift. Sales are completed POS and printed waiter orders. Cash received is money that actually entered the Cash account (POS, clearance). Cash deposit is a transfer from Cash to another payment account, same as the Cash Deposit modal. Expenses are recorded operating expenses. Expected balance = opening + cash in − all cash out. Waiter-recorded payments do not enter the payment account until clearance.
     {% endif %}
   </p>
 </div>

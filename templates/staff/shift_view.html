@@ -63,6 +63,7 @@
         <div class="card-body py-2">
           <table class="table table-sm mb-0">
             <tr><td>{% if useri.langSet == 0 %}Cash ya Kuanza{% else %}Opening Cash{% endif %}</td><td class="text-right">{{ payments.opening_cash|floatformat:2|intcomma }}</td></tr>
+            <tr><td>{% if useri.langSet == 0 %}Cash iliyoingia{% else %}Cash received{% endif %}</td><td class="text-right">{{ payments.cash_in|floatformat:2|intcomma }}</td></tr>
             <tr><td>{% if useri.langSet == 0 %}Matumizi{% else %}Expenses{% endif %}</td><td class="text-right">{{ payments.expenses|floatformat:2|intcomma }}</td></tr>
             <tr><td>{% if useri.langSet == 0 %}Cash Deposits{% else %}Cash Deposits{% endif %}</td><td class="text-right">{{ payments.deposits|floatformat:2|intcomma }}</td></tr>
             <tr><td>{% if useri.langSet == 0 %}Cash Inayotarajiwa{% else %}Expected Cash{% endif %}</td><td class="text-right">{{ payments.expected_cash|floatformat:2|intcomma }}</td></tr>

@@ -375,6 +375,10 @@
               <td>{{ payments.opening_cash|floatformat:2|intcomma }}</td>
             </tr>
             <tr>
+              <td>{% if useri.langSet == 0 %}Cash iliyoingia{% else %}Cash received{% endif %}</td>
+              <td>{{ payments.cash_in|floatformat:2|intcomma }}</td>
+            </tr>
+            <tr>
               <td>{% if useri.langSet == 0 %}Matumizi{% else %}Expenses{% endif %}</td>
               <td>{{ payments.expenses|floatformat:2|intcomma }}</td>
             </tr>
