@@ -3629,32 +3629,146 @@ def _deduct_stock_for_order(sale):
                         produ_colored.objects.filter(pk=ss.size.id).update(idadi=F('idadi')-ss.idadi)
 
 
+def _restore_stock_for_line_qty(line, qty):
+      qty = Decimal(str(qty or 0))
+      if qty <= 0:
+            return
+
+      if line.produ and getattr(line.produ, 'is_grouped_item', False):
+            grouped_restore = restore_grouped_members_stock(line.produ, qty)
+            if not grouped_restore.get('success'):
+                  raise ValueError(grouped_restore.get('msg') or 'Grouped stock restore failed')
+            return
+
+      produced = None
+      try:
+            produced = line.produ.produced if line.produ_id else None
+      except Exception:
+            produced = None
+      if produced and produced.notsure:
+            productionList.objects.filter(pk=produced.id).update(qty=F('qty') - qty)
+      elif line.produ_id:
+            bidhaa_stoku.objects.filter(pk=line.produ.id).update(idadi=F('idadi') + qty)
+
+      remaining = qty
+      for ss in sales_size.objects.filter(mauzo=line.id).select_related('size').order_by('pk'):
+            if remaining <= 0:
+                  break
+            take = min(Decimal(str(ss.idadi or 0)), remaining)
+            if take <= 0:
+                  continue
+            if ss.size_id:
+                  produ_size.objects.filter(pk=ss.size_id).update(idadi=F('idadi') + take)
+            ss.returned = Decimal(str(ss.returned or 0)) + take
+            ss.idadi = Decimal(str(ss.idadi or 0)) - take
+            if ss.idadi <= 0:
+                  ss.delete()
+            else:
+                  ss.save(update_fields=['idadi', 'returned'])
+            remaining -= take
+
+      remaining = qty
+      for sc in sales_color.objects.filter(mauzo=line.id).select_related('color').order_by('pk'):
+            if remaining <= 0:
+                  break
+            take = min(Decimal(str(sc.idadi or 0)), remaining)
+            if take <= 0:
+                  continue
+            if sc.color_id:
+                  produ_colored.objects.filter(pk=sc.color_id).update(idadi=F('idadi') + take)
+            sc.returned = Decimal(str(sc.returned or 0)) + take
+            sc.idadi = Decimal(str(sc.idadi or 0)) - take
+            if sc.idadi <= 0:
+                  sc.delete()
+            else:
+                  sc.save(update_fields=['idadi', 'returned'])
+            remaining -= take
+
+
 def _restore_stock_for_order(sale):
       if sale.online:
             return
 
-      the_list = mauzoList.objects.filter(mauzo=sale)
+      the_list = mauzoList.objects.filter(mauzo=sale).select_related('produ', 'produ__produced')
       for l in the_list:
-            if l.produ and getattr(l.produ, 'is_grouped_item', False):
-                  grouped_restore = restore_grouped_members_stock(l.produ, l.idadi)
-                  if not grouped_restore.get('success'):
-                        raise ValueError(grouped_restore.get('msg') or 'Grouped stock restore failed')
-                  continue
-            
-            if l.produ.produced and l.produ.produced.notsure:
-                  productionList.objects.filter(pk=l.produ.produced.id).update(qty=F('qty')-l.idadi)
-            else:
-                  bidhaa_stoku.objects.filter(pk=l.produ.id).update(idadi=F('idadi')+l.idadi)
+            _restore_stock_for_line_qty(l, l.idadi)
 
-            if sales_color.objects.filter(mauzo=l.id).exists():
-                  sale_c = sales_color.objects.filter(mauzo=l.id)
-                  for sc in sale_c:
-                        produ_colored.objects.filter(pk=sc.color.id).update(idadi=F('idadi')+sc.idadi)
 
-            if sales_size.objects.filter(mauzo=l.id).exists():
-                  sale_s = sales_size.objects.filter(mauzo=l.id)
-                  for ss in sale_s:
-                        produ_colored.objects.filter(pk=ss.size.id).update(idadi=F('idadi')+ss.idadi)
+def _waiter_summary_open_sale(duka, order_id, lock=False):
+      qs = mauzoni.objects.filter(
+            pk=order_id,
+            Interprise=duka,
+            waiter_order__isnull=False,
+            By__isnull=True,
+            full_returned=False,
+            printed_number__gt=0,
+      )
+      if not lock:
+            qs = qs.select_related('customer_in__area')
+      return qs.last()
+
+
+def _waiter_summary_item_rows(sale):
+      items = []
+      lines = mauzoList.objects.filter(mauzo=sale.id).select_related('produ__bidhaa')
+      for ln in lines:
+            qty = float(ln.idadi or 0)
+            price = float(ln.bei or 0)
+            returned_qty = float(ln.returned or 0)
+            items.append({
+                  'id': ln.id,
+                  'name': str(ln.produ.bidhaa.bidhaa_jina or '').strip() if ln.produ_id and ln.produ.bidhaa_id else '-',
+                  'qty': qty,
+                  'returned': returned_qty,
+                  'unit': str(ln.produ.bidhaa.vipimo or '').strip() if ln.produ_id and ln.produ.bidhaa_id else '',
+                  'price': price,
+                  'total': qty * price,
+            })
+      return items
+
+
+def _waiter_summary_sale_payload(sale, can_delete=False):
+      table_name = '-'
+      place_name = '-'
+      try:
+            if sale.customer_in:
+                  table_name = str(sale.customer_in.name or '').strip() or '-'
+                  place_name = str(sale.customer_in.area.name or '').strip() if sale.customer_in.area else '-'
+      except Exception:
+            table_name = '-'
+            place_name = '-'
+      return {
+            'success': True,
+            'can_delete': bool(can_delete),
+            'deleted_order': False,
+            'order': {
+                  'id': sale.id,
+                  'code': sale.code,
+                  'table': table_name,
+                  'place': place_name,
+                  'date': sale.tarehe.strftime('%d/%m/%Y %H:%M') if sale.tarehe else '',
+                  'amount': float(sale.amount or 0),
+            },
+            'items': _waiter_summary_item_rows(sale),
+      }
+
+
+def _recalc_waiter_sale_amount(sale):
+      lines = mauzoList.objects.filter(mauzo=sale)
+      if not lines.exists():
+            sale.delete()
+            return {'deleted_order': True, 'amount': 0}
+      total = lines.aggregate(
+            s=Sum(F('bei') * F('idadi') * F('saveT'), output_field=FloatField())
+      )['s'] or 0
+      sale.amount = total
+      paid = float(sale.ilolipwa or 0)
+      if paid > float(total or 0):
+            sale.ilolipwa = total
+            sale.save(update_fields=['amount', 'ilolipwa'])
+      else:
+            sale.save(update_fields=['amount'])
+      return {'deleted_order': False, 'amount': float(sale.amount or 0)}
 
 
 def _parse_waiter_desc(desc):
@@ -3902,6 +4016,7 @@ def waiter_orders_summary(request):
                   or (getattr(cheo, 'waiter_check_up', False))
             )
       )
+      fix_counts = _waiter_clearing_cash_fix_counts(duka) if can_clear_waiter_payments else {'wrong': 0, 'missing': 0}
 
       try:
             selected_waiter_id = int(request.GET.get('waiter', 0) or 0)
@@ -4010,7 +4125,7 @@ def waiter_orders_summary(request):
 
                   cash_default_amount = max(0, float(total_remaining_debt or 0))
                   cash_account = PaymentAkaunts.objects.filter(
-                        Interprise__owner=duka.owner,
+                        Interprise=duka,
                         aina__iexact='Cash'
                   ).order_by('pk').last()
 
@@ -4041,6 +4156,10 @@ def waiter_orders_summary(request):
             'selected_waiter_has_non_cash_payments': selected_waiter_has_non_cash_payments,
             'selected_waiter_payment_accounts': selected_waiter_payment_accounts,
             'selected_waiter_payment_accounts_json': json.dumps(selected_waiter_payment_accounts),
+            'can_remap_clearing_payments': can_clear_waiter_payments and (
+                  (fix_counts.get('wrong') or 0) > 0 or (fix_counts.get('missing') or 0) > 0
+            ),
+            'clearing_cash_fix_counts': fix_counts,
       })
       return render(request, 'waiter_orders_summary.html', todo)
 
@@ -4101,42 +4220,7 @@ def waiter_summary_order_details(request):
       if not sale:
             return JsonResponse({'success': False, 'msg': 'Order not found'})
 
-      items = []
-      lines = mauzoList.objects.filter(mauzo=sale.id).select_related('produ__bidhaa')
-      for ln in lines:
-            qty = float(ln.idadi or 0)
-            price = float(ln.bei or 0)
-            items.append({
-                  'name': str(ln.produ.bidhaa.bidhaa_jina or '').strip(),
-                  'qty': qty,
-                  'unit': str(ln.produ.bidhaa.vipimo or '').strip(),
-                  'price': price,
-                  'total': qty * price,
-            })
-
-      table_name = '-'
-      place_name = '-'
-      try:
-            if sale.customer_in:
-                  table_name = str(sale.customer_in.name or '').strip() or '-'
-                  place_name = str(sale.customer_in.area.name or '').strip() if sale.customer_in.area else '-'
-      except:
-            table_name = '-'
-            place_name = '-'
-
-      return JsonResponse({
-            'success': True,
-            'can_delete': can_delete_waiter_orders,
-            'order': {
-                  'id': sale.id,
-                  'code': sale.code,
-                  'table': table_name,
-                  'place': place_name,
-                  'date': sale.tarehe.strftime('%d/%m/%Y %H:%M') if sale.tarehe else '',
-                  'amount': float(sale.amount or 0),
-            },
-            'items': items,
-      })
+      return JsonResponse(_waiter_summary_sale_payload(sale, can_delete_waiter_orders))
 
 
 @login_required(login_url='login')
@@ -4180,7 +4264,119 @@ def waiter_summary_delete_order(request):
             mauzoList.objects.filter(mauzo=sale.id).delete()
             sale.delete()
 
-      return JsonResponse({'success': True})
+      return JsonResponse({'success': True, 'deleted_order': True})
+
+
+def _waiter_summary_can_edit_items(cheo):
+      return bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_delete_order', False)))
+
+
+@login_required(login_url='login')
+def waiter_summary_delete_item(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            order_id = int(request.POST.get('order', 0) or 0)
+            item_id = int(request.POST.get('item', 0) or 0)
+      except Exception:
+            order_id = 0
+            item_id = 0
+
+      if not order_id or not item_id:
+            return JsonResponse({'success': False, 'msg': 'Invalid data'})
+
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+      cheo = todo.get('cheo')
+      if not duka or not duka.waiter_counter:
+            return JsonResponse({'success': False, 'msg': 'Waiter counter is disabled'})
+      if not _waiter_summary_can_edit_items(cheo):
+            return JsonResponse({'success': False, 'msg': 'Permission denied'})
+
+      with transaction.atomic():
+            sale = _waiter_summary_open_sale(duka, order_id, lock=True)
+            if not sale:
+                  return JsonResponse({'success': False, 'msg': 'Order not found'})
+            line = mauzoList.objects.filter(pk=item_id, mauzo_id=sale.id).first()
+            if not line:
+                  return JsonResponse({'success': False, 'msg': 'Item not found'})
+            if not sale.online:
+                  _restore_stock_for_line_qty(line, line.idadi)
+            line.delete()
+            result = _recalc_waiter_sale_amount(sale)
+
+      if result.get('deleted_order'):
+            return JsonResponse({'success': True, 'deleted_order': True})
+      sale = mauzoni.objects.filter(pk=order_id).select_related('customer_in__area').first()
+      payload = _waiter_summary_sale_payload(sale, True)
+      payload['deleted_item'] = True
+      return JsonResponse(payload)
+
+
+@login_required(login_url='login')
+def waiter_summary_return_item_qty(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      try:
+            order_id = int(request.POST.get('order', 0) or 0)
+            item_id = int(request.POST.get('item', 0) or 0)
+            ret_qty = Decimal(str(request.POST.get('qty', '0') or '0').replace(',', ''))
+      except Exception:
+            order_id = 0
+            item_id = 0
+            ret_qty = Decimal('0')
+
+      if not order_id or not item_id or ret_qty <= 0:
+            return JsonResponse({
+                  'success': False,
+                  'msg': 'Weka idadi sahihi ya zilizorudishwa',
+                  'msg_eng': 'Enter a valid returned quantity',
+            })
+
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+      cheo = todo.get('cheo')
+      if not duka or not duka.waiter_counter:
+            return JsonResponse({'success': False, 'msg': 'Waiter counter is disabled'})
+      if not _waiter_summary_can_edit_items(cheo):
+            return JsonResponse({'success': False, 'msg': 'Permission denied'})
+
+      with transaction.atomic():
+            sale = _waiter_summary_open_sale(duka, order_id, lock=True)
+            if not sale:
+                  return JsonResponse({'success': False, 'msg': 'Order not found'})
+            line = mauzoList.objects.filter(pk=item_id, mauzo_id=sale.id).first()
+            if not line:
+                  return JsonResponse({'success': False, 'msg': 'Item not found'})
+
+            current_qty = Decimal(str(line.idadi or 0))
+            if ret_qty > current_qty:
+                  return JsonResponse({
+                        'success': False,
+                        'msg': 'Idadi iliyorudishwa inazidi qty ya item',
+                        'msg_eng': 'Returned quantity exceeds item qty',
+                  })
+
+            if not sale.online:
+                  _restore_stock_for_line_qty(line, ret_qty)
+
+            if ret_qty == current_qty:
+                  line.delete()
+            else:
+                  line.idadi = current_qty - ret_qty
+                  line.returned = Decimal(str(line.returned or 0)) + ret_qty
+                  line.save(update_fields=['idadi', 'returned'])
+
+            result = _recalc_waiter_sale_amount(sale)
+
+      if result.get('deleted_order'):
+            return JsonResponse({'success': True, 'deleted_order': True})
+      sale = mauzoni.objects.filter(pk=order_id).select_related('customer_in__area').first()
+      payload = _waiter_summary_sale_payload(sale, True)
+      payload['returned_qty'] = float(ret_qty)
+      return JsonResponse(payload)
 
 
 @login_required(login_url='login')
@@ -4297,6 +4493,13 @@ def waiter_summary_clear_waiter_payments(request):
 
       selected_sale_ids = list(selected_qs.values_list('id', flat=True))
       total_orders_amount = float(selected_qs.aggregate(s=Sum('amount')).get('s') or 0)
+      owed_amount = Decimal(str(
+            selected_qs.aggregate(
+                  s=Sum(F('amount') - F('ilolipwa'), output_field=DecimalField())
+            ).get('s') or 0
+      ))
+      if owed_amount < 0:
+            owed_amount = Decimal('0')
 
       non_cash_recorded_total = float(
             waiterPayments.objects.filter(
@@ -4324,13 +4527,16 @@ def waiter_summary_clear_waiter_payments(request):
       if not posted_amount_by_account:
             return JsonResponse({'success': False, 'msg': 'Amount must be greater than zero'})
 
+      posted_ids = list(posted_amount_by_account.keys())
       pay_accounts = {
             x.id: x for x in PaymentAkaunts.objects.filter(
-                  Interprise__owner=duka.owner,
-                  pk__in=list(posted_amount_by_account.keys())
+                  pk__in=posted_ids
+            ).filter(
+                  Q(Interprise=duka)
+                  | (Q(Interprise__owner=duka.owner) & ~Q(aina__iexact='Cash'))
             )
       }
-      if len(pay_accounts.keys()) != len(posted_amount_by_account.keys()):
+      if len(pay_accounts.keys()) != len(posted_ids):
             return JsonResponse({'success': False, 'msg': 'Some payment accounts are invalid'})
 
       clear_amount = float(sum(posted_amount_by_account.values()) or 0)
@@ -4355,37 +4561,52 @@ def waiter_summary_clear_waiter_payments(request):
             clear_rec = waiter_clearing()
             clear_rec.waiter = waiter_obj
             clear_rec.amount = clear_amount
+            clear_rec.owed_amount = owed_amount
+            remaining_after = owed_amount - Decimal(str(clear_amount))
+            if remaining_after < 0:
+                  remaining_after = Decimal('0')
+            clear_rec.remaining_amount = remaining_after
             clear_rec.tarehe = datetime.datetime.now(tz=timezone.utc)
             clear_rec.By = cheo
             clear_rec.save()
 
-            # Record account movements per entered payment account.
+            # Record account movements the same way as lipaInvo.
+            acc_objs = list(
+                  PaymentAkaunts.objects.select_for_update().filter(pk__in=list(pay_accounts.keys()))
+            )
+            acc_by_id = {x.id: x for x in acc_objs}
             for account_id, acc_amount in posted_amount_by_account.items():
-                  acc_obj = pay_accounts.get(account_id)
+                  acc_obj = acc_by_id.get(account_id)
                   if not acc_obj:
                         continue
-                  before = float(acc_obj.Amount or 0)
-                  after = before + float(acc_amount)
-                  PaymentAkaunts.objects.filter(pk=acc_obj.id).update(Amount=after)
+                  paid_amo = Decimal(str(acc_amount))
+                  if paid_amo <= 0:
+                        continue
+                  before = Decimal(str(acc_obj.Amount or 0))
+                  after = before + paid_amo
+                  acc_obj.Amount = after
+                  acc_obj.save(update_fields=['Amount'])
 
                   cash_in = wekaCash()
                   cash_in.Interprise = duka
                   cash_in.tarehe = datetime.datetime.now(tz=timezone.utc)
                   cash_in.Akaunt = acc_obj
-                  cash_in.Amount = float(acc_amount)
+                  cash_in.Amount = paid_amo
                   cash_in.before = before
                   cash_in.After = after
-                  cash_in.kutoka = f'WAITER CLEARING - {waiter_name}'
-                  cash_in.maelezo = f'Orders total: {total_orders_amount}'
+                  cash_in.kutoka = 'Goods Sales'
+                  cash_in.maelezo = f'Waiter clearing - {waiter_name}. Orders total: {total_orders_amount}'
                   cash_in.by = cheo
-                  cash_in.order = True
                   cash_in.mauzo = True
                   cash_in.from_waiter_payments = clear_rec
+                  if not acc_obj.onesha:
+                        cash_in.usiri = True
+                  apply_weka_admin_flag(cash_in, cheo)
                   cash_in.save()
 
             # Allocate paid amount through waiter orders in sequence.
             paidAmo = float(clear_amount or 0)
-            cleared_codes = []
+            cleared_sale = None
             has_service = False
             has_goods = False
             for od in selected_qs:
@@ -4419,8 +4640,7 @@ def waiter_summary_clear_waiter_payments(request):
                   clearOda.save()
 
                   if order_paid > 0:
-                        code = str(od.code or '').strip() or str(od.Invo_no or od.id)
-                        cleared_codes.append(code)
+                        cleared_sale = od
                         if od.service:
                               has_service = True
                         else:
@@ -4429,23 +4649,145 @@ def waiter_summary_clear_waiter_payments(request):
                   if paidAmo <= 0 and order_paid < order_amount:
                         break
 
-            invo_note = ', '.join(f'INVO-{c}' for c in cleared_codes[:40])
-            if len(cleared_codes) > 40:
-                  invo_note += '...'
-            maelezo = f'Orders total: {total_orders_amount}'
-            if invo_note:
-                  maelezo = f'{maelezo}. {invo_note}'
-            wekaCash.objects.filter(from_waiter_payments=clear_rec).update(
-                  maelezo=maelezo[:500],
-                  mauzo=bool(has_goods or not has_service),
-                  huduma=bool(has_service and not has_goods),
-            )
+            maelezo = f'Waiter clearing - {waiter_name}. Orders total: {total_orders_amount}'
+            weka_update = {
+                  'maelezo': maelezo[:500],
+                  'kutoka': 'Goods Sales',
+                  'mauzo': bool(has_goods or not has_service),
+                  'huduma': bool(has_service and not has_goods),
+            }
+            if cleared_sale:
+                  weka_update['invo'] = cleared_sale
+            wekaCash.objects.filter(from_waiter_payments=clear_rec).update(**weka_update)
 
       return JsonResponse({
             'success': True,
             'amount': clear_amount,
             'total_orders_amount': total_orders_amount,
             'non_cash_recorded_total': non_cash_recorded_total,
+      })
+
+
+def _shop_cash_account(duka):
+      return PaymentAkaunts.objects.filter(
+            Interprise=duka,
+            aina__iexact='Cash',
+      ).order_by('pk').last()
+
+
+def _waiter_clearing_cash_fix_counts(duka):
+      cash_acc = _shop_cash_account(duka)
+      if not cash_acc:
+            return {'wrong': 0, 'missing': 0}
+      wrong = wekaCash.objects.filter(
+            from_waiter_payments__isnull=False,
+            Interprise=duka,
+            Akaunt__aina__iexact='Cash',
+      ).exclude(Akaunt_id=cash_acc.id).count()
+      linked_ids = wekaCash.objects.filter(
+            from_waiter_payments__isnull=False,
+            from_waiter_payments__waiter__Interprise=duka,
+      ).values_list('from_waiter_payments_id', flat=True)
+      missing = waiter_clearing.objects.filter(
+            waiter__Interprise=duka,
+      ).exclude(pk__in=linked_ids).count()
+      return {'wrong': int(wrong), 'missing': int(missing)}
+
+
+@login_required(login_url='login')
+def waiter_remap_clearing_payments(request):
+      if request.method != 'POST':
+            return JsonResponse({'success': False, 'msg': 'Invalid method'})
+
+      todo = newInvo_funct(request)
+      duka = todo.get('duka')
+      cheo = todo.get('cheo')
+      if not duka or not duka.waiter_counter:
+            return JsonResponse({'success': False, 'msg': 'Waiter counter is disabled'})
+      can_fix = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_check_up', False)))
+      if not can_fix:
+            return JsonResponse({'success': False, 'msg': 'Permission denied'})
+
+      cash_acc = _shop_cash_account(duka)
+      if not cash_acc:
+            return JsonResponse({
+                  'success': False,
+                  'msg_swa': 'Hakuna akaunti ya Cash ya duka hili.',
+                  'msg_eng': 'This shop has no Cash account.',
+            })
+
+      moved = 0
+      created = 0
+      skipped = 0
+      with transaction.atomic():
+            cash_acc = PaymentAkaunts.objects.select_for_update().get(pk=cash_acc.id)
+            clearings = waiter_clearing.objects.filter(waiter__Interprise=duka).order_by('pk')
+            for rec in clearings:
+                  wekas = list(
+                        wekaCash.objects.select_related('Akaunt').filter(from_waiter_payments=rec)
+                  )
+                  cash_wekas = [
+                        w for w in wekas
+                        if w.Akaunt_id and str(getattr(w.Akaunt, 'aina', '') or '').lower() == 'cash'
+                  ]
+                  if not wekas:
+                        amt = Decimal(str(rec.amount or 0))
+                        if amt <= 0:
+                              skipped += 1
+                              continue
+                        before = Decimal(str(cash_acc.Amount or 0))
+                        after = before + amt
+                        cash_acc.Amount = after
+                        cash_acc.save(update_fields=['Amount'])
+                        cash_in = wekaCash()
+                        cash_in.Interprise = duka
+                        cash_in.tarehe = rec.tarehe or datetime.datetime.now(tz=timezone.utc)
+                        cash_in.Akaunt = cash_acc
+                        cash_in.Amount = amt
+                        cash_in.before = before
+                        cash_in.After = after
+                        cash_in.kutoka = 'Goods Sales'
+                        cash_in.maelezo = f'Waiter clearing remap #{rec.id}'
+                        cash_in.by = rec.By or cheo
+                        cash_in.mauzo = True
+                        cash_in.from_waiter_payments = rec
+                        apply_weka_admin_flag(cash_in, cheo)
+                        cash_in.save()
+                        created += 1
+                        continue
+
+                  for w in cash_wekas:
+                        if w.Akaunt_id == cash_acc.id and w.Interprise_id == duka.id:
+                              skipped += 1
+                              continue
+                        amt = Decimal(str(w.Amount or 0))
+                        if amt <= 0:
+                              skipped += 1
+                              continue
+                        old = PaymentAkaunts.objects.select_for_update().filter(pk=w.Akaunt_id).first()
+                        if old and old.id != cash_acc.id:
+                              old.Amount = Decimal(str(old.Amount or 0)) - amt
+                              old.save(update_fields=['Amount'])
+                        before = Decimal(str(cash_acc.Amount or 0))
+                        after = before + amt
+                        cash_acc.Amount = after
+                        cash_acc.save(update_fields=['Amount'])
+                        w.Akaunt = cash_acc
+                        w.Interprise = duka
+                        w.before = before
+                        w.After = after
+                        w.kutoka = w.kutoka or 'Goods Sales'
+                        w.save(update_fields=['Akaunt', 'Interprise', 'before', 'After', 'kutoka'])
+                        moved += 1
+
+      return JsonResponse({
+            'success': True,
+            'moved': moved,
+            'created': created,
+            'skipped': skipped,
+            'account': str(cash_acc.Akaunt_name or 'Cash'),
+            'msg_swa': f'Malipo yamewekwa upya kwenye {cash_acc.Akaunt_name}. Yaliyohamishwa: {moved}, yaliyoundwa: {created}.',
+            'msg_eng': f'Payments were remapped to {cash_acc.Akaunt_name}. Moved: {moved}, created: {created}.',
       })
 
 
@@ -5017,6 +5359,12 @@ def _waiter_service_matched_sales(dukas, period_meta):
             service_date, shift_obj = _waiter_service_date_for_event(event_at, shifts, cutover)
             if service_date < start or service_date > end:
                   continue
+            amount = float(sale.amount or 0)
+            paid = float(sale.ilolipwa or 0)
+            if paid < 0:
+                  paid = 0.0
+            if paid > amount:
+                  paid = amount
             matched.append({
                   'sale': sale,
                   'waiter_id': sale.waiter_order_id,
@@ -5025,7 +5373,9 @@ def _waiter_service_matched_sales(dukas, period_meta):
                   'service_date': service_date,
                   'shift_obj': shift_obj,
                   'event_at': dj_timezone.localtime(event_at),
-                  'amount': float(sale.amount or 0),
+                  'amount': amount,
+                  'paid_amount': paid,
+                  'remaining_amount': max(0.0, amount - paid),
             })
       return matched
 
@@ -5054,6 +5404,8 @@ def _waiter_service_report_data(dukas, period_meta, selected_waiter_id=0, select
             sale = row['sale']
             waiter = sale.waiter_order
             amount = row['amount']
+            paid_amount = float(row.get('paid_amount') or 0)
+            remaining_amount = float(row.get('remaining_amount') or 0)
             local_at = row['event_at']
             service_date = row['service_date']
             items_qty = float(qty_by_sale.get(sale.id, 0) or 0)
@@ -5075,6 +5427,8 @@ def _waiter_service_report_data(dukas, period_meta, selected_waiter_id=0, select
                         'orders_count': 0,
                         'items_qty': 0.0,
                         'total_amount': 0.0,
+                        'paid_amount': 0.0,
+                        'remaining_amount': 0.0,
                         'first_at': local_at,
                         'last_at': local_at,
                         'overnight': False,
@@ -5091,6 +5445,8 @@ def _waiter_service_report_data(dukas, period_meta, selected_waiter_id=0, select
             bucket['orders_count'] += 1
             bucket['items_qty'] += items_qty
             bucket['total_amount'] += amount
+            bucket['paid_amount'] += paid_amount
+            bucket['remaining_amount'] += remaining_amount
             if local_at < bucket['first_at']:
                   bucket['first_at'] = local_at
             if local_at > bucket['last_at']:
@@ -5105,12 +5461,16 @@ def _waiter_service_report_data(dukas, period_meta, selected_waiter_id=0, select
                         'orders_count': 0,
                         'items_qty': 0.0,
                         'total_amount': 0.0,
+                        'paid_amount': 0.0,
+                        'remaining_amount': 0.0,
                         'waiters': set(),
                   }
                   day_map[service_date] = day_row
             day_row['orders_count'] += 1
             day_row['items_qty'] += items_qty
             day_row['total_amount'] += amount
+            day_row['paid_amount'] += paid_amount
+            day_row['remaining_amount'] += remaining_amount
             day_row['waiters'].add(map_key)
 
             selected = False
@@ -5135,6 +5495,8 @@ def _waiter_service_report_data(dukas, period_meta, selected_waiter_id=0, select
                         'id': sale.id,
                         'code': sale.code,
                         'amount': amount,
+                        'paid_amount': paid_amount,
+                        'remaining_amount': remaining_amount,
                         'items_qty': items_qty,
                         'table': table_name,
                         'place': place_name,
@@ -5156,6 +5518,8 @@ def _waiter_service_report_data(dukas, period_meta, selected_waiter_id=0, select
                   'orders_count': item['orders_count'],
                   'items_qty': item['items_qty'],
                   'total_amount': item['total_amount'],
+                  'paid_amount': item['paid_amount'],
+                  'remaining_amount': item['remaining_amount'],
                   'waiters_count': len(item['waiters']),
             })
 
@@ -5163,7 +5527,9 @@ def _waiter_service_report_data(dukas, period_meta, selected_waiter_id=0, select
             'waiters': len(rows),
             'orders': sum(r['orders_count'] for r in rows),
             'items_qty': sum(r['items_qty'] for r in rows),
-            'amount': sum(r['total_amount'] for r in rows),
+            'amount': float(sum(r.get('total_amount') or 0 for r in rows)),
+            'paid_amount': float(sum(r.get('paid_amount') or 0 for r in rows)),
+            'remaining_amount': float(sum(r.get('remaining_amount') or 0 for r in rows)),
       }
       selected_orders.sort(key=lambda x: x['event_at'] or datetime.datetime.min, reverse=True)
       selected_waiter = None
@@ -5364,6 +5730,35 @@ def waiter_service_report_items(request):
       })
 
 
+def _waiter_uncleared_unpaid(duka, waiter_id):
+      qs = mauzoni.objects.filter(
+            Interprise=duka,
+            waiter_order_id=waiter_id,
+            waiter_order__isnull=False,
+            By__isnull=True,
+            full_returned=False,
+            printed_number__gt=0,
+      )
+      unpaid = qs.aggregate(
+            s=Sum(F('amount') - F('ilolipwa'), output_field=DecimalField())
+      ).get('s') or 0
+      unpaid = Decimal(str(unpaid))
+      if unpaid < 0:
+            unpaid = Decimal('0')
+      return unpaid, qs.count()
+
+
+def _waiter_clearing_owed_fallback(rec):
+      owed = rec.owed_amount
+      if owed is not None:
+            return Decimal(str(owed))
+      note = wekaCash.objects.filter(from_waiter_payments=rec).values_list('maelezo', flat=True).first() or ''
+      match = re.search(r'Orders total:\s*([0-9]+(?:\.[0-9]+)?)', str(note))
+      if match:
+            return Decimal(match.group(1))
+      return Decimal(str(rec.amount or 0))
+
+
 @login_required(login_url='login')
 def waiter_clearing_list(request):
       todo = newInvo_funct(request)
@@ -5371,6 +5766,11 @@ def waiter_clearing_list(request):
 
       if not duka or not duka.waiter_counter:
             return redirect('/userdash')
+
+      try:
+            selected_waiter_id = int(request.GET.get('waiter', 0) or 0)
+      except:
+            selected_waiter_id = 0
 
       qs = waiter_clearing.objects.filter(
             waiter__Interprise=duka
@@ -5381,6 +5781,28 @@ def waiter_clearing_list(request):
             'By__user__user',
       ).order_by('-pk')
 
+      waiter_ids = list(qs.values_list('waiter_id', flat=True).distinct())
+      waiter_staff = InterprisePermissions.objects.filter(
+            Q(pk__in=waiter_ids) | Q(Interprise=duka, waiter_counter=True)
+      ).select_related('fanyakazi', 'user__user', 'user_entp__Interprise').order_by('pk')
+      waiter_choices = []
+      seen = set()
+      for staff in waiter_staff:
+            if not staff.id or staff.id in seen:
+                  continue
+            seen.add(staff.id)
+            waiter_choices.append({
+                  'id': staff.id,
+                  'name': _waiter_person_name(staff, 'Waiter'),
+            })
+      waiter_choices.sort(key=lambda x: (x['name'] or '').lower())
+
+      if selected_waiter_id:
+            if not any(w['id'] == selected_waiter_id for w in waiter_choices):
+                  selected_waiter_id = 0
+            else:
+                  qs = qs.filter(waiter_id=selected_waiter_id)
+
       paginator = Paginator(qs, 15)
       page_num = request.GET.get('page', 1)
       try:
@@ -5388,23 +5810,53 @@ def waiter_clearing_list(request):
       except EmptyPage:
             page_obj = paginator.page(paginator.num_pages)
 
+      unpaid_cache = {}
       rows = []
       for rec in page_obj:
             waiter_name = _waiter_person_name(rec.waiter, 'Waiter')
             by_name = _waiter_person_name(rec.By, '-')
-
+            owed = _waiter_clearing_owed_fallback(rec)
+            remaining = rec.remaining_amount
+            if remaining is None:
+                  remaining = owed - Decimal(str(rec.amount or 0))
+                  if remaining < 0:
+                        remaining = Decimal('0')
+            waiter_pk = rec.waiter_id
+            if waiter_pk not in unpaid_cache:
+                  unpaid_cache[waiter_pk] = _waiter_uncleared_unpaid(duka, waiter_pk)
+            current_unpaid, unpaid_orders = unpaid_cache[waiter_pk]
             rows.append({
                   'id': rec.id,
+                  'waiter_id': waiter_pk,
                   'waiter_name': waiter_name,
                   'amount': rec.amount,
+                  'owed_amount': owed,
+                  'remaining_amount': remaining,
+                  'current_unpaid': current_unpaid,
+                  'unpaid_orders': unpaid_orders,
                   'tarehe': rec.tarehe,
                   'by_name': by_name,
             })
+
+      selected_unpaid = Decimal('0')
+      selected_unpaid_orders = 0
+      selected_waiter_name = ''
+      if selected_waiter_id:
+            selected_unpaid, selected_unpaid_orders = _waiter_uncleared_unpaid(duka, selected_waiter_id)
+            for choice in waiter_choices:
+                  if choice['id'] == selected_waiter_id:
+                        selected_waiter_name = choice['name']
+                        break
 
       todo.update({
             'clearing_rows': rows,
             'page_obj': page_obj,
             'paginator': paginator,
+            'waiter_choices': waiter_choices,
+            'selected_waiter_id': selected_waiter_id,
+            'selected_waiter_name': selected_waiter_name,
+            'selected_unpaid': selected_unpaid,
+            'selected_unpaid_orders': selected_unpaid_orders,
       })
       return render(request, 'waiter_clearing_list.html', todo)
 

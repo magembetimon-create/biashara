@@ -3,7 +3,7 @@
 
 {% block Dashboard %}
 <div class="whiteBg py-4" style="min-height: 80vh;">
-  <div class="classic_div" style="max-width: 1100px; margin: 0 auto;">
+  <div class="classic_div" style="max-width: 1240px; margin: 0 auto;">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
       <div>
         <h5 class="mb-1">
@@ -144,22 +144,34 @@
     </p>
 
     <div class="row mb-3">
-      <div class="col-md-4 mb-2">
+      <div class="col-6 col-md-4 col-lg-2 mb-2">
         <div class="border rounded p-3 bg-white h-100">
           <div class="text-muted small">{% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}</div>
-          <div class="h4 mb-0">{{ report_totals.waiters|intcomma }}</div>
+          <div class="h4 mb-0">{{ report_totals.waiters|default:0|intcomma }}</div>
         </div>
       </div>
-      <div class="col-md-4 mb-2">
+      <div class="col-6 col-md-4 col-lg-2 mb-2">
         <div class="border rounded p-3 bg-white h-100">
           <div class="text-muted small">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</div>
-          <div class="h4 mb-0">{{ report_totals.orders|intcomma }}</div>
+          <div class="h4 mb-0">{{ report_totals.orders|default:0|intcomma }}</div>
         </div>
       </div>
-      <div class="col-md-4 mb-2">
+      <div class="col-6 col-md-4 col-lg-3 mb-2">
         <div class="border rounded p-3 bg-white h-100">
           <div class="text-muted small">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</div>
-          <div class="h4 mb-0">{{ duka.currencii }} {{ report_totals.amount|floatformat:0|intcomma }}</div>
+          <div class="h4 mb-0">{{ duka.currencii }} {{ report_totals.amount|default:0|floatformat:0|intcomma }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Iliyolipwa{% else %}Paid{% endif %}</div>
+          <div class="h4 mb-0" style="color:#198754;">{{ duka.currencii }} {{ report_totals.paid_amount|default:0|floatformat:0|intcomma }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-3 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Deni lililobaki{% else %}Remaining debt{% endif %}</div>
+          <div class="h4 mb-0" style="color:#dc3545;">{{ duka.currencii }} {{ report_totals.remaining_amount|default:0|floatformat:0|intcomma }}</div>
         </div>
       </div>
     </div>
@@ -177,6 +189,8 @@
           {{ selected_waiter.orders_count|intcomma }}
           {% if useri.langSet == 0 %}oda{% else %}orders{% endif %}
           · {{ duka.currencii }} {{ selected_waiter.total_amount|floatformat:0|intcomma }}
+          · {% if useri.langSet == 0 %}Iliyolipwa{% else %}Paid{% endif %} {{ duka.currencii }} {{ selected_waiter.paid_amount|floatformat:0|intcomma }}
+          · {% if useri.langSet == 0 %}Baki{% else %}Remaining{% endif %} {{ duka.currencii }} {{ selected_waiter.remaining_amount|floatformat:0|intcomma }}
           {% if selected_waiter.branch_label %} · {{ selected_waiter.branch_label }}{% endif %}
         </span>
       </div>
@@ -192,7 +206,9 @@
               <th class="text-left">{% if useri.langSet == 0 %}Muda halisi{% else %}Actual time{% endif %}</th>
               <th class="text-left d-none d-md-table-cell">{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}</th>
               <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
-              <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+              <th class="text-right">{% if useri.langSet == 0 %}Jumla{% else %}Amount{% endif %}</th>
+              <th class="text-right">{% if useri.langSet == 0 %}Iliyolipwa{% else %}Paid{% endif %}</th>
+              <th class="text-right">{% if useri.langSet == 0 %}Baki{% else %}Remaining{% endif %}</th>
             </tr>
           </thead>
           <tbody>
@@ -212,11 +228,13 @@
                   {{ od.items_qty|floatformat:2|intcomma }}
                 </button>
               </td>
-              <td>{{ duka.currencii }} {{ od.amount|floatformat:0|intcomma }}</td>
+              <td class="text-right">{{ duka.currencii }} {{ od.amount|default:0|floatformat:0|intcomma }}</td>
+              <td class="text-right" style="color:#198754;">{{ duka.currencii }} {{ od.paid_amount|default:0|floatformat:0|intcomma }}</td>
+              <td class="text-right" style="color:#dc3545;">{{ duka.currencii }} {{ od.remaining_amount|default:0|floatformat:0|intcomma }}</td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="{% if show_branch_col %}7{% else %}6{% endif %}" class="text-center text-muted py-4">
+              <td colspan="{% if show_branch_col %}9{% else %}8{% endif %}" class="text-center text-muted py-4">
                 {% if useri.langSet == 0 %}Hakuna oda katika kipindi hiki.{% else %}No orders in this period.{% endif %}
               </td>
             </tr>
@@ -240,7 +258,9 @@
                 {% endif %}
                 <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</th>
                 <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
-                <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Jumla{% else %}Amount{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Iliyolipwa{% else %}Paid{% endif %}</th>
+                <th class="text-right">{% if useri.langSet == 0 %}Deni lililobaki{% else %}Remaining debt{% endif %}</th>
                 <th class="text-left">{% if useri.langSet == 0 %}Kuanza – Kumaliza{% else %}First – Last{% endif %}</th>
               </tr>
             </thead>
@@ -264,7 +284,9 @@
                     {{ row.items_qty|floatformat:2|intcomma }}
                   </button>
                 </td>
-                <td>{{ duka.currencii }} {{ row.total_amount|floatformat:0|intcomma }}</td>
+                <td class="text-right">{{ duka.currencii }} {{ row.total_amount|default:0|floatformat:0|intcomma }}</td>
+                <td class="text-right" style="color:#198754;">{{ duka.currencii }} {{ row.paid_amount|default:0|floatformat:0|intcomma }}</td>
+                <td class="text-right" style="color:#dc3545;">{{ duka.currencii }} {{ row.remaining_amount|default:0|floatformat:0|intcomma }}</td>
                 <td class="small">
                   <script>document.write(moment('{{ row.first_at|date:"r" }}').format('DD/MM HH:mm'));</script>
                   –
@@ -296,7 +318,9 @@
               <th class="text-left">{% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}</th>
               <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</th>
               <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
-              <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+              <th class="text-right">{% if useri.langSet == 0 %}Jumla{% else %}Amount{% endif %}</th>
+              <th class="text-right">{% if useri.langSet == 0 %}Iliyolipwa{% else %}Paid{% endif %}</th>
+              <th class="text-right">{% if useri.langSet == 0 %}Deni lililobaki{% else %}Remaining debt{% endif %}</th>
             </tr>
           </thead>
           <tbody>
@@ -314,7 +338,9 @@
                   {{ day.items_qty|floatformat:2|intcomma }}
                 </button>
               </td>
-              <td>{{ duka.currencii }} {{ day.total_amount|floatformat:0|intcomma }}</td>
+              <td class="text-right">{{ duka.currencii }} {{ day.total_amount|default:0|floatformat:0|intcomma }}</td>
+              <td class="text-right" style="color:#198754;">{{ duka.currencii }} {{ day.paid_amount|default:0|floatformat:0|intcomma }}</td>
+              <td class="text-right" style="color:#dc3545;">{{ duka.currencii }} {{ day.remaining_amount|default:0|floatformat:0|intcomma }}</td>
             </tr>
             {% endfor %}
           </tbody>

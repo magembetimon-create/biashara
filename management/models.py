@@ -793,6 +793,8 @@ class customer_in_cell(models.Model):
 class waiter_clearing(models.Model):
     waiter = models.ForeignKey(InterprisePermissions,on_delete=models.CASCADE,null=True,blank=True,related_name='waiter_clearing_waiter_set')
     amount = models.DecimalField(max_digits=20,decimal_places=4)
+    owed_amount = models.DecimalField(max_digits=20, decimal_places=4, null=True, blank=True)
+    remaining_amount = models.DecimalField(max_digits=20, decimal_places=4, null=True, blank=True)
     tarehe = models.DateTimeField()
     By = models.ForeignKey(InterprisePermissions,on_delete=models.SET_NULL,null=True,blank=True,related_name='waiter_clearing_by_set')
 

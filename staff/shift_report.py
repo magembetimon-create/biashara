@@ -59,6 +59,46 @@ def completed_sale_lines_qs(duka, starts_at, period_end):
     )
 
 
+def shift_sales_paid_unpaid(duka, shifts):
+    """Invoice paid vs remaining debt per shift, using the same sale window as sales."""
+    now = timezone.now()
+    unpaid = {}
+    paid = {}
+    windows = []
+    for shift in shifts:
+        unpaid[shift.id] = Decimal('0')
+        paid[shift.id] = Decimal('0')
+        period_end = shift.ends_at or now
+        if shift.starts_at:
+            windows.append((shift.id, shift.starts_at, period_end))
+    if not windows:
+        return unpaid, paid
+
+    range_start = min(start for _, start, _ in windows)
+    range_end = max(end for _, _, end in windows)
+    sales = completed_sales_qs(duka, range_start, range_end).exclude(full_returned=True).values(
+        'amount', 'ilolipwa', 'event_at'
+    )
+    for row in sales:
+        event_at = row.get('event_at')
+        if not event_at:
+            continue
+        amt = _dec(row.get('amount'))
+        paid_amt = _dec(row.get('ilolipwa'))
+        if paid_amt < 0:
+            paid_amt = Decimal('0')
+        if paid_amt > amt:
+            paid_amt = amt
+        debt = amt - paid_amt
+        if debt < 0:
+            debt = Decimal('0')
+        for shift_id, starts_at, period_end in windows:
+            if starts_at <= event_at <= period_end:
+                unpaid[shift_id] += debt
+                paid[shift_id] += paid_amt
+    return unpaid, paid
+
+
 def shift_sales_amounts(duka, shifts):
     """Completed sales totals per shift, matching shift view Stock Movement sales."""
     now = timezone.now()
@@ -171,6 +211,7 @@ def build_shifts_period_report(duka, shifts):
     now = timezone.now()
     windows = _shift_time_windows(shifts, now)
     sales_map = shift_sales_amounts(duka, shifts)
+    unpaid_map, paid_map = shift_sales_paid_unpaid(duka, shifts)
     expenses_map = _amounts_in_windows(
         windows,
         toaCash.objects.filter(Interprise=duka.id, matumizi__isnull=False),
@@ -193,6 +234,8 @@ def build_shifts_period_report(duka, shifts):
         'opening': Decimal('0'),
         'closing': Decimal('0'),
         'sales': Decimal('0'),
+        'unpaid': Decimal('0'),
+        'paid': Decimal('0'),
         'expenses': Decimal('0'),
         'deposits': Decimal('0'),
         'cash_in': Decimal('0'),
@@ -204,6 +247,8 @@ def build_shifts_period_report(duka, shifts):
 
     for shift in shifts:
         sales = _dec(sales_map.get(shift.id, 0))
+        unpaid = _dec(unpaid_map.get(shift.id, 0))
+        paid = _dec(paid_map.get(shift.id, 0))
         expenses = _dec(expenses_map.get(shift.id, 0))
         deposits = _dec(deposits_map.get(shift.id, 0))
         cash_in = _dec(cash_in_map.get(shift.id, 0))
@@ -220,12 +265,16 @@ def build_shifts_period_report(duka, shifts):
             'opening': opening,
             'closing': closing,
             'sales': sales,
+            'unpaid': unpaid,
+            'paid': paid,
             'expenses': expenses,
             'deposits': deposits,
             'cash_in': cash_in,
             'balance': balance,
         })
         totals['sales'] += sales
+        totals['unpaid'] += unpaid
+        totals['paid'] += paid
         totals['expenses'] += expenses
         totals['deposits'] += deposits
         totals['cash_in'] += cash_in

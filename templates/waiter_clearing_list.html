@@ -3,7 +3,7 @@
 
 {% block Dashboard %}
 <div class="whiteBg py-4" style="min-height: 80vh;">
-  <div class="classic_div" style="max-width: 980px; margin: 0 auto;">
+  <div class="classic_div" style="max-width: 1180px; margin: 0 auto;">
 
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
       <div>
@@ -12,9 +12,9 @@
         </h5>
         <div class="text-muted small">
           {% if useri.langSet == 0 %}
-            Rekodi zote za malipo yaliyofanywa kwa wahudumu.
+            Rekodi za clearance, deni lililokuwa, kilichobaki, na pesa ambayo bado haijalipwa.
           {% else %}
-            All waiter payment clearing records.
+            Clearing records with amount owed, remaining after clearance, and current unpaid.
           {% endif %}
         </div>
       </div>
@@ -23,13 +23,53 @@
       </div>
     </div>
 
+    <form method="get" action="/mauzo/waiter_clearing_list" class="form-inline mb-3">
+      <label class="small mr-2 mb-1" for="waiterClearingFilter">
+        {% if useri.langSet == 0 %}Mhudumu{% else %}Waiter{% endif %}
+      </label>
+      <select name="waiter" id="waiterClearingFilter" class="form-control form-control-sm mr-2 mb-1" style="min-width:220px;" onchange="this.form.submit()">
+        <option value="">{% if useri.langSet == 0 %}Wahudumu wote{% else %}All waiters{% endif %}</option>
+        {% for w in waiter_choices %}
+        <option value="{{ w.id }}" {% if selected_waiter_id == w.id %}selected{% endif %}>{{ w.name }}</option>
+        {% endfor %}
+      </select>
+      {% if selected_waiter_id %}
+      <a href="/mauzo/waiter_clearing_list" class="btn btn-outline-secondary btn-sm mb-1">
+        {% if useri.langSet == 0 %}Ondoa chaguo{% else %}Clear filter{% endif %}
+      </a>
+      {% endif %}
+    </form>
+
+    {% if selected_waiter_id %}
+    <div class="row mb-3">
+      <div class="col-md-6 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Mhudumu{% else %}Waiter{% endif %}</div>
+          <div class="h5 mb-0">{{ selected_waiter_name|title }}</div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-2">
+        <div class="border rounded p-3 bg-white h-100">
+          <div class="text-muted small">{% if useri.langSet == 0 %}Pesa isiyolipwa sasa{% else %}Current unpaid{% endif %}</div>
+          <div class="h5 mb-0 text-danger">{{ duka.currencii }} {{ selected_unpaid|floatformat:0|intcomma }}</div>
+          <div class="small text-muted">
+            {{ selected_unpaid_orders }} {% if useri.langSet == 0 %}oda zisizoclear{% else %}uncleared order(s){% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <div class="table-responsive">
       <table class="table table-sm table-bordered table-hover bg-white">
         <thead class="thead-light">
           <tr>
             <th class="text-center" style="width:50px;">#</th>
             <th>{% if useri.langSet == 0 %}Mhudumu{% else %}Waiter{% endif %}</th>
-            <th class="text-right">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+            <th class="text-right">{% if useri.langSet == 0 %}Iliodaiwa{% else %}Owed{% endif %}</th>
+            <th class="text-right">{% if useri.langSet == 0 %}Iliyoclear{% else %}Cleared{% endif %}</th>
+            <th class="text-right">{% if useri.langSet == 0 %}Ilobaki baada ya clear{% else %}Left after clear{% endif %}</th>
+            <th class="text-right">{% if useri.langSet == 0 %}Haijalipwa sasa{% else %}Unpaid now{% endif %}</th>
             <th>{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
             <th>{% if useri.langSet == 0 %}Alifanya{% else %}Cleared By{% endif %}</th>
           </tr>
@@ -39,13 +79,21 @@
             {% for row in clearing_rows %}
             <tr>
               <td class="text-center text-muted small">{{ row.id }}</td>
-              <td>{{ row.waiter_name }}</td>
-              <td class="text-right font-weight-bold">
-                {{ duka.currencii }}&nbsp;{{ row.amount|floatformat:0|intcomma }}
+              <td>
+                <a href="/mauzo/waiter_clearing_list?waiter={{ row.waiter_id }}">{{ row.waiter_name }}</a>
+              </td>
+              <td class="text-right">{{ duka.currencii }}&nbsp;{{ row.owed_amount|floatformat:0|intcomma }}</td>
+              <td class="text-right font-weight-bold">{{ duka.currencii }}&nbsp;{{ row.amount|floatformat:0|intcomma }}</td>
+              <td class="text-right">{{ duka.currencii }}&nbsp;{{ row.remaining_amount|floatformat:0|intcomma }}</td>
+              <td class="text-right {% if row.current_unpaid %}text-danger{% endif %}">
+                {{ duka.currencii }}&nbsp;{{ row.current_unpaid|floatformat:0|intcomma }}
+                {% if row.unpaid_orders %}
+                <div class="small text-muted">{{ row.unpaid_orders }} {% if useri.langSet == 0 %}oda{% else %}order(s){% endif %}</div>
+                {% endif %}
               </td>
               <td class="small">
                 <script>
-                    document.write(moment('{{ row.tarehe|date:"r" }}').format('DD MMM YYYY HH:mm') + '</span>');
+                    document.write(moment('{{ row.tarehe|date:"r" }}').format('DD MMM YYYY HH:mm'));
                 </script>
               </td>
               <td class="small">{{ row.by_name|default:"-" }}</td>
@@ -53,7 +101,7 @@
             {% endfor %}
           {% else %}
             <tr>
-              <td colspan="5" class="text-center text-muted py-4">
+              <td colspan="8" class="text-center text-muted py-4">
                 {% if useri.langSet == 0 %}Hakuna rekodi za malipo.{% else %}No clearing records found.{% endif %}
               </td>
             </tr>
@@ -68,10 +116,10 @@
 
         {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page=1">&laquo;</a>
+          <a class="page-link" href="?{% if selected_waiter_id %}waiter={{ selected_waiter_id }}&{% endif %}page=1">&laquo;</a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+          <a class="page-link" href="?{% if selected_waiter_id %}waiter={{ selected_waiter_id }}&{% endif %}page={{ page_obj.previous_page_number }}">
             {% if useri.langSet == 0 %}Iliyopita{% else %}Prev{% endif %}
           </a>
         </li>
@@ -87,19 +135,19 @@
           <li class="page-item active"><span class="page-link">{{ num }}</span></li>
           {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            <a class="page-link" href="?{% if selected_waiter_id %}waiter={{ selected_waiter_id }}&{% endif %}page={{ num }}">{{ num }}</a>
           </li>
           {% endif %}
         {% endfor %}
 
         {% if page_obj.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+          <a class="page-link" href="?{% if selected_waiter_id %}waiter={{ selected_waiter_id }}&{% endif %}page={{ page_obj.next_page_number }}">
             {% if useri.langSet == 0 %}Inayofuata{% else %}Next{% endif %}
           </a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="?page={{ paginator.num_pages }}">&raquo;</a>
+          <a class="page-link" href="?{% if selected_waiter_id %}waiter={{ selected_waiter_id }}&{% endif %}page={{ paginator.num_pages }}">&raquo;</a>
         </li>
         {% else %}
         <li class="page-item disabled">

@@ -608,57 +608,57 @@ function renderStockMali(stock, cash) {
   $('#maliTable').html(`
     <tr>
       <td>${lang('Pesa (akaunti)','Cash (accounts)')}</td>
-      <td class="text-right">${floatValue(openCash)}</td>
-      <td class="text-right">${floatValue(closeCash)}</td>
-      <td class="text-right" ${changeTone(dCash)}>${signedAmt(dCash)}</td>
+      <td class="ie-amt">${floatValue(openCash)}</td>
+      <td class="ie-amt">${floatValue(closeCash)}</td>
+      <td class="ie-amt" ${changeTone(dCash)}>${signedAmt(dCash)}</td>
     </tr>
     <tr>
       <td>${lang('Bidhaa (bei ya ununuzi)','Goods (purchase price)')}</td>
-      <td class="text-right">${floatValue(openSt)}</td>
-      <td class="text-right">${floatValue(closeSt)}</td>
-      <td class="text-right" ${changeTone(dSt)}>${signedAmt(dSt)}</td>
+      <td class="ie-amt">${floatValue(openSt)}</td>
+      <td class="ie-amt">${floatValue(closeSt)}</td>
+      <td class="ie-amt" ${changeTone(dSt)}>${signedAmt(dSt)}</td>
     </tr>
     <tr class="weight600">
       <td>${lang('Jumla ya mali','Total assets')}</td>
-      <td class="text-right">${floatValue(openW)}</td>
-      <td class="text-right">${floatValue(closeW)}</td>
-      <td class="text-right" ${changeTone(dW)}>${signedAmt(dW)}</td>
+      <td class="ie-amt">${floatValue(openW)}</td>
+      <td class="ie-amt">${floatValue(closeW)}</td>
+      <td class="ie-amt" ${changeTone(dW)}>${signedAmt(dW)}</td>
     </tr>
   `)
 
   let flow = `
     <tr class="weight600" style="background-color: rgba(160, 57, 49, 0.13)">
       <td>${lang('Bidhaa kufungua','Opening goods')}</td>
-      <td class="text-right">${floatValue(openSt)}</td>
+      <td class="ie-amt">${floatValue(openSt)}</td>
     </tr>`
   if (Number(stock.purchases) > 0) {
-    flow += `<tr><td>${lang('+ Manunuzi yaliyopokelewa','+ Purchases received')}</td><td class="text-right">${floatValue(stock.purchases)}</td></tr>`
+    flow += `<tr><td>${lang('+ Manunuzi yaliyopokelewa','+ Purchases received')}</td><td class="ie-amt">${floatValue(stock.purchases)}</td></tr>`
   }
   if (Number(stock.produced) > 0) {
-    flow += `<tr><td>${lang('+ Uzalishaji','+ Production')}</td><td class="text-right">${floatValue(stock.produced)}</td></tr>`
+    flow += `<tr><td>${lang('+ Uzalishaji','+ Production')}</td><td class="ie-amt">${floatValue(stock.produced)}</td></tr>`
   }
   if (Number(stock.received) > 0) {
-    flow += `<tr><td>${lang('+ Zilizopokelewa (uhamisho)','+ Received (transfer)')}</td><td class="text-right">${floatValue(stock.received)}</td></tr>`
+    flow += `<tr><td>${lang('+ Zilizopokelewa (uhamisho)','+ Received (transfer)')}</td><td class="ie-amt">${floatValue(stock.received)}</td></tr>`
   }
   if (Number(stock.added) > 0) {
-    flow += `<tr><td>${lang('+ Zilizongezwa stokini','+ Stock additions')}</td><td class="text-right">${floatValue(stock.added)}</td></tr>`
+    flow += `<tr><td>${lang('+ Zilizongezwa stokini','+ Stock additions')}</td><td class="ie-amt">${floatValue(stock.added)}</td></tr>`
   }
   if (Number(stock.cogs) > 0) {
-    flow += `<tr><td>${lang('− Gharama ya zilizouzwa','− Cost of goods sold')}</td><td class="text-right">${floatValue(stock.cogs)}</td></tr>`
+    flow += `<tr><td>${lang('− Gharama ya zilizouzwa','− Cost of goods sold')}</td><td class="ie-amt">${floatValue(stock.cogs)}</td></tr>`
   }
   if (Number(stock.reductions) > 0) {
-    flow += `<tr><td>${lang('− Uharibifu / matumizi / zilizopotea','− Damage / usage / loss')}</td><td class="text-right">${floatValue(stock.reductions)}</td></tr>`
+    flow += `<tr><td>${lang('− Uharibifu / matumizi / zilizopotea','− Damage / usage / loss')}</td><td class="ie-amt">${floatValue(stock.reductions)}</td></tr>`
   }
   if (Number(stock.transferred) > 0) {
-    flow += `<tr><td>${lang('− Uhamisho nje','− Transferred out')}</td><td class="text-right">${floatValue(stock.transferred)}</td></tr>`
+    flow += `<tr><td>${lang('− Uhamisho nje','− Transferred out')}</td><td class="ie-amt">${floatValue(stock.transferred)}</td></tr>`
   }
   if (Number(stock.pu_returns) > 0) {
-    flow += `<tr><td>${lang('− Kurudisha manunuzi','− Purchase returns')}</td><td class="text-right">${floatValue(stock.pu_returns)}</td></tr>`
+    flow += `<tr><td>${lang('− Kurudisha manunuzi','− Purchase returns')}</td><td class="ie-amt">${floatValue(stock.pu_returns)}</td></tr>`
   }
   flow += `
     <tr class="weight600">
       <td>${lang('Bidhaa kufunga','Closing goods')}</td>
-      <td class="text-right">${floatValue(closeSt)}</td>
+      <td class="ie-amt">${floatValue(closeSt)}</td>
     </tr>`
 
   $('#stockFlowTable').html(flow)

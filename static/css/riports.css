@@ -117,4 +117,26 @@
     cursor: pointer;
 }
 
+#maliWrap .ie-compact-wrap {
+    overflow: visible;
+}
+#maliWrap .ie-compact-table {
+    min-width: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    table-layout: auto;
+}
+#maliWrap .ie-compact-table thead tr th,
+#maliWrap .ie-compact-table td {
+    white-space: normal !important;
+    word-break: break-word;
+    vertical-align: top;
+}
+#maliWrap .ie-compact-table .ie-amt {
+    white-space: nowrap !important;
+    width: 1%;
+    text-align: right;
+    vertical-align: middle;
+}
+
 

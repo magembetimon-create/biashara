@@ -2,6 +2,18 @@
 {% load humanize %}
 
 {% block Dashboard %}
+<style>
+  .waiter-kebab-dot {
+    display: block;
+    width: 4px;
+    height: 4px;
+    margin: 2px auto;
+    border-radius: 50%;
+    background: #444;
+  }
+  #waiterOrderDetailsModal .table-responsive { overflow: visible; }
+  #waiterOrderDetailsModal .dropdown-menu { z-index: 2060; min-width: 220px; }
+</style>
 <div class="whiteBg py-4" style="min-height: 80vh;">
   <div class="classic_div" style="max-width: 980px; margin: 0 auto;">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
@@ -22,6 +34,12 @@
         <a href="/mauzo/waiter_orders_summary" class="btn btn-outline-secondary btn-sm mr-1">
           &larr; {% if useri.langSet == 0 %}Orodha ya Wahudumu{% else %}Waiter List{% endif %}
         </a>
+        {% endif %}
+        {% if can_remap_clearing_payments %}
+        <button type="button" class="btn btn-sm btn-warning" id="remapWaiterClearingBtn">
+          {% if useri.langSet == 0 %}Weka upya malipo ya Cash{% else %}Remap cash payments{% endif %}
+          <span class="badge badge-light">{{ clearing_cash_fix_counts.wrong|add:clearing_cash_fix_counts.missing }}</span>
+        </button>
         {% endif %}
         {% include 'includes/waiter_manager_tabs.html' with waiter_tab='orders' %}
       </div>
@@ -295,6 +313,23 @@
         <div id="waiterOrderModalContent" class="small text-muted">
           {% if useri.langSet == 0 %}Inapakia...{% else %}Loading...{% endif %}
         </div>
+        <div id="waiterReturnQtyPanel" class="border rounded p-2 mt-3 bg-light d-none">
+          <div class="small font-weight-bold mb-1" id="waiterReturnQtyTitle"></div>
+          <div class="form-row align-items-end">
+            <div class="col-sm-6">
+              <label class="small mb-1" for="waiterReturnQtyInput">{% if useri.langSet == 0 %}Qty iliyorudishwa{% else %}Returned qty{% endif %}</label>
+              <input type="number" min="1" step="1" class="form-control form-control-sm" id="waiterReturnQtyInput">
+            </div>
+            <div class="col-sm-6 mt-2 mt-sm-0">
+              <button type="button" class="btn btn-sm btn-primary" id="waiterReturnQtySave">
+                {% if useri.langSet == 0 %}Hifadhi{% else %}Save{% endif %}
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="waiterReturnQtyCancel">
+                {% if useri.langSet == 0 %}Ghairi{% else %}Cancel{% endif %}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer d-flex justify-content-between">
         <button type="button" class="btn btn-sm btn-outline-danger" id="waiterOrderDeleteBtn" style="display:none;">
@@ -363,7 +398,15 @@
     var modalMeta = document.getElementById('waiterOrderModalMeta');
     var modalContent = document.getElementById('waiterOrderModalContent');
     var deleteBtn = document.getElementById('waiterOrderDeleteBtn');
+    var returnPanel = document.getElementById('waiterReturnQtyPanel');
+    var returnTitle = document.getElementById('waiterReturnQtyTitle');
+    var returnInput = document.getElementById('waiterReturnQtyInput');
+    var returnSave = document.getElementById('waiterReturnQtySave');
+    var returnCancel = document.getElementById('waiterReturnQtyCancel');
     var selectedOrderId = 0;
+    var returnItemId = 0;
+    var canDeleteItems = false;
+    var currencyCode = '{{ duka.currencii }}';
     var openClearBtn = document.getElementById('openWaiterClearingModal');
     var clearAccountsBody = document.getElementById('waiterClearingAccountsBody');
     var recordsWrap = document.getElementById('waiterPaymentRecordsWrap');
@@ -608,7 +651,86 @@
       });
     }
 
-    function renderOrderItems(items, currency) {
+    function hideReturnPanel() {
+      if (returnPanel) returnPanel.classList.add('d-none');
+      returnItemId = 0;
+    }
+
+    function updateListRowAmount(orderId, amount) {
+      if (!selectedBody) return;
+      var row = selectedBody.querySelector('tr[data-id="' + orderId + '"]');
+      if (!row) return;
+      row.setAttribute('data-amount', amount);
+      var tds = row.querySelectorAll('td');
+      if (tds.length) {
+        tds[tds.length - 1].textContent = currencyCode + ' ' + Number(amount || 0).toLocaleString();
+      }
+    }
+
+    function applyOrderDetails(data) {
+      var order = data.order || {};
+      canDeleteItems = !!data.can_delete;
+      selectedOrderId = Number(order.id || selectedOrderId);
+      modalTitle.textContent = '{% if useri.langSet == 0 %}Order{% else %}Order{% endif %} ' + (order.code || '-');
+      modalMeta.textContent = '{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}: ' + (order.table || '-') + ' | {% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}: ' + (order.place || '-') + ' | {% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}: ' + currencyCode + ' ' + Number(order.amount || 0).toLocaleString();
+      modalContent.innerHTML = renderOrderItems(data.items || [], currencyCode, canDeleteItems);
+      deleteBtn.style.display = canDeleteItems ? '' : 'none';
+      hideReturnPanel();
+      updateListRowAmount(selectedOrderId, order.amount || 0);
+    }
+
+    function waiterPost(url, body) {
+      return fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-CSRFToken': getCookie('csrftoken') || ''
+        },
+        body: body
+      }).then(function (res) { return res.json(); });
+    }
+
+    function showWaiterLoading() {
+      $('#loadMe').modal('show');
+    }
+
+    function hideWaiterLoading() {
+      $('#loadMe').modal('hide');
+      if (typeof hideLoading === 'function') hideLoading();
+    }
+
+    function waiterMutateAndReload(url, body, failMsg) {
+      showWaiterLoading();
+      return waiterPost(url, body)
+        .then(function (data) {
+          if (data && data.success) {
+            $('#loadMe').modal('hide');
+            if (typeof hideLoading === 'function') hideLoading();
+            window.location.reload();
+            return data;
+          }
+          hideWaiterLoading();
+          alert((data && (data.msg || data.msg_swa || data.msg_eng)) || failMsg);
+          return data;
+        })
+        .catch(function () {
+          hideWaiterLoading();
+          alert(failMsg);
+        });
+    }
+
+    function deleteWholeOrder() {
+      if (!selectedOrderId) return;
+      var ok = confirm('{% if useri.langSet == 0 %}Una uhakika unataka kufuta order hii?{% else %}Are you sure you want to delete this order?{% endif %}');
+      if (!ok) return;
+      waiterMutateAndReload(
+        '/mauzo/waiter_summary_delete_order',
+        'order=' + encodeURIComponent(selectedOrderId),
+        '{% if useri.langSet == 0 %}Imeshindikana kufuta order.{% else %}Failed to delete order.{% endif %}'
+      );
+    }
+
+    function renderOrderItems(items, currency, canDeleteItems) {
       if (!items || !items.length) {
         return '{% if useri.langSet == 0 %}Hakuna items kwenye order hii.{% else %}No items found for this order.{% endif %}';
       }
@@ -621,17 +743,36 @@
       html += '<th>{% if useri.langSet == 0 %}Kipimo{% else %}Unit{% endif %}</th>';
       html += '<th class="text-right">{% if useri.langSet == 0 %}Bei{% else %}Price{% endif %}</th>';
       html += '<th class="text-right">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</th>';
+      if (canDeleteItems) {
+        html += '<th class="text-right"></th>';
+      }
       html += '</tr></thead><tbody>';
 
       for (var i = 0; i < items.length; i++) {
         var it = items[i] || {};
+        var qty = Number(it.qty || 0);
         html += '<tr>';
         html += '<td>' + (i + 1) + '</td>';
         html += '<td>' + (it.name || '-') + '</td>';
-        html += '<td class="text-right">' + (it.qty || 0) + '</td>';
+        html += '<td class="text-right">' + qty + (it.returned ? ' <span class="text-muted small">(-' + it.returned + ')</span>' : '') + '</td>';
         html += '<td>' + (it.unit || '-') + '</td>';
         html += '<td class="text-right">' + currency + ' ' + Number(it.price || 0).toLocaleString() + '</td>';
         html += '<td class="text-right">' + currency + ' ' + Number(it.total || 0).toLocaleString() + '</td>';
+        if (canDeleteItems) {
+          html += '<td class="text-right">';
+          html += '<div class="dropdown">';
+          html += '<button class="btn btn-sm btn-light py-1 px-2" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{% if useri.langSet == 0 %}Vitendo{% else %}Actions{% endif %}">';
+          html += '<span class="waiter-kebab-dot"></span><span class="waiter-kebab-dot"></span><span class="waiter-kebab-dot"></span>';
+          html += '</button>';
+          html += '<div class="dropdown-menu dropdown-menu-right">';
+          html += '<button type="button" class="dropdown-item waiter-delete-item" data-item="' + (it.id || '') + '">{% if useri.langSet == 0 %}Futa item{% else %}Delete item{% endif %}</button>';
+          if (qty > 1) {
+            html += '<button type="button" class="dropdown-item waiter-return-qty" data-item="' + (it.id || '') + '" data-name="' + String(it.name || '').replace(/"/g, '&quot;') + '" data-qty="' + qty + '">{% if useri.langSet == 0 %}Weka qty iliyorudishwa{% else %}Set returned qty{% endif %}</button>';
+          }
+          html += '<div class="dropdown-divider"></div>';
+          html += '<button type="button" class="dropdown-item text-danger waiter-delete-whole-order">{% if useri.langSet == 0 %}Futa order yote{% else %}Delete whole order{% endif %}</button>';
+          html += '</div></div></td>';
+        }
         html += '</tr>';
       }
 
@@ -651,6 +792,7 @@
         modalMeta.textContent = '{% if useri.langSet == 0 %}Inapakia...{% else %}Loading...{% endif %}';
         modalContent.innerHTML = '{% if useri.langSet == 0 %}Inapakia items...{% else %}Loading items...{% endif %}';
         deleteBtn.style.display = 'none';
+        hideReturnPanel();
         modal.modal('show');
 
         fetch('/mauzo/waiter_summary_order_details?order=' + selectedOrderId)
@@ -662,12 +804,7 @@
               deleteBtn.style.display = 'none';
               return;
             }
-
-            var order = data.order || {};
-            modalTitle.textContent = '{% if useri.langSet == 0 %}Order{% else %}Order{% endif %} ' + (order.code || '-');
-            modalMeta.textContent = '{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}: ' + (order.table || '-') + ' | {% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}: ' + (order.place || '-') + ' | {% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}: {{ duka.currencii }} ' + Number(order.amount || 0).toLocaleString();
-            modalContent.innerHTML = renderOrderItems(data.items || [], '{{ duka.currencii }}');
-            deleteBtn.style.display = data.can_delete ? '' : 'none';
+            applyOrderDetails(data);
           })
           .catch(function () {
             modalMeta.textContent = '';
@@ -677,33 +814,98 @@
       });
     }
 
-    if (deleteBtn) {
-      deleteBtn.addEventListener('click', function () {
-        if (!selectedOrderId) return;
-        var ok = confirm('{% if useri.langSet == 0 %}Una uhakika unataka kufuta order hii?{% else %}Are you sure you want to delete this order?{% endif %}');
+    var remapBtn = document.getElementById('remapWaiterClearingBtn');
+    if (remapBtn) {
+      remapBtn.addEventListener('click', function () {
+        var ok = confirm('{% if useri.langSet == 0 %}Hii itahamisha malipo ya clearance yaliyokwenda akaunti nyingine ya Cash kwenda Cash account ya duka hili. Una uhakika?{% else %}This will move previous waiter-clearing cash that went to the wrong Cash account onto this shop Cash account. Continue?{% endif %}');
         if (!ok) return;
-
-        fetch('/mauzo/waiter_summary_delete_order', {
+        remapBtn.disabled = true;
+        fetch('/mauzo/waiter_remap_clearing_payments', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'X-CSRFToken': getCookie('csrftoken') || ''
           },
-          body: 'order=' + encodeURIComponent(selectedOrderId)
+          body: 'confirm=1'
         })
           .then(function (res) { return res.json(); })
           .then(function (data) {
+            remapBtn.disabled = false;
             if (data && data.success) {
-              modal.modal('hide');
+              alert(data.msg_swa || data.msg_eng || 'OK');
               window.location.reload();
             } else {
-              alert((data && data.msg) ? data.msg : '{% if useri.langSet == 0 %}Imeshindikana kufuta order.{% else %}Failed to delete order.{% endif %}');
+              alert((data && (data.msg_swa || data.msg_eng || data.msg)) || '{% if useri.langSet == 0 %}Imeshindikana.{% else %}Failed.{% endif %}');
             }
           })
           .catch(function () {
-            alert('{% if useri.langSet == 0 %}Imeshindikana kufuta order.{% else %}Failed to delete order.{% endif %}');
+            remapBtn.disabled = false;
+            alert('{% if useri.langSet == 0 %}Imeshindikana.{% else %}Failed.{% endif %}');
           });
       });
+    }
+
+    if (modalContent) {
+      modalContent.addEventListener('click', function (ev) {
+        var delItem = ev.target.closest('.waiter-delete-item');
+        if (delItem) {
+          ev.preventDefault();
+          var itemId = Number(delItem.getAttribute('data-item') || 0);
+          if (!selectedOrderId || !itemId) return;
+          var ok = confirm('{% if useri.langSet == 0 %}Futa item hii kwenye order?{% else %}Delete this item from the order?{% endif %}');
+          if (!ok) return;
+          waiterMutateAndReload(
+            '/mauzo/waiter_summary_delete_item',
+            'order=' + encodeURIComponent(selectedOrderId) + '&item=' + encodeURIComponent(itemId),
+            '{% if useri.langSet == 0 %}Imeshindikana kufuta item.{% else %}Failed to delete item.{% endif %}'
+          );
+          return;
+        }
+
+        var retItem = ev.target.closest('.waiter-return-qty');
+        if (retItem) {
+          ev.preventDefault();
+          returnItemId = Number(retItem.getAttribute('data-item') || 0);
+          var maxQty = Number(retItem.getAttribute('data-qty') || 0);
+          var itemName = retItem.getAttribute('data-name') || '';
+          if (!returnPanel || !returnItemId) return;
+          returnTitle.textContent = (itemName || '{% if useri.langSet == 0 %}Item{% else %}Item{% endif %}') + ' — {% if useri.langSet == 0 %}Qty sasa{% else %}Current qty{% endif %}: ' + maxQty;
+          returnInput.max = Math.max(1, maxQty);
+          returnInput.value = maxQty > 1 ? 1 : maxQty;
+          returnPanel.classList.remove('d-none');
+          returnInput.focus();
+          return;
+        }
+
+        if (ev.target.closest('.waiter-delete-whole-order')) {
+          ev.preventDefault();
+          deleteWholeOrder();
+        }
+      });
+    }
+
+    if (returnCancel) {
+      returnCancel.addEventListener('click', hideReturnPanel);
+    }
+
+    if (returnSave) {
+      returnSave.addEventListener('click', function () {
+        if (!selectedOrderId || !returnItemId) return;
+        var qty = Number(returnInput && returnInput.value ? returnInput.value : 0);
+        if (!qty || qty <= 0) {
+          alert('{% if useri.langSet == 0 %}Weka idadi sahihi ya zilizorudishwa.{% else %}Enter a valid returned quantity.{% endif %}');
+          return;
+        }
+        waiterMutateAndReload(
+          '/mauzo/waiter_summary_return_item_qty',
+          'order=' + encodeURIComponent(selectedOrderId) + '&item=' + encodeURIComponent(returnItemId) + '&qty=' + encodeURIComponent(qty),
+          '{% if useri.langSet == 0 %}Imeshindikana.{% else %}Failed.{% endif %}'
+        );
+      });
+    }
+
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', deleteWholeOrder);
     }
   })();
 </script>

@@ -2,7 +2,7 @@
 {% load humanize %}
 {% load static %}
 {% block Dashboard %}
-<link rel="stylesheet" href="{% static 'css/riports.css' %}">
+<link rel="stylesheet" href="{% static 'css/riports.css' %}?v=ie2">
 
 <div  class=" Analytical whiteBg tab_div p-md-4 p-2" style="min-height: 100vh;" id="general-panel">
     
@@ -230,26 +230,26 @@
             <h6 class="weight600 mb-2">{% if useri.langSet == 0 %}Mali (pesa na bidhaa){% else %}Assets (cash and goods){% endif %}
               <span class="text-muted weight400 smallFont">{% if useri.langSet == 0 %}— bidhaa kwa bei ya ununuzi{% else %}— goods at purchase price{% endif %}</span>
             </h6>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover" style="max-width:720px">
+            <div class="ie-compact-wrap">
+                <table class="table table-sm table-hover ie-compact-table">
                     <thead>
                         <tr>
                             <th></th>
-                            <th class="text-right">{% if useri.langSet == 0 %}Kufungua{% else %}Opening{% endif %} <span class="text-primary latoFont smallFont">({{duka.currencii}})</span></th>
-                            <th class="text-right">{% if useri.langSet == 0 %}Kufunga{% else %}Closing{% endif %}</th>
-                            <th class="text-right">{% if useri.langSet == 0 %}Mabadiliko{% else %}Change{% endif %}</th>
+                            <th class="text-right ie-amt">{% if useri.langSet == 0 %}Kufungua{% else %}Opening{% endif %} <span class="text-primary latoFont smallFont">({{duka.currencii}})</span></th>
+                            <th class="text-right ie-amt">{% if useri.langSet == 0 %}Kufunga{% else %}Closing{% endif %}</th>
+                            <th class="text-right ie-amt">{% if useri.langSet == 0 %}Mabadiliko{% else %}Change{% endif %}</th>
                         </tr>
                     </thead>
                     <tbody id="maliTable"></tbody>
                 </table>
             </div>
             <h6 class="weight500 mt-3 mb-2">{% if useri.langSet == 0 %}Bidhaa kwa kipindi{% else %}Goods this period{% endif %}</h6>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover" style="max-width:520px">
+            <div class="ie-compact-wrap">
+                <table class="table table-sm table-hover ie-compact-table">
                     <thead>
                         <tr>
                             <th>{% if useri.langSet == 0 %}Kipengele{% else %}Item{% endif %}</th>
-                            <th class="text-right">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %} <span class="text-primary latoFont smallFont">({{duka.currencii}})</span></th>
+                            <th class="text-right ie-amt">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %} <span class="text-primary latoFont smallFont">({{duka.currencii}})</span></th>
                         </tr>
                     </thead>
                     <tbody id="stockFlowTable"></tbody>
@@ -893,7 +893,7 @@
 
 {% block billmpya %}
    <script src="{% static 'js/riports/repots.js' %}">  </script>
-   <script src="{% static 'js/riports/payments/incomeExpenditure.js' %}">  </script>
+   <script src="{% static 'js/riports/payments/incomeExpenditure.js' %}?v=ie2">  </script>
 {% endblock %}
  
 {% block dash-mapper %}

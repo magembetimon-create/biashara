@@ -50,6 +50,8 @@
       <div><div class="label">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</div><strong>{{ report_totals.orders|intcomma }}</strong></div>
       <div><div class="label">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</div><strong>{{ report_totals.items_qty|floatformat:2|intcomma }}</strong></div>
       <div><div class="label">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</div><strong>{{ duka.currencii }} {{ report_totals.amount|floatformat:0|intcomma }}</strong></div>
+      <div><div class="label">{% if useri.langSet == 0 %}Iliyolipwa{% else %}Paid{% endif %}</div><strong>{{ duka.currencii }} {{ report_totals.paid_amount|floatformat:0|intcomma }}</strong></div>
+      <div><div class="label">{% if useri.langSet == 0 %}Deni lililobaki{% else %}Remaining debt{% endif %}</div><strong>{{ duka.currencii }} {{ report_totals.remaining_amount|floatformat:0|intcomma }}</strong></div>
     </div>
 
     {% if selected_waiter %}
@@ -62,7 +64,9 @@
           {% if show_branch_col %}<th class="text-left">{% if useri.langSet == 0 %}Counter{% else %}Counter{% endif %}</th>{% endif %}
           <th class="text-left">{% if useri.langSet == 0 %}Siku{% else %}Day{% endif %}</th>
           <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
-          <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Jumla{% else %}Amount{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Iliyolipwa{% else %}Paid{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Baki{% else %}Remaining{% endif %}</th>
         </tr>
       </thead>
       <tbody>
@@ -73,6 +77,8 @@
           <td>{{ od.service_date|date:"d/m/Y" }}</td>
           <td>{{ od.items_qty|floatformat:2|intcomma }}</td>
           <td>{{ duka.currencii }} {{ od.amount|floatformat:0|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ od.paid_amount|floatformat:0|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ od.remaining_amount|floatformat:0|intcomma }}</td>
         </tr>
         {% empty %}
         <tr><td colspan="5">{% if useri.langSet == 0 %}Hakuna oda.{% else %}No orders.{% endif %}</td></tr>
@@ -88,7 +94,9 @@
           {% if show_branch_col %}<th class="text-left">{% if useri.langSet == 0 %}Counter{% else %}Counter{% endif %}</th>{% endif %}
           <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</th>
           <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
-          <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Jumla{% else %}Amount{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Iliyolipwa{% else %}Paid{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Deni lililobaki{% else %}Remaining debt{% endif %}</th>
         </tr>
       </thead>
       <tbody>
@@ -100,9 +108,11 @@
           <td>{{ row.orders_count|intcomma }}</td>
           <td>{{ row.items_qty|floatformat:2|intcomma }}</td>
           <td>{{ duka.currencii }} {{ row.total_amount|floatformat:0|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ row.paid_amount|floatformat:0|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ row.remaining_amount|floatformat:0|intcomma }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="6">{% if useri.langSet == 0 %}Hakuna oda.{% else %}No orders.{% endif %}</td></tr>
+        <tr><td colspan="8">{% if useri.langSet == 0 %}Hakuna oda.{% else %}No orders.{% endif %}</td></tr>
         {% endfor %}
       </tbody>
       <tfoot>
@@ -111,6 +121,8 @@
           <td>{{ report_totals.orders|intcomma }}</td>
           <td>{{ report_totals.items_qty|floatformat:2|intcomma }}</td>
           <td>{{ duka.currencii }} {{ report_totals.amount|floatformat:0|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ report_totals.paid_amount|floatformat:0|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ report_totals.remaining_amount|floatformat:0|intcomma }}</td>
         </tr>
       </tfoot>
     </table>
@@ -123,7 +135,9 @@
           <th class="text-left">{% if useri.langSet == 0 %}Wahudumu{% else %}Waiters{% endif %}</th>
           <th class="text-left">{% if useri.langSet == 0 %}Oda{% else %}Orders{% endif %}</th>
           <th class="text-left">{% if useri.langSet == 0 %}Items{% else %}Items{% endif %}</th>
-          <th class="text-left">{% if useri.langSet == 0 %}Amount{% else %}Amount{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Jumla{% else %}Amount{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Iliyolipwa{% else %}Paid{% endif %}</th>
+          <th class="text-left">{% if useri.langSet == 0 %}Deni lililobaki{% else %}Remaining debt{% endif %}</th>
         </tr>
       </thead>
       <tbody>
@@ -134,6 +148,8 @@
           <td>{{ day.orders_count|intcomma }}</td>
           <td>{{ day.items_qty|floatformat:2|intcomma }}</td>
           <td>{{ duka.currencii }} {{ day.total_amount|floatformat:0|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ day.paid_amount|floatformat:0|intcomma }}</td>
+          <td>{{ duka.currencii }} {{ day.remaining_amount|floatformat:0|intcomma }}</td>
         </tr>
         {% endfor %}
       </tbody>

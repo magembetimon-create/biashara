@@ -1837,6 +1837,24 @@ def _ps_overview(todo, account_id=0, recorded_by=0, direction='', branch_id=0):
     return overview
 
 
+def _ps_statement_maelezo(text):
+    raw = ' '.join(str(text or '').split())
+    if not raw:
+        return ''
+    waiter = re.search(
+        r'Waiter clearing\s*-\s*(.*?)\.\s*Orders total:\s*([\d.,]+)',
+        raw,
+        flags=re.I,
+    )
+    if waiter:
+        return f'Waiter clearing - {waiter.group(1).strip()}. Orders total: {waiter.group(2)}'
+    cleaned = re.sub(r'(?:,\s*)?(?:INVO-|ORD-)[\w./-]+', '', raw)
+    cleaned = re.sub(r'\s{2,}', ' ', cleaned)
+    cleaned = re.sub(r'\s*\(\s*\)', '', cleaned)
+    cleaned = re.sub(r'\s*Mkupuo:\s*', 'Mkupuo ', cleaned, flags=re.I)
+    return cleaned.strip(' .,;')
+
+
 def _ps_serialize_weka(rows):
     out = []
     for row in rows:
@@ -1854,7 +1872,7 @@ def _ps_serialize_weka(rows):
             'recorded_by': f"{row.get('BFname') or ''} {row.get('BLname') or ''}".strip(),
             'kutoka': row.get('kutoka') or '',
             'kwenda': '',
-            'maelezo': row.get('maelezo') or '',
+            'maelezo': _ps_statement_maelezo(row.get('maelezo') or ''),
             'mauzo': bool(row.get('mauzo')),
             'order': bool(row.get('order')),
             'invo_code': row.get('invo_code') or '',
@@ -1882,7 +1900,7 @@ def _ps_serialize_toa(rows):
             'recorded_by': f"{row.get('BFname') or ''} {row.get('BLname') or ''}".strip(),
             'kutoka': '',
             'kwenda': row.get('kwenda') or '',
-            'maelezo': row.get('maelezo') or '',
+            'maelezo': _ps_statement_maelezo(row.get('maelezo') or ''),
             'kuhamisha': bool(row.get('kuhamisha')),
             'personal': bool(row.get('personal')),
             'expense_name': row.get('expense_name') or '',
