@@ -820,6 +820,7 @@
         var ok = confirm('{% if useri.langSet == 0 %}Hii itahamisha malipo ya clearance yaliyokwenda akaunti nyingine ya Cash kwenda Cash account ya duka hili. Una uhakika?{% else %}This will move previous waiter-clearing cash that went to the wrong Cash account onto this shop Cash account. Continue?{% endif %}');
         if (!ok) return;
         remapBtn.disabled = true;
+        if (typeof $('#loadMe').modal === 'function') $('#loadMe').modal('show');
         fetch('/mauzo/waiter_remap_clearing_payments', {
           method: 'POST',
           headers: {
@@ -828,9 +829,29 @@
           },
           body: 'confirm=1'
         })
-          .then(function (res) { return res.json(); })
+          .then(function (res) {
+            return res.text().then(function (text) {
+              var data = null;
+              try {
+                data = text ? JSON.parse(text) : {};
+              } catch (e) {
+                var plain = String(text || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 280);
+                data = {
+                  success: false,
+                  msg: 'HTTP ' + res.status + (plain ? ': ' + plain : ''),
+                  msg_swa: 'Imeshindikana (HTTP ' + res.status + ')' + (plain ? ': ' + plain : ''),
+                  msg_eng: 'Failed (HTTP ' + res.status + ')' + (plain ? ': ' + plain : '')
+                };
+              }
+              if (!data) data = {};
+              if (!res.ok && data.success !== true) data.success = false;
+              return data;
+            });
+          })
           .then(function (data) {
             remapBtn.disabled = false;
+            if (typeof $('#loadMe').modal === 'function') $('#loadMe').modal('hide');
+            if (typeof hideLoading === 'function') hideLoading();
             if (data && data.success) {
               alert(data.msg_swa || data.msg_eng || 'OK');
               window.location.reload();
@@ -838,9 +859,11 @@
               alert((data && (data.msg_swa || data.msg_eng || data.msg)) || '{% if useri.langSet == 0 %}Imeshindikana.{% else %}Failed.{% endif %}');
             }
           })
-          .catch(function () {
+          .catch(function (err) {
             remapBtn.disabled = false;
-            alert('{% if useri.langSet == 0 %}Imeshindikana.{% else %}Failed.{% endif %}');
+            if (typeof $('#loadMe').modal === 'function') $('#loadMe').modal('hide');
+            if (typeof hideLoading === 'function') hideLoading();
+            alert('{% if useri.langSet == 0 %}Imeshindikana.{% else %}Failed.{% endif %} ' + (err && err.message ? err.message : ''));
           });
       });
     }

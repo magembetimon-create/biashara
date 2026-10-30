@@ -4694,101 +4694,128 @@ def _waiter_clearing_cash_fix_counts(duka):
       return {'wrong': int(wrong), 'missing': int(missing)}
 
 
+@csrf_exempt
 @login_required(login_url='login')
 def waiter_remap_clearing_payments(request):
       if request.method != 'POST':
-            return JsonResponse({'success': False, 'msg': 'Invalid method'})
-
-      todo = newInvo_funct(request)
-      duka = todo.get('duka')
-      cheo = todo.get('cheo')
-      if not duka or not duka.waiter_counter:
-            return JsonResponse({'success': False, 'msg': 'Waiter counter is disabled'})
-      can_fix = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_check_up', False)))
-      if not can_fix:
-            return JsonResponse({'success': False, 'msg': 'Permission denied'})
-
-      cash_acc = _shop_cash_account(duka)
-      if not cash_acc:
             return JsonResponse({
                   'success': False,
-                  'msg_swa': 'Hakuna akaunti ya Cash ya duka hili.',
-                  'msg_eng': 'This shop has no Cash account.',
+                  'msg': 'Invalid method',
+                  'msg_swa': 'Ombi si sahihi (POST tu).',
+                  'msg_eng': 'Invalid method',
             })
 
-      moved = 0
-      created = 0
-      skipped = 0
-      with transaction.atomic():
-            cash_acc = PaymentAkaunts.objects.select_for_update().get(pk=cash_acc.id)
-            clearings = waiter_clearing.objects.filter(waiter__Interprise=duka).order_by('pk')
-            for rec in clearings:
-                  wekas = list(
-                        wekaCash.objects.select_related('Akaunt').filter(from_waiter_payments=rec)
-                  )
-                  cash_wekas = [
-                        w for w in wekas
-                        if w.Akaunt_id and str(getattr(w.Akaunt, 'aina', '') or '').lower() == 'cash'
-                  ]
-                  if not wekas:
-                        amt = Decimal(str(rec.amount or 0))
-                        if amt <= 0:
-                              skipped += 1
-                              continue
-                        before = Decimal(str(cash_acc.Amount or 0))
-                        after = before + amt
-                        cash_acc.Amount = after
-                        cash_acc.save(update_fields=['Amount'])
-                        cash_in = wekaCash()
-                        cash_in.Interprise = duka
-                        cash_in.tarehe = rec.tarehe or datetime.datetime.now(tz=timezone.utc)
-                        cash_in.Akaunt = cash_acc
-                        cash_in.Amount = amt
-                        cash_in.before = before
-                        cash_in.After = after
-                        cash_in.kutoka = 'Goods Sales'
-                        cash_in.maelezo = f'Waiter clearing remap #{rec.id}'
-                        cash_in.by = rec.By or cheo
-                        cash_in.mauzo = True
-                        cash_in.from_waiter_payments = rec
-                        apply_weka_admin_flag(cash_in, cheo)
-                        cash_in.save()
-                        created += 1
-                        continue
+      try:
+            todo = newInvo_funct(request)
+            duka = todo.get('duka')
+            cheo = todo.get('cheo')
+            if not duka or not duka.waiter_counter:
+                  return JsonResponse({
+                        'success': False,
+                        'msg': 'Waiter counter is disabled',
+                        'msg_swa': 'Waiter counter haijawashwa.',
+                        'msg_eng': 'Waiter counter is disabled',
+                  })
+            can_fix = bool(cheo and (getattr(cheo, 'owner', False) or getattr(cheo, 'waiter_check_up', False)))
+            if not can_fix:
+                  return JsonResponse({
+                        'success': False,
+                        'msg': 'Permission denied',
+                        'msg_swa': 'Huna ruhusa ya kuweka upya malipo.',
+                        'msg_eng': 'Permission denied',
+                  })
 
-                  for w in cash_wekas:
-                        if w.Akaunt_id == cash_acc.id and w.Interprise_id == duka.id:
-                              skipped += 1
-                              continue
-                        amt = Decimal(str(w.Amount or 0))
-                        if amt <= 0:
-                              skipped += 1
-                              continue
-                        old = PaymentAkaunts.objects.select_for_update().filter(pk=w.Akaunt_id).first()
-                        if old and old.id != cash_acc.id:
-                              old.Amount = Decimal(str(old.Amount or 0)) - amt
-                              old.save(update_fields=['Amount'])
-                        before = Decimal(str(cash_acc.Amount or 0))
-                        after = before + amt
-                        cash_acc.Amount = after
-                        cash_acc.save(update_fields=['Amount'])
-                        w.Akaunt = cash_acc
-                        w.Interprise = duka
-                        w.before = before
-                        w.After = after
-                        w.kutoka = w.kutoka or 'Goods Sales'
-                        w.save(update_fields=['Akaunt', 'Interprise', 'before', 'After', 'kutoka'])
-                        moved += 1
+            cash_acc = _shop_cash_account(duka)
+            if not cash_acc:
+                  return JsonResponse({
+                        'success': False,
+                        'msg_swa': 'Hakuna akaunti ya Cash ya duka hili.',
+                        'msg_eng': 'This shop has no Cash account.',
+                        'msg': 'This shop has no Cash account.',
+                  })
 
-      return JsonResponse({
-            'success': True,
-            'moved': moved,
-            'created': created,
-            'skipped': skipped,
-            'account': str(cash_acc.Akaunt_name or 'Cash'),
-            'msg_swa': f'Malipo yamewekwa upya kwenye {cash_acc.Akaunt_name}. Yaliyohamishwa: {moved}, yaliyoundwa: {created}.',
-            'msg_eng': f'Payments were remapped to {cash_acc.Akaunt_name}. Moved: {moved}, created: {created}.',
-      })
+            moved = 0
+            created = 0
+            skipped = 0
+            with transaction.atomic():
+                  cash_acc = PaymentAkaunts.objects.get(pk=cash_acc.id)
+                  clearings = waiter_clearing.objects.filter(waiter__Interprise=duka).order_by('pk')
+                  for rec in clearings:
+                        wekas = list(
+                              wekaCash.objects.select_related('Akaunt').filter(from_waiter_payments=rec)
+                        )
+                        cash_wekas = [
+                              w for w in wekas
+                              if w.Akaunt_id and str(getattr(w.Akaunt, 'aina', '') or '').lower() == 'cash'
+                        ]
+                        if not wekas:
+                              amt = Decimal(str(rec.amount or 0))
+                              if amt <= 0:
+                                    skipped += 1
+                                    continue
+                              before = Decimal(str(cash_acc.Amount or 0))
+                              after = before + amt
+                              cash_acc.Amount = after
+                              cash_acc.save(update_fields=['Amount'])
+                              cash_in = wekaCash()
+                              cash_in.Interprise = duka
+                              cash_in.tarehe = rec.tarehe or datetime.datetime.now(tz=timezone.utc)
+                              cash_in.Akaunt = cash_acc
+                              cash_in.Amount = amt
+                              cash_in.before = before
+                              cash_in.After = after
+                              cash_in.kutoka = 'Goods Sales'
+                              cash_in.maelezo = f'Waiter clearing remap #{rec.id}'[:500]
+                              cash_in.by = rec.By or cheo
+                              cash_in.mauzo = True
+                              cash_in.from_waiter_payments = rec
+                              apply_weka_admin_flag(cash_in, cheo)
+                              cash_in.save()
+                              created += 1
+                              continue
+
+                        for w in cash_wekas:
+                              if w.Akaunt_id == cash_acc.id and w.Interprise_id == duka.id:
+                                    skipped += 1
+                                    continue
+                              amt = Decimal(str(w.Amount or 0))
+                              if amt <= 0:
+                                    skipped += 1
+                                    continue
+                              old = PaymentAkaunts.objects.filter(pk=w.Akaunt_id).first()
+                              if old and old.id != cash_acc.id:
+                                    old.Amount = Decimal(str(old.Amount or 0)) - amt
+                                    old.save(update_fields=['Amount'])
+                              before = Decimal(str(cash_acc.Amount or 0))
+                              after = before + amt
+                              cash_acc.Amount = after
+                              cash_acc.save(update_fields=['Amount'])
+                              w.Akaunt = cash_acc
+                              w.Interprise = duka
+                              w.before = before
+                              w.After = after
+                              w.kutoka = (w.kutoka or 'Goods Sales')[:500]
+                              w.save(update_fields=['Akaunt', 'Interprise', 'before', 'After', 'kutoka'])
+                              moved += 1
+
+            return JsonResponse({
+                  'success': True,
+                  'moved': moved,
+                  'created': created,
+                  'skipped': skipped,
+                  'account': str(cash_acc.Akaunt_name or 'Cash'),
+                  'msg_swa': f'Malipo yamewekwa upya kwenye {cash_acc.Akaunt_name}. Yaliyohamishwa: {moved}, yaliyoundwa: {created}.',
+                  'msg_eng': f'Payments were remapped to {cash_acc.Akaunt_name}. Moved: {moved}, created: {created}.',
+            })
+      except Exception as exc:
+            traceback.print_exc()
+            err = str(exc) or exc.__class__.__name__
+            return JsonResponse({
+                  'success': False,
+                  'msg': err,
+                  'msg_swa': f'Imeshindikana kuweka upya malipo: {err}',
+                  'msg_eng': f'Failed to remap payments: {err}',
+            })
 
 
 def _waiter_person_name(counter_obj, default_name='Waiter'):
