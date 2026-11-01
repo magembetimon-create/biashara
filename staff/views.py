@@ -13,6 +13,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 import json
+from zoneinfo import ZoneInfo
 
 from management.models import (
     Interprise,
@@ -51,6 +52,18 @@ from staff.shift_report import (
     _money,
     build_shift_report,
     build_shifts_period_report,
+    period_cash_account_breakdowns,
+    period_sales_item_breakdown,
+    period_sales_staff_breakdown,
+    period_sales_category_breakdown,
+    period_sales_payments_by_account,
+    period_unpaid_breakdowns,
+    period_expenses_breakdowns,
+    period_cash_deposit_breakdown,
+    period_prior_invoice_payments,
+    period_external_account_in,
+    period_recon_movements,
+    period_stock_value_report,
     completed_sales_qs,
     expected_cash_from_flows,
     shift_payment_flows,
@@ -694,8 +707,20 @@ def staff_shifts(request):
         return render(request, 'errorpage.html', todoFunct(request))
 
 
+def _user_tzinfo(request):
+    """Browser offset (Date.getTimezoneOffset, minutes west of UTC), else East Africa."""
+    raw = (request.GET.get('tz') or request.COOKIES.get('tz_off') or '').strip()
+    if raw:
+        try:
+            return timezone.get_fixed_timezone(-int(raw))
+        except (TypeError, ValueError):
+            pass
+    return ZoneInfo('Africa/Dar_es_Salaam')
+
+
 def _shifts_report_period(request):
-    local_now = timezone.localtime()
+    user_tz = _user_tzinfo(request)
+    local_now = timezone.now().astimezone(user_tz)
     preset = (request.GET.get('preset') or 'month').strip().lower()
     if preset not in ('week', 'month', 'custom'):
         preset = 'month'
@@ -716,8 +741,8 @@ def _shifts_report_period(request):
         else:
             if fr > to:
                 fr, to = to, fr
-            start = timezone.make_aware(datetime.combine(fr, time.min), timezone.get_current_timezone())
-            end = timezone.make_aware(datetime.combine(to, time.max), timezone.get_current_timezone())
+            start = timezone.make_aware(datetime.combine(fr, time.min), user_tz)
+            end = timezone.make_aware(datetime.combine(to, time.max), user_tz)
 
     return preset, start, end
 
@@ -740,11 +765,68 @@ def staff_shifts_report(request):
             ).select_related('opened_by__user__user', 'closed_by__user__user').order_by('-starts_at')
         )
         rows, totals = build_shifts_period_report(duka, shifts)
+        account_breakdowns = period_cash_account_breakdowns(duka, shifts)
+        sales_item_breakdown = period_sales_item_breakdown(duka, shifts)
+        sales_staff_breakdown = period_sales_staff_breakdown(duka, shifts)
+        sales_category_breakdown = period_sales_category_breakdown(duka, shifts)
+        unpaid_breakdown = period_unpaid_breakdowns(duka, shifts)
+        sales_payments_by_account = period_sales_payments_by_account(
+            duka, shifts, period_start=start,
+        )
+        expenses_breakdown = period_expenses_breakdowns(duka, shifts)
+        deposits_breakdown = period_cash_deposit_breakdown(duka, shifts)
+        prior_invoice_payments = period_prior_invoice_payments(duka, shifts, period_start=start)
+        external_account_in = period_external_account_in(duka, shifts)
+        recon_movements = period_recon_movements(duka, shifts, period_start=start)
+        stock_flow = period_stock_value_report(duka, shifts)
+        opening_amount = Decimal(str(account_breakdowns.get('opening', {}).get('total') or 0))
+        closing_amount = Decimal(str(account_breakdowns.get('closing', {}).get('total') or 0))
+        current_amount = Decimal(str(account_breakdowns.get('current', {}).get('total') or 0))
+        prior_invoice_amount = Decimal(str(prior_invoice_payments.get('total') or 0))
+        external_in_amount = Decimal(str(external_account_in.get('total') or 0))
+        sales_in_amount = Decimal(str(recon_movements.get('sales_in', {}).get('total') or 0))
+        bills_amount = Decimal(str(recon_movements.get('bills', {}).get('total') or 0))
+        other_out_amount = Decimal(str(recon_movements.get('other_out', {}).get('total') or 0))
+        other_in_amount = Decimal(str(recon_movements.get('other_in', {}).get('total') or 0))
+        expected_closing = (
+            opening_amount
+            + sales_in_amount
+            + prior_invoice_amount
+            + external_in_amount
+            + other_in_amount
+            - Decimal(str(totals.get('expenses') or 0))
+            - bills_amount
+            - other_out_amount
+        )
+        closing_diff = closing_amount - expected_closing
 
         todo.update({
             'staff_page': 'shift_report',
             'report_rows': rows,
             'report_totals': totals,
+            'account_breakdowns': account_breakdowns,
+            'sales_item_breakdown': sales_item_breakdown,
+            'sales_staff_breakdown': sales_staff_breakdown,
+            'sales_category_breakdown': sales_category_breakdown,
+            'unpaid_breakdown': unpaid_breakdown,
+            'sales_payments_by_account': sales_payments_by_account,
+            'expenses_breakdown': expenses_breakdown,
+            'deposits_breakdown': deposits_breakdown,
+            'prior_invoice_payments': prior_invoice_payments,
+            'external_account_in': external_account_in,
+            'recon_movements': recon_movements,
+            'stock_flow': stock_flow,
+            'opening_amount': opening_amount,
+            'closing_amount': closing_amount,
+            'current_amount': current_amount,
+            'prior_invoice_amount': prior_invoice_amount,
+            'external_in_amount': external_in_amount,
+            'sales_in_amount': sales_in_amount,
+            'bills_amount': bills_amount,
+            'other_out_amount': other_out_amount,
+            'other_in_amount': other_in_amount,
+            'expected_closing': expected_closing,
+            'closing_diff': closing_diff,
             'preset': preset,
             'period_start': start,
             'period_end': end,

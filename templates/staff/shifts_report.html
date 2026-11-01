@@ -14,20 +14,148 @@
   }
   #general-panel .nav-tabs .nav-link { white-space: nowrap; }
   .sr-wrap { max-width: 1280px; margin: 0 auto; }
-  .sr-kpis {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-  .sr-kpi {
+  .sr-summary-wrap {
     background: #fff;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 12px 14px;
-    min-height: 78px;
+    border: 1px solid #e6e9ef;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
   }
-  .sr-kpi .lbl { color: #6c757d; font-size: 12px; margin-bottom: 4px; }
-  .sr-kpi .val { font-weight: 600; font-size: 16px; word-break: break-word; }
+  .sr-summary {
+    margin-bottom: 0;
+    font-size: 13px;
+    color: #343a40;
+  }
+  .sr-summary thead th {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: #6c757d;
+    background: #f8f9fb;
+    border-bottom: 1px solid #eef0f4;
+    padding: 8px 14px;
+    white-space: nowrap;
+  }
+  .sr-summary th, .sr-summary td { vertical-align: middle; }
+  .sr-summary td {
+    padding: 7px 14px;
+    border-top: 1px solid #f1f3f5;
+    border-bottom: 0;
+  }
+  .sr-summary td.sr-sum-name {
+    font-weight: 500;
+    color: #212529;
+  }
+  .sr-summary td.sr-sum-amt {
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+  .sr-summary td.sr-sum-more {
+    color: #868e96;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .sr-summary .sr-amt-in { color: #198754; }
+  .sr-summary .sr-amt-out { color: #dc3545; }
+  .sr-summary .sr-amt-sales { color: #0d6efd; }
+  .sr-summary tr.sr-sum-close td {
+    background: #f8f9fb;
+  }
+  .sr-summary tr.sr-sum-close td.sr-sum-name { font-weight: 600; }
+  .sr-summary tr.sr-tint-sales td { background: #eef5ff; }
+  .sr-summary tr.sr-tint-in td { background: #eef8f1; }
+  .sr-summary tr.sr-tint-out td { background: #fdf3f4; }
+  .sr-summary tr.sr-tint-buy td { background: #fff6eb; }
+  .sr-kpi-click { cursor: pointer; }
+  .sr-bd-print-head { display: none; }
+  tr.sr-kpi-click:hover, tr.sr-kpi-click:focus {
+    background: #f4f7fb;
+    outline: none;
+  }
+  tr.sr-kpi-click.sr-tint-sales:hover td,
+  tr.sr-kpi-click.sr-tint-sales:focus td { background: #e4efff; }
+  tr.sr-kpi-click.sr-tint-in:hover td,
+  tr.sr-kpi-click.sr-tint-in:focus td { background: #e4f6ea; }
+  tr.sr-kpi-click.sr-tint-out:hover td,
+  tr.sr-kpi-click.sr-tint-out:focus td { background: #fbeaec; }
+  tr.sr-kpi-click.sr-tint-buy:hover td,
+  tr.sr-kpi-click.sr-tint-buy:focus td { background: #ffefd9; }
+  tr.sr-kpi-click:hover td.sr-sum-name,
+  tr.sr-kpi-click:focus td.sr-sum-name { color: #0d6efd; }
+  .sr-breakdown-dialog { max-width: min(1100px, 96vw); width: 96vw; margin: .5rem auto; }
+  #srBreakdownModal .modal-content {
+    max-height: calc(100vh - 1.5rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #srBreakdownPrint {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #srBreakdownModal .modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 12px;
+  }
+  .sr-unpaid-tabs {
+    display: none;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .sr-unpaid-tabs.is-on { display: flex; }
+  .sr-unpaid-tab {
+    border: 1px solid #ced4da;
+    background: #fff;
+    color: #495057;
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .sr-unpaid-tab.is-active {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+  }
+  .sr-breakdown-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sr-breakdown-table th, .sr-breakdown-table td { white-space: nowrap; }
+  .sr-breakdown-table td.text-left { white-space: normal; }
+  .sr-breakdown-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #e9ecef;
+  }
+  .sr-breakdown-table tfoot td {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background: #fff;
+    box-shadow: 0 -1px 0 #dee2e6;
+  }
+  #srBreakdownModal .table-responsive .table-hover,
+  #srBreakdownModal .sr-breakdown-table.table-hover {
+    min-width: 0 !important;
+  }
   .sr-shift-card {
     background: #fff;
     border: 1px solid #e9ecef;
@@ -45,25 +173,225 @@
   .sr-shift-metrics .k { font-size: 11px; color: #6c757d; }
   .sr-shift-metrics .v { font-weight: 600; font-size: 13px; }
   .sr-filters { display: flex; flex-wrap: wrap; gap: 6px; }
-  .sr-table th, .sr-table td { white-space: nowrap; }
-  @media (min-width: 768px) {
-    .sr-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .sr-kpi .val { font-size: 18px; }
+  .sr-stock-dialog { max-width: min(96vw, 1280px); margin: 1.2rem auto; }
+  .sr-stock-dialog .modal-content { max-height: calc(100vh - 2.4rem); }
+  #srStockWrap {
+    max-height: 62vh;
+    overflow: auto;
+    border: 1px solid #e6e9ef;
+    border-radius: 8px;
   }
+  #srStockTable { margin-bottom: 0; font-size: 12px; }
+  #srStockTable thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fb;
+    z-index: 3;
+    white-space: nowrap;
+    font-size: 11px;
+  }
+  #srStockTable thead tr:nth-child(2) th { top: 28px; z-index: 2; }
+  #srStockTable.sv-one-metric thead tr:nth-child(2) { display: none; }
+  #srStockTable.sv-one-metric thead tr:first-child th { top: 0; }
+  #srStockTable tfoot td {
+    position: sticky;
+    bottom: 0;
+    background: #eef2ff;
+    font-weight: 600;
+  }
+  #srStockTable.sv-hide-qty .sv-qty,
+  #srStockTable.sv-hide-value .sv-value,
+  #srStockTable.sv-hide-worth .sv-worth,
+  #srStockTable.sv-hide-added .sv-mov-added,
+  #srStockTable.sv-hide-purchased .sv-mov-purchased,
+  #srStockTable.sv-hide-reduction .sv-mov-reduction,
+  #srStockTable.sv-hide-transferred .sv-mov-transferred,
+  #srStockTable.sv-hide-received .sv-mov-received { display: none !important; }
+  #srStockSearch { max-width: 260px; }
+  .sr-sv-print-head { display: none; }
+  .sr-table th, .sr-table td { white-space: nowrap; }
   @media (max-width: 767.98px) {
     .Analytical#general-panel { padding-left: 10px !important; padding-right: 10px !important; }
   }
+  .sr-print-only { display: none; }
   @media print {
-    .c-menu, .navbar, .staff-no-print, nav.nav-tabs { display: none !important; }
-    #general-panel { min-height: auto !important; padding: 0 !important; }
-    .sr-cards { display: none !important; }
-    .sr-table-wrap { display: block !important; }
-    .table { font-size: 11px; }
+    @page { size: A4 landscape; margin: 10mm; }
+    html, body {
+      background: #fff !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+    body:not(.sr-print-breakdown):not(.sr-print-stock) * { visibility: hidden !important; }
+    body:not(.sr-print-breakdown):not(.sr-print-stock) #srPrintArea,
+    body:not(.sr-print-breakdown):not(.sr-print-stock) #srPrintArea * { visibility: visible !important; }
+    body:not(.sr-print-breakdown):not(.sr-print-stock) #srPrintArea {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+    }
+    body:not(.sr-print-breakdown):not(.sr-print-stock) .staff-no-print,
+    body:not(.sr-print-breakdown):not(.sr-print-stock) .staff-screen-period,
+    body:not(.sr-print-breakdown):not(.sr-print-stock) .sr-cards,
+    body:not(.sr-print-breakdown):not(.sr-print-stock) .modal,
+    body:not(.sr-print-breakdown):not(.sr-print-stock) .sr-filters,
+    body:not(.sr-print-breakdown):not(.sr-print-stock) nav.nav-tabs { display: none !important; }
+    body:not(.sr-print-breakdown):not(.sr-print-stock) .sr-sum-more { color: #333 !important; }
+    body.sr-print-breakdown * { visibility: hidden !important; }
+    body.sr-print-breakdown #srBreakdownPrint,
+    body.sr-print-breakdown #srBreakdownPrint * { visibility: visible !important; }
+    body.sr-print-breakdown .modal,
+    body.sr-print-breakdown .modal-dialog,
+    body.sr-print-breakdown .modal-content {
+      display: block !important;
+      position: static !important;
+      transform: none !important;
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      background: #fff !important;
+    }
+    body.sr-print-breakdown .modal-backdrop,
+    body.sr-print-breakdown .sr-bd-no-print,
+    body.sr-print-breakdown .sr-unpaid-tabs { display: none !important; }
+    body.sr-print-breakdown #srBreakdownPrint,
+    body.sr-print-breakdown #srBreakdownModal .modal-body,
+    body.sr-print-breakdown .sr-breakdown-scroll {
+      position: static;
+      overflow: visible !important;
+      max-height: none !important;
+      height: auto !important;
+      display: block !important;
+      flex: none !important;
+    }
+    body.sr-print-breakdown .sr-breakdown-table thead th,
+    body.sr-print-breakdown .sr-breakdown-table tfoot td {
+      position: static !important;
+    }
+    body.sr-print-breakdown #srBreakdownPrint {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      background: #fff;
+    }
+    body.sr-print-stock * { visibility: hidden !important; }
+    body.sr-print-stock #srStockPrint,
+    body.sr-print-stock #srStockPrint * { visibility: visible !important; }
+    body.sr-print-stock .modal,
+    body.sr-print-stock .modal-dialog,
+    body.sr-print-stock .modal-content {
+      display: block !important;
+      position: static !important;
+      transform: none !important;
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      background: #fff !important;
+    }
+    body.sr-print-stock .modal-backdrop,
+    body.sr-print-stock .sr-sv-no-print { display: none !important; }
+    body.sr-print-stock #srStockPrint,
+    body.sr-print-stock #srStockModal .modal-body,
+    body.sr-print-stock #srStockWrap {
+      position: static;
+      overflow: visible !important;
+      max-height: none !important;
+      height: auto !important;
+      display: block !important;
+      flex: none !important;
+    }
+    body.sr-print-stock #srStockTable thead th,
+    body.sr-print-stock #srStockTable tfoot td {
+      position: static !important;
+    }
+    body.sr-print-stock #srStockPrint {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      background: #fff;
+    }
+    body.sr-print-stock .sr-sv-print-head { display: block !important; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+    body.sr-print-stock #srStockTable { width: 100% !important; font-size: 11px; border-collapse: collapse; }
+    body.sr-print-stock #srStockTable th,
+    body.sr-print-stock #srStockTable td {
+      border: 1px solid #444 !important;
+      padding: 4px 6px !important;
+      color: #000 !important;
+      background: #fff !important;
+    }
+    body.sr-print-stock #srStockTable thead th,
+    body.sr-print-stock #srStockTable tfoot td { background: #eee !important; font-weight: 700; }
+    body.sr-print-breakdown .sr-bd-print-head { display: block !important; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+    body.sr-print-breakdown .sr-breakdown-table { width: 100% !important; font-size: 12px; border-collapse: collapse; }
+    body.sr-print-breakdown .sr-breakdown-table th,
+    body.sr-print-breakdown .sr-breakdown-table td {
+      border: 1px solid #444 !important;
+      padding: 6px 8px !important;
+      color: #000 !important;
+      background: #fff !important;
+    }
+    body.sr-print-breakdown .sr-breakdown-table thead th,
+    body.sr-print-breakdown .sr-breakdown-table tfoot td { background: #eee !important; font-weight: 700; }
+    .sr-print-only { display: block !important; }
+    .sr-table-wrap {
+      display: block !important;
+      overflow: visible !important;
+      width: 100% !important;
+    }
+    .sr-table-wrap .table-hover,
+    .sr-table.table-hover { min-width: 0 !important; }
+    .sr-summary-wrap { border: 1px solid #333; border-radius: 0; }
+    .sr-summary { width: 100% !important; font-size: 11px; }
+    .sr-summary th, .sr-summary td {
+      border: 1px solid #444 !important;
+      padding: 5px 6px !important;
+      color: #000 !important;
+      background: #fff !important;
+    }
+    .sr-summary thead th { background: #eee !important; }
+    .sr-table {
+      width: 100% !important;
+      font-size: 10px !important;
+      border-collapse: collapse !important;
+    }
+    .sr-table th, .sr-table td {
+      border: 1px solid #444 !important;
+      padding: 4px 5px !important;
+      white-space: nowrap;
+      color: #000 !important;
+      background: #fff !important;
+    }
+    .sr-table thead th {
+      background: #eee !important;
+      font-weight: 700;
+    }
+    .sr-table tfoot td { background: #f4f4f4 !important; font-weight: 700; }
+    .sr-table a { color: #000 !important; text-decoration: none !important; }
+    .badge { border: 1px solid #333; background: #fff !important; color: #000 !important; }
+    .sr-print-head { margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+    .sr-print-head h1 { font-size: 16px; margin: 0 0 2px; }
+    .sr-print-head .shop { font-size: 13px; font-weight: 700; }
+    .sr-print-head .meta { font-size: 11px; color: #222; }
+    .sr-print-period { font-size: 12px; margin: 8px 0 10px; }
   }
 </style>
 <div class="Analytical whiteBg p-2 px-md-4 pt-md-3" id="general-panel" style="min-height:100vh;">
   <div class="sr-wrap">
+  <div class="staff-no-print">
   {% include 'staff/staffnavigations.html' %}
+  </div>
 
   <div class="d-flex flex-wrap justify-content-between align-items-start py-2 border-bottom staff-no-print" style="gap:10px;">
     <div>
@@ -90,50 +418,162 @@
     </button>
   </div>
 
-  <p class="mt-3 mb-3 small">
+  <div id="srPrintArea">
+  <div class="sr-print-only sr-print-head">
+    <div class="shop">{{ duka.name }}</div>
+    <h1>{% if useri.langSet == 0 %}Ripoti za Shift{% else %}Shift Reports{% endif %}{% if duka.currencii %} ({{ duka.currencii }}){% endif %}</h1>
+    <div class="meta">
+      {% if useri.langSet == 0 %}Kipindi{% else %}Period{% endif %}:
+      <span class="sr-period-range"></span>
+      · {{ report_totals.count }} {% if useri.langSet == 0 %}shift{% else %}shift(s){% endif %}
+    </div>
+  </div>
+  <p class="mt-3 mb-3 small sr-print-period staff-screen-period">
     {% if useri.langSet == 0 %}Kipindi{% else %}Period{% endif %}:
-    <strong>
-      <script>document.write(moment('{{ period_start|date:"r" }}').format('DD MMM YYYY HH:mm'))</script>
-      –
-      <script>document.write(moment('{{ period_end|date:"r" }}').format('DD MMM YYYY HH:mm'))</script>
-    </strong>
+    <strong class="sr-period-range"></strong>
     · {{ report_totals.count }} {% if useri.langSet == 0 %}shift{% else %}shift(s){% endif %}
   </p>
 
-  <div class="sr-kpis mb-3">
-    <div class="sr-kpi">
-      <div class="lbl">{% if useri.langSet == 0 %}Cash ya kuanza{% else %}Opening{% endif %}</div>
-      <div class="val">{{ report_totals.opening|default:0|floatformat:2|intcomma }}</div>
-    </div>
-    <div class="sr-kpi">
-      <div class="lbl">{% if useri.langSet == 0 %}Cash ya kufunga{% else %}Closing{% endif %}</div>
-      <div class="val">{{ report_totals.closing|default:0|floatformat:2|intcomma }}</div>
-    </div>
-    <div class="sr-kpi">
-      <div class="lbl">{% if useri.langSet == 0 %}Mauzo / Mapato{% else %}Sales / Income{% endif %}</div>
-      <div class="val" style="color:#0d6efd;">{{ report_totals.sales|default:0|floatformat:2|intcomma }}</div>
-    </div>
-    <div class="sr-kpi">
-      <div class="lbl">{% if useri.langSet == 0 %}Haijalipwa (deni){% else %}Unpaid (debt){% endif %}</div>
-      <div class="val" style="color:#dc3545;">{{ report_totals.unpaid|default:0|floatformat:2|intcomma }}</div>
-    </div>
-    <div class="sr-kpi">
-      <div class="lbl">{% if useri.langSet == 0 %}Cash iliyoingia{% else %}Cash received{% endif %}</div>
-      <div class="val">{{ report_totals.cash_in|default:0|floatformat:2|intcomma }}</div>
-    </div>
-    <div class="sr-kpi">
-      <div class="lbl">{% if useri.langSet == 0 %}Matumizi{% else %}Expenses{% endif %}</div>
-      <div class="val" style="color:#dc3545;">{{ report_totals.expenses|default:0|floatformat:2|intcomma }}</div>
-    </div>
-    <div class="sr-kpi">
-      <div class="lbl">{% if useri.langSet == 0 %}Cash deposit{% else %}Cash deposit{% endif %}</div>
-      <div class="val" style="color:#198754;">{{ report_totals.deposits|default:0|floatformat:2|intcomma }}</div>
-    </div>
-    <div class="sr-kpi">
-      <div class="lbl">{% if useri.langSet == 0 %}Pesa ya balance{% else %}Balance{% endif %}</div>
-      <div class="val brown">{{ report_totals.balance|default:0|floatformat:2|intcomma }}</div>
-    </div>
+  <div class="sr-summary-wrap mb-3">
+    <table class="table table-sm sr-summary mb-0">
+      <thead class="thead-light">
+        <tr>
+          <th class="text-left">{% if useri.langSet == 0 %}Kipengele{% else %}Item{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}{% if duka.currencii %} ({{ duka.currencii }}){% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Maelezo{% else %}Details{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="sr-kpi-click" tabindex="0" data-breakdown="opening">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Opening{% else %}Opening{% endif %}</td>
+          <td class="text-right sr-sum-amt">{{ opening_amount|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=account_breakdowns.opening.rows|length %}{{ n }} {% if useri.langSet == 0 %}akaunti{% else %}{% if n == 1 %}account{% else %}accounts{% endif %}{% endif %}{% if account_breakdowns.opening.source == 'reconstructed' %} · {% if useri.langSet == 0 %}ledger{% else %}ledger{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+        <tr class="sr-kpi-click sr-tint-sales" tabindex="0" data-breakdown="sales">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Mauzo / Mapato{% else %}Sales / Income{% endif %}</td>
+          <td class="text-right sr-sum-amt sr-amt-sales">{{ report_totals.sales|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=sales_item_breakdown.count|default:0 %}{{ n }} {% if useri.langSet == 0 %}bidhaa{% else %}{% if n == 1 %}item{% else %}items{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+        <tr class="sr-kpi-click" tabindex="0" data-breakdown="unpaid">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Haijalipwa (deni){% else %}Unpaid amount{% endif %}</td>
+          <td class="text-right sr-sum-amt sr-amt-out">{{ report_totals.unpaid|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=unpaid_breakdown.staff.count|default:0 %}{{ n }} {% if useri.langSet == 0 %}watumishi{% else %}staff{% endif %}{% endwith %}</td>
+        </tr>
+        <tr class="sr-kpi-click sr-tint-in" tabindex="0" data-breakdown="paid">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Hela iliyolipwa kwenye mauzo{% else %}Total received on sales{% endif %}</td>
+          <td class="text-right sr-sum-amt sr-amt-in">{{ report_totals.paid|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=sales_payments_by_account.rows|length %}{{ n }} {% if useri.langSet == 0 %}akaunti{% else %}{% if n == 1 %}account{% else %}accounts{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+        <tr class="sr-kpi-click" tabindex="0" data-breakdown="prior_invoices">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Malipo ya ankara za nyuma{% else %}Prior invoice payments{% endif %}</td>
+          <td class="text-right sr-sum-amt sr-amt-in">{{ prior_invoice_amount|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=prior_invoice_payments.count|default:0 %}{{ n }} {% if useri.langSet == 0 %}rekodi{% else %}{% if n == 1 %}record{% else %}records{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+        <tr class="sr-kpi-click" tabindex="0" data-breakdown="sales_in">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Pesa iliyoingia kwenye mauzo{% else %}Cash in from sales{% endif %}</td>
+          <td class="text-right sr-sum-amt sr-amt-in">{{ sales_in_amount|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=recon_movements.sales_in.count|default:0 %}{{ n }} {% if useri.langSet == 0 %}rekodi{% else %}{% if n == 1 %}record{% else %}records{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+        <tr class="sr-kpi-click sr-tint-out" tabindex="0" data-breakdown="expenses">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Matumizi{% else %}Expenses{% endif %}</td>
+          <td class="text-right sr-sum-amt sr-amt-out">{{ report_totals.expenses|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=expenses_breakdown.records.count|default:0 %}{{ n }} {% if useri.langSet == 0 %}rekodi{% else %}{% if n == 1 %}record{% else %}records{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+        <tr class="sr-kpi-click sr-tint-buy" tabindex="0" data-breakdown="bills">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Malipo ya manunuzi{% else %}Purchase payments{% endif %}</td>
+          <td class="text-right sr-sum-amt sr-amt-out">{{ bills_amount|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=recon_movements.bills.count|default:0 %}{{ n }} {% if useri.langSet == 0 %}rekodi{% else %}{% if n == 1 %}record{% else %}records{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+        <tr class="sr-kpi-click" tabindex="0" data-breakdown="other_out">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Toa pesa nyingine{% else %}Other outflows{% endif %}</td>
+          <td class="text-right sr-sum-amt sr-amt-out">{{ other_out_amount|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=recon_movements.other_out.count|default:0 %}{{ n }} {% if useri.langSet == 0 %}rekodi{% else %}{% if n == 1 %}record{% else %}records{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+        <tr class="sr-kpi-click" tabindex="0" data-breakdown="deposits">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Cash deposit{% else %}Cash deposit{% endif %}</td>
+          <td class="text-right sr-sum-amt sr-amt-in">{{ report_totals.deposits|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% if useri.langSet == 0 %}ndani — haiathiri jumla{% else %}internal — net 0{% endif %}</td>
+        </tr>
+        <tr class="sr-kpi-click" tabindex="0" data-breakdown="external_in">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Kuweka pesa (nje){% else %}External deposits{% endif %}</td>
+          <td class="text-right sr-sum-amt sr-amt-in">{{ external_in_amount|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=external_account_in.count|default:0 %}{{ n }} {% if useri.langSet == 0 %}rekodi{% else %}{% if n == 1 %}record{% else %}records{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+        {% if other_in_amount %}
+        <tr class="sr-kpi-click" tabindex="0" data-breakdown="other_in">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Ingizo jingine{% else %}Other inflows{% endif %}</td>
+          <td class="text-right sr-sum-amt sr-amt-in">{{ other_in_amount|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=recon_movements.other_in.count|default:0 %}{{ n }} {% if useri.langSet == 0 %}rekodi{% else %}{% if n == 1 %}record{% else %}records{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+        {% endif %}
+        <tr class="sr-sum-close">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Closing inayotarajiwa{% else %}Expected closing{% endif %}</td>
+          <td class="text-right sr-sum-amt">{{ expected_closing|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% if useri.langSet == 0 %}Opening + ingizo − tozo{% else %}Opening + in − out{% endif %}</td>
+        </tr>
+        <tr class="sr-kpi-click sr-sum-close" tabindex="0" data-breakdown="closing">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Closing amount{% else %}Closing amount{% endif %}</td>
+          <td class="text-right sr-sum-amt">{{ closing_amount|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=account_breakdowns.closing.rows|length %}{{ n }} {% if useri.langSet == 0 %}akaunti{% else %}{% if n == 1 %}account{% else %}accounts{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+        <tr class="sr-sum-close">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Tofauti{% else %}Difference{% endif %}</td>
+          <td class="text-right sr-sum-amt {% if closing_diff %}sr-amt-out{% else %}sr-amt-in{% endif %}">{{ closing_diff|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% if useri.langSet == 0 %}Closing − inayotarajiwa{% else %}Closing − expected{% endif %}</td>
+        </tr>
+        <tr class="sr-kpi-click sr-sum-close" tabindex="0" data-breakdown="current">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}Current balance{% else %}Current balance{% endif %}</td>
+          <td class="text-right sr-sum-amt">{{ current_amount|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-more">{% with n=account_breakdowns.current.rows|length %}{{ n }} {% if useri.langSet == 0 %}akaunti sasa{% else %}{% if n == 1 %}account now{% else %}accounts now{% endif %}{% endif %}{% endwith %}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
+  <p class="small text-muted mb-3">
+    {% if useri.langSet == 0 %}
+      Closing inayotarajiwa = Opening + pesa iliyoingia kwenye mauzo + malipo ya ankara za nyuma + kuweka pesa nje − matumizi − malipo ya manunuzi − toa pesa nyingine.
+      “Hela iliyolipwa kwenye mauzo” ni ilolipwa ya ankara za kipindi (pamoja na oda za waiter za kipindi). Malipo ya ankara za nyuma ni pesa iliyopokelewa sasa kwa mauzo/oda za waiter za kabla ya kipindi.
+      Cash deposit ni uhamisho ndani ya akaunti, haiathiri jumla ya akaunti zote.
+    {% else %}
+      Expected closing = Opening + cash in from sales + prior invoice payments + external deposits − expenses − purchase payments − other outflows.
+      “Total received on sales” is the paid portion of this period’s invoices (including this period’s waiter orders). Prior invoice payments are cash received now for sales or waiter orders dated before the period.
+      Cash deposit is an internal transfer and does not change the all-accounts total.
+    {% endif %}
+  </p>
+
+  <div class="sr-summary-wrap mb-3" id="srStockSummaryWrap">
+    <table class="table table-sm sr-summary mb-0" id="srStockSummary">
+      <thead class="thead-light">
+        <tr>
+          <th class="text-left">{% if useri.langSet == 0 %}Mzunguko wa stoku{% else %}Stock flow{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+          <th class="text-right">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in stock_flow.summary %}
+        <tr class="sr-kpi-click {{ row.tint }}" tabindex="0" data-stock-panel="1">
+          <td class="text-left sr-sum-name">{% if useri.langSet == 0 %}{{ row.name_swa }}{% else %}{{ row.name_eng }}{% endif %}</td>
+          <td class="text-right sr-sum-amt">{{ row.qty|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-amt">{{ row.value|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right sr-sum-amt">{{ row.worth|default:0|floatformat:2|intcomma }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna mzunguko wa stoku katika kipindi hiki.{% else %}No stock flow in this period.{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="small text-muted mb-3">
+    {% if useri.langSet == 0 %}
+      Bonyeza mzunguko wa stoku kuona mchanganuo wa bidhaa (Qty, Ghalama, Thamani) kama Stock Value Panel ya shift. Hesabu ni kutoka kufunguliwa kwa shift ya kwanza hadi kufungwa kwa ya mwisho, au sasa kama shift ya mwisho bado wazi.
+    {% else %}
+      Click stock flow to open the item breakdown (Qty, Value, Worth) like the shift Stock Value Panel. Figures run from the first shift open to the last shift close, or now if the last shift is still open.
+    {% endif %}
+  </p>
 
   <div class="sr-cards d-lg-none">
     {% for row in report_rows %}
@@ -254,11 +694,12 @@
       {% endif %}
     </table>
   </div>
+  </div>
   <p class="small text-muted staff-no-print mt-3">
     {% if useri.langSet == 0 %}
-      Cash ya kuanza/kufunga ya kipindi ni shift ya kwanza na ya mwisho, si jumla ya shift zote. Mauzo ni POS na oda za waiter zilizoprint. Haijalipwa ni sehemu ya mauzo ambayo bado haijalipwa (amount − ilolipwa). Cash iliyoingia ni pesa iliyowekwa kwenye akaunti ya Cash (POS, clearance). Cash deposit ni kuhamisha pesa kutoka Cash kwenda akaunti nyingine. Matumizi ni matumizi yaliyorekodiwa. Balance inayotarajiwa = cash ya kuanza + cash iliyoingia − pesa zote zilizotoka kwenye Cash.
+      Opening na Closing ni jumla ya akaunti zote za malipo (si Cash tu) wakati shift ya kwanza ilifunguliwa na shift ya mwisho ilifungwa. Current balance ni salio la akaunti zote sasa. Mauzo ni POS na oda za waiter zilizoprint. Haijalipwa ni deni (amount − iliyolipwa). Hela iliyolipwa ni sehemu ya mauzo ya kipindi hiki iliyolipwa. Malipo ya ankara za nyuma ni hela iliyolipwa sasa kwa mauzo au oda za waiter za kabla ya kipindi. Cash deposit ni kuhamisha pesa kutoka Cash kwenda akaunti nyingine. Kuweka pesa (nje) ni hela iliyowekwa kwenye akaunti za tawi hili kutoka nje au huduma nyingine. Matumizi ni matumizi yaliyorekodiwa.
     {% else %}
-      Period opening/closing are the first and last shift, not the sum of every shift. Sales are completed POS and printed waiter orders. Unpaid is the portion of those sales still outstanding (amount − paid). Cash received is money that actually entered the Cash account (POS, clearance). Cash deposit is a transfer from Cash to another payment account. Expenses are recorded operating expenses. Expected balance = opening + cash in − all cash out.
+      Opening and Closing are the totals of all payment accounts (not Cash only) at the first shift open and last shift close. Current balance is all accounts right now. Sales are completed POS and printed waiter orders. Unpaid is still outstanding (amount − paid). Received on sales is the paid portion of sales in this period. Prior invoice payments are money collected now for sales or waiter orders dated before the selected period. Cash deposit is a transfer from Cash to another account. External deposits are money added to this branch’s accounts from outside or other services. Expenses are recorded operating expenses.
     {% endif %}
   </p>
   </div>
@@ -268,6 +709,7 @@
   <div class="modal-dialog modal-sm" role="document">
     <form method="get" action="/staff/shifts/report" class="modal-content">
       <input type="hidden" name="preset" value="custom">
+      <input type="hidden" name="tz" id="srTzField" value="">
       <div class="modal-header py-2">
         <h6 class="modal-title">{% if useri.langSet == 0 %}Chagua muda{% else %}Select period{% endif %}</h6>
         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
@@ -289,4 +731,1058 @@
     </form>
   </div>
 </div>
+
+{{ account_breakdowns|json_script:"sr-account-breakdowns" }}
+{{ sales_item_breakdown|json_script:"sr-sales-item-breakdown" }}
+{{ sales_staff_breakdown|json_script:"sr-sales-staff-breakdown" }}
+{{ sales_category_breakdown|json_script:"sr-sales-category-breakdown" }}
+{{ unpaid_breakdown|json_script:"sr-unpaid-breakdown" }}
+{{ sales_payments_by_account|json_script:"sr-sales-payments-by-account" }}
+{{ expenses_breakdown|json_script:"sr-expenses-breakdown" }}
+{{ deposits_breakdown|json_script:"sr-deposits-breakdown" }}
+{{ prior_invoice_payments|json_script:"sr-prior-invoice-payments" }}
+{{ external_account_in|json_script:"sr-external-account-in" }}
+{{ recon_movements|json_script:"sr-recon-movements" }}
+
+<div class="modal fade" id="srStockModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog sr-stock-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2 sr-sv-no-print">
+        <div class="pr-2" style="min-width:0;">
+          <h5 class="modal-title mb-0">{% if useri.langSet == 0 %}Muhtasari wa bidhaa{% else %}Stock Value Panel{% endif %}</h5>
+          <div class="small text-muted mt-1">
+            <span class="sr-period-range"></span>
+            · {{ stock_flow.count|default:0 }} {% if useri.langSet == 0 %}bidhaa{% else %}items{% endif %}
+          </div>
+        </div>
+        <div class="d-flex align-items-center ml-auto" style="gap:8px;">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="srStockPrintBtn">
+            {% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}
+          </button>
+          <button type="button" class="close ml-0" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+        </div>
+      </div>
+      <div id="srStockPrint">
+        <div class="sr-sv-print-head">
+          <div class="font-weight-bold">{{ duka.name }}</div>
+          <div class="font-weight-bold">{% if useri.langSet == 0 %}Muhtasari wa bidhaa{% else %}Stock Value Panel{% endif %}{% if duka.currencii %} ({{ duka.currencii }}){% endif %}</div>
+          <div class="small">
+            {% if useri.langSet == 0 %}Kipindi{% else %}Period{% endif %}:
+            <span class="sr-period-range"></span>
+            · {{ stock_flow.count|default:0 }} {% if useri.langSet == 0 %}bidhaa{% else %}items{% endif %}
+          </div>
+        </div>
+      <div class="modal-body pt-2">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2 sr-sv-no-print" style="gap:8px;">
+          <input type="search" class="form-control form-control-sm" id="srStockSearch" autocomplete="off"
+            placeholder="{% if useri.langSet == 0 %}Tafuta bidhaa...{% else %}Search item...{% endif %}">
+          <div class="d-flex flex-wrap" style="gap:12px;">
+            <div class="custom-control custom-checkbox">
+              <input type="checkbox" class="custom-control-input sr-sv-col" id="srSvQty" data-sv-col="qty" checked>
+              <label class="custom-control-label" for="srSvQty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</label>
+            </div>
+            <div class="custom-control custom-checkbox">
+              <input type="checkbox" class="custom-control-input sr-sv-col" id="srSvValue" data-sv-col="value" checked>
+              <label class="custom-control-label" for="srSvValue">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</label>
+            </div>
+            <div class="custom-control custom-checkbox">
+              <input type="checkbox" class="custom-control-input sr-sv-col" id="srSvWorth" data-sv-col="worth" checked>
+              <label class="custom-control-label" for="srSvWorth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</label>
+            </div>
+          </div>
+        </div>
+        <p class="small text-muted mb-2 sr-sv-no-print">
+          {% if useri.langSet == 0 %}
+            Mzunguko wa stoku kutoka kufunguliwa kwa shift ya kwanza hadi kufungwa kwa ya mwisho (au sasa). Bonyeza muhtasari kuona bidhaa.
+          {% else %}
+            Stock flow from the first shift open to the last shift close (or now). Click the summary to see items.
+          {% endif %}
+        </p>
+        <div id="srStockWrap">
+          <table class="table table-sm table-hover table-bordered{% if not stock_flow.optional_groups.added %} sv-hide-added{% endif %}{% if not stock_flow.optional_groups.purchased %} sv-hide-purchased{% endif %}{% if not stock_flow.optional_groups.reduction %} sv-hide-reduction{% endif %}{% if not stock_flow.optional_groups.transferred %} sv-hide-transferred{% endif %}{% if not stock_flow.optional_groups.received %} sv-hide-received{% endif %}" id="srStockTable">
+            <thead>
+              <tr>
+                <th rowspan="2" class="text-left">#</th>
+                <th rowspan="2" class="text-left">{% if useri.langSet == 0 %}Bidhaa{% else %}Item name{% endif %}</th>
+                <th rowspan="2" class="text-left">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
+                <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Stoku ya awali{% else %}Stock before{% endif %}</th>
+                <th class="text-center sv-group sv-mov-added" data-sv-group="added" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizongezwa{% else %}Added{% endif %}</th>
+                <th class="text-center sv-group sv-mov-purchased" data-sv-group="purchased" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizonunuliwa{% else %}Purchased{% endif %}</th>
+                <th class="text-center sv-group sv-mov-reduction" data-sv-group="reduction" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizopunguzwa{% else %}Reduction{% endif %}</th>
+                <th class="text-center sv-group sv-mov-transferred" data-sv-group="transferred" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizohamishwa{% else %}Transferred{% endif %}</th>
+                <th class="text-center sv-group sv-mov-received" data-sv-group="received" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizopokelewa{% else %}Received{% endif %}</th>
+                <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Jumla kabla ya mauzo{% else %}Total before sales{% endif %}</th>
+                <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizouzwa{% else %}Sold{% endif %}</th>
+                <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if stock_flow.stock_frozen %}{% if useri.langSet == 0 %}Stoku ya kufunga{% else %}Closing stock{% endif %}{% else %}{% if useri.langSet == 0 %}Stoku ya sasa{% else %}Current stock{% endif %}{% endif %}</th>
+              </tr>
+              <tr>
+                <th class="sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+                <th class="sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+                <th class="sv-qty sv-mov-added">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="sv-value sv-mov-added">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+                <th class="sv-worth sv-mov-added">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+                <th class="sv-qty sv-mov-purchased">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="sv-value sv-mov-purchased">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+                <th class="sv-worth sv-mov-purchased">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+                <th class="sv-qty sv-mov-reduction">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="sv-value sv-mov-reduction">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+                <th class="sv-worth sv-mov-reduction">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+                <th class="sv-qty sv-mov-transferred">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="sv-value sv-mov-transferred">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+                <th class="sv-worth sv-mov-transferred">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+                <th class="sv-qty sv-mov-received">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="sv-value sv-mov-received">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+                <th class="sv-worth sv-mov-received">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+                <th class="sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+                <th class="sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+                <th class="sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+                <th class="sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+                <th class="sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+                <th class="sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody id="srStockBody">
+              {% for s in stock_flow.rows %}
+              <tr class="sr-stock-row" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }} {{ s.aina_name|default:''|lower }}">
+                <td>{{ forloop.counter }}</td>
+                <td>{{ s.item_name }}</td>
+                <td>{{ s.units|default:'-' }}</td>
+                <td class="sv-qty">{{ s.before_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value">{{ s.before_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth">{{ s.before_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-added">{{ s.added_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-added">{{ s.added_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-added">{{ s.added_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-purchased">{{ s.purchased_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-purchased">{{ s.purchased_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-purchased">{{ s.purchased_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-reduction">{{ s.reduction_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-reduction">{{ s.reduction_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-reduction">{{ s.reduction_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-transferred">{{ s.transferred_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-transferred">{{ s.transferred_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-transferred">{{ s.transferred_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-received">{{ s.received_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-received">{{ s.received_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-received">{{ s.received_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty">{{ s.available_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value">{{ s.available_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth">{{ s.available_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty">{{ s.sold_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value">{{ s.sold_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth">{{ s.sold_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty">{{ s.current_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value">{{ s.current_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth">{{ s.current_worth|default:0|floatformat:2|intcomma }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="30" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna data ya stoku.{% else %}No stock data.{% endif %}</td></tr>
+              {% endfor %}
+              <tr id="srStockNoMatch" style="display:none">
+                <td colspan="30" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna bidhaa inayolingana.{% else %}No items match this search.{% endif %}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td class="text-left">{% if useri.langSet == 0 %}Jumla{% else %}Totals{% endif %}</td>
+                <td></td>
+                <td></td>
+                <td class="sv-qty">{{ stock_flow.totals.before_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value">{{ stock_flow.totals.before_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth">{{ stock_flow.totals.before_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-added">{{ stock_flow.totals.added_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-added">{{ stock_flow.totals.added_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-added">{{ stock_flow.totals.added_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-purchased">{{ stock_flow.totals.purchased_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-purchased">{{ stock_flow.totals.purchased_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-purchased">{{ stock_flow.totals.purchased_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-reduction">{{ stock_flow.totals.reduction_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-reduction">{{ stock_flow.totals.reduction_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-reduction">{{ stock_flow.totals.reduction_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-transferred">{{ stock_flow.totals.transferred_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-transferred">{{ stock_flow.totals.transferred_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-transferred">{{ stock_flow.totals.transferred_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-received">{{ stock_flow.totals.received_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-received">{{ stock_flow.totals.received_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-received">{{ stock_flow.totals.received_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty">{{ stock_flow.totals.available_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value">{{ stock_flow.totals.available_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth">{{ stock_flow.totals.available_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty">{{ stock_flow.totals.sold_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value">{{ stock_flow.totals.sold_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth">{{ stock_flow.totals.sold_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty">{{ stock_flow.totals.current_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value">{{ stock_flow.totals.current_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth">{{ stock_flow.totals.current_worth|default:0|floatformat:2|intcomma }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="srBreakdownModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog sr-breakdown-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2 sr-bd-no-print">
+        <div class="pr-2" style="min-width:0;">
+          <h5 class="modal-title mb-0" id="srBreakdownTitle"></h5>
+          <div class="small text-muted mt-1" id="srBreakdownPeriod"></div>
+        </div>
+        <div class="d-flex align-items-center ml-auto" style="gap:8px;">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="srBreakdownPrintBtn">
+            {% if useri.langSet == 0 %}Chapisha{% else %}Print{% endif %}
+          </button>
+          <button type="button" class="close ml-0" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+        </div>
+      </div>
+      <div id="srBreakdownPrint">
+        <div class="sr-bd-print-head">
+          <div class="font-weight-bold">{{ duka.name }}</div>
+          <div id="srBreakdownPrintTitle" class="font-weight-bold"></div>
+          <div id="srBreakdownPrintMeta" class="small"></div>
+        </div>
+        <div class="modal-body">
+          <p class="small text-muted mb-2" id="srBreakdownMeta"></p>
+          <div class="sr-unpaid-tabs sr-bd-no-print" id="srUnpaidTabs">
+            <button type="button" class="sr-unpaid-tab is-active" data-unpaid-tab="staff">{% if useri.langSet == 0 %}Kwa mtumishi{% else %}By staff{% endif %}</button>
+            <button type="button" class="sr-unpaid-tab" data-unpaid-tab="customers">{% if useri.langSet == 0 %}Kwa mteja{% else %}By customer{% endif %}</button>
+          </div>
+          <div class="sr-unpaid-tabs sr-bd-no-print" id="srExpenseTabs">
+            <button type="button" class="sr-unpaid-tab is-active" data-expense-tab="records">{% if useri.langSet == 0 %}Kwa rekodi{% else %}By records{% endif %}</button>
+            <button type="button" class="sr-unpaid-tab" data-expense-tab="types">{% if useri.langSet == 0 %}Kwa tumizi{% else %}By expenses{% endif %}</button>
+          </div>
+          <div class="sr-unpaid-tabs sr-bd-no-print" id="srSalesTabs">
+            <button type="button" class="sr-unpaid-tab is-active" data-sales-tab="items">{% if useri.langSet == 0 %}Kwa bidhaa{% else %}By items{% endif %}</button>
+            <button type="button" class="sr-unpaid-tab" data-sales-tab="staff">{% if useri.langSet == 0 %}Kwa mtumishi{% else %}By staff{% endif %}</button>
+            <button type="button" class="sr-unpaid-tab" data-sales-tab="category">{% if useri.langSet == 0 %}Mauzo kwa aina{% else %}Sale by category{% endif %}</button>
+          </div>
+          <div class="sr-unpaid-tabs sr-bd-no-print" id="srPriorTabs">
+            <button type="button" class="sr-unpaid-tab is-active" data-prior-tab="records">{% if useri.langSet == 0 %}Kwa rekodi{% else %}By record{% endif %}</button>
+            <button type="button" class="sr-unpaid-tab" data-prior-tab="staff">{% if useri.langSet == 0 %}Kwa mtumishi{% else %}By staff{% endif %}</button>
+            <button type="button" class="sr-unpaid-tab" data-prior-tab="customers">{% if useri.langSet == 0 %}Kwa mteja{% else %}By customer{% endif %}</button>
+          </div>
+          <div class="sr-breakdown-scroll">
+            <table class="table table-sm sr-breakdown-table mb-0">
+              <thead class="thead-light" id="srBreakdownHead"></thead>
+              <tbody id="srBreakdownBody"></tbody>
+              <tfoot id="srBreakdownFoot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var lang0 = {% if useri.langSet == 0 %}true{% else %}false{% endif %};
+  var curr = '{% if duka.currencii %} ({{ duka.currencii }}){% endif %}';
+  var periodStartIso = '{{ period_start|date:"c" }}';
+  var periodEndIso = '{{ period_end|date:"c" }}';
+  try {
+    var tzOff = String(new Date().getTimezoneOffset());
+    document.cookie = 'tz_off=' + encodeURIComponent(tzOff) + ';path=/;max-age=31536000;SameSite=Lax';
+    var tzField = document.getElementById('srTzField');
+    if (tzField) tzField.value = tzOff;
+  } catch (e) {}
+  var dataEl = document.getElementById('sr-account-breakdowns');
+  var salesEl = document.getElementById('sr-sales-item-breakdown');
+  var salesStaffEl = document.getElementById('sr-sales-staff-breakdown');
+  var salesCatEl = document.getElementById('sr-sales-category-breakdown');
+  var unpaidEl = document.getElementById('sr-unpaid-breakdown');
+  var salesPayEl = document.getElementById('sr-sales-payments-by-account');
+  var expensesEl = document.getElementById('sr-expenses-breakdown');
+  var depositsEl = document.getElementById('sr-deposits-breakdown');
+  var priorEl = document.getElementById('sr-prior-invoice-payments');
+  var externalEl = document.getElementById('sr-external-account-in');
+  var reconEl = document.getElementById('sr-recon-movements');
+  var data = {};
+  var salesData = { rows: [], total: '0', cost_total: '0', qty_total: '0', count: 0 };
+  var salesStaffData = { rows: [], total: '0', paid_total: '0', debt_total: '0', count: 0 };
+  var salesCatData = { rows: [], total: '0', qty_total: '0', count: 0 };
+  var unpaidData = { staff: { rows: [], total: '0', count: 0 }, customers: { rows: [], total: '0', count: 0 } };
+  var salesPayData = { rows: [], total: '0', cash_total: '0' };
+  var expensesData = { records: { rows: [], total: '0', count: 0 }, types: { rows: [], total: '0', count: 0 } };
+  var depositsData = { rows: [], total: '0', count: 0 };
+  var priorData = { rows: [], total: '0', count: 0, records: { rows: [], total: '0', count: 0 }, staff: { rows: [], total: '0', paid_total: '0', remaining_total: '0', count: 0 }, customers: { rows: [], total: '0', paid_total: '0', remaining_total: '0', count: 0 } };
+  var externalData = { rows: [], total: '0', count: 0 };
+  var reconData = { sales_in: { rows: [], total: '0', count: 0 }, bills: { rows: [], total: '0', count: 0 }, other_out: { rows: [], total: '0', count: 0 }, other_in: { rows: [], total: '0', count: 0 } };
+  try { data = JSON.parse(dataEl.textContent || '{}'); } catch (e) { data = {}; }
+  try { salesData = JSON.parse(salesEl.textContent || '{}'); } catch (e) {}
+  try { salesStaffData = JSON.parse(salesStaffEl.textContent || '{}'); } catch (e) {}
+  try { salesCatData = JSON.parse(salesCatEl.textContent || '{}'); } catch (e) {}
+  try { unpaidData = JSON.parse(unpaidEl.textContent || '{}'); } catch (e) {}
+  try { salesPayData = JSON.parse(salesPayEl.textContent || '{}'); } catch (e) {}
+  try { expensesData = JSON.parse(expensesEl.textContent || '{}'); } catch (e) {}
+  try { depositsData = JSON.parse(depositsEl.textContent || '{}'); } catch (e) {}
+  try { priorData = JSON.parse(priorEl.textContent || '{}'); } catch (e) {}
+  try { externalData = JSON.parse(externalEl.textContent || '{}'); } catch (e) {}
+  try { reconData = JSON.parse(reconEl.textContent || '{}'); } catch (e) {}
+  var paidData = unpaidData.paid || { staff: { rows: [], total: '0', count: 0 }, customers: { rows: [], total: '0', count: 0 } };
+  var unpaidTab = 'staff';
+  var expenseTab = 'records';
+  var salesTab = 'items';
+  var priorTab = 'records';
+  var currentKind = '';
+  var titles = {
+    opening: lang0 ? 'Opening — akaunti' : 'Opening — payment accounts',
+    closing: lang0 ? 'Closing amount — akaunti' : 'Closing amount — payment accounts',
+    current: lang0 ? 'Current balance — akaunti' : 'Current balance — payment accounts',
+    received: lang0 ? 'Pesa zilizoingia — akaunti' : 'Received — payment accounts',
+    sales: lang0 ? 'Mauzo / Mapato — bidhaa' : 'Sales / Income — items',
+    unpaid: lang0 ? 'Haijalipwa — deni' : 'Unpaid — debt',
+    paid: lang0 ? 'Hela iliyolipwa kwenye mauzo — akaunti' : 'Received on sales — payment accounts',
+    expenses: lang0 ? 'Matumizi' : 'Expenses',
+    deposits: lang0 ? 'Cash deposit' : 'Cash deposit',
+    prior_invoices: lang0 ? 'Malipo ya ankara za nyuma' : 'Prior invoice payments',
+    sales_in: lang0 ? 'Pesa iliyoingia kwenye mauzo' : 'Cash in from sales',
+    bills: lang0 ? 'Malipo ya manunuzi' : 'Purchase payments',
+    other_out: lang0 ? 'Toa pesa nyingine' : 'Other outflows',
+    other_in: lang0 ? 'Ingizo jingine' : 'Other inflows',
+    external_in: lang0 ? 'Kuweka pesa (nje)' : 'External deposits'
+  };
+  var roleLabel = {
+    waiter: lang0 ? 'Waiter' : 'Waiter',
+    recorder: lang0 ? 'Recorder' : 'Recorder',
+    both: lang0 ? 'Waiter / Recorder' : 'Waiter / Recorder'
+  };
+  function fmtAmt(v) {
+    var n = Number(v);
+    if (isNaN(n)) return v;
+    return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fmtWhen(iso) {
+    if (!iso) return '';
+    try {
+      if (window.moment) {
+        var m = moment(iso);
+        if (m.isValid()) return m.format('DD MMM YYYY HH:mm');
+      }
+    } catch (e) {}
+    return iso;
+  }
+  var periodText = [fmtWhen(periodStartIso), fmtWhen(periodEndIso)].filter(Boolean).join(' – ');
+  document.querySelectorAll('.sr-period-range').forEach(function (el) {
+    el.textContent = periodText;
+  });
+  function cell(text, cls) {
+    var td = document.createElement('td');
+    if (cls) td.className = cls;
+    td.textContent = text;
+    return td;
+  }
+  function noteCell(note) {
+    var td = document.createElement('td');
+    td.className = 'text-left';
+    var raw = String(note || '').trim();
+    if (!raw) {
+      td.textContent = '—';
+      return td;
+    }
+    if (raw.indexOf('<') === -1) {
+      td.textContent = raw;
+      return td;
+    }
+    var wrap = document.createElement('div');
+    wrap.innerHTML = raw;
+    var label = (wrap.textContent || '').replace(/\s+/g, ' ').trim() || '—';
+    var a = wrap.querySelector('a[href]');
+    var href = a ? (a.getAttribute('href') || '').trim() : '';
+    if (href.charAt(0) === '/' && href.charAt(1) !== '/') {
+      var link = document.createElement('a');
+      link.href = href;
+      link.textContent = label;
+      link.className = 'text-primary';
+      td.appendChild(link);
+    } else {
+      td.textContent = label;
+    }
+    return td;
+  }
+  function headCell(text, cls) {
+    var th = document.createElement('th');
+    if (cls) th.className = cls;
+    th.textContent = text;
+    return th;
+  }
+  function fillBreakdown(kind) {
+    currentKind = kind;
+    var isSales = kind === 'sales';
+    var isSalesStaff = isSales && salesTab === 'staff';
+    var isSalesCat = isSales && salesTab === 'category';
+    var isUnpaid = kind === 'unpaid';
+    var isPaid = kind === 'paid';
+    var isMoney = isUnpaid;
+    var isExpenses = kind === 'expenses';
+    var isDeposits = kind === 'deposits';
+    var isPrior = kind === 'prior_invoices';
+    var isPriorStaff = isPrior && priorTab === 'staff';
+    var isPriorCust = isPrior && priorTab === 'customers';
+    var isExternal = kind === 'external_in';
+    var isSalesIn = kind === 'sales_in';
+    var isBills = kind === 'bills';
+    var isOtherOut = kind === 'other_out';
+    var isOtherIn = kind === 'other_in';
+    var pack = data[kind] || { rows: [], total: '0', cash_total: '0' };
+    if (isSales) {
+      if (salesTab === 'staff') pack = salesStaffData;
+      else if (salesTab === 'category') pack = salesCatData;
+      else pack = salesData;
+    }
+    else if (isUnpaid) pack = unpaidData[unpaidTab] || { rows: [], total: '0' };
+    else if (isPaid) pack = salesPayData;
+    else if (isExpenses) pack = expensesData[expenseTab] || { rows: [], total: '0' };
+    else if (isDeposits) pack = depositsData;
+    else if (isPrior) {
+      if (priorTab === 'staff') pack = priorData.staff || { rows: [], total: '0', paid_total: '0', remaining_total: '0', count: 0 };
+      else if (priorTab === 'customers') pack = priorData.customers || { rows: [], total: '0', paid_total: '0', remaining_total: '0', count: 0 };
+      else pack = priorData.records || priorData;
+    }
+    else if (isExternal) pack = externalData;
+    else if (isSalesIn) pack = reconData.sales_in || { rows: [], total: '0', count: 0 };
+    else if (isBills) pack = reconData.bills || { rows: [], total: '0', count: 0 };
+    else if (isOtherOut) pack = reconData.other_out || { rows: [], total: '0', count: 0 };
+    else if (isOtherIn) pack = reconData.other_in || { rows: [], total: '0', count: 0 };
+    var title = titles[kind] || kind;
+    if (isUnpaid) {
+      title = unpaidTab === 'customers'
+        ? (lang0 ? 'Haijalipwa — wateja' : 'Unpaid — customers')
+        : (lang0 ? 'Haijalipwa — watumishi' : 'Unpaid — staff');
+    } else if (isExpenses) {
+      title = expenseTab === 'types'
+        ? (lang0 ? 'Matumizi — kwa tumizi' : 'Expenses — by expenses')
+        : (lang0 ? 'Matumizi — kwa rekodi' : 'Expenses — by records');
+    } else if (isSales) {
+      if (salesTab === 'staff') title = lang0 ? 'Mauzo — watumishi' : 'Sales — by staff';
+      else if (salesTab === 'category') title = lang0 ? 'Mauzo — kwa aina' : 'Sales — by category';
+      else title = lang0 ? 'Mauzo — bidhaa' : 'Sales — items';
+    } else if (isPrior) {
+      if (priorTab === 'staff') title = lang0 ? 'Malipo ya ankara za nyuma — watumishi' : 'Prior invoice payments — by staff';
+      else if (priorTab === 'customers') title = lang0 ? 'Malipo ya ankara za nyuma — wateja' : 'Prior invoice payments — by customer';
+      else title = lang0 ? 'Malipo ya ankara za nyuma — rekodi' : 'Prior invoice payments — by record';
+    }
+    var periodText = [fmtWhen(periodStartIso), fmtWhen(periodEndIso)].filter(Boolean).join(' – ');
+    document.getElementById('srBreakdownTitle').textContent = title;
+    document.getElementById('srBreakdownPrintTitle').textContent = title;
+    document.getElementById('srBreakdownPeriod').textContent = periodText;
+    var bits = [];
+    if (pack.shift_code) bits.push(pack.shift_code);
+    var when = fmtWhen(pack.as_of);
+    if (when && when !== periodText) bits.push(when);
+    var meta = bits.join(' · ');
+    var extra = '';
+    if (kind === 'sales' && salesTab === 'staff') {
+      extra = lang0
+        ? 'Mauzo ya recorder na waiter: jumla, iliyolipwa, na deni.'
+        : 'Sales by recorder and waiter: total, paid, and remaining debt.';
+    } else if (kind === 'sales' && salesTab === 'category') {
+      extra = lang0
+        ? 'Mauzo yaliyojumuishwa kwa aina ya bidhaa.'
+        : 'Sales grouped by item category.';
+    } else if (kind === 'sales') {
+      extra = lang0
+        ? 'Bidhaa zilizouzwa katika shift za kipindi hiki.'
+        : 'Items sold during shifts in this period.';
+    } else if (kind === 'unpaid' && unpaidTab === 'staff') {
+      extra = lang0
+        ? 'Deni la mauzo na oda za waiter zilizoprint, kwa aliyerekodi.'
+        : 'Unpaid completed sales and printed waiter orders, by who recorded them.';
+    } else if (kind === 'unpaid') {
+      extra = lang0
+        ? 'Deni la wateja muhimu waliosajiliwa tu.'
+        : 'Unpaid amounts for saved customers only.';
+    } else if (kind === 'paid') {
+      extra = lang0
+        ? 'Kila akaunti ya malipo: kiasi kilichopokelewa kutoka malipo ya mauzo ya kipindi hiki.'
+        : 'Each payment account and how much it received from this period’s sales payments.';
+    } else if (kind === 'expenses' && expenseTab === 'records') {
+      extra = lang0
+        ? 'Kila rekodi ya tumizi katika shift za kipindi hiki.'
+        : 'Each expense record during shifts in this period.';
+    } else if (kind === 'expenses') {
+      extra = lang0
+        ? 'Tumizi zilizojumuishwa: mara ngapi na jumla ya kiasi.'
+        : 'Expenses grouped by type, with how many times and total amount.';
+    } else if (kind === 'deposits') {
+      extra = lang0
+        ? 'Pesa iliyohamishwa kutoka akaunti ya Cash kwenda akaunti nyingine.'
+        : 'Money transferred from a Cash account to another payment account.';
+    } else if (kind === 'prior_invoices' && priorTab === 'staff') {
+      extra = lang0
+        ? 'Kila mtumishi: deni la ankara za nyuma, alicholipa katika kipindi hiki, na kilichobaki.'
+        : 'Each staff member: amount owed on prior invoices, paid in this period, and remaining.';
+    } else if (kind === 'prior_invoices' && priorTab === 'customers') {
+      extra = lang0
+        ? 'Wateja waliosajiliwa tu: deni la ankara za nyuma, walicholipa katika kipindi hiki, na kilichobaki.'
+        : 'Saved customers only: amount owed on prior invoices, paid in this period, and remaining.';
+    } else if (kind === 'prior_invoices') {
+      extra = lang0
+        ? 'Malipo yaliyopokelewa katika kipindi hiki kwa mauzo au oda za waiter zilizofanyika kabla ya kipindi (pamoja na waiter clearing).'
+        : 'Payments received in this period for sales or waiter orders dated before the period (including waiter clearing).';
+    } else if (kind === 'external_in') {
+      extra = lang0
+        ? 'Pesa iliyowekwa kwenye akaunti za tawi hili kutoka nje, huduma nyingine, au akaunti za matawi mengine (modal ya Transactions).'
+        : 'Money added to this branch’s accounts from outside, other services, or other branches (Transactions modal).';
+    } else if (kind === 'sales_in') {
+      extra = lang0
+        ? 'Cash iliyowekwa kwenye akaunti kutoka mauzo ya kipindi hiki (si ilolipwa ya ankara).'
+        : 'Cash deposited from this period’s sales (not the invoice paid-portion figure).';
+    } else if (kind === 'bills') {
+      extra = lang0
+        ? 'Malipo ya manunuzi yaliyotoka kwenye akaunti katika kipindi hiki.'
+        : 'Purchase payments that left the accounts in this period.';
+    } else if (kind === 'other_out') {
+      extra = lang0
+        ? 'Pesa iliyotolewa ambayo si matumizi, si malipo ya manunuzi, wala uhamisho wa ndani.'
+        : 'Money taken out that is not an expense, bill, or internal transfer.';
+    } else if (kind === 'other_in') {
+      extra = lang0
+        ? 'Ingizo jingine lisilo mauzo, malipo ya ankara za nyuma, wala kuweka pesa nje.'
+        : 'Other inflows that are not sales, prior invoices, or external deposits.';
+    } else if (kind === 'received') {
+      extra = lang0
+        ? 'Pesa iliyowekwa kwenye kila akaunti ya malipo katika shift za kipindi hiki.'
+        : 'Money deposited into each payment account during shifts in this period.';
+    } else if (kind === 'opening') {
+      extra = lang0
+        ? (pack.source === 'reconstructed'
+          ? 'Salio la ledger wakati shift ya kwanza ilifunguliwa (snapshot ilikuwa haijakamilika). Jumla ni akaunti zote.'
+          : 'Salio la kila akaunti wakati shift ya kwanza ilifunguliwa. Jumla ni akaunti zote, si Cash tu.')
+        : (pack.source === 'reconstructed'
+          ? 'Ledger balance when the first shift opened (the snapshot was incomplete). Total is all accounts.'
+          : 'Each account balance when the first shift opened. Total is all accounts, not Cash only.');
+    } else if (kind === 'current') {
+      extra = lang0
+        ? 'Salio la kila akaunti sasa hivi.'
+        : 'Each account balance right now.';
+    } else {
+      extra = lang0
+        ? 'Salio la kila akaunti wakati shift ya mwisho ya kipindi ilifungwa.'
+        : 'Each account balance when the last shift in this period closed.';
+    }
+    document.getElementById('srBreakdownMeta').textContent = extra;
+    document.getElementById('srBreakdownPrintMeta').textContent = [periodText, meta].filter(Boolean).join(' · ');
+    document.getElementById('srUnpaidTabs').classList.toggle('is-on', isMoney);
+    document.getElementById('srExpenseTabs').classList.toggle('is-on', isExpenses);
+    document.getElementById('srSalesTabs').classList.toggle('is-on', isSales);
+    document.getElementById('srPriorTabs').classList.toggle('is-on', isPrior);
+    document.querySelectorAll('#srUnpaidTabs .sr-unpaid-tab').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-unpaid-tab') === unpaidTab);
+    });
+    document.querySelectorAll('#srExpenseTabs .sr-unpaid-tab').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-expense-tab') === expenseTab);
+    });
+    document.querySelectorAll('#srSalesTabs .sr-unpaid-tab').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-sales-tab') === salesTab);
+    });
+    document.querySelectorAll('#srPriorTabs .sr-unpaid-tab').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-prior-tab') === priorTab);
+    });
+
+    var head = document.getElementById('srBreakdownHead');
+    var body = document.getElementById('srBreakdownBody');
+    var foot = document.getElementById('srBreakdownFoot');
+    head.innerHTML = '';
+    body.innerHTML = '';
+    foot.innerHTML = '';
+    var hr = document.createElement('tr');
+    var colCount = 4;
+    if (isSalesStaff) {
+      colCount = 6;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Mtumishi' : 'Staff', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Nafasi' : 'Role', 'text-left'));
+      hr.appendChild(headCell((lang0 ? 'Jumla' : 'Total amount') + curr, 'text-right'));
+      hr.appendChild(headCell((lang0 ? 'Iliolipwa' : 'Paid amount') + curr, 'text-right'));
+      hr.appendChild(headCell((lang0 ? 'Deni' : 'Debt') + curr, 'text-right'));
+    } else if (isSalesCat) {
+      colCount = 4;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Aina ya bidhaa' : 'Category', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Idadi' : 'Qty', 'text-right'));
+      hr.appendChild(headCell((lang0 ? 'Thamani' : 'Amount') + curr, 'text-right'));
+    } else if (isSales) {
+      colCount = 6;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Bidhaa' : 'Item', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Bei iliyouzwa' : 'Sold price', 'text-right'));
+      hr.appendChild(headCell(lang0 ? 'Idadi' : 'Qty', 'text-right'));
+      hr.appendChild(headCell(lang0 ? 'Ghalama' : 'Cost', 'text-right'));
+      hr.appendChild(headCell(lang0 ? 'Thamani' : 'Value', 'text-right'));
+    } else if (isMoney && unpaidTab === 'staff') {
+      colCount = 4;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Jina' : 'Name', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Nafasi' : 'Role', 'text-left'));
+      hr.appendChild(headCell((isPaid ? (lang0 ? 'Iliolipwa' : 'Paid') : (lang0 ? 'Anayodaiwa' : 'Owed')) + curr, 'text-right'));
+    } else if (isMoney) {
+      colCount = 3;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Mteja' : 'Customer', 'text-left'));
+      hr.appendChild(headCell((isPaid ? (lang0 ? 'Iliolipwa' : 'Paid') : (lang0 ? 'Anayodaiwa' : 'Owed')) + curr, 'text-right'));
+    } else if (isExpenses && expenseTab === 'records') {
+      colCount = 6;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Muda' : 'Time', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Aliyerekodi' : 'Recorded by', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Maelezo' : 'Description', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Tumizi' : 'Expense', 'text-left'));
+      hr.appendChild(headCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right'));
+    } else if (isExpenses) {
+      colCount = 4;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Tumizi' : 'Expense', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Mara ngapi' : 'Times recorded', 'text-right'));
+      hr.appendChild(headCell((lang0 ? 'Jumla' : 'Amount') + curr, 'text-right'));
+    } else if (isDeposits) {
+      colCount = 7;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Tarehe / muda' : 'Date / time', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Akaunti ya Cash' : 'Cash account', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Kwenda akaunti' : 'To account', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Kabla' : 'Amount before', 'text-right'));
+      hr.appendChild(headCell(lang0 ? 'Baada' : 'Amount after', 'text-right'));
+      hr.appendChild(headCell((lang0 ? 'Iliyowekwa' : 'Deposited') + curr, 'text-right'));
+    } else if (isPriorStaff) {
+      colCount = 6;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Mtumishi' : 'Staff', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Nafasi' : 'Role', 'text-left'));
+      hr.appendChild(headCell((lang0 ? 'Aliyokuwa anadaiwa' : 'Amount owed') + curr, 'text-right'));
+      hr.appendChild(headCell((lang0 ? 'Alilipa' : 'Paid') + curr, 'text-right'));
+      hr.appendChild(headCell((lang0 ? 'Iliyobaki' : 'Remaining') + curr, 'text-right'));
+    } else if (isPriorCust) {
+      colCount = 5;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Mteja' : 'Customer', 'text-left'));
+      hr.appendChild(headCell((lang0 ? 'Aliyokuwa anadaiwa' : 'Amount owed') + curr, 'text-right'));
+      hr.appendChild(headCell((lang0 ? 'Alilipa' : 'Paid') + curr, 'text-right'));
+      hr.appendChild(headCell((lang0 ? 'Iliyobaki' : 'Remaining') + curr, 'text-right'));
+    } else if (isPrior || isSalesIn) {
+      colCount = 7;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Tarehe ya malipo' : 'Payment time', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Ankara' : 'Invoice', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Mteja' : 'Customer', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Tarehe ya mauzo' : 'Sale date', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Akaunti' : 'Account', 'text-left'));
+      hr.appendChild(headCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right'));
+    } else if (isBills) {
+      colCount = 7;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Tarehe / muda' : 'Date / time', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Akaunti' : 'Account', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Muuzaji' : 'Vendor', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Maelezo' : 'Description', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Aliyerekodi' : 'Recorded by', 'text-left'));
+      hr.appendChild(headCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right'));
+    } else if (isOtherOut) {
+      colCount = 7;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Tarehe / muda' : 'Date / time', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Akaunti' : 'Account', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Kwenda' : 'To', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Maelezo' : 'Description', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Aliyerekodi' : 'Recorded by', 'text-left'));
+      hr.appendChild(headCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right'));
+    } else if (isExternal || isOtherIn) {
+      colCount = 7;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Tarehe / muda' : 'Date / time', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Akaunti' : 'Account', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Kutoka' : 'From', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Maelezo' : 'Description', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Aliyerekodi' : 'Recorded by', 'text-left'));
+      hr.appendChild(headCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right'));
+    } else {
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(lang0 ? 'Akaunti' : 'Payment account', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Aina' : 'Type', 'text-left'));
+      hr.appendChild(headCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right'));
+    }
+    head.appendChild(hr);
+
+    var rows = pack.rows || [];
+    if (!rows.length) {
+      var empty = document.createElement('tr');
+      var emptyTd = document.createElement('td');
+      emptyTd.colSpan = colCount;
+      emptyTd.className = 'text-center text-muted py-4';
+      emptyTd.textContent = lang0 ? 'Hakuna akaunti za kuonyesha.' : 'No payment accounts to show.';
+      if (isSalesStaff || isSalesCat) emptyTd.textContent = lang0 ? 'Hakuna mauzo ya kuonyesha.' : 'No sales to show.';
+      else if (isSales) emptyTd.textContent = lang0 ? 'Hakuna bidhaa zilizouzwa.' : 'No items sold.';
+      else if (isUnpaid) emptyTd.textContent = lang0 ? 'Hakuna deni la kuonyesha.' : 'No unpaid amounts to show.';
+      else if (isPaid) emptyTd.textContent = lang0 ? 'Hakuna malipo ya kuonyesha.' : 'No paid amounts to show.';
+      else if (isExpenses) emptyTd.textContent = lang0 ? 'Hakuna matumizi ya kuonyesha.' : 'No expenses to show.';
+      else if (isDeposits) emptyTd.textContent = lang0 ? 'Hakuna cash deposit ya kuonyesha.' : 'No cash deposits to show.';
+      else if (isPriorStaff) emptyTd.textContent = lang0 ? 'Hakuna watumishi wa kuonyesha.' : 'No staff to show.';
+      else if (isPriorCust) emptyTd.textContent = lang0 ? 'Hakuna wateja wa kuonyesha.' : 'No customers to show.';
+      else if (isPrior) emptyTd.textContent = lang0 ? 'Hakuna malipo ya ankara za nyuma.' : 'No prior invoice payments to show.';
+      else if (isSalesIn) emptyTd.textContent = lang0 ? 'Hakuna pesa iliyoingia kwenye mauzo.' : 'No cash in from sales to show.';
+      else if (isBills) emptyTd.textContent = lang0 ? 'Hakuna malipo ya manunuzi.' : 'No purchase payments to show.';
+      else if (isOtherOut) emptyTd.textContent = lang0 ? 'Hakuna toa pesa nyingine.' : 'No other outflows to show.';
+      else if (isOtherIn) emptyTd.textContent = lang0 ? 'Hakuna ingizo jingine.' : 'No other inflows to show.';
+      else if (isExternal) emptyTd.textContent = lang0 ? 'Hakuna kuweka pesa kutoka nje.' : 'No external deposits to show.';
+      empty.appendChild(emptyTd);
+      body.appendChild(empty);
+    } else if (isSalesStaff) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(cell(roleLabel[row.role] || row.role || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.total), 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.paid), 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.debt), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isSalesCat) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(row.name || (lang0 ? 'Bila aina' : 'Uncategorized'), 'text-left'));
+        tr.appendChild(cell(row.qty, 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.value), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isSales) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.sell), 'text-right'));
+        tr.appendChild(cell(row.qty, 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.cost), 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.value), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isMoney && unpaidTab === 'staff') {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(cell(roleLabel[row.role] || row.role || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isMoney) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isExpenses && expenseTab === 'records') {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(fmtWhen(row.at), 'text-left'));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(noteCell(row.note));
+        tr.appendChild(cell(row.expense || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isExpenses) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(cell(String(row.times || 0), 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isDeposits) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(fmtWhen(row.at), 'text-left'));
+        tr.appendChild(cell(row.cash_account || '—', 'text-left'));
+        tr.appendChild(cell(row.to_account || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.before), 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.after), 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isPriorStaff) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(cell(roleLabel[row.role] || row.role || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.owed), 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.paid), 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.remaining), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isPriorCust) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.owed), 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.paid), 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.remaining), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isPrior || isSalesIn) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(fmtWhen(row.at), 'text-left'));
+        tr.appendChild(cell(row.code || '—', 'text-left'));
+        tr.appendChild(cell(row.customer || '—', 'text-left'));
+        tr.appendChild(cell(fmtWhen(row.sale_at), 'text-left'));
+        tr.appendChild(cell(row.account || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isBills) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(fmtWhen(row.at), 'text-left'));
+        tr.appendChild(cell(row.account || '—', 'text-left'));
+        tr.appendChild(cell(row.vendor || '—', 'text-left'));
+        tr.appendChild(noteCell(row.note));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isOtherOut) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(fmtWhen(row.at), 'text-left'));
+        tr.appendChild(cell(row.account || '—', 'text-left'));
+        tr.appendChild(cell(row.to || '—', 'text-left'));
+        tr.appendChild(noteCell(row.note));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isExternal || isOtherIn) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(fmtWhen(row.at), 'text-left'));
+        tr.appendChild(cell(row.account || '—', 'text-left'));
+        tr.appendChild(cell(row.source || '—', 'text-left'));
+        tr.appendChild(noteCell(row.note));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(row.name || '—', 'text-left'));
+        tr.appendChild(cell(row.aina || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
+        body.appendChild(tr);
+      });
+    }
+
+    var tot = document.createElement('tr');
+    tot.className = 'weight600';
+    if (isSalesStaff) {
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
+      tot.children[0].colSpan = 3;
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.paid_total), 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.debt_total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isSalesCat) {
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
+      tot.children[0].colSpan = 2;
+      tot.appendChild(cell(pack.qty_total || '0', 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isSales) {
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
+      tot.children[0].colSpan = 3;
+      tot.appendChild(cell(pack.qty_total || '0', 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.cost_total), 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isMoney || (isExpenses && expenseTab === 'records')) {
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
+      tot.children[0].colSpan = colCount - 1;
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isDeposits) {
+      tot.appendChild(cell(lang0 ? 'Jumla iliyowekwa' : 'Total deposited', 'text-right'));
+      tot.children[0].colSpan = colCount - 1;
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isPriorStaff) {
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
+      tot.children[0].colSpan = 3;
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.paid_total), 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.remaining_total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isPriorCust) {
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
+      tot.children[0].colSpan = 2;
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.paid_total), 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.remaining_total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isPrior || isSalesIn) {
+      tot.appendChild(cell(lang0 ? 'Jumla iliyolipwa' : 'Total paid', 'text-right'));
+      tot.children[0].colSpan = colCount - 1;
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isBills || isOtherOut || isOtherIn) {
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
+      tot.children[0].colSpan = colCount - 1;
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isExternal) {
+      tot.appendChild(cell(lang0 ? 'Jumla iliyowekwa' : 'Total deposited', 'text-right'));
+      tot.children[0].colSpan = colCount - 1;
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isExpenses) {
+      tot.appendChild(cell(lang0 ? 'Jumla halisi' : 'Net total', 'text-right'));
+      tot.children[0].colSpan = colCount - 1;
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
+    } else {
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
+      tot.children[0].colSpan = 3;
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
+      if (!isPaid) {
+        var cash = document.createElement('tr');
+        cash.appendChild(cell(lang0 ? 'Jumla ya Cash' : 'Cash total', 'text-right text-muted'));
+        cash.children[0].colSpan = 3;
+        cash.appendChild(cell(fmtAmt(pack.cash_total), 'text-right'));
+        foot.appendChild(cash);
+      }
+    }
+  }
+  document.querySelectorAll('.sr-kpi-click').forEach(function (btn) {
+    function openRow() {
+      if (btn.getAttribute('data-stock-panel')) {
+        $('#srStockModal').modal('show');
+        return;
+      }
+      var kind = btn.getAttribute('data-breakdown');
+      if (kind === 'unpaid') unpaidTab = 'staff';
+      if (kind === 'expenses') expenseTab = 'records';
+      if (kind === 'sales') salesTab = 'items';
+      if (kind === 'prior_invoices') priorTab = 'records';
+      fillBreakdown(kind);
+      $('#srBreakdownModal').modal('show');
+    }
+    btn.addEventListener('click', openRow);
+    btn.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        openRow();
+      }
+    });
+  });
+  document.querySelectorAll('#srUnpaidTabs .sr-unpaid-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      unpaidTab = btn.getAttribute('data-unpaid-tab') || 'staff';
+      fillBreakdown(currentKind === 'paid' ? 'paid' : 'unpaid');
+    });
+  });
+  document.querySelectorAll('#srExpenseTabs .sr-unpaid-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      expenseTab = btn.getAttribute('data-expense-tab') || 'records';
+      fillBreakdown('expenses');
+    });
+  });
+  document.querySelectorAll('#srSalesTabs .sr-unpaid-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      salesTab = btn.getAttribute('data-sales-tab') || 'items';
+      fillBreakdown('sales');
+    });
+  });
+  document.querySelectorAll('#srPriorTabs .sr-unpaid-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      priorTab = btn.getAttribute('data-prior-tab') || 'records';
+      fillBreakdown('prior_invoices');
+    });
+  });
+  document.getElementById('srBreakdownPrintBtn').addEventListener('click', function () {
+    document.body.classList.add('sr-print-breakdown');
+    window.print();
+  });
+  var stockPrintBtn = document.getElementById('srStockPrintBtn');
+  if (stockPrintBtn) {
+    stockPrintBtn.addEventListener('click', function () {
+      document.body.classList.add('sr-print-stock');
+      window.print();
+    });
+  }
+  window.addEventListener('afterprint', function () {
+    document.body.classList.remove('sr-print-breakdown');
+    document.body.classList.remove('sr-print-stock');
+  });
+  var stockTable = document.getElementById('srStockTable');
+  var stockSearch = document.getElementById('srStockSearch');
+  function applyStockCols() {
+    if (!stockTable) return;
+    var cols = { qty: false, value: false, worth: false };
+    document.querySelectorAll('.sr-sv-col').forEach(function (box) {
+      var col = box.getAttribute('data-sv-col');
+      cols[col] = !!box.checked;
+    });
+    if (!cols.qty && !cols.value && !cols.worth) {
+      cols.qty = true;
+      var qtyBox = document.querySelector('.sr-sv-col[data-sv-col="qty"]');
+      if (qtyBox) qtyBox.checked = true;
+    }
+    var metricCount = Number(!!cols.qty) + Number(!!cols.value) + Number(!!cols.worth);
+    var oneMetric = metricCount <= 1;
+    stockTable.classList.toggle('sv-one-metric', oneMetric);
+    stockTable.classList.toggle('sv-hide-qty', !cols.qty);
+    stockTable.classList.toggle('sv-hide-value', !cols.value);
+    stockTable.classList.toggle('sv-hide-worth', !cols.worth);
+    stockTable.querySelectorAll('thead tr:first-child th.sv-group').forEach(function (th) {
+      var metrics = (th.getAttribute('data-sv-metrics') || '').split(',');
+      var n = metrics.filter(function (m) { return cols[m]; }).length;
+      var group = th.getAttribute('data-sv-group');
+      var groupHidden = !!(group && stockTable.classList.contains('sv-hide-' + group));
+      th.colSpan = Math.max(n, 1);
+      th.style.display = (n && !groupHidden) ? '' : 'none';
+    });
+    stockTable.querySelectorAll('thead tr:first-child th[rowspan]').forEach(function (th) {
+      th.rowSpan = oneMetric ? 1 : 2;
+    });
+  }
+  document.querySelectorAll('.sr-sv-col').forEach(function (box) {
+    box.addEventListener('change', applyStockCols);
+  });
+  applyStockCols();
+  $('#srStockModal').on('shown.bs.modal', applyStockCols);
+  if (stockSearch) {
+    stockSearch.addEventListener('input', function () {
+      var q = (stockSearch.value || '').trim().toLowerCase();
+      var shown = 0;
+      document.querySelectorAll('#srStockBody tr.sr-stock-row').forEach(function (tr) {
+        var ok = !q || (tr.getAttribute('data-sv-search') || '').indexOf(q) !== -1;
+        tr.style.display = ok ? '' : 'none';
+        if (ok) shown += 1;
+      });
+      var none = document.getElementById('srStockNoMatch');
+      if (none) none.style.display = shown ? 'none' : '';
+    });
+  }
+})();
+</script>
 {% endblock %}
