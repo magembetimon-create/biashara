@@ -1575,11 +1575,11 @@ def shift_actor_sales(request):
                 if bucket_key not in item_buckets:
                     item_buckets[bucket_key] = {
                         'item_key': item_key,
-                        'item_name': item_name,
-                        'units': item_units,
-                        'qty': Decimal('0'),
-                        'amount': Decimal('0'),
-                    }
+                    'item_name': item_name,
+                    'units': item_units,
+                    'qty': Decimal('0'),
+                    'amount': Decimal('0'),
+                }
                 item_buckets[bucket_key]['qty'] += net_qty
                 item_buckets[bucket_key]['amount'] += amount
 

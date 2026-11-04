@@ -1,4 +1,4 @@
-﻿from collections import defaultdict
+from collections import defaultdict
 from decimal import Decimal
 
 from django.db.models import Case, DateTimeField, F, Prefetch, Q, Sum, When
@@ -15,6 +15,8 @@ from management.models import (
     mauzoList,
     mauzoni,
     productChangeRecord,
+    pu_ret,
+    sa_ret,
     toaCash,
     transferList,
     wekaCash,
@@ -1546,6 +1548,118 @@ def _snapshot_qty_map(activity):
     return qty_map
 
 
+def _dec_qty(val):
+    return Decimal(str(val or 0))
+
+
+def _stock_qty_map_at(duka, at_dt, closing=False):
+    """Live lots rolled back to at_dt, using Packed_at for waiter sales.
+
+    Opening uses movements at/after at_dt and excludes lots born at/after at_dt.
+    Closing uses movements after at_dt and keeps lots born at at_dt.
+    """
+    qty_map = defaultdict(lambda: Decimal('0'))
+    if not at_dt:
+        return qty_map
+    items = list(
+        bidhaa_stoku.objects.filter(
+            Interprise=duka.id,
+            is_grouped_item=False,
+            service=False,
+        ).values(
+            'id', 'idadi',
+            'manunuzi__manunuzi__tarehe',
+            'manunuzi__idadi',
+            'ongezwa__date',
+            'uhamisho__receive__transfer__tarehe',
+            'uhamisho__qty',
+            'produced__production__date',
+            'produced__qty',
+        )
+    )
+    ids = [row['id'] for row in items]
+    delta = defaultdict(lambda: Decimal('0'))
+    when_kw = 'gt' if closing else 'gte'
+
+    def _after(field):
+        return {f'{field}__{when_kw}': at_dt}
+
+    if ids:
+        sales = mauzoList.objects.filter(
+            produ_id__in=ids,
+            mauzo__service=False,
+            mauzo__order=False,
+            mauzo__cart=False,
+            mauzo__ignore=False,
+        ).annotate(event_at=sale_event_at('mauzo__')).filter(
+            **_after('event_at'),
+        ).values_list('produ_id', 'idadi')
+        for pid, qty in sales:
+            delta[pid] += _dec_qty(qty)
+
+        returns = sa_ret.objects.filter(
+            sa_list__produ_id__in=ids,
+            **_after('ret__tarehe'),
+        ).values_list('sa_list__produ_id', 'idadi')
+        for pid, qty in returns:
+            delta[pid] -= _dec_qty(qty)
+
+        transfers = transferList.objects.filter(
+            toka_id__in=ids,
+            kwenda__receive__transfer__order=False,
+            **_after('kwenda__receive__transfer__tarehe'),
+        ).values_list('toka_id', 'kwenda__qty')
+        for pid, qty in transfers:
+            delta[pid] += _dec_qty(qty)
+
+        reductions = productChangeRecord.objects.filter(
+            prod_id__in=ids,
+            adjst__Ongezwa=False,
+            **_after('adjst__date'),
+        ).filter(
+            Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True)
+            | Q(adjst__expire=True) | Q(adjst__others=True) | Q(adjst__full_Return=True)
+        ).values_list('prod_id', 'qty')
+        for pid, qty in reductions:
+            delta[pid] += _dec_qty(qty)
+
+        added = productChangeRecord.objects.filter(
+            prod_id__in=ids,
+            adjst__Ongezwa=True,
+            **_after('adjst__date'),
+        ).values_list('prod_id', 'qty')
+        for pid, qty in added:
+            delta[pid] -= _dec_qty(qty)
+
+        registered = productChangeRecord.objects.filter(
+            prod_id__in=ids,
+            adjst__registered=True,
+            **_after('adjst__date'),
+        ).values_list('prod_id', 'qty')
+        for pid, qty in registered:
+            delta[pid] -= _dec_qty(qty)
+
+        pu_returns = pu_ret.objects.filter(
+            pu_list_id__in=ids,
+            **_after('ret__tarehe'),
+        ).values_list('pu_list_id', 'idadi')
+        for pid, qty in pu_returns:
+            delta[pid] += _dec_qty(qty)
+
+    for row in items:
+        origin = (
+            row['manunuzi__manunuzi__tarehe']
+            or row['ongezwa__date']
+            or row['uhamisho__receive__transfer__tarehe']
+            or row['produced__production__date']
+        )
+        if origin is not None and (origin > at_dt if closing else origin >= at_dt):
+            continue
+        q = _dec_qty(row['idadi']) + delta.get(row['id'], Decimal('0'))
+        qty_map[row['id']] = q
+    return qty_map
+
+
 def _grouped_member_stock_ids(produ):
     if not produ or not getattr(produ, 'is_grouped_item', False) or not produ.grouped_item_ref_id:
         return []
@@ -1623,9 +1737,17 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
         adjst__date__lte=period_end,
     ).filter(
         Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True)
-        | Q(adjst__expire=True) | Q(adjst__others=True)
+        | Q(adjst__expire=True) | Q(adjst__others=True) | Q(adjst__full_Return=True)
     ).values_list('prod_id', 'qty')
     for prod_id, qty in reduction_rows:
+        reduction_qty_map[prod_id] += Decimal(qty or 0)
+
+    pu_return_rows = pu_ret.objects.filter(
+        pu_list__Interprise=duka.id,
+        ret__tarehe__gte=starts_at,
+        ret__tarehe__lte=period_end,
+    ).values_list('pu_list_id', 'idadi')
+    for prod_id, qty in pu_return_rows:
         reduction_qty_map[prod_id] += Decimal(qty or 0)
 
     added_qty_map = defaultdict(lambda: Decimal('0'))
@@ -1633,15 +1755,30 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
         adjst__Interprise=duka.id,
         adjst__date__gte=starts_at,
         adjst__date__lte=period_end,
-        adjst__Ongezwa=True,
-    ).values_list('prod_id', 'qty')
+    ).filter(Q(adjst__Ongezwa=True) | Q(adjst__registered=True)).values_list('prod_id', 'qty')
     for prod_id, qty in added_rows:
+        added_qty_map[prod_id] += Decimal(qty or 0)
+
+    produced_rows = bidhaa_stoku.objects.filter(
+        Interprise=duka.id,
+        produced__isnull=False,
+        produced__production__date__gte=starts_at,
+        produced__production__date__lte=period_end,
+    ).values_list('id', 'produced__qty')
+    for prod_id, qty in produced_rows:
+        added_qty_map[prod_id] += Decimal(qty or 0)
+
+    return_rows = sa_ret.objects.filter(
+        sa_list__produ__Interprise=duka.id,
+        ret__tarehe__gte=starts_at,
+        ret__tarehe__lte=period_end,
+    ).values_list('sa_list__produ_id', 'idadi')
+    for prod_id, qty in return_rows:
         added_qty_map[prod_id] += Decimal(qty or 0)
 
     transferred_qty_map = defaultdict(lambda: Decimal('0'))
     transferred_rows = transferList.objects.filter(
         toka__Interprise=duka.id,
-        kwenda__receive__transfer__Interprise=duka.id,
         kwenda__receive__transfer__order=False,
         kwenda__receive__transfer__tarehe__gte=starts_at,
         kwenda__receive__transfer__tarehe__lte=period_end,
@@ -1729,7 +1866,9 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
             t_qty = transferred_qty_map[iid]
             rc_qty = received_qty_map[iid]
             reconstructed = b_qty + a_qty + p_qty + rc_qty - s_qty - r_qty - t_qty
-            if is_closed:
+            if is_closed and closing_qty_map:
+                c_qty = closing_qty_map[iid]
+            elif is_closed:
                 c_qty = reconstructed
             else:
                 c_qty = Decimal(itm.idadi or 0)
@@ -1847,8 +1986,8 @@ def _stock_flow_summary_rows(totals, optional_groups, stock_frozen):
         {'key': 'sold', 'name_swa': 'Zilizouzwa', 'name_eng': 'Sold', 'prefix': 'sold', 'optional': False, 'tint': 'sr-tint-sales'},
         {
             'key': 'current',
-            'name_swa': 'Stoku ya kufunga' if stock_frozen else 'Stoku ya sasa',
-            'name_eng': 'Closing stock' if stock_frozen else 'Current stock',
+            'name_swa': 'Stoku ya kufunga',
+            'name_eng': 'Closing stock',
             'prefix': 'current',
             'optional': False,
             'tint': 'sr-sum-close',
@@ -1934,20 +2073,24 @@ def period_stock_value_report(duka, shifts):
             event_ref_id__isnull=False,
         ).order_by('-recorded_at').first()
 
-    before_qty_map = _snapshot_qty_map(opening_snapshot_activity)
-    closing_qty_map = _snapshot_qty_map(closing_snapshot_activity)
+    before_qty_map = _stock_qty_map_at(duka, starts_at)
+    if not before_qty_map:
+        before_qty_map = _snapshot_qty_map(opening_snapshot_activity)
+    closing_qty_map = _stock_qty_map_at(duka, period_end, closing=True) if is_closed else defaultdict(lambda: Decimal('0'))
+    if is_closed and not closing_qty_map:
+        closing_qty_map = _snapshot_qty_map(closing_snapshot_activity)
     sold_qty_map = defaultdict(lambda: Decimal('0'))
     for line in completed_sale_lines_qs(duka, starts_at, period_end).select_related('produ'):
-        net_qty = Decimal(line.idadi or 0) - Decimal(line.returned or 0) - Decimal(line.serviceReturn or 0)
-        if net_qty <= 0:
+        sold_qty = Decimal(line.idadi or 0)
+        if sold_qty <= 0:
             continue
         produ = line.produ
         if produ and getattr(produ, 'is_grouped_item', False):
             member_ids = _grouped_member_stock_ids(produ)
-            for sid, part in _allocate_qty(member_ids, net_qty, before_qty_map).items():
+            for sid, part in _allocate_qty(member_ids, sold_qty, before_qty_map).items():
                 sold_qty_map[sid] += part
         elif produ:
-            sold_qty_map[produ.id] += net_qty
+            sold_qty_map[produ.id] += sold_qty
 
     panel = _assemble_stock_value_panel(
         duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed,
@@ -2012,14 +2155,19 @@ def build_shift_report(duka, shift):
         event_ref_id__isnull=False,
     ).order_by('-recorded_at').first()
 
-    before_qty_map = _snapshot_qty_map(opening_snapshot_activity)
-    closing_qty_map = _snapshot_qty_map(closing_snapshot_activity)
+    before_qty_map = _stock_qty_map_at(duka, starts_at)
+    if not before_qty_map:
+        before_qty_map = _snapshot_qty_map(opening_snapshot_activity)
+    closing_qty_map = _stock_qty_map_at(duka, period_end, closing=True) if is_closed else defaultdict(lambda: Decimal('0'))
+    if is_closed and not closing_qty_map:
+        closing_qty_map = _snapshot_qty_map(closing_snapshot_activity)
 
     for line in line_qs:
-        net_qty = Decimal(line.idadi or 0) - Decimal(line.returned or 0) - Decimal(line.serviceReturn or 0)
-        if net_qty <= 0:
+        sold_qty = Decimal(line.idadi or 0)
+        net_qty = sold_qty - Decimal(line.returned or 0) - Decimal(line.serviceReturn or 0)
+        if sold_qty <= 0:
             continue
-        line_amount = net_qty * Decimal(line.bei or 0)
+        line_amount = max(net_qty, Decimal('0')) * Decimal(line.bei or 0)
         sales_amount += line_amount
 
         sale = line.mauzo
@@ -2040,10 +2188,10 @@ def build_shift_report(duka, shift):
         produ = line.produ
         if produ and getattr(produ, 'is_grouped_item', False):
             member_ids = _grouped_member_stock_ids(produ)
-            for sid, part in _allocate_qty(member_ids, net_qty, before_qty_map).items():
+            for sid, part in _allocate_qty(member_ids, sold_qty, before_qty_map).items():
                 sold_qty_map[sid] += part
         elif produ:
-            sold_qty_map[produ.id] += net_qty
+            sold_qty_map[produ.id] += sold_qty
 
     sales_breakdown_rows = sorted(breakdown.values(), key=lambda x: (x['name'] or '').lower())
     sales_breakdown_totals = {

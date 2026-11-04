@@ -13,12 +13,16 @@
     -webkit-overflow-scrolling: touch;
   }
   #general-panel .nav-tabs .nav-link { white-space: nowrap; }
-  .sr-wrap { max-width: 1280px; margin: 0 auto; }
+  .sr-wrap { max-width: 1280px; width: 100%; min-width: 0; margin: 0 auto; }
   .sr-summary-wrap {
     background: #fff;
     border: 1px solid #e6e9ef;
     border-radius: 10px;
-    overflow: hidden;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
   }
   .sr-summary {
@@ -71,6 +75,38 @@
   .sr-summary tr.sr-tint-in td { background: #eef8f1; }
   .sr-summary tr.sr-tint-out td { background: #fdf3f4; }
   .sr-summary tr.sr-tint-buy td { background: #fff6eb; }
+  #srStockSummary {
+    min-width: 640px;
+    width: 100%;
+  }
+  #srStockSummary th:first-child,
+  #srStockSummary td.sr-sum-name {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: #fff;
+    white-space: nowrap;
+    box-shadow: 6px 0 8px -6px rgba(16, 24, 40, 0.28);
+  }
+  #srStockSummary thead th:first-child {
+    background: #f8f9fb;
+    z-index: 2;
+  }
+  #srStockSummary tr.sr-sum-close td.sr-sum-name { background: #f8f9fb; }
+  #srStockSummary tr.sr-tint-sales td.sr-sum-name { background: #eef5ff; }
+  #srStockSummary tr.sr-tint-in td.sr-sum-name { background: #eef8f1; }
+  #srStockSummary tr.sr-tint-out td.sr-sum-name { background: #fdf3f4; }
+  #srStockSummary tr.sr-tint-buy td.sr-sum-name { background: #fff6eb; }
+  #srStockSummary tr.sr-kpi-click:hover td.sr-sum-name,
+  #srStockSummary tr.sr-kpi-click:focus td.sr-sum-name { background: #f4f7fb; }
+  #srStockSummary tr.sr-kpi-click.sr-tint-sales:hover td.sr-sum-name,
+  #srStockSummary tr.sr-kpi-click.sr-tint-sales:focus td.sr-sum-name { background: #e4efff; }
+  #srStockSummary tr.sr-kpi-click.sr-tint-in:hover td.sr-sum-name,
+  #srStockSummary tr.sr-kpi-click.sr-tint-in:focus td.sr-sum-name { background: #e4f6ea; }
+  #srStockSummary tr.sr-kpi-click.sr-tint-out:hover td.sr-sum-name,
+  #srStockSummary tr.sr-kpi-click.sr-tint-out:focus td.sr-sum-name { background: #fbeaec; }
+  #srStockSummary tr.sr-kpi-click.sr-tint-buy:hover td.sr-sum-name,
+  #srStockSummary tr.sr-kpi-click.sr-tint-buy:focus td.sr-sum-name { background: #ffefd9; }
   .sr-kpi-click { cursor: pointer; }
   .sr-bd-print-head { display: none; }
   tr.sr-kpi-click:hover, tr.sr-kpi-click:focus {
@@ -352,7 +388,10 @@
     }
     .sr-table-wrap .table-hover,
     .sr-table.table-hover { min-width: 0 !important; }
-    .sr-summary-wrap { border: 1px solid #333; border-radius: 0; }
+    .sr-summary-wrap { border: 1px solid #333; border-radius: 0; overflow: visible !important; }
+    #srStockSummary { min-width: 0 !important; }
+    #srStockSummary th:first-child,
+    #srStockSummary td.sr-sum-name { position: static !important; box-shadow: none !important; }
     .sr-summary { width: 100% !important; font-size: 11px; }
     .sr-summary th, .sr-summary td {
       border: 1px solid #444 !important;
@@ -813,7 +852,7 @@
                 <th class="text-center sv-group sv-mov-received" data-sv-group="received" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizopokelewa{% else %}Received{% endif %}</th>
                 <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Jumla kabla ya mauzo{% else %}Total before sales{% endif %}</th>
                 <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizouzwa{% else %}Sold{% endif %}</th>
-                <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if stock_flow.stock_frozen %}{% if useri.langSet == 0 %}Stoku ya kufunga{% else %}Closing stock{% endif %}{% else %}{% if useri.langSet == 0 %}Stoku ya sasa{% else %}Current stock{% endif %}{% endif %}</th>
+                <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Stoku ya kufunga{% else %}Closing stock{% endif %}</th>
               </tr>
               <tr>
                 <th class="sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>

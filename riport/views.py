@@ -15,7 +15,7 @@ from management.models import  UserExtend,stokAdjustment,ForPrintingPupose,Inter
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
-from django.db.models import F
+from django.db.models import Case, DateTimeField, F, When
 from django.core import serializers
 from django.db.models import Q
 # from datetime import datetime
@@ -2049,23 +2049,34 @@ def _report_branch_ids(todo, shop):
   return [duka.id]
 
 
+def _sale_event_at(prefix=''):
+  p = prefix
+  return Case(
+    When(
+      **{f'{p}waiter_order_id__isnull': False, f'{p}Packed_at__isnull': False},
+      then=F(f'{p}Packed_at'),
+    ),
+    default=F(f'{p}tarehe'),
+    output_field=DateTimeField(),
+  )
+
+
 def _item_movements_since(item_ids, at_dt):
   if not item_ids:
     return []
   rows = []
   sales = mauzoList.objects.filter(
     produ_id__in=item_ids,
-    mauzo__tarehe__gte=at_dt,
     mauzo__order=False,
-  ).values_list('produ_id', 'idadi', 'returned', 'serviceReturn', 'mauzo__tarehe')
-  for pid, qty, ret, sret, when in sales:
-    net = Decimal(str(qty or 0)) - Decimal(str(ret or 0)) - Decimal(str(sret or 0))
-    rows.append((pid, net, when))
+  ).annotate(event_at=_sale_event_at('mauzo__')).filter(
+    event_at__gte=at_dt,
+  ).values_list('produ_id', 'idadi', 'event_at')
+  for pid, qty, when in sales:
+    rows.append((pid, Decimal(str(qty or 0)), when))
 
   old_returns = sa_ret.objects.filter(
     sa_list__produ_id__in=item_ids,
     ret__tarehe__gte=at_dt,
-    sa_list__mauzo__tarehe__lt=at_dt,
   ).values_list('sa_list__produ_id', 'idadi', 'ret__tarehe')
   for pid, qty, when in old_returns:
     rows.append((pid, -Decimal(str(qty or 0)), when))
@@ -2210,9 +2221,10 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     sale_rows = mauzoList.objects.filter(
       produ_id__in=item_ids,
       mauzo__order=False,
-      mauzo__tarehe__gte=tf,
-    ).exclude(mauzo__tarehe__gt=tt).values(
-      'id', 'idadi', 'mauzo__tarehe', 'mauzo__code',
+    ).annotate(event_at=_sale_event_at('mauzo__')).filter(
+      event_at__gte=tf,
+    ).exclude(event_at__gt=tt).values(
+      'id', 'idadi', 'event_at', 'mauzo__code',
       'produ__Interprise_id', 'produ__Interprise__name'
     )
     ret_rows = sa_ret.objects.filter(
@@ -2283,7 +2295,7 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
            duka=r['prod__Interprise_id'], dukaN=r['prod__Interprise__name'])
 
   for r in sale_rows:
-    add_ev(r['mauzo__tarehe'], 'sale', qty_out=r['idadi'],
+    add_ev(r['event_at'], 'sale', qty_out=r['idadi'],
            code=r['mauzo__code'], duka=r['produ__Interprise_id'], dukaN=r['produ__Interprise__name'])
 
   for r in ret_rows:
@@ -2310,6 +2322,7 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
 
   qty_in = sum((Decimal(str(e['qty_in'] or 0)) for e in events), Decimal('0'))
   qty_out = sum((Decimal(str(e['qty_out'] or 0)) for e in events), Decimal('0'))
+  close_qty = open_qty + qty_in - qty_out
 
   info = bidhaa_stoku.objects.filter(bidhaa_id=bidhaa_id, Interprise__in=br).select_related('bidhaa', 'bidhaa__bidhaa_aina').first()
   name = ''
