@@ -1222,7 +1222,8 @@ def shift_reconcile(request):
             before = Decimal(str(row.get('before_qty') or 0))
             added_in = Decimal(str(row.get('added_in_qty') or 0))
             reduced_in = Decimal(str(row.get('reduced_in_qty') or 0))
-            max_sold = before + added_in - reduced_in
+            returned_in = Decimal(str(row.get('returned_qty') or 0))
+            max_sold = before + added_in + returned_in - reduced_in
             user_sold = Decimal(str(item.get('sold_qty') or system_sold))
             if user_sold < system_sold:
                 return JsonResponse({

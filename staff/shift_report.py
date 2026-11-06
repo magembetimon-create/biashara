@@ -1646,6 +1646,24 @@ def _stock_qty_map_at(duka, at_dt, closing=False):
         for pid, qty in pu_returns:
             delta[pid] += _dec_qty(qty)
 
+        inbound = bidhaa_stoku.objects.filter(
+            pk__in=ids,
+            uhamisho__isnull=False,
+            uhamisho__receive__transfer__order=False,
+            **_after('uhamisho__receive__transfer__tarehe'),
+        ).values_list('id', 'uhamisho__qty')
+        for pid, qty in inbound:
+            delta[pid] -= _dec_qty(qty)
+
+        purchased = bidhaa_stoku.objects.filter(
+            pk__in=ids,
+            manunuzi__isnull=False,
+            manunuzi__manunuzi__order=False,
+            **_after('manunuzi__manunuzi__tarehe'),
+        ).values_list('id', 'manunuzi__idadi', 'manunuzi__rudi')
+        for pid, qty, rudi in purchased:
+            delta[pid] -= _dec_qty(qty) - _dec_qty(rudi)
+
     for row in items:
         origin = (
             row['manunuzi__manunuzi__tarehe']
@@ -1741,6 +1759,53 @@ def _money(qty, buy_price, sales_price, ratio):
     if ratio == 0:
         ratio = Decimal('1')
     return qty * buy_price / ratio, qty * sales_price
+
+
+def _scale_qty_money(buckets, prefix, new_qty):
+    old_qty = buckets.get(f'{prefix}_qty') or Decimal('0')
+    buckets[f'{prefix}_qty'] = new_qty
+    if old_qty == new_qty:
+        return
+    if old_qty:
+        factor = new_qty / old_qty
+        buckets[f'{prefix}_value'] *= factor
+        buckets[f'{prefix}_worth'] *= factor
+        return
+    current_qty = buckets.get('current_qty') or Decimal('0')
+    if current_qty:
+        buckets[f'{prefix}_value'] = (buckets.get('current_value') or Decimal('0')) * new_qty / current_qty
+        buckets[f'{prefix}_worth'] = (buckets.get('current_worth') or Decimal('0')) * new_qty / current_qty
+        return
+    buckets[f'{prefix}_value'] = Decimal('0')
+    buckets[f'{prefix}_worth'] = Decimal('0')
+
+
+def _rebase_group_before_to_current(buckets):
+    """Set opening so the row identity matches live/closing stock.
+
+    Returns via /mauzo/return and lots received onto an older origin date can
+    inflate Stock Before without changing shelf qty. Current stock is the
+    source of truth: opening = current - in + out + sold - returned.
+    """
+    added_in = (
+        (buckets.get('added_qty') or Decimal('0'))
+        + (buckets.get('purchased_qty') or Decimal('0'))
+        + (buckets.get('received_qty') or Decimal('0'))
+    )
+    reduced_in = (
+        (buckets.get('reduction_qty') or Decimal('0'))
+        + (buckets.get('transferred_qty') or Decimal('0'))
+    )
+    implied_before = (
+        (buckets.get('current_qty') or Decimal('0'))
+        - added_in
+        - (buckets.get('returned_qty') or Decimal('0'))
+        + (buckets.get('sold_qty') or Decimal('0'))
+        + reduced_in
+    )
+    if implied_before == (buckets.get('before_qty') or Decimal('0')):
+        return
+    _scale_qty_money(buckets, 'before', implied_before)
 
 
 STOCK_FLOW_METRIC_KEYS = (
@@ -1891,6 +1956,9 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
             t_qty = transferred_qty_map[iid]
             rc_qty = received_qty_map[iid]
             rt_qty = returned_qty_map[iid]
+            # New receive/purchase lots must not also sit in opening.
+            if rc_qty or p_qty:
+                b_qty = max(Decimal('0'), b_qty - rc_qty - p_qty)
             reconstructed = b_qty + a_qty + p_qty + rc_qty + rt_qty - s_qty - r_qty - t_qty
             if is_closed and closing_qty_map:
                 c_qty = closing_qty_map[iid]
@@ -1937,6 +2005,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
             buckets['returned_value'] += rt_val
             buckets['returned_worth'] += rt_worth
 
+        _rebase_group_before_to_current(buckets)
         has_activity = any(
             buckets[k] for k in (
                 'before_qty', 'added_qty', 'purchased_qty', 'sold_qty', 'reduction_qty',

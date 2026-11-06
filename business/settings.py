@@ -39,6 +39,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://www.fanyabiashara.com',
     'http://fanyabiashara.com',
     'http://www.fanyabiashara.com',
+    'http://94.72.104.184',
+    'https://94.72.104.184',
     'https://google.com',
     'https://fanyabiashara-behqabgwdsh8dvb8.centralus-01.azurewebsites.net'
 ]
