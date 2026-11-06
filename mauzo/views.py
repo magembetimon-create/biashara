@@ -6931,10 +6931,13 @@ def  Itm_return_data(request):
 
             
            
-            if amo <= uzo.ilolipwa:
-                  rtrn.amount =amo 
-            else:
-                  rtrn.amount = uzo.ilolipwa     
+            paid_on_sale = float(uzo.ilolipwa or 0)
+            waiter_paid = float(getattr(uzo, 'waiter_pay', 0) or 0)
+            if waiter_paid > 0:
+                  paid_on_sale = min(paid_on_sale, waiter_paid) if paid_on_sale else waiter_paid
+            if paid_on_sale < 0:
+                  paid_on_sale = 0
+            rtrn.amount = min(float(amo), paid_on_sale)
 
             
             

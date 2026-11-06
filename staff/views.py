@@ -1082,6 +1082,7 @@ def shift_view(request):
                 'aina_name': s.get('aina_name') or '',
                 'before_qty': float(s.get('before_qty') or 0),
                 'added_qty': float(s.get('added_in_qty') or 0),
+                'returned_qty': float(s.get('returned_qty') or 0),
                 'reduced_qty': float(s.get('reduced_in_qty') or 0),
                 'available_qty': float(s.get('available_qty') or 0),
                 'sold_qty': float(s.get('sold_qty') or 0),
@@ -1474,7 +1475,7 @@ def print_shift(request):
             'stock_metric_count': stock_metric_count,
             'show_stock_subhead': stock_metric_count > 1,
             'stock_colspan': 3 + (
-                (4 + sum(1 for k in ('added', 'purchased', 'reduction', 'transferred', 'received')
+                (4 + sum(1 for k in ('added', 'purchased', 'reduction', 'transferred', 'received', 'returned')
                          if (report.get('stock_optional_groups') or {}).get(k)))
                 * stock_metric_count
             ),

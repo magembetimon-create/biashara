@@ -2068,6 +2068,9 @@ def _item_movements_since(item_ids, at_dt):
   sales = mauzoList.objects.filter(
     produ_id__in=item_ids,
     mauzo__order=False,
+    mauzo__service=False,
+    mauzo__cart=False,
+    mauzo__ignore=False,
   ).annotate(event_at=_sale_event_at('mauzo__')).filter(
     event_at__gte=at_dt,
   ).values_list('produ_id', 'idadi', 'event_at')
@@ -2093,6 +2096,7 @@ def _item_movements_since(item_ids, at_dt):
     prod_id__in=item_ids,
     adjst__date__gte=at_dt,
     adjst__Ongezwa=False,
+    adjst__registered=False,
   ).filter(
     Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True) | Q(adjst__expire=True) | Q(adjst__others=True) | Q(adjst__full_Return=True)
   ).values_list('prod_id', 'qty', 'adjst__date')
@@ -2107,6 +2111,15 @@ def _item_movements_since(item_ids, at_dt):
   for pid, qty, when in added:
     rows.append((pid, -Decimal(str(qty or 0)), when))
 
+  registered = productChangeRecord.objects.filter(
+    prod_id__in=item_ids,
+    adjst__date__gte=at_dt,
+    adjst__registered=True,
+    adjst__Ongezwa=False,
+  ).values_list('prod_id', 'qty', 'adjst__date')
+  for pid, qty, when in registered:
+    rows.append((pid, -Decimal(str(qty or 0)), when))
+
   pu_returns = pu_ret.objects.filter(
     pu_list_id__in=item_ids,
     ret__tarehe__gte=at_dt,
@@ -2115,6 +2128,10 @@ def _item_movements_since(item_ids, at_dt):
     rows.append((pid, Decimal(str(qty or 0)), when))
 
   return rows
+
+
+def _lot_origin(row):
+  return row.get('origin_pu') or row.get('origin_add') or row.get('origin_tr') or row.get('origin_pr')
 
 
 def item_track_for_period(br, bidhaa_id, tf, tt):
@@ -2137,21 +2154,6 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
   movements = _item_movements_since(item_ids, tf)
   delta_open = _delta_map(movements, lambda when: _dt_ge(when, tf))
   delta_close = _delta_map(movements, lambda when: _dt_gt(when, tt))
-
-  open_qty = Decimal('0')
-  close_qty = Decimal('0')
-  for row in items:
-    origin = row['origin_pu'] or row['origin_add'] or row['origin_tr'] or row['origin_pr']
-    iid = row['id']
-    cur = Decimal(str(row['idadi'] or 0))
-    if origin is None or _dt_lt(origin, tf):
-      q = cur + delta_open.get(iid, Decimal('0'))
-      if q > 0:
-        open_qty += q
-    if origin is None or _dt_le(origin, tt):
-      q = cur + delta_close.get(iid, Decimal('0'))
-      if q > 0:
-        close_qty += q
 
   events = []
   in_kinds = {
@@ -2221,6 +2223,9 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     sale_rows = mauzoList.objects.filter(
       produ_id__in=item_ids,
       mauzo__order=False,
+      mauzo__service=False,
+      mauzo__cart=False,
+      mauzo__ignore=False,
     ).annotate(event_at=_sale_event_at('mauzo__')).filter(
       event_at__gte=tf,
     ).exclude(event_at__gt=tt).values(
@@ -2285,7 +2290,7 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     elif r['adjst__expire']:
       kind = 'expire'
     elif r['adjst__full_Return']:
-      continue
+      kind = 'pu_return'
     elif r['adjst__tumika'] and r['adjst__production_id']:
       kind = 'used_production'
     elif r['adjst__tumika']:
@@ -2314,15 +2319,42 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
            code=r['ret__code'], duka=r['pu_list__Interprise_id'], dukaN=r['pu_list__Interprise__name'])
 
   events.sort(key=lambda e: (e['tarehe'] or '', e.get('_in', 1), e.get('code') or ''))
+
+  born_in_period = set()
+  if item_ids:
+    for r in pu_rows:
+      born_in_period.add(r['id'])
+    for r in pr_rows:
+      born_in_period.add(r['id'])
+    for r in rc_rows:
+      born_in_period.add(r['id'])
+
+  open_qty = Decimal('0')
+  close_qty = Decimal('0')
+  for row in items:
+    origin = _lot_origin(row)
+    iid = row['id']
+    cur = Decimal(str(row['idadi'] or 0))
+    born_at_or_after_open = iid in born_in_period or (
+      origin is not None and not _dt_lt(origin, tf)
+    )
+    if not born_at_or_after_open:
+      open_qty += cur + delta_open.get(iid, Decimal('0'))
+    born_after_close = origin is not None and _dt_gt(origin, tt)
+    if not born_after_close:
+      close_qty += cur + delta_close.get(iid, Decimal('0'))
+
+  qty_in = sum((Decimal(str(e['qty_in'] or 0)) for e in events), Decimal('0'))
+  qty_out = sum((Decimal(str(e['qty_out'] or 0)) for e in events), Decimal('0'))
+  ledger_close = open_qty + qty_in - qty_out
+  if ledger_close != close_qty:
+    open_qty = close_qty - qty_in + qty_out
+
   running = open_qty
   for ev in events:
     running += Decimal(str(ev['qty_in'] or 0)) - Decimal(str(ev['qty_out'] or 0))
     ev['balance'] = _qtyf(running)
     ev.pop('_in', None)
-
-  qty_in = sum((Decimal(str(e['qty_in'] or 0)) for e in events), Decimal('0'))
-  qty_out = sum((Decimal(str(e['qty_out'] or 0)) for e in events), Decimal('0'))
-  close_qty = open_qty + qty_in - qty_out
 
   info = bidhaa_stoku.objects.filter(bidhaa_id=bidhaa_id, Interprise__in=br).select_related('bidhaa', 'bidhaa__bidhaa_aina').first()
   name = ''

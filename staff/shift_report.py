@@ -1708,6 +1708,34 @@ def _allocate_qty(stock_ids, qty, weight_map):
     return allocations
 
 
+def _distribute_stock_qty(qty_map, produ, qty, before_qty_map):
+    qty = Decimal(qty or 0)
+    if qty == 0 or not produ:
+        return
+    if getattr(produ, 'is_grouped_item', False):
+        for sid, part in _allocate_qty(_grouped_member_stock_ids(produ), qty, before_qty_map).items():
+            qty_map[sid] += part
+    else:
+        qty_map[produ.id] += qty
+
+
+def _window_sale_returns(duka, starts_at, period_end, sold_qty_map, before_qty_map):
+    """Returns in this window, including items sold in the same shift."""
+    returned_map = defaultdict(lambda: Decimal('0'))
+    rows = sa_ret.objects.filter(
+        sa_list__produ__Interprise=duka.id,
+        ret__tarehe__gte=starts_at,
+        ret__tarehe__lte=period_end,
+    ).select_related('sa_list__produ')
+    for row in rows:
+        qty = Decimal(row.idadi or 0)
+        if qty <= 0:
+            continue
+        produ = row.sa_list.produ if row.sa_list_id else None
+        _distribute_stock_qty(returned_map, produ, qty, before_qty_map)
+    return returned_map
+
+
 def _money(qty, buy_price, sales_price, ratio):
     ratio = ratio or Decimal('1')
     if ratio == 0:
@@ -1722,13 +1750,14 @@ STOCK_FLOW_METRIC_KEYS = (
     'reduction_qty', 'reduction_value', 'reduction_worth',
     'transferred_qty', 'transferred_value', 'transferred_worth',
     'received_qty', 'received_value', 'received_worth',
+    'returned_qty', 'returned_value', 'returned_worth',
     'available_qty', 'available_value', 'available_worth',
     'sold_qty', 'sold_value', 'sold_worth',
     'current_qty', 'current_value', 'current_worth',
 )
 
 
-def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed):
+def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed, returned_qty_map=None):
     """Stock Value Panel rows/totals for a time window, matching shift view."""
     reduction_qty_map = defaultdict(lambda: Decimal('0'))
     reduction_rows = productChangeRecord.objects.filter(
@@ -1768,13 +1797,8 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
     for prod_id, qty in produced_rows:
         added_qty_map[prod_id] += Decimal(qty or 0)
 
-    return_rows = sa_ret.objects.filter(
-        sa_list__produ__Interprise=duka.id,
-        ret__tarehe__gte=starts_at,
-        ret__tarehe__lte=period_end,
-    ).values_list('sa_list__produ_id', 'idadi')
-    for prod_id, qty in return_rows:
-        added_qty_map[prod_id] += Decimal(qty or 0)
+    if returned_qty_map is None:
+        returned_qty_map = defaultdict(lambda: Decimal('0'))
 
     transferred_qty_map = defaultdict(lambda: Decimal('0'))
     transferred_rows = transferList.objects.filter(
@@ -1822,6 +1846,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
 
     relevant_ids = set(items_by_id.keys()) | set(before_qty_map.keys()) | set(closing_qty_map.keys())
     relevant_ids |= set(sold_qty_map.keys()) | set(added_qty_map.keys()) | set(reduction_qty_map.keys())
+    relevant_ids |= set(returned_qty_map.keys())
     relevant_ids |= set(transferred_qty_map.keys()) | set(received_qty_map.keys())
     relevant_ids |= set(purchased_qty_map.keys())
 
@@ -1865,7 +1890,8 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
             r_qty = reduction_qty_map[iid]
             t_qty = transferred_qty_map[iid]
             rc_qty = received_qty_map[iid]
-            reconstructed = b_qty + a_qty + p_qty + rc_qty - s_qty - r_qty - t_qty
+            rt_qty = returned_qty_map[iid]
+            reconstructed = b_qty + a_qty + p_qty + rc_qty + rt_qty - s_qty - r_qty - t_qty
             if is_closed and closing_qty_map:
                 c_qty = closing_qty_map[iid]
             elif is_closed:
@@ -1881,6 +1907,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
             r_val, r_worth = _money(r_qty, buy_price, sales_price, ratio)
             t_val, t_worth = _money(t_qty, buy_price, sales_price, ratio)
             rc_val, rc_worth = _money(rc_qty, buy_price, sales_price, ratio)
+            rt_val, rt_worth = _money(rt_qty, buy_price, sales_price, ratio)
 
             buckets['current_qty'] += c_qty
             buckets['current_value'] += c_val
@@ -1906,11 +1933,14 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
             buckets['received_qty'] += rc_qty
             buckets['received_value'] += rc_val
             buckets['received_worth'] += rc_worth
+            buckets['returned_qty'] += rt_qty
+            buckets['returned_value'] += rt_val
+            buckets['returned_worth'] += rt_worth
 
         has_activity = any(
             buckets[k] for k in (
                 'before_qty', 'added_qty', 'purchased_qty', 'sold_qty', 'reduction_qty',
-                'transferred_qty', 'received_qty', 'current_qty',
+                'transferred_qty', 'received_qty', 'returned_qty', 'current_qty',
             )
         )
         if not has_activity:
@@ -1961,6 +1991,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
         'reduction': _qty_used('reduction_qty'),
         'transferred': _qty_used('transferred_qty'),
         'received': _qty_used('received_qty'),
+        'returned': _qty_used('returned_qty'),
     }
     stock_now = total_current_qty if is_closed else (
         bidhaa_stoku.objects.filter(Interprise=duka.id, is_grouped_item=False).aggregate(sum=Sum('idadi'))['sum'] or 0
@@ -1984,6 +2015,7 @@ def _stock_flow_summary_rows(totals, optional_groups, stock_frozen):
         {'key': 'received', 'name_swa': 'Zilizopokelewa', 'name_eng': 'Received', 'prefix': 'received', 'optional': True, 'tint': 'sr-tint-in'},
         {'key': 'available', 'name_swa': 'Jumla kabla ya mauzo', 'name_eng': 'Total before sales', 'prefix': 'available', 'optional': False, 'tint': ''},
         {'key': 'sold', 'name_swa': 'Zilizouzwa', 'name_eng': 'Sold', 'prefix': 'sold', 'optional': False, 'tint': 'sr-tint-sales'},
+        {'key': 'returned', 'name_swa': 'Zilizorudishwa', 'name_eng': 'Returned', 'prefix': 'returned', 'optional': True, 'tint': 'sr-tint-in'},
         {
             'key': 'current',
             'name_swa': 'Stoku ya kufunga',
@@ -2047,6 +2079,7 @@ def period_stock_value_report(duka, shifts):
             'reduction': False,
             'transferred': False,
             'received': False,
+            'returned': False,
         },
         'stock_frozen': False,
     })
@@ -2092,8 +2125,10 @@ def period_stock_value_report(duka, shifts):
         elif produ:
             sold_qty_map[produ.id] += sold_qty
 
+    returned_qty_map = _window_sale_returns(duka, starts_at, period_end, sold_qty_map, before_qty_map)
     panel = _assemble_stock_value_panel(
         duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed,
+        returned_qty_map=returned_qty_map,
     )
     return _pack_stock_panel_json(panel)
 
@@ -2193,6 +2228,8 @@ def build_shift_report(duka, shift):
         elif produ:
             sold_qty_map[produ.id] += sold_qty
 
+    returned_qty_map = _window_sale_returns(duka, starts_at, period_end, sold_qty_map, before_qty_map)
+
     sales_breakdown_rows = sorted(breakdown.values(), key=lambda x: (x['name'] or '').lower())
     sales_breakdown_totals = {
         'sales_count': sum(row['sales_count'] for row in sales_breakdown_rows),
@@ -2246,6 +2283,7 @@ def build_shift_report(duka, shift):
 
     stock_panel = _assemble_stock_value_panel(
         duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed,
+        returned_qty_map=returned_qty_map,
     )
     stock_value_rows = stock_panel['rows']
     stock_value_totals = stock_panel['totals']

@@ -242,7 +242,8 @@
   #srStockTable.sv-hide-purchased .sv-mov-purchased,
   #srStockTable.sv-hide-reduction .sv-mov-reduction,
   #srStockTable.sv-hide-transferred .sv-mov-transferred,
-  #srStockTable.sv-hide-received .sv-mov-received { display: none !important; }
+  #srStockTable.sv-hide-received .sv-mov-received,
+  #srStockTable.sv-hide-returned .sv-mov-returned { display: none !important; }
   #srStockSearch { max-width: 260px; }
   .sr-sv-print-head { display: none; }
   .sr-table th, .sr-table td { white-space: nowrap; }
@@ -838,7 +839,7 @@
           {% endif %}
         </p>
         <div id="srStockWrap">
-          <table class="table table-sm table-hover table-bordered{% if not stock_flow.optional_groups.added %} sv-hide-added{% endif %}{% if not stock_flow.optional_groups.purchased %} sv-hide-purchased{% endif %}{% if not stock_flow.optional_groups.reduction %} sv-hide-reduction{% endif %}{% if not stock_flow.optional_groups.transferred %} sv-hide-transferred{% endif %}{% if not stock_flow.optional_groups.received %} sv-hide-received{% endif %}" id="srStockTable">
+          <table class="table table-sm table-hover table-bordered{% if not stock_flow.optional_groups.added %} sv-hide-added{% endif %}{% if not stock_flow.optional_groups.purchased %} sv-hide-purchased{% endif %}{% if not stock_flow.optional_groups.reduction %} sv-hide-reduction{% endif %}{% if not stock_flow.optional_groups.transferred %} sv-hide-transferred{% endif %}{% if not stock_flow.optional_groups.received %} sv-hide-received{% endif %}{% if not stock_flow.optional_groups.returned %} sv-hide-returned{% endif %}" id="srStockTable">
             <thead>
               <tr>
                 <th rowspan="2" class="text-left">#</th>
@@ -852,6 +853,7 @@
                 <th class="text-center sv-group sv-mov-received" data-sv-group="received" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizopokelewa{% else %}Received{% endif %}</th>
                 <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Jumla kabla ya mauzo{% else %}Total before sales{% endif %}</th>
                 <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizouzwa{% else %}Sold{% endif %}</th>
+                <th class="text-center sv-group sv-mov-returned" data-sv-group="returned" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Zilizorudishwa{% else %}Returned{% endif %}</th>
                 <th class="text-center sv-group" data-sv-metrics="qty,value,worth" colspan="3">{% if useri.langSet == 0 %}Stoku ya kufunga{% else %}Closing stock{% endif %}</th>
               </tr>
               <tr>
@@ -879,6 +881,9 @@
                 <th class="sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
                 <th class="sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
                 <th class="sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
+                <th class="sv-qty sv-mov-returned">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
+                <th class="sv-value sv-mov-returned">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
+                <th class="sv-worth sv-mov-returned">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
                 <th class="sv-qty">{% if useri.langSet == 0 %}Idadi{% else %}Qty{% endif %}</th>
                 <th class="sv-value">{% if useri.langSet == 0 %}Ghalama{% else %}Value{% endif %}</th>
                 <th class="sv-worth">{% if useri.langSet == 0 %}Thamani{% else %}Worth{% endif %}</th>
@@ -914,15 +919,18 @@
                 <td class="sv-qty">{{ s.sold_qty|default:0|floatformat:2|intcomma }}</td>
                 <td class="sv-value">{{ s.sold_value|default:0|floatformat:2|intcomma }}</td>
                 <td class="sv-worth">{{ s.sold_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-returned">{{ s.returned_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-returned">{{ s.returned_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-returned">{{ s.returned_worth|default:0|floatformat:2|intcomma }}</td>
                 <td class="sv-qty">{{ s.current_qty|default:0|floatformat:2|intcomma }}</td>
                 <td class="sv-value">{{ s.current_value|default:0|floatformat:2|intcomma }}</td>
                 <td class="sv-worth">{{ s.current_worth|default:0|floatformat:2|intcomma }}</td>
               </tr>
               {% empty %}
-              <tr><td colspan="30" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna data ya stoku.{% else %}No stock data.{% endif %}</td></tr>
+              <tr><td colspan="33" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna data ya stoku.{% else %}No stock data.{% endif %}</td></tr>
               {% endfor %}
               <tr id="srStockNoMatch" style="display:none">
-                <td colspan="30" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna bidhaa inayolingana.{% else %}No items match this search.{% endif %}</td>
+                <td colspan="33" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna bidhaa inayolingana.{% else %}No items match this search.{% endif %}</td>
               </tr>
             </tbody>
             <tfoot>
@@ -954,6 +962,9 @@
                 <td class="sv-qty">{{ stock_flow.totals.sold_qty|default:0|floatformat:2|intcomma }}</td>
                 <td class="sv-value">{{ stock_flow.totals.sold_value|default:0|floatformat:2|intcomma }}</td>
                 <td class="sv-worth">{{ stock_flow.totals.sold_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-returned">{{ stock_flow.totals.returned_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-returned">{{ stock_flow.totals.returned_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-returned">{{ stock_flow.totals.returned_worth|default:0|floatformat:2|intcomma }}</td>
                 <td class="sv-qty">{{ stock_flow.totals.current_qty|default:0|floatformat:2|intcomma }}</td>
                 <td class="sv-value">{{ stock_flow.totals.current_value|default:0|floatformat:2|intcomma }}</td>
                 <td class="sv-worth">{{ stock_flow.totals.current_worth|default:0|floatformat:2|intcomma }}</td>
