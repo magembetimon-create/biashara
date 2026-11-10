@@ -7,4 +7,15 @@ python manage.py test_gcs_upload
 
 ssh root@94.72.104.184
 
+sudo -u biashara git -C /home/biashara/app pull
+chown -R biashara:biashara /home/biashara/app
+systemctl restart biashara
+
+sudo -u biashara git -C /home/biashara/app pull
+systemctl restart biashara
+
+sudo -u biashara git -C /home/biashara/app checkout -- requirements.txt
+sudo -u biashara git -C /home/biashara/app pull
+systemctl restart biashara
+
 

@@ -2,8 +2,10 @@
 {% load static %}
 {% load humanize %}
 
-{% block nav-staff %}class="c-menu__item style-none is-active showingpop2"{% endblock %}
-{% block active-staff-shifts-menu %}class="btn-default btn btn-sm pop2_active_menu"{% endblock %}
+{% block nav-staff %}{% if not calendar_report %}class="c-menu__item style-none is-active showingpop2"{% else %}class="c-menu__item has-submenu showingpop2"{% endif %}{% endblock %}
+{% block active-staff-shifts-menu %}{% if not calendar_report %}class="btn-default btn btn-sm pop2_active_menu"{% else %}class="btn-default btn btn-sm"{% endif %}{% endblock %}
+{% block nav-ripoti %}{% if calendar_report %}class="c-menu__item style-none is-active"{% else %}class="c-menu__item has-submenu activate"{% endif %}{% endblock %}
+{% block active-riport %}{% if calendar_report %} class="bi bi-graph-up text-primary" {% else %} class="bi bi-graph-up" {% endif %}{% endblock %}
 
 {% block Dashboard %}
 <style>
@@ -152,6 +154,16 @@
     flex-wrap: wrap;
   }
   .sr-unpaid-tabs.is-on { display: flex; }
+  .sr-sales-head { display: none; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .sr-sales-head.is-on { display: flex; }
+  .sr-sales-head #srSalesTabs,
+  .sr-sales-head #srExpenseTabs { display: flex; margin-bottom: 0; }
+  .sr-sales-view-btns .btn { padding: 3px 7px; line-height: 1; }
+  .sr-sales-view-btns .btn.is-on { background: #495057; border-color: #495057; color: #fff; }
+  #srSalesChartWrap { display: none; flex: 1 1 auto; min-height: 240px; position: relative; }
+  #srSalesChartWrap.is-on { display: block; height: min(52vh, 420px); }
+  #srSalesChart { width: 100% !important; height: 100% !important; }
+  .sr-breakdown-scroll.is-chart-hidden { display: none; }
   .sr-unpaid-tab {
     border: 1px solid #ced4da;
     background: #fff;
@@ -208,7 +220,17 @@
   }
   .sr-shift-metrics .k { font-size: 11px; color: #6c757d; }
   .sr-shift-metrics .v { font-weight: 600; font-size: 13px; }
-  .sr-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sr-filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .sr-period-more { display: inline-flex; flex-wrap: nowrap; }
+  .sr-period-more .dropdown-menu { min-width: 11rem; }
+  .sr-period-more .dropdown-item { font-size: 13px; }
+  .sr-branch-box {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+    width: 100%; padding: 8px 10px; border: 1px solid #e6e9ef; border-radius: 8px;
+    background: #f8f9fb;
+  }
+  .sr-branch-box label { margin: 0; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .sr-branch-box .sr-check-report { margin-left: auto; }
   .sr-stock-dialog { max-width: min(96vw, 1280px); margin: 1.2rem auto; }
   .sr-stock-dialog .modal-content { max-height: calc(100vh - 2.4rem); }
   #srStockWrap {
@@ -245,6 +267,29 @@
   #srStockTable.sv-hide-received .sv-mov-received,
   #srStockTable.sv-hide-returned .sv-mov-returned { display: none !important; }
   #srStockSearch { max-width: 260px; }
+  #srCategsList { overflow-x: auto; min-width: 0; }
+  #srCategsList .categsBtn { white-space: nowrap; min-width: 9rem; }
+  #srCategsList .sr-categ-count {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    opacity: 0.85;
+  }
+  body.theme-dark #srCategsList .categsBtn,
+  body.theme-dark #srSalesCategsList .categsBtn { color: #e2e8f0; }
+  #srSalesItemTools { display: none; }
+  #srSalesItemTools.is-on { display: block; }
+  #srSalesItemSearch { max-width: 260px; }
+  #srSalesCategsList { overflow-x: auto; min-width: 0; }
+  #srSalesCategsList .categsBtn { white-space: nowrap; min-width: 9rem; }
+  #srSalesCategsList .sr-categ-count {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    opacity: 0.85;
+  }
   .sr-sv-print-head { display: none; }
   .sr-table th, .sr-table td { white-space: nowrap; }
   @media (max-width: 767.98px) {
@@ -297,7 +342,8 @@
     }
     body.sr-print-breakdown .modal-backdrop,
     body.sr-print-breakdown .sr-bd-no-print,
-    body.sr-print-breakdown .sr-unpaid-tabs { display: none !important; }
+    body.sr-print-breakdown .sr-unpaid-tabs,
+    body.sr-print-breakdown #srSalesChartWrap { display: none !important; }
     body.sr-print-breakdown #srBreakdownPrint,
     body.sr-print-breakdown #srBreakdownModal .modal-body,
     body.sr-print-breakdown .sr-breakdown-scroll {
@@ -430,14 +476,21 @@
 <div class="Analytical whiteBg p-2 px-md-4 pt-md-3" id="general-panel" style="min-height:100vh;">
   <div class="sr-wrap">
   <div class="staff-no-print">
+  {% if not calendar_report %}
   {% include 'staff/staffnavigations.html' %}
+  {% endif %}
   </div>
 
   <div class="d-flex flex-wrap justify-content-between align-items-start py-2 border-bottom staff-no-print" style="gap:10px;">
     <div>
-      <h5 class="mb-1">{% if useri.langSet == 0 %}Ripoti za Shift{% else %}Shift Reports{% endif %}</h5>
+      <h5 class="mb-1">{% if calendar_report %}{% if useri.langSet == 0 %}Ripoti ya jumla ya kipindi{% else %}General period report{% endif %}{% else %}{% if useri.langSet == 0 %}Ripoti za Shift{% else %}Shift Reports{% endif %}{% endif %}</h5>
       <div class="text-muted small">
-        {% if useri.langSet == 0 %}Mchanganuo wa hesabu na madeni kwa shift zilizoanza katika kipindi ulichochagua{% else %}Cash, sales and unpaid debt for shifts that started in the selected period{% endif %}
+        {% if calendar_report %}
+          {% if useri.langSet == 0 %}Mchanganuo wa mauzo, matumizi, cash, stoku na madeni kwa muda uliochagua — si kwa shift{% else %}Sales, expenses, cash, stock and debts for the dates you choose — not tied to shifts{% endif %}
+        {% else %}
+          {% if useri.langSet == 0 %}Mchanganuo wa hesabu na madeni kwa shift zilizoanza katika kipindi ulichochagua{% else %}Cash, sales and unpaid debt for shifts that started in the selected period{% endif %}
+        {% endif %}
+        {% if report_branch_label %} · {{ report_branch_label }}{% endif %}
         {% if duka.currencii %} ({{ duka.currencii }}){% endif %}
       </div>
     </div>
@@ -446,32 +499,81 @@
     </button>
   </div>
 
-  <div class="sr-filters mt-3 staff-no-print">
-    <a class="btn btn-sm {% if preset == 'week' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/staff/shifts/report?preset=week">
-      {% if useri.langSet == 0 %}Wiki hii{% else %}This week{% endif %}
-    </a>
-    <a class="btn btn-sm {% if preset == 'month' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="/staff/shifts/report?preset=month">
-      {% if useri.langSet == 0 %}Mwezi huu{% else %}This month{% endif %}
-    </a>
-    <button type="button" class="btn btn-sm {% if preset == 'custom' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-toggle="modal" data-target="#shiftReportDates">
-      {% if useri.langSet == 0 %}Tarehe maalum{% else %}Custom date{% endif %}
+  <form method="get" action="{{ report_form_action|default:'/staff/shifts/report' }}" class="sr-filters mt-3 staff-no-print" id="srFilterForm">
+    {% if preset == 'custom' %}
+    <input type="hidden" name="fr" value="{{ custom_fr }}">
+    <input type="hidden" name="to" value="{{ custom_to }}">
+    {% endif %}
+    {% if report_branches|length > 1 %}
+    <div class="sr-branch-box">
+      <span class="small text-muted font-weight-bold">{% if useri.langSet == 0 %}Matawi{% else %}Branches{% endif %}</span>
+      {% for b in report_branches %}
+      <label>
+        <input type="checkbox" name="d" value="{{ b.id }}"
+          {% if b.id in selected_branch_ids %}checked{% endif %}>
+        {{ b.name }}
+      </label>
+      {% endfor %}
+      <button type="submit" name="preset" value="{{ preset }}" class="btn btn-primary btn-sm sr-check-report">
+        {% if useri.langSet == 0 %}Angalia ripoti{% else %}Check report{% endif %}
+      </button>
+    </div>
+    {% endif %}
+    <button type="submit" name="preset" value="today" class="btn btn-sm {% if preset == 'today' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      {% if useri.langSet == 0 %}Leo{% else %}Today{% endif %}
     </button>
-  </div>
+    <button type="submit" name="preset" value="week" class="btn btn-sm {% if preset == 'week' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      {% if useri.langSet == 0 %}Wiki hii{% else %}This week{% endif %}
+    </button>
+    <button type="submit" name="preset" value="month" class="btn btn-sm {% if preset == 'month' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      {% if useri.langSet == 0 %}Mwezi huu{% else %}This month{% endif %}
+    </button>
+    <div class="btn-group sr-period-more">
+      <button type="button" class="btn btn-sm dropdown-toggle {% if preset == 'yesterday' or preset == 'last_week' or preset == 'last_month' or preset == 'year' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        {% if preset == 'yesterday' %}{% if useri.langSet == 0 %}Jana{% else %}Yesterday{% endif %}
+        {% elif preset == 'last_week' %}{% if useri.langSet == 0 %}Wiki iliyopita{% else %}Last week{% endif %}
+        {% elif preset == 'last_month' %}{% if useri.langSet == 0 %}Mwezi uliopita{% else %}Last month{% endif %}
+        {% elif preset == 'year' %}{% if useri.langSet == 0 %}Mwaka huu{% else %}This year{% endif %}
+        {% else %}{% if useri.langSet == 0 %}Tarehe nyingine{% else %}More dates{% endif %}{% endif %}
+      </button>
+      <div class="dropdown-menu">
+        <button type="submit" name="preset" value="yesterday" class="dropdown-item{% if preset == 'yesterday' %} active{% endif %}">
+          {% if useri.langSet == 0 %}Jana{% else %}Yesterday{% endif %}
+        </button>
+        <button type="submit" name="preset" value="last_week" class="dropdown-item{% if preset == 'last_week' %} active{% endif %}">
+          {% if useri.langSet == 0 %}Wiki iliyopita{% else %}Last week{% endif %}
+        </button>
+        <button type="submit" name="preset" value="last_month" class="dropdown-item{% if preset == 'last_month' %} active{% endif %}">
+          {% if useri.langSet == 0 %}Mwezi uliopita{% else %}Last month{% endif %}
+        </button>
+        <button type="submit" name="preset" value="year" class="dropdown-item{% if preset == 'year' %} active{% endif %}">
+          {% if useri.langSet == 0 %}Mwaka huu{% else %}This year{% endif %}
+        </button>
+      </div>
+      <button type="button" class="btn btn-sm {% if preset == 'custom' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-toggle="modal" data-target="#shiftReportDates">
+        {% if useri.langSet == 0 %}Tarehe maalum{% else %}Custom date{% endif %}
+      </button>
+    </div>
+  </form>
 
   <div id="srPrintArea">
   <div class="sr-print-only sr-print-head">
-    <div class="shop">{{ duka.name }}</div>
-    <h1>{% if useri.langSet == 0 %}Ripoti za Shift{% else %}Shift Reports{% endif %}{% if duka.currencii %} ({{ duka.currencii }}){% endif %}</h1>
+    <div class="shop">{% if report_branch_label %}{{ report_branch_label }}{% else %}{{ duka.name }}{% endif %}</div>
+    <h1>{% if calendar_report %}{% if useri.langSet == 0 %}Ripoti ya jumla ya kipindi{% else %}General period report{% endif %}{% else %}{% if useri.langSet == 0 %}Ripoti za Shift{% else %}Shift Reports{% endif %}{% endif %}{% if duka.currencii %} ({{ duka.currencii }}){% endif %}</h1>
     <div class="meta">
       {% if useri.langSet == 0 %}Kipindi{% else %}Period{% endif %}:
       <span class="sr-period-range"></span>
+      {% if not calendar_report %}
       · {{ report_totals.count }} {% if useri.langSet == 0 %}shift{% else %}shift(s){% endif %}
+      {% endif %}
     </div>
   </div>
   <p class="mt-3 mb-3 small sr-print-period staff-screen-period">
     {% if useri.langSet == 0 %}Kipindi{% else %}Period{% endif %}:
     <strong class="sr-period-range"></strong>
+    {% if not calendar_report %}
     · {{ report_totals.count }} {% if useri.langSet == 0 %}shift{% else %}shift(s){% endif %}
+    {% endif %}
   </p>
 
   <div class="sr-summary-wrap mb-3">
@@ -609,18 +711,30 @@
   </div>
   <p class="small text-muted mb-3">
     {% if useri.langSet == 0 %}
+      {% if calendar_report %}
+      Bonyeza mzunguko wa stoku kuona mchanganuo wa bidhaa (Qty, Ghalama, Thamani). Hesabu ni kutoka mwanzo wa kipindi hadi mwisho wake, au sasa kama kipindi bado kinaendelea.
+      {% else %}
       Bonyeza mzunguko wa stoku kuona mchanganuo wa bidhaa (Qty, Ghalama, Thamani) kama Stock Value Panel ya shift. Hesabu ni kutoka kufunguliwa kwa shift ya kwanza hadi kufungwa kwa ya mwisho, au sasa kama shift ya mwisho bado wazi.
+      {% endif %}
     {% else %}
+      {% if calendar_report %}
+      Click stock flow to open the item breakdown (Qty, Value, Worth). Figures run from the start of the selected period to its end, or now if the period is still open.
+      {% else %}
       Click stock flow to open the item breakdown (Qty, Value, Worth) like the shift Stock Value Panel. Figures run from the first shift open to the last shift close, or now if the last shift is still open.
+      {% endif %}
     {% endif %}
   </p>
 
+  {% if not calendar_report %}
   <div class="sr-cards d-lg-none">
     {% for row in report_rows %}
     <div class="sr-shift-card">
       <div class="d-flex justify-content-between align-items-start" style="gap:8px;">
         <div>
           <a href="/staff/shifts/view?sid={{ row.shift.id }}" class="font-weight-bold">{{ row.shift.code }}</a>
+          {% if multi_branch and row.branch_name %}
+          <div class="meta">{{ row.branch_name }}</div>
+          {% endif %}
           <div class="meta">
             <script>document.write(moment('{{ row.shift.starts_at|date:"r" }}').format('DD MMM YYYY HH:mm'))</script>
           </div>
@@ -671,6 +785,9 @@
         <tr>
           <th>#</th>
           <th class="text-left">{% if useri.langSet == 0 %}Msimbo{% else %}Code{% endif %}</th>
+          {% if multi_branch %}
+          <th class="text-left">{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}</th>
+          {% endif %}
           <th class="text-left">{% if useri.langSet == 0 %}Hali{% else %}Status{% endif %}</th>
           <th class="text-left">{% if useri.langSet == 0 %}Imeanza{% else %}Started{% endif %}</th>
           <th class="text-right">{% if useri.langSet == 0 %}Kuanza{% else %}Opening{% endif %}</th>
@@ -690,6 +807,9 @@
           <td class="text-left">
             <a href="/staff/shifts/view?sid={{ row.shift.id }}">{{ row.shift.code }}</a>
           </td>
+          {% if multi_branch %}
+          <td class="text-left">{{ row.branch_name|default:'-' }}</td>
+          {% endif %}
           <td class="text-left">
             {% if row.shift.status == 'closed' %}
               <span class="badge badge-secondary">{% if useri.langSet == 0 %}Imefungwa{% else %}Closed{% endif %}</span>
@@ -711,7 +831,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="12" class="text-center text-muted py-4">
+          <td colspan="{% if multi_branch %}13{% else %}12{% endif %}" class="text-center text-muted py-4">
             {% if useri.langSet == 0 %}Hakuna shift zilizoanza katika kipindi hiki.{% else %}No shifts started in this period.{% endif %}
           </td>
         </tr>
@@ -720,7 +840,7 @@
       {% if report_rows %}
       <tfoot>
         <tr class="weight600">
-          <td colspan="4" class="text-right">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
+          <td colspan="{% if multi_branch %}5{% else %}4{% endif %}" class="text-right">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
           <td class="text-right">{{ report_totals.opening|default:0|floatformat:2|intcomma }}</td>
           <td class="text-right">{{ report_totals.closing|default:0|floatformat:2|intcomma }}</td>
           <td class="text-right">{{ report_totals.sales|default:0|floatformat:2|intcomma }}</td>
@@ -735,11 +855,20 @@
     </table>
   </div>
   </div>
+  {% endif %}
   <p class="small text-muted staff-no-print mt-3">
     {% if useri.langSet == 0 %}
+      {% if calendar_report %}
+      Opening na Closing ni jumla ya akaunti zote za malipo (si Cash tu) mwanzoni na mwisho wa kipindi ulichochagua. Current balance ni salio la akaunti zote sasa. Mauzo ni POS na oda za waiter zilizoprint. Haijalipwa ni deni (amount − iliyolipwa). Hela iliyolipwa ni sehemu ya mauzo ya kipindi hiki iliyolipwa. Malipo ya ankara za nyuma ni hela iliyolipwa sasa kwa mauzo au oda za waiter za kabla ya kipindi. Cash deposit ni kuhamisha pesa kutoka Cash kwenda akaunti nyingine. Kuweka pesa (nje) ni hela iliyowekwa kwenye akaunti za tawi hili kutoka nje au huduma nyingine. Matumizi ni matumizi yaliyorekodiwa.
+      {% else %}
       Opening na Closing ni jumla ya akaunti zote za malipo (si Cash tu) wakati shift ya kwanza ilifunguliwa na shift ya mwisho ilifungwa. Current balance ni salio la akaunti zote sasa. Mauzo ni POS na oda za waiter zilizoprint. Haijalipwa ni deni (amount − iliyolipwa). Hela iliyolipwa ni sehemu ya mauzo ya kipindi hiki iliyolipwa. Malipo ya ankara za nyuma ni hela iliyolipwa sasa kwa mauzo au oda za waiter za kabla ya kipindi. Cash deposit ni kuhamisha pesa kutoka Cash kwenda akaunti nyingine. Kuweka pesa (nje) ni hela iliyowekwa kwenye akaunti za tawi hili kutoka nje au huduma nyingine. Matumizi ni matumizi yaliyorekodiwa.
+      {% endif %}
     {% else %}
+      {% if calendar_report %}
+      Opening and Closing are the totals of all payment accounts (not Cash only) at the start and end of the selected period. Current balance is all accounts right now. Sales are completed POS and printed waiter orders. Unpaid is still outstanding (amount − paid). Received on sales is the paid portion of sales in this period. Prior invoice payments are money collected now for sales or waiter orders dated before the selected period. Cash deposit is a transfer from Cash to another account. External deposits are money added to this branch’s accounts from outside or other services. Expenses are recorded operating expenses.
+      {% else %}
       Opening and Closing are the totals of all payment accounts (not Cash only) at the first shift open and last shift close. Current balance is all accounts right now. Sales are completed POS and printed waiter orders. Unpaid is still outstanding (amount − paid). Received on sales is the paid portion of sales in this period. Prior invoice payments are money collected now for sales or waiter orders dated before the selected period. Cash deposit is a transfer from Cash to another account. External deposits are money added to this branch’s accounts from outside or other services. Expenses are recorded operating expenses.
+      {% endif %}
     {% endif %}
   </p>
   </div>
@@ -747,8 +876,9 @@
 
 <div class="modal fade" id="shiftReportDates" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-sm" role="document">
-    <form method="get" action="/staff/shifts/report" class="modal-content">
+    <form method="get" action="{{ report_form_action|default:'/staff/shifts/report' }}" class="modal-content">
       <input type="hidden" name="preset" value="custom">
+      <div id="srCustomBranchFields"></div>
       <input type="hidden" name="tz" id="srTzField" value="">
       <div class="modal-header py-2">
         <h6 class="modal-title">{% if useri.langSet == 0 %}Chagua muda{% else %}Select period{% endif %}</h6>
@@ -776,6 +906,7 @@
 {{ sales_item_breakdown|json_script:"sr-sales-item-breakdown" }}
 {{ sales_staff_breakdown|json_script:"sr-sales-staff-breakdown" }}
 {{ sales_category_breakdown|json_script:"sr-sales-category-breakdown" }}
+{{ sales_time_breakdown|json_script:"sr-sales-time-breakdown" }}
 {{ unpaid_breakdown|json_script:"sr-unpaid-breakdown" }}
 {{ sales_payments_by_account|json_script:"sr-sales-payments-by-account" }}
 {{ expenses_breakdown|json_script:"sr-expenses-breakdown" }}
@@ -783,6 +914,7 @@
 {{ prior_invoice_payments|json_script:"sr-prior-invoice-payments" }}
 {{ external_account_in|json_script:"sr-external-account-in" }}
 {{ recon_movements|json_script:"sr-recon-movements" }}
+{{ stock_flow.rows|json_script:"srStockRowsData" }}
 
 <div class="modal fade" id="srStockModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog sr-stock-dialog" role="document">
@@ -804,7 +936,7 @@
       </div>
       <div id="srStockPrint">
         <div class="sr-sv-print-head">
-          <div class="font-weight-bold">{{ duka.name }}</div>
+          <div class="font-weight-bold">{% if report_branch_label %}{{ report_branch_label }}{% else %}{{ duka.name }}{% endif %}</div>
           <div class="font-weight-bold">{% if useri.langSet == 0 %}Muhtasari wa bidhaa{% else %}Stock Value Panel{% endif %}{% if duka.currencii %} ({{ duka.currencii }}){% endif %}</div>
           <div class="small">
             {% if useri.langSet == 0 %}Kipindi{% else %}Period{% endif %}:
@@ -831,11 +963,20 @@
             </div>
           </div>
         </div>
+        <ul id="srCategsList" class="list-unstyled d-flex pt-1 mb-2 sr-sv-no-print"></ul>
         <p class="small text-muted mb-2 sr-sv-no-print">
           {% if useri.langSet == 0 %}
+            {% if calendar_report %}
+            Mzunguko wa stoku kutoka mwanzo wa kipindi hadi mwisho wake (au sasa). Bonyeza muhtasari kuona bidhaa.
+            {% else %}
             Mzunguko wa stoku kutoka kufunguliwa kwa shift ya kwanza hadi kufungwa kwa ya mwisho (au sasa). Bonyeza muhtasari kuona bidhaa.
+            {% endif %}
           {% else %}
+            {% if calendar_report %}
+            Stock flow from the start of the selected period to its end (or now). Click the summary to see items.
+            {% else %}
             Stock flow from the first shift open to the last shift close (or now). Click the summary to see items.
+            {% endif %}
           {% endif %}
         </p>
         <div id="srStockWrap">
@@ -891,7 +1032,7 @@
             </thead>
             <tbody id="srStockBody">
               {% for s in stock_flow.rows %}
-              <tr class="sr-stock-row" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }} {{ s.aina_name|default:''|lower }}">
+              <tr class="sr-stock-row" data-sv-i="{{ forloop.counter0 }}" data-sv-aina="{{ s.aina_id|default:'-1' }}" data-sv-aina-name="{{ s.aina_name|default:'' }}" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }} {{ s.aina_name|default:''|lower }}">
                 <td>{{ forloop.counter }}</td>
                 <td>{{ s.item_name }}</td>
                 <td>{{ s.units|default:'-' }}</td>
@@ -938,36 +1079,36 @@
                 <td class="text-left">{% if useri.langSet == 0 %}Jumla{% else %}Totals{% endif %}</td>
                 <td></td>
                 <td></td>
-                <td class="sv-qty">{{ stock_flow.totals.before_qty|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-value">{{ stock_flow.totals.before_value|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-worth">{{ stock_flow.totals.before_worth|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-qty sv-mov-added">{{ stock_flow.totals.added_qty|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-value sv-mov-added">{{ stock_flow.totals.added_value|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-worth sv-mov-added">{{ stock_flow.totals.added_worth|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-qty sv-mov-purchased">{{ stock_flow.totals.purchased_qty|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-value sv-mov-purchased">{{ stock_flow.totals.purchased_value|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-worth sv-mov-purchased">{{ stock_flow.totals.purchased_worth|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-qty sv-mov-reduction">{{ stock_flow.totals.reduction_qty|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-value sv-mov-reduction">{{ stock_flow.totals.reduction_value|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-worth sv-mov-reduction">{{ stock_flow.totals.reduction_worth|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-qty sv-mov-transferred">{{ stock_flow.totals.transferred_qty|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-value sv-mov-transferred">{{ stock_flow.totals.transferred_value|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-worth sv-mov-transferred">{{ stock_flow.totals.transferred_worth|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-qty sv-mov-received">{{ stock_flow.totals.received_qty|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-value sv-mov-received">{{ stock_flow.totals.received_value|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-worth sv-mov-received">{{ stock_flow.totals.received_worth|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-qty">{{ stock_flow.totals.available_qty|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-value">{{ stock_flow.totals.available_value|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-worth">{{ stock_flow.totals.available_worth|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-qty">{{ stock_flow.totals.sold_qty|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-value">{{ stock_flow.totals.sold_value|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-worth">{{ stock_flow.totals.sold_worth|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-qty sv-mov-returned">{{ stock_flow.totals.returned_qty|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-value sv-mov-returned">{{ stock_flow.totals.returned_value|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-worth sv-mov-returned">{{ stock_flow.totals.returned_worth|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-qty">{{ stock_flow.totals.current_qty|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-value">{{ stock_flow.totals.current_value|default:0|floatformat:2|intcomma }}</td>
-                <td class="sv-worth">{{ stock_flow.totals.current_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty" data-sv-key="before_qty">{{ stock_flow.totals.before_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value" data-sv-key="before_value">{{ stock_flow.totals.before_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth" data-sv-key="before_worth">{{ stock_flow.totals.before_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-added" data-sv-key="added_qty">{{ stock_flow.totals.added_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-added" data-sv-key="added_value">{{ stock_flow.totals.added_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-added" data-sv-key="added_worth">{{ stock_flow.totals.added_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-purchased" data-sv-key="purchased_qty">{{ stock_flow.totals.purchased_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-purchased" data-sv-key="purchased_value">{{ stock_flow.totals.purchased_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-purchased" data-sv-key="purchased_worth">{{ stock_flow.totals.purchased_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-reduction" data-sv-key="reduction_qty">{{ stock_flow.totals.reduction_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-reduction" data-sv-key="reduction_value">{{ stock_flow.totals.reduction_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-reduction" data-sv-key="reduction_worth">{{ stock_flow.totals.reduction_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-transferred" data-sv-key="transferred_qty">{{ stock_flow.totals.transferred_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-transferred" data-sv-key="transferred_value">{{ stock_flow.totals.transferred_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-transferred" data-sv-key="transferred_worth">{{ stock_flow.totals.transferred_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-received" data-sv-key="received_qty">{{ stock_flow.totals.received_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-received" data-sv-key="received_value">{{ stock_flow.totals.received_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-received" data-sv-key="received_worth">{{ stock_flow.totals.received_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty" data-sv-key="available_qty">{{ stock_flow.totals.available_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value" data-sv-key="available_value">{{ stock_flow.totals.available_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth" data-sv-key="available_worth">{{ stock_flow.totals.available_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty" data-sv-key="sold_qty">{{ stock_flow.totals.sold_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value" data-sv-key="sold_value">{{ stock_flow.totals.sold_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth" data-sv-key="sold_worth">{{ stock_flow.totals.sold_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty sv-mov-returned" data-sv-key="returned_qty">{{ stock_flow.totals.returned_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value sv-mov-returned" data-sv-key="returned_value">{{ stock_flow.totals.returned_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth sv-mov-returned" data-sv-key="returned_worth">{{ stock_flow.totals.returned_worth|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-qty" data-sv-key="current_qty">{{ stock_flow.totals.current_qty|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-value" data-sv-key="current_value">{{ stock_flow.totals.current_value|default:0|floatformat:2|intcomma }}</td>
+                <td class="sv-worth" data-sv-key="current_worth">{{ stock_flow.totals.current_worth|default:0|floatformat:2|intcomma }}</td>
               </tr>
             </tfoot>
           </table>
@@ -994,7 +1135,7 @@
       </div>
       <div id="srBreakdownPrint">
         <div class="sr-bd-print-head">
-          <div class="font-weight-bold">{{ duka.name }}</div>
+          <div class="font-weight-bold">{% if report_branch_label %}{{ report_branch_label }}{% else %}{{ duka.name }}{% endif %}</div>
           <div id="srBreakdownPrintTitle" class="font-weight-bold"></div>
           <div id="srBreakdownPrintMeta" class="small"></div>
         </div>
@@ -1004,21 +1145,74 @@
             <button type="button" class="sr-unpaid-tab is-active" data-unpaid-tab="staff">{% if useri.langSet == 0 %}Kwa mtumishi{% else %}By staff{% endif %}</button>
             <button type="button" class="sr-unpaid-tab" data-unpaid-tab="customers">{% if useri.langSet == 0 %}Kwa mteja{% else %}By customer{% endif %}</button>
           </div>
-          <div class="sr-unpaid-tabs sr-bd-no-print" id="srExpenseTabs">
-            <button type="button" class="sr-unpaid-tab is-active" data-expense-tab="records">{% if useri.langSet == 0 %}Kwa rekodi{% else %}By records{% endif %}</button>
-            <button type="button" class="sr-unpaid-tab" data-expense-tab="types">{% if useri.langSet == 0 %}Kwa tumizi{% else %}By expenses{% endif %}</button>
+          <div class="sr-sales-head sr-bd-no-print" id="srExpenseHeadRow">
+            <div class="sr-unpaid-tabs" id="srExpenseTabs">
+              <button type="button" class="sr-unpaid-tab is-active" data-expense-tab="records">{% if useri.langSet == 0 %}Kwa rekodi{% else %}By records{% endif %}</button>
+              <button type="button" class="sr-unpaid-tab" data-expense-tab="types">{% if useri.langSet == 0 %}Kwa tumizi{% else %}By expenses{% endif %}</button>
+              <button type="button" class="sr-unpaid-tab" data-expense-tab="time" id="srExpenseTimeTab">{% if expenses_breakdown.time.grain == 'month' %}{% if useri.langSet == 0 %}Kwa mwezi{% else %}By month{% endif %}{% else %}{% if useri.langSet == 0 %}Kwa tarehe{% else %}By date{% endif %}{% endif %}</button>
+            </div>
+            <div class="btn-group btn-group-sm sr-sales-view-btns" id="srExpenseViewToggle" role="group">
+              <button type="button" class="btn btn-outline-secondary is-on" data-expense-view="list" title="{% if useri.langSet == 0 %}Orodha{% else %}List{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width=".95em" height=".95em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+              </button>
+              <button type="button" class="btn btn-outline-secondary" data-expense-view="chart" title="{% if useri.langSet == 0 %}Chati{% else %}Chart{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width=".95em" height=".95em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"></line>
+                  <line x1="12" y1="20" x2="12" y2="4"></line>
+                  <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+              </button>
+            </div>
           </div>
-          <div class="sr-unpaid-tabs sr-bd-no-print" id="srSalesTabs">
-            <button type="button" class="sr-unpaid-tab is-active" data-sales-tab="items">{% if useri.langSet == 0 %}Kwa bidhaa{% else %}By items{% endif %}</button>
-            <button type="button" class="sr-unpaid-tab" data-sales-tab="staff">{% if useri.langSet == 0 %}Kwa mtumishi{% else %}By staff{% endif %}</button>
-            <button type="button" class="sr-unpaid-tab" data-sales-tab="category">{% if useri.langSet == 0 %}Mauzo kwa aina{% else %}Sale by category{% endif %}</button>
+          <div class="sr-sales-head sr-bd-no-print" id="srSalesHeadRow">
+            <div class="sr-unpaid-tabs" id="srSalesTabs">
+              <button type="button" class="sr-unpaid-tab is-active" data-sales-tab="items">{% if useri.langSet == 0 %}Kwa bidhaa{% else %}By items{% endif %}</button>
+              <button type="button" class="sr-unpaid-tab" data-sales-tab="staff">{% if useri.langSet == 0 %}Kwa mtumishi{% else %}By staff{% endif %}</button>
+              <button type="button" class="sr-unpaid-tab" data-sales-tab="category">{% if useri.langSet == 0 %}Mauzo kwa aina{% else %}Sale by category{% endif %}</button>
+              <button type="button" class="sr-unpaid-tab" data-sales-tab="time" id="srSalesTimeTab">{% if sales_time_breakdown.grain == 'month' %}{% if useri.langSet == 0 %}Kwa mwezi{% else %}By month{% endif %}{% else %}{% if useri.langSet == 0 %}Kwa tarehe{% else %}By date{% endif %}{% endif %}</button>
+            </div>
+            <div class="btn-group btn-group-sm sr-sales-view-btns" id="srSalesViewToggle" role="group">
+              <button type="button" class="btn btn-outline-secondary is-on" data-sales-view="list" title="{% if useri.langSet == 0 %}Orodha{% else %}List{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width=".95em" height=".95em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+              </button>
+              <button type="button" class="btn btn-outline-secondary" data-sales-view="chart" title="{% if useri.langSet == 0 %}Chati{% else %}Chart{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width=".95em" height=".95em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"></line>
+                  <line x1="12" y1="20" x2="12" y2="4"></line>
+                  <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div id="srSalesItemTools" class="sr-bd-no-print mb-2">
+            <input type="search" class="form-control form-control-sm mb-1" id="srSalesItemSearch" autocomplete="off"
+              placeholder="{% if useri.langSet == 0 %}Tafuta bidhaa...{% else %}Search item...{% endif %}">
+            <ul id="srSalesCategsList" class="list-unstyled d-flex pt-1 mb-0"></ul>
           </div>
           <div class="sr-unpaid-tabs sr-bd-no-print" id="srPriorTabs">
             <button type="button" class="sr-unpaid-tab is-active" data-prior-tab="records">{% if useri.langSet == 0 %}Kwa rekodi{% else %}By record{% endif %}</button>
             <button type="button" class="sr-unpaid-tab" data-prior-tab="staff">{% if useri.langSet == 0 %}Kwa mtumishi{% else %}By staff{% endif %}</button>
             <button type="button" class="sr-unpaid-tab" data-prior-tab="customers">{% if useri.langSet == 0 %}Kwa mteja{% else %}By customer{% endif %}</button>
           </div>
-          <div class="sr-breakdown-scroll">
+          <div id="srSalesChartWrap" class="sr-bd-no-print">
+            <p class="small text-muted mb-2" id="srSalesChartNote"></p>
+            <canvas id="srSalesChart"></canvas>
+          </div>
+          <div class="sr-breakdown-scroll" id="srBreakdownTableWrap">
             <table class="table table-sm sr-breakdown-table mb-0">
               <thead class="thead-light" id="srBreakdownHead"></thead>
               <tbody id="srBreakdownBody"></tbody>
@@ -1033,6 +1227,7 @@
 <script>
 (function () {
   var lang0 = {% if useri.langSet == 0 %}true{% else %}false{% endif %};
+  var calendarReport = {% if calendar_report %}true{% else %}false{% endif %};
   var curr = '{% if duka.currencii %} ({{ duka.currencii }}){% endif %}';
   var periodStartIso = '{{ period_start|date:"c" }}';
   var periodEndIso = '{{ period_end|date:"c" }}';
@@ -1042,10 +1237,26 @@
     var tzField = document.getElementById('srTzField');
     if (tzField) tzField.value = tzOff;
   } catch (e) {}
+  var customDateForm = document.querySelector('#shiftReportDates form');
+  if (customDateForm) {
+    customDateForm.addEventListener('submit', function () {
+      var holder = document.getElementById('srCustomBranchFields');
+      if (!holder) return;
+      holder.innerHTML = '';
+      document.querySelectorAll('#srFilterForm input[name="d"]:checked').forEach(function (cb) {
+        var h = document.createElement('input');
+        h.type = 'hidden';
+        h.name = 'd';
+        h.value = cb.value;
+        holder.appendChild(h);
+      });
+    });
+  }
   var dataEl = document.getElementById('sr-account-breakdowns');
   var salesEl = document.getElementById('sr-sales-item-breakdown');
   var salesStaffEl = document.getElementById('sr-sales-staff-breakdown');
   var salesCatEl = document.getElementById('sr-sales-category-breakdown');
+  var salesTimeEl = document.getElementById('sr-sales-time-breakdown');
   var unpaidEl = document.getElementById('sr-unpaid-breakdown');
   var salesPayEl = document.getElementById('sr-sales-payments-by-account');
   var expensesEl = document.getElementById('sr-expenses-breakdown');
@@ -1057,9 +1268,10 @@
   var salesData = { rows: [], total: '0', cost_total: '0', qty_total: '0', count: 0 };
   var salesStaffData = { rows: [], total: '0', paid_total: '0', debt_total: '0', count: 0 };
   var salesCatData = { rows: [], total: '0', qty_total: '0', count: 0 };
+  var salesTimeData = { rows: [], total: '0', qty_total: '0', count: 0, grain: 'date' };
   var unpaidData = { staff: { rows: [], total: '0', count: 0 }, customers: { rows: [], total: '0', count: 0 } };
   var salesPayData = { rows: [], total: '0', cash_total: '0' };
-  var expensesData = { records: { rows: [], total: '0', count: 0 }, types: { rows: [], total: '0', count: 0 } };
+  var expensesData = { records: { rows: [], total: '0', count: 0 }, types: { rows: [], total: '0', count: 0 }, time: { rows: [], total: '0', count: 0, grain: 'date', times_total: 0 } };
   var depositsData = { rows: [], total: '0', count: 0 };
   var priorData = { rows: [], total: '0', count: 0, records: { rows: [], total: '0', count: 0 }, staff: { rows: [], total: '0', paid_total: '0', remaining_total: '0', count: 0 }, customers: { rows: [], total: '0', paid_total: '0', remaining_total: '0', count: 0 } };
   var externalData = { rows: [], total: '0', count: 0 };
@@ -1068,9 +1280,13 @@
   try { salesData = JSON.parse(salesEl.textContent || '{}'); } catch (e) {}
   try { salesStaffData = JSON.parse(salesStaffEl.textContent || '{}'); } catch (e) {}
   try { salesCatData = JSON.parse(salesCatEl.textContent || '{}'); } catch (e) {}
+  try { salesTimeData = JSON.parse(salesTimeEl.textContent || '{}'); } catch (e) {}
   try { unpaidData = JSON.parse(unpaidEl.textContent || '{}'); } catch (e) {}
   try { salesPayData = JSON.parse(salesPayEl.textContent || '{}'); } catch (e) {}
   try { expensesData = JSON.parse(expensesEl.textContent || '{}'); } catch (e) {}
+  if (!expensesData.records) expensesData.records = { rows: [], total: '0', count: 0 };
+  if (!expensesData.types) expensesData.types = { rows: [], total: '0', count: 0 };
+  if (!expensesData.time) expensesData.time = { rows: [], total: '0', count: 0, grain: 'date', times_total: 0 };
   try { depositsData = JSON.parse(depositsEl.textContent || '{}'); } catch (e) {}
   try { priorData = JSON.parse(priorEl.textContent || '{}'); } catch (e) {}
   try { externalData = JSON.parse(externalEl.textContent || '{}'); } catch (e) {}
@@ -1078,7 +1294,14 @@
   var paidData = unpaidData.paid || { staff: { rows: [], total: '0', count: 0 }, customers: { rows: [], total: '0', count: 0 } };
   var unpaidTab = 'staff';
   var expenseTab = 'records';
+  var expenseView = 'list';
+  var SR_EXPENSE_CHART_MAX = 14;
   var salesTab = 'items';
+  var salesView = 'list';
+  var srSalesChartObj = null;
+  var SR_SALES_ITEM_CHART_MAX = 14;
+  var SR_SALES_CATEG = 0;
+  var SR_SALES_UNCATEG = -1;
   var priorTab = 'records';
   var currentKind = '';
   var titles = {
@@ -1167,10 +1390,16 @@
     var isSales = kind === 'sales';
     var isSalesStaff = isSales && salesTab === 'staff';
     var isSalesCat = isSales && salesTab === 'category';
+    var isSalesTime = isSales && salesTab === 'time';
+    var salesTimeGrain = (salesTimeData && salesTimeData.grain) === 'month' ? 'month' : 'date';
     var isUnpaid = kind === 'unpaid';
     var isPaid = kind === 'paid';
     var isMoney = isUnpaid;
     var isExpenses = kind === 'expenses';
+    var isExpenseRecords = isExpenses && expenseTab === 'records';
+    var isExpenseTypes = isExpenses && expenseTab === 'types';
+    var isExpenseTime = isExpenses && expenseTab === 'time';
+    var expenseTimeGrain = ((expensesData.time || {}).grain) === 'month' ? 'month' : 'date';
     var isDeposits = kind === 'deposits';
     var isPrior = kind === 'prior_invoices';
     var isPriorStaff = isPrior && priorTab === 'staff';
@@ -1184,11 +1413,15 @@
     if (isSales) {
       if (salesTab === 'staff') pack = salesStaffData;
       else if (salesTab === 'category') pack = salesCatData;
+      else if (salesTab === 'time') pack = salesTimeData;
       else pack = salesData;
     }
     else if (isUnpaid) pack = unpaidData[unpaidTab] || { rows: [], total: '0' };
     else if (isPaid) pack = salesPayData;
-    else if (isExpenses) pack = expensesData[expenseTab] || { rows: [], total: '0' };
+    else if (isExpenses) {
+      if (expenseTab === 'time') pack = expensesData.time || { rows: [], total: '0', times_total: 0, grain: expenseTimeGrain };
+      else pack = expensesData[expenseTab] || { rows: [], total: '0' };
+    }
     else if (isDeposits) pack = depositsData;
     else if (isPrior) {
       if (priorTab === 'staff') pack = priorData.staff || { rows: [], total: '0', paid_total: '0', remaining_total: '0', count: 0 };
@@ -1206,12 +1439,17 @@
         ? (lang0 ? 'Haijalipwa — wateja' : 'Unpaid — customers')
         : (lang0 ? 'Haijalipwa — watumishi' : 'Unpaid — staff');
     } else if (isExpenses) {
-      title = expenseTab === 'types'
-        ? (lang0 ? 'Matumizi — kwa tumizi' : 'Expenses — by expenses')
-        : (lang0 ? 'Matumizi — kwa rekodi' : 'Expenses — by records');
+      if (expenseTab === 'types') title = lang0 ? 'Matumizi — kwa tumizi' : 'Expenses — by expenses';
+      else if (expenseTab === 'time') title = expenseTimeGrain === 'month'
+        ? (lang0 ? 'Matumizi — kwa mwezi' : 'Expenses — by month')
+        : (lang0 ? 'Matumizi — kwa tarehe' : 'Expenses — by date');
+      else title = lang0 ? 'Matumizi — kwa rekodi' : 'Expenses — by records';
     } else if (isSales) {
       if (salesTab === 'staff') title = lang0 ? 'Mauzo — watumishi' : 'Sales — by staff';
       else if (salesTab === 'category') title = lang0 ? 'Mauzo — kwa aina' : 'Sales — by category';
+      else if (salesTab === 'time') title = salesTimeGrain === 'month'
+        ? (lang0 ? 'Mauzo — kwa mwezi' : 'Sales — by month')
+        : (lang0 ? 'Mauzo — kwa tarehe' : 'Sales — by date');
       else title = lang0 ? 'Mauzo — bidhaa' : 'Sales — items';
     } else if (isPrior) {
       if (priorTab === 'staff') title = lang0 ? 'Malipo ya ankara za nyuma — watumishi' : 'Prior invoice payments — by staff';
@@ -1236,10 +1474,14 @@
       extra = lang0
         ? 'Mauzo yaliyojumuishwa kwa aina ya bidhaa.'
         : 'Sales grouped by item category.';
+    } else if (kind === 'sales' && salesTab === 'time') {
+      extra = salesTimeGrain === 'month'
+        ? (lang0 ? 'Mauzo yaliyojumuishwa kwa mwezi (kipindi kimezidi miezi mitatu).' : 'Sales grouped by month (the period is longer than three months).')
+        : (lang0 ? 'Mauzo yaliyojumuishwa kwa tarehe katika kipindi hiki.' : 'Sales grouped by date in this period.');
     } else if (kind === 'sales') {
-      extra = lang0
-        ? 'Bidhaa zilizouzwa katika shift za kipindi hiki.'
-        : 'Items sold during shifts in this period.';
+      extra = calendarReport
+        ? (lang0 ? 'Bidhaa zilizouzwa katika kipindi hiki.' : 'Items sold in this period.')
+        : (lang0 ? 'Bidhaa zilizouzwa katika shift za kipindi hiki.' : 'Items sold during shifts in this period.');
     } else if (kind === 'unpaid' && unpaidTab === 'staff') {
       extra = lang0
         ? 'Deni la mauzo na oda za waiter zilizoprint, kwa aliyerekodi.'
@@ -1253,9 +1495,13 @@
         ? 'Kila akaunti ya malipo: kiasi kilichopokelewa kutoka malipo ya mauzo ya kipindi hiki.'
         : 'Each payment account and how much it received from this period’s sales payments.';
     } else if (kind === 'expenses' && expenseTab === 'records') {
-      extra = lang0
-        ? 'Kila rekodi ya tumizi katika shift za kipindi hiki.'
-        : 'Each expense record during shifts in this period.';
+      extra = calendarReport
+        ? (lang0 ? 'Kila rekodi ya tumizi katika kipindi hiki.' : 'Each expense record in this period.')
+        : (lang0 ? 'Kila rekodi ya tumizi katika shift za kipindi hiki.' : 'Each expense record during shifts in this period.');
+    } else if (kind === 'expenses' && expenseTab === 'time') {
+      extra = expenseTimeGrain === 'month'
+        ? (lang0 ? 'Matumizi yaliyojumuishwa kwa mwezi (kipindi kimezidi miezi mitatu).' : 'Expenses grouped by month (the period is longer than three months).')
+        : (lang0 ? 'Matumizi yaliyojumuishwa kwa tarehe katika kipindi hiki.' : 'Expenses grouped by date in this period.');
     } else if (kind === 'expenses') {
       extra = lang0
         ? 'Tumizi zilizojumuishwa: mara ngapi na jumla ya kiasi.'
@@ -1297,31 +1543,45 @@
         ? 'Ingizo jingine lisilo mauzo, malipo ya ankara za nyuma, wala kuweka pesa nje.'
         : 'Other inflows that are not sales, prior invoices, or external deposits.';
     } else if (kind === 'received') {
-      extra = lang0
-        ? 'Pesa iliyowekwa kwenye kila akaunti ya malipo katika shift za kipindi hiki.'
-        : 'Money deposited into each payment account during shifts in this period.';
+      extra = calendarReport
+        ? (lang0 ? 'Pesa iliyowekwa kwenye kila akaunti ya malipo katika kipindi hiki.' : 'Money deposited into each payment account in this period.')
+        : (lang0 ? 'Pesa iliyowekwa kwenye kila akaunti ya malipo katika shift za kipindi hiki.' : 'Money deposited into each payment account during shifts in this period.');
     } else if (kind === 'opening') {
-      extra = lang0
-        ? (pack.source === 'reconstructed'
-          ? 'Salio la ledger wakati shift ya kwanza ilifunguliwa (snapshot ilikuwa haijakamilika). Jumla ni akaunti zote.'
-          : 'Salio la kila akaunti wakati shift ya kwanza ilifunguliwa. Jumla ni akaunti zote, si Cash tu.')
-        : (pack.source === 'reconstructed'
-          ? 'Ledger balance when the first shift opened (the snapshot was incomplete). Total is all accounts.'
-          : 'Each account balance when the first shift opened. Total is all accounts, not Cash only.');
+      extra = calendarReport
+        ? (lang0
+          ? 'Salio la kila akaunti mwanzoni mwa kipindi ulichochagua. Jumla ni akaunti zote, si Cash tu.'
+          : 'Each account balance at the start of the selected period. Total is all accounts, not Cash only.')
+        : (lang0
+          ? (pack.source === 'reconstructed'
+            ? 'Salio la ledger wakati shift ya kwanza ilifunguliwa (snapshot ilikuwa haijakamilika). Jumla ni akaunti zote.'
+            : 'Salio la kila akaunti wakati shift ya kwanza ilifunguliwa. Jumla ni akaunti zote, si Cash tu.')
+          : (pack.source === 'reconstructed'
+            ? 'Ledger balance when the first shift opened (the snapshot was incomplete). Total is all accounts.'
+            : 'Each account balance when the first shift opened. Total is all accounts, not Cash only.'));
     } else if (kind === 'current') {
       extra = lang0
         ? 'Salio la kila akaunti sasa hivi.'
         : 'Each account balance right now.';
     } else {
-      extra = lang0
-        ? 'Salio la kila akaunti wakati shift ya mwisho ya kipindi ilifungwa.'
-        : 'Each account balance when the last shift in this period closed.';
+      extra = calendarReport
+        ? (lang0
+          ? 'Salio la kila akaunti mwisho wa kipindi ulichochagua (au sasa kama kipindi bado kinaendelea).'
+          : 'Each account balance at the end of the selected period (or now if the period is still open).')
+        : (lang0
+          ? 'Salio la kila akaunti wakati shift ya mwisho ya kipindi ilifungwa.'
+          : 'Each account balance when the last shift in this period closed.');
     }
     document.getElementById('srBreakdownMeta').textContent = extra;
     document.getElementById('srBreakdownPrintMeta').textContent = [periodText, meta].filter(Boolean).join(' · ');
     document.getElementById('srUnpaidTabs').classList.toggle('is-on', isMoney);
     document.getElementById('srExpenseTabs').classList.toggle('is-on', isExpenses);
+    var expenseHead = document.getElementById('srExpenseHeadRow');
+    if (expenseHead) expenseHead.classList.toggle('is-on', isExpenses);
     document.getElementById('srSalesTabs').classList.toggle('is-on', isSales);
+    var salesHead = document.getElementById('srSalesHeadRow');
+    if (salesHead) salesHead.classList.toggle('is-on', isSales);
+    var salesItemTools = document.getElementById('srSalesItemTools');
+    if (salesItemTools) salesItemTools.classList.toggle('is-on', isSales && salesTab === 'items');
     document.getElementById('srPriorTabs').classList.toggle('is-on', isPrior);
     document.querySelectorAll('#srUnpaidTabs .sr-unpaid-tab').forEach(function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-unpaid-tab') === unpaidTab);
@@ -1329,6 +1589,12 @@
     document.querySelectorAll('#srExpenseTabs .sr-unpaid-tab').forEach(function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-expense-tab') === expenseTab);
     });
+    var expenseTimeTab = document.getElementById('srExpenseTimeTab');
+    if (expenseTimeTab) {
+      expenseTimeTab.textContent = expenseTimeGrain === 'month'
+        ? (lang0 ? 'Kwa mwezi' : 'By month')
+        : (lang0 ? 'Kwa tarehe' : 'By date');
+    }
     document.querySelectorAll('#srSalesTabs .sr-unpaid-tab').forEach(function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-sales-tab') === salesTab);
     });
@@ -1353,11 +1619,19 @@
       hr.appendChild(headCell((lang0 ? 'Iliolipwa' : 'Paid amount') + curr, 'text-right'));
       hr.appendChild(headCell((lang0 ? 'Deni' : 'Debt') + curr, 'text-right'));
     } else if (isSalesCat) {
-      colCount = 4;
+      colCount = 5;
       hr.appendChild(headCell('#'));
       hr.appendChild(headCell(lang0 ? 'Aina ya bidhaa' : 'Category', 'text-left'));
       hr.appendChild(headCell(lang0 ? 'Idadi' : 'Qty', 'text-right'));
+      hr.appendChild(headCell(lang0 ? 'Ghalama' : 'Cost', 'text-right'));
       hr.appendChild(headCell((lang0 ? 'Thamani' : 'Amount') + curr, 'text-right'));
+    } else if (isSalesTime) {
+      colCount = 5;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(salesTimeGrain === 'month' ? (lang0 ? 'Mwezi' : 'Month') : (lang0 ? 'Tarehe' : 'Date'), 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Idadi' : 'Qty', 'text-right'));
+      hr.appendChild(headCell(lang0 ? 'Ghalama' : 'Cost', 'text-right'));
+      hr.appendChild(headCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right'));
     } else if (isSales) {
       colCount = 6;
       hr.appendChild(headCell('#'));
@@ -1377,13 +1651,19 @@
       hr.appendChild(headCell('#'));
       hr.appendChild(headCell(lang0 ? 'Mteja' : 'Customer', 'text-left'));
       hr.appendChild(headCell((isPaid ? (lang0 ? 'Iliolipwa' : 'Paid') : (lang0 ? 'Anayodaiwa' : 'Owed')) + curr, 'text-right'));
-    } else if (isExpenses && expenseTab === 'records') {
+    } else if (isExpenseRecords) {
       colCount = 6;
       hr.appendChild(headCell('#'));
       hr.appendChild(headCell(lang0 ? 'Muda' : 'Time', 'text-left'));
       hr.appendChild(headCell(lang0 ? 'Aliyerekodi' : 'Recorded by', 'text-left'));
       hr.appendChild(headCell(lang0 ? 'Maelezo' : 'Description', 'text-left'));
       hr.appendChild(headCell(lang0 ? 'Tumizi' : 'Expense', 'text-left'));
+      hr.appendChild(headCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right'));
+    } else if (isExpenseTime) {
+      colCount = 4;
+      hr.appendChild(headCell('#'));
+      hr.appendChild(headCell(expenseTimeGrain === 'month' ? (lang0 ? 'Mwezi' : 'Month') : (lang0 ? 'Tarehe' : 'Date'), 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Mara ngapi' : 'Times recorded', 'text-right'));
       hr.appendChild(headCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right'));
     } else if (isExpenses) {
       colCount = 4;
@@ -1466,7 +1746,7 @@
       emptyTd.colSpan = colCount;
       emptyTd.className = 'text-center text-muted py-4';
       emptyTd.textContent = lang0 ? 'Hakuna akaunti za kuonyesha.' : 'No payment accounts to show.';
-      if (isSalesStaff || isSalesCat) emptyTd.textContent = lang0 ? 'Hakuna mauzo ya kuonyesha.' : 'No sales to show.';
+      if (isSalesStaff || isSalesCat || isSalesTime) emptyTd.textContent = lang0 ? 'Hakuna mauzo ya kuonyesha.' : 'No sales to show.';
       else if (isSales) emptyTd.textContent = lang0 ? 'Hakuna bidhaa zilizouzwa.' : 'No items sold.';
       else if (isUnpaid) emptyTd.textContent = lang0 ? 'Hakuna deni la kuonyesha.' : 'No unpaid amounts to show.';
       else if (isPaid) emptyTd.textContent = lang0 ? 'Hakuna malipo ya kuonyesha.' : 'No paid amounts to show.';
@@ -1499,12 +1779,32 @@
         tr.appendChild(cell(String(i + 1)));
         tr.appendChild(cell(row.name || (lang0 ? 'Bila aina' : 'Uncategorized'), 'text-left'));
         tr.appendChild(cell(row.qty, 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.cost), 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.value), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isSalesTime) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(fmtSalesTimeLabel(row.key, salesTimeGrain), 'text-left'));
+        tr.appendChild(cell(row.qty, 'text-right'));
+        tr.appendChild(cell(fmtAmt(row.cost), 'text-right'));
         tr.appendChild(cell(fmtAmt(row.value), 'text-right'));
         body.appendChild(tr);
       });
     } else if (isSales) {
       rows.forEach(function (row, i) {
         var tr = document.createElement('tr');
+        var ainaId = row.aina_id == null || row.aina_id === '' ? SR_SALES_UNCATEG : Number(row.aina_id);
+        if (isNaN(ainaId)) ainaId = SR_SALES_UNCATEG;
+        tr.className = 'sr-sales-item-row';
+        tr.setAttribute('data-sv-aina', String(ainaId));
+        tr.setAttribute('data-sv-aina-name', row.aina_name || '');
+        tr.setAttribute('data-sv-search', (String(row.name || '') + ' ' + String(row.aina_name || '')).toLowerCase());
+        tr.setAttribute('data-qty', String(row.qty || 0));
+        tr.setAttribute('data-cost', String(row.cost || 0));
+        tr.setAttribute('data-value', String(row.value || 0));
         tr.appendChild(cell(String(i + 1)));
         tr.appendChild(cell(row.name || '—', 'text-left'));
         tr.appendChild(cell(fmtAmt(row.sell), 'text-right'));
@@ -1513,6 +1813,15 @@
         tr.appendChild(cell(fmtAmt(row.value), 'text-right'));
         body.appendChild(tr);
       });
+      var salesNone = document.createElement('tr');
+      salesNone.id = 'srSalesNoMatch';
+      salesNone.style.display = 'none';
+      var salesNoneTd = document.createElement('td');
+      salesNoneTd.colSpan = colCount;
+      salesNoneTd.className = 'text-center text-muted py-4';
+      salesNoneTd.textContent = lang0 ? 'Hakuna bidhaa zinazolingana.' : 'No matching items.';
+      salesNone.appendChild(salesNoneTd);
+      body.appendChild(salesNone);
     } else if (isMoney && unpaidTab === 'staff') {
       rows.forEach(function (row, i) {
         var tr = document.createElement('tr');
@@ -1530,7 +1839,7 @@
         tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
         body.appendChild(tr);
       });
-    } else if (isExpenses && expenseTab === 'records') {
+    } else if (isExpenseRecords) {
       rows.forEach(function (row, i) {
         var tr = document.createElement('tr');
         tr.appendChild(cell(String(i + 1)));
@@ -1538,6 +1847,15 @@
         tr.appendChild(cell(row.name || '—', 'text-left'));
         tr.appendChild(noteCell(row.note));
         tr.appendChild(cell(row.expense || '—', 'text-left'));
+        tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
+        body.appendChild(tr);
+      });
+    } else if (isExpenseTime) {
+      rows.forEach(function (row, i) {
+        var tr = document.createElement('tr');
+        tr.appendChild(cell(String(i + 1)));
+        tr.appendChild(cell(fmtSalesTimeLabel(row.key, expenseTimeGrain), 'text-left'));
+        tr.appendChild(cell(String(row.times || 0), 'text-right'));
         tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
         body.appendChild(tr);
       });
@@ -1655,18 +1973,38 @@
       tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
       tot.children[0].colSpan = 2;
       tot.appendChild(cell(pack.qty_total || '0', 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.cost_total), 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isSalesTime) {
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
+      tot.children[0].colSpan = 2;
+      tot.appendChild(cell(pack.qty_total || '0', 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.cost_total), 'text-right'));
       tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
       foot.appendChild(tot);
     } else if (isSales) {
       tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
       tot.children[0].colSpan = 3;
-      tot.appendChild(cell(pack.qty_total || '0', 'text-right'));
-      tot.appendChild(cell(fmtAmt(pack.cost_total), 'text-right'));
-      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      var qtyTd = cell(pack.qty_total || '0', 'text-right');
+      qtyTd.id = 'srSalesQtyTot';
+      tot.appendChild(qtyTd);
+      var costTd = cell(fmtAmt(pack.cost_total), 'text-right');
+      costTd.id = 'srSalesCostTot';
+      tot.appendChild(costTd);
+      var valTd = cell(fmtAmt(pack.total), 'text-right');
+      valTd.id = 'srSalesValueTot';
+      tot.appendChild(valTd);
       foot.appendChild(tot);
-    } else if (isMoney || (isExpenses && expenseTab === 'records')) {
+    } else if (isMoney || isExpenseRecords) {
       tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
       tot.children[0].colSpan = colCount - 1;
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
+    } else if (isExpenseTime) {
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
+      tot.children[0].colSpan = 2;
+      tot.appendChild(cell(String(pack.times_total || 0), 'text-right'));
       tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
       foot.appendChild(tot);
     } else if (isDeposits) {
@@ -1703,8 +2041,14 @@
       tot.children[0].colSpan = colCount - 1;
       tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
       foot.appendChild(tot);
+    } else if (isExpenseTypes) {
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
+      tot.children[0].colSpan = 2;
+      tot.appendChild(cell(String(pack.times_total || 0), 'text-right'));
+      tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
+      foot.appendChild(tot);
     } else if (isExpenses) {
-      tot.appendChild(cell(lang0 ? 'Jumla halisi' : 'Net total', 'text-right'));
+      tot.appendChild(cell(lang0 ? 'Jumla' : 'Total', 'text-right'));
       tot.children[0].colSpan = colCount - 1;
       tot.appendChild(cell(fmtAmt(pack.total), 'text-right'));
       foot.appendChild(tot);
@@ -1721,6 +2065,321 @@
         foot.appendChild(cash);
       }
     }
+    if (isSales && salesTab === 'items') {
+      renderSrSalesCategories();
+      filterSrSalesItemRows();
+    }
+    applySrSalesView();
+  }
+  function fmtSalesTimeLabel(key, grain) {
+    if (!key) return '—';
+    try {
+      if (window.moment) {
+        if (grain === 'month') {
+          var mm = moment(key + '-01');
+          if (mm.isValid()) return mm.format('MMM YYYY');
+        } else {
+          var md = moment(key);
+          if (md.isValid()) return md.format('DD MMM YYYY');
+        }
+      }
+    } catch (e) {}
+    return key;
+  }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function ymdLocal(d) {
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+  function destroySrSalesChart() {
+    if (srSalesChartObj) {
+      srSalesChartObj.destroy();
+      srSalesChartObj = null;
+    }
+  }
+  function salesTimeChartRows(rows, grain, valueKey) {
+    valueKey = valueKey || 'value';
+    var map = {};
+    (rows || []).forEach(function (r) {
+      if (r && r.key) map[r.key] = r;
+    });
+    var start = periodStartIso ? new Date(periodStartIso) : null;
+    var end = periodEndIso ? new Date(periodEndIso) : null;
+    if (!start || isNaN(start.getTime()) || !end || isNaN(end.getTime())) {
+      return (rows || []).map(function (r) {
+        return { label: fmtSalesTimeLabel(r.key, grain), value: parseFloat(r[valueKey]) || 0 };
+      });
+    }
+    var keys = [];
+    if (grain === 'month') {
+      var y = start.getFullYear();
+      var m = start.getMonth();
+      var ey = end.getFullYear();
+      var em = end.getMonth();
+      while (y < ey || (y === ey && m <= em)) {
+        keys.push(y + '-' + pad2(m + 1));
+        m += 1;
+        if (m > 11) { m = 0; y += 1; }
+      }
+    } else {
+      var cur = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      var last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      while (cur <= last) {
+        keys.push(ymdLocal(cur));
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+    if (!keys.length) {
+      return (rows || []).map(function (r) {
+        return { label: fmtSalesTimeLabel(r.key, grain), value: parseFloat(r[valueKey]) || 0 };
+      });
+    }
+    return keys.map(function (k) {
+      var row = map[k];
+      return { label: fmtSalesTimeLabel(k, grain), value: row ? (parseFloat(row[valueKey]) || 0) : 0 };
+    });
+  }
+  function srExpenseChartPoints() {
+    var note = '';
+    var type = 'bar';
+    var points = [];
+    if (expenseTab === 'types') {
+      ((expensesData.types || {}).rows || []).forEach(function (r) {
+        points.push({ label: r.name || '—', value: parseFloat(r.amount) || 0 });
+      });
+    } else if (expenseTab === 'time') {
+      type = 'line';
+      var grain = ((expensesData.time || {}).grain) === 'month' ? 'month' : 'date';
+      points = salesTimeChartRows((expensesData.time || {}).rows || [], grain, 'amount');
+    } else {
+      var recs = ((expensesData.records || {}).rows || []).map(function (r) {
+        return {
+          label: (r.expense || '—') + (r.at ? ' · ' + fmtWhen(r.at) : ''),
+          value: parseFloat(r.amount) || 0
+        };
+      });
+      if (recs.length > SR_EXPENSE_CHART_MAX) {
+        ((expensesData.types || {}).rows || []).forEach(function (r) {
+          points.push({ label: r.name || '—', value: parseFloat(r.amount) || 0 });
+        });
+        note = lang0
+          ? 'Rekodi ni nyingi; chati inaonesha matumizi kwa tumizi.'
+          : 'Too many records; the chart shows expenses by type.';
+      } else {
+        recs.sort(function (a, b) { return b.value - a.value; });
+        points = recs;
+      }
+    }
+    if (type !== 'line' && points.length > 8) type = 'horizontalBar';
+    if (type !== 'line' && points.length > 20) points = points.slice(0, 20);
+    return { type: type, points: points, note: note };
+  }
+  function srSalesChartPalette(n) {
+    var base = ['#0d6efd', '#198754', '#fd7e14', '#6f42c1', '#20c997', '#dc3545', '#0dcaf0', '#ffc107', '#6610f2', '#d63384'];
+    var out = [];
+    var i;
+    for (i = 0; i < n; i += 1) out.push(base[i % base.length]);
+    return out;
+  }
+  function srSalesChartPoints() {
+    var note = '';
+    var type = 'bar';
+    var points = [];
+    if (salesTab === 'staff') {
+      (salesStaffData.rows || []).forEach(function (r) {
+        points.push({ label: r.name || '—', value: parseFloat(r.total) || 0 });
+      });
+    } else if (salesTab === 'category') {
+      (salesCatData.rows || []).forEach(function (r) {
+        points.push({ label: r.name || (lang0 ? 'Bila aina' : 'Uncategorized'), value: parseFloat(r.value) || 0 });
+      });
+    } else if (salesTab === 'time') {
+      type = 'line';
+      var grain = (salesTimeData && salesTimeData.grain) === 'month' ? 'month' : 'date';
+      points = salesTimeChartRows(salesTimeData.rows || [], grain);
+    } else {
+      var visible = [];
+      document.querySelectorAll('#srBreakdownBody tr.sr-sales-item-row').forEach(function (tr) {
+        if (tr.style.display === 'none') return;
+        visible.push({
+          label: (tr.children[1] && tr.children[1].textContent) || '—',
+          value: parseFloat(tr.getAttribute('data-value')) || 0
+        });
+      });
+      if (visible.length > SR_SALES_ITEM_CHART_MAX && !Number(SR_SALES_CATEG)) {
+        (salesCatData.rows || []).forEach(function (r) {
+          points.push({ label: r.name || (lang0 ? 'Bila aina' : 'Uncategorized'), value: parseFloat(r.value) || 0 });
+        });
+        note = lang0
+          ? 'Bidhaa ni nyingi; chati inaonesha mauzo kwa aina.'
+          : 'Too many items; the chart shows sales by category.';
+      } else {
+        visible.sort(function (a, b) { return b.value - a.value; });
+        if (visible.length > SR_SALES_ITEM_CHART_MAX) {
+          points = visible.slice(0, SR_SALES_ITEM_CHART_MAX);
+          note = lang0
+            ? 'Chati inaonesha bidhaa ' + SR_SALES_ITEM_CHART_MAX + ' zenye mauzo makubwa.'
+            : 'Chart shows the top ' + SR_SALES_ITEM_CHART_MAX + ' items by sales.';
+        } else {
+          points = visible;
+        }
+      }
+    }
+    if (type !== 'line' && points.length > 8) type = 'horizontalBar';
+    if (type !== 'line' && points.length > 20) points = points.slice(0, 20);
+    return { type: type, points: points, note: note };
+  }
+  function renderSrSalesChart() {
+    var wrap = document.getElementById('srSalesChartWrap');
+    var canvas = document.getElementById('srSalesChart');
+    var noteEl = document.getElementById('srSalesChartNote');
+    if (!wrap || !canvas || typeof window.Chart === 'undefined') return;
+    destroySrSalesChart();
+    var spec = currentKind === 'expenses' ? srExpenseChartPoints() : srSalesChartPoints();
+    if (noteEl) noteEl.textContent = spec.note || '';
+    var labels = spec.points.map(function (p) { return p.label; });
+    var values = spec.points.map(function (p) { return p.value; });
+    var colors = srSalesChartPalette(values.length);
+    var valueAxis = {
+      ticks: {
+        beginAtZero: true,
+        callback: function (v) { return fmtAmt(v); }
+      }
+    };
+    var labelAxis = {
+      ticks: { autoSkip: true, maxRotation: 45, minRotation: 0, maxTicksLimit: spec.type === 'line' ? 12 : 20 }
+    };
+    var ctx = canvas.getContext('2d');
+    srSalesChartObj = new Chart(ctx, {
+      type: spec.type,
+      data: {
+        labels: labels,
+        datasets: [{
+          label: currentKind === 'expenses' ? (lang0 ? 'Kiasi' : 'Amount') : (lang0 ? 'Thamani' : 'Value'),
+          data: values,
+          backgroundColor: spec.type === 'line' ? 'rgba(13,110,253,0.15)' : colors,
+          borderColor: spec.type === 'line' ? '#0d6efd' : colors,
+          borderWidth: spec.type === 'line' ? 2 : 1,
+          fill: spec.type === 'line',
+          pointRadius: spec.type === 'line' ? 2 : 0,
+          lineTension: 0.15
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        legend: { display: false },
+        tooltips: {
+          callbacks: {
+            label: function (item, data) {
+              var ds = data.datasets[item.datasetIndex];
+              var val = spec.type === 'horizontalBar' ? item.xLabel : item.yLabel;
+              return (ds.label || '') + ': ' + fmtAmt(val);
+            }
+          }
+        },
+        scales: spec.type === 'horizontalBar'
+          ? { xAxes: [valueAxis], yAxes: [labelAxis] }
+          : { xAxes: [labelAxis], yAxes: [valueAxis] }
+      }
+    });
+  }
+  function applySrSalesView() {
+    var isSales = currentKind === 'sales';
+    var isExpenses = currentKind === 'expenses';
+    var chartOn = (isSales && salesView === 'chart') || (isExpenses && expenseView === 'chart');
+    var tableWrap = document.getElementById('srBreakdownTableWrap');
+    var chartWrap = document.getElementById('srSalesChartWrap');
+    if (tableWrap) tableWrap.classList.toggle('is-chart-hidden', chartOn);
+    if (chartWrap) chartWrap.classList.toggle('is-on', chartOn);
+    document.querySelectorAll('#srSalesViewToggle [data-sales-view]').forEach(function (btn) {
+      btn.classList.toggle('is-on', btn.getAttribute('data-sales-view') === salesView);
+    });
+    document.querySelectorAll('#srExpenseViewToggle [data-expense-view]').forEach(function (btn) {
+      btn.classList.toggle('is-on', btn.getAttribute('data-expense-view') === expenseView);
+    });
+    if (chartOn) renderSrSalesChart();
+    else destroySrSalesChart();
+  }
+  function srSalesAinaId(tr) {
+    var raw = tr.getAttribute('data-sv-aina');
+    if (raw == null || raw === '') return SR_SALES_UNCATEG;
+    var n = Number(raw);
+    return isNaN(n) ? SR_SALES_UNCATEG : n;
+  }
+  function fmtSalesQtyTot(n) {
+    if (!isFinite(n)) return '0';
+    if (Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
+    return String(Math.round(n * 1000) / 1000);
+  }
+  function renderSrSalesCategories() {
+    var list = document.getElementById('srSalesCategsList');
+    if (!list) return;
+    var rows = document.querySelectorAll('#srBreakdownBody tr.sr-sales-item-row');
+    var cats = [];
+    var seen = {};
+    var all = 0;
+    rows.forEach(function (tr) {
+      all += 1;
+      var id = srSalesAinaId(tr);
+      if (seen[id]) {
+        seen[id].total += 1;
+        return;
+      }
+      var name = (tr.getAttribute('data-sv-aina-name') || '').trim();
+      if (!name || id === SR_SALES_UNCATEG) name = lang0 ? 'Bila Aina' : 'Uncategorized';
+      var rec = { id: id, aina: name, total: 1 };
+      seen[id] = rec;
+      cats.push(rec);
+    });
+    cats.sort(function (a, b) { return String(a.aina).localeCompare(String(b.aina)); });
+    var html = '<li class="py-1 pr-1"><button type="button" data-aina="0" class="btn border categsBtn sr-sales-categ-btn text-left text-capitalize latoFont btn-block btn-default"><span class="d-block">' + (lang0 ? 'Aina Zote' : 'All Categories') + '</span><small class="sr-categ-count">' + all + '</small></button></li>';
+    cats.forEach(function (c) {
+      html += '<li class="py-1 pr-1"><button type="button" data-aina="' + c.id + '" class="btn border categsBtn sr-sales-categ-btn text-left text-capitalize latoFont btn-block btn-light"><span class="d-block">' + c.aina + '</span><small class="sr-categ-count">' + c.total + '</small></button></li>';
+    });
+    list.innerHTML = html;
+    var active = list.querySelector('.sr-sales-categ-btn[data-aina="' + SR_SALES_CATEG + '"]');
+    if (!active) {
+      SR_SALES_CATEG = 0;
+      active = list.querySelector('.sr-sales-categ-btn[data-aina="0"]');
+    }
+    if (active && Number(SR_SALES_CATEG)) {
+      list.querySelectorAll('.sr-sales-categ-btn').forEach(function (b) {
+        b.classList.remove('text-primary', 'border-primary', 'btn-default');
+        b.classList.add('btn-light');
+      });
+      active.classList.add('text-primary', 'border-primary');
+      active.classList.remove('btn-light');
+    }
+  }
+  function updateSrSalesItemTotals() {
+    var qty = 0, cost = 0, value = 0;
+    document.querySelectorAll('#srBreakdownBody tr.sr-sales-item-row').forEach(function (tr) {
+      if (tr.style.display === 'none') return;
+      qty += parseFloat(tr.getAttribute('data-qty')) || 0;
+      cost += parseFloat(tr.getAttribute('data-cost')) || 0;
+      value += parseFloat(tr.getAttribute('data-value')) || 0;
+    });
+    var qtyEl = document.getElementById('srSalesQtyTot');
+    var costEl = document.getElementById('srSalesCostTot');
+    var valEl = document.getElementById('srSalesValueTot');
+    if (qtyEl) qtyEl.textContent = fmtSalesQtyTot(qty);
+    if (costEl) costEl.textContent = fmtAmt(cost);
+    if (valEl) valEl.textContent = fmtAmt(value);
+  }
+  function filterSrSalesItemRows() {
+    var searchEl = document.getElementById('srSalesItemSearch');
+    var q = ((searchEl && searchEl.value) || '').trim().toLowerCase();
+    var shown = 0;
+    document.querySelectorAll('#srBreakdownBody tr.sr-sales-item-row').forEach(function (tr) {
+      var ainaId = srSalesAinaId(tr);
+      var okCat = !Number(SR_SALES_CATEG) || Number(SR_SALES_CATEG) === ainaId;
+      var ok = okCat && (!q || (tr.getAttribute('data-sv-search') || '').indexOf(q) !== -1);
+      tr.style.display = ok ? '' : 'none';
+      if (ok) shown += 1;
+    });
+    var none = document.getElementById('srSalesNoMatch');
+    if (none) none.style.display = shown ? 'none' : '';
+    updateSrSalesItemTotals();
+    if (currentKind === 'sales' && salesView === 'chart') renderSrSalesChart();
   }
   document.querySelectorAll('.sr-kpi-click').forEach(function (btn) {
     function openRow() {
@@ -1731,7 +2390,12 @@
       var kind = btn.getAttribute('data-breakdown');
       if (kind === 'unpaid') unpaidTab = 'staff';
       if (kind === 'expenses') expenseTab = 'records';
-      if (kind === 'sales') salesTab = 'items';
+      if (kind === 'sales') {
+        salesTab = 'items';
+        SR_SALES_CATEG = 0;
+        var salesSearch = document.getElementById('srSalesItemSearch');
+        if (salesSearch) salesSearch.value = '';
+      }
       if (kind === 'prior_invoices') priorTab = 'records';
       fillBreakdown(kind);
       $('#srBreakdownModal').modal('show');
@@ -1762,6 +2426,44 @@
       fillBreakdown('sales');
     });
   });
+  document.querySelectorAll('#srSalesViewToggle [data-sales-view]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      salesView = btn.getAttribute('data-sales-view') || 'list';
+      applySrSalesView();
+    });
+  });
+  document.querySelectorAll('#srExpenseViewToggle [data-expense-view]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      expenseView = btn.getAttribute('data-expense-view') || 'list';
+      applySrSalesView();
+    });
+  });
+  var srSalesSearch = document.getElementById('srSalesItemSearch');
+  if (srSalesSearch) {
+    srSalesSearch.addEventListener('input', filterSrSalesItemRows);
+  }
+  var srSalesCategs = document.getElementById('srSalesCategsList');
+  if (srSalesCategs) {
+    srSalesCategs.addEventListener('click', function (ev) {
+      var btn = ev.target.closest && ev.target.closest('.sr-sales-categ-btn');
+      if (!btn) return;
+      srSalesCategs.querySelectorAll('.sr-sales-categ-btn').forEach(function (b) {
+        b.classList.remove('text-primary', 'border-primary');
+        b.classList.add('btn-light');
+        b.classList.remove('btn-default');
+      });
+      var ain = btn.getAttribute('data-aina');
+      if (Number(ain)) btn.classList.add('text-primary', 'border-primary');
+      else {
+        btn.classList.add('btn-default');
+        btn.classList.remove('btn-light');
+      }
+      SR_SALES_CATEG = Number(ain) || 0;
+      filterSrSalesItemRows();
+      var wrap = document.querySelector('#srBreakdownModal .modal-body');
+      if (wrap) wrap.scrollTop = 0;
+    });
+  }
   document.querySelectorAll('#srPriorTabs .sr-unpaid-tab').forEach(function (btn) {
     btn.addEventListener('click', function () {
       priorTab = btn.getAttribute('data-prior-tab') || 'records';
@@ -1820,19 +2522,117 @@
   });
   applyStockCols();
   $('#srStockModal').on('shown.bs.modal', applyStockCols);
+  var SR_CATEG = 0;
+  var SR_UNCATEG = -1;
+  function srAinaId(tr) {
+    var raw = tr.getAttribute('data-sv-aina');
+    if (raw == null || raw === '') return SR_UNCATEG;
+    var n = Number(raw);
+    return isNaN(n) ? SR_UNCATEG : n;
+  }
+  function renderSrCategories() {
+    var list = document.getElementById('srCategsList');
+    if (!list) return;
+    var rows = document.querySelectorAll('#srStockBody tr.sr-stock-row');
+    var cats = [];
+    var seen = {};
+    var all = 0;
+    rows.forEach(function (tr) {
+      all += 1;
+      var id = srAinaId(tr);
+      if (seen[id]) {
+        seen[id].total += 1;
+        return;
+      }
+      var name = (tr.getAttribute('data-sv-aina-name') || '').trim();
+      if (!name || id === SR_UNCATEG) name = lang0 ? 'Bila Aina' : 'Uncategorized';
+      var rec = { id: id, aina: name, total: 1 };
+      seen[id] = rec;
+      cats.push(rec);
+    });
+    cats.sort(function (a, b) { return String(a.aina).localeCompare(String(b.aina)); });
+    var html = '<li class="py-1 pr-1"><button type="button" data-aina="0" class="btn border categsBtn sr-categ-btn text-left text-capitalize latoFont btn-block btn-default"><span class="d-block">' + (lang0 ? 'Aina Zote' : 'All Categories') + '</span><small class="sr-categ-count">' + all + '</small></button></li>';
+    cats.forEach(function (c) {
+      html += '<li class="py-1 pr-1"><button type="button" data-aina="' + c.id + '" class="btn border categsBtn sr-categ-btn text-left text-capitalize latoFont btn-block btn-light"><span class="d-block">' + c.aina + '</span><small class="sr-categ-count">' + c.total + '</small></button></li>';
+    });
+    list.innerHTML = html;
+  }
+  var SR_METRIC_KEYS = [
+    'before_qty', 'before_value', 'before_worth',
+    'added_qty', 'added_value', 'added_worth',
+    'purchased_qty', 'purchased_value', 'purchased_worth',
+    'reduction_qty', 'reduction_value', 'reduction_worth',
+    'transferred_qty', 'transferred_value', 'transferred_worth',
+    'received_qty', 'received_value', 'received_worth',
+    'available_qty', 'available_value', 'available_worth',
+    'sold_qty', 'sold_value', 'sold_worth',
+    'returned_qty', 'returned_value', 'returned_worth',
+    'current_qty', 'current_value', 'current_worth'
+  ];
+  var SR_STOCK_ROWS = [];
+  try {
+    var rowsEl = document.getElementById('srStockRowsData');
+    SR_STOCK_ROWS = rowsEl ? JSON.parse(rowsEl.textContent || '[]') : [];
+  } catch (e) { SR_STOCK_ROWS = []; }
+  function srFmtTot(v) {
+    return (Number(v) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function updateSrStockTotals() {
+    var tot = {};
+    SR_METRIC_KEYS.forEach(function (k) { tot[k] = 0; });
+    document.querySelectorAll('#srStockBody tr.sr-stock-row').forEach(function (tr) {
+      if (tr.style.display === 'none') return;
+      var row = SR_STOCK_ROWS[Number(tr.getAttribute('data-sv-i'))];
+      if (!row) return;
+      SR_METRIC_KEYS.forEach(function (k) { tot[k] += parseFloat(row[k]) || 0; });
+    });
+    document.querySelectorAll('#srStockTable tfoot [data-sv-key]').forEach(function (td) {
+      var k = td.getAttribute('data-sv-key');
+      td.textContent = srFmtTot(tot[k]);
+    });
+  }
+  function filterSrStockRows() {
+    var q = ((stockSearch && stockSearch.value) || '').trim().toLowerCase();
+    var shown = 0;
+    document.querySelectorAll('#srStockBody tr.sr-stock-row').forEach(function (tr) {
+      var ainaId = srAinaId(tr);
+      var okCat = !Number(SR_CATEG) || Number(SR_CATEG) === ainaId;
+      var ok = okCat && (!q || (tr.getAttribute('data-sv-search') || '').indexOf(q) !== -1);
+      tr.style.display = ok ? '' : 'none';
+      if (ok) shown += 1;
+    });
+    var none = document.getElementById('srStockNoMatch');
+    if (none) none.style.display = shown ? 'none' : '';
+    updateSrStockTotals();
+  }
+  renderSrCategories();
   if (stockSearch) {
-    stockSearch.addEventListener('input', function () {
-      var q = (stockSearch.value || '').trim().toLowerCase();
-      var shown = 0;
-      document.querySelectorAll('#srStockBody tr.sr-stock-row').forEach(function (tr) {
-        var ok = !q || (tr.getAttribute('data-sv-search') || '').indexOf(q) !== -1;
-        tr.style.display = ok ? '' : 'none';
-        if (ok) shown += 1;
+    stockSearch.addEventListener('input', filterSrStockRows);
+  }
+  var srCategs = document.getElementById('srCategsList');
+  if (srCategs) {
+    srCategs.addEventListener('click', function (ev) {
+      var btn = ev.target.closest && ev.target.closest('.sr-categ-btn');
+      if (!btn) return;
+      srCategs.querySelectorAll('.sr-categ-btn').forEach(function (b) {
+        b.classList.remove('text-primary', 'border-primary');
+        b.classList.add('btn-light');
+        b.classList.remove('btn-default');
       });
-      var none = document.getElementById('srStockNoMatch');
-      if (none) none.style.display = shown ? 'none' : '';
+      var ain = btn.getAttribute('data-aina');
+      if (Number(ain)) btn.classList.add('text-primary', 'border-primary');
+      else {
+        btn.classList.add('btn-default');
+        btn.classList.remove('btn-light');
+      }
+      SR_CATEG = Number(ain) || 0;
+      filterSrStockRows();
+      var wrap = document.getElementById('srStockWrap');
+      if (wrap) wrap.scrollTop = 0;
     });
   }
 })();
 </script>
 {% endblock %}
+
+{% block dash-map %}{% if calendar_report %}{% if useri.langSet == 0 %}Ripoti ya jumla ya kipindi{% else %}General period report{% endif %}{% endif %}{% endblock %}

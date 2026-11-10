@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns=[
 path('riportPage',views.riportPage, name='riportPage'),
+path('generalPeriodReport',views.generalPeriodReport, name='generalPeriodReport'),
 path('shiftRiport',views.shiftRiport, name='shiftRiport'),
 
 path('riportMauzo',views.riportMauzo, name='riportMauzo'),

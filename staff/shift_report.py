@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import timedelta
 from decimal import Decimal
 
 from django.db.models import Case, DateTimeField, F, Prefetch, Q, Sum, When
@@ -49,9 +50,35 @@ def completed_sales_qs(duka, starts_at, period_end):
     )
 
 
-def completed_sale_lines_qs(duka, starts_at, period_end):
+class CalendarPeriod:
+    """A single calendar window that period_* helpers can treat like a shift."""
+    calendar = True
+
+    def __init__(self, starts_at, ends_at, live=True):
+        self.id = 0
+        self.code = ''
+        self.starts_at = starts_at
+        self.ends_at = ends_at
+        self.status = 'open' if live else 'closed'
+        self.opening_cash = Decimal('0')
+        self.actual_closing_cash = None
+
+
+def calendar_period_span(start, end, now=None):
+    now = now or timezone.now()
+    live = bool(end and end >= now - timedelta(seconds=30))
+    return CalendarPeriod(start, end, live=live)
+
+
+def _shop_ids(duka, duka_ids=None):
+    if duka_ids:
+        return [int(x) for x in duka_ids]
+    return [int(duka.id)]
+
+
+def completed_sale_lines_qs(duka, starts_at, period_end, duka_ids=None):
     return mauzoList.objects.filter(
-        mauzo__Interprise=duka.id,
+        mauzo__Interprise_id__in=_shop_ids(duka, duka_ids),
         mauzo__service=False,
         mauzo__order=False,
         mauzo__cart=False,
@@ -451,32 +478,45 @@ def period_cash_account_breakdowns(duka, shifts):
         }
 
     first, last = dated[0], dated[-1]
-    opening_sid = _shift_snapshot_id(first, 'OPENING_SNAPSHOT')
-    opening_rows = _account_rows_from_snapshot(opening_sid)
-    opening_source = 'snapshot'
+    calendar = any(getattr(s, 'calendar', False) for s in dated)
     recon_opening = _account_balances_at(duka, first.starts_at)
-    if not opening_rows:
+    if calendar:
         opening_rows = recon_opening
         opening_source = 'reconstructed'
-    else:
-        snap_total = sum((_dec(r.get('amount')) for r in opening_rows), Decimal('0'))
-        recon_total = sum((_dec(r.get('amount')) for r in recon_opening), Decimal('0'))
-        if abs(snap_total - recon_total) > Decimal('0.01'):
-            opening_rows = recon_opening
-            opening_source = 'reconstructed'
-
-    closing_at = last.ends_at or timezone.now()
-    closing_sid = _shift_snapshot_id(last, 'CLOSING_SNAPSHOT') if last.status == 'closed' else None
-    closing_rows = _account_rows_from_snapshot(closing_sid)
-    closing_source = 'snapshot'
-    if not closing_rows:
-        if last.ends_at:
+        closing_at = last.ends_at or timezone.now()
+        if last.status == 'closed' and last.ends_at:
             closing_rows = _account_balances_at(duka, last.ends_at)
             closing_source = 'reconstructed'
         else:
             closing_rows = current_rows
             closing_source = 'current'
             closing_at = timezone.now()
+    else:
+        opening_sid = _shift_snapshot_id(first, 'OPENING_SNAPSHOT')
+        opening_rows = _account_rows_from_snapshot(opening_sid)
+        opening_source = 'snapshot'
+        if not opening_rows:
+            opening_rows = recon_opening
+            opening_source = 'reconstructed'
+        else:
+            snap_total = sum((_dec(r.get('amount')) for r in opening_rows), Decimal('0'))
+            recon_total = sum((_dec(r.get('amount')) for r in recon_opening), Decimal('0'))
+            if abs(snap_total - recon_total) > Decimal('0.01'):
+                opening_rows = recon_opening
+                opening_source = 'reconstructed'
+
+        closing_at = last.ends_at or timezone.now()
+        closing_sid = _shift_snapshot_id(last, 'CLOSING_SNAPSHOT') if last.status == 'closed' else None
+        closing_rows = _account_rows_from_snapshot(closing_sid)
+        closing_source = 'snapshot'
+        if not closing_rows:
+            if last.ends_at:
+                closing_rows = _account_balances_at(duka, last.ends_at)
+                closing_source = 'reconstructed'
+            else:
+                closing_rows = current_rows
+                closing_source = 'current'
+                closing_at = timezone.now()
 
     return {
         'opening': _pack_account_breakdown(
@@ -499,6 +539,23 @@ def _qty_str(value):
     return format(d.quantize(Decimal('0.001')), 'f').rstrip('0').rstrip('.')
 
 
+def _sale_line_unit_cost(line):
+    """Purchase cost of one sold unit: wholesale buy if jum, else retail (buy / ratio)."""
+    produ = getattr(line, 'produ', None)
+    if not produ:
+        return Decimal('0')
+    sell = _dec(line.bei)
+    bidhaa = produ.bidhaa if produ.bidhaa_id else None
+    ratio = _dec(getattr(bidhaa, 'idadi_jum', 1) or 1)
+    if ratio == 0:
+        ratio = Decimal('1')
+    buy = _dec(produ.Bei_kununua)
+    retail_cost = buy / ratio
+    if line.jum and abs(sell - buy) <= abs(sell - retail_cost):
+        return buy
+    return retail_cost
+
+
 def period_sales_item_breakdown(duka, shifts):
     """Sold items in the same shift windows as Sales / Income."""
     empty = {
@@ -514,7 +571,9 @@ def period_sales_item_breakdown(duka, shifts):
     range_start = min(start for _, start, _ in windows)
     range_end = max(end for _, _, end in windows)
     grouped = {}
-    for line in completed_sale_lines_qs(duka, range_start, range_end).select_related('produ__bidhaa'):
+    for line in completed_sale_lines_qs(duka, range_start, range_end).select_related(
+        'produ__bidhaa__bidhaa_aina',
+    ):
         event_at = getattr(line, 'event_at', None)
         if not event_at:
             continue
@@ -525,21 +584,15 @@ def period_sales_item_breakdown(duka, shifts):
             continue
         produ = line.produ
         name = '—'
-        unit_cost = Decimal('0')
+        unit_cost = _sale_line_unit_cost(line)
         item_id = 0
         sell = _dec(line.bei)
+        aina = None
         if produ:
             item_id = produ.id
             name = produ.bidhaa.bidhaa_jina if produ.bidhaa_id else '—'
-            ratio = _dec(getattr(produ.bidhaa, 'idadi_jum', 1) or 1)
-            if ratio == 0:
-                ratio = Decimal('1')
-            buy = _dec(produ.Bei_kununua)
-            retail_cost = buy / ratio
-            if line.jum and abs(sell - buy) <= abs(sell - retail_cost):
-                unit_cost = buy
-            else:
-                unit_cost = retail_cost
+            if produ.bidhaa_id and produ.bidhaa:
+                aina = produ.bidhaa.bidhaa_aina
         key = (item_id, _qty2(sell), _qty2(unit_cost))
         if key not in grouped:
             grouped[key] = {
@@ -549,6 +602,8 @@ def period_sales_item_breakdown(duka, shifts):
                 'cost': unit_cost,
                 'value': Decimal('0'),
                 'cost_value': Decimal('0'),
+                'aina_id': aina.id if aina else -1,
+                'aina_name': ((aina.aina or '').strip() if aina else ''),
             }
         grouped[key]['qty'] += net_qty
         grouped[key]['value'] += net_qty * sell
@@ -570,6 +625,8 @@ def period_sales_item_breakdown(duka, shifts):
                 'qty': _qty_str(r['qty']),
                 'cost': _qty2(r['cost_value']),
                 'value': _qty2(r['value']),
+                'aina_id': r.get('aina_id') if r.get('aina_id') is not None else -1,
+                'aina_name': r.get('aina_name') or '',
             }
             for r in rows
         ],
@@ -653,6 +710,7 @@ def period_sales_category_breakdown(duka, shifts):
     empty = {
         'count': 0,
         'total': '0.00',
+        'cost_total': '0.00',
         'qty_total': '0',
         'rows': [],
     }
@@ -679,14 +737,17 @@ def period_sales_category_breakdown(duka, shifts):
             cat = produ.bidhaa.bidhaa_aina
         cat_id = cat.id if cat else 0
         cat_name = ((cat.aina or '').strip() if cat else '')
+        unit_cost = _sale_line_unit_cost(line)
         if cat_id not in grouped:
             grouped[cat_id] = {
                 'name': cat_name,
                 'qty': Decimal('0'),
                 'value': Decimal('0'),
+                'cost': Decimal('0'),
             }
         grouped[cat_id]['qty'] += net_qty
         grouped[cat_id]['value'] += net_qty * _dec(line.bei)
+        grouped[cat_id]['cost'] += net_qty * unit_cost
 
     rows = sorted(
         grouped.values(),
@@ -694,14 +755,148 @@ def period_sales_category_breakdown(duka, shifts):
     )
     qty_total = sum((r['qty'] for r in rows), Decimal('0'))
     value_total = sum((r['value'] for r in rows), Decimal('0'))
+    cost_total = sum((r['cost'] for r in rows), Decimal('0'))
     return {
         'count': len(rows),
         'qty_total': _qty_str(qty_total),
+        'cost_total': _qty2(cost_total),
         'total': _qty2(value_total),
         'rows': [
             {
                 'name': r['name'],
                 'qty': _qty_str(r['qty']),
+                'cost': _qty2(r['cost']),
+                'value': _qty2(r['value']),
+            }
+            for r in rows
+        ],
+    }
+
+
+def sales_time_grain(start, end):
+    """Month buckets when the selected period is longer than three months."""
+    if not start or not end:
+        return 'date'
+    months = (end.year - start.year) * 12 + (end.month - start.month)
+    if end.day < start.day:
+        months -= 1
+    return 'month' if months > 3 else 'date'
+
+
+def _event_local(event_at, tzinfo=None):
+    if not event_at:
+        return None
+    if timezone.is_naive(event_at):
+        event_at = timezone.make_aware(event_at, timezone.get_current_timezone())
+    if tzinfo is not None:
+        return event_at.astimezone(tzinfo)
+    return timezone.localtime(event_at)
+
+
+def _empty_sales_time(grain):
+    return {
+        'grain': grain or 'date',
+        'count': 0,
+        'total': '0.00',
+        'cost_total': '0.00',
+        'qty_total': '0',
+        'rows': [],
+    }
+
+
+def period_sales_time_breakdown(duka, shifts, grain='date', tzinfo=None):
+    """Sold qty and value grouped by calendar date or month in shift windows."""
+    grain = 'month' if grain == 'month' else 'date'
+    empty = _empty_sales_time(grain)
+    windows = _shift_time_windows(shifts)
+    if not windows:
+        return empty
+    range_start = min(start for _, start, _ in windows)
+    range_end = max(end for _, _, end in windows)
+    grouped = {}
+    for line in completed_sale_lines_qs(duka, range_start, range_end).select_related(
+        'produ__bidhaa',
+    ):
+        event_at = getattr(line, 'event_at', None)
+        if not event_at:
+            continue
+        if not any(start <= event_at <= end for _, start, end in windows):
+            continue
+        net_qty = _dec(line.idadi) - _dec(line.returned) - _dec(line.serviceReturn)
+        if net_qty <= 0:
+            continue
+        local = _event_local(event_at, tzinfo)
+        if not local:
+            continue
+        key = local.strftime('%Y-%m') if grain == 'month' else local.strftime('%Y-%m-%d')
+        unit_cost = _sale_line_unit_cost(line)
+        if key not in grouped:
+            grouped[key] = {
+                'key': key,
+                'qty': Decimal('0'),
+                'value': Decimal('0'),
+                'cost': Decimal('0'),
+            }
+        grouped[key]['qty'] += net_qty
+        grouped[key]['value'] += net_qty * _dec(line.bei)
+        grouped[key]['cost'] += net_qty * unit_cost
+    rows = [grouped[k] for k in sorted(grouped)]
+    qty_total = sum((r['qty'] for r in rows), Decimal('0'))
+    value_total = sum((r['value'] for r in rows), Decimal('0'))
+    cost_total = sum((r['cost'] for r in rows), Decimal('0'))
+    return {
+        'grain': grain,
+        'count': len(rows),
+        'qty_total': _qty_str(qty_total),
+        'cost_total': _qty2(cost_total),
+        'total': _qty2(value_total),
+        'rows': [
+            {
+                'key': r['key'],
+                'qty': _qty_str(r['qty']),
+                'cost': _qty2(r['cost']),
+                'value': _qty2(r['value']),
+            }
+            for r in rows
+        ],
+    }
+
+
+def coalesce_sales_time_breakdown(pack, grain='date'):
+    """Merge concatenated multi-shop date/month rows."""
+    grain = (pack or {}).get('grain') or grain or 'date'
+    if grain != 'month':
+        grain = 'date'
+    grouped = {}
+    for row in (pack or {}).get('rows') or []:
+        key = str(row.get('key') or '')
+        if not key:
+            continue
+        if key not in grouped:
+            grouped[key] = {
+                'key': key,
+                'qty': Decimal('0'),
+                'value': Decimal('0'),
+                'cost': Decimal('0'),
+            }
+        grouped[key]['qty'] += _dec(row.get('qty'))
+        grouped[key]['value'] += _dec(row.get('value'))
+        grouped[key]['cost'] += _dec(row.get('cost'))
+    rows = [grouped[k] for k in sorted(grouped)]
+    qty_total = sum((r['qty'] for r in rows), Decimal('0'))
+    value_total = sum((r['value'] for r in rows), Decimal('0'))
+    cost_total = sum((r['cost'] for r in rows), Decimal('0'))
+    return {
+        'grain': grain,
+        'count': len(rows),
+        'qty_total': _qty_str(qty_total),
+        'cost_total': _qty2(cost_total),
+        'total': _qty2(value_total),
+        'rows': [
+            {
+                'key': r['key'],
+                'qty': _qty_str(r['qty']),
+                'cost': _qty2(r['cost']),
                 'value': _qty2(r['value']),
             }
             for r in rows
@@ -755,6 +950,48 @@ def _sale_paid_and_debt(amount, ilolipwa):
 
 def _sale_remaining_debt(amount, ilolipwa):
     return _sale_paid_and_debt(amount, ilolipwa)[1]
+
+
+def recorder_shift_sales_summary(duka, shift, recorder):
+    """Completed POS sales by the shift recorder (not waiter orders) in this shift window."""
+    empty = {
+        'total': Decimal('0'),
+        'paid': Decimal('0'),
+        'debt': Decimal('0'),
+        'invoices': [],
+    }
+    if not shift or not shift.starts_at:
+        return empty
+    period_end = shift.ends_at or timezone.now()
+    qs = completed_sales_qs(duka, shift.starts_at, period_end).exclude(full_returned=True).filter(
+        waiter_order__isnull=True,
+    )
+    if recorder:
+        qs = qs.filter(By=recorder)
+    invoices = []
+    total = Decimal('0')
+    paid = Decimal('0')
+    for sale in qs.order_by('tarehe', 'id'):
+        amt = _dec(sale.amount)
+        paid_amt, debt = _sale_paid_and_debt(sale.amount, sale.ilolipwa)
+        total += amt
+        paid += paid_amt
+        invoices.append({
+            'id': sale.id,
+            'code': sale.code or '',
+            'amount': amt,
+            'paid': paid_amt,
+            'debt': debt,
+        })
+    debt = total - paid
+    if debt < 0:
+        debt = Decimal('0')
+    return {
+        'total': total,
+        'paid': paid,
+        'debt': debt,
+        'invoices': invoices,
+    }
 
 
 def _bump_money_group(group_map, key, name, role, amount):
@@ -849,13 +1086,61 @@ def _iso(dt):
     return dt.isoformat()
 
 
-def period_expenses_breakdowns(duka, shifts):
-    """Operating expenses (toaCash.matumizi) as records and grouped by expense type."""
+def _empty_expense_time(grain):
+    return {
+        'grain': grain or 'date',
+        'count': 0,
+        'total': '0.00',
+        'times_total': 0,
+        'rows': [],
+    }
+
+
+def coalesce_expense_time_breakdown(pack, grain='date'):
+    grain = (pack or {}).get('grain') or grain or 'date'
+    if grain != 'month':
+        grain = 'date'
+    grouped = {}
+    for row in (pack or {}).get('rows') or []:
+        key = str(row.get('key') or '')
+        if not key:
+            continue
+        if key not in grouped:
+            grouped[key] = {
+                'key': key,
+                'times': 0,
+                'amount': Decimal('0'),
+            }
+        grouped[key]['times'] += int(row.get('times') or 0)
+        grouped[key]['amount'] += _dec(row.get('amount'))
+    rows = [grouped[k] for k in sorted(grouped)]
+    times_total = sum((r['times'] for r in rows), 0)
+    amount_total = sum((r['amount'] for r in rows), Decimal('0'))
+    return {
+        'grain': grain,
+        'count': len(rows),
+        'times_total': times_total,
+        'total': _qty2(amount_total),
+        'rows': [
+            {
+                'key': r['key'],
+                'times': r['times'],
+                'amount': _qty2(r['amount']),
+            }
+            for r in rows
+        ],
+    }
+
+
+def period_expenses_breakdowns(duka, shifts, grain='date', tzinfo=None):
+    """Operating expenses (toaCash.matumizi) as records, types, and date/month."""
+    grain = 'month' if grain == 'month' else 'date'
     empty_records = {'count': 0, 'total': '0.00', 'rows': []}
     empty_types = {'count': 0, 'total': '0.00', 'rows': []}
+    empty_time = _empty_expense_time(grain)
     windows = _shift_time_windows(shifts)
     if not windows:
-        return {'records': empty_records, 'types': empty_types}
+        return {'records': empty_records, 'types': empty_types, 'time': empty_time}
 
     range_start = min(start for _, start, _ in windows)
     range_end = max(end for _, _, end in windows)
@@ -873,6 +1158,7 @@ def period_expenses_breakdowns(duka, shifts):
 
     records = []
     types_map = {}
+    time_map = {}
     for row in qs:
         event_at = row.tarehe
         if not event_at:
@@ -905,6 +1191,17 @@ def period_expenses_breakdowns(duka, shifts):
             }
         types_map[type_key]['times'] += 1
         types_map[type_key]['amount'] += amount
+        local = _event_local(event_at, tzinfo)
+        if local:
+            tkey = local.strftime('%Y-%m') if grain == 'month' else local.strftime('%Y-%m-%d')
+            if tkey not in time_map:
+                time_map[tkey] = {
+                    'key': tkey,
+                    'times': 0,
+                    'amount': Decimal('0'),
+                }
+            time_map[tkey]['times'] += 1
+            time_map[tkey]['amount'] += amount
 
     records_total = sum((_dec(r['amount']) for r in records), Decimal('0'))
     type_rows = sorted(
@@ -912,6 +1209,9 @@ def period_expenses_breakdowns(duka, shifts):
         key=lambda r: (-_dec(r['amount']), (r.get('name') or '').lower()),
     )
     types_total = sum((r['amount'] for r in type_rows), Decimal('0'))
+    time_rows = [time_map[k] for k in sorted(time_map)]
+    time_total = sum((r['amount'] for r in time_rows), Decimal('0'))
+    times_total = sum((r['times'] for r in time_rows), 0)
     return {
         'records': {
             'count': len(records),
@@ -920,6 +1220,7 @@ def period_expenses_breakdowns(duka, shifts):
         },
         'types': {
             'count': len(type_rows),
+            'times_total': sum((r['times'] for r in type_rows), 0),
             'total': _qty2(types_total),
             'rows': [
                 {
@@ -928,6 +1229,20 @@ def period_expenses_breakdowns(duka, shifts):
                     'amount': _qty2(r['amount']),
                 }
                 for r in type_rows
+            ],
+        },
+        'time': {
+            'grain': grain,
+            'count': len(time_rows),
+            'times_total': times_total,
+            'total': _qty2(time_total),
+            'rows': [
+                {
+                    'key': r['key'],
+                    'times': r['times'],
+                    'amount': _qty2(r['amount']),
+                }
+                for r in time_rows
             ],
         },
     }
@@ -1438,11 +1753,19 @@ def period_recon_movements(duka, shifts, period_start=None):
     opening_at = first.starts_at
     closing_at = last.ends_at or timezone.now()
     cutoff = period_start or opening_at
+    calendar = any(getattr(s, 'calendar', False) for s in dated)
+    weka_time = {'tarehe__lte': closing_at}
+    toa_time = {'tarehe__lte': closing_at}
+    if calendar:
+        weka_time['tarehe__gte'] = opening_at
+        toa_time['tarehe__gte'] = opening_at
+    else:
+        weka_time['tarehe__gt'] = opening_at
+        toa_time['tarehe__gt'] = opening_at
 
     wekas = wekaCash.objects.filter(
         Interprise=duka.id,
-        tarehe__gt=opening_at,
-        tarehe__lte=closing_at,
+        **weka_time,
     ).select_related(
         'Akaunt',
         'huduma_nyingine',
@@ -1458,8 +1781,7 @@ def period_recon_movements(duka, shifts, period_start=None):
 
     toas = toaCash.objects.filter(
         Interprise=duka.id,
-        tarehe__gt=opening_at,
-        tarehe__lte=closing_at,
+        **toa_time,
     ).select_related(
         'Akaunt',
         'bill',
@@ -1552,7 +1874,7 @@ def _dec_qty(val):
     return Decimal(str(val or 0))
 
 
-def _stock_qty_map_at(duka, at_dt, closing=False):
+def _stock_qty_map_at(duka, at_dt, closing=False, duka_ids=None):
     """Live lots rolled back to at_dt, using Packed_at for waiter sales.
 
     Opening uses movements at/after at_dt and excludes lots born at/after at_dt.
@@ -1563,7 +1885,7 @@ def _stock_qty_map_at(duka, at_dt, closing=False):
         return qty_map
     items = list(
         bidhaa_stoku.objects.filter(
-            Interprise=duka.id,
+            Interprise_id__in=_shop_ids(duka, duka_ids),
             is_grouped_item=False,
             service=False,
         ).values(
@@ -1737,11 +2059,11 @@ def _distribute_stock_qty(qty_map, produ, qty, before_qty_map):
         qty_map[produ.id] += qty
 
 
-def _window_sale_returns(duka, starts_at, period_end, sold_qty_map, before_qty_map):
+def _window_sale_returns(duka, starts_at, period_end, sold_qty_map, before_qty_map, duka_ids=None):
     """Returns in this window, including items sold in the same shift."""
     returned_map = defaultdict(lambda: Decimal('0'))
     rows = sa_ret.objects.filter(
-        sa_list__produ__Interprise=duka.id,
+        sa_list__produ__Interprise_id__in=_shop_ids(duka, duka_ids),
         ret__tarehe__gte=starts_at,
         ret__tarehe__lte=period_end,
     ).select_related('sa_list__produ')
@@ -1822,11 +2144,12 @@ STOCK_FLOW_METRIC_KEYS = (
 )
 
 
-def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed, returned_qty_map=None):
+def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed, returned_qty_map=None, duka_ids=None):
     """Stock Value Panel rows/totals for a time window, matching shift view."""
+    shop_ids = _shop_ids(duka, duka_ids)
     reduction_qty_map = defaultdict(lambda: Decimal('0'))
     reduction_rows = productChangeRecord.objects.filter(
-        adjst__Interprise=duka.id,
+        adjst__Interprise_id__in=shop_ids,
         adjst__date__gte=starts_at,
         adjst__date__lte=period_end,
     ).filter(
@@ -1837,7 +2160,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
         reduction_qty_map[prod_id] += Decimal(qty or 0)
 
     pu_return_rows = pu_ret.objects.filter(
-        pu_list__Interprise=duka.id,
+        pu_list__Interprise_id__in=shop_ids,
         ret__tarehe__gte=starts_at,
         ret__tarehe__lte=period_end,
     ).values_list('pu_list_id', 'idadi')
@@ -1846,7 +2169,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
 
     added_qty_map = defaultdict(lambda: Decimal('0'))
     added_rows = productChangeRecord.objects.filter(
-        adjst__Interprise=duka.id,
+        adjst__Interprise_id__in=shop_ids,
         adjst__date__gte=starts_at,
         adjst__date__lte=period_end,
     ).filter(Q(adjst__Ongezwa=True) | Q(adjst__registered=True)).values_list('prod_id', 'qty')
@@ -1854,7 +2177,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
         added_qty_map[prod_id] += Decimal(qty or 0)
 
     produced_rows = bidhaa_stoku.objects.filter(
-        Interprise=duka.id,
+        Interprise_id__in=shop_ids,
         produced__isnull=False,
         produced__production__date__gte=starts_at,
         produced__production__date__lte=period_end,
@@ -1867,31 +2190,35 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
 
     transferred_qty_map = defaultdict(lambda: Decimal('0'))
     transferred_rows = transferList.objects.filter(
-        toka__Interprise=duka.id,
+        toka__Interprise_id__in=shop_ids,
         kwenda__receive__transfer__order=False,
         kwenda__receive__transfer__tarehe__gte=starts_at,
         kwenda__receive__transfer__tarehe__lte=period_end,
+    ).exclude(
+        kwenda__receive__Interprise_id__in=shop_ids,
     ).values_list('toka_id', 'kwenda__qty')
     for toka_id, qty in transferred_rows:
         transferred_qty_map[toka_id] += Decimal(qty or 0)
 
     received_qty_map = defaultdict(lambda: Decimal('0'))
     received_rows = bidhaa_stoku.objects.filter(
-        Interprise=duka.id,
+        Interprise_id__in=shop_ids,
         uhamisho__isnull=False,
         uhamisho__receive__transfer__order=False,
         uhamisho__receive__transfer__tarehe__gte=starts_at,
         uhamisho__receive__transfer__tarehe__lte=period_end,
+    ).exclude(
+        uhamisho__receive__transfer__Interprise_id__in=shop_ids,
     ).values_list('id', 'uhamisho__qty')
     for prod_id, qty in received_rows:
         received_qty_map[prod_id] += Decimal(qty or 0)
 
     purchased_qty_map = defaultdict(lambda: Decimal('0'))
     purchased_rows = bidhaa_stoku.objects.filter(
-        Interprise=duka.id,
+        Interprise_id__in=shop_ids,
         is_grouped_item=False,
         manunuzi__isnull=False,
-        manunuzi__manunuzi__Interprise=duka.id,
+        manunuzi__manunuzi__Interprise_id__in=shop_ids,
         manunuzi__manunuzi__order=False,
         manunuzi__manunuzi__tarehe__gte=starts_at,
         manunuzi__manunuzi__tarehe__lte=period_end,
@@ -1903,7 +2230,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
 
     live_items = list(
         bidhaa_stoku.objects.filter(
-            Interprise=duka.id,
+            Interprise_id__in=shop_ids,
             is_grouped_item=False,
         ).select_related('bidhaa__bidhaa_aina').order_by('bidhaa__bidhaa_jina')
     )
@@ -2063,7 +2390,9 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
         'returned': _qty_used('returned_qty'),
     }
     stock_now = total_current_qty if is_closed else (
-        bidhaa_stoku.objects.filter(Interprise=duka.id, is_grouped_item=False).aggregate(sum=Sum('idadi'))['sum'] or 0
+        bidhaa_stoku.objects.filter(
+            Interprise_id__in=shop_ids, is_grouped_item=False
+        ).aggregate(sum=Sum('idadi'))['sum'] or 0
     )
     return {
         'rows': stock_value_rows,
@@ -2137,7 +2466,42 @@ def _pack_stock_panel_json(panel):
     }
 
 
-def period_stock_value_report(duka, shifts):
+def merge_period_payload(a, b):
+    """Combine two period-report dicts (rows concatenated, numeric totals summed)."""
+    if not a:
+        return b
+    if not b:
+        return a
+    if not isinstance(a, dict) or not isinstance(b, dict):
+        return a
+    out = dict(a)
+    for k, bv in b.items():
+        av = out.get(k)
+        if isinstance(av, dict) and isinstance(bv, dict):
+            out[k] = merge_period_payload(av, bv)
+        elif isinstance(av, list) and isinstance(bv, list):
+            out[k] = list(av) + list(bv)
+        elif k in ('count', 'times_total'):
+            try:
+                out[k] = int(av or 0) + int(bv or 0)
+            except Exception:
+                out[k] = bv
+        else:
+            summed = False
+            if k in ('total', 'cost_total', 'qty_total', 'cash_total', 'amount') or (
+                isinstance(k, str) and k.endswith('_total')
+            ):
+                try:
+                    out[k] = _qty2(_dec(av) + _dec(bv))
+                    summed = True
+                except Exception:
+                    summed = False
+            if not summed and k not in out:
+                out[k] = bv
+    return out
+
+
+def period_stock_value_report(duka, shifts, duka_ids=None):
     """Period stock flow from first shift open to last shift close (or now)."""
     empty = _pack_stock_panel_json({
         'rows': [],
@@ -2159,30 +2523,35 @@ def period_stock_value_report(duka, shifts):
 
     first, last = dated[0], dated[-1]
     starts_at = first.starts_at
-    period_end = last.ends_at or timezone.now()
-    is_closed = str(last.status or '') == 'closed' and bool(last.ends_at)
+    period_end = max((s.ends_at or timezone.now() for s in dated), default=timezone.now())
+    is_closed = all(str(s.status or '') == 'closed' and bool(s.ends_at) for s in dated)
+    calendar = any(getattr(s, 'calendar', False) for s in dated)
 
-    opening_snapshot_activity = ShiftActivity.objects.filter(
-        shift=first.id,
-        event_type='OPENING_SNAPSHOT',
-        event_ref_id__isnull=False,
-    ).order_by('recorded_at').first()
+    shop_ids = _shop_ids(duka, duka_ids)
+    multi = len(shop_ids) > 1
+    opening_snapshot_activity = None
     closing_snapshot_activity = None
-    if is_closed:
-        closing_snapshot_activity = ShiftActivity.objects.filter(
-            shift=last.id,
-            event_type='CLOSING_SNAPSHOT',
+    if not calendar and not multi:
+        opening_snapshot_activity = ShiftActivity.objects.filter(
+            shift=first.id,
+            event_type='OPENING_SNAPSHOT',
             event_ref_id__isnull=False,
-        ).order_by('-recorded_at').first()
+        ).order_by('recorded_at').first()
+        if is_closed:
+            closing_snapshot_activity = ShiftActivity.objects.filter(
+                shift=last.id,
+                event_type='CLOSING_SNAPSHOT',
+                event_ref_id__isnull=False,
+            ).order_by('-recorded_at').first()
 
-    before_qty_map = _stock_qty_map_at(duka, starts_at)
-    if not before_qty_map:
+    before_qty_map = _stock_qty_map_at(duka, starts_at, duka_ids=shop_ids)
+    if not before_qty_map and opening_snapshot_activity:
         before_qty_map = _snapshot_qty_map(opening_snapshot_activity)
-    closing_qty_map = _stock_qty_map_at(duka, period_end, closing=True) if is_closed else defaultdict(lambda: Decimal('0'))
-    if is_closed and not closing_qty_map:
+    closing_qty_map = _stock_qty_map_at(duka, period_end, closing=True, duka_ids=shop_ids) if is_closed else defaultdict(lambda: Decimal('0'))
+    if is_closed and not closing_qty_map and closing_snapshot_activity:
         closing_qty_map = _snapshot_qty_map(closing_snapshot_activity)
     sold_qty_map = defaultdict(lambda: Decimal('0'))
-    for line in completed_sale_lines_qs(duka, starts_at, period_end).select_related('produ'):
+    for line in completed_sale_lines_qs(duka, starts_at, period_end, duka_ids=shop_ids).select_related('produ'):
         sold_qty = Decimal(line.idadi or 0)
         if sold_qty <= 0:
             continue
@@ -2194,10 +2563,12 @@ def period_stock_value_report(duka, shifts):
         elif produ:
             sold_qty_map[produ.id] += sold_qty
 
-    returned_qty_map = _window_sale_returns(duka, starts_at, period_end, sold_qty_map, before_qty_map)
+    returned_qty_map = _window_sale_returns(
+        duka, starts_at, period_end, sold_qty_map, before_qty_map, duka_ids=shop_ids,
+    )
     panel = _assemble_stock_value_panel(
         duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed,
-        returned_qty_map=returned_qty_map,
+        returned_qty_map=returned_qty_map, duka_ids=shop_ids,
     )
     return _pack_stock_panel_json(panel)
 

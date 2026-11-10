@@ -192,6 +192,7 @@
           </button>
         </div>
         {{ recon_rows|json_script:"shiftReconData" }}
+        {{ recon_pay_summary|json_script:"shiftReconPaySummary" }}
         <div class="row mt-2" id="shiftReconWrap">
           <div class="col-12">
             <div class="card">
@@ -648,6 +649,102 @@
         </button>
         <button type="button" class="btn btn-danger" id="confirmCloseShiftBtn" onclick="submitCloseShift()">
           {% if useri.langSet == 0 %}Ndiyo, Maliza Shift{% else %}Yes, Finish Shift{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="reconPayModal" tabindex="-1" role="dialog" aria-labelledby="reconPayModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reconPayModalLabel">
+          {% if useri.langSet == 0 %}Malipo ya Recorder{% else %}Recorder Payment{% endif %}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2 text-muted" id="reconPayRecorderName"></p>
+        <div class="d-flex justify-content-between mb-1">
+          <span>{% if useri.langSet == 0 %}Jumla ya mauzo yaliyorekodiwa{% else %}Total recorded sales{% endif %}</span>
+          <strong id="reconPayRecordedTotal">0.00</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-1">
+          <span>{% if useri.langSet == 0 %}Kilicholipwa kabla ya reconciliation{% else %}Paid before reconciliation{% endif %}</span>
+          <strong id="reconPayAlreadyPaid">0.00</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-1">
+          <span>{% if useri.langSet == 0 %}Kiasi cha ziada baada ya reconciliation{% else %}Additional amount after reconciliation{% endif %}</span>
+          <strong id="reconPayExtra">0.00</strong>
+        </div>
+        <hr class="my-2">
+        <div class="d-flex justify-content-between mb-3">
+          <span>{% if useri.langSet == 0 %}Jumla inayotakiwa{% else %}Total required{% endif %}</span>
+          <strong id="reconPayRequired">0.00</strong>
+        </div>
+        <label for="reconPayClaimed" class="mb-1">
+          {% if useri.langSet == 0 %}Kiasi kilichopokelewa{% else %}Amount received{% endif %}
+        </label>
+        <div class="d-flex align-items-center">
+          <div class="custom-control custom-checkbox mb-0 mr-2 flex-shrink-0" title="{% if useri.langSet == 0 %}Thibitisha kiasi kilichopo ni sahihi{% else %}Confirm the amount shown is correct{% endif %}">
+            <input type="checkbox" class="custom-control-input" id="reconPayEnterAmt">
+            <label class="custom-control-label" for="reconPayEnterAmt"></label>
+          </div>
+          <input type="number" step="0.01" min="0" class="form-control" id="reconPayClaimed">
+        </div>
+        <small class="text-muted d-block mt-2">
+          {% if useri.langSet == 0 %}Angalia kiasi, kisha weka tiki kuthibitisha kilichopo kwenye field ni sahihi ili kuendelea. Kiasi kisicholipwa kitabaki deni kwenye invoice ya reconciliation.{% else %}Review the amount, then tick the checkbox to confirm the field is correct before continuing. Any shortfall remains as debt on this reconciliation invoice.{% endif %}
+        </small>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          {% if useri.langSet == 0 %}Ghairi{% else %}Cancel{% endif %}
+        </button>
+        <button type="button" class="btn btn-primary" onclick="continueReconPay()">
+          {% if useri.langSet == 0 %}Endelea{% else %}Continue{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="reconPayConfirmModal" tabindex="-1" role="dialog" aria-labelledby="reconPayConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reconPayConfirmModalLabel">
+          {% if useri.langSet == 0 %}Thibitisha tarifa za malipo{% else %}Confirm payment details{% endif %}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">
+          {% if useri.langSet == 0 %}Tafadhali hakikisha tarifa unazojaza ni sahihi kabla ya kuhifadhi.{% else %}Please confirm the figures you entered are correct before saving.{% endif %}
+        </p>
+        <div class="d-flex justify-content-between mb-1">
+          <span>{% if useri.langSet == 0 %}Jumla inayotakiwa{% else %}Total required{% endif %}</span>
+          <strong id="reconPayConfirmRequired">0.00</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-1">
+          <span>{% if useri.langSet == 0 %}Kiasi kilichopokelewa{% else %}Amount received{% endif %}</span>
+          <strong id="reconPayConfirmClaimed">0.00</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span>{% if useri.langSet == 0 %}Deni litakalobaki{% else %}Remaining debt{% endif %}</span>
+          <strong id="reconPayConfirmDebt">0.00</strong>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="backToReconPay()">
+          {% if useri.langSet == 0 %}Rudi{% else %}Back{% endif %}
+        </button>
+        <button type="button" class="btn btn-success" id="reconPayConfirmBtn" onclick="submitShiftRecon()">
+          {% if useri.langSet == 0 %}Ndiyo, tarifa ni sahihi{% else %}Yes, the figures are correct{% endif %}
         </button>
       </div>
     </div>
@@ -1321,7 +1418,22 @@ function toggleShiftRecon() {
     wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
-function saveShiftRecon() {
+function loadReconPaySummary() {
+  var el = document.getElementById('shiftReconPaySummary');
+  if (!el) return { total: 0, paid: 0, debt: 0, name: '' };
+  try { return JSON.parse(el.textContent || '{}'); } catch (e) { return { total: 0, paid: 0, debt: 0, name: '' }; }
+}
+function reconExtraTotal() {
+  var t = 0;
+  RECON_ROWS.forEach(function(row) {
+    var sold = reconUserSold(row);
+    if (reconRound(sold) > reconRound(row.sold_qty)) {
+      t += (sold - reconNum(row.sold_qty)) * reconNum(row.sales_price);
+    }
+  });
+  return reconRound(t);
+}
+function reconCollectSaveItems() {
   var badNames = [];
   RECON_ROWS.forEach(function(row) {
     if (row.user_sold == null || row.user_sold === '') return;
@@ -1334,7 +1446,7 @@ function saveShiftRecon() {
   });
   if (badNames.length) {
     alert('{% if useri.langSet == 0 %}Sold qty haiwezi kuwa pungufu ya iliyorekodiwa wala kuzidi stoku. Rekodi: {% else %}Sold qty cannot be below recorded qty or above stock. Check: {% endif %}' + badNames.join(', '));
-    return;
+    return null;
   }
   var items = [];
   RECON_ROWS.forEach(function(row) {
@@ -1345,13 +1457,100 @@ function saveShiftRecon() {
   });
   if (!items.length) {
     alert('{% if useri.langSet == 0 %}Hakuna tofauti ya kuhifadhi. Jaza sold au current stock ya bidhaa zilizokosekana.{% else %}No difference to save. Fill sold or current stock for missing items.{% endif %}');
+    return null;
+  }
+  return items;
+}
+
+var RECON_PENDING_ITEMS = [];
+var RECON_PENDING_PAY = { claimed: 0, required: 0, extra: 0 };
+
+function setElText(id, text) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+function saveShiftRecon() {
+  var items = reconCollectSaveItems();
+  if (!items) return;
+  RECON_PENDING_ITEMS = items;
+  var sum = loadReconPaySummary();
+  var extra = reconExtraTotal();
+  var recorded = reconNum(sum.total);
+  var paid = reconNum(sum.paid);
+  var required = reconRound(recorded + extra);
+  RECON_PENDING_PAY = { claimed: required, required: required, extra: extra, paid: paid };
+  setElText('reconPayRecorderName', sum.name || '{{ recon_recorder_name|default:""|escapejs }}');
+  setElText('reconPayRecordedTotal', reconFmt(recorded));
+  setElText('reconPayAlreadyPaid', reconFmt(paid));
+  setElText('reconPayExtra', reconFmt(extra));
+  setElText('reconPayRequired', reconFmt(required));
+  var inp = document.getElementById('reconPayClaimed');
+  var chk = document.getElementById('reconPayEnterAmt');
+  if (chk) chk.checked = false;
+  if (inp) {
+    inp.disabled = false;
+    inp.min = paid;
+    inp.max = required;
+    inp.placeholder = reconFmt(required);
+    inp.value = required;
+  }
+  $('#reconPayModal').modal('show');
+}
+function continueReconPay() {
+  var sum = loadReconPaySummary();
+  var extra = RECON_PENDING_PAY.extra;
+  var recorded = reconNum(sum.total);
+  var paid = reconNum(sum.paid);
+  var required = reconRound(recorded + extra);
+  var chk = document.getElementById('reconPayEnterAmt');
+  if (!chk || !chk.checked) {
+    alert('{% if useri.langSet == 0 %}Weka tiki kuthibitisha kiasi kilichopo kwenye field ni sahihi.{% else %}Tick the checkbox to confirm the amount in the field is correct.{% endif %}');
     return;
   }
-  var btn = document.getElementById('reconSaveBtn');
+  var inp = document.getElementById('reconPayClaimed');
+  var raw = inp && inp.value != null ? String(inp.value).trim() : '';
+  if (!raw) {
+    alert('{% if useri.langSet == 0 %}Jaza kiasi halisi kilichopokelewa.{% else %}Enter the actual amount received.{% endif %}');
+    return;
+  }
+  var claimed = reconNum(raw);
+  if (claimed < paid) {
+    alert('{% if useri.langSet == 0 %}Kiasi hakiwezi kuwa pungufu ya kilicholipwa kabla.{% else %}Amount cannot be less than what was already paid.{% endif %}');
+    return;
+  }
+  if (claimed > required) {
+    alert('{% if useri.langSet == 0 %}Kiasi hakiwezi kuzidi jumla inayotakiwa.{% else %}Amount cannot exceed the total required.{% endif %}');
+    return;
+  }
+  var debt = reconRound(required - claimed);
+  if (debt < 0) debt = 0;
+  RECON_PENDING_PAY = { claimed: claimed, required: required, extra: extra, paid: paid };
+  setElText('reconPayConfirmRequired', reconFmt(required));
+  setElText('reconPayConfirmClaimed', reconFmt(claimed));
+  setElText('reconPayConfirmDebt', reconFmt(debt));
+  $('#reconPayModal').modal('hide');
+  $('#reconPayConfirmModal').modal('show');
+}
+function backToReconPay() {
+  $('#reconPayConfirmModal').modal('hide');
+  $('#reconPayModal').modal('show');
+}
+function submitShiftRecon() {
+  var items = RECON_PENDING_ITEMS || [];
+  if (!items.length) {
+    alert('{% if useri.langSet == 0 %}Hakuna tofauti ya kuhifadhi.{% else %}No difference to save.{% endif %}');
+    return;
+  }
+  var btn = document.getElementById('reconPayConfirmBtn');
+  var saveBtn = document.getElementById('reconSaveBtn');
   if (btn) btn.disabled = true;
+  if (saveBtn) saveBtn.disabled = true;
   var form = new FormData();
   form.append('sid', '{{ shift.id }}');
   form.append('items', JSON.stringify(items));
+  form.append('pay_all', '0');
+  form.append('paid_total', String(RECON_PENDING_PAY.claimed));
+  $('#reconPayConfirmModal').modal('hide');
   $('#loadMe').modal('show');
   fetch('/staff/shifts/reconcile', {
     method: 'POST',
@@ -1373,7 +1572,10 @@ function saveShiftRecon() {
       if (typeof hideLoading === 'function') hideLoading();
       alert('Network error');
     })
-    .finally(function() { if (btn) btn.disabled = false; });
+    .finally(function() {
+      if (btn) btn.disabled = false;
+      if (saveBtn) saveBtn.disabled = false;
+    });
 }
 document.addEventListener('click', function(ev) {
   var btn = ev.target.closest && ev.target.closest('#reconCategsList .recon-categ-btn');

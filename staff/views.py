@@ -56,19 +56,29 @@ from staff.shift_report import (
     period_sales_item_breakdown,
     period_sales_staff_breakdown,
     period_sales_category_breakdown,
+    period_sales_time_breakdown,
+    coalesce_sales_time_breakdown,
+    sales_time_grain,
     period_sales_payments_by_account,
     period_unpaid_breakdowns,
     period_expenses_breakdowns,
+    coalesce_expense_time_breakdown,
     period_cash_deposit_breakdown,
     period_prior_invoice_payments,
     period_external_account_in,
     period_recon_movements,
     period_stock_value_report,
+    merge_period_payload,
+    calendar_period_span,
+    _dec,
     completed_sales_qs,
     expected_cash_from_flows,
     shift_payment_flows,
     shift_sales_amounts,
     staff_display_name,
+    recorder_shift_sales_summary,
+    _sale_paid_and_debt,
+    _sale_remaining_debt,
 )
 from stoku.stock_consume import consume_bidhaa_qty, stock_out_error, stock_short_messages
 
@@ -722,16 +732,34 @@ def _shifts_report_period(request):
     user_tz = _user_tzinfo(request)
     local_now = timezone.now().astimezone(user_tz)
     preset = (request.GET.get('preset') or 'month').strip().lower()
-    if preset not in ('week', 'month', 'custom'):
+    named = (
+        'today', 'week', 'month', 'yesterday', 'last_week', 'last_month', 'year', 'custom',
+    )
+    if preset not in named:
         preset = 'month'
 
     start = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
     end = local_now
 
-    if preset == 'week':
+    if preset == 'today':
+        pass
+    elif preset == 'yesterday':
+        start = start - timedelta(days=1)
+        end = start.replace(hour=23, minute=59, second=59, microsecond=999999)
+    elif preset == 'week':
         start = start - timedelta(days=start.weekday())
+    elif preset == 'last_week':
+        this_monday = start - timedelta(days=start.weekday())
+        start = this_monday - timedelta(days=7)
+        end = this_monday - timedelta(microseconds=1)
     elif preset == 'month':
         start = start.replace(day=1)
+    elif preset == 'last_month':
+        first_this = start.replace(day=1)
+        end = first_this - timedelta(microseconds=1)
+        start = end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif preset == 'year':
+        start = start.replace(month=1, day=1)
     else:
         fr = parse_date(request.GET.get('fr') or '')
         to = parse_date(request.GET.get('to') or '')
@@ -747,6 +775,229 @@ def _shifts_report_period(request):
     return preset, start, end
 
 
+def _shift_report_allowed_dukas(todo):
+    """Branches this user may open on shift report: current shop plus Allow=True."""
+    duka = todo.get('duka')
+    allowed = []
+    seen = set()
+    if duka and getattr(duka, 'Interprise', False):
+        allowed.append(duka)
+        seen.add(duka.id)
+    matawi = todo.get('matawi') or []
+    try:
+        perms = list(matawi)
+    except TypeError:
+        perms = []
+    for perm in perms:
+        if not perm or not getattr(perm, 'Allow', False):
+            continue
+        ent = getattr(perm, 'Interprise', None)
+        if not ent or not getattr(ent, 'Interprise', False) or ent.id in seen:
+            continue
+        allowed.append(ent)
+        seen.add(ent.id)
+    return allowed
+
+
+def _resolve_shift_report_dukas(request, todo):
+    allowed = _shift_report_allowed_dukas(todo)
+    current = todo.get('duka')
+    allowed_by_id = {ent.id: ent for ent in allowed}
+    raw_ids = []
+    for raw in request.GET.getlist('d') or request.POST.getlist('d'):
+        try:
+            raw_ids.append(int(raw))
+        except (TypeError, ValueError):
+            continue
+    selected = [allowed_by_id[i] for i in raw_ids if i in allowed_by_id]
+    if not selected and current and current.id in allowed_by_id:
+        selected = [allowed_by_id[current.id]]
+    elif not selected and allowed:
+        selected = [allowed[0]]
+    return selected, allowed
+
+
+def enterprise_period_report_context(todo, request, calendar=False):
+    selected_dukas, report_branches = _resolve_shift_report_dukas(request, todo)
+    duka = selected_dukas[0] if selected_dukas else todo['duka']
+    selected_ids = [ent.id for ent in selected_dukas]
+    preset, start, end = _shifts_report_period(request)
+    user_tz = _user_tzinfo(request)
+    time_grain = sales_time_grain(start, end)
+    rows = []
+    totals = None
+    account_breakdowns = None
+    sales_item_breakdown = None
+    sales_staff_breakdown = None
+    sales_category_breakdown = None
+    sales_time_breakdown = None
+    unpaid_breakdown = None
+    sales_payments_by_account = None
+    expenses_breakdown = None
+    deposits_breakdown = None
+    prior_invoice_payments = None
+    external_account_in = None
+    recon_movements = None
+    all_shifts = []
+    for shop in selected_dukas:
+        if calendar:
+            shop_shifts = [calendar_period_span(start, end)]
+        else:
+            shop_shifts = list(
+                ShiftSession.objects.filter(
+                    Interprise=shop.id,
+                    starts_at__gte=start,
+                    starts_at__lte=end,
+                ).select_related(
+                    'Interprise', 'opened_by__user__user', 'closed_by__user__user',
+                ).order_by('-starts_at')
+            )
+        all_shifts.extend(shop_shifts)
+        shop_rows, shop_totals = build_shifts_period_report(shop, shop_shifts)
+        if not calendar:
+            for r in shop_rows:
+                r['branch_name'] = shop.name
+            rows.extend(shop_rows)
+        if totals is None:
+            totals = dict(shop_totals)
+        else:
+            for k, v in shop_totals.items():
+                if k in ('count', 'open_count', 'closed_count'):
+                    totals[k] = int(totals.get(k) or 0) + int(v or 0)
+                else:
+                    totals[k] = _dec(totals.get(k)) + _dec(v)
+        account_breakdowns = merge_period_payload(
+            account_breakdowns, period_cash_account_breakdowns(shop, shop_shifts),
+        )
+        sales_item_breakdown = merge_period_payload(
+            sales_item_breakdown, period_sales_item_breakdown(shop, shop_shifts),
+        )
+        sales_staff_breakdown = merge_period_payload(
+            sales_staff_breakdown, period_sales_staff_breakdown(shop, shop_shifts),
+        )
+        sales_category_breakdown = merge_period_payload(
+            sales_category_breakdown, period_sales_category_breakdown(shop, shop_shifts),
+        )
+        sales_time_breakdown = merge_period_payload(
+            sales_time_breakdown,
+            period_sales_time_breakdown(shop, shop_shifts, grain=time_grain, tzinfo=user_tz),
+        )
+        unpaid_breakdown = merge_period_payload(
+            unpaid_breakdown, period_unpaid_breakdowns(shop, shop_shifts),
+        )
+        sales_payments_by_account = merge_period_payload(
+            sales_payments_by_account,
+            period_sales_payments_by_account(shop, shop_shifts, period_start=start),
+        )
+        expenses_breakdown = merge_period_payload(
+            expenses_breakdown,
+            period_expenses_breakdowns(shop, shop_shifts, grain=time_grain, tzinfo=user_tz),
+        )
+        deposits_breakdown = merge_period_payload(
+            deposits_breakdown, period_cash_deposit_breakdown(shop, shop_shifts),
+        )
+        prior_invoice_payments = merge_period_payload(
+            prior_invoice_payments,
+            period_prior_invoice_payments(shop, shop_shifts, period_start=start),
+        )
+        external_account_in = merge_period_payload(
+            external_account_in, period_external_account_in(shop, shop_shifts),
+        )
+        recon_movements = merge_period_payload(
+            recon_movements, period_recon_movements(shop, shop_shifts, period_start=start),
+        )
+    if totals is None:
+        totals = {}
+    if calendar:
+        totals['count'] = 0
+        totals['open_count'] = 0
+        totals['closed_count'] = 0
+        totals['opening'] = Decimal(str((account_breakdowns or {}).get('opening', {}).get('total') or 0))
+        totals['closing'] = Decimal(str((account_breakdowns or {}).get('closing', {}).get('total') or 0))
+    account_breakdowns = account_breakdowns or {}
+    sales_item_breakdown = sales_item_breakdown or {}
+    sales_staff_breakdown = sales_staff_breakdown or {}
+    sales_category_breakdown = sales_category_breakdown or {}
+    sales_time_breakdown = coalesce_sales_time_breakdown(
+        sales_time_breakdown or {}, time_grain,
+    )
+    unpaid_breakdown = unpaid_breakdown or {}
+    sales_payments_by_account = sales_payments_by_account or {}
+    expenses_breakdown = expenses_breakdown or {}
+    expenses_breakdown['time'] = coalesce_expense_time_breakdown(
+        expenses_breakdown.get('time') or {}, time_grain,
+    )
+    deposits_breakdown = deposits_breakdown or {}
+    prior_invoice_payments = prior_invoice_payments or {}
+    external_account_in = external_account_in or {}
+    recon_movements = recon_movements or {}
+    if not calendar:
+        rows.sort(key=lambda r: r['shift'].starts_at or timezone.now(), reverse=True)
+    stock_flow = period_stock_value_report(duka, all_shifts, duka_ids=selected_ids)
+    opening_amount = Decimal(str(account_breakdowns.get('opening', {}).get('total') or 0))
+    closing_amount = Decimal(str(account_breakdowns.get('closing', {}).get('total') or 0))
+    current_amount = Decimal(str(account_breakdowns.get('current', {}).get('total') or 0))
+    prior_invoice_amount = Decimal(str(prior_invoice_payments.get('total') or 0))
+    external_in_amount = Decimal(str(external_account_in.get('total') or 0))
+    sales_in_amount = Decimal(str(recon_movements.get('sales_in', {}).get('total') or 0))
+    bills_amount = Decimal(str(recon_movements.get('bills', {}).get('total') or 0))
+    other_out_amount = Decimal(str(recon_movements.get('other_out', {}).get('total') or 0))
+    other_in_amount = Decimal(str(recon_movements.get('other_in', {}).get('total') or 0))
+    expected_closing = (
+        opening_amount
+        + sales_in_amount
+        + prior_invoice_amount
+        + external_in_amount
+        + other_in_amount
+        - Decimal(str(totals.get('expenses') or 0))
+        - bills_amount
+        - other_out_amount
+    )
+    closing_diff = closing_amount - expected_closing
+    return {
+        'staff_page': 'shift_report' if not calendar else '',
+        'calendar_report': calendar,
+        'report_form_action': '/riport/generalPeriodReport' if calendar else '/staff/shifts/report',
+        'report_rows': rows,
+        'report_totals': totals,
+        'account_breakdowns': account_breakdowns,
+        'sales_item_breakdown': sales_item_breakdown,
+        'sales_staff_breakdown': sales_staff_breakdown,
+        'sales_category_breakdown': sales_category_breakdown,
+        'sales_time_breakdown': sales_time_breakdown,
+        'unpaid_breakdown': unpaid_breakdown,
+        'sales_payments_by_account': sales_payments_by_account,
+        'expenses_breakdown': expenses_breakdown,
+        'deposits_breakdown': deposits_breakdown,
+        'prior_invoice_payments': prior_invoice_payments,
+        'external_account_in': external_account_in,
+        'recon_movements': recon_movements,
+        'stock_flow': stock_flow,
+        'opening_amount': opening_amount,
+        'closing_amount': closing_amount,
+        'current_amount': current_amount,
+        'prior_invoice_amount': prior_invoice_amount,
+        'external_in_amount': external_in_amount,
+        'sales_in_amount': sales_in_amount,
+        'bills_amount': bills_amount,
+        'other_out_amount': other_out_amount,
+        'other_in_amount': other_in_amount,
+        'expected_closing': expected_closing,
+        'closing_diff': closing_diff,
+        'preset': preset,
+        'period_start': start,
+        'period_end': end,
+        'custom_fr': start.date().isoformat(),
+        'custom_to': end.date().isoformat(),
+        'report_duka': duka,
+        'report_dukas': selected_dukas,
+        'report_branches': report_branches,
+        'selected_branch_ids': selected_ids,
+        'report_branch_label': ', '.join((ent.name or '') for ent in selected_dukas),
+        'multi_branch': len(selected_ids) > 1,
+    }
+
+
 @login_required(login_url='login')
 def staff_shifts_report(request):
     try:
@@ -754,85 +1005,7 @@ def staff_shifts_report(request):
         ok, resp = _shift_enabled_or_redirect(todo)
         if not ok:
             return resp
-
-        duka = todo['duka']
-        preset, start, end = _shifts_report_period(request)
-        shifts = list(
-            ShiftSession.objects.filter(
-                Interprise=duka.id,
-                starts_at__gte=start,
-                starts_at__lte=end,
-            ).select_related('opened_by__user__user', 'closed_by__user__user').order_by('-starts_at')
-        )
-        rows, totals = build_shifts_period_report(duka, shifts)
-        account_breakdowns = period_cash_account_breakdowns(duka, shifts)
-        sales_item_breakdown = period_sales_item_breakdown(duka, shifts)
-        sales_staff_breakdown = period_sales_staff_breakdown(duka, shifts)
-        sales_category_breakdown = period_sales_category_breakdown(duka, shifts)
-        unpaid_breakdown = period_unpaid_breakdowns(duka, shifts)
-        sales_payments_by_account = period_sales_payments_by_account(
-            duka, shifts, period_start=start,
-        )
-        expenses_breakdown = period_expenses_breakdowns(duka, shifts)
-        deposits_breakdown = period_cash_deposit_breakdown(duka, shifts)
-        prior_invoice_payments = period_prior_invoice_payments(duka, shifts, period_start=start)
-        external_account_in = period_external_account_in(duka, shifts)
-        recon_movements = period_recon_movements(duka, shifts, period_start=start)
-        stock_flow = period_stock_value_report(duka, shifts)
-        opening_amount = Decimal(str(account_breakdowns.get('opening', {}).get('total') or 0))
-        closing_amount = Decimal(str(account_breakdowns.get('closing', {}).get('total') or 0))
-        current_amount = Decimal(str(account_breakdowns.get('current', {}).get('total') or 0))
-        prior_invoice_amount = Decimal(str(prior_invoice_payments.get('total') or 0))
-        external_in_amount = Decimal(str(external_account_in.get('total') or 0))
-        sales_in_amount = Decimal(str(recon_movements.get('sales_in', {}).get('total') or 0))
-        bills_amount = Decimal(str(recon_movements.get('bills', {}).get('total') or 0))
-        other_out_amount = Decimal(str(recon_movements.get('other_out', {}).get('total') or 0))
-        other_in_amount = Decimal(str(recon_movements.get('other_in', {}).get('total') or 0))
-        expected_closing = (
-            opening_amount
-            + sales_in_amount
-            + prior_invoice_amount
-            + external_in_amount
-            + other_in_amount
-            - Decimal(str(totals.get('expenses') or 0))
-            - bills_amount
-            - other_out_amount
-        )
-        closing_diff = closing_amount - expected_closing
-
-        todo.update({
-            'staff_page': 'shift_report',
-            'report_rows': rows,
-            'report_totals': totals,
-            'account_breakdowns': account_breakdowns,
-            'sales_item_breakdown': sales_item_breakdown,
-            'sales_staff_breakdown': sales_staff_breakdown,
-            'sales_category_breakdown': sales_category_breakdown,
-            'unpaid_breakdown': unpaid_breakdown,
-            'sales_payments_by_account': sales_payments_by_account,
-            'expenses_breakdown': expenses_breakdown,
-            'deposits_breakdown': deposits_breakdown,
-            'prior_invoice_payments': prior_invoice_payments,
-            'external_account_in': external_account_in,
-            'recon_movements': recon_movements,
-            'stock_flow': stock_flow,
-            'opening_amount': opening_amount,
-            'closing_amount': closing_amount,
-            'current_amount': current_amount,
-            'prior_invoice_amount': prior_invoice_amount,
-            'external_in_amount': external_in_amount,
-            'sales_in_amount': sales_in_amount,
-            'bills_amount': bills_amount,
-            'other_out_amount': other_out_amount,
-            'other_in_amount': other_in_amount,
-            'expected_closing': expected_closing,
-            'closing_diff': closing_diff,
-            'preset': preset,
-            'period_start': start,
-            'period_end': end,
-            'custom_fr': start.date().isoformat(),
-            'custom_to': end.date().isoformat(),
-        })
+        todo.update(enterprise_period_report_context(todo, request, calendar=False))
         return render(request, 'staff/shifts_report.html', todo)
     except Exception:
         traceback.print_exc()
@@ -1064,7 +1237,11 @@ def shift_view(request):
 
         duka = todo['duka']
         sid = int(request.GET.get('sid', 0))
-        shift = ShiftSession.objects.get(pk=sid, Interprise=duka.id)
+        allowed_ids = {ent.id for ent in _shift_report_allowed_dukas(todo)} or {duka.id}
+        shift = ShiftSession.objects.select_related('Interprise').get(pk=sid)
+        if shift.Interprise_id not in allowed_ids:
+            return render(request, 'errorpage.html', todo)
+        duka = shift.Interprise
         report = build_shift_report(duka, shift)
         assignments = report['assignments']
         activities = report['activities']
@@ -1095,6 +1272,7 @@ def shift_view(request):
             .first()
         )
         recorder_staff = recorder.staff if recorder else shift.opened_by
+        rec_sales = recorder_shift_sales_summary(duka, shift, recorder_staff)
         todo.update({
             'staff_page': 'shifts',
             'shift': shift,
@@ -1113,6 +1291,12 @@ def shift_view(request):
             'sales_breakdown_totals': report['sales_breakdown_totals'],
             'recon_rows': recon_rows,
             'recon_recorder_name': staff_display_name(recorder_staff) if recorder_staff else '',
+            'recon_pay_summary': {
+                'total': str(rec_sales['total']),
+                'paid': str(rec_sales['paid']),
+                'debt': str(rec_sales['debt']),
+                'name': staff_display_name(recorder_staff) if recorder_staff else '',
+            },
             'can_reconcile': _can_reconcile_shift(todo, shift),
         })
 
@@ -1152,6 +1336,46 @@ def _shift_recorder_staff(shift):
         .first()
     )
     return rec.staff if rec else shift.opened_by
+
+
+def _credit_cash_sale_payment(duka, cash_acc, amount, recorder, now, sale, note):
+    amount = _dec(amount)
+    if not cash_acc or amount <= 0:
+        return
+    cash_acc.refresh_from_db()
+    before = _dec(cash_acc.Amount)
+    cash_acc.Amount = before + amount
+    cash_acc.save(update_fields=['Amount'])
+    weka = wekaCash()
+    weka.Interprise = duka
+    weka.tarehe = now
+    weka.Akaunt = cash_acc
+    weka.Amount = amount
+    weka.before = before
+    weka.After = before + amount
+    weka.kutoka = 'Sales '
+    weka.maelezo = note
+    weka.by = recorder
+    weka.mauzo = True
+    weka.invo = sale
+    weka.admin_approve = True
+    weka.save()
+
+
+def _apply_sale_cash_payment(sale, pay, cash_acc, duka, recorder, now, note):
+    remaining = _sale_remaining_debt(sale.amount, sale.ilolipwa)
+    take = _dec(pay)
+    if take > remaining:
+        take = remaining
+    if take <= 0:
+        return Decimal('0')
+    sale.ilolipwa = _dec(sale.ilolipwa) + take
+    sale.full_paid = sale.ilolipwa >= _dec(sale.amount)
+    if sale.full_paid:
+        sale.kulipa = now.date()
+    sale.save(update_fields=['ilolipwa', 'full_paid', 'kulipa'])
+    _credit_cash_sale_payment(duka, cash_acc, take, recorder, now, sale, note)
+    return take
 
 
 def _next_sale_invoice_code(duka):
@@ -1251,9 +1475,50 @@ def shift_reconcile(request):
 
         recorder = _shift_recorder_staff(shift) or cheo
         recorder_name = staff_display_name(recorder) if recorder else (cheo.user.user.get_full_name() if cheo and cheo.user else 'Recorder')
+        extra_total = Decimal('0')
+        for row, extra in extras:
+            extra_total += extra * Decimal(str(row.get('sales_price') or 0))
+
+        rec_sales = recorder_shift_sales_summary(duka, shift, recorder)
+        required = rec_sales['total'] + extra_total
+        already_paid = rec_sales['paid']
+        pay_all = str(request.POST.get('pay_all') or '').strip().lower() in ('1', 'true', 'yes', 'on')
+        if pay_all:
+            claimed = required
+        else:
+            raw_paid = str(request.POST.get('paid_total') or '').strip()
+            try:
+                claimed = Decimal(raw_paid)
+            except Exception:
+                return JsonResponse({
+                    'success': False,
+                    'msg_swa': 'Jaza kiasi halisi kilichopokelewa au chagua kuwasilisha pesa yote.',
+                    'msg_eng': 'Enter the actual amount received or choose to submit all money.',
+                })
+        if claimed < already_paid:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': f'Kiasi kilicholipwa hakiwezi kuwa pungufu ya kilicholipwa kabla ({already_paid:.2f}).',
+                'msg_eng': f'Paid amount cannot be less than the amount already paid ({already_paid:.2f}).',
+            })
+        if claimed > required:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': f'Kiasi kilicholipwa hakiwezi kuzidi jumla ya mauzo ({required:.2f}).',
+                'msg_eng': f'Paid amount cannot exceed total recorder sales ({required:.2f}).',
+            })
+        new_cash = claimed - already_paid
+        unpaid_ids = [inv['id'] for inv in rec_sales['invoices'] if inv['debt'] > 0]
+
         cash_acc = PaymentAkaunts.objects.filter(Interprise=duka.id, aina__iexact='Cash').order_by('id').first()
         if not cash_acc:
             cash_acc = PaymentAkaunts.objects.filter(Interprise=duka.id).order_by('id').first()
+        if new_cash > 0 and not cash_acc:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Hakuna akaunti ya Cash ya kuweka malipo.',
+                'msg_eng': 'No cash account is available to record the payment.',
+            })
 
         now = timezone.now()
         with transaction.atomic():
@@ -1266,7 +1531,7 @@ def shift_reconcile(request):
             sale.date = now.date()
             sale.kulipa = now.date()
             sale.tarehe = now
-            sale.full_paid = True
+            sale.full_paid = False
             sale.Invo_no = invono
             sale.mteja_jina = (recorder_name or '')[:100]
             sale.order = False
@@ -1300,27 +1565,36 @@ def shift_reconcile(request):
                     total += qty * price
 
             sale.amount = total
-            sale.ilolipwa = total
-            sale.save(update_fields=['amount', 'ilolipwa'])
+            sale.ilolipwa = Decimal('0')
+            sale.full_paid = total <= 0
+            sale.save(update_fields=['amount', 'ilolipwa', 'full_paid'])
 
-            if cash_acc and total > 0:
-                before = Decimal(str(cash_acc.Amount or 0))
-                cash_acc.Amount = before + total
-                cash_acc.save(update_fields=['Amount'])
-                weka = wekaCash()
-                weka.Interprise = duka
-                weka.tarehe = now
-                weka.Akaunt = cash_acc
-                weka.Amount = total
-                weka.before = before
-                weka.After = before + total
-                weka.kutoka = 'Sales '
-                weka.maelezo = f'Shift recon {shift.code}'
-                weka.by = recorder
-                weka.mauzo = True
-                weka.invo = sale
-                weka.admin_approve = True
-                weka.save()
+            remaining_cash = new_cash
+            if remaining_cash > 0 and unpaid_ids:
+                older = mauzoni.objects.filter(pk__in=unpaid_ids).order_by('tarehe', 'id')
+                for old_sale in older:
+                    if remaining_cash <= 0:
+                        break
+                    taken = _apply_sale_cash_payment(
+                        old_sale,
+                        remaining_cash,
+                        cash_acc,
+                        duka,
+                        recorder,
+                        now,
+                        f'Shift recon {shift.code} settle prior invoice {old_sale.code}',
+                    )
+                    remaining_cash -= taken
+            if remaining_cash > 0:
+                remaining_cash -= _apply_sale_cash_payment(
+                    sale,
+                    remaining_cash,
+                    cash_acc,
+                    duka,
+                    recorder,
+                    now,
+                    f'Shift recon {shift.code}',
+                )
 
             ShiftActivity.objects.create(
                 shift=shift,
@@ -1331,13 +1605,17 @@ def shift_reconcile(request):
                 by=cheo,
             )
 
+        recon_paid, recon_debt = _sale_paid_and_debt(sale.amount, sale.ilolipwa)
         return JsonResponse({
             'success': True,
             'sale_id': sale.id,
             'amount': float(total),
+            'paid': float(recon_paid),
+            'debt': float(recon_debt),
+            'claimed': float(claimed),
             'lines': len(extras),
-            'msg_swa': f'Mauzo ya reconciliation yamehifadhiwa. Jumla {total:.2f}.',
-            'msg_eng': f'Reconciliation sales saved. Total {total:.2f}.',
+            'msg_swa': f'Mauzo ya reconciliation yamehifadhiwa. Jumla {total:.2f}. Deni {recon_debt:.2f}.',
+            'msg_eng': f'Reconciliation sales saved. Total {total:.2f}. Debt {recon_debt:.2f}.',
         })
     except ShiftSession.DoesNotExist:
         return JsonResponse({'success': False, 'msg': 'Shift not found'}, status=404)
@@ -1453,7 +1731,11 @@ def print_shift(request):
         if not duka or not useri:
             return JsonResponse({'success': False, 'msg': 'User context error'}, status=400)
 
-        shift = ShiftSession.objects.get(pk=sid, Interprise=duka.id)
+        allowed_ids = {ent.id for ent in _shift_report_allowed_dukas(todo)} or {duka.id}
+        shift = ShiftSession.objects.select_related('Interprise').get(pk=sid)
+        if shift.Interprise_id not in allowed_ids:
+            return JsonResponse({'success': False, 'msg': 'Shift not allowed'}, status=403)
+        duka = shift.Interprise
         report = build_shift_report(duka, shift)
 
         context = {
@@ -1515,7 +1797,11 @@ def shift_actor_sales(request):
         if not duka or sid <= 0 or actor_id < 0:
             return render(request, 'errorpage.html', todo)
 
-        shift = ShiftSession.objects.get(pk=sid, Interprise=duka.id)
+        allowed_ids = {ent.id for ent in _shift_report_allowed_dukas(todo)} or {duka.id}
+        shift = ShiftSession.objects.select_related('Interprise').get(pk=sid)
+        if shift.Interprise_id not in allowed_ids:
+            return render(request, 'errorpage.html', todo)
+        duka = shift.Interprise
         period_end = shift.ends_at or timezone.now()
 
         all_staff = actor_id == 0

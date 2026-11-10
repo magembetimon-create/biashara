@@ -40,6 +40,7 @@ from decimal import Decimal
 import random 
 
 from accaunts.todos import Todos
+from staff.views import enterprise_period_report_context
 
 # Create your views here.
 def todoFunct(request):
@@ -54,6 +55,20 @@ def riportPage(request):
         return redirect('/userdash')
     else:     
       return render(request,'riportPage.html',todo)
+
+@login_required(login_url='login')
+def generalPeriodReport(request):
+    """Calendar-period summary (same KPIs as shift report, ignoring shift windows)."""
+    todo = todoFunct(request)
+    if not todo['duka'].Interprise:
+        return redirect('/userdash')
+    try:
+        todo.update(enterprise_period_report_context(todo, request, calendar=True))
+        return render(request, 'staff/shifts_report.html', todo)
+    except Exception:
+        traceback.print_exc()
+        return render(request, 'errorpage.html', todoFunct(request))
+
 
 @login_required(login_url='login')
 def riportMauzo(request):

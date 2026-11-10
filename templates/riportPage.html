@@ -2,6 +2,18 @@
 
 {% block Dashboard %}
 <div  class=" Analytical whiteBg tab_div p-4" style="min-height: 100vh;" id="general-panel">
+
+<div class="mb-4 pb-3 border-bottom">
+  <h5 class="mb-1">{% if useri.langSet == 0 %}Ripoti ya jumla ya kipindi{% else %}General period report{% endif %}</h5>
+  <p class="small text-muted mb-2">
+    {% if useri.langSet == 0 %}
+      Muhtasari wa mauzo, matumizi, cash, malipo, stoku na madeni kwa muda unaochagua — si kwa shift.
+    {% else %}
+      Sales, expenses, cash, payments, stock and debts for the dates you choose — not tied to shifts.
+    {% endif %}
+  </p>
+  <a class="weight600" href="/riport/generalPeriodReport">{% if useri.langSet == 0 %}Fungua ripoti ya jumla ya kipindi{% else %}Open general period report{% endif %}</a>
+</div>
     
 <div class="row">
   <div class="col-md-3">
@@ -63,6 +75,7 @@
   <div class="col-md-3">
       <h5>{% if useri.langSet == 0 %}Malipo {% else %}Payments{% endif %}</h5>
        <ul class="list-unstyled " >
+              <li class="py-1 weight600" ><a href="/riport/generalPeriodReport">{% if useri.langSet == 0 %}Ripoti ya jumla ya kipindi{% else %}General period report{% endif %}</a></li>
               <li class="py-1 weight600" ><a href="/riport/IncomeExpenditure"> {% if useri.langSet == 0 %}Mapato Na Matumizi{% else %}Income & Expenditure{% endif %}</a></li>
               <li class="py-1 weight600" ><a href="/riport/TansferR">{% if useri.langSet == 0 %}Kuhamisha Pesa {% else %}Amount Transfer{% endif %}</a></li>
       <!-- <li class="py-1 weight600" ><a href="/riport/shiftRiport">{% if useri.langSet == 0 %}Ripoti ya Zamu{% else %}Shift Report{% endif %}</a></li> -->
