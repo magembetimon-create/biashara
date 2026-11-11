@@ -154,7 +154,11 @@
                   {% for bil in bili %}
               <tr>
                 <td class="text-center latoFont"><a class="txn-code-link" href="{% url 'viewInvo' %}?item_valued={{bil.id}}">SAL-{{bil.code}}</a></td>
-                <td class="text-center latoFont">{{bil.tarehe|date:"d/m/Y H:i"}}</td>
+                <td class="text-center latoFont">
+                  {% if bil.tarehe %}
+                  <script>document.write(moment('{{ bil.tarehe|date:"r" }}').format('DD/MM/YYYY HH:mm'));</script>
+                  {% endif %}
+                </td>
 
                 <td class="text-center text-primary latoFont ">
                     {% if bil.saved_custom   %}
