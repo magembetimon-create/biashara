@@ -72,7 +72,7 @@ from staff.shift_report import (
     calendar_period_span,
     _dec,
     completed_sales_qs,
-    _start_exclusive_for_shift,
+    _shift_window_lower,
     expected_cash_from_flows,
     shift_payment_flows,
     shift_sales_amounts,
@@ -1664,9 +1664,10 @@ def close_shift(request):
             }, status=403)
 
         period_end = timezone.now()
+        owned_from, start_exclusive = _shift_window_lower(duka, shift.starts_at)
         flows = shift_payment_flows(
-            duka, shift.starts_at, period_end,
-            start_exclusive=_start_exclusive_for_shift(duka, shift.starts_at),
+            duka, owned_from or shift.starts_at, period_end,
+            start_exclusive=start_exclusive,
         )
         expected = expected_cash_from_flows(shift.opening_cash, flows)
 
@@ -1822,9 +1823,10 @@ def shift_actor_sales(request):
                 return render(request, 'errorpage.html', todo)
             actor_name = staff_display_name(actor)
 
+        owned_from, start_exclusive = _shift_window_lower(duka, shift.starts_at)
         shift_sales = completed_sales_qs(
-            duka, shift.starts_at, period_end,
-            start_exclusive=_start_exclusive_for_shift(duka, shift.starts_at),
+            duka, owned_from or shift.starts_at, period_end,
+            start_exclusive=start_exclusive,
         )
         actor_sales = shift_sales
         if not all_staff:

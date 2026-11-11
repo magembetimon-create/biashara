@@ -46,20 +46,39 @@ def _dt_range_kwargs(field, starts_at, period_end, start_exclusive=False):
     }
 
 
-def _start_exclusive_for_shift(duka, starts_at, duka_ids=None):
-    """True when a previous shift closed at this start, so boundary events stay there."""
+def _minute_floor(dt):
+    if not dt:
+        return dt
+    return dt.replace(second=0, microsecond=0)
+
+
+def _shift_window_lower(duka, starts_at, duka_ids=None):
+    """Lower bound for events owned by this shift.
+
+    Sales through the previous close stay on that shift. If close and open
+    share the same displayed minute (HH:mm), this shift starts at the next minute.
+    Returns (bound, exclusive) where exclusive True means event_at > bound.
+    """
     if not starts_at:
-        return False
+        return starts_at, False
     qs = ShiftSession.objects.filter(
         status='closed',
         starts_at__lt=starts_at,
         ends_at__isnull=False,
-        ends_at__gte=starts_at,
     )
     shop_ids = _shop_ids(duka, duka_ids) if duka is not None else []
     if shop_ids:
         qs = qs.filter(Interprise_id__in=shop_ids)
-    return qs.exists()
+    prev = qs.order_by('-starts_at').first()
+    if not prev or not prev.ends_at:
+        return starts_at, False
+    start_min = _minute_floor(starts_at)
+    prev_min = _minute_floor(prev.ends_at)
+    if prev_min == start_min:
+        return start_min + timedelta(minutes=1), False
+    if prev.ends_at >= starts_at:
+        return prev.ends_at, True
+    return starts_at, False
 
 
 def _event_shift_id(windows, event_at):
@@ -122,15 +141,9 @@ def completed_sale_lines_qs(duka, starts_at, period_end, duka_ids=None, start_ex
 def shift_sales_paid_unpaid(duka, shifts):
     """Invoice paid vs remaining debt per shift, using the same sale window as sales."""
     now = timezone.now()
-    unpaid = {}
-    paid = {}
-    windows = []
-    for shift in shifts:
-        unpaid[shift.id] = Decimal('0')
-        paid[shift.id] = Decimal('0')
-        period_end = shift.ends_at or now
-        if shift.starts_at:
-            windows.append((shift.id, shift.starts_at, period_end))
+    unpaid = {shift.id: Decimal('0') for shift in shifts}
+    paid = {shift.id: Decimal('0') for shift in shifts}
+    windows = _shift_time_windows(shifts, now)
     if not windows:
         return unpaid, paid
 
@@ -163,13 +176,8 @@ def shift_sales_paid_unpaid(duka, shifts):
 def shift_sales_amounts(duka, shifts):
     """Completed sales totals per shift, matching shift view Stock Movement sales."""
     now = timezone.now()
-    amounts = {}
-    windows = []
-    for shift in shifts:
-        period_end = shift.ends_at or now
-        amounts[shift.id] = Decimal('0')
-        if shift.starts_at:
-            windows.append((shift.id, shift.starts_at, period_end))
+    amounts = {shift.id: Decimal('0') for shift in shifts}
+    windows = _shift_time_windows(shifts, now)
     if not windows:
         return amounts
 
@@ -192,11 +200,22 @@ def shift_sales_amounts(duka, shifts):
 
 def _shift_time_windows(shifts, now=None):
     now = now or timezone.now()
-    windows = []
+    dated = []
     for shift in shifts:
         if not shift.starts_at:
             continue
-        windows.append((shift.id, shift.starts_at, shift.ends_at or now))
+        dated.append((shift.id, shift.starts_at, shift.ends_at or now))
+    dated.sort(key=lambda w: (w[1], w[0]))
+    windows = []
+    for i, (sid, start, end) in enumerate(dated):
+        adj_end = end
+        if i + 1 < len(dated):
+            next_start = dated[i + 1][1]
+            if _minute_floor(end) == _minute_floor(next_start):
+                minute_end = _minute_floor(next_start) + timedelta(minutes=1) - timedelta(microseconds=1)
+                if minute_end > adj_end:
+                    adj_end = minute_end
+        windows.append((sid, start, adj_end))
     return windows
 
 
@@ -993,9 +1012,10 @@ def recorder_shift_sales_summary(duka, shift, recorder):
     if not shift or not shift.starts_at:
         return empty
     period_end = shift.ends_at or timezone.now()
+    owned_from, start_exclusive = _shift_window_lower(duka, shift.starts_at)
     qs = completed_sales_qs(
-        duka, shift.starts_at, period_end,
-        start_exclusive=_start_exclusive_for_shift(duka, shift.starts_at),
+        duka, owned_from, period_end,
+        start_exclusive=start_exclusive,
     ).exclude(full_returned=True).filter(
         waiter_order__isnull=True,
     )
@@ -2603,7 +2623,9 @@ def build_shift_report(duka, shift):
     period_end = shift.ends_at or timezone.now()
     starts_at = shift.starts_at
     is_closed = str(shift.status or '') == 'closed'
-    start_exclusive = _start_exclusive_for_shift(duka, starts_at)
+    owned_from, start_exclusive = _shift_window_lower(duka, starts_at)
+    if not owned_from:
+        owned_from = starts_at
 
     assignments = ShiftAssignment.objects.filter(
         shift=shift.id, active=True
@@ -2631,7 +2653,7 @@ def build_shift_report(duka, shift):
         })
     shift_team_rows.sort(key=lambda row: (0 if row['is_recorder'] else 1, row['name'].lower()))
 
-    line_qs = completed_sale_lines_qs(duka, starts_at, period_end, start_exclusive=start_exclusive).select_related(
+    line_qs = completed_sale_lines_qs(duka, owned_from, period_end, start_exclusive=start_exclusive).select_related(
         'produ',
         'mauzo__waiter_order__user__user',
         'mauzo__waiter_order__user_entp__Interprise',
@@ -2657,7 +2679,7 @@ def build_shift_report(duka, shift):
         event_ref_id__isnull=False,
     ).order_by('-recorded_at').first()
 
-    before_qty_map = _stock_qty_map_at(duka, starts_at)
+    before_qty_map = _stock_qty_map_at(duka, owned_from)
     if not before_qty_map:
         before_qty_map = _snapshot_qty_map(opening_snapshot_activity)
     closing_qty_map = _stock_qty_map_at(duka, period_end, closing=True) if is_closed else defaultdict(lambda: Decimal('0'))
@@ -2696,7 +2718,7 @@ def build_shift_report(duka, shift):
             sold_qty_map[produ.id] += sold_qty
 
     returned_qty_map = _window_sale_returns(
-        duka, starts_at, period_end, sold_qty_map, before_qty_map, start_exclusive=start_exclusive,
+        duka, owned_from, period_end, sold_qty_map, before_qty_map, start_exclusive=start_exclusive,
     )
 
     sales_breakdown_rows = sorted(breakdown.values(), key=lambda x: (x['name'] or '').lower())
@@ -2711,7 +2733,7 @@ def build_shift_report(duka, shift):
         order=True,
         cart=False,
         ignore=False,
-        **_dt_range_kwargs('tarehe', starts_at, period_end, start_exclusive),
+        **_dt_range_kwargs('tarehe', owned_from, period_end, start_exclusive),
     )
     pending_sales_amount = pending_qs.aggregate(sum=Sum('amount'))['sum'] or Decimal('0')
     pending_sales_count = pending_qs.count()
@@ -2719,15 +2741,15 @@ def build_shift_report(duka, shift):
     used_qty = productChangeRecord.objects.filter(
         adjst__Interprise=duka.id,
         adjst__tumika=True,
-        **_dt_range_kwargs('adjst__date', starts_at, period_end, start_exclusive),
+        **_dt_range_kwargs('adjst__date', owned_from, period_end, start_exclusive),
     ).aggregate(sum=Sum('qty'))['sum'] or 0
 
     damaged_qty = productChangeRecord.objects.filter(
         adjst__Interprise=duka.id,
-        **_dt_range_kwargs('adjst__date', starts_at, period_end, start_exclusive),
+        **_dt_range_kwargs('adjst__date', owned_from, period_end, start_exclusive),
     ).filter(Q(adjst__haribika=True) | Q(adjst__potea=True)).aggregate(sum=Sum('qty'))['sum'] or 0
 
-    flows = shift_payment_flows(duka, starts_at, period_end, start_exclusive=start_exclusive)
+    flows = shift_payment_flows(duka, owned_from, period_end, start_exclusive=start_exclusive)
     expenses = flows['expenses']
     deposits = flows['deposits']
 
@@ -2740,14 +2762,14 @@ def build_shift_report(duka, shift):
     mobile_payments = wekaCash.objects.filter(
         Interprise=duka.id,
         kuhamisha=False,
-        **_dt_range_kwargs('tarehe', starts_at, period_end, start_exclusive),
+        **_dt_range_kwargs('tarehe', owned_from, period_end, start_exclusive),
     ).exclude(
         Akaunt__aina__iexact='Cash'
     ).select_related('Akaunt', 'by__fanyakazi').order_by('tarehe')
     mobile_payments_total = mobile_payments.aggregate(sum=Sum('Amount'))['sum'] or Decimal('0')
 
     stock_panel = _assemble_stock_value_panel(
-        duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed,
+        duka, owned_from, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed,
         returned_qty_map=returned_qty_map, start_exclusive=start_exclusive,
     )
     stock_value_rows = stock_panel['rows']
