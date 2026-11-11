@@ -11,6 +11,7 @@ from management.models import (
     SaveAkauntState,
     ShiftActivity,
     ShiftAssignment,
+    ShiftSession,
     bidhaa_stoku,
     grouped_item_member,
     mauzoList,
@@ -37,17 +38,48 @@ def sale_event_at(prefix=''):
     )
 
 
-def completed_sales_qs(duka, starts_at, period_end):
-    return mauzoni.objects.filter(
+def _dt_range_kwargs(field, starts_at, period_end, start_exclusive=False):
+    op = 'gt' if start_exclusive else 'gte'
+    return {
+        f'{field}__{op}': starts_at,
+        f'{field}__lte': period_end,
+    }
+
+
+def _start_exclusive_for_shift(duka, starts_at, duka_ids=None):
+    """True when a previous shift closed at this start, so boundary events stay there."""
+    if not starts_at:
+        return False
+    qs = ShiftSession.objects.filter(
+        status='closed',
+        starts_at__lt=starts_at,
+        ends_at__isnull=False,
+        ends_at__gte=starts_at,
+    )
+    shop_ids = _shop_ids(duka, duka_ids) if duka is not None else []
+    if shop_ids:
+        qs = qs.filter(Interprise_id__in=shop_ids)
+    return qs.exists()
+
+
+def _event_shift_id(windows, event_at):
+    """If a timestamp sits on two shift edges, keep it on the earlier (closing) shift."""
+    matches = [w for w in windows if w[1] <= event_at <= w[2]]
+    if not matches:
+        return None
+    matches.sort(key=lambda w: (w[1], w[0]))
+    return matches[0][0]
+
+
+def completed_sales_qs(duka, starts_at, period_end, start_exclusive=False):
+    qs = mauzoni.objects.filter(
         Interprise=duka.id,
         service=False,
         order=False,
         cart=False,
         ignore=False,
-    ).annotate(event_at=sale_event_at()).filter(
-        event_at__gte=starts_at,
-        event_at__lte=period_end,
-    )
+    ).annotate(event_at=sale_event_at())
+    return qs.filter(**_dt_range_kwargs('event_at', starts_at, period_end, start_exclusive))
 
 
 class CalendarPeriod:
@@ -76,17 +108,15 @@ def _shop_ids(duka, duka_ids=None):
     return [int(duka.id)]
 
 
-def completed_sale_lines_qs(duka, starts_at, period_end, duka_ids=None):
-    return mauzoList.objects.filter(
+def completed_sale_lines_qs(duka, starts_at, period_end, duka_ids=None, start_exclusive=False):
+    qs = mauzoList.objects.filter(
         mauzo__Interprise_id__in=_shop_ids(duka, duka_ids),
         mauzo__service=False,
         mauzo__order=False,
         mauzo__cart=False,
         mauzo__ignore=False,
-    ).annotate(event_at=sale_event_at('mauzo__')).filter(
-        event_at__gte=starts_at,
-        event_at__lte=period_end,
-    )
+    ).annotate(event_at=sale_event_at('mauzo__'))
+    return qs.filter(**_dt_range_kwargs('event_at', starts_at, period_end, start_exclusive))
 
 
 def shift_sales_paid_unpaid(duka, shifts):
@@ -122,10 +152,11 @@ def shift_sales_paid_unpaid(duka, shifts):
         debt = amt - paid_amt
         if debt < 0:
             debt = Decimal('0')
-        for shift_id, starts_at, period_end in windows:
-            if starts_at <= event_at <= period_end:
-                unpaid[shift_id] += debt
-                paid[shift_id] += paid_amt
+        sid = _event_shift_id(windows, event_at)
+        if sid is None:
+            continue
+        unpaid[sid] += debt
+        paid[sid] += paid_amt
     return unpaid, paid
 
 
@@ -152,9 +183,10 @@ def shift_sales_amounts(duka, shifts):
         if not event_at:
             continue
         line_amount = net_qty * Decimal(line.bei or 0)
-        for shift_id, starts_at, period_end in windows:
-            if starts_at <= event_at <= period_end:
-                amounts[shift_id] += line_amount
+        sid = _event_shift_id(windows, event_at)
+        if sid is None:
+            continue
+        amounts[sid] += line_amount
     return amounts
 
 
@@ -183,9 +215,10 @@ def _amounts_in_windows(windows, qs, date_field='tarehe', amount_field='Amount')
         if not event_at:
             continue
         amt = Decimal(str(row.get(amount_field) or 0))
-        for shift_id, starts_at, period_end in windows:
-            if starts_at <= event_at <= period_end:
-                amounts[shift_id] += amt
+        sid = _event_shift_id(windows, event_at)
+        if sid is None:
+            continue
+        amounts[sid] += amt
     return amounts
 
 
@@ -193,7 +226,7 @@ def _dec(value):
     return Decimal(str(value or 0))
 
 
-def shift_payment_flows(duka, starts_at, period_end):
+def shift_payment_flows(duka, starts_at, period_end, start_exclusive=False):
     """Cash-drawer and report figures for one shift window.
 
     Cash deposit = money taken from cash into another payment account
@@ -201,29 +234,26 @@ def shift_payment_flows(duka, starts_at, period_end):
     Expenses = recorded operating expenses (toaCash.matumizi).
     Cash in/out = movements on Cash payment accounts only, used for expected till.
     """
+    time_kw = _dt_range_kwargs('tarehe', starts_at, period_end, start_exclusive)
     expenses = toaCash.objects.filter(
         Interprise=duka.id,
-        tarehe__gte=starts_at,
-        tarehe__lte=period_end,
         matumizi__isnull=False,
+        **time_kw,
     ).aggregate(sum=Sum('Amount'))['sum'] or 0
     deposits = toaCash.objects.filter(
         Interprise=duka.id,
-        tarehe__gte=starts_at,
-        tarehe__lte=period_end,
         deposit_to__isnull=False,
+        **time_kw,
     ).aggregate(sum=Sum('Amount'))['sum'] or 0
     cash_in = wekaCash.objects.filter(
         Interprise=duka.id,
-        tarehe__gte=starts_at,
-        tarehe__lte=period_end,
         Akaunt__aina__iexact='Cash',
+        **time_kw,
     ).aggregate(sum=Sum('Amount'))['sum'] or 0
     cash_out = toaCash.objects.filter(
         Interprise=duka.id,
-        tarehe__gte=starts_at,
-        tarehe__lte=period_end,
         Akaunt__aina__iexact='Cash',
+        **time_kw,
     ).aggregate(sum=Sum('Amount'))['sum'] or 0
     return {
         'expenses': _dec(expenses),
@@ -963,7 +993,10 @@ def recorder_shift_sales_summary(duka, shift, recorder):
     if not shift or not shift.starts_at:
         return empty
     period_end = shift.ends_at or timezone.now()
-    qs = completed_sales_qs(duka, shift.starts_at, period_end).exclude(full_returned=True).filter(
+    qs = completed_sales_qs(
+        duka, shift.starts_at, period_end,
+        start_exclusive=_start_exclusive_for_shift(duka, shift.starts_at),
+    ).exclude(full_returned=True).filter(
         waiter_order__isnull=True,
     )
     if recorder:
@@ -1877,8 +1910,9 @@ def _dec_qty(val):
 def _stock_qty_map_at(duka, at_dt, closing=False, duka_ids=None):
     """Live lots rolled back to at_dt, using Packed_at for waiter sales.
 
-    Opening uses movements at/after at_dt and excludes lots born at/after at_dt.
-    Closing uses movements after at_dt and keeps lots born at at_dt.
+    Opening and closing at the same instant match, except lots born at that
+    instant (inbound) which belong to the new shift. Movements at at_dt already
+    happened on the closing shift, so only later movements are rewound.
     """
     qty_map = defaultdict(lambda: Decimal('0'))
     if not at_dt:
@@ -1901,7 +1935,7 @@ def _stock_qty_map_at(duka, at_dt, closing=False, duka_ids=None):
     )
     ids = [row['id'] for row in items]
     delta = defaultdict(lambda: Decimal('0'))
-    when_kw = 'gt' if closing else 'gte'
+    when_kw = 'gt'
 
     def _after(field):
         return {f'{field}__{when_kw}': at_dt}
@@ -2059,13 +2093,12 @@ def _distribute_stock_qty(qty_map, produ, qty, before_qty_map):
         qty_map[produ.id] += qty
 
 
-def _window_sale_returns(duka, starts_at, period_end, sold_qty_map, before_qty_map, duka_ids=None):
+def _window_sale_returns(duka, starts_at, period_end, sold_qty_map, before_qty_map, duka_ids=None, start_exclusive=False):
     """Returns in this window, including items sold in the same shift."""
     returned_map = defaultdict(lambda: Decimal('0'))
     rows = sa_ret.objects.filter(
         sa_list__produ__Interprise_id__in=_shop_ids(duka, duka_ids),
-        ret__tarehe__gte=starts_at,
-        ret__tarehe__lte=period_end,
+        **_dt_range_kwargs('ret__tarehe', starts_at, period_end, start_exclusive),
     ).select_related('sa_list__produ')
     for row in rows:
         qty = Decimal(row.idadi or 0)
@@ -2144,14 +2177,13 @@ STOCK_FLOW_METRIC_KEYS = (
 )
 
 
-def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed, returned_qty_map=None, duka_ids=None):
+def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed, returned_qty_map=None, duka_ids=None, start_exclusive=False):
     """Stock Value Panel rows/totals for a time window, matching shift view."""
     shop_ids = _shop_ids(duka, duka_ids)
     reduction_qty_map = defaultdict(lambda: Decimal('0'))
     reduction_rows = productChangeRecord.objects.filter(
         adjst__Interprise_id__in=shop_ids,
-        adjst__date__gte=starts_at,
-        adjst__date__lte=period_end,
+        **_dt_range_kwargs('adjst__date', starts_at, period_end, start_exclusive),
     ).filter(
         Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True)
         | Q(adjst__expire=True) | Q(adjst__others=True) | Q(adjst__full_Return=True)
@@ -2161,8 +2193,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
 
     pu_return_rows = pu_ret.objects.filter(
         pu_list__Interprise_id__in=shop_ids,
-        ret__tarehe__gte=starts_at,
-        ret__tarehe__lte=period_end,
+        **_dt_range_kwargs('ret__tarehe', starts_at, period_end, start_exclusive),
     ).values_list('pu_list_id', 'idadi')
     for prod_id, qty in pu_return_rows:
         reduction_qty_map[prod_id] += Decimal(qty or 0)
@@ -2170,8 +2201,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
     added_qty_map = defaultdict(lambda: Decimal('0'))
     added_rows = productChangeRecord.objects.filter(
         adjst__Interprise_id__in=shop_ids,
-        adjst__date__gte=starts_at,
-        adjst__date__lte=period_end,
+        **_dt_range_kwargs('adjst__date', starts_at, period_end, start_exclusive),
     ).filter(Q(adjst__Ongezwa=True) | Q(adjst__registered=True)).values_list('prod_id', 'qty')
     for prod_id, qty in added_rows:
         added_qty_map[prod_id] += Decimal(qty or 0)
@@ -2179,8 +2209,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
     produced_rows = bidhaa_stoku.objects.filter(
         Interprise_id__in=shop_ids,
         produced__isnull=False,
-        produced__production__date__gte=starts_at,
-        produced__production__date__lte=period_end,
+        **_dt_range_kwargs('produced__production__date', starts_at, period_end, start_exclusive),
     ).values_list('id', 'produced__qty')
     for prod_id, qty in produced_rows:
         added_qty_map[prod_id] += Decimal(qty or 0)
@@ -2192,8 +2221,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
     transferred_rows = transferList.objects.filter(
         toka__Interprise_id__in=shop_ids,
         kwenda__receive__transfer__order=False,
-        kwenda__receive__transfer__tarehe__gte=starts_at,
-        kwenda__receive__transfer__tarehe__lte=period_end,
+        **_dt_range_kwargs('kwenda__receive__transfer__tarehe', starts_at, period_end, start_exclusive),
     ).exclude(
         kwenda__receive__Interprise_id__in=shop_ids,
     ).values_list('toka_id', 'kwenda__qty')
@@ -2205,8 +2233,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
         Interprise_id__in=shop_ids,
         uhamisho__isnull=False,
         uhamisho__receive__transfer__order=False,
-        uhamisho__receive__transfer__tarehe__gte=starts_at,
-        uhamisho__receive__transfer__tarehe__lte=period_end,
+        **_dt_range_kwargs('uhamisho__receive__transfer__tarehe', starts_at, period_end, start_exclusive),
     ).exclude(
         uhamisho__receive__transfer__Interprise_id__in=shop_ids,
     ).values_list('id', 'uhamisho__qty')
@@ -2220,8 +2247,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
         manunuzi__isnull=False,
         manunuzi__manunuzi__Interprise_id__in=shop_ids,
         manunuzi__manunuzi__order=False,
-        manunuzi__manunuzi__tarehe__gte=starts_at,
-        manunuzi__manunuzi__tarehe__lte=period_end,
+        **_dt_range_kwargs('manunuzi__manunuzi__tarehe', starts_at, period_end, start_exclusive),
     ).values_list('id', 'manunuzi__idadi', 'manunuzi__rudi')
     for prod_id, qty, rudi in purchased_rows:
         net_qty = Decimal(qty or 0) - Decimal(rudi or 0)
@@ -2577,6 +2603,7 @@ def build_shift_report(duka, shift):
     period_end = shift.ends_at or timezone.now()
     starts_at = shift.starts_at
     is_closed = str(shift.status or '') == 'closed'
+    start_exclusive = _start_exclusive_for_shift(duka, starts_at)
 
     assignments = ShiftAssignment.objects.filter(
         shift=shift.id, active=True
@@ -2604,7 +2631,7 @@ def build_shift_report(duka, shift):
         })
     shift_team_rows.sort(key=lambda row: (0 if row['is_recorder'] else 1, row['name'].lower()))
 
-    line_qs = completed_sale_lines_qs(duka, starts_at, period_end).select_related(
+    line_qs = completed_sale_lines_qs(duka, starts_at, period_end, start_exclusive=start_exclusive).select_related(
         'produ',
         'mauzo__waiter_order__user__user',
         'mauzo__waiter_order__user_entp__Interprise',
@@ -2668,7 +2695,9 @@ def build_shift_report(duka, shift):
         elif produ:
             sold_qty_map[produ.id] += sold_qty
 
-    returned_qty_map = _window_sale_returns(duka, starts_at, period_end, sold_qty_map, before_qty_map)
+    returned_qty_map = _window_sale_returns(
+        duka, starts_at, period_end, sold_qty_map, before_qty_map, start_exclusive=start_exclusive,
+    )
 
     sales_breakdown_rows = sorted(breakdown.values(), key=lambda x: (x['name'] or '').lower())
     sales_breakdown_totals = {
@@ -2682,26 +2711,23 @@ def build_shift_report(duka, shift):
         order=True,
         cart=False,
         ignore=False,
-        tarehe__gte=starts_at,
-        tarehe__lte=period_end,
+        **_dt_range_kwargs('tarehe', starts_at, period_end, start_exclusive),
     )
     pending_sales_amount = pending_qs.aggregate(sum=Sum('amount'))['sum'] or Decimal('0')
     pending_sales_count = pending_qs.count()
 
     used_qty = productChangeRecord.objects.filter(
         adjst__Interprise=duka.id,
-        adjst__date__gte=starts_at,
-        adjst__date__lte=period_end,
         adjst__tumika=True,
+        **_dt_range_kwargs('adjst__date', starts_at, period_end, start_exclusive),
     ).aggregate(sum=Sum('qty'))['sum'] or 0
 
     damaged_qty = productChangeRecord.objects.filter(
         adjst__Interprise=duka.id,
-        adjst__date__gte=starts_at,
-        adjst__date__lte=period_end,
+        **_dt_range_kwargs('adjst__date', starts_at, period_end, start_exclusive),
     ).filter(Q(adjst__haribika=True) | Q(adjst__potea=True)).aggregate(sum=Sum('qty'))['sum'] or 0
 
-    flows = shift_payment_flows(duka, starts_at, period_end)
+    flows = shift_payment_flows(duka, starts_at, period_end, start_exclusive=start_exclusive)
     expenses = flows['expenses']
     deposits = flows['deposits']
 
@@ -2713,9 +2739,8 @@ def build_shift_report(duka, shift):
 
     mobile_payments = wekaCash.objects.filter(
         Interprise=duka.id,
-        tarehe__gte=starts_at,
-        tarehe__lte=period_end,
         kuhamisha=False,
+        **_dt_range_kwargs('tarehe', starts_at, period_end, start_exclusive),
     ).exclude(
         Akaunt__aina__iexact='Cash'
     ).select_related('Akaunt', 'by__fanyakazi').order_by('tarehe')
@@ -2723,7 +2748,7 @@ def build_shift_report(duka, shift):
 
     stock_panel = _assemble_stock_value_panel(
         duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed,
-        returned_qty_map=returned_qty_map,
+        returned_qty_map=returned_qty_map, start_exclusive=start_exclusive,
     )
     stock_value_rows = stock_panel['rows']
     stock_value_totals = stock_panel['totals']
