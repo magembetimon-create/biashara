@@ -146,6 +146,52 @@ class PeriodShiftSlice:
             self.actual_closing_cash = None
 
 
+SHIFT_COVERAGE_IN = 'in'
+SHIFT_COVERAGE_PRIOR = 'prior'
+SHIFT_COVERAGE_ALL = (SHIFT_COVERAGE_IN, SHIFT_COVERAGE_PRIOR)
+
+
+def shift_coverage_flags(request):
+    """Which shift groups the report should include. Default: both."""
+    raw = [(x or '').strip().lower() for x in request.GET.getlist('sc')]
+    selected = [x for x in raw if x in SHIFT_COVERAGE_ALL]
+    if not selected:
+        selected = list(SHIFT_COVERAGE_ALL)
+    return {
+        'in': SHIFT_COVERAGE_IN in selected,
+        'prior': SHIFT_COVERAGE_PRIOR in selected,
+        'selected': selected,
+    }
+
+
+def filter_shifts_by_coverage(shifts, start, end, flags):
+    """Keep shifts that started in the period and/or started earlier.
+
+    prior = started before the period and either closed inside it or still open.
+    """
+    want_in = bool(flags.get('in'))
+    want_prior = bool(flags.get('prior'))
+    if want_in and want_prior:
+        return list(shifts)
+    out = []
+    for shift in shifts:
+        starts_at = getattr(shift, 'starts_at', None)
+        if not starts_at:
+            continue
+        started_in = start <= starts_at < end
+        started_before = starts_at < start
+        ends_at = getattr(shift, 'ends_at', None)
+        closed = str(getattr(shift, 'status', '') or '') == 'closed' and bool(ends_at)
+        closed_in = closed and start < ends_at <= end
+        still_open = not closed
+        if want_in and started_in:
+            out.append(shift)
+            continue
+        if want_prior and started_before and (closed_in or still_open):
+            out.append(shift)
+    return out
+
+
 def shifts_overlapping_period(shop_id, start, end):
     """Shifts that cover any part of [start, end], including earlier still-open ones."""
     qs = ShiftSession.objects.filter(

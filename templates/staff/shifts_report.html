@@ -230,6 +230,7 @@
     background: #f8f9fb;
   }
   .sr-branch-box label { margin: 0; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .sr-branch-box.sr-cover-box label { white-space: normal; font-weight: 500; }
   .sr-branch-box .sr-check-report { margin-left: auto; }
   .sr-stock-dialog { max-width: min(96vw, 1280px); margin: 1.2rem auto; }
   .sr-stock-dialog .modal-content { max-height: calc(100vh - 2.4rem); }
@@ -488,7 +489,7 @@
         {% if calendar_report %}
           {% if useri.langSet == 0 %}Mchanganuo wa mauzo, matumizi, cash, stoku na madeni kwa muda uliochagua — si kwa shift{% else %}Sales, expenses, cash, stock and debts for the dates you choose — not tied to shifts{% endif %}
         {% else %}
-          {% if useri.langSet == 0 %}Mchanganuo wa hesabu na madeni kwa shift zilizoanza katika kipindi ulichochagua{% else %}Cash, sales and unpaid debt for shifts that started in the selected period{% endif %}
+          {% if useri.langSet == 0 %}Mchanganuo wa hesabu na madeni kwa zamu zilizofunika kipindi — chagua zilizoanza ndani, zilizoanza nje, au zote{% else %}Cash, sales and unpaid debt for shifts covering the period — choose started inside, started earlier, or both{% endif %}
         {% endif %}
         {% if report_branch_label %} · {{ report_branch_label }}{% endif %}
         {% if duka.currencii %} ({{ duka.currencii }}){% endif %}
@@ -517,6 +518,24 @@
       <button type="submit" name="preset" value="{{ preset }}" class="btn btn-primary btn-sm sr-check-report">
         {% if useri.langSet == 0 %}Angalia ripoti{% else %}Check report{% endif %}
       </button>
+    </div>
+    {% endif %}
+    {% if not calendar_report %}
+    <div class="sr-branch-box sr-cover-box">
+      <span class="small text-muted font-weight-bold">{% if useri.langSet == 0 %}Zamu{% else %}Shifts{% endif %}</span>
+      <label>
+        <input type="checkbox" name="sc" value="in" {% if shift_cover_in %}checked{% endif %}>
+        {% if useri.langSet == 0 %}Zilizoanza ndani ya muda huu{% else %}Started in this period{% endif %}
+      </label>
+      <label>
+        <input type="checkbox" name="sc" value="prior" {% if shift_cover_prior %}checked{% endif %}>
+        {% if useri.langSet == 0 %}Zilizoanza nje, zimefungwa hapa au bado wazi{% else %}Started earlier (closed here or still open){% endif %}
+      </label>
+      {% if report_branches|length <= 1 %}
+      <button type="submit" name="preset" value="{{ preset }}" class="btn btn-primary btn-sm sr-check-report">
+        {% if useri.langSet == 0 %}Angalia ripoti{% else %}Check report{% endif %}
+      </button>
+      {% endif %}
     </div>
     {% endif %}
     <button type="submit" name="preset" value="today" class="btn btn-sm {% if preset == 'today' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
@@ -1243,16 +1262,30 @@
     var tzField = document.getElementById('srTzField');
     if (tzField) tzField.value = tzOff;
   } catch (e) {}
+  document.querySelectorAll('#srFilterForm input[name="sc"]').forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      var form = document.getElementById('srFilterForm');
+      if (!form) return;
+      if (!form.querySelector('input[type="hidden"][name="preset"]')) {
+        var h = document.createElement('input');
+        h.type = 'hidden';
+        h.name = 'preset';
+        h.value = '{{ preset }}';
+        form.appendChild(h);
+      }
+      form.submit();
+    });
+  });
   var customDateForm = document.querySelector('#shiftReportDates form');
   if (customDateForm) {
     customDateForm.addEventListener('submit', function () {
       var holder = document.getElementById('srCustomBranchFields');
       if (!holder) return;
       holder.innerHTML = '';
-      document.querySelectorAll('#srFilterForm input[name="d"]:checked').forEach(function (cb) {
+      document.querySelectorAll('#srFilterForm input[name="d"]:checked, #srFilterForm input[name="sc"]:checked').forEach(function (cb) {
         var h = document.createElement('input');
         h.type = 'hidden';
-        h.name = 'd';
+        h.name = cb.name;
         h.value = cb.value;
         holder.appendChild(h);
       });

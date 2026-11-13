@@ -72,6 +72,8 @@ from staff.shift_report import (
     calendar_period_span,
     shifts_overlapping_period,
     clip_shifts_to_period,
+    shift_coverage_flags,
+    filter_shifts_by_coverage,
     _dec,
     completed_sales_qs,
     _shift_window_lower,
@@ -825,6 +827,7 @@ def enterprise_period_report_context(todo, request, calendar=False):
     duka = selected_dukas[0] if selected_dukas else todo['duka']
     selected_ids = [ent.id for ent in selected_dukas]
     preset, start, end = _shifts_report_period(request)
+    coverage = shift_coverage_flags(request)
     user_tz = _user_tzinfo(request)
     time_grain = sales_time_grain(start, end)
     rows = []
@@ -848,7 +851,12 @@ def enterprise_period_report_context(todo, request, calendar=False):
         else:
             shop_shifts = clip_shifts_to_period(
                 shop,
-                shifts_overlapping_period(shop.id, start, end),
+                filter_shifts_by_coverage(
+                    shifts_overlapping_period(shop.id, start, end),
+                    start,
+                    end,
+                    coverage,
+                ),
                 start,
                 end,
             )
@@ -995,6 +1003,9 @@ def enterprise_period_report_context(todo, request, calendar=False):
         'selected_branch_ids': selected_ids,
         'report_branch_label': ', '.join((ent.name or '') for ent in selected_dukas),
         'multi_branch': len(selected_ids) > 1,
+        'shift_coverage': coverage,
+        'shift_cover_in': coverage['in'],
+        'shift_cover_prior': coverage['prior'],
     }
 
 
