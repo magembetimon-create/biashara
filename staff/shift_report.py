@@ -739,7 +739,7 @@ def _sale_line_unit_cost(line):
 
 
 def period_sales_item_breakdown(duka, shifts):
-    """Sold items in the same shift windows as Sales / Income."""
+    """Sold items grouped by catalog bidhaa (not bidhaa_stoku lots)."""
     empty = {
         'rows': [],
         'total': '0.00',
@@ -767,21 +767,20 @@ def period_sales_item_breakdown(duka, shifts):
         produ = line.produ
         name = '—'
         unit_cost = _sale_line_unit_cost(line)
-        item_id = 0
         sell = _dec(line.bei)
         aina = None
-        if produ:
-            item_id = produ.id
-            name = produ.bidhaa.bidhaa_jina if produ.bidhaa_id else '—'
-            if produ.bidhaa_id and produ.bidhaa:
-                aina = produ.bidhaa.bidhaa_aina
-        key = (item_id, _qty2(sell), _qty2(unit_cost))
+        if produ and produ.bidhaa_id and produ.bidhaa:
+            key = ('bidhaa', produ.bidhaa_id)
+            name = produ.bidhaa.bidhaa_jina or '—'
+            aina = produ.bidhaa.bidhaa_aina
+        elif produ:
+            key = ('stock', produ.id)
+        else:
+            key = ('none', 0)
         if key not in grouped:
             grouped[key] = {
                 'name': name or '—',
-                'sell': sell,
                 'qty': Decimal('0'),
-                'cost': unit_cost,
                 'value': Decimal('0'),
                 'cost_value': Decimal('0'),
                 'aina_id': aina.id if aina else -1,
@@ -803,7 +802,7 @@ def period_sales_item_breakdown(duka, shifts):
         'rows': [
             {
                 'name': r['name'],
-                'sell': _qty2(r['sell']),
+                'sell': _qty2(r['value'] / r['qty'] if r['qty'] else 0),
                 'qty': _qty_str(r['qty']),
                 'cost': _qty2(r['cost_value']),
                 'value': _qty2(r['value']),
