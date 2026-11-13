@@ -185,6 +185,13 @@
     border-color: #0d6efd;
     color: #fff;
   }
+  .sr-stock-move-count {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 11px;
+    opacity: 0.85;
+    font-weight: 600;
+  }
   .sr-breakdown-scroll {
     flex: 1 1 auto;
     min-height: 0;
@@ -995,6 +1002,20 @@
             </div>
           </div>
         </div>
+        <div class="sr-unpaid-tabs is-on mb-2 sr-sv-no-print" id="srStockMoveTabs">
+          <button type="button" class="sr-unpaid-tab is-active" data-stock-move="all">
+            {% if useri.langSet == 0 %}Bidhaa zote{% else %}All items{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="all"></span>
+          </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="sold">
+            {% if useri.langSet == 0 %}Zilizouzwa{% else %}Sold{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="sold"></span>
+          </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="unsold">
+            {% if useri.langSet == 0 %}Hazijauzwa{% else %}Not sold{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="unsold"></span>
+          </button>
+        </div>
         <ul id="srCategsList" class="list-unstyled d-flex pt-1 mb-2 sr-sv-no-print"></ul>
         <p class="small text-muted mb-2 sr-sv-no-print">
           {% if useri.langSet == 0 %}
@@ -1064,7 +1085,7 @@
             </thead>
             <tbody id="srStockBody">
               {% for s in stock_flow.rows %}
-              <tr class="sr-stock-row" data-sv-i="{{ forloop.counter0 }}" data-sv-aina="{{ s.aina_id|default:'-1' }}" data-sv-aina-name="{{ s.aina_name|default:'' }}" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }} {{ s.aina_name|default:''|lower }}">
+              <tr class="sr-stock-row" data-sv-i="{{ forloop.counter0 }}" data-sv-sold="{{ s.sold_qty|default:0 }}" data-sv-aina="{{ s.aina_id|default:'-1' }}" data-sv-aina-name="{{ s.aina_name|default:'' }}" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }} {{ s.aina_name|default:''|lower }}">
                 <td>{{ forloop.counter }}</td>
                 <td>{{ s.item_name }}</td>
                 <td>{{ s.units|default:'-' }}</td>
@@ -2626,6 +2647,29 @@
   $('#srStockModal').on('shown.bs.modal', applyStockCols);
   var SR_CATEG = 0;
   var SR_UNCATEG = -1;
+  var SR_STOCK_MOVE = 'all';
+  function srStockSoldQty(tr) {
+    return parseFloat(tr.getAttribute('data-sv-sold')) || 0;
+  }
+  function srStockMoveMatch(tr) {
+    var sold = srStockSoldQty(tr);
+    if (SR_STOCK_MOVE === 'sold') return sold > 0.0000001;
+    if (SR_STOCK_MOVE === 'unsold') return sold <= 0.0000001;
+    return true;
+  }
+  function updateSrStockMoveCounts() {
+    var all = 0, sold = 0, unsold = 0;
+    document.querySelectorAll('#srStockBody tr.sr-stock-row').forEach(function (tr) {
+      all += 1;
+      if (srStockSoldQty(tr) > 0.0000001) sold += 1;
+      else unsold += 1;
+    });
+    var map = { all: all, sold: sold, unsold: unsold };
+    document.querySelectorAll('[data-stock-move-count]').forEach(function (el) {
+      var k = el.getAttribute('data-stock-move-count');
+      el.textContent = map[k] != null ? '(' + map[k] + ')' : '';
+    });
+  }
   function srAinaId(tr) {
     var raw = tr.getAttribute('data-sv-aina');
     if (raw == null || raw === '') return SR_UNCATEG;
@@ -2640,6 +2684,7 @@
     var seen = {};
     var all = 0;
     rows.forEach(function (tr) {
+      if (!srStockMoveMatch(tr)) return;
       all += 1;
       var id = srAinaId(tr);
       if (seen[id]) {
@@ -2696,18 +2741,40 @@
   function filterSrStockRows() {
     var q = ((stockSearch && stockSearch.value) || '').trim().toLowerCase();
     var shown = 0;
+    var visNo = 0;
     document.querySelectorAll('#srStockBody tr.sr-stock-row').forEach(function (tr) {
       var ainaId = srAinaId(tr);
       var okCat = !Number(SR_CATEG) || Number(SR_CATEG) === ainaId;
-      var ok = okCat && (!q || (tr.getAttribute('data-sv-search') || '').indexOf(q) !== -1);
+      var okMove = srStockMoveMatch(tr);
+      var ok = okMove && okCat && (!q || (tr.getAttribute('data-sv-search') || '').indexOf(q) !== -1);
       tr.style.display = ok ? '' : 'none';
-      if (ok) shown += 1;
+      if (ok) {
+        shown += 1;
+        visNo += 1;
+        var numCell = tr.children[0];
+        if (numCell) numCell.textContent = String(visNo);
+      }
     });
     var none = document.getElementById('srStockNoMatch');
     if (none) none.style.display = shown ? 'none' : '';
     updateSrStockTotals();
   }
+  updateSrStockMoveCounts();
   renderSrCategories();
+  filterSrStockRows();
+  document.querySelectorAll('#srStockMoveTabs [data-stock-move]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      SR_STOCK_MOVE = btn.getAttribute('data-stock-move') || 'all';
+      document.querySelectorAll('#srStockMoveTabs [data-stock-move]').forEach(function (b) {
+        b.classList.toggle('is-active', b.getAttribute('data-stock-move') === SR_STOCK_MOVE);
+      });
+      SR_CATEG = 0;
+      renderSrCategories();
+      filterSrStockRows();
+      var wrap = document.getElementById('srStockWrap');
+      if (wrap) wrap.scrollTop = 0;
+    });
+  });
   if (stockSearch) {
     stockSearch.addEventListener('input', filterSrStockRows);
   }
