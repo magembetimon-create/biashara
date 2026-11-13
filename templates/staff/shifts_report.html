@@ -173,6 +173,13 @@
     font-size: 13px;
     cursor: pointer;
   }
+  .sr-sort-th {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .sr-sort-th:hover { color: #0d6efd; }
+  .sr-sort-th.is-sorted { color: #0d6efd; }
   .sr-unpaid-tab.is-active {
     background: #0d6efd;
     border-color: #0d6efd;
@@ -1336,6 +1343,12 @@
   var expenseView = 'list';
   var SR_EXPENSE_CHART_MAX = 14;
   var salesTab = 'items';
+  var salesSort = {
+    items: { key: '', dir: 'desc' },
+    staff: { key: '', dir: 'desc' },
+    category: { key: '', dir: 'desc' },
+    time: { key: '', dir: 'desc' }
+  };
   var salesView = 'list';
   var srSalesChartObj = null;
   var SR_SALES_ITEM_CHART_MAX = 14;
@@ -1422,6 +1435,52 @@
     var th = document.createElement('th');
     if (cls) th.className = cls;
     th.textContent = text;
+    return th;
+  }
+  function salesNum(v) {
+    var n = parseFloat(v);
+    return isFinite(n) ? n : 0;
+  }
+  function sortSalesRows(tab, rows) {
+    var st = salesSort[tab] || { key: '', dir: 'desc' };
+    if (!st.key) return (rows || []).slice();
+    var key = st.key;
+    var dir = st.dir === 'asc' ? 1 : -1;
+    return (rows || []).slice().sort(function (a, b) {
+      var d = salesNum(a[key]) - salesNum(b[key]);
+      if (d) return d * dir;
+      return String(a.name || a.key || '').localeCompare(String(b.name || b.key || ''));
+    });
+  }
+  function sortHeadCell(text, cls, tab, key) {
+    var th = headCell(text, cls);
+    th.classList.add('sr-sort-th');
+    th.setAttribute('role', 'button');
+    th.setAttribute('tabindex', '0');
+    th.title = lang0 ? 'Panga: kubwa juu / ndogo juu' : 'Sort: largest / smallest first';
+    var st = salesSort[tab] || { key: '', dir: 'desc' };
+    if (st.key === key) {
+      th.classList.add('is-sorted');
+      th.setAttribute('aria-sort', st.dir === 'asc' ? 'ascending' : 'descending');
+      th.appendChild(document.createTextNode(st.dir === 'asc' ? ' \u2191' : ' \u2193'));
+    }
+    function toggleSort() {
+      var cur = salesSort[tab] || { key: '', dir: 'desc' };
+      if (cur.key === key) cur.dir = cur.dir === 'desc' ? 'asc' : 'desc';
+      else {
+        cur.key = key;
+        cur.dir = 'desc';
+      }
+      salesSort[tab] = cur;
+      fillBreakdown('sales');
+    }
+    th.addEventListener('click', toggleSort);
+    th.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        toggleSort();
+      }
+    });
     return th;
   }
   function fillBreakdown(kind) {
@@ -1654,31 +1713,31 @@
       hr.appendChild(headCell('#'));
       hr.appendChild(headCell(lang0 ? 'Mtumishi' : 'Staff', 'text-left'));
       hr.appendChild(headCell(lang0 ? 'Nafasi' : 'Role', 'text-left'));
-      hr.appendChild(headCell((lang0 ? 'Jumla' : 'Total amount') + curr, 'text-right'));
-      hr.appendChild(headCell((lang0 ? 'Iliolipwa' : 'Paid amount') + curr, 'text-right'));
-      hr.appendChild(headCell((lang0 ? 'Deni' : 'Debt') + curr, 'text-right'));
+      hr.appendChild(sortHeadCell((lang0 ? 'Jumla' : 'Total amount') + curr, 'text-right', 'staff', 'total'));
+      hr.appendChild(sortHeadCell((lang0 ? 'Iliolipwa' : 'Paid amount') + curr, 'text-right', 'staff', 'paid'));
+      hr.appendChild(sortHeadCell((lang0 ? 'Deni' : 'Debt') + curr, 'text-right', 'staff', 'debt'));
     } else if (isSalesCat) {
       colCount = 5;
       hr.appendChild(headCell('#'));
       hr.appendChild(headCell(lang0 ? 'Aina ya bidhaa' : 'Category', 'text-left'));
-      hr.appendChild(headCell(lang0 ? 'Idadi' : 'Qty', 'text-right'));
-      hr.appendChild(headCell(lang0 ? 'Ghalama' : 'Cost', 'text-right'));
-      hr.appendChild(headCell((lang0 ? 'Thamani' : 'Amount') + curr, 'text-right'));
+      hr.appendChild(sortHeadCell(lang0 ? 'Idadi' : 'Qty', 'text-right', 'category', 'qty'));
+      hr.appendChild(sortHeadCell(lang0 ? 'Ghalama' : 'Cost', 'text-right', 'category', 'cost'));
+      hr.appendChild(sortHeadCell((lang0 ? 'Thamani' : 'Amount') + curr, 'text-right', 'category', 'value'));
     } else if (isSalesTime) {
       colCount = 5;
       hr.appendChild(headCell('#'));
       hr.appendChild(headCell(salesTimeGrain === 'month' ? (lang0 ? 'Mwezi' : 'Month') : (lang0 ? 'Tarehe' : 'Date'), 'text-left'));
-      hr.appendChild(headCell(lang0 ? 'Idadi' : 'Qty', 'text-right'));
-      hr.appendChild(headCell(lang0 ? 'Ghalama' : 'Cost', 'text-right'));
-      hr.appendChild(headCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right'));
+      hr.appendChild(sortHeadCell(lang0 ? 'Idadi' : 'Qty', 'text-right', 'time', 'qty'));
+      hr.appendChild(sortHeadCell(lang0 ? 'Ghalama' : 'Cost', 'text-right', 'time', 'cost'));
+      hr.appendChild(sortHeadCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right', 'time', 'value'));
     } else if (isSales) {
       colCount = 6;
       hr.appendChild(headCell('#'));
       hr.appendChild(headCell(lang0 ? 'Bidhaa' : 'Item', 'text-left'));
       hr.appendChild(headCell(lang0 ? 'Bei iliyouzwa' : 'Sold price', 'text-right'));
-      hr.appendChild(headCell(lang0 ? 'Idadi' : 'Qty', 'text-right'));
-      hr.appendChild(headCell(lang0 ? 'Ghalama' : 'Cost', 'text-right'));
-      hr.appendChild(headCell(lang0 ? 'Thamani' : 'Value', 'text-right'));
+      hr.appendChild(sortHeadCell(lang0 ? 'Idadi' : 'Qty', 'text-right', 'items', 'qty'));
+      hr.appendChild(sortHeadCell(lang0 ? 'Ghalama' : 'Cost', 'text-right', 'items', 'cost'));
+      hr.appendChild(sortHeadCell(lang0 ? 'Thamani' : 'Value', 'text-right', 'items', 'value'));
     } else if (isMoney && unpaidTab === 'staff') {
       colCount = 4;
       hr.appendChild(headCell('#'));
@@ -1779,6 +1838,10 @@
     head.appendChild(hr);
 
     var rows = pack.rows || [];
+    if (isSalesStaff) rows = sortSalesRows('staff', rows);
+    else if (isSalesCat) rows = sortSalesRows('category', rows);
+    else if (isSalesTime) rows = sortSalesRows('time', rows);
+    else if (isSales) rows = sortSalesRows('items', rows);
     if (!rows.length) {
       var empty = document.createElement('tr');
       var emptyTd = document.createElement('td');
