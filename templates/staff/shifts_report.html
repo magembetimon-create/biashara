@@ -714,13 +714,13 @@
       {% if calendar_report %}
       Bonyeza mzunguko wa stoku kuona mchanganuo wa bidhaa (Qty, Ghalama, Thamani). Hesabu ni kutoka mwanzo wa kipindi hadi mwisho wake, au sasa kama kipindi bado kinaendelea.
       {% else %}
-      Bonyeza mzunguko wa stoku kuona mchanganuo wa bidhaa (Qty, Ghalama, Thamani) kama Stock Value Panel ya shift. Hesabu ni kutoka kufunguliwa kwa shift ya kwanza hadi kufungwa kwa ya mwisho, au sasa kama shift ya mwisho bado wazi.
+      Bonyeza mzunguko wa stoku kuona mchanganuo wa bidhaa (Qty, Ghalama, Thamani). Hesabu ni movement ndani ya muda uliowekwa, hata kama zamu ilianza kabla na bado inaendelea.
       {% endif %}
     {% else %}
       {% if calendar_report %}
       Click stock flow to open the item breakdown (Qty, Value, Worth). Figures run from the start of the selected period to its end, or now if the period is still open.
       {% else %}
-      Click stock flow to open the item breakdown (Qty, Value, Worth) like the shift Stock Value Panel. Figures run from the first shift open to the last shift close, or now if the last shift is still open.
+      Click stock flow to open the item breakdown (Qty, Value, Worth). Figures are movements inside the selected period, including a shift that started earlier and is still running.
       {% endif %}
     {% endif %}
   </p>
@@ -732,6 +732,9 @@
       <div class="d-flex justify-content-between align-items-start" style="gap:8px;">
         <div>
           <a href="/staff/shifts/view?sid={{ row.shift.id }}" class="font-weight-bold">{{ row.shift.code }}</a>
+          {% if row.continued %}
+          <span class="badge badge-info">{% if useri.langSet == 0 %}Inaendelea{% else %}Continuing{% endif %}</span>
+          {% endif %}
           {% if multi_branch and row.branch_name %}
           <div class="meta">{{ row.branch_name }}</div>
           {% endif %}
@@ -774,7 +777,7 @@
     </div>
     {% empty %}
     <div class="text-center text-muted py-4">
-      {% if useri.langSet == 0 %}Hakuna shift zilizoanza katika kipindi hiki.{% else %}No shifts started in this period.{% endif %}
+      {% if useri.langSet == 0 %}Hakuna shift inayofunika kipindi hiki.{% else %}No shift covers this period.{% endif %}
     </div>
     {% endfor %}
   </div>
@@ -806,6 +809,9 @@
           <td>{{ forloop.counter }}</td>
           <td class="text-left">
             <a href="/staff/shifts/view?sid={{ row.shift.id }}">{{ row.shift.code }}</a>
+            {% if row.continued %}
+            <span class="badge badge-info ml-1">{% if useri.langSet == 0 %}Inaendelea{% else %}Continuing{% endif %}</span>
+            {% endif %}
           </td>
           {% if multi_branch %}
           <td class="text-left">{{ row.branch_name|default:'-' }}</td>
@@ -832,7 +838,7 @@
         {% empty %}
         <tr>
           <td colspan="{% if multi_branch %}13{% else %}12{% endif %}" class="text-center text-muted py-4">
-            {% if useri.langSet == 0 %}Hakuna shift zilizoanza katika kipindi hiki.{% else %}No shifts started in this period.{% endif %}
+            {% if useri.langSet == 0 %}Hakuna shift inayofunika kipindi hiki.{% else %}No shift covers this period.{% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -861,13 +867,13 @@
       {% if calendar_report %}
       Opening na Closing ni jumla ya akaunti zote za malipo (si Cash tu) mwanzoni na mwisho wa kipindi ulichochagua. Current balance ni salio la akaunti zote sasa. Mauzo ni POS na oda za waiter zilizoprint. Haijalipwa ni deni (amount − iliyolipwa). Hela iliyolipwa ni sehemu ya mauzo ya kipindi hiki iliyolipwa. Malipo ya ankara za nyuma ni hela iliyolipwa sasa kwa mauzo au oda za waiter za kabla ya kipindi. Cash deposit ni kuhamisha pesa kutoka Cash kwenda akaunti nyingine. Kuweka pesa (nje) ni hela iliyowekwa kwenye akaunti za tawi hili kutoka nje au huduma nyingine. Matumizi ni matumizi yaliyorekodiwa.
       {% else %}
-      Opening na Closing ni jumla ya akaunti zote za malipo (si Cash tu) wakati shift ya kwanza ilifunguliwa na shift ya mwisho ilifungwa. Current balance ni salio la akaunti zote sasa. Mauzo ni POS na oda za waiter zilizoprint. Haijalipwa ni deni (amount − iliyolipwa). Hela iliyolipwa ni sehemu ya mauzo ya kipindi hiki iliyolipwa. Malipo ya ankara za nyuma ni hela iliyolipwa sasa kwa mauzo au oda za waiter za kabla ya kipindi. Cash deposit ni kuhamisha pesa kutoka Cash kwenda akaunti nyingine. Kuweka pesa (nje) ni hela iliyowekwa kwenye akaunti za tawi hili kutoka nje au huduma nyingine. Matumizi ni matumizi yaliyorekodiwa.
+      Ripoti hii inafuata mpangilio wa zamu zilizofunika kipindi (pamoja na zamu iliyoanza kabla na bado haijafungwa). Mauzo, matumizi na movement nyingine ni zile zilizorekodiwa ndani ya muda uliowekwa, zikiwekwa kwenye zamu iliyomiliki wakati huo. Opening na Closing ni jumla ya akaunti za malipo mwanzoni na mwisho wa kipindi hicho. Current balance ni salio sasa. Haijalipwa ni deni (amount − iliyolipwa). Hela iliyolipwa ni sehemu ya mauzo ya kipindi hiki iliyolipwa. Malipo ya ankara za nyuma ni hela iliyolipwa sasa kwa mauzo au oda za waiter za kabla ya kipindi. Cash deposit ni kuhamisha pesa kutoka Cash kwenda akaunti nyingine. Kuweka pesa (nje) ni hela iliyowekwa kwenye akaunti za tawi hili kutoka nje au huduma nyingine. Matumizi ni matumizi yaliyorekodiwa.
       {% endif %}
     {% else %}
       {% if calendar_report %}
       Opening and Closing are the totals of all payment accounts (not Cash only) at the start and end of the selected period. Current balance is all accounts right now. Sales are completed POS and printed waiter orders. Unpaid is still outstanding (amount − paid). Received on sales is the paid portion of sales in this period. Prior invoice payments are money collected now for sales or waiter orders dated before the selected period. Cash deposit is a transfer from Cash to another account. External deposits are money added to this branch’s accounts from outside or other services. Expenses are recorded operating expenses.
       {% else %}
-      Opening and Closing are the totals of all payment accounts (not Cash only) at the first shift open and last shift close. Current balance is all accounts right now. Sales are completed POS and printed waiter orders. Unpaid is still outstanding (amount − paid). Received on sales is the paid portion of sales in this period. Prior invoice payments are money collected now for sales or waiter orders dated before the selected period. Cash deposit is a transfer from Cash to another account. External deposits are money added to this branch’s accounts from outside or other services. Expenses are recorded operating expenses.
+      This report follows the shifts that cover the selected period (including a shift that started earlier and is still open). Sales, expenses and other movements are those recorded inside the selected clock window, assigned to the shift that owned that time. Opening and Closing are all payment accounts at the start and end of that window. Current balance is all accounts right now. Unpaid is still outstanding (amount − paid). Received on sales is the paid portion of sales in this period. Prior invoice payments are money collected now for sales or waiter orders dated before the selected period. Cash deposit is a transfer from Cash to another account. External deposits are money added to this branch’s accounts from outside or other services. Expenses are recorded operating expenses.
       {% endif %}
     {% endif %}
   </p>

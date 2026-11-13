@@ -70,6 +70,8 @@ from staff.shift_report import (
     period_stock_value_report,
     merge_period_payload,
     calendar_period_span,
+    shifts_overlapping_period,
+    clip_shifts_to_period,
     _dec,
     completed_sales_qs,
     _shift_window_lower,
@@ -844,14 +846,11 @@ def enterprise_period_report_context(todo, request, calendar=False):
         if calendar:
             shop_shifts = [calendar_period_span(start, end)]
         else:
-            shop_shifts = list(
-                ShiftSession.objects.filter(
-                    Interprise=shop.id,
-                    starts_at__gte=start,
-                    starts_at__lte=end,
-                ).select_related(
-                    'Interprise', 'opened_by__user__user', 'closed_by__user__user',
-                ).order_by('-starts_at')
+            shop_shifts = clip_shifts_to_period(
+                shop,
+                shifts_overlapping_period(shop.id, start, end),
+                start,
+                end,
             )
         all_shifts.extend(shop_shifts)
         shop_rows, shop_totals = build_shifts_period_report(shop, shop_shifts)
@@ -913,8 +912,6 @@ def enterprise_period_report_context(todo, request, calendar=False):
         totals['count'] = 0
         totals['open_count'] = 0
         totals['closed_count'] = 0
-        totals['opening'] = Decimal(str((account_breakdowns or {}).get('opening', {}).get('total') or 0))
-        totals['closing'] = Decimal(str((account_breakdowns or {}).get('closing', {}).get('total') or 0))
     account_breakdowns = account_breakdowns or {}
     sales_item_breakdown = sales_item_breakdown or {}
     sales_staff_breakdown = sales_staff_breakdown or {}
@@ -955,6 +952,8 @@ def enterprise_period_report_context(todo, request, calendar=False):
         - other_out_amount
     )
     closing_diff = closing_amount - expected_closing
+    totals['opening'] = opening_amount
+    totals['closing'] = closing_amount
     return {
         'staff_page': 'shift_report' if not calendar else '',
         'calendar_report': calendar,

@@ -121,6 +121,82 @@ def calendar_period_span(start, end, now=None):
     return CalendarPeriod(start, end, live=live)
 
 
+class PeriodShiftSlice:
+    """A shift clipped to the selected report period (continuation-aware)."""
+    calendar = False
+
+    def __init__(self, shift, starts_at, ends_at, period_start, period_end):
+        self.id = shift.id
+        self.code = shift.code
+        self.starts_at = starts_at
+        self.ends_at = ends_at
+        self.status = shift.status
+        self.opening_cash = shift.opening_cash
+        self.actual_closing_cash = shift.actual_closing_cash
+        self.source_shift = shift
+        self.continued = bool(period_start and shift.starts_at and shift.starts_at < period_start)
+        closed_inside = (
+            str(shift.status or '') == 'closed'
+            and bool(shift.ends_at)
+            and (not period_end or shift.ends_at <= period_end)
+        )
+        self.use_opening_snapshot = not self.continued
+        self.use_closing_snapshot = closed_inside
+        if not closed_inside:
+            self.actual_closing_cash = None
+
+
+def shifts_overlapping_period(shop_id, start, end):
+    """Shifts that cover any part of [start, end], including earlier still-open ones."""
+    qs = ShiftSession.objects.filter(
+        Interprise=shop_id,
+        starts_at__lt=end,
+    ).filter(
+        Q(ends_at__isnull=True) | Q(ends_at__gt=start)
+    ).select_related(
+        'Interprise', 'opened_by__user__user', 'closed_by__user__user',
+    ).order_by('starts_at')
+    found = list(qs)
+    if found:
+        return found
+    open_shift = ShiftSession.objects.filter(
+        Interprise=shop_id,
+        status='open',
+        starts_at__lt=end,
+    ).select_related(
+        'Interprise', 'opened_by__user__user', 'closed_by__user__user',
+    ).order_by('-starts_at').first()
+    return [open_shift] if open_shift else []
+
+
+def clip_shifts_to_period(duka, shifts, period_start, period_end, now=None):
+    """Clip each shift to the report clock window using the same ownership as shift view."""
+    now = now or timezone.now()
+    if period_end is None:
+        period_end = now
+    out = []
+    for shift in shifts:
+        if getattr(shift, 'calendar', False):
+            out.append(shift)
+            continue
+        owned_from, exclusive = _shift_window_lower(duka, shift.starts_at)
+        if not owned_from:
+            owned_from = shift.starts_at
+        if exclusive:
+            owned_from = owned_from + timedelta(microseconds=1)
+        owned_end = shift.ends_at or now
+        start = owned_from
+        end = owned_end
+        if period_start and start < period_start:
+            start = period_start
+        if end > period_end:
+            end = period_end
+        if not start or start > end:
+            continue
+        out.append(PeriodShiftSlice(shift, start, end, period_start, period_end))
+    return out
+
+
 def _shop_ids(duka, duka_ids=None):
     if duka_ids:
         return [int(x) for x in duka_ids]
@@ -340,7 +416,8 @@ def build_shifts_period_report(duka, shifts):
             closing = balance
 
         rows.append({
-            'shift': shift,
+            'shift': getattr(shift, 'source_shift', shift),
+            'continued': bool(getattr(shift, 'continued', False)),
             'opening': opening,
             'closing': closing,
             'sales': sales,
@@ -528,12 +605,23 @@ def period_cash_account_breakdowns(duka, shifts):
 
     first, last = dated[0], dated[-1]
     calendar = any(getattr(s, 'calendar', False) for s in dated)
+    use_open_snap = (not calendar) and getattr(first, 'use_opening_snapshot', True)
+    use_close_snap = (not calendar) and getattr(
+        last, 'use_closing_snapshot', last.status == 'closed' and bool(last.ends_at),
+    )
     recon_opening = _account_balances_at(duka, first.starts_at)
-    if calendar:
+    closing_at = last.ends_at or timezone.now()
+    if calendar or not use_open_snap:
         opening_rows = recon_opening
         opening_source = 'reconstructed'
-        closing_at = last.ends_at or timezone.now()
-        if last.status == 'closed' and last.ends_at:
+        if use_close_snap:
+            closing_sid = _shift_snapshot_id(last, 'CLOSING_SNAPSHOT')
+            closing_rows = _account_rows_from_snapshot(closing_sid)
+            closing_source = 'snapshot'
+            if not closing_rows:
+                closing_rows = _account_balances_at(duka, closing_at)
+                closing_source = 'reconstructed'
+        elif last.ends_at and last.ends_at < timezone.now() - timedelta(seconds=30):
             closing_rows = _account_balances_at(duka, last.ends_at)
             closing_source = 'reconstructed'
         else:
@@ -554,12 +642,11 @@ def period_cash_account_breakdowns(duka, shifts):
                 opening_rows = recon_opening
                 opening_source = 'reconstructed'
 
-        closing_at = last.ends_at or timezone.now()
-        closing_sid = _shift_snapshot_id(last, 'CLOSING_SNAPSHOT') if last.status == 'closed' else None
+        closing_sid = _shift_snapshot_id(last, 'CLOSING_SNAPSHOT') if use_close_snap else None
         closing_rows = _account_rows_from_snapshot(closing_sid)
         closing_source = 'snapshot'
         if not closing_rows:
-            if last.ends_at:
+            if last.ends_at and (use_close_snap or last.ends_at < timezone.now() - timedelta(seconds=30)):
                 closing_rows = _account_balances_at(duka, last.ends_at)
                 closing_source = 'reconstructed'
             else:
@@ -1807,9 +1894,10 @@ def period_recon_movements(duka, shifts, period_start=None):
     closing_at = last.ends_at or timezone.now()
     cutoff = period_start or opening_at
     calendar = any(getattr(s, 'calendar', False) for s in dated)
+    period_slice = any(getattr(s, 'source_shift', None) for s in dated)
     weka_time = {'tarehe__lte': closing_at}
     toa_time = {'tarehe__lte': closing_at}
-    if calendar:
+    if calendar or period_slice:
         weka_time['tarehe__gte'] = opening_at
         toa_time['tarehe__gte'] = opening_at
     else:
@@ -2570,20 +2658,27 @@ def period_stock_value_report(duka, shifts, duka_ids=None):
     first, last = dated[0], dated[-1]
     starts_at = first.starts_at
     period_end = max((s.ends_at or timezone.now() for s in dated), default=timezone.now())
-    is_closed = all(str(s.status or '') == 'closed' and bool(s.ends_at) for s in dated)
+    now = timezone.now()
+    slice_ended = bool(period_end and period_end < now - timedelta(seconds=30))
+    is_closed = slice_ended or all(
+        str(s.status or '') == 'closed' and bool(s.ends_at) for s in dated
+    )
     calendar = any(getattr(s, 'calendar', False) for s in dated)
+    use_open_snap = (not calendar) and getattr(first, 'use_opening_snapshot', True)
+    use_close_snap = (not calendar) and getattr(last, 'use_closing_snapshot', False) and is_closed
 
     shop_ids = _shop_ids(duka, duka_ids)
     multi = len(shop_ids) > 1
     opening_snapshot_activity = None
     closing_snapshot_activity = None
     if not calendar and not multi:
-        opening_snapshot_activity = ShiftActivity.objects.filter(
-            shift=first.id,
-            event_type='OPENING_SNAPSHOT',
-            event_ref_id__isnull=False,
-        ).order_by('recorded_at').first()
-        if is_closed:
+        if use_open_snap:
+            opening_snapshot_activity = ShiftActivity.objects.filter(
+                shift=first.id,
+                event_type='OPENING_SNAPSHOT',
+                event_ref_id__isnull=False,
+            ).order_by('recorded_at').first()
+        if use_close_snap:
             closing_snapshot_activity = ShiftActivity.objects.filter(
                 shift=last.id,
                 event_type='CLOSING_SNAPSHOT',
