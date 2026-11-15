@@ -318,7 +318,7 @@
           <div class="form-row align-items-end">
             <div class="col-sm-6">
               <label class="small mb-1" for="waiterReturnQtyInput">{% if useri.langSet == 0 %}Qty iliyorudishwa{% else %}Returned qty{% endif %}</label>
-              <input type="number" min="1" step="1" class="form-control form-control-sm" id="waiterReturnQtyInput">
+              <input type="number" min="1" step="1" class="form-control form-control-sm" id="waiterReturnQtyInput" placeholder="0" value="">
             </div>
             <div class="col-sm-6 mt-2 mt-sm-0">
               <button type="button" class="btn btn-sm btn-primary" id="waiterReturnQtySave">
@@ -894,7 +894,8 @@
           if (!returnPanel || !returnItemId) return;
           returnTitle.textContent = (itemName || '{% if useri.langSet == 0 %}Item{% else %}Item{% endif %}') + ' — {% if useri.langSet == 0 %}Qty sasa{% else %}Current qty{% endif %}: ' + maxQty;
           returnInput.max = Math.max(1, maxQty);
-          returnInput.value = maxQty > 1 ? 1 : maxQty;
+          returnInput.value = '';
+          returnInput.placeholder = '0';
           returnPanel.classList.remove('d-none');
           returnInput.focus();
           return;

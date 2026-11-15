@@ -699,7 +699,7 @@
             <input type="checkbox" class="custom-control-input" id="reconPayEnterAmt">
             <label class="custom-control-label" for="reconPayEnterAmt"></label>
           </div>
-          <input type="number" step="0.01" min="0" class="form-control" id="reconPayClaimed">
+          <input type="text" inputmode="decimal" autocomplete="off" class="form-control" id="reconPayClaimed" placeholder="0.00" value="">
         </div>
         <small class="text-muted d-block mt-2">
           {% if useri.langSet == 0 %}Angalia kiasi, kisha weka tiki kuthibitisha kilichopo kwenye field ni sahihi ili kuendelea. Kiasi kisicholipwa kitabaki deni kwenye invoice ya reconciliation.{% else %}Review the amount, then tick the checkbox to confirm the field is correct before continuing. Any shortfall remains as debt on this reconciliation invoice.{% endif %}
@@ -1185,6 +1185,26 @@ function reconRound(v) {
 function reconFmt(v) {
   return reconRound(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+function reconPayParse(raw) {
+  var cleaned = String(raw == null ? '' : raw).replace(/,/g, '').replace(/[^0-9.\-]/g, '');
+  if (!cleaned || cleaned === '-' || cleaned === '.') return NaN;
+  var n = parseFloat(cleaned);
+  return Number.isFinite(n) ? n : NaN;
+}
+function reconPayFormat(raw) {
+  var text = String(raw == null ? '' : raw).replace(/,/g, '').replace(/[^0-9.\-]/g, '');
+  if (!text) return '';
+  var negative = text.charAt(0) === '-';
+  var unsigned = negative ? text.slice(1) : text;
+  var hasDot = unsigned.indexOf('.') !== -1;
+  var parts = unsigned.split('.');
+  var intPart = (parts[0] || '').replace(/^0+(?=\d)/, '');
+  var decimalPart = hasDot ? parts.slice(1).join('').replace(/\D/g, '').slice(0, 2) : '';
+  var formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  var out = (negative ? '-' : '') + formattedInt;
+  if (hasDot) out += '.' + decimalPart;
+  return out;
+}
 function reconExpectedCurrent(row) {
   return reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) + reconNum(row.returned_qty) - reconNum(row.reduced_qty) - reconNum(row.sold_qty));
 }
@@ -1495,10 +1515,8 @@ function saveShiftRecon() {
   if (chk) chk.checked = false;
   if (inp) {
     inp.disabled = false;
-    inp.min = paid;
-    inp.max = required;
     inp.placeholder = reconFmt(required);
-    inp.value = required;
+    inp.value = '';
   }
   $('#reconPayModal').modal('show');
 }
@@ -1515,11 +1533,11 @@ function continueReconPay() {
   }
   var inp = document.getElementById('reconPayClaimed');
   var raw = inp && inp.value != null ? String(inp.value).trim() : '';
-  if (!raw) {
+  var claimed = raw ? reconRound(reconPayParse(raw)) : required;
+  if (!Number.isFinite(claimed)) {
     alert('{% if useri.langSet == 0 %}Jaza kiasi halisi kilichopokelewa.{% else %}Enter the actual amount received.{% endif %}');
     return;
   }
-  var claimed = reconNum(raw);
   if (claimed < paid) {
     alert('{% if useri.langSet == 0 %}Kiasi hakiwezi kuwa pungufu ya kilicholipwa kabla.{% else %}Amount cannot be less than what was already paid.{% endif %}');
     return;
@@ -1597,6 +1615,17 @@ document.addEventListener('click', function(ev) {
 document.addEventListener('input', function(ev) {
   if (ev.target.classList.contains('recon-sold')) onReconSoldInput(ev.target);
   if (ev.target.classList.contains('recon-current')) onReconCurrentInput(ev.target);
+  if (ev.target.id === 'reconPayClaimed') {
+    var el = ev.target;
+    var start = el.selectionStart;
+    var before = el.value;
+    el.value = reconPayFormat(el.value);
+    if (typeof start === 'number') {
+      var delta = el.value.length - before.length;
+      var pos = Math.max(0, start + delta);
+      try { el.setSelectionRange(pos, pos); } catch (e) {}
+    }
+  }
 });
 document.addEventListener('focusout', function(ev) {
   if (ev.target.classList.contains('recon-sold')) onReconSoldBlur(ev.target);
