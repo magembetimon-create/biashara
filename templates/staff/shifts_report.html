@@ -747,13 +747,13 @@
       {% if calendar_report %}
       Bonyeza mzunguko wa stoku kuona mchanganuo wa bidhaa (Qty, Ghalama, Thamani). Hesabu ni kutoka mwanzo wa kipindi hadi mwisho wake, au sasa kama kipindi bado kinaendelea.
       {% else %}
-      Bonyeza mzunguko wa stoku kuona mchanganuo wa bidhaa (Qty, Ghalama, Thamani). Hesabu ni movement ndani ya muda uliowekwa, hata kama zamu ilianza kabla na bado inaendelea.
+      Bonyeza mzunguko wa stoku kuona mchanganuo wa bidhaa (Qty, Ghalama, Thamani). Hesabu zinafuata zamu: iliyoanza ndani ya kipindi inaonekana yote; iliyoanza nyuma inaonesha kuanzia mwanzo wa kipindi.
       {% endif %}
     {% else %}
       {% if calendar_report %}
       Click stock flow to open the item breakdown (Qty, Value, Worth). Figures run from the start of the selected period to its end, or now if the period is still open.
       {% else %}
-      Click stock flow to open the item breakdown (Qty, Value, Worth). Figures are movements inside the selected period, including a shift that started earlier and is still running.
+      Click stock flow to open the item breakdown (Qty, Value, Worth). Figures follow shifts: a shift that started in the period is shown in full; one that started earlier is shown from the period start.
       {% endif %}
     {% endif %}
   </p>
@@ -900,13 +900,13 @@
       {% if calendar_report %}
       Opening na Closing ni jumla ya akaunti zote za malipo (si Cash tu) mwanzoni na mwisho wa kipindi ulichochagua. Current balance ni salio la akaunti zote sasa. Mauzo ni POS na oda za waiter zilizoprint. Haijalipwa ni deni (amount − iliyolipwa). Hela iliyolipwa ni sehemu ya mauzo ya kipindi hiki iliyolipwa. Malipo ya ankara za nyuma ni hela iliyolipwa sasa kwa mauzo au oda za waiter za kabla ya kipindi. Cash deposit ni kuhamisha pesa kutoka Cash kwenda akaunti nyingine. Kuweka pesa (nje) ni hela iliyowekwa kwenye akaunti za tawi hili kutoka nje au huduma nyingine. Matumizi ni matumizi yaliyorekodiwa.
       {% else %}
-      Jedwali la zamu linaonesha mauzo na cash ya zamu nzima (sawa na ukurasa wa kuona zamu). Muhtasari juu ni movement ndani ya muda uliowekwa. Cash iliyoingia kwenye zamu ni malipo ya mauzo ya zamu hiyo tu, si malipo ya ankara za nyuma. Opening na Closing juu ni akaunti za malipo mwanzoni na mwisho wa kipindi. Current balance ni salio sasa.
+      Jedwali na mchanganuo wa cash vinafuata zamu, si saa za siku. Zamu iliyoanza ndani ya kipindi inaoneshwa yote (hata ikafungwa siku inayofuata). Zamu iliyoanza nyuma inaonesha movement kuanzia mwanzo wa kipindi hadi kufungwa au sasa. Cash iliyoingia kwenye zamu ni malipo ya mauzo ya zamu hiyo tu. Opening na Closing juu ni akaunti za malipo mwanzoni na mwisho wa dirisha hilo.
       {% endif %}
     {% else %}
       {% if calendar_report %}
       Opening and Closing are the totals of all payment accounts (not Cash only) at the start and end of the selected period. Current balance is all accounts right now. Sales are completed POS and printed waiter orders. Unpaid is still outstanding (amount − paid). Received on sales is the paid portion of sales in this period. Prior invoice payments are money collected now for sales or waiter orders dated before the selected period. Cash deposit is a transfer from Cash to another account. External deposits are money added to this branch’s accounts from outside or other services. Expenses are recorded operating expenses.
       {% else %}
-      Each shift row is the full shift (same sales and cash as the shift view). The summary above is movements inside the selected period. Cash in on a shift is payments for that shift’s sales only, not prior invoices. Opening and Closing above are payment accounts at the start and end of the period. Current balance is all accounts right now.
+      Shift rows and the cash breakdown follow shifts, not calendar hours. A shift that started in the selected period is shown in full (even if it closed the next day). A shift that started earlier shows movement from the period start until it closed or now. Cash in on a shift is payments for that shift’s sales only.
       {% endif %}
     {% endif %}
   </p>
@@ -1282,8 +1282,8 @@
   var lang0 = {% if useri.langSet == 0 %}true{% else %}false{% endif %};
   var calendarReport = {% if calendar_report %}true{% else %}false{% endif %};
   var curr = '{% if duka.currencii %} ({{ duka.currencii }}){% endif %}';
-  var periodStartIso = '{{ period_start|date:"c" }}';
-  var periodEndIso = '{{ period_end|date:"c" }}';
+  var periodStartIso = '{{ report_span_start|date:"c" }}';
+  var periodEndIso = '{{ report_span_end|date:"c" }}';
   try {
     var tzOff = String(new Date().getTimezoneOffset());
     document.cookie = 'tz_off=' + encodeURIComponent(tzOff) + ';path=/;max-age=31536000;SameSite=Lax';

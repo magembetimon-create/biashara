@@ -135,14 +135,15 @@ class PeriodShiftSlice:
         self.actual_closing_cash = shift.actual_closing_cash
         self.source_shift = shift
         self.continued = bool(period_start and shift.starts_at and shift.starts_at < period_start)
-        closed_inside = (
+        closed_at_slice_end = (
             str(shift.status or '') == 'closed'
             and bool(shift.ends_at)
-            and (not period_end or shift.ends_at <= period_end)
+            and ends_at
+            and shift.ends_at <= ends_at
         )
         self.use_opening_snapshot = not self.continued
-        self.use_closing_snapshot = closed_inside
-        if not closed_inside:
+        self.use_closing_snapshot = closed_at_slice_end
+        if not closed_at_slice_end:
             self.actual_closing_cash = None
 
 
@@ -189,6 +190,15 @@ def filter_shifts_by_coverage(shifts, start, end, flags):
             continue
         if want_prior and started_before and (closed_in or still_open):
             out.append(shift)
+    if want_in and not out:
+        for shift in shifts:
+            starts_at = getattr(shift, 'starts_at', None)
+            if not starts_at or starts_at >= start:
+                continue
+            ends_at = getattr(shift, 'ends_at', None)
+            closed = str(getattr(shift, 'status', '') or '') == 'closed' and bool(ends_at)
+            if not closed:
+                out.append(shift)
     return out
 
 
@@ -216,7 +226,11 @@ def shifts_overlapping_period(shop_id, start, end):
 
 
 def clip_shifts_to_period(duka, shifts, period_start, period_end, now=None):
-    """Clip each shift to the report clock window using the same ownership as shift view."""
+    """Align each shift to the report without cutting a shift that started in the period.
+
+    Started in the period → full owned window (through close or now), even past 23:59.
+    Started earlier → movement from period start until the shift ends or the period ends.
+    """
     now = now or timezone.now()
     if period_end is None:
         period_end = now
@@ -233,9 +247,10 @@ def clip_shifts_to_period(duka, shifts, period_start, period_end, now=None):
         owned_end = shift.ends_at or now
         start = owned_from
         end = owned_end
+        started_in = bool(period_start and shift.starts_at and shift.starts_at >= period_start)
         if period_start and start < period_start:
             start = period_start
-        if end > period_end:
+        if not started_in and period_end and end > period_end:
             end = period_end
         if not start or start > end:
             continue

@@ -954,6 +954,14 @@ def enterprise_period_report_context(todo, request, calendar=False):
     if not calendar:
         rows.sort(key=lambda r: r['shift'].starts_at or timezone.now(), reverse=True)
     stock_flow = period_stock_value_report(duka, all_shifts, duka_ids=selected_ids)
+    span_start, span_end = start, end
+    if not calendar and all_shifts:
+        starts = [s.starts_at for s in all_shifts if getattr(s, 'starts_at', None)]
+        ends = [s.ends_at or timezone.now() for s in all_shifts if getattr(s, 'starts_at', None)]
+        if starts:
+            span_start = min(starts)
+        if ends:
+            span_end = max(ends)
     opening_amount = Decimal(str(account_breakdowns.get('opening', {}).get('total') or 0))
     closing_amount = Decimal(str(account_breakdowns.get('closing', {}).get('total') or 0))
     current_amount = Decimal(str(account_breakdowns.get('current', {}).get('total') or 0))
@@ -1010,6 +1018,8 @@ def enterprise_period_report_context(todo, request, calendar=False):
         'preset': preset,
         'period_start': start,
         'period_end': end,
+        'report_span_start': span_start,
+        'report_span_end': span_end,
         'custom_fr': start.date().isoformat(),
         'custom_to': end.date().isoformat(),
         'report_duka': duka,
