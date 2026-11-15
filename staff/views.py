@@ -832,6 +832,7 @@ def enterprise_period_report_context(todo, request, calendar=False):
     time_grain = sales_time_grain(start, end)
     rows = []
     totals = None
+    table_totals = None
     account_breakdowns = None
     sales_item_breakdown = None
     sales_staff_breakdown = None
@@ -849,22 +850,35 @@ def enterprise_period_report_context(todo, request, calendar=False):
         if calendar:
             shop_shifts = [calendar_period_span(start, end)]
         else:
-            shop_shifts = clip_shifts_to_period(
-                shop,
-                filter_shifts_by_coverage(
-                    shifts_overlapping_period(shop.id, start, end),
-                    start,
-                    end,
-                    coverage,
-                ),
+            shop_raw = filter_shifts_by_coverage(
+                shifts_overlapping_period(shop.id, start, end),
                 start,
                 end,
+                coverage,
             )
+            shop_shifts = clip_shifts_to_period(shop, shop_raw, start, end)
         all_shifts.extend(shop_shifts)
-        shop_rows, shop_totals = build_shifts_period_report(shop, shop_shifts)
+        if calendar:
+            shop_rows, shop_totals = build_shifts_period_report(shop, shop_shifts)
+        else:
+            shop_rows, full_totals = build_shifts_period_report(shop, shop_raw)
+            _slice_rows, shop_totals = build_shifts_period_report(shop, shop_shifts)
+            shop_totals['count'] = full_totals.get('count') or shop_totals.get('count')
+            shop_totals['open_count'] = full_totals.get('open_count') or 0
+            shop_totals['closed_count'] = full_totals.get('closed_count') or 0
+            if table_totals is None:
+                table_totals = dict(full_totals)
+            else:
+                for k, v in full_totals.items():
+                    if k in ('count', 'open_count', 'closed_count'):
+                        table_totals[k] = int(table_totals.get(k) or 0) + int(v or 0)
+                    else:
+                        table_totals[k] = _dec(table_totals.get(k)) + _dec(v)
         if not calendar:
             for r in shop_rows:
                 r['branch_name'] = shop.name
+                src = r.get('shift')
+                r['continued'] = bool(src and src.starts_at and src.starts_at < start)
             rows.extend(shop_rows)
         if totals is None:
             totals = dict(shop_totals)
@@ -968,6 +982,7 @@ def enterprise_period_report_context(todo, request, calendar=False):
         'report_form_action': '/riport/generalPeriodReport' if calendar else '/staff/shifts/report',
         'report_rows': rows,
         'report_totals': totals,
+        'table_totals': table_totals or totals,
         'account_breakdowns': account_breakdowns,
         'sales_item_breakdown': sales_item_breakdown,
         'sales_staff_breakdown': sales_staff_breakdown,

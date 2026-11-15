@@ -265,7 +265,7 @@ def shift_sales_paid_unpaid(duka, shifts):
     now = timezone.now()
     unpaid = {shift.id: Decimal('0') for shift in shifts}
     paid = {shift.id: Decimal('0') for shift in shifts}
-    windows = _shift_time_windows(shifts, now)
+    windows = _shift_time_windows(shifts, now, duka=duka)
     if not windows:
         return unpaid, paid
 
@@ -299,7 +299,7 @@ def shift_sales_amounts(duka, shifts):
     """Completed sales totals per shift, matching shift view Stock Movement sales."""
     now = timezone.now()
     amounts = {shift.id: Decimal('0') for shift in shifts}
-    windows = _shift_time_windows(shifts, now)
+    windows = _shift_time_windows(shifts, now, duka=duka)
     if not windows:
         return amounts
 
@@ -320,13 +320,25 @@ def shift_sales_amounts(duka, shifts):
     return amounts
 
 
-def _shift_time_windows(shifts, now=None):
+def _shift_time_windows(shifts, now=None, duka=None):
     now = now or timezone.now()
     dated = []
     for shift in shifts:
         if not shift.starts_at:
             continue
-        dated.append((shift.id, shift.starts_at, shift.ends_at or now))
+        start = shift.starts_at
+        # Slices already have an owned+clipped start. Raw shifts match /staff/shifts/view.
+        if (
+            duka is not None
+            and not getattr(shift, 'calendar', False)
+            and getattr(shift, 'source_shift', None) is None
+        ):
+            owned, exclusive = _shift_window_lower(duka, shift.starts_at)
+            if owned:
+                start = owned
+            if exclusive:
+                start = start + timedelta(microseconds=1)
+        dated.append((shift.id, start, shift.ends_at or now))
     dated.sort(key=lambda w: (w[1], w[0]))
     windows = []
     for i, (sid, start, end) in enumerate(dated):
@@ -367,6 +379,14 @@ def _dec(value):
     return Decimal(str(value or 0))
 
 
+def _sale_in_shift_window(sale_at, starts_at, period_end, start_exclusive=False):
+    if not sale_at or not starts_at:
+        return False
+    if start_exclusive:
+        return sale_at > starts_at and sale_at <= period_end
+    return sale_at >= starts_at and sale_at <= period_end
+
+
 def shift_payment_flows(duka, starts_at, period_end, start_exclusive=False):
     """Cash-drawer and report figures for one shift window.
 
@@ -374,6 +394,8 @@ def shift_payment_flows(duka, starts_at, period_end, start_exclusive=False):
     (toaCash.deposit_to), matching /akaunting/cash-deposits.
     Expenses = recorded operating expenses (toaCash.matumizi).
     Cash in/out = movements on Cash payment accounts only, used for expected till.
+    sales_cash_in = Cash received for sales that belong to this shift.
+    prior_cash_in = Cash received now for sales dated before this shift.
     """
     time_kw = _dt_range_kwargs('tarehe', starts_at, period_end, start_exclusive)
     expenses = toaCash.objects.filter(
@@ -386,21 +408,43 @@ def shift_payment_flows(duka, starts_at, period_end, start_exclusive=False):
         deposit_to__isnull=False,
         **time_kw,
     ).aggregate(sum=Sum('Amount'))['sum'] or 0
-    cash_in = wekaCash.objects.filter(
-        Interprise=duka.id,
-        Akaunt__aina__iexact='Cash',
-        **time_kw,
-    ).aggregate(sum=Sum('Amount'))['sum'] or 0
     cash_out = toaCash.objects.filter(
         Interprise=duka.id,
         Akaunt__aina__iexact='Cash',
         **time_kw,
     ).aggregate(sum=Sum('Amount'))['sum'] or 0
+
+    cash_in = Decimal('0')
+    sales_cash_in = Decimal('0')
+    prior_cash_in = Decimal('0')
+    other_cash_in = Decimal('0')
+    for row in wekaCash.objects.filter(
+        Interprise=duka.id,
+        Akaunt__aina__iexact='Cash',
+        **time_kw,
+    ).select_related('invo').annotate(sale_at=sale_event_at('invo__')):
+        if _weka_is_internal(row):
+            cash_in += _dec(row.Amount)
+            continue
+        amt = _dec(row.Amount)
+        cash_in += amt
+        if not _weka_is_sales(row):
+            other_cash_in += amt
+            continue
+        sale_at = getattr(row, 'sale_at', None)
+        if _sale_in_shift_window(sale_at, starts_at, period_end, start_exclusive):
+            sales_cash_in += amt
+        else:
+            prior_cash_in += amt
+
     return {
         'expenses': _dec(expenses),
         'deposits': _dec(deposits),
         'cash_in': _dec(cash_in),
         'cash_out': _dec(cash_out),
+        'sales_cash_in': _dec(sales_cash_in),
+        'prior_cash_in': _dec(prior_cash_in),
+        'other_cash_in': _dec(other_cash_in),
     }
 
 
@@ -410,7 +454,7 @@ def expected_cash_from_flows(opening, flows):
 
 def build_shifts_period_report(duka, shifts):
     now = timezone.now()
-    windows = _shift_time_windows(shifts, now)
+    windows = _shift_time_windows(shifts, now, duka=duka)
     sales_map = shift_sales_amounts(duka, shifts)
     unpaid_map, paid_map = shift_sales_paid_unpaid(duka, shifts)
     expenses_map = _amounts_in_windows(
@@ -421,14 +465,7 @@ def build_shifts_period_report(duka, shifts):
         windows,
         toaCash.objects.filter(Interprise=duka.id, deposit_to__isnull=False),
     )
-    cash_in_map = _amounts_in_windows(
-        windows,
-        wekaCash.objects.filter(Interprise=duka.id, Akaunt__aina__iexact='Cash'),
-    )
-    cash_out_map = _amounts_in_windows(
-        windows,
-        toaCash.objects.filter(Interprise=duka.id, Akaunt__aina__iexact='Cash'),
-    )
+    win_by_id = {sid: (start, end) for sid, start, end in windows}
 
     rows = []
     totals = {
@@ -452,10 +489,12 @@ def build_shifts_period_report(duka, shifts):
         paid = _dec(paid_map.get(shift.id, 0))
         expenses = _dec(expenses_map.get(shift.id, 0))
         deposits = _dec(deposits_map.get(shift.id, 0))
-        cash_in = _dec(cash_in_map.get(shift.id, 0))
-        cash_out = _dec(cash_out_map.get(shift.id, 0))
+        wstart, wend = win_by_id.get(shift.id, (shift.starts_at, shift.ends_at or now))
+        flows = shift_payment_flows(duka, wstart, wend)
+        cash_in = _dec(flows.get('sales_cash_in'))
+        cash_out = _dec(flows.get('cash_out'))
         opening = _dec(shift.opening_cash)
-        balance = expected_cash_from_flows(opening, {'cash_in': cash_in, 'cash_out': cash_out})
+        balance = expected_cash_from_flows(opening, {'cash_in': flows.get('cash_in'), 'cash_out': cash_out})
         if shift.status == 'closed' and shift.actual_closing_cash is not None:
             closing = _dec(shift.actual_closing_cash)
         else:
@@ -2932,7 +2971,9 @@ def build_shift_report(duka, shift):
         },
         'payments': {
             'opening_cash': opening_cash,
-            'cash_in': flows['cash_in'],
+            'cash_in': flows.get('sales_cash_in', flows['cash_in']),
+            'prior_cash_in': flows.get('prior_cash_in') or Decimal('0'),
+            'other_cash_in': flows.get('other_cash_in') or Decimal('0'),
             'expenses': expenses,
             'deposits': deposits,
             'expected_cash': expected_cash,

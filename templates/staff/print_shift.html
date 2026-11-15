@@ -375,9 +375,21 @@
               <td>{{ payments.opening_cash|floatformat:2|intcomma }}</td>
             </tr>
             <tr>
-              <td>{% if useri.langSet == 0 %}Cash iliyoingia{% else %}Cash received{% endif %}</td>
+              <td>{% if useri.langSet == 0 %}Cash iliyoingia (mauzo ya zamu){% else %}Cash received (this shift's sales){% endif %}</td>
               <td>{{ payments.cash_in|floatformat:2|intcomma }}</td>
             </tr>
+            {% if payments.prior_cash_in %}
+            <tr>
+              <td>{% if useri.langSet == 0 %}Malipo ya ankara za nyuma{% else %}Prior invoice payments{% endif %}</td>
+              <td>{{ payments.prior_cash_in|floatformat:2|intcomma }}</td>
+            </tr>
+            {% endif %}
+            {% if payments.other_cash_in %}
+            <tr>
+              <td>{% if useri.langSet == 0 %}Cash nyingine iliyoingia{% else %}Other cash in{% endif %}</td>
+              <td>{{ payments.other_cash_in|floatformat:2|intcomma }}</td>
+            </tr>
+            {% endif %}
             <tr>
               <td>{% if useri.langSet == 0 %}Matumizi{% else %}Expenses{% endif %}</td>
               <td>{{ payments.expenses|floatformat:2|intcomma }}</td>

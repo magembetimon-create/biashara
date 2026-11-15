@@ -880,14 +880,14 @@
       <tfoot>
         <tr class="weight600">
           <td colspan="{% if multi_branch %}5{% else %}4{% endif %}" class="text-right">{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
-          <td class="text-right">{{ report_totals.opening|default:0|floatformat:2|intcomma }}</td>
-          <td class="text-right">{{ report_totals.closing|default:0|floatformat:2|intcomma }}</td>
-          <td class="text-right">{{ report_totals.sales|default:0|floatformat:2|intcomma }}</td>
-          <td class="text-right" style="color:#dc3545;">{{ report_totals.unpaid|default:0|floatformat:2|intcomma }}</td>
-          <td class="text-right">{{ report_totals.cash_in|default:0|floatformat:2|intcomma }}</td>
-          <td class="text-right">{{ report_totals.expenses|default:0|floatformat:2|intcomma }}</td>
-          <td class="text-right">{{ report_totals.deposits|default:0|floatformat:2|intcomma }}</td>
-          <td class="text-right">{{ report_totals.balance|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ table_totals.opening|default:report_totals.opening|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ table_totals.closing|default:report_totals.closing|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ table_totals.sales|default:report_totals.sales|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right" style="color:#dc3545;">{{ table_totals.unpaid|default:report_totals.unpaid|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ table_totals.cash_in|default:report_totals.cash_in|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ table_totals.expenses|default:report_totals.expenses|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ table_totals.deposits|default:report_totals.deposits|default:0|floatformat:2|intcomma }}</td>
+          <td class="text-right">{{ table_totals.balance|default:report_totals.balance|default:0|floatformat:2|intcomma }}</td>
         </tr>
       </tfoot>
       {% endif %}
@@ -900,13 +900,13 @@
       {% if calendar_report %}
       Opening na Closing ni jumla ya akaunti zote za malipo (si Cash tu) mwanzoni na mwisho wa kipindi ulichochagua. Current balance ni salio la akaunti zote sasa. Mauzo ni POS na oda za waiter zilizoprint. Haijalipwa ni deni (amount − iliyolipwa). Hela iliyolipwa ni sehemu ya mauzo ya kipindi hiki iliyolipwa. Malipo ya ankara za nyuma ni hela iliyolipwa sasa kwa mauzo au oda za waiter za kabla ya kipindi. Cash deposit ni kuhamisha pesa kutoka Cash kwenda akaunti nyingine. Kuweka pesa (nje) ni hela iliyowekwa kwenye akaunti za tawi hili kutoka nje au huduma nyingine. Matumizi ni matumizi yaliyorekodiwa.
       {% else %}
-      Ripoti hii inafuata mpangilio wa zamu zilizofunika kipindi (pamoja na zamu iliyoanza kabla na bado haijafungwa). Mauzo, matumizi na movement nyingine ni zile zilizorekodiwa ndani ya muda uliowekwa, zikiwekwa kwenye zamu iliyomiliki wakati huo. Opening na Closing ni jumla ya akaunti za malipo mwanzoni na mwisho wa kipindi hicho. Current balance ni salio sasa. Haijalipwa ni deni (amount − iliyolipwa). Hela iliyolipwa ni sehemu ya mauzo ya kipindi hiki iliyolipwa. Malipo ya ankara za nyuma ni hela iliyolipwa sasa kwa mauzo au oda za waiter za kabla ya kipindi. Cash deposit ni kuhamisha pesa kutoka Cash kwenda akaunti nyingine. Kuweka pesa (nje) ni hela iliyowekwa kwenye akaunti za tawi hili kutoka nje au huduma nyingine. Matumizi ni matumizi yaliyorekodiwa.
+      Jedwali la zamu linaonesha mauzo na cash ya zamu nzima (sawa na ukurasa wa kuona zamu). Muhtasari juu ni movement ndani ya muda uliowekwa. Cash iliyoingia kwenye zamu ni malipo ya mauzo ya zamu hiyo tu, si malipo ya ankara za nyuma. Opening na Closing juu ni akaunti za malipo mwanzoni na mwisho wa kipindi. Current balance ni salio sasa.
       {% endif %}
     {% else %}
       {% if calendar_report %}
       Opening and Closing are the totals of all payment accounts (not Cash only) at the start and end of the selected period. Current balance is all accounts right now. Sales are completed POS and printed waiter orders. Unpaid is still outstanding (amount − paid). Received on sales is the paid portion of sales in this period. Prior invoice payments are money collected now for sales or waiter orders dated before the selected period. Cash deposit is a transfer from Cash to another account. External deposits are money added to this branch’s accounts from outside or other services. Expenses are recorded operating expenses.
       {% else %}
-      This report follows the shifts that cover the selected period (including a shift that started earlier and is still open). Sales, expenses and other movements are those recorded inside the selected clock window, assigned to the shift that owned that time. Opening and Closing are all payment accounts at the start and end of that window. Current balance is all accounts right now. Unpaid is still outstanding (amount − paid). Received on sales is the paid portion of sales in this period. Prior invoice payments are money collected now for sales or waiter orders dated before the selected period. Cash deposit is a transfer from Cash to another account. External deposits are money added to this branch’s accounts from outside or other services. Expenses are recorded operating expenses.
+      Each shift row is the full shift (same sales and cash as the shift view). The summary above is movements inside the selected period. Cash in on a shift is payments for that shift’s sales only, not prior invoices. Opening and Closing above are payment accounts at the start and end of the period. Current balance is all accounts right now.
       {% endif %}
     {% endif %}
   </p>
