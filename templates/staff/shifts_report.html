@@ -1015,6 +1015,26 @@
             {% if useri.langSet == 0 %}Hazijauzwa{% else %}Not sold{% endif %}
             <span class="sr-stock-move-count" data-stock-move-count="unsold"></span>
           </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="purchased" data-stock-move-hide>
+            {% if useri.langSet == 0 %}Zilizonunuliwa{% else %}Purchased{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="purchased"></span>
+          </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="transferred" data-stock-move-hide>
+            {% if useri.langSet == 0 %}Zilizohamishwa{% else %}Transferred{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="transferred"></span>
+          </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="received" data-stock-move-hide>
+            {% if useri.langSet == 0 %}Zilizopokelewa{% else %}Received{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="received"></span>
+          </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="added" data-stock-move-hide>
+            {% if useri.langSet == 0 %}Zilizongezwa{% else %}Added{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="added"></span>
+          </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="reduced" data-stock-move-hide>
+            {% if useri.langSet == 0 %}Zilizopunguzwa{% else %}Reduced{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="reduced"></span>
+          </button>
         </div>
         <ul id="srCategsList" class="list-unstyled d-flex pt-1 mb-2 sr-sv-no-print"></ul>
         <p class="small text-muted mb-2 sr-sv-no-print">
@@ -1085,7 +1105,7 @@
             </thead>
             <tbody id="srStockBody">
               {% for s in stock_flow.rows %}
-              <tr class="sr-stock-row" data-sv-i="{{ forloop.counter0 }}" data-sv-sold="{{ s.sold_qty|default:0 }}" data-sv-aina="{{ s.aina_id|default:'-1' }}" data-sv-aina-name="{{ s.aina_name|default:'' }}" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }} {{ s.aina_name|default:''|lower }}">
+              <tr class="sr-stock-row" data-sv-i="{{ forloop.counter0 }}" data-sv-sold="{{ s.sold_qty|default:0 }}" data-sv-purchased="{{ s.purchased_qty|default:0 }}" data-sv-transferred="{{ s.transferred_qty|default:0 }}" data-sv-received="{{ s.received_qty|default:0 }}" data-sv-added="{{ s.added_qty|default:0 }}" data-sv-reduced="{{ s.reduction_qty|default:0 }}" data-sv-aina="{{ s.aina_id|default:'-1' }}" data-sv-aina-name="{{ s.aina_name|default:'' }}" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }} {{ s.aina_name|default:''|lower }}">
                 <td>{{ forloop.counter }}</td>
                 <td>{{ s.item_name }}</td>
                 <td>{{ s.units|default:'-' }}</td>
@@ -2648,26 +2668,51 @@
   var SR_CATEG = 0;
   var SR_UNCATEG = -1;
   var SR_STOCK_MOVE = 'all';
+  var SR_STOCK_QTY_ATTR = {
+    sold: 'data-sv-sold',
+    purchased: 'data-sv-purchased',
+    transferred: 'data-sv-transferred',
+    received: 'data-sv-received',
+    added: 'data-sv-added',
+    reduced: 'data-sv-reduced'
+  };
+  function srStockQty(tr, attr) {
+    return parseFloat(tr.getAttribute(attr)) || 0;
+  }
   function srStockSoldQty(tr) {
-    return parseFloat(tr.getAttribute('data-sv-sold')) || 0;
+    return srStockQty(tr, 'data-sv-sold');
   }
   function srStockMoveMatch(tr) {
-    var sold = srStockSoldQty(tr);
-    if (SR_STOCK_MOVE === 'sold') return sold > 0.0000001;
-    if (SR_STOCK_MOVE === 'unsold') return sold <= 0.0000001;
-    return true;
+    if (SR_STOCK_MOVE === 'all') return true;
+    if (SR_STOCK_MOVE === 'unsold') return srStockSoldQty(tr) <= 0.0000001;
+    var attr = SR_STOCK_QTY_ATTR[SR_STOCK_MOVE];
+    if (!attr) return true;
+    return srStockQty(tr, attr) > 0.0000001;
   }
   function updateSrStockMoveCounts() {
-    var all = 0, sold = 0, unsold = 0;
+    var map = { all: 0, sold: 0, unsold: 0, purchased: 0, transferred: 0, received: 0, added: 0, reduced: 0 };
     document.querySelectorAll('#srStockBody tr.sr-stock-row').forEach(function (tr) {
-      all += 1;
-      if (srStockSoldQty(tr) > 0.0000001) sold += 1;
-      else unsold += 1;
+      map.all += 1;
+      if (srStockSoldQty(tr) > 0.0000001) map.sold += 1;
+      else map.unsold += 1;
+      ['purchased', 'transferred', 'received', 'added', 'reduced'].forEach(function (k) {
+        if (srStockQty(tr, SR_STOCK_QTY_ATTR[k]) > 0.0000001) map[k] += 1;
+      });
     });
-    var map = { all: all, sold: sold, unsold: unsold };
     document.querySelectorAll('[data-stock-move-count]').forEach(function (el) {
       var k = el.getAttribute('data-stock-move-count');
       el.textContent = map[k] != null ? '(' + map[k] + ')' : '';
+    });
+    document.querySelectorAll('#srStockMoveTabs [data-stock-move-hide]').forEach(function (btn) {
+      var k = btn.getAttribute('data-stock-move');
+      var n = map[k] || 0;
+      btn.style.display = n ? '' : 'none';
+      if (!n && SR_STOCK_MOVE === k) {
+        SR_STOCK_MOVE = 'all';
+        document.querySelectorAll('#srStockMoveTabs [data-stock-move]').forEach(function (b) {
+          b.classList.toggle('is-active', b.getAttribute('data-stock-move') === 'all');
+        });
+      }
     });
   }
   function srAinaId(tr) {
