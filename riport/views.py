@@ -2175,7 +2175,7 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     'purchase', 'added', 'registered', 'production', 'received', 'sale_return',
   }
 
-  def add_ev(tarehe, kind, qty_in=0, qty_out=0, code='', note='', duka=0, dukaN=''):
+  def add_ev(tarehe, kind, qty_in=0, qty_out=0, code='', note='', duka=0, dukaN='', _ord=0):
     if not tarehe:
       return
     if not _dt_ge(tarehe, tf) or _dt_gt(tarehe, tt):
@@ -2194,6 +2194,7 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
       'duka': duka,
       'dukaN': dukaN or '',
       '_in': 0 if kind in in_kinds else 1,
+      '_ord': _ord,
     })
 
   if not item_ids:
@@ -2244,14 +2245,14 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     ).annotate(event_at=_sale_event_at('mauzo__')).filter(
       event_at__gte=tf,
     ).exclude(event_at__gt=tt).values(
-      'id', 'idadi', 'event_at', 'mauzo__code',
+      'id', 'idadi', 'returned', 'event_at', 'mauzo__code',
       'produ__Interprise_id', 'produ__Interprise__name'
     )
     ret_rows = sa_ret.objects.filter(
       sa_list__produ_id__in=item_ids,
       ret__tarehe__gte=tf,
     ).exclude(ret__tarehe__gt=tt).values(
-      'id', 'idadi', 'ret__tarehe', 'ret__code',
+      'id', 'idadi', 'sa_list_id', 'ret__tarehe', 'ret__code',
       'sa_list__produ__Interprise_id', 'sa_list__produ__Interprise__name'
     )
     tr_rows = transferList.objects.filter(
@@ -2318,9 +2319,21 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     add_ev(r['event_at'], 'sale', qty_out=r['idadi'],
            code=r['mauzo__code'], duka=r['produ__Interprise_id'], dukaN=r['produ__Interprise__name'])
 
+  sa_ret_by_line = defaultdict(lambda: Decimal('0'))
   for r in ret_rows:
+    sa_ret_by_line[r['sa_list_id']] += Decimal(str(r['idadi'] or 0))
     add_ev(r['ret__tarehe'], 'sale_return', qty_in=r['idadi'],
            code=r['ret__code'], duka=r['sa_list__produ__Interprise_id'], dukaN=r['sa_list__produ__Interprise__name'])
+
+  for r in sale_rows:
+    extra_ret = Decimal(str(r.get('returned') or 0)) - sa_ret_by_line.get(r['id'], Decimal('0'))
+    if extra_ret > 0:
+      add_ev(
+        r['event_at'], 'sale_return', qty_in=extra_ret,
+        code=r['mauzo__code'], note='waiter',
+        duka=r['produ__Interprise_id'], dukaN=r['produ__Interprise__name'],
+        _ord=1,
+      )
 
   for r in tr_rows:
     dest = r.get('kwenda__receive__Interprise__name') or ''
@@ -2333,7 +2346,7 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     add_ev(r['ret__tarehe'], 'pu_return', qty_out=r['idadi'],
            code=r['ret__code'], duka=r['pu_list__Interprise_id'], dukaN=r['pu_list__Interprise__name'])
 
-  events.sort(key=lambda e: (e['tarehe'] or '', e.get('_in', 1), e.get('code') or ''))
+  events.sort(key=lambda e: (e['tarehe'] or '', e.get('_ord', 0), e.get('_in', 1), e.get('code') or ''))
 
   born_in_period = set()
   if item_ids:
@@ -2361,15 +2374,13 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
 
   qty_in = sum((Decimal(str(e['qty_in'] or 0)) for e in events), Decimal('0'))
   qty_out = sum((Decimal(str(e['qty_out'] or 0)) for e in events), Decimal('0'))
-  ledger_close = open_qty + qty_in - qty_out
-  if ledger_close != close_qty:
-    open_qty = close_qty - qty_in + qty_out
 
   running = open_qty
   for ev in events:
     running += Decimal(str(ev['qty_in'] or 0)) - Decimal(str(ev['qty_out'] or 0))
     ev['balance'] = _qtyf(running)
     ev.pop('_in', None)
+    ev.pop('_ord', None)
 
   info = bidhaa_stoku.objects.filter(bidhaa_id=bidhaa_id, Interprise__in=br).select_related('bidhaa', 'bidhaa__bidhaa_aina').first()
   name = ''
