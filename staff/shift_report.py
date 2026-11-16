@@ -2300,9 +2300,19 @@ def _distribute_stock_qty(qty_map, produ, qty, before_qty_map):
         qty_map[produ.id] += qty
 
 
+def _sale_line_net_qty(line):
+    net = (
+        Decimal(line.idadi or 0)
+        - Decimal(line.returned or 0)
+        - Decimal(line.serviceReturn or 0)
+    )
+    return net if net > 0 else Decimal('0')
+
+
 def _window_sale_returns(duka, starts_at, period_end, sold_qty_map, before_qty_map, duka_ids=None, start_exclusive=False):
-    """Returns in this window, including items sold in the same shift."""
+    """Returns in this window, including waiter qty corrections without sa_ret."""
     returned_map = defaultdict(lambda: Decimal('0'))
+    counted_by_line = defaultdict(lambda: Decimal('0'))
     rows = sa_ret.objects.filter(
         sa_list__produ__Interprise_id__in=_shop_ids(duka, duka_ids),
         **_dt_range_kwargs('ret__tarehe', starts_at, period_end, start_exclusive),
@@ -2311,8 +2321,17 @@ def _window_sale_returns(duka, starts_at, period_end, sold_qty_map, before_qty_m
         qty = Decimal(row.idadi or 0)
         if qty <= 0:
             continue
+        if row.sa_list_id:
+            counted_by_line[row.sa_list_id] += qty
         produ = row.sa_list.produ if row.sa_list_id else None
         _distribute_stock_qty(returned_map, produ, qty, before_qty_map)
+
+    for line in completed_sale_lines_qs(
+        duka, starts_at, period_end, duka_ids=duka_ids, start_exclusive=start_exclusive,
+    ).select_related('produ'):
+        extra = Decimal(line.returned or 0) - counted_by_line.get(line.id, Decimal('0'))
+        if extra > 0:
+            _distribute_stock_qty(returned_map, line.produ, extra, before_qty_map)
     return returned_map
 
 
@@ -2345,9 +2364,8 @@ def _scale_qty_money(buckets, prefix, new_qty):
 def _rebase_group_before_to_current(buckets):
     """Set opening so the row identity matches live/closing stock.
 
-    Returns via /mauzo/return and lots received onto an older origin date can
-    inflate Stock Before without changing shelf qty. Current stock is the
-    source of truth: opening = current - in + out + sold - returned.
+    Sold is net of returns. Current stock is the source of truth:
+    opening = current - in + out + sold.
     """
     added_in = (
         (buckets.get('added_qty') or Decimal('0'))
@@ -2361,7 +2379,6 @@ def _rebase_group_before_to_current(buckets):
     implied_before = (
         (buckets.get('current_qty') or Decimal('0'))
         - added_in
-        - (buckets.get('returned_qty') or Decimal('0'))
         + (buckets.get('sold_qty') or Decimal('0'))
         + reduced_in
     )
@@ -2519,7 +2536,7 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
             # New receive/purchase lots must not also sit in opening.
             if rc_qty or p_qty:
                 b_qty = max(Decimal('0'), b_qty - rc_qty - p_qty)
-            reconstructed = b_qty + a_qty + p_qty + rc_qty + rt_qty - s_qty - r_qty - t_qty
+            reconstructed = b_qty + a_qty + p_qty + rc_qty - s_qty - r_qty - t_qty
             if is_closed and closing_qty_map:
                 c_qty = closing_qty_map[iid]
             elif is_closed:
@@ -2792,16 +2809,10 @@ def period_stock_value_report(duka, shifts, duka_ids=None):
         closing_qty_map = _snapshot_qty_map(closing_snapshot_activity)
     sold_qty_map = defaultdict(lambda: Decimal('0'))
     for line in completed_sale_lines_qs(duka, starts_at, period_end, duka_ids=shop_ids).select_related('produ'):
-        sold_qty = Decimal(line.idadi or 0)
+        sold_qty = _sale_line_net_qty(line)
         if sold_qty <= 0:
             continue
-        produ = line.produ
-        if produ and getattr(produ, 'is_grouped_item', False):
-            member_ids = _grouped_member_stock_ids(produ)
-            for sid, part in _allocate_qty(member_ids, sold_qty, before_qty_map).items():
-                sold_qty_map[sid] += part
-        elif produ:
-            sold_qty_map[produ.id] += sold_qty
+        _distribute_stock_qty(sold_qty_map, line.produ, sold_qty, before_qty_map)
 
     returned_qty_map = _window_sale_returns(
         duka, starts_at, period_end, sold_qty_map, before_qty_map, duka_ids=shop_ids,
@@ -2881,11 +2892,10 @@ def build_shift_report(duka, shift):
         closing_qty_map = _snapshot_qty_map(closing_snapshot_activity)
 
     for line in line_qs:
-        sold_qty = Decimal(line.idadi or 0)
-        net_qty = sold_qty - Decimal(line.returned or 0) - Decimal(line.serviceReturn or 0)
-        if sold_qty <= 0:
+        net_qty = _sale_line_net_qty(line)
+        if net_qty <= 0:
             continue
-        line_amount = max(net_qty, Decimal('0')) * Decimal(line.bei or 0)
+        line_amount = net_qty * Decimal(line.bei or 0)
         sales_amount += line_amount
 
         sale = line.mauzo
@@ -2903,13 +2913,7 @@ def build_shift_report(duka, shift):
             breakdown[key]['sales_count'] += 1
         breakdown[key]['total_amount'] += line_amount
 
-        produ = line.produ
-        if produ and getattr(produ, 'is_grouped_item', False):
-            member_ids = _grouped_member_stock_ids(produ)
-            for sid, part in _allocate_qty(member_ids, sold_qty, before_qty_map).items():
-                sold_qty_map[sid] += part
-        elif produ:
-            sold_qty_map[produ.id] += sold_qty
+        _distribute_stock_qty(sold_qty_map, line.produ, net_qty, before_qty_map)
 
     returned_qty_map = _window_sale_returns(
         duka, owned_from, period_end, sold_qty_map, before_qty_map, start_exclusive=start_exclusive,

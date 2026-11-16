@@ -588,9 +588,9 @@
       </div>
       <p class="small text-muted mt-2">
         {% if useri.langSet == 0 %}
-        Zilizongezwa = kuongeza idadi. Zilizouzwa ni mauzo yote ya zamu. Zilizorudishwa ni return (hata ya mauzo ya zamu hii). Stoku sasa = jumla kabla ya mauzo − zilizouzwa + zilizorudishwa. Zilizonunuliwa = manunuzi. Zilizopunguzwa = kupunguza (tumika, haribika, potea, expire, others). Mauzo ya waiter yanahesabiwa wakati wa print ya kwanza. Bidhaa grouped hazioneshwi; mauzo yake yanahesabiwa kwenye bidhaa wanachama.
+        Zilizongezwa = kuongeza idadi. Zilizouzwa ni mauzo halisi ya zamu (baada ya kurudisha). Zilizorudishwa ni return (tayari zimetolewa kwenye Sold). Stoku sasa = jumla kabla ya mauzo − zilizouzwa. Kurudisha/kufuta item kwenye waiter orders kunarudisha stock. Zilizonunuliwa = manunuzi. Zilizopunguzwa = kupunguza (tumika, haribika, potea, expire, others). Mauzo ya waiter yanahesabiwa wakati wa print ya kwanza. Bidhaa grouped hazioneshwi; mauzo yake yanahesabiwa kwenye bidhaa wanachama.
         {% else %}
-        Added = quantity added. Sold is all sales in the shift. Returned is sales returns in the shift (including those sales). Current = total before sales − sold + returned. Purchased = purchases. Reduction = reduce (used, damaged, lost, expired, other). Waiter sales count at first print. Grouped items are hidden; their sales are counted on member products.
+        Added = quantity added. Sold is net sales in the shift (after returns). Returned is shown separately and is already removed from Sold. Current = total before sales − sold. Returning or deleting a waiter item puts qty back into stock. Purchased = purchases. Reduction = reduce (used, damaged, lost, expired, other). Waiter sales count at first print. Grouped items are hidden; their sales are counted on member products.
         {% endif %}
       </p>
     </div>
@@ -1206,10 +1206,10 @@ function reconPayFormat(raw) {
   return out;
 }
 function reconExpectedCurrent(row) {
-  return reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) + reconNum(row.returned_qty) - reconNum(row.reduced_qty) - reconNum(row.sold_qty));
+  return reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty) - reconNum(row.sold_qty));
 }
 function reconMaxSold(row) {
-  return reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) + reconNum(row.returned_qty) - reconNum(row.reduced_qty));
+  return reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty));
 }
 function loadReconRows() {
   var el = document.getElementById('shiftReconData');
@@ -1344,7 +1344,7 @@ function renderReconTable() {
       + '<td>' + reconFmt(r.reduced_qty) + '</td>'
       + '<td>' + reconFmt(reconMaxSold(r)) + '</td>'
       + '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm recon-sold' + (reconSoldTooLow(r, r.user_sold) || reconSoldTooHigh(r, r.user_sold) ? ' redborder' : '') + '" placeholder="' + reconFmt(r.sold_qty) + '" value="' + soldVal + '"></td>'
-      + '<td><input type="number" min="0" max="' + reconRound(reconNum(r.before_qty) + reconNum(r.added_qty) + reconNum(r.returned_qty) - reconNum(r.reduced_qty) - reconNum(r.sold_qty)) + '" step="0.01" class="form-control form-control-sm recon-current" placeholder="' + reconFmt(expCur) + '" value="' + curVal + '"></td>'
+      + '<td><input type="number" min="0" max="' + reconRound(reconNum(r.before_qty) + reconNum(r.added_qty) - reconNum(r.reduced_qty) - reconNum(r.sold_qty)) + '" step="0.01" class="form-control form-control-sm recon-current" placeholder="' + reconFmt(expCur) + '" value="' + curVal + '"></td>'
       + '<td>' + reconFmt(r.sales_price) + '</td>'
       + '<td class="recon-amount">' + reconFmt(reconUserSold(r) * reconNum(r.sales_price)) + '</td>'
       + '</tr>';
@@ -1370,7 +1370,7 @@ function onReconSoldInput(inp) {
   var sold = reconNum(inp.value);
   row.user_sold = sold;
   if (!reconSoldTooLow(row, sold) && !reconSoldTooHigh(row, sold)) {
-    var cur = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) + reconNum(row.returned_qty) - reconNum(row.reduced_qty) - sold);
+    var cur = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty) - sold);
     tr.querySelector('.recon-current').value = cur;
     row.user_current = cur;
   }
@@ -1398,7 +1398,7 @@ function onReconSoldBlur(inp) {
   }
   sold = reconRound(sold);
   inp.value = sold;
-  var cur = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) + reconNum(row.returned_qty) - reconNum(row.reduced_qty) - sold);
+  var cur = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty) - sold);
   tr.querySelector('.recon-current').value = cur;
   row.user_sold = sold;
   row.user_current = cur;
@@ -1410,7 +1410,7 @@ function onReconCurrentInput(inp) {
   if (!row) return;
   var sys = reconNum(row.sold_qty);
   var maxSold = reconMaxSold(row);
-  var maxCur = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) + reconNum(row.returned_qty) - reconNum(row.reduced_qty) - sys);
+  var maxCur = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty) - sys);
   if (inp.value === '') {
     row.user_sold = '';
     row.user_current = '';
@@ -1423,7 +1423,7 @@ function onReconCurrentInput(inp) {
   if (cur > maxCur) cur = maxCur;
   cur = reconRound(cur);
   inp.value = cur;
-  var sold = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) + reconNum(row.returned_qty) - reconNum(row.reduced_qty) - cur);
+  var sold = reconRound(reconNum(row.before_qty) + reconNum(row.added_qty) - reconNum(row.reduced_qty) - cur);
   if (sold < sys) sold = sys;
   if (sold > maxSold) sold = maxSold;
   tr.querySelector('.recon-sold').value = sold;

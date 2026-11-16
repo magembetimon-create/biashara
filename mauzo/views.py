@@ -3629,6 +3629,20 @@ def _deduct_stock_for_order(sale):
                         produ_colored.objects.filter(pk=ss.size.id).update(idadi=F('idadi')-ss.idadi)
 
 
+def _line_remaining_qty(line):
+      remaining = (
+            Decimal(str(line.idadi or 0))
+            - Decimal(str(line.returned or 0))
+            - Decimal(str(getattr(line, 'serviceReturn', 0) or 0))
+      )
+      return remaining if remaining > 0 else Decimal('0')
+
+
+def _waiter_printed_sale_holds_stock(sale):
+      """Stock leaves waiter orders at first print, except online orders that skip deduct."""
+      return bool(sale) and int(getattr(sale, 'printed_number', 0) or 0) > 0 and not bool(sale.online)
+
+
 def _restore_stock_for_line_qty(line, qty):
       qty = Decimal(str(qty or 0))
       if qty <= 0:
@@ -3686,12 +3700,12 @@ def _restore_stock_for_line_qty(line, qty):
 
 
 def _restore_stock_for_order(sale):
-      if sale.online:
+      if not _waiter_printed_sale_holds_stock(sale):
             return
 
       the_list = mauzoList.objects.filter(mauzo=sale).select_related('produ', 'produ__produced')
       for l in the_list:
-            _restore_stock_for_line_qty(l, l.idadi)
+            _restore_stock_for_line_qty(l, _line_remaining_qty(l))
 
 
 def _waiter_summary_open_sale(duka, order_id, lock=False):
@@ -3712,17 +3726,19 @@ def _waiter_summary_item_rows(sale):
       items = []
       lines = mauzoList.objects.filter(mauzo=sale.id).select_related('produ__bidhaa')
       for ln in lines:
-            qty = float(ln.idadi or 0)
+            remaining = float(_line_remaining_qty(ln))
+            if remaining <= 0:
+                  continue
             price = float(ln.bei or 0)
             returned_qty = float(ln.returned or 0)
             items.append({
                   'id': ln.id,
                   'name': str(ln.produ.bidhaa.bidhaa_jina or '').strip() if ln.produ_id and ln.produ.bidhaa_id else '-',
-                  'qty': qty,
+                  'qty': remaining,
                   'returned': returned_qty,
                   'unit': str(ln.produ.bidhaa.vipimo or '').strip() if ln.produ_id and ln.produ.bidhaa_id else '',
                   'price': price,
-                  'total': qty * price,
+                  'total': remaining * price,
             })
       return items
 
@@ -3754,20 +3770,31 @@ def _waiter_summary_sale_payload(sale, can_delete=False):
 
 
 def _recalc_waiter_sale_amount(sale):
-      lines = mauzoList.objects.filter(mauzo=sale)
-      if not lines.exists():
+      lines = list(mauzoList.objects.filter(mauzo=sale))
+      if not lines:
             sale.delete()
             return {'deleted_order': True, 'amount': 0}
-      total = lines.aggregate(
-            s=Sum(F('bei') * F('idadi') * F('saveT'), output_field=FloatField())
-      )['s'] or 0
+      total = Decimal('0')
+      remaining_any = False
+      for ln in lines:
+            rem = _line_remaining_qty(ln)
+            if rem > 0:
+                  remaining_any = True
+            save_t = Decimal(str(ln.saveT or 1))
+            total += Decimal(str(ln.bei or 0)) * rem * save_t
+      if not remaining_any:
+            sale.full_returned = True
+            sale.amount = 0
+            sale.ilolipwa = 0
+            sale.save(update_fields=['full_returned', 'amount', 'ilolipwa'])
+            return {'deleted_order': True, 'amount': 0}
       sale.amount = total
-      paid = float(sale.ilolipwa or 0)
-      if paid > float(total or 0):
+      paid = Decimal(str(sale.ilolipwa or 0))
+      update_fields = ['amount']
+      if paid > total:
             sale.ilolipwa = total
-            sale.save(update_fields=['amount', 'ilolipwa'])
-      else:
-            sale.save(update_fields=['amount'])
+            update_fields.append('ilolipwa')
+      sale.save(update_fields=update_fields)
       return {'deleted_order': False, 'amount': float(sale.amount or 0)}
 
 
@@ -3859,10 +3886,12 @@ def waiter_orders_data(request):
       if all_ids:
             lines = mauzoList.objects.filter(mauzo__in=all_ids).select_related('produ__bidhaa')
             for line in lines:
+                  qty = float(_line_remaining_qty(line))
+                  if qty <= 0:
+                        continue
                   if line.mauzo_id not in items_map:
                         items_map[line.mauzo_id] = []
                   unit_price = float(line.bei_og or line.bei or 0)
-                  qty = float(line.idadi or 0)
                   items_map[line.mauzo_id].append({
                         'name': line.produ.bidhaa.bidhaa_jina,
                         'qty': qty,
@@ -4298,11 +4327,13 @@ def waiter_summary_delete_item(request):
             sale = _waiter_summary_open_sale(duka, order_id, lock=True)
             if not sale:
                   return JsonResponse({'success': False, 'msg': 'Order not found'})
-            line = mauzoList.objects.filter(pk=item_id, mauzo_id=sale.id).first()
+            line = mauzoList.objects.select_related('produ', 'produ__produced').filter(
+                  pk=item_id, mauzo_id=sale.id,
+            ).first()
             if not line:
                   return JsonResponse({'success': False, 'msg': 'Item not found'})
-            if not sale.online:
-                  _restore_stock_for_line_qty(line, line.idadi)
+            if _waiter_printed_sale_holds_stock(sale):
+                  _restore_stock_for_line_qty(line, _line_remaining_qty(line))
             line.delete()
             result = _recalc_waiter_sale_amount(sale)
 
@@ -4347,27 +4378,25 @@ def waiter_summary_return_item_qty(request):
             sale = _waiter_summary_open_sale(duka, order_id, lock=True)
             if not sale:
                   return JsonResponse({'success': False, 'msg': 'Order not found'})
-            line = mauzoList.objects.filter(pk=item_id, mauzo_id=sale.id).first()
+            line = mauzoList.objects.select_related('produ', 'produ__produced').filter(
+                  pk=item_id, mauzo_id=sale.id,
+            ).first()
             if not line:
                   return JsonResponse({'success': False, 'msg': 'Item not found'})
 
-            current_qty = Decimal(str(line.idadi or 0))
-            if ret_qty > current_qty:
+            remaining_qty = _line_remaining_qty(line)
+            if ret_qty > remaining_qty:
                   return JsonResponse({
                         'success': False,
                         'msg': 'Idadi iliyorudishwa inazidi qty ya item',
                         'msg_eng': 'Returned quantity exceeds item qty',
                   })
 
-            if not sale.online:
+            if _waiter_printed_sale_holds_stock(sale):
                   _restore_stock_for_line_qty(line, ret_qty)
 
-            if ret_qty == current_qty:
-                  line.delete()
-            else:
-                  line.idadi = current_qty - ret_qty
-                  line.returned = Decimal(str(line.returned or 0)) + ret_qty
-                  line.save(update_fields=['idadi', 'returned'])
+            line.returned = Decimal(str(line.returned or 0)) + ret_qty
+            line.save(update_fields=['returned'])
 
             result = _recalc_waiter_sale_amount(sale)
 
@@ -5924,6 +5953,7 @@ def waiter_print_order(request):
             first_print = int(sale.printed_number or 0) <= 0
 
             if first_print:
+                  sale.online = False
                   try:
                         _deduct_stock_for_order(sale)
                   except Exception as reduce_error:
@@ -5931,9 +5961,11 @@ def waiter_print_order(request):
 
             sale.order = False
             sale.receved = True
-            sale.Packed_at = datetime.datetime.now(tz=timezone.utc)
             sale.printed_number = int(sale.printed_number or 0) + 1
-            update_fields = ['order', 'receved', 'Packed_at', 'printed_number']
+            update_fields = ['order', 'receved', 'printed_number']
+            if first_print:
+                  sale.Packed_at = datetime.datetime.now(tz=timezone.utc)
+                  update_fields.extend(['Packed_at', 'online'])
             if first_print and sale.user_customer_id and sale.customer_in_id:
                   sale.packed = True
                   update_fields.append('packed')
