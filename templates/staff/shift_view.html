@@ -588,9 +588,9 @@
       </div>
       <p class="small text-muted mt-2">
         {% if useri.langSet == 0 %}
-        Zilizongezwa = kuongeza idadi. Zilizouzwa ni mauzo halisi ya zamu (baada ya kurudisha). Zilizorudishwa ni return (tayari zimetolewa kwenye Sold). Stoku sasa = jumla kabla ya mauzo − zilizouzwa. Kurudisha/kufuta item kwenye waiter orders kunarudisha stock. Zilizonunuliwa = manunuzi. Zilizopunguzwa = kupunguza (tumika, haribika, potea, expire, others). Mauzo ya waiter yanahesabiwa wakati wa print ya kwanza. Bidhaa grouped hazioneshwi; mauzo yake yanahesabiwa kwenye bidhaa wanachama.
+        Zilizongezwa = kuongeza idadi. Zilizouzwa ni mauzo halisi ya zamu (baada ya kurudisha). Opening ya shift hii ni closing ya shift iliyopita (haikokotolewi ili kuendana na stock ya sasa). Tofauti inabaki; rekebisha kwa adjustment. Kurudisha/kufuta item kwenye waiter orders kunarudisha stock. Mauzo ya waiter yanahesabiwa wakati wa print ya kwanza.
         {% else %}
-        Added = quantity added. Sold is net sales in the shift (after returns). Returned is shown separately and is already removed from Sold. Current = total before sales − sold. Returning or deleting a waiter item puts qty back into stock. Purchased = purchases. Reduction = reduce (used, damaged, lost, expired, other). Waiter sales count at first print. Grouped items are hidden; their sales are counted on member products.
+        Added = quantity added. Sold is net sales in the shift (after returns). Opening is the previous shift closing; it is not recalculated to match current stock. Leave gaps; fix with stock adjustments. Returning or deleting a waiter item puts qty back into stock. Waiter sales count at first print.
         {% endif %}
       </p>
     </div>

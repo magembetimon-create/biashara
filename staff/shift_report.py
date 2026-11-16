@@ -2110,6 +2110,53 @@ def _snapshot_qty_map(activity):
     return qty_map
 
 
+def _shift_snapshot_activity(shift, event_type):
+    if not shift or not getattr(shift, 'id', None):
+        return None
+    newest_first = event_type == 'CLOSING_SNAPSHOT'
+    return ShiftActivity.objects.filter(
+        shift=shift.id,
+        event_type=event_type,
+        event_ref_id__isnull=False,
+    ).order_by('-recorded_at' if newest_first else 'recorded_at').first()
+
+
+def _previous_closed_shift(duka, starts_at, duka_ids=None):
+    if not starts_at:
+        return None
+    return ShiftSession.objects.filter(
+        status='closed',
+        starts_at__lt=starts_at,
+        ends_at__isnull=False,
+        Interprise_id__in=_shop_ids(duka, duka_ids),
+    ).order_by('-starts_at').first()
+
+
+def _opening_stock_qty_map(duka, shift, at_dt, duka_ids=None, use_snapshot=True):
+    """Opening stock: previous shift close, else this open snapshot, else reconstructed."""
+    if use_snapshot and shift is not None:
+        src = getattr(shift, 'source_shift', None) or shift
+        prev = _previous_closed_shift(duka, getattr(src, 'starts_at', None), duka_ids)
+        prev_close = _snapshot_qty_map(_shift_snapshot_activity(prev, 'CLOSING_SNAPSHOT'))
+        if prev_close:
+            return prev_close
+        this_open = _snapshot_qty_map(_shift_snapshot_activity(src, 'OPENING_SNAPSHOT'))
+        if this_open:
+            return this_open
+    return _stock_qty_map_at(duka, at_dt, duka_ids=duka_ids)
+
+
+def _closing_stock_qty_map(duka, shift, at_dt, is_closed, duka_ids=None, use_snapshot=True):
+    if not is_closed:
+        return defaultdict(lambda: Decimal('0'))
+    if use_snapshot and shift is not None:
+        src = getattr(shift, 'source_shift', None) or shift
+        close_map = _snapshot_qty_map(_shift_snapshot_activity(src, 'CLOSING_SNAPSHOT'))
+        if close_map:
+            return close_map
+    return _stock_qty_map_at(duka, at_dt, closing=True, duka_ids=duka_ids)
+
+
 def _dec_qty(val):
     return Decimal(str(val or 0))
 
@@ -2342,51 +2389,6 @@ def _money(qty, buy_price, sales_price, ratio):
     return qty * buy_price / ratio, qty * sales_price
 
 
-def _scale_qty_money(buckets, prefix, new_qty):
-    old_qty = buckets.get(f'{prefix}_qty') or Decimal('0')
-    buckets[f'{prefix}_qty'] = new_qty
-    if old_qty == new_qty:
-        return
-    if old_qty:
-        factor = new_qty / old_qty
-        buckets[f'{prefix}_value'] *= factor
-        buckets[f'{prefix}_worth'] *= factor
-        return
-    current_qty = buckets.get('current_qty') or Decimal('0')
-    if current_qty:
-        buckets[f'{prefix}_value'] = (buckets.get('current_value') or Decimal('0')) * new_qty / current_qty
-        buckets[f'{prefix}_worth'] = (buckets.get('current_worth') or Decimal('0')) * new_qty / current_qty
-        return
-    buckets[f'{prefix}_value'] = Decimal('0')
-    buckets[f'{prefix}_worth'] = Decimal('0')
-
-
-def _rebase_group_before_to_current(buckets):
-    """Set opening so the row identity matches live/closing stock.
-
-    Sold is net of returns. Current stock is the source of truth:
-    opening = current - in + out + sold.
-    """
-    added_in = (
-        (buckets.get('added_qty') or Decimal('0'))
-        + (buckets.get('purchased_qty') or Decimal('0'))
-        + (buckets.get('received_qty') or Decimal('0'))
-    )
-    reduced_in = (
-        (buckets.get('reduction_qty') or Decimal('0'))
-        + (buckets.get('transferred_qty') or Decimal('0'))
-    )
-    implied_before = (
-        (buckets.get('current_qty') or Decimal('0'))
-        - added_in
-        + (buckets.get('sold_qty') or Decimal('0'))
-        + reduced_in
-    )
-    if implied_before == (buckets.get('before_qty') or Decimal('0')):
-        return
-    _scale_qty_money(buckets, 'before', implied_before)
-
-
 STOCK_FLOW_METRIC_KEYS = (
     'before_qty', 'before_value', 'before_worth',
     'added_qty', 'added_value', 'added_worth',
@@ -2582,7 +2584,6 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
             buckets['returned_value'] += rt_val
             buckets['returned_worth'] += rt_worth
 
-        _rebase_group_before_to_current(buckets)
         has_activity = any(
             buckets[k] for k in (
                 'before_qty', 'added_qty', 'purchased_qty', 'sold_qty', 'reduction_qty',
@@ -2785,28 +2786,14 @@ def period_stock_value_report(duka, shifts, duka_ids=None):
 
     shop_ids = _shop_ids(duka, duka_ids)
     multi = len(shop_ids) > 1
-    opening_snapshot_activity = None
-    closing_snapshot_activity = None
-    if not calendar and not multi:
-        if use_open_snap:
-            opening_snapshot_activity = ShiftActivity.objects.filter(
-                shift=first.id,
-                event_type='OPENING_SNAPSHOT',
-                event_ref_id__isnull=False,
-            ).order_by('recorded_at').first()
-        if use_close_snap:
-            closing_snapshot_activity = ShiftActivity.objects.filter(
-                shift=last.id,
-                event_type='CLOSING_SNAPSHOT',
-                event_ref_id__isnull=False,
-            ).order_by('-recorded_at').first()
 
-    before_qty_map = _stock_qty_map_at(duka, starts_at, duka_ids=shop_ids)
-    if not before_qty_map and opening_snapshot_activity:
-        before_qty_map = _snapshot_qty_map(opening_snapshot_activity)
-    closing_qty_map = _stock_qty_map_at(duka, period_end, closing=True, duka_ids=shop_ids) if is_closed else defaultdict(lambda: Decimal('0'))
-    if is_closed and not closing_qty_map and closing_snapshot_activity:
-        closing_qty_map = _snapshot_qty_map(closing_snapshot_activity)
+    before_qty_map = _opening_stock_qty_map(
+        duka, first, starts_at, duka_ids=shop_ids, use_snapshot=use_open_snap and not multi,
+    )
+    closing_qty_map = _closing_stock_qty_map(
+        duka, last, period_end, is_closed, duka_ids=shop_ids,
+        use_snapshot=use_close_snap and not multi,
+    )
     sold_qty_map = defaultdict(lambda: Decimal('0'))
     for line in completed_sale_lines_qs(duka, starts_at, period_end, duka_ids=shop_ids).select_related('produ'):
         sold_qty = _sale_line_net_qty(line)
@@ -2873,23 +2860,8 @@ def build_shift_report(duka, shift):
     breakdown = {}
     counted_sales = set()
 
-    opening_snapshot_activity = ShiftActivity.objects.filter(
-        shift=shift.id,
-        event_type='OPENING_SNAPSHOT',
-        event_ref_id__isnull=False,
-    ).order_by('recorded_at').first()
-    closing_snapshot_activity = ShiftActivity.objects.filter(
-        shift=shift.id,
-        event_type='CLOSING_SNAPSHOT',
-        event_ref_id__isnull=False,
-    ).order_by('-recorded_at').first()
-
-    before_qty_map = _stock_qty_map_at(duka, owned_from)
-    if not before_qty_map:
-        before_qty_map = _snapshot_qty_map(opening_snapshot_activity)
-    closing_qty_map = _stock_qty_map_at(duka, period_end, closing=True) if is_closed else defaultdict(lambda: Decimal('0'))
-    if is_closed and not closing_qty_map:
-        closing_qty_map = _snapshot_qty_map(closing_snapshot_activity)
+    before_qty_map = _opening_stock_qty_map(duka, shift, owned_from)
+    closing_qty_map = _closing_stock_qty_map(duka, shift, period_end, is_closed)
 
     for line in line_qs:
         net_qty = _sale_line_net_qty(line)

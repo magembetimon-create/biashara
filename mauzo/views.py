@@ -3969,8 +3969,23 @@ def waiter_orders_data(request):
       return JsonResponse(data)
 
 
-def _waiter_orders_summary_data(duka):
-      base_qs = mauzoni.objects.filter(
+def _sale_remaining_amount_map(sale_ids):
+      amounts = {}
+      if not sale_ids:
+            return amounts
+      for line in mauzoList.objects.filter(mauzo_id__in=sale_ids).only(
+            'mauzo_id', 'idadi', 'returned', 'serviceReturn', 'bei', 'saveT',
+      ):
+            rem = _line_remaining_qty(line)
+            if rem <= 0:
+                  continue
+            add = Decimal(str(line.bei or 0)) * rem * Decimal(str(line.saveT or 1))
+            amounts[line.mauzo_id] = amounts.get(line.mauzo_id, Decimal('0')) + add
+      return amounts
+
+
+def _waiter_uncleared_sales_qs(duka):
+      return mauzoni.objects.filter(
             Interprise=duka,
             waiter_order__isnull=False,
             By__isnull=True,
@@ -3978,25 +3993,45 @@ def _waiter_orders_summary_data(duka):
             printed_number__gt=0,
       )
 
-      grouped = list(
-            base_qs.values(
-                  'waiter_order',
-                  'waiter_order__cheo',
-                  'waiter_order__fanyakazi__jina',
-                  'waiter_order__user__user__first_name',
-                  'waiter_order__user__user__last_name',
-                  'waiter_order__user_entp__Interprise__Intp_code',
-            ).annotate(
-                  orders_count=Count('id'),
-                  total_amount=Sum('amount'),
-            ).order_by('-orders_count', '-total_amount', 'waiter_order__user__user__first_name')
-      )
+
+def _waiter_orders_summary_data(duka):
+      base_qs = _waiter_uncleared_sales_qs(duka)
+      sale_rows = list(base_qs.values(
+            'id',
+            'waiter_order',
+            'waiter_order__cheo',
+            'waiter_order__fanyakazi__jina',
+            'waiter_order__user__user__first_name',
+            'waiter_order__user__user__last_name',
+            'waiter_order__user_entp__Interprise__Intp_code',
+      ))
+      remaining_map = _sale_remaining_amount_map([row['id'] for row in sale_rows])
+
+      grouped = {}
+      for row in sale_rows:
+            key = row.get('waiter_order')
+            if key not in grouped:
+                  grouped[key] = {
+                        'waiter_order': key,
+                        'waiter_order__cheo': row.get('waiter_order__cheo'),
+                        'waiter_order__fanyakazi__jina': row.get('waiter_order__fanyakazi__jina'),
+                        'waiter_order__user__user__first_name': row.get('waiter_order__user__user__first_name'),
+                        'waiter_order__user__user__last_name': row.get('waiter_order__user__user__last_name'),
+                        'waiter_order__user_entp__Interprise__Intp_code': row.get('waiter_order__user_entp__Interprise__Intp_code'),
+                        'orders_count': 0,
+                        'total_amount': Decimal('0'),
+                  }
+            grouped[key]['orders_count'] += 1
+            grouped[key]['total_amount'] += remaining_map.get(row['id'], Decimal('0'))
 
       rows = []
       total_amount = 0
       total_orders = 0
 
-      for row in grouped:
+      for row in sorted(
+            grouped.values(),
+            key=lambda x: (-x['orders_count'], -x['total_amount'], str(x.get('waiter_order__user__user__first_name') or '')),
+      ):
             waiter_name = str(row.get('waiter_order__fanyakazi__jina') or '').strip()
             if not waiter_name:
                   waiter_name = f"{str(row.get('waiter_order__user__user__first_name') or '').strip()} {str(row.get('waiter_order__user__user__last_name') or '').strip()}".strip()
@@ -4072,6 +4107,8 @@ def waiter_orders_summary(request):
                   printed_number__gt=0,
             ).select_related('customer_in__area').order_by('-pk')[:120]
 
+            remaining_map = _sale_remaining_amount_map([od.id for od in selected_qs])
+
             if selected_qs.exists():
                   waiter_obj = selected_qs.first().waiter_order
                   selected_waiter_code = ''
@@ -4100,7 +4137,7 @@ def waiter_orders_summary(request):
                               table_name = '-'
                               place_name = '-'
 
-                        row_amount = float(od.amount or 0)
+                        row_amount = float(remaining_map.get(od.id, Decimal('0')))
                         selected_waiter_orders_total_amount += row_amount
                         selected_waiter_orders.append({
                               'id': od.id,
