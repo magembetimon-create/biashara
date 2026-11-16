@@ -2076,7 +2076,7 @@ def _sale_event_at(prefix=''):
   )
 
 
-def _item_movements_since(item_ids, at_dt):
+def _item_movements_since(item_ids, at_dt, br=None):
   if not item_ids:
     return []
   rows = []
@@ -2088,23 +2088,29 @@ def _item_movements_since(item_ids, at_dt):
     mauzo__ignore=False,
   ).annotate(event_at=_sale_event_at('mauzo__')).filter(
     event_at__gte=at_dt,
-  ).values_list('produ_id', 'idadi', 'event_at')
-  for pid, qty, when in sales:
+  )
+  if br:
+    sales = sales.filter(mauzo__Interprise_id__in=br)
+  for pid, qty, when in sales.values_list('produ_id', 'idadi', 'event_at'):
     rows.append((pid, Decimal(str(qty or 0)), when))
 
   old_returns = sa_ret.objects.filter(
     sa_list__produ_id__in=item_ids,
     ret__tarehe__gte=at_dt,
-  ).values_list('sa_list__produ_id', 'idadi', 'ret__tarehe')
-  for pid, qty, when in old_returns:
+  )
+  if br:
+    old_returns = old_returns.filter(ret__Interprise_id__in=br)
+  for pid, qty, when in old_returns.values_list('sa_list__produ_id', 'idadi', 'ret__tarehe'):
     rows.append((pid, -Decimal(str(qty or 0)), when))
 
   transfers = transferList.objects.filter(
     toka_id__in=item_ids,
     kwenda__receive__transfer__order=False,
     kwenda__receive__transfer__tarehe__gte=at_dt,
-  ).values_list('toka_id', 'kwenda__qty', 'kwenda__receive__transfer__tarehe')
-  for pid, qty, when in transfers:
+  )
+  if br:
+    transfers = transfers.filter(toka__Interprise_id__in=br)
+  for pid, qty, when in transfers.values_list('toka_id', 'kwenda__qty', 'kwenda__receive__transfer__tarehe'):
     rows.append((pid, Decimal(str(qty or 0)), when))
 
   reductions = productChangeRecord.objects.filter(
@@ -2114,16 +2120,20 @@ def _item_movements_since(item_ids, at_dt):
     adjst__registered=False,
   ).filter(
     Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True) | Q(adjst__expire=True) | Q(adjst__others=True) | Q(adjst__full_Return=True)
-  ).values_list('prod_id', 'qty', 'adjst__date')
-  for pid, qty, when in reductions:
+  )
+  if br:
+    reductions = reductions.filter(adjst__Interprise_id__in=br)
+  for pid, qty, when in reductions.values_list('prod_id', 'qty', 'adjst__date'):
     rows.append((pid, Decimal(str(qty or 0)), when))
 
   added = productChangeRecord.objects.filter(
     prod_id__in=item_ids,
     adjst__date__gte=at_dt,
     adjst__Ongezwa=True,
-  ).values_list('prod_id', 'qty', 'adjst__date')
-  for pid, qty, when in added:
+  )
+  if br:
+    added = added.filter(adjst__Interprise_id__in=br)
+  for pid, qty, when in added.values_list('prod_id', 'qty', 'adjst__date'):
     rows.append((pid, -Decimal(str(qty or 0)), when))
 
   registered = productChangeRecord.objects.filter(
@@ -2131,22 +2141,28 @@ def _item_movements_since(item_ids, at_dt):
     adjst__date__gte=at_dt,
     adjst__registered=True,
     adjst__Ongezwa=False,
-  ).values_list('prod_id', 'qty', 'adjst__date')
-  for pid, qty, when in registered:
+  )
+  if br:
+    registered = registered.filter(adjst__Interprise_id__in=br)
+  for pid, qty, when in registered.values_list('prod_id', 'qty', 'adjst__date'):
     rows.append((pid, -Decimal(str(qty or 0)), when))
 
   pu_returns = pu_ret.objects.filter(
     pu_list_id__in=item_ids,
     ret__tarehe__gte=at_dt,
-  ).values_list('pu_list_id', 'idadi', 'ret__tarehe')
-  for pid, qty, when in pu_returns:
+  )
+  if br:
+    pu_returns = pu_returns.filter(pu_list__Interprise_id__in=br)
+  for pid, qty, when in pu_returns.values_list('pu_list_id', 'idadi', 'ret__tarehe'):
     rows.append((pid, Decimal(str(qty or 0)), when))
 
   return rows
 
 
 def _lot_origin(row):
-  return row.get('origin_pu') or row.get('origin_add') or row.get('origin_tr') or row.get('origin_pr')
+  # Transfer/adjust/produce is the lot's birth in this branch; purchase FK can remain
+  # from a source-branch bill after stock is received.
+  return row.get('origin_tr') or row.get('origin_add') or row.get('origin_pr') or row.get('origin_pu')
 
 
 def item_track_for_period(br, bidhaa_id, tf, tt):
@@ -2166,7 +2182,7 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
 
   item_ids = [row['id'] for row in items]
   current = sum((Decimal(str(row['idadi'] or 0)) for row in items), Decimal('0'))
-  movements = _item_movements_since(item_ids, tf)
+  movements = _item_movements_since(item_ids, tf, br=br)
   delta_open = _delta_map(movements, lambda when: _dt_ge(when, tf))
   delta_close = _delta_map(movements, lambda when: _dt_gt(when, tt))
 
@@ -2202,8 +2218,11 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
   else:
     pu_rows = bidhaa_stoku.objects.filter(
       id__in=item_ids,
+      Interprise_id__in=br,
       manunuzi__isnull=False,
+      uhamisho__isnull=True,
       manunuzi__manunuzi__order=False,
+      manunuzi__manunuzi__Interprise_id__in=br,
       manunuzi__manunuzi__tarehe__gte=tf,
     ).exclude(manunuzi__manunuzi__tarehe__gt=tt).values(
       'id', 'Interprise_id', 'Interprise__name', 'manunuzi__idadi',
@@ -2211,7 +2230,9 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     )
     pr_rows = bidhaa_stoku.objects.filter(
       id__in=item_ids,
+      Interprise_id__in=br,
       produced__isnull=False,
+      produced__production__production__Interprise_id__in=br,
       produced__production__date__gte=tf,
     ).exclude(produced__production__date__gt=tt).values(
       'id', 'Interprise_id', 'Interprise__name', 'produced__qty',
@@ -2219,7 +2240,9 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     )
     rc_rows = bidhaa_stoku.objects.filter(
       id__in=item_ids,
+      Interprise_id__in=br,
       uhamisho__isnull=False,
+      uhamisho__receive__Interprise_id__in=br,
       uhamisho__receive__transfer__order=False,
       uhamisho__receive__transfer__tarehe__gte=tf,
     ).exclude(uhamisho__receive__transfer__tarehe__gt=tt).values(
@@ -2229,6 +2252,8 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     )
     adj_rows = productChangeRecord.objects.filter(
       prod_id__in=item_ids,
+      prod__Interprise_id__in=br,
+      adjst__Interprise_id__in=br,
       adjst__date__gte=tf,
     ).exclude(adjst__date__gt=tt).values(
       'id', 'qty', 'adjst__date', 'adjst__code', 'adjst__Ongezwa', 'adjst__haribika',
@@ -2238,6 +2263,8 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     )
     sale_rows = mauzoList.objects.filter(
       produ_id__in=item_ids,
+      produ__Interprise_id__in=br,
+      mauzo__Interprise_id__in=br,
       mauzo__order=False,
       mauzo__service=False,
       mauzo__cart=False,
@@ -2250,6 +2277,8 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     )
     ret_rows = sa_ret.objects.filter(
       sa_list__produ_id__in=item_ids,
+      sa_list__produ__Interprise_id__in=br,
+      ret__Interprise_id__in=br,
       ret__tarehe__gte=tf,
     ).exclude(ret__tarehe__gt=tt).values(
       'id', 'idadi', 'sa_list_id', 'ret__tarehe', 'ret__code',
@@ -2257,6 +2286,7 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     )
     tr_rows = transferList.objects.filter(
       toka_id__in=item_ids,
+      toka__Interprise_id__in=br,
       kwenda__receive__transfer__order=False,
       kwenda__receive__transfer__tarehe__gte=tf,
     ).exclude(kwenda__receive__transfer__tarehe__gt=tt).values(
@@ -2266,6 +2296,7 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     )
     prn_rows = pu_ret.objects.filter(
       pu_list_id__in=item_ids,
+      pu_list__Interprise_id__in=br,
       ret__tarehe__gte=tf,
     ).exclude(ret__tarehe__gt=tt).values(
       'id', 'idadi', 'ret__tarehe', 'ret__code',
