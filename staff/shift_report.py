@@ -1613,7 +1613,7 @@ def period_prior_invoice_payments(duka, shifts, period_start=None):
         'by__fanyakazi',
         'by__user_entp__Interprise',
         'invo',
-        'from_waiter_payments',
+        *_WAITER_CLEARING_RELATED,
         *invo_related,
     ).prefetch_related(_weka_sales_prefetch()).annotate(
         sale_at=sale_event_at('invo__'),
@@ -1812,6 +1812,16 @@ def _waiter_clearing_label(row):
     return raw
 
 
+def _waiter_name_from_note(note):
+    raw = (note or '').strip()
+    if 'waiter clearing' not in raw.lower() or '-' not in raw:
+        return ''
+    rest = raw.split('-', 1)[-1].strip()
+    if '.' in rest:
+        rest = rest.split('.', 1)[0].strip()
+    return rest
+
+
 _SALE_PARTY_RELATED = (
     'customer_id',
     'By__user__user',
@@ -1820,6 +1830,16 @@ _SALE_PARTY_RELATED = (
     'waiter_order__user__user',
     'waiter_order__fanyakazi',
     'waiter_order__user_entp__Interprise',
+)
+
+_WAITER_CLEARING_RELATED = (
+    'from_waiter_payments',
+    'from_waiter_payments__By__user__user',
+    'from_waiter_payments__By__fanyakazi',
+    'from_waiter_payments__By__user_entp__Interprise',
+    'from_waiter_payments__waiter__user__user',
+    'from_waiter_payments__waiter__fanyakazi',
+    'from_waiter_payments__waiter__user_entp__Interprise',
 )
 
 
@@ -1918,6 +1938,26 @@ def _weka_sales_item(row, amount, sales):
             sale_at = when
     if sale_at is None:
         sale_at = _sale_when(sale) or getattr(row, 'sale_at', None)
+    note = (row.maelezo or '').strip()
+    clearing = getattr(row, 'from_waiter_payments', None)
+    is_waiter_clearing = bool(getattr(row, 'from_waiter_payments_id', None) or clearing)
+    if not is_waiter_clearing and 'waiter clearing' in note.lower():
+        is_waiter_clearing = True
+    waiter_name = ''
+    recorded_by = staff_display_name(row.by)
+    if clearing is not None:
+        waiter_name = staff_display_name(getattr(clearing, 'waiter', None))
+        clearer = staff_display_name(getattr(clearing, 'By', None))
+        if clearer and clearer != 'Unknown':
+            recorded_by = clearer
+        if waiter_name == 'Unknown':
+            waiter_name = ''
+    if not waiter_name:
+        waiter_name = _waiter_name_from_note(note) or (
+            _waiter_clearing_label(row) if is_waiter_clearing else ''
+        )
+    if waiter_name and waiter_name.lower() in ('goods sales', 'unknown'):
+        waiter_name = _waiter_name_from_note(note)
     return {
         'at': _iso(row.tarehe),
         'sale_at': _iso(sale_at),
@@ -1925,8 +1965,11 @@ def _weka_sales_item(row, amount, sales):
         'customer': cust or '—',
         'account': _account_name(row.Akaunt),
         'source': (row.kutoka or '').strip() or '—',
-        'note': (row.maelezo or '').strip(),
-        'name': staff_display_name(row.by),
+        'note': note,
+        'name': recorded_by,
+        'recorded_by': recorded_by,
+        'is_waiter_clearing': is_waiter_clearing,
+        'waiter_name': waiter_name or '',
         'amount': _qty2(amount),
     }
 
@@ -2014,7 +2057,7 @@ def period_recon_movements(duka, shifts, period_start=None):
         'by__user_entp__Interprise',
         'invo',
         'invo__customer_id',
-        'from_waiter_payments',
+        *_WAITER_CLEARING_RELATED,
     ).prefetch_related(_weka_sales_prefetch()).annotate(
         sale_at=sale_event_at('invo__'),
     ).order_by('-tarehe', '-id')

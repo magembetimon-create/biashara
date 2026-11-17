@@ -2165,6 +2165,34 @@ def _lot_origin(row):
   return row.get('origin_tr') or row.get('origin_add') or row.get('origin_pr') or row.get('origin_pu')
 
 
+def _perm_name_fields(prefix):
+  return [
+    f'{prefix}fanyakazi__jina',
+    f'{prefix}user__user__first_name',
+    f'{prefix}user__user__last_name',
+    f'{prefix}cheo',
+  ]
+
+
+def _perm_name_from_row(row, prefix):
+  name = str(row.get(f'{prefix}fanyakazi__jina') or '').strip()
+  if not name:
+    name = (
+      f"{str(row.get(f'{prefix}user__user__first_name') or '').strip()} "
+      f"{str(row.get(f'{prefix}user__user__last_name') or '').strip()}"
+    ).strip()
+  if not name:
+    name = str(row.get(f'{prefix}cheo') or '').strip()
+  return name
+
+
+def _sale_actor(row):
+  if row.get('mauzo__waiter_order_id'):
+    return _perm_name_from_row(row, 'mauzo__waiter_order__'), 'waiter'
+  name = _perm_name_from_row(row, 'mauzo__By__')
+  return name, ('staff' if name else '')
+
+
 def item_track_for_period(br, bidhaa_id, tf, tt):
   # All lots of this product (current and previous). New purchases mark older lots
   # inapacha=True, so tracking only inapacha=False hid every earlier bill/transfer.
@@ -2191,7 +2219,7 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     'purchase', 'added', 'registered', 'production', 'received', 'sale_return',
   }
 
-  def add_ev(tarehe, kind, qty_in=0, qty_out=0, code='', note='', duka=0, dukaN='', _ord=0):
+  def add_ev(tarehe, kind, qty_in=0, qty_out=0, code='', note='', duka=0, dukaN='', by='', by_kind='', _ord=0):
     if not tarehe:
       return
     if not _dt_ge(tarehe, tf) or _dt_gt(tarehe, tt):
@@ -2209,6 +2237,8 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
       'note': note or '',
       'duka': duka,
       'dukaN': dukaN or '',
+      'by': by or '',
+      'by_kind': by_kind or '',
       '_in': 0 if kind in in_kinds else 1,
       '_ord': _ord,
     })
@@ -2226,7 +2256,8 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
       manunuzi__manunuzi__tarehe__gte=tf,
     ).exclude(manunuzi__manunuzi__tarehe__gt=tt).values(
       'id', 'Interprise_id', 'Interprise__name', 'manunuzi__idadi',
-      'manunuzi__manunuzi__tarehe', 'manunuzi__manunuzi__code'
+      'manunuzi__manunuzi__tarehe', 'manunuzi__manunuzi__code',
+      *_perm_name_fields('manunuzi__manunuzi__By__'),
     )
     pr_rows = bidhaa_stoku.objects.filter(
       id__in=item_ids,
@@ -2236,7 +2267,8 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
       produced__production__date__gte=tf,
     ).exclude(produced__production__date__gt=tt).values(
       'id', 'Interprise_id', 'Interprise__name', 'produced__qty',
-      'produced__production__date', 'produced__production__code'
+      'produced__production__date', 'produced__production__code',
+      *_perm_name_fields('produced__production__Na__'),
     )
     rc_rows = bidhaa_stoku.objects.filter(
       id__in=item_ids,
@@ -2248,7 +2280,8 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     ).exclude(uhamisho__receive__transfer__tarehe__gt=tt).values(
       'id', 'Interprise_id', 'Interprise__name', 'uhamisho__qty',
       'uhamisho__receive__transfer__tarehe', 'uhamisho__receive__transfer__code',
-      'uhamisho__receive__transfer__Interprise__name'
+      'uhamisho__receive__transfer__Interprise__name',
+      *_perm_name_fields('uhamisho__receive__By__'),
     )
     adj_rows = productChangeRecord.objects.filter(
       prod_id__in=item_ids,
@@ -2259,7 +2292,8 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
       'id', 'qty', 'adjst__date', 'adjst__code', 'adjst__Ongezwa', 'adjst__haribika',
       'adjst__potea', 'adjst__expire', 'adjst__tumika', 'adjst__registered',
       'adjst__full_Return', 'adjst__others', 'adjst__production_id', 'adjst__desc',
-      'prod__Interprise_id', 'prod__Interprise__name'
+      'prod__Interprise_id', 'prod__Interprise__name',
+      *_perm_name_fields('adjst__Na__'),
     )
     sale_rows = mauzoList.objects.filter(
       produ_id__in=item_ids,
@@ -2273,7 +2307,10 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
       event_at__gte=tf,
     ).exclude(event_at__gt=tt).values(
       'id', 'idadi', 'returned', 'event_at', 'mauzo__code',
-      'produ__Interprise_id', 'produ__Interprise__name'
+      'mauzo__waiter_order_id',
+      'produ__Interprise_id', 'produ__Interprise__name',
+      *_perm_name_fields('mauzo__waiter_order__'),
+      *_perm_name_fields('mauzo__By__'),
     )
     ret_rows = sa_ret.objects.filter(
       sa_list__produ_id__in=item_ids,
@@ -2282,7 +2319,8 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
       ret__tarehe__gte=tf,
     ).exclude(ret__tarehe__gt=tt).values(
       'id', 'idadi', 'sa_list_id', 'ret__tarehe', 'ret__code',
-      'sa_list__produ__Interprise_id', 'sa_list__produ__Interprise__name'
+      'sa_list__produ__Interprise_id', 'sa_list__produ__Interprise__name',
+      *_perm_name_fields('ret__By__'),
     )
     tr_rows = transferList.objects.filter(
       toka_id__in=item_ids,
@@ -2292,7 +2330,8 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     ).exclude(kwenda__receive__transfer__tarehe__gt=tt).values(
       'id', 'kwenda__qty', 'kwenda__receive__transfer__tarehe',
       'kwenda__receive__transfer__code', 'toka__Interprise_id',
-      'toka__Interprise__name', 'kwenda__receive__Interprise__name'
+      'toka__Interprise__name', 'kwenda__receive__Interprise__name',
+      *_perm_name_fields('kwenda__receive__transfer__By__'),
     )
     prn_rows = pu_ret.objects.filter(
       pu_list_id__in=item_ids,
@@ -2300,23 +2339,27 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
       ret__tarehe__gte=tf,
     ).exclude(ret__tarehe__gt=tt).values(
       'id', 'idadi', 'ret__tarehe', 'ret__code',
-      'pu_list__Interprise_id', 'pu_list__Interprise__name'
+      'pu_list__Interprise_id', 'pu_list__Interprise__name',
+      *_perm_name_fields('ret__By__'),
     )
 
   for r in pu_rows:
     add_ev(r['manunuzi__manunuzi__tarehe'], 'purchase', qty_in=r['manunuzi__idadi'],
-           code=r['manunuzi__manunuzi__code'], duka=r['Interprise_id'], dukaN=r['Interprise__name'])
+           code=r['manunuzi__manunuzi__code'], duka=r['Interprise_id'], dukaN=r['Interprise__name'],
+           by=_perm_name_from_row(r, 'manunuzi__manunuzi__By__'), by_kind='staff')
 
   for r in pr_rows:
     add_ev(r['produced__production__date'], 'production', qty_in=r['produced__qty'],
-           code=r['produced__production__code'], duka=r['Interprise_id'], dukaN=r['Interprise__name'])
+           code=r['produced__production__code'], duka=r['Interprise_id'], dukaN=r['Interprise__name'],
+           by=_perm_name_from_row(r, 'produced__production__Na__'), by_kind='staff')
 
   for r in rc_rows:
     src = r.get('uhamisho__receive__transfer__Interprise__name') or ''
     add_ev(r['uhamisho__receive__transfer__tarehe'], 'received', qty_in=r['uhamisho__qty'],
            code=r['uhamisho__receive__transfer__code'],
            note=(('← ' + src) if src else ''),
-           duka=r['Interprise_id'], dukaN=r['Interprise__name'])
+           duka=r['Interprise_id'], dukaN=r['Interprise__name'],
+           by=_perm_name_from_row(r, 'uhamisho__receive__By__'), by_kind='staff')
 
   for r in adj_rows:
     kind = 'adjust'
@@ -2344,25 +2387,31 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
       kind = 'used'
     add_ev(r['adjst__date'], kind, qty_in=qty_in, qty_out=qty_out,
            code=r['adjst__code'], note=r['adjst__desc'] or '',
-           duka=r['prod__Interprise_id'], dukaN=r['prod__Interprise__name'])
+           duka=r['prod__Interprise_id'], dukaN=r['prod__Interprise__name'],
+           by=_perm_name_from_row(r, 'adjst__Na__'), by_kind='staff')
 
   for r in sale_rows:
+    by, by_kind = _sale_actor(r)
     add_ev(r['event_at'], 'sale', qty_out=r['idadi'],
-           code=r['mauzo__code'], duka=r['produ__Interprise_id'], dukaN=r['produ__Interprise__name'])
+           code=r['mauzo__code'], duka=r['produ__Interprise_id'], dukaN=r['produ__Interprise__name'],
+           by=by, by_kind=by_kind)
 
   sa_ret_by_line = defaultdict(lambda: Decimal('0'))
   for r in ret_rows:
     sa_ret_by_line[r['sa_list_id']] += Decimal(str(r['idadi'] or 0))
     add_ev(r['ret__tarehe'], 'sale_return', qty_in=r['idadi'],
-           code=r['ret__code'], duka=r['sa_list__produ__Interprise_id'], dukaN=r['sa_list__produ__Interprise__name'])
+           code=r['ret__code'], duka=r['sa_list__produ__Interprise_id'], dukaN=r['sa_list__produ__Interprise__name'],
+           by=_perm_name_from_row(r, 'ret__By__'), by_kind='staff')
 
   for r in sale_rows:
     extra_ret = Decimal(str(r.get('returned') or 0)) - sa_ret_by_line.get(r['id'], Decimal('0'))
     if extra_ret > 0:
+      by, by_kind = _sale_actor(r)
       add_ev(
         r['event_at'], 'sale_return', qty_in=extra_ret,
-        code=r['mauzo__code'], note='waiter',
+        code=r['mauzo__code'],
         duka=r['produ__Interprise_id'], dukaN=r['produ__Interprise__name'],
+        by=by, by_kind=by_kind or 'waiter',
         _ord=1,
       )
 
@@ -2371,11 +2420,13 @@ def item_track_for_period(br, bidhaa_id, tf, tt):
     add_ev(r['kwenda__receive__transfer__tarehe'], 'transfer_out', qty_out=r['kwenda__qty'],
            code=r['kwenda__receive__transfer__code'],
            note=(('→ ' + dest) if dest else ''),
-           duka=r['toka__Interprise_id'], dukaN=r['toka__Interprise__name'])
+           duka=r['toka__Interprise_id'], dukaN=r['toka__Interprise__name'],
+           by=_perm_name_from_row(r, 'kwenda__receive__transfer__By__'), by_kind='staff')
 
   for r in prn_rows:
     add_ev(r['ret__tarehe'], 'pu_return', qty_out=r['idadi'],
-           code=r['ret__code'], duka=r['pu_list__Interprise_id'], dukaN=r['pu_list__Interprise__name'])
+           code=r['ret__code'], duka=r['pu_list__Interprise_id'], dukaN=r['pu_list__Interprise__name'],
+           by=_perm_name_from_row(r, 'ret__By__'), by_kind='staff')
 
   events.sort(key=lambda e: (e['tarehe'] or '', e.get('_ord', 0), e.get('_in', 1), e.get('code') or ''))
 

@@ -66,6 +66,7 @@
         <div class="form-group hidden" id="productQtyWrapper">
           <label class="smallFont mb-1">{% if useri.langSet == 0 %}Idadi zilizotumika{% else %}Quantity used{% endif %} *</label>
           <input type="number" id="productQty" class="form-control form-control-sm" step="0.001" min="0.001">
+          <small class="text-danger hidden" id="productQtyError"></small>
           {% if useri.langSet == 0 %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='productQty' recycle_title='Tumia tena idadi' %}{% else %}{% include 'partials/exp_recycle_btn.html' with recycle_targets='productQty' recycle_title='Reuse quantity' %}{% endif %}
         </div>
 
@@ -270,5 +271,5 @@
     saveGroup: "{% url 'addExpenseGroup' %}",
   };
 </script>
-<script src="{% static 'js/expense_records.js' %}"></script>
+<script src="{% static 'js/expense_records.js' %}?v=exp4"></script>
 {% endblock %}

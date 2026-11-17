@@ -80,7 +80,7 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-sm table-hover latoFont" id="itemTrackTable" style="min-width:720px">
+            <table class="table table-sm table-hover latoFont" id="itemTrackTable" style="min-width:860px">
                 <thead>
                     <tr>
                         <th>{% if useri.langSet == 0 %}Tarehe{% else %}Date{% endif %}</th>
@@ -89,6 +89,7 @@
                         <th class="text-right">{% if useri.langSet == 0 %}Kutoka{% else %}Out{% endif %}</th>
                         <th class="text-right">{% if useri.langSet == 0 %}Salio{% else %}Balance{% endif %}</th>
                         <th>{% if useri.langSet == 0 %}Rejea{% else %}Ref{% endif %}</th>
+                        <th>{% if useri.langSet == 0 %}Mhusika{% else %}Recorded by{% endif %}</th>
                         <th>{% if useri.langSet == 0 %}Tawi{% else %}Branch{% endif %}</th>
                     </tr>
                 </thead>
@@ -104,7 +105,7 @@
 {% endblock %}
 
 {% block billmpya %}
-<script src="{% static 'js/riports/InventoryRiport/itemTrack.js' %}?v=trk2"></script>
+<script src="{% static 'js/riports/InventoryRiport/itemTrack.js' %}?v=trk3"></script>
 {% endblock %}
 
 {% block dash-mapper %}

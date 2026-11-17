@@ -44,6 +44,7 @@ from django.template.defaultfilters import stringfilter
 register = template.Library()
 
 from accaunts.todos import Todos, updateOrder, shift_operation_block_payload
+from stoku.stock_consume import consume_bidhaa_qty, stock_short_messages
 from accaunts.notification_hub import apply_record_admin_flag
 from purchase.expense_receipt_utils import (
     count_pending_mandatory_expense_receipts,
@@ -2221,25 +2222,23 @@ def _next_stock_adj_code(duka):
     return adj_str, adjno
 
 
-def _save_product_expense(todo, matum, stock_item_id, quantity, rec_datetime, maelezo):
+def _save_product_expense(todo, matum, bidhaa_id, quantity, rec_datetime, maelezo, request=None):
     duka = todo['duka']
     cheo = todo['cheo']
-    qty = float(quantity)
+    qty = Decimal(str(quantity or 0))
     if qty <= 0:
         raise ValueError('Quantity must be positive')
-    if not matum.bidhaa_matumizi:
-        raise ValueError('Expense category is not for product usage')
+    if getattr(matum, 'discount', False):
+        raise ValueError('Discount cannot be used as a product expense')
 
     if not ((cheo.stokAdjs and not cheo.viewi) or cheo.user == duka.owner):
         raise ValueError('No permission for stock adjustment')
 
-    pr = bidhaa_stoku.objects.filter(pk=int(stock_item_id), Interprise=duka.id)
-    if not pr.exists():
+    item = bidhaa.objects.filter(pk=int(bidhaa_id)).first()
+    item_name = (item.bidhaa_jina if item else '') or ''
+    used = consume_bidhaa_qty(duka, int(bidhaa_id), qty, request, item_name=item_name)
+    if not used:
         raise ValueError('Stock item not found')
-    prod = pr.last()
-    notsure = bool(getattr(getattr(prod, 'produced', None), 'notsure', False))
-    if float(prod.idadi or 0) < qty and not notsure:
-        raise ValueError('Insufficient stock quantity')
 
     adj_str, adjno = _next_stock_adj_code(duka)
     adj = stokAdjustment()
@@ -2254,34 +2253,12 @@ def _save_product_expense(todo, matum, stock_item_id, quantity, rec_datetime, ma
     adj.code = adj_str
     adj.save()
 
-    if prod.produced:
-        if notsure:
-            productionList.objects.filter(pk=prod.produced.id).update(qty=F('qty') + qty)
-        else:
-            pr.update(idadi=F('idadi') - qty)
-    else:
-        pr.update(idadi=F('idadi') - qty)
-        any_other = bidhaa_stoku.objects.filter(
-            bidhaa=prod.bidhaa, idadi__gt=0, inapacha=True,
-        ).exclude(pk=prod.id)
-        prod.refresh_from_db()
-        if prod.idadi == 0 and any_other.exists():
-            pr.update(inapacha=True)
-            lany = any_other.last()
-            lany.inapacha = False
-            lany.save()
-            updateOrder({
-                'itm': prod,
-                'request': None,
-                'out': True,
-                'other': lany,
-            })
-
-    prc = productChangeRecord()
-    prc.prod = bidhaa_stoku.objects.get(pk=prod.id)
-    prc.qty = qty
-    prc.adjst = adj
-    prc.save()
+    for batch, taken in used:
+        prc = productChangeRecord()
+        prc.prod = batch
+        prc.qty = taken
+        prc.adjst = adj
+        prc.save()
 
     to_comfirm = InterprisePermissions.objects.filter(Interprise=duka.id, Allow=True)
     for tn in to_comfirm:
@@ -2342,15 +2319,39 @@ def getExpData(request):
             workers_qs = Workers.objects.filter(Interprise__owner=duka.owner.id).order_by('jina')
         staff_data = [{'id': w.id, 'name': w.jina, 'tin': w.tin or ''} for w in workers_qs[:500]]
 
-        stock_items = list(
-            bidhaa_stoku.objects.filter(Interprise=duka.id)
-            .annotate(
-                name=F('bidhaa__bidhaa_jina'),
-                uwiano=F('bidhaa__idadi_jum'),
+        stock_rows = (
+            bidhaa_stoku.objects.filter(
+                Interprise=duka.id,
+                service=False,
+                is_grouped_item=False,
             )
-            .values('id', 'name', 'idadi', 'Bei_kununua', 'uwiano')
-            .order_by('name')[:3000]
+            .values(
+                'bidhaa_id',
+                'bidhaa__bidhaa_jina',
+                'bidhaa__namba',
+                'bidhaa__idadi_jum',
+                'bidhaa__vipimo',
+            )
+            .annotate(
+                idadi=Sum('idadi'),
+                Bei_kununua=Avg('Bei_kununua'),
+            )
+            .order_by('bidhaa__bidhaa_jina')[:3000]
         )
+        stock_items = []
+        for row in stock_rows:
+            name = row.get('bidhaa__bidhaa_jina') or ''
+            namba = row.get('bidhaa__namba') or ''
+            if namba:
+                name = f'{name} ({namba})'
+            stock_items.append({
+                'id': row['bidhaa_id'],
+                'name': name,
+                'idadi': float(row.get('idadi') or 0),
+                'Bei_kununua': float(row.get('Bei_kununua') or 0),
+                'uwiano': float(row.get('bidhaa__idadi_jum') or 1),
+                'unit': row.get('bidhaa__vipimo') or '',
+            })
 
         return JsonResponse({
             'success': True,
@@ -2538,17 +2539,17 @@ def _add_expense_batch(request, todo):
                 maelezo = str(exp.get('remarks') or exp.get('desc') or '').strip()
 
                 if category == 'product':
-                    stock_item_id = exp.get('stock_item_id')
+                    bidhaa_id = exp.get('bidhaa_id') or exp.get('stock_item_id')
                     try:
                         quantity = float(exp.get('quantity') or 0)
                     except (TypeError, ValueError):
                         raise ValueError('Invalid quantity')
-                    if not stock_item_id:
+                    if not bidhaa_id:
                         raise ValueError('Stock item required')
                     if quantity <= 0:
                         raise ValueError('Quantity must be positive')
                     _save_product_expense(
-                        todo, matum, stock_item_id, quantity, rec_datetime, maelezo,
+                        todo, matum, bidhaa_id, quantity, rec_datetime, maelezo, request,
                     )
                     continue
 
@@ -2590,6 +2591,13 @@ def _add_expense_batch(request, todo):
     except matumizi.DoesNotExist:
         return JsonResponse({'success': False, 'message_swa': 'Aina ya matumizi haipo', 'message_eng': 'Expense type not found'})
     except ValueError as err:
+        named = stock_short_messages(err)
+        if named:
+            return JsonResponse({
+                'success': False,
+                'message_swa': named.get('message_swa') or named.get('msg_swa'),
+                'message_eng': named.get('message_eng') or named.get('msg_eng'),
+            })
         return JsonResponse({'success': False, 'message_eng': str(err), 'message_swa': str(err)})
     except Exception:
         traceback.print_exc()

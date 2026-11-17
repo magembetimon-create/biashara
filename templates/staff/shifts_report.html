@@ -1438,6 +1438,36 @@
   document.querySelectorAll('.sr-period-range').forEach(function (el) {
     el.textContent = periodText;
   });
+  function isWaiterClearingRow(row) {
+    if (row && row.is_waiter_clearing) return true;
+    var blob = String((row && (row.note || row.source)) || '');
+    return /waiter clearing/i.test(blob);
+  }
+  function waiterNameFromSalesRow(row) {
+    var named = String((row && row.waiter_name) || '').trim();
+    if (named && named.toLowerCase() !== 'unknown') return named;
+    var note = String((row && (row.note || row.source)) || '');
+    var m = note.match(/waiter clearing\s*[-:]\s*([^.]+)/i);
+    return m ? m[1].trim() : '';
+  }
+  function salesInRecordedBy(row) {
+    var who = String((row && (row.recorded_by || row.name)) || '').trim();
+    if (isWaiterClearingRow(row)) {
+      var tag = lang0 ? 'Waiter clearance' : 'Waiter clearance';
+      return who && who !== 'Unknown' ? (tag + ': ' + who) : tag;
+    }
+    return who || '—';
+  }
+  function salesInNote(row) {
+    if (isWaiterClearingRow(row)) {
+      var waiter = waiterNameFromSalesRow(row);
+      if (waiter) {
+        return lang0 ? ('Oda za waiter: ' + waiter) : ('Waiter orders: ' + waiter);
+      }
+      return lang0 ? 'Oda za waiter' : 'Waiter orders';
+    }
+    return String((row && row.note) || '').trim();
+  }
   function cell(text, cls) {
     var td = document.createElement('td');
     if (cls) td.className = cls;
@@ -1835,13 +1865,15 @@
       hr.appendChild(headCell((lang0 ? 'Alilipa' : 'Paid') + curr, 'text-right'));
       hr.appendChild(headCell((lang0 ? 'Iliyobaki' : 'Remaining') + curr, 'text-right'));
     } else if (isPrior || isSalesIn) {
-      colCount = 7;
+      colCount = 9;
       hr.appendChild(headCell('#'));
       hr.appendChild(headCell(lang0 ? 'Tarehe ya malipo' : 'Payment time', 'text-left'));
       hr.appendChild(headCell(lang0 ? 'Ankara' : 'Invoice', 'text-left'));
       hr.appendChild(headCell(lang0 ? 'Mteja' : 'Customer', 'text-left'));
       hr.appendChild(headCell(lang0 ? 'Tarehe ya mauzo' : 'Sale date', 'text-left'));
       hr.appendChild(headCell(lang0 ? 'Akaunti' : 'Account', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Aliyerekodi' : 'Recorded by', 'text-left'));
+      hr.appendChild(headCell(lang0 ? 'Maelezo' : 'Description', 'text-left'));
       hr.appendChild(headCell((lang0 ? 'Kiasi' : 'Amount') + curr, 'text-right'));
     } else if (isBills) {
       colCount = 7;
@@ -2053,6 +2085,8 @@
         tr.appendChild(cell(row.customer || '—', 'text-left'));
         tr.appendChild(cell(fmtWhen(row.sale_at), 'text-left'));
         tr.appendChild(cell(row.account || '—', 'text-left'));
+        tr.appendChild(cell(salesInRecordedBy(row), 'text-left'));
+        tr.appendChild(noteCell(salesInNote(row)));
         tr.appendChild(cell(fmtAmt(row.amount), 'text-right'));
         body.appendChild(tr);
       });

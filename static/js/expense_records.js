@@ -30,16 +30,76 @@
     return unit * Number(qty || 0);
   }
 
+  function selectedProductStock() {
+    const id = String($prodVal.val() || '');
+    if (!id) return null;
+    return stockItems.find((x) => String(x.id) === id) || null;
+  }
+
+  function queuedQtyForBidhaa(bidhaaId) {
+    const id = String(bidhaaId || '');
+    if (!id) return 0;
+    return expenses.reduce((sum, row) => {
+      const payload = row.payload || {};
+      if (String(payload.bidhaa_id || payload.stock_item_id || '') !== id) return sum;
+      return sum + (Number(payload.quantity) || 0);
+    }, 0);
+  }
+
+  function availableProductQty(it) {
+    if (!it) return 0;
+    const have = Number(it.idadi) || 0;
+    const left = have - queuedQtyForBidhaa(it.id);
+    return left > 0 ? left : 0;
+  }
+
+  function productQtyOverflowMessage(entered, available, unit) {
+    const u = unit ? ` ${unit}` : '';
+    return lang(
+      `Idadi uliyojaza (${fmt(entered)}) ni kubwa kuliko idadi iliyopo stoku (${fmt(available)}${u}).`,
+      `The quantity you entered (${fmt(entered)}) is greater than available stock (${fmt(available)}${u}).`
+    );
+  }
+
+  function syncProductQtyLimit() {
+    const it = selectedProductStock();
+    const $err = $('#productQtyError');
+    const available = availableProductQty(it);
+    if (it) {
+      $prodQty.attr('max', available);
+    } else {
+      $prodQty.removeAttr('max');
+    }
+    const raw = $prodQty.val();
+    const quantity = Number(raw);
+    const over = raw !== '' && Number.isFinite(quantity) && quantity > available + 0.0001;
+    if (over) {
+      $prodQty.addClass('is-invalid');
+      $err.text(productQtyOverflowMessage(quantity, available, it && it.unit)).removeClass('hidden');
+      return false;
+    }
+    $prodQty.removeClass('is-invalid');
+    $err.text('').addClass('hidden');
+    return true;
+  }
+
   function updateProductStockHint() {
-    const id = $prodVal.val();
-    const it = stockItems.find((x) => String(x.id) === String(id));
+    const it = selectedProductStock();
     const $hint = $('#productStockHint');
     if (!it) {
       $hint.text('');
+      syncProductQtyLimit();
       return;
     }
     const st = lang('Stoku', 'Stock');
-    $hint.text(`${st}: ${fmt(it.idadi)}`);
+    const unit = it.unit ? ` ${it.unit}` : '';
+    const available = availableProductQty(it);
+    $hint.text(`${st}: ${fmt(it.idadi)}${unit}` + (
+      available < Number(it.idadi)
+        ? ` · ${lang('Iliyobaki kwenye orodha hii', 'Left on this list')}: ${fmt(available)}${unit}`
+        : ''
+    ));
+    syncProductQtyLimit();
   }
 
   function fmt(n) {
@@ -122,6 +182,19 @@
         itemsByCat.supplies.push(item);
       }
     });
+    // Product usage is a source of cost, not its own P&L bucket: list every
+    // named expense (except customer discounts) so stock can be charged to posho, supplies, bills, etc.
+    const productPool = [];
+    const seen = new Set();
+    ['supplies', 'allowance', 'bills', 'product'].forEach((k) => {
+      (itemsByCat[k] || []).forEach((it) => {
+        if (seen.has(it.id)) return;
+        seen.add(it.id);
+        productPool.push(it);
+      });
+    });
+    productPool.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+    itemsByCat.product = productPool;
   }
 
   function fillAccounts() {
@@ -246,6 +319,10 @@
     setupAutocomplete($item, $itemList, $itemVal, items, applyBillFixed);
     if (isProduct) {
       setupAutocomplete($prodItem, $prodList, $prodVal, stockItems, () => updateProductStockHint());
+      updateProductStockHint();
+    } else {
+      $('#productQtyError').text('').addClass('hidden');
+      $prodQty.removeClass('is-invalid');
     }
   }
 
@@ -317,11 +394,19 @@
         return null;
       }
       const stockId = $prodVal.val();
-      const stockRow = stockItems.find((x) => String(x.id) === String(stockId));
+      const stockRow = selectedProductStock();
+      const available = availableProductQty(stockRow);
+      if (!stockRow || quantity > available + 0.0001) {
+        const msg = productQtyOverflowMessage(quantity, available, stockRow && stockRow.unit);
+        syncProductQtyLimit();
+        toastr.warning(msg);
+        return null;
+      }
       const amount = productLineCost(stockId, quantity);
       const payload = {
         category: 'product',
         expense_group_id: $itemVal.val(),
+        bidhaa_id: stockId,
         stock_item_id: stockId,
         quantity,
         remarks: ($desc.val() || '').trim(),
@@ -441,6 +526,7 @@
           idadi: s.idadi,
           Bei_kununua: s.Bei_kununua,
           uwiano: s.uwiano,
+          unit: s.unit || '',
         }));
         staffMembers = (resp.staff || []).map((s) => ({ id: String(s.id), name: s.name, tin: s.tin }));
         refreshTaxGroupSelect(resp.tax_groups || []);
@@ -479,8 +565,11 @@
       $prodVal.val('');
       $prodQty.val('');
       $('#productStockHint').text('');
+      $('#productQtyError').text('').addClass('hidden');
+      $prodQty.removeClass('is-invalid');
       toggleFields();
     });
+    $prodQty.on('input.expQty change.expQty', syncProductQtyLimit);
     $('#recipientType').on('change', updateRecipient);
 
     $('#addBtn').on('click', () => {
@@ -500,6 +589,7 @@
       const i = Number($(this).data('i'));
       expenses.splice(i, 1);
       renderQueue();
+      updateProductStockHint();
     });
 
     $('#expenseForm').on('submit', (e) => {

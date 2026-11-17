@@ -23,9 +23,9 @@
         </h5>
         <div class="text-muted small">
           {% if useri.langSet == 0 %}
-            Oda ambazo bado hazijaclear kwa cashier au sales.
+            Oda ambazo bado hazijaclear 100%. Kiasi ni deni (kinachodaiwa), si jumla ya invoice.
           {% else %}
-            Waiter orders that are not yet cleared by cashier or sales.
+            Orders not yet fully cleared. Amounts are what is still owed, not the full invoice.
           {% endif %}
         </div>
       </div>
@@ -61,7 +61,7 @@
       </div>
       <div class="col-md-4 mb-2">
         <div class="border rounded p-3 bg-white h-100">
-          <div class="text-muted small">{% if useri.langSet == 0 %}Jumla ya pesa{% else %}Total amount{% endif %}</div>
+          <div class="text-muted small">{% if useri.langSet == 0 %}Kinachodaiwa{% else %}Amount owed{% endif %}</div>
           <div class="h4 mb-0">{{ duka.currencii }} {{ waiter_summary.totals.amount|floatformat:0|intcomma }}</div>
         </div>
       </div>
@@ -86,7 +86,7 @@
                 <th scope="col" class="text-left">{% if useri.langSet == 0 %}Muhudumu{% else %}Waiter{% endif %}</th>
                 <th scope="col" class="text-left">{% if useri.langSet == 0 %}Cheo{% else %}Role{% endif %}</th>
                 <th scope="col" class="text-left">{% if useri.langSet == 0 %}Idadi ya oda{% else %}Orders{% endif %}</th>
-                <th scope="col" class="text-left">{% if useri.langSet == 0 %}Jumla ya pesa{% else %}Total amount{% endif %}</th>
+                <th scope="col" class="text-left">{% if useri.langSet == 0 %}Kinachodaiwa{% else %}Amount owed{% endif %}</th>
               </tr>
             </thead>
             <tbody id="waiterSummaryTbody">
@@ -146,7 +146,7 @@
             <div class="border rounded p-2 bg-white h-100">
               <div class="d-flex justify-content-between align-items-center">
                 <div>
-                  <div class="text-muted small">{% if useri.langSet == 0 %}Jumla ya hela{% else %}Total amount{% endif %}</div>
+                  <div class="text-muted small">{% if useri.langSet == 0 %}Kinachodaiwa{% else %}Amount owed{% endif %}</div>
                   <div class="h5 mb-0">{{ duka.currencii }} {{ selected_waiter_orders_total_amount|floatformat:0|intcomma }}</div>
                 </div>
                 {% if can_clear_waiter_payments %}
@@ -180,7 +180,7 @@
                 <th class="text-left" >{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}</th>
                 <th class="text-left" >{% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}</th>
                 <th class="text-left" >{% if useri.langSet == 0 %}Muda{% else %}Time{% endif %}</th>
-                <th class="text-left">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Kinachodaiwa{% else %}Amount owed{% endif %}</th>
               </tr>
             </thead>
             <tbody id="selectedWaiterOrdersTbody">
@@ -451,7 +451,20 @@
 
     function formatAmountInput(inputEl) {
       if (!inputEl) return;
+      var start = inputEl.selectionStart;
+      var before = inputEl.value;
       inputEl.value = formatAmountValue(inputEl.value);
+      if (typeof start === 'number') {
+        var pos = Math.max(0, start + (inputEl.value.length - before.length));
+        try { inputEl.setSelectionRange(pos, pos); } catch (e) {}
+      }
+    }
+
+    function resolveClearAmount(inputEl) {
+      if (!inputEl) return 0;
+      var raw = String(inputEl.value || '').trim();
+      if (raw) return parseAmountValue(raw);
+      return parseAmountValue(inputEl.getAttribute('data-default-amount') || inputEl.placeholder || 0);
     }
 
     function renderClearingRows(rows) {
@@ -484,7 +497,7 @@
           html += '<td>' + accountName + '</td>';
         }
 
-        html += '<td class="text-right" style="max-width:180px;"><input type="text" inputmode="decimal" class="form-control form-control-sm text-right waiter-clear-amount-input" data-account="' + accountId + '" value="' + formatAmountValue(amount) + '" placeholder="Amount"></td>';
+        html += '<td class="text-right" style="max-width:180px;"><input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm text-right waiter-clear-amount-input" data-account="' + accountId + '" data-default-amount="' + amount + '" value="" placeholder="' + formatAmountValue(amount) + '"></td>';
 
         html += '<td class="text-center"><input type="checkbox" class="waiter-clear-select" data-account="' + accountId + '"></td>';
         html += '</tr>';
@@ -508,7 +521,7 @@
         var aid = Number(cb.getAttribute('data-account') || 0);
         if (!aid) return;
         var input = clearAccountsBody.querySelector('.waiter-clear-amount-input[data-account="' + aid + '"]');
-        var amt = parseAmountValue((input && input.value) || 0);
+        var amt = resolveClearAmount(input);
         if (amt > 0) total += amt;
       });
       waiterSelectedTotalText.textContent = '{{ duka.currencii }} ' + total.toLocaleString();
@@ -566,7 +579,7 @@
       checked.forEach(function (cb) {
         var aid = Number(cb.getAttribute('data-account') || 0);
         var input = clearAccountsBody.querySelector('.waiter-clear-amount-input[data-account="' + aid + '"]');
-        var amt = parseAmountValue((input && input.value) || 0);
+        var amt = resolveClearAmount(input);
         if (aid && amt > 0) {
           payments.push({ account_id: aid, amount: amt });
           finalAmount += amt;
@@ -581,6 +594,9 @@
       var ok = confirm('{% if useri.langSet == 0 %}Una uhakika unataka kuclear malipo ya waiter huyu?{% else %}Are you sure you want to clear this waiter payments?{% endif %}');
       if (!ok) return;
 
+      clearModal.modal('hide');
+      $('#loadMe').modal('show');
+
       fetch('/mauzo/waiter_summary_clear_waiter_payments', {
         method: 'POST',
         headers: {
@@ -593,13 +609,20 @@
         .then(function (res) { return res.json(); })
         .then(function (data) {
           if (data && data.success) {
-            clearModal.modal('hide');
+            $('#loadMe').modal('hide');
+            if (typeof hideLoading === 'function') hideLoading();
             window.location.reload();
           } else {
+            $('#loadMe').modal('hide');
+            if (typeof hideLoading === 'function') hideLoading();
+            clearModal.modal('show');
             alert((data && data.msg) ? data.msg : '{% if useri.langSet == 0 %}Imeshindikana kuclear malipo.{% else %}Failed to clear payments.{% endif %}');
           }
         })
         .catch(function () {
+          $('#loadMe').modal('hide');
+          if (typeof hideLoading === 'function') hideLoading();
+          clearModal.modal('show');
           alert('{% if useri.langSet == 0 %}Imeshindikana kuclear malipo.{% else %}Failed to clear payments.{% endif %}');
         });
     }
@@ -672,7 +695,7 @@
       canDeleteItems = !!data.can_delete;
       selectedOrderId = Number(order.id || selectedOrderId);
       modalTitle.textContent = '{% if useri.langSet == 0 %}Order{% else %}Order{% endif %} ' + (order.code || '-');
-      modalMeta.textContent = '{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}: ' + (order.table || '-') + ' | {% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}: ' + (order.place || '-') + ' | {% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}: ' + currencyCode + ' ' + Number(order.amount || 0).toLocaleString();
+      modalMeta.textContent = '{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}: ' + (order.table || '-') + ' | {% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}: ' + (order.place || '-') + ' | {% if useri.langSet == 0 %}Kinachodaiwa{% else %}Amount owed{% endif %}: ' + currencyCode + ' ' + Number(order.amount || 0).toLocaleString();
       modalContent.innerHTML = renderOrderItems(data.items || [], currencyCode, canDeleteItems);
       deleteBtn.style.display = canDeleteItems ? '' : 'none';
       hideReturnPanel();

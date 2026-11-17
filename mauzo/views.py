@@ -3753,6 +3753,9 @@ def _waiter_summary_sale_payload(sale, can_delete=False):
       except Exception:
             table_name = '-'
             place_name = '-'
+      items = _waiter_summary_item_rows(sale)
+      remaining_total = sum((Decimal(str(it.get('total') or 0)) for it in items), Decimal('0'))
+      owed = _sale_owed_amount(remaining_total, sale.ilolipwa or 0)
       return {
             'success': True,
             'can_delete': bool(can_delete),
@@ -3763,9 +3766,11 @@ def _waiter_summary_sale_payload(sale, can_delete=False):
                   'table': table_name,
                   'place': place_name,
                   'date': sale.tarehe.strftime('%d/%m/%Y %H:%M') if sale.tarehe else '',
-                  'amount': float(sale.amount or 0),
+                  'amount': float(owed),
+                  'invoice_amount': float(remaining_total),
+                  'paid': float(sale.ilolipwa or 0),
             },
-            'items': _waiter_summary_item_rows(sale),
+            'items': items,
       }
 
 
@@ -3984,6 +3989,11 @@ def _sale_remaining_amount_map(sale_ids):
       return amounts
 
 
+def _sale_owed_amount(remaining, paid):
+      owed = Decimal(str(remaining or 0)) - Decimal(str(paid or 0))
+      return owed if owed > 0 else Decimal('0')
+
+
 def _waiter_uncleared_sales_qs(duka):
       return mauzoni.objects.filter(
             Interprise=duka,
@@ -3998,6 +4008,7 @@ def _waiter_orders_summary_data(duka):
       base_qs = _waiter_uncleared_sales_qs(duka)
       sale_rows = list(base_qs.values(
             'id',
+            'ilolipwa',
             'waiter_order',
             'waiter_order__cheo',
             'waiter_order__fanyakazi__jina',
@@ -4009,6 +4020,9 @@ def _waiter_orders_summary_data(duka):
 
       grouped = {}
       for row in sale_rows:
+            owed = _sale_owed_amount(remaining_map.get(row['id'], Decimal('0')), row.get('ilolipwa') or 0)
+            if owed <= 0:
+                  continue
             key = row.get('waiter_order')
             if key not in grouped:
                   grouped[key] = {
@@ -4022,7 +4036,7 @@ def _waiter_orders_summary_data(duka):
                         'total_amount': Decimal('0'),
                   }
             grouped[key]['orders_count'] += 1
-            grouped[key]['total_amount'] += remaining_map.get(row['id'], Decimal('0'))
+            grouped[key]['total_amount'] += owed
 
       rows = []
       total_amount = 0
@@ -4137,23 +4151,25 @@ def waiter_orders_summary(request):
                               table_name = '-'
                               place_name = '-'
 
-                        row_amount = float(remaining_map.get(od.id, Decimal('0')))
+                        owed = _sale_owed_amount(remaining_map.get(od.id, Decimal('0')), od.ilolipwa or 0)
+                        if owed <= 0:
+                              continue
+                        row_amount = float(owed)
                         selected_waiter_orders_total_amount += row_amount
                         selected_waiter_orders.append({
                               'id': od.id,
                               'code': od.code,
                               'date': od.tarehe,
                               'amount': row_amount,
+                              'invoice_amount': float(remaining_map.get(od.id, Decimal('0'))),
+                              'paid': float(od.ilolipwa or 0),
                               'table': table_name,
                               'place': place_name,
                         })
 
-                  selected_sale_ids = [x.id for x in selected_qs]
+                  selected_sale_ids = [x['id'] for x in selected_waiter_orders]
                   
-                  # Calculate remaining debt per sale
-                  total_remaining_debt = float(selected_qs.aggregate(
-                        debt=Sum(F('amount') - F('ilolipwa'), output_field=DecimalField())
-                  ).get('debt') or 0)
+                  total_remaining_debt = selected_waiter_orders_total_amount
                   
                   # Get accounts used for previous non-cash payments
                   non_cash_groups = list(
@@ -4558,14 +4574,11 @@ def waiter_summary_clear_waiter_payments(request):
             return JsonResponse({'success': False, 'msg': 'No uncleared waiter orders found'})
 
       selected_sale_ids = list(selected_qs.values_list('id', flat=True))
-      total_orders_amount = float(selected_qs.aggregate(s=Sum('amount')).get('s') or 0)
-      owed_amount = Decimal(str(
-            selected_qs.aggregate(
-                  s=Sum(F('amount') - F('ilolipwa'), output_field=DecimalField())
-            ).get('s') or 0
-      ))
-      if owed_amount < 0:
-            owed_amount = Decimal('0')
+      remaining_map = _sale_remaining_amount_map(selected_sale_ids)
+      owed_amount = Decimal('0')
+      for od in selected_qs:
+            owed_amount += _sale_owed_amount(remaining_map.get(od.id, Decimal('0')), od.ilolipwa or 0)
+      total_orders_amount = float(owed_amount)
 
       non_cash_recorded_total = float(
             waiterPayments.objects.filter(
@@ -4676,16 +4689,18 @@ def waiter_summary_clear_waiter_payments(request):
             has_service = False
             has_goods = False
             for od in selected_qs:
-                  order_amount = float(od.amount or 0)
+                  order_owed = float(_sale_owed_amount(remaining_map.get(od.id, Decimal('0')), od.ilolipwa or 0))
+                  if order_owed <= 0:
+                        continue
                   if paidAmo <= 0:
                         break
 
-                  if paidAmo >= order_amount:
-                        order_paid = order_amount
+                  if paidAmo >= order_owed:
+                        order_paid = order_owed
                         new_full_paid = True
                         new_by_id = cheo.id if cheo else None
                         new_clear_id = clear_rec.id
-                        paidAmo = float(paidAmo - order_amount)
+                        paidAmo = float(paidAmo - order_owed)
                   else:
                         order_paid = float(paidAmo)
                         new_full_paid = False
@@ -4702,7 +4717,8 @@ def waiter_summary_clear_waiter_payments(request):
                   )
 
                   clearOda = mauzoni.objects.get(pk=od.id)
-                  clearOda.By = None if clearOda.amount > clearOda.ilolipwa else cheo
+                  remaining_after = remaining_map.get(od.id, Decimal('0'))
+                  clearOda.By = None if _sale_owed_amount(remaining_after, clearOda.ilolipwa or 0) > 0 else cheo
                   clearOda.save()
 
                   if order_paid > 0:
@@ -4712,7 +4728,7 @@ def waiter_summary_clear_waiter_payments(request):
                         else:
                               has_goods = True
 
-                  if paidAmo <= 0 and order_paid < order_amount:
+                  if paidAmo <= 0 and order_paid < order_owed:
                         break
 
             maelezo = f'Waiter clearing - {waiter_name}. Orders total: {total_orders_amount}'

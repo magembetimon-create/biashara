@@ -41,6 +41,15 @@ $(document).ready(function () {
   })
 })
 
+function actorLabel(ev) {
+  const name = (ev.by || '').trim()
+  if (ev.by_kind === 'waiter') {
+    const tag = lang('Iliuzwa na waiter', 'Sold by waiter')
+    return name ? (tag + ': ' + name) : tag
+  }
+  return name
+}
+
 function kindLabel(kind) {
   const map = {
     purchase: lang('Manunuzi', 'Purchase'),
@@ -152,7 +161,7 @@ function renderItemTrack(resp, from, to) {
   `)
 
   if (!events.length) {
-    $('#itemTrackBody').html(`<tr><td colspan="7" class="text-muted">${lang('Hakuna miamala kwenye muda huu','No movements in this period')}</td></tr>`)
+    $('#itemTrackBody').html(`<tr><td colspan="8" class="text-muted">${lang('Hakuna miamala kwenye muda huu','No movements in this period')}</td></tr>`)
     return
   }
 
@@ -163,6 +172,7 @@ function renderItemTrack(resp, from, to) {
       <td></td>
       <td></td>
       <td class="text-right weight600">${floatValue(resp.open_qty)}</td>
+      <td></td>
       <td></td>
       <td></td>
     </tr>`
@@ -177,6 +187,7 @@ function renderItemTrack(resp, from, to) {
         <td class="text-right" style="color:brown">${qtyCell(ev.qty_out)}</td>
         <td class="text-right">${floatValue(ev.balance)}</td>
         <td>${ev.code || ''}</td>
+        <td class="noWordCut">${actorLabel(ev)}</td>
         <td>${ev.dukaN || ''}</td>
       </tr>`
   })
@@ -188,6 +199,7 @@ function renderItemTrack(resp, from, to) {
       <td></td>
       <td></td>
       <td class="text-right">${floatValue(resp.close_qty)}</td>
+      <td></td>
       <td></td>
       <td></td>
     </tr>`
