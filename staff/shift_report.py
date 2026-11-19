@@ -596,6 +596,66 @@ def expected_cash_from_flows(opening, flows):
     return _dec(opening) + _dec(flows.get('cash_in')) - _dec(flows.get('cash_out'))
 
 
+def _shift_payment_flows_by_window(duka, windows):
+    """One wekaCash scan for all shift windows (avoids replaying waiter FIFO per shift)."""
+    empty = {
+        'expenses': Decimal('0'),
+        'deposits': Decimal('0'),
+        'cash_in': Decimal('0'),
+        'cash_out': Decimal('0'),
+        'sales_cash_in': Decimal('0'),
+        'prior_cash_in': Decimal('0'),
+        'other_cash_in': Decimal('0'),
+    }
+    result = {sid: dict(empty) for sid, _, _ in windows}
+    if not windows:
+        return result
+    expenses_map = _amounts_in_windows(
+        windows, toaCash.objects.filter(Interprise=duka.id, matumizi__isnull=False),
+    )
+    deposits_map = _amounts_in_windows(
+        windows, toaCash.objects.filter(Interprise=duka.id, deposit_to__isnull=False),
+    )
+    cash_out_map = _amounts_in_windows(
+        windows, toaCash.objects.filter(Interprise=duka.id, Akaunt__aina__iexact='Cash'),
+    )
+    for sid, bucket in result.items():
+        bucket['expenses'] = _dec(expenses_map.get(sid))
+        bucket['deposits'] = _dec(deposits_map.get(sid))
+        bucket['cash_out'] = _dec(cash_out_map.get(sid))
+    range_start = min(start for _, start, _ in windows)
+    range_end = max(end for _, _, end in windows)
+    win_by_id = {sid: (start, end) for sid, start, end in windows}
+    alloc_by_clearing = _build_waiter_clearing_alloc(duka)
+    for row in wekaCash.objects.filter(
+        Interprise=duka.id,
+        Akaunt__aina__iexact='Cash',
+        tarehe__gte=range_start,
+        tarehe__lte=range_end,
+    ).select_related('invo', 'from_waiter_payments').prefetch_related(
+        _weka_sales_prefetch(),
+    ).annotate(sale_at=sale_event_at('invo__')).order_by('tarehe', 'id'):
+        sid = _event_shift_id(windows, row.tarehe)
+        if sid is None:
+            continue
+        bucket = result[sid]
+        wstart, wend = win_by_id[sid]
+        if _weka_is_internal(row):
+            bucket['cash_in'] += _dec(row.Amount)
+            continue
+        amt = _dec(row.Amount)
+        bucket['cash_in'] += amt
+        if not _weka_is_sales(row):
+            bucket['other_cash_in'] += amt
+            continue
+        current_amt, prior_amt = _weka_cash_window_split(
+            row, wstart, wend, alloc_by_clearing=alloc_by_clearing,
+        )
+        bucket['sales_cash_in'] += current_amt
+        bucket['prior_cash_in'] += prior_amt
+    return result
+
+
 def build_shifts_period_report(duka, shifts):
     now = timezone.now()
     windows = _shift_time_windows(shifts, now, duka=duka)
@@ -609,7 +669,7 @@ def build_shifts_period_report(duka, shifts):
         windows,
         toaCash.objects.filter(Interprise=duka.id, deposit_to__isnull=False),
     )
-    win_by_id = {sid: (start, end) for sid, start, end in windows}
+    flows_map = _shift_payment_flows_by_window(duka, windows)
 
     rows = []
     totals = {
@@ -633,8 +693,7 @@ def build_shifts_period_report(duka, shifts):
         paid = _dec(paid_map.get(shift.id, 0))
         expenses = _dec(expenses_map.get(shift.id, 0))
         deposits = _dec(deposits_map.get(shift.id, 0))
-        wstart, wend = win_by_id.get(shift.id, (shift.starts_at, shift.ends_at or now))
-        flows = shift_payment_flows(duka, wstart, wend)
+        flows = flows_map.get(shift.id) or {}
         cash_in = _dec(flows.get('sales_cash_in'))
         cash_out = _dec(flows.get('cash_out'))
         opening = _dec(shift.opening_cash)
@@ -2012,6 +2071,9 @@ def _weka_related_sales(row):
 
 def _build_waiter_clearing_alloc(duka):
     """Replay waiter-clearing FIFO (same order as /mauzo clear) -> {clearing_id: [(sale, take), ...]}."""
+    cached = getattr(duka, '_waiter_clearing_alloc_cache', None)
+    if cached is not None:
+        return cached
     duka_id = getattr(duka, 'id', duka)
     sales = list(
         mauzoni.objects.filter(
@@ -2046,6 +2108,10 @@ def _build_waiter_clearing_alloc(duka):
                 paid[sale.id] += take
                 remaining -= take
         out[clr.id] = alloc
+    try:
+        duka._waiter_clearing_alloc_cache = out
+    except Exception:
+        pass
     return out
 
 
@@ -2457,9 +2523,10 @@ def _stock_qty_map_at(duka, at_dt, closing=False, duka_ids=None):
     qty_map = defaultdict(lambda: Decimal('0'))
     if not at_dt:
         return qty_map
+    shop_ids = _shop_ids(duka, duka_ids)
     items = list(
         bidhaa_stoku.objects.filter(
-            Interprise_id__in=_shop_ids(duka, duka_ids),
+            Interprise_id__in=shop_ids,
             is_grouped_item=False,
             service=False,
         ).values(
@@ -2473,91 +2540,101 @@ def _stock_qty_map_at(duka, at_dt, closing=False, duka_ids=None):
             'produced__qty',
         )
     )
-    ids = [row['id'] for row in items]
+    if not items:
+        return qty_map
+    id_set = {row['id'] for row in items}
     delta = defaultdict(lambda: Decimal('0'))
     when_kw = 'gt'
 
     def _after(field):
         return {f'{field}__{when_kw}': at_dt}
 
-    if ids:
-        sales = mauzoList.objects.filter(
-            produ_id__in=ids,
-            mauzo__service=False,
-            mauzo__order=False,
-            mauzo__cart=False,
-            mauzo__ignore=False,
-        ).annotate(event_at=sale_event_at('mauzo__')).filter(
-            **_after('event_at'),
-        ).values_list('produ_id', 'idadi')
-        for pid, qty in sales:
+    sales = mauzoList.objects.filter(
+        mauzo__Interprise_id__in=shop_ids,
+        mauzo__service=False,
+        mauzo__order=False,
+        mauzo__cart=False,
+        mauzo__ignore=False,
+    ).annotate(event_at=sale_event_at('mauzo__')).filter(
+        **_after('event_at'),
+    ).values_list('produ_id', 'idadi')
+    for pid, qty in sales:
+        if pid in id_set:
             delta[pid] += _dec_qty(qty)
 
-        returns = sa_ret.objects.filter(
-            sa_list__produ_id__in=ids,
-            **_after('ret__tarehe'),
-        ).values_list('sa_list__produ_id', 'idadi')
-        for pid, qty in returns:
+    returns = sa_ret.objects.filter(
+        sa_list__produ__Interprise_id__in=shop_ids,
+        **_after('ret__tarehe'),
+    ).values_list('sa_list__produ_id', 'idadi')
+    for pid, qty in returns:
+        if pid in id_set:
             delta[pid] -= _dec_qty(qty)
 
-        transfers = transferList.objects.filter(
-            toka_id__in=ids,
-            kwenda__receive__transfer__order=False,
-            **_after('kwenda__receive__transfer__tarehe'),
-        ).values_list('toka_id', 'kwenda__qty')
-        for pid, qty in transfers:
+    transfers = transferList.objects.filter(
+        toka__Interprise_id__in=shop_ids,
+        kwenda__receive__transfer__order=False,
+        **_after('kwenda__receive__transfer__tarehe'),
+    ).values_list('toka_id', 'kwenda__qty')
+    for pid, qty in transfers:
+        if pid in id_set:
             delta[pid] += _dec_qty(qty)
 
-        reductions = productChangeRecord.objects.filter(
-            prod_id__in=ids,
-            adjst__Ongezwa=False,
-            **_after('adjst__date'),
-        ).filter(
-            Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True)
-            | Q(adjst__expire=True) | Q(adjst__others=True) | Q(adjst__full_Return=True)
-        ).values_list('prod_id', 'qty')
-        for pid, qty in reductions:
+    reductions = productChangeRecord.objects.filter(
+        adjst__Interprise_id__in=shop_ids,
+        adjst__Ongezwa=False,
+        **_after('adjst__date'),
+    ).filter(
+        Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True)
+        | Q(adjst__expire=True) | Q(adjst__others=True) | Q(adjst__full_Return=True)
+    ).values_list('prod_id', 'qty')
+    for pid, qty in reductions:
+        if pid in id_set:
             delta[pid] += _dec_qty(qty)
 
-        added = productChangeRecord.objects.filter(
-            prod_id__in=ids,
-            adjst__Ongezwa=True,
-            **_after('adjst__date'),
-        ).values_list('prod_id', 'qty')
-        for pid, qty in added:
+    added = productChangeRecord.objects.filter(
+        adjst__Interprise_id__in=shop_ids,
+        adjst__Ongezwa=True,
+        **_after('adjst__date'),
+    ).values_list('prod_id', 'qty')
+    for pid, qty in added:
+        if pid in id_set:
             delta[pid] -= _dec_qty(qty)
 
-        registered = productChangeRecord.objects.filter(
-            prod_id__in=ids,
-            adjst__registered=True,
-            **_after('adjst__date'),
-        ).values_list('prod_id', 'qty')
-        for pid, qty in registered:
+    registered = productChangeRecord.objects.filter(
+        adjst__Interprise_id__in=shop_ids,
+        adjst__registered=True,
+        **_after('adjst__date'),
+    ).values_list('prod_id', 'qty')
+    for pid, qty in registered:
+        if pid in id_set:
             delta[pid] -= _dec_qty(qty)
 
-        pu_returns = pu_ret.objects.filter(
-            pu_list_id__in=ids,
-            **_after('ret__tarehe'),
-        ).values_list('pu_list_id', 'idadi')
-        for pid, qty in pu_returns:
+    pu_returns = pu_ret.objects.filter(
+        pu_list__Interprise_id__in=shop_ids,
+        **_after('ret__tarehe'),
+    ).values_list('pu_list_id', 'idadi')
+    for pid, qty in pu_returns:
+        if pid in id_set:
             delta[pid] += _dec_qty(qty)
 
-        inbound = bidhaa_stoku.objects.filter(
-            pk__in=ids,
-            uhamisho__isnull=False,
-            uhamisho__receive__transfer__order=False,
-            **_after('uhamisho__receive__transfer__tarehe'),
-        ).values_list('id', 'uhamisho__qty')
-        for pid, qty in inbound:
+    inbound = bidhaa_stoku.objects.filter(
+        Interprise_id__in=shop_ids,
+        uhamisho__isnull=False,
+        uhamisho__receive__transfer__order=False,
+        **_after('uhamisho__receive__transfer__tarehe'),
+    ).values_list('id', 'uhamisho__qty')
+    for pid, qty in inbound:
+        if pid in id_set:
             delta[pid] -= _dec_qty(qty)
 
-        purchased = bidhaa_stoku.objects.filter(
-            pk__in=ids,
-            manunuzi__isnull=False,
-            manunuzi__manunuzi__order=False,
-            **_after('manunuzi__manunuzi__tarehe'),
-        ).values_list('id', 'manunuzi__idadi', 'manunuzi__rudi')
-        for pid, qty, rudi in purchased:
+    purchased = bidhaa_stoku.objects.filter(
+        Interprise_id__in=shop_ids,
+        manunuzi__isnull=False,
+        manunuzi__manunuzi__order=False,
+        **_after('manunuzi__manunuzi__tarehe'),
+    ).values_list('id', 'manunuzi__idadi', 'manunuzi__rudi')
+    for pid, qty, rudi in purchased:
+        if pid in id_set:
             delta[pid] -= _dec_qty(qty) - _dec_qty(rudi)
 
     for row in items:
@@ -2570,7 +2647,8 @@ def _stock_qty_map_at(duka, at_dt, closing=False, duka_ids=None):
         if origin is not None and (origin > at_dt if closing else origin >= at_dt):
             continue
         q = _dec_qty(row['idadi']) + delta.get(row['id'], Decimal('0'))
-        qty_map[row['id']] = q
+        if q or row['id'] in delta:
+            qty_map[row['id']] = q
     return qty_map
 
 
@@ -2886,23 +2964,25 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
             'ref': f'PU-{bill.code}' if bill and bill.code else '',
         })
 
-    live_items = list(
-        bidhaa_stoku.objects.filter(
-            Interprise_id__in=shop_ids,
-            is_grouped_item=False,
-        ).select_related('bidhaa__bidhaa_aina').order_by('bidhaa__bidhaa_jina')
-    )
-    items_by_id = {itm.id: itm for itm in live_items}
-
-    relevant_ids = set(items_by_id.keys()) | set(before_qty_map.keys()) | set(closing_qty_map.keys())
+    relevant_ids = set(before_qty_map.keys()) | set(closing_qty_map.keys())
     relevant_ids |= set(sold_qty_map.keys()) | set(added_qty_map.keys()) | set(reduction_qty_map.keys())
     relevant_ids |= set(returned_qty_map.keys())
     relevant_ids |= set(transferred_qty_map.keys()) | set(received_qty_map.keys())
     relevant_ids |= set(purchased_qty_map.keys())
+    if not is_closed:
+        relevant_ids.update(
+            bidhaa_stoku.objects.filter(
+                Interprise_id__in=shop_ids,
+                is_grouped_item=False,
+                idadi__gt=0,
+            ).values_list('id', flat=True)
+        )
 
-    missing_ids = [iid for iid in relevant_ids if iid not in items_by_id]
-    if missing_ids:
-        for itm in bidhaa_stoku.objects.filter(pk__in=missing_ids, is_grouped_item=False).select_related('bidhaa__bidhaa_aina'):
+    items_by_id = {}
+    if relevant_ids:
+        for itm in bidhaa_stoku.objects.filter(
+            pk__in=relevant_ids, is_grouped_item=False,
+        ).select_related('bidhaa__bidhaa_aina'):
             items_by_id[itm.id] = itm
 
     stock_items = list(items_by_id.values())

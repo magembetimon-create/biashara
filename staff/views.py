@@ -862,7 +862,16 @@ def enterprise_period_report_context(todo, request, calendar=False):
             shop_rows, shop_totals = build_shifts_period_report(shop, shop_shifts)
         else:
             shop_rows, full_totals = build_shifts_period_report(shop, shop_raw)
-            _slice_rows, shop_totals = build_shifts_period_report(shop, shop_shifts)
+            raw_windows = [
+                (s.id, s.starts_at, s.ends_at) for s in shop_raw if getattr(s, 'starts_at', None)
+            ]
+            clip_windows = [
+                (s.id, s.starts_at, s.ends_at) for s in shop_shifts if getattr(s, 'starts_at', None)
+            ]
+            if raw_windows == clip_windows:
+                shop_totals = full_totals
+            else:
+                _slice_rows, shop_totals = build_shifts_period_report(shop, shop_shifts)
             shop_totals['count'] = full_totals.get('count') or shop_totals.get('count')
             shop_totals['open_count'] = full_totals.get('open_count') or 0
             shop_totals['closed_count'] = full_totals.get('closed_count') or 0
