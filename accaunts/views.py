@@ -5208,6 +5208,23 @@ def notification_pending(request):
             extra = extra_en if todo.get('useri') and todo['useri'].langSet else extra_sw
             if todo.get('useri') and todo['useri'].langSet == 0:
                 extra = extra_sw
+            lang0 = todo.get('useri') and todo['useri'].langSet == 0
+            if not adj.Ongezwa and not adj.full_Return and not conf.Return:
+                reasons = []
+                if adj.haribika:
+                    reasons.append('Kuharibika' if lang0 else 'Damage')
+                if adj.production_id:
+                    reasons.append('Kuzalishia' if lang0 else 'Production')
+                if adj.expire:
+                    reasons.append('Kupitwa na muda' if lang0 else 'Expired')
+                if adj.tumika:
+                    reasons.append('Matumizi' if lang0 else 'Usage')
+                if adj.potea:
+                    reasons.append('Kupotea' if lang0 else 'Waste')
+                if adj.others:
+                    reasons.append('Mengineyo' if lang0 else 'Others')
+                if reasons:
+                    extra = f'{extra} · {", ".join(reasons)}'
             if adj.desc:
                 extra = f'{extra} · {adj.desc[:80]}'
             rows.append({
@@ -5352,7 +5369,7 @@ def notification_preview(request):
             return render(request, 'hub_preview.html', todo)
 
         if kind == 'adjust':
-            from management.models import productChangeRecord
+            from management.models import productChangeRecord, rekodiMatumizi
             conf = pending_adjusts_qs(todo.get('cheo'), duka).select_related(
                 'adjs', 'adjs__Na__user__user',
             ).filter(pk=rec_id).first()
@@ -5370,11 +5387,31 @@ def notification_preview(request):
                     'unit': unit,
                     'qty': show_qty,
                 })
+            expense_rows = []
+            if adj.tumika:
+                for rec in rekodiMatumizi.objects.filter(adjst=adj.id).select_related(
+                    'matumizi', 'akaunti', 'worker_recipient',
+                    'by__user__user', 'by__fanyakazi',
+                ).order_by('id'):
+                    wk = rec.worker_recipient
+                    recipient = ((wk.jina if wk else '') or rec.kabidhiwa or '').strip() or '—'
+                    expense_rows.append({
+                        'expense': (rec.matumizi.matumizi if rec.matumizi_id else '') or '—',
+                        'amount': rec.kiasi,
+                        'account': (rec.akaunti.Akaunt_name if rec.akaunti_id else '') or '—',
+                        'recipient': recipient,
+                        'recorded_by': _hub_person(rec.by) or '—',
+                        'tarehe': rec.tarehe,
+                        'note': (rec.maelezo or '').strip(),
+                        'is_product': (rec.expense_kind or '') == 'product' or not rec.akaunti_id,
+                    })
             todo.update({
                 'preview_kind': 'adjust',
                 'the_bill': adj,
                 'print_lines': lines,
                 'adj_undo': bool(getattr(conf, 'Return', False) or adj.full_Return),
+                'expense_rows': expense_rows,
+                'show_expense_account': any(not r.get('is_product') for r in expense_rows),
             })
             return render(request, 'hub_preview.html', todo)
     except Exception:

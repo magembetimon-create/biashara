@@ -19,8 +19,10 @@ from management.models import (
     productChangeRecord,
     pu_ret,
     sa_ret,
+    rekodiMatumizi,
     toaCash,
     transferList,
+    waiter_clearing,
     wekaCash,
 )
 
@@ -402,6 +404,129 @@ def _sale_in_shift_window(sale_at, starts_at, period_end, start_exclusive=False)
     return sale_at >= starts_at and sale_at <= period_end
 
 
+def _weka_cash_window_split(row, starts_at, period_end, start_exclusive=False, alloc_by_clearing=None):
+    """Split one cash-in row into this-shift sales vs prior invoices.
+
+    Waiter clearing posts one wekaCash whose invo is the last order touched;
+    allocate the deposit across related orders by remaining owed at clearing time.
+    """
+    amount = _dec(row.Amount)
+    takes = _weka_sale_takes(row, alloc_by_clearing)
+    if not takes:
+        sale_at = getattr(row, 'sale_at', None)
+        if _sale_in_shift_window(sale_at, starts_at, period_end, start_exclusive):
+            return amount, Decimal('0')
+        return Decimal('0'), amount
+    current_amt = Decimal('0')
+    prior_amt = Decimal('0')
+    assigned = Decimal('0')
+    for sale, take in takes:
+        take = _dec(take)
+        if take <= 0:
+            continue
+        when = _sale_when(sale) if sale else getattr(row, 'sale_at', None)
+        if _sale_in_shift_window(when, starts_at, period_end, start_exclusive):
+            current_amt += take
+        else:
+            prior_amt += take
+        assigned += take
+    leftover = amount - assigned
+    if leftover > 0:
+        last = takes[-1][0]
+        when = _sale_when(last) if last else getattr(row, 'sale_at', None)
+        if _sale_in_shift_window(when, starts_at, period_end, start_exclusive):
+            current_amt += leftover
+        else:
+            prior_amt += leftover
+    return current_amt, prior_amt
+
+
+def _expense_recipient_name(rec):
+    worker = getattr(rec, 'worker_recipient', None)
+    if worker:
+        name = (getattr(worker, 'jina', None) or '').strip()
+        if name:
+            return name
+    return (getattr(rec, 'kabidhiwa', None) or '').strip() or '—'
+
+
+def _product_expense_used_label(rec):
+    adj = getattr(rec, 'adjst', None)
+    if not adj:
+        return ''
+    grouped = {}
+    for change in adj.productchangerecord_set.all():
+        batch = getattr(change, 'prod', None)
+        item = getattr(batch, 'bidhaa', None) if batch else None
+        name = (getattr(item, 'bidhaa_jina', None) or '').strip() or '—'
+        unit = (getattr(item, 'vipimo', None) or '').strip()
+        qty = _dec(change.qty)
+        key = (name, unit)
+        grouped[key] = grouped.get(key, Decimal('0')) + qty
+    parts = []
+    for (name, unit), qty in grouped.items():
+        label = f'{name} ({_qty_str(qty)}{(" " + unit) if unit else ""})'
+        parts.append(label)
+    return ', '.join(parts)
+
+
+def shift_expenses_breakdown(duka, starts_at, period_end, start_exclusive=False):
+    """ExpenseRecords rows in this shift: cash out and stock used as product expense."""
+    time_kw = _dt_range_kwargs('tarehe', starts_at, period_end, start_exclusive)
+    qs = rekodiMatumizi.objects.filter(
+        Interprise=duka.id,
+        manunuzil=False,
+        manunuzi_id__isnull=True,
+        matumiziDeti__isnull=True,
+        **time_kw,
+    ).select_related(
+        'matumizi',
+        'akaunti',
+        'by__user__user',
+        'by__fanyakazi',
+        'worker_recipient',
+        'adjst',
+    ).prefetch_related(
+        Prefetch(
+            'adjst__productchangerecord_set',
+            queryset=productChangeRecord.objects.select_related('prod__bidhaa'),
+        )
+    ).order_by('tarehe', 'id')
+
+    rows = []
+    cash_total = Decimal('0')
+    product_total = Decimal('0')
+    for rec in qs:
+        is_product = (rec.expense_kind or '') == 'product' or bool(rec.adjst_id)
+        expense_name = (rec.matumizi.matumizi if rec.matumizi_id and rec.matumizi else '') or '—'
+        used = _product_expense_used_label(rec) if is_product else ''
+        if used:
+            expense_name = f'{expense_name} — {used}'
+        amount = _dec(rec.kiasi)
+        if is_product:
+            product_total += amount
+            account_name = '—'
+        else:
+            cash_total += amount
+            acc = rec.akaunti
+            account_name = (acc.Akaunt_name if acc else '') or '—'
+        rows.append({
+            'tarehe': rec.tarehe,
+            'expense': expense_name,
+            'amount': amount,
+            'account': account_name,
+            'recipient': _expense_recipient_name(rec),
+            'recorded_by': staff_display_name(rec.by),
+            'is_product': is_product,
+        })
+    return {
+        'rows': rows,
+        'cash_total': cash_total,
+        'product_total': product_total,
+        'total': cash_total + product_total,
+    }
+
+
 def shift_payment_flows(duka, starts_at, period_end, start_exclusive=False):
     """Cash-drawer and report figures for one shift window.
 
@@ -433,11 +558,14 @@ def shift_payment_flows(duka, starts_at, period_end, start_exclusive=False):
     sales_cash_in = Decimal('0')
     prior_cash_in = Decimal('0')
     other_cash_in = Decimal('0')
+    alloc_by_clearing = _build_waiter_clearing_alloc(duka)
     for row in wekaCash.objects.filter(
         Interprise=duka.id,
         Akaunt__aina__iexact='Cash',
         **time_kw,
-    ).select_related('invo').annotate(sale_at=sale_event_at('invo__')):
+    ).select_related('invo', 'from_waiter_payments').prefetch_related(
+        _weka_sales_prefetch(),
+    ).annotate(sale_at=sale_event_at('invo__')).order_by('tarehe', 'id'):
         if _weka_is_internal(row):
             cash_in += _dec(row.Amount)
             continue
@@ -446,11 +574,12 @@ def shift_payment_flows(duka, starts_at, period_end, start_exclusive=False):
         if not _weka_is_sales(row):
             other_cash_in += amt
             continue
-        sale_at = getattr(row, 'sale_at', None)
-        if _sale_in_shift_window(sale_at, starts_at, period_end, start_exclusive):
-            sales_cash_in += amt
-        else:
-            prior_cash_in += amt
+        current_amt, prior_amt = _weka_cash_window_split(
+            row, starts_at, period_end, start_exclusive=start_exclusive,
+            alloc_by_clearing=alloc_by_clearing,
+        )
+        sales_cash_in += current_amt
+        prior_cash_in += prior_amt
 
     return {
         'expenses': _dec(expenses),
@@ -552,6 +681,20 @@ def build_shifts_period_report(duka, shifts):
 
 def _qty2(value):
     return str(_dec(value).quantize(Decimal('0.01')))
+
+
+def _iso_dt(dt):
+    if not dt:
+        return ''
+    try:
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    except Exception:
+        pass
+    try:
+        return dt.isoformat()
+    except Exception:
+        return str(dt)
 
 
 def _is_cash_aina(aina):
@@ -1622,6 +1765,7 @@ def period_prior_invoice_payments(duka, shifts, period_start=None):
     rows = []
     total = Decimal('0')
     sale_paid = {}
+    alloc_by_clearing = _build_waiter_clearing_alloc(duka)
     for row in qs:
         paid_at = row.tarehe
         if not paid_at:
@@ -1630,7 +1774,9 @@ def period_prior_invoice_payments(duka, shifts, period_start=None):
             continue
         if _weka_is_internal(row) or not _weka_is_sales(row):
             continue
-        prior_amt, _, prior_sales, _, prior_alloc = _weka_prior_current_split(row, cutoff)
+        prior_amt, _, prior_sales, _, prior_alloc = _weka_prior_current_split(
+            row, cutoff, alloc_by_clearing=alloc_by_clearing,
+        )
         if prior_amt <= 0:
             continue
         item = _weka_sales_item(row, prior_amt, prior_sales)
@@ -1844,6 +1990,7 @@ _WAITER_CLEARING_RELATED = (
 
 
 def _weka_related_sales(row):
+    sales = []
     clearing = getattr(row, 'from_waiter_payments', None)
     if clearing is not None:
         sales = list(getattr(clearing, 'cleared_sales', None) or [])
@@ -1855,11 +2002,98 @@ def _weka_related_sales(row):
                     ignore=False,
                 ).select_related(*_SALE_PARTY_RELATED)
             )
-        if sales:
-            return sales
-    if row.invo_id and row.invo and not row.invo.cart and not row.invo.ignore:
-        return [row.invo]
-    return []
+    invo = None
+    if row.invo_id and getattr(row, 'invo', None) and not row.invo.cart and not row.invo.ignore:
+        invo = row.invo
+        if invo.id not in {s.id for s in sales}:
+            sales.append(invo)
+    return sales
+
+
+def _build_waiter_clearing_alloc(duka):
+    """Replay waiter-clearing FIFO (same order as /mauzo clear) -> {clearing_id: [(sale, take), ...]}."""
+    duka_id = getattr(duka, 'id', duka)
+    sales = list(
+        mauzoni.objects.filter(
+            Interprise=duka_id,
+            waiter_order_id__isnull=False,
+            cart=False,
+            ignore=False,
+        ).select_related(*_SALE_PARTY_RELATED).order_by('pk')
+    )
+    by_waiter = defaultdict(list)
+    for sale in sales:
+        by_waiter[sale.waiter_order_id].append(sale)
+    paid = defaultdict(lambda: Decimal('0'))
+    out = {}
+    for clr in waiter_clearing.objects.filter(
+        waiter__Interprise_id=duka_id,
+    ).order_by('tarehe', 'id'):
+        remaining = _dec(clr.amount)
+        alloc = []
+        for sale in by_waiter.get(clr.waiter_id, []):
+            if remaining <= 0:
+                break
+            when = _sale_when(sale) or sale.tarehe
+            if when and clr.tarehe and when > clr.tarehe:
+                continue
+            owed = _dec(sale.amount) - paid[sale.id]
+            if owed <= 0:
+                continue
+            take = owed if owed <= remaining else remaining
+            if take > 0:
+                alloc.append((sale, take))
+                paid[sale.id] += take
+                remaining -= take
+        out[clr.id] = alloc
+    return out
+
+
+def _fallback_sale_takes(row, amount):
+    remaining = _dec(amount)
+    takes = []
+    ordered = sorted(_weka_related_sales(row) or [], key=lambda s: (s.id or 0))
+    for sale in ordered:
+        if remaining <= 0:
+            break
+        take = min(_dec(sale.amount), remaining)
+        if take <= 0:
+            take = remaining
+        takes.append((sale, take))
+        remaining -= take
+    if remaining > 0 and ordered:
+        last_sale, last_take = takes[-1] if takes else (ordered[-1], Decimal('0'))
+        if takes:
+            takes[-1] = (last_sale, last_take + remaining)
+        else:
+            takes.append((ordered[-1], remaining))
+    return takes
+
+
+def _weka_sale_takes(row, alloc_by_clearing=None):
+    """How much of this wekaCash applies to each related sale."""
+    amount = _dec(row.Amount)
+    clr_id = getattr(row, 'from_waiter_payments_id', None)
+    if clr_id and alloc_by_clearing and clr_id in alloc_by_clearing:
+        pairs = alloc_by_clearing.get(clr_id) or []
+        total_alloc = sum((_dec(a) for _, a in pairs), Decimal('0'))
+        if total_alloc > 0:
+            if total_alloc == amount:
+                return [(sale, _dec(take)) for sale, take in pairs if _dec(take) > 0]
+            ratio = amount / total_alloc
+            out = []
+            assigned = Decimal('0')
+            usable = [(sale, _dec(take)) for sale, take in pairs if _dec(take) > 0]
+            for i, (sale, take) in enumerate(usable):
+                if i == len(usable) - 1:
+                    part = amount - assigned
+                else:
+                    part = (take * ratio).quantize(Decimal('0.0001'))
+                if part > 0:
+                    out.append((sale, part))
+                    assigned += part
+            return out
+    return _fallback_sale_takes(row, amount)
 
 
 def _weka_sales_prefetch():
@@ -1883,45 +2117,48 @@ def _codes_from_sales(sales, fallback=''):
     return (fallback or '').strip() or '—'
 
 
-def _weka_prior_current_split(row, cutoff):
+def _weka_prior_current_split(row, cutoff, alloc_by_clearing=None):
     """Split a sales weka into prior vs current by related sale dates."""
     amount = _dec(row.Amount)
-    sales = _weka_related_sales(row)
-    if not sales:
+    takes = _weka_sale_takes(row, alloc_by_clearing)
+    sales = [sale for sale, _take in takes if sale]
+    if not takes:
         return Decimal('0'), amount, [], sales, []
-    remaining = amount
     prior_amt = Decimal('0')
     current_amt = Decimal('0')
     prior_sales = []
     current_sales = []
     prior_alloc = []
-    ordered = sorted(sales, key=lambda s: (s.id or 0))
-    for sale in ordered:
-        if remaining <= 0:
-            break
-        take = min(_dec(sale.amount), remaining)
+    assigned = Decimal('0')
+    for sale, take in takes:
+        take = _dec(take)
         if take <= 0:
-            take = remaining
-        when = _sale_when(sale)
+            continue
+        when = _sale_when(sale) if sale else getattr(row, 'sale_at', None)
         if when and cutoff and when < cutoff:
             prior_amt += take
-            prior_sales.append(sale)
-            prior_alloc.append((sale, take))
+            if sale and sale not in prior_sales:
+                prior_sales.append(sale)
+            if sale:
+                prior_alloc.append((sale, take))
         else:
             current_amt += take
-            current_sales.append(sale)
-        remaining -= take
-    if remaining > 0:
-        last = ordered[-1]
-        when = _sale_when(last)
+            if sale and sale not in current_sales:
+                current_sales.append(sale)
+        assigned += take
+    leftover = amount - assigned
+    if leftover > 0:
+        last = takes[-1][0]
+        when = _sale_when(last) if last else getattr(row, 'sale_at', None)
         if when and cutoff and when < cutoff:
-            prior_amt += remaining
-            if last not in prior_sales:
+            prior_amt += leftover
+            if last and last not in prior_sales:
                 prior_sales.append(last)
-            prior_alloc.append((last, remaining))
+            if last:
+                prior_alloc.append((last, leftover))
         else:
-            current_amt += remaining
-            if last not in current_sales:
+            current_amt += leftover
+            if last and last not in current_sales:
                 current_sales.append(last)
     return prior_amt, current_amt, prior_sales, current_sales, prior_alloc
 
@@ -1993,6 +2230,7 @@ def period_sales_payments_by_account(duka, shifts, period_start=None):
     ).annotate(sale_at=sale_event_at('invo__'))
 
     totals = {}
+    alloc_by_clearing = _build_waiter_clearing_alloc(duka)
     for row in qs:
         paid_at = row.tarehe
         if not paid_at:
@@ -2001,7 +2239,9 @@ def period_sales_payments_by_account(duka, shifts, period_start=None):
             continue
         if _weka_is_internal(row) or not _weka_is_sales(row):
             continue
-        _, current_amt, _, _, _ = _weka_prior_current_split(row, cutoff)
+        _, current_amt, _, _, _ = _weka_prior_current_split(
+            row, cutoff, alloc_by_clearing=alloc_by_clearing,
+        )
         if current_amt <= 0:
             continue
         key = row.Akaunt_id or 0
@@ -2079,13 +2319,16 @@ def period_recon_movements(duka, shifts, period_start=None):
     other_in = []
     bills = []
     other_out = []
+    alloc_by_clearing = _build_waiter_clearing_alloc(duka)
 
     for row in wekas:
         if _weka_is_internal(row):
             continue
         amount = _dec(row.Amount)
         if _weka_is_sales(row):
-            _, current_amt, _, current_sales, _ = _weka_prior_current_split(row, cutoff)
+            _, current_amt, _, current_sales, _ = _weka_prior_current_split(
+                row, cutoff, alloc_by_clearing=alloc_by_clearing,
+            )
             if current_amt > 0:
                 sales_in.append(_weka_sales_item(row, current_amt, current_sales))
             continue
@@ -2445,20 +2688,112 @@ STOCK_FLOW_METRIC_KEYS = (
     'current_qty', 'current_value', 'current_worth',
 )
 
+STOCK_REDUCTION_REASON_KEYS = ('used', 'damaged', 'expired', 'waste', 'others')
+
+
+def _adj_reduction_reason(tumika, haribika, expire, potea, others, full_return=False):
+    """Match /stoku/reduceItemQuantity Reason: used, damaged, expired, lost, others."""
+    if tumika:
+        return 'used'
+    if haribika:
+        return 'damaged'
+    if expire:
+        return 'expired'
+    if potea:
+        return 'waste'
+    if others:
+        return 'others'
+    if full_return:
+        return None
+    return None
+
 
 def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, closing_qty_map, sold_qty_map, is_closed, returned_qty_map=None, duka_ids=None, start_exclusive=False):
     """Stock Value Panel rows/totals for a time window, matching shift view."""
     shop_ids = _shop_ids(duka, duka_ids)
     reduction_qty_map = defaultdict(lambda: Decimal('0'))
+    reason_qty_maps = {
+        key: defaultdict(lambda: Decimal('0')) for key in STOCK_REDUCTION_REASON_KEYS
+    }
     reduction_rows = productChangeRecord.objects.filter(
         adjst__Interprise_id__in=shop_ids,
         **_dt_range_kwargs('adjst__date', starts_at, period_end, start_exclusive),
     ).filter(
         Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True)
         | Q(adjst__expire=True) | Q(adjst__others=True) | Q(adjst__full_Return=True)
-    ).values_list('prod_id', 'qty')
-    for prod_id, qty in reduction_rows:
-        reduction_qty_map[prod_id] += Decimal(qty or 0)
+    ).values_list(
+        'prod_id', 'qty',
+        'adjst__tumika', 'adjst__haribika', 'adjst__expire',
+        'adjst__potea', 'adjst__others', 'adjst__full_Return',
+    )
+    for prod_id, qty, tumika, haribika, expire, potea, others, full_return in reduction_rows:
+        qty = Decimal(qty or 0)
+        reduction_qty_map[prod_id] += qty
+        reason = _adj_reduction_reason(tumika, haribika, expire, potea, others, full_return)
+        if reason:
+            reason_qty_maps[reason][prod_id] += qty
+
+    reduction_tx = []
+    red_changes = list(
+        productChangeRecord.objects.filter(
+            adjst__Interprise_id__in=shop_ids,
+            **_dt_range_kwargs('adjst__date', starts_at, period_end, start_exclusive),
+        ).filter(
+            Q(adjst__tumika=True) | Q(adjst__haribika=True) | Q(adjst__potea=True)
+            | Q(adjst__expire=True) | Q(adjst__others=True)
+        ).select_related(
+            'prod__bidhaa',
+            'adjst__Na__user__user',
+            'adjst__Na__fanyakazi',
+        ).order_by('adjst__date', 'id')
+    )
+    used_adj_ids = {ch.adjst_id for ch in red_changes if ch.adjst_id and ch.adjst and ch.adjst.tumika}
+    exp_by_adj = defaultdict(list)
+    if used_adj_ids:
+        for rec in rekodiMatumizi.objects.filter(adjst_id__in=used_adj_ids).select_related(
+            'matumizi', 'worker_recipient', 'by__user__user', 'by__fanyakazi',
+        ).order_by('id'):
+            exp_by_adj[rec.adjst_id].append(rec)
+    for ch in red_changes:
+        adj = ch.adjst
+        if not adj:
+            continue
+        reason = _adj_reduction_reason(
+            adj.tumika, adj.haribika, adj.expire, adj.potea, adj.others, adj.full_Return,
+        )
+        if not reason:
+            continue
+        qty = Decimal(ch.qty or 0)
+        prod = ch.prod
+        bd = prod.bidhaa if prod else None
+        ratio = Decimal(bd.idadi_jum or 1) if bd else Decimal('1')
+        if not ratio:
+            ratio = Decimal('1')
+        unit_price = (Decimal(prod.Bei_kununua or 0) if prod else Decimal('0')) / ratio
+        expenses = exp_by_adj.get(adj.id) or []
+        exp_names = []
+        recipients = []
+        for rec in expenses:
+            if rec.matumizi_id and rec.matumizi and rec.matumizi.matumizi:
+                exp_names.append(rec.matumizi.matumizi)
+            wk = rec.worker_recipient
+            recp = ((wk.jina if wk else '') or rec.kabidhiwa or '').strip()
+            if recp:
+                recipients.append(recp)
+        reduction_tx.append({
+            'date': adj.date,
+            'item': (bd.bidhaa_jina if bd else '') or '',
+            'units': (bd.vipimo if bd else '') or '',
+            'qty': qty,
+            'price': unit_price,
+            'total': qty * unit_price,
+            'reason': reason,
+            'desc': (adj.desc or '').strip(),
+            'expense': ' · '.join(dict.fromkeys(exp_names)),
+            'recipient': ' · '.join(dict.fromkeys(recipients)),
+            'recorded_by': staff_display_name(adj.Na),
+            'ref': f'ADJ-{adj.code}' if adj.code else '',
+        })
 
     pu_return_rows = pu_ret.objects.filter(
         pu_list__Interprise_id__in=shop_ids,
@@ -2510,18 +2845,46 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
         received_qty_map[prod_id] += Decimal(qty or 0)
 
     purchased_qty_map = defaultdict(lambda: Decimal('0'))
-    purchased_rows = bidhaa_stoku.objects.filter(
+    purchase_tx = []
+    purchased_lots = bidhaa_stoku.objects.filter(
         Interprise_id__in=shop_ids,
         is_grouped_item=False,
         manunuzi__isnull=False,
         manunuzi__manunuzi__Interprise_id__in=shop_ids,
         manunuzi__manunuzi__order=False,
         **_dt_range_kwargs('manunuzi__manunuzi__tarehe', starts_at, period_end, start_exclusive),
-    ).values_list('id', 'manunuzi__idadi', 'manunuzi__rudi')
-    for prod_id, qty, rudi in purchased_rows:
-        net_qty = Decimal(qty or 0) - Decimal(rudi or 0)
-        if net_qty:
-            purchased_qty_map[prod_id] += net_qty
+    ).select_related(
+        'bidhaa',
+        'manunuzi__manunuzi__supplier_id',
+        'manunuzi__manunuzi__By__user__user',
+        'manunuzi__manunuzi__By__fanyakazi',
+    ).order_by('manunuzi__manunuzi__tarehe', 'id')
+    for itm in purchased_lots:
+        ml = itm.manunuzi
+        bill = ml.manunuzi if ml else None
+        net_qty = Decimal(ml.idadi or 0) - Decimal(ml.rudi or 0) if ml else Decimal('0')
+        if not net_qty:
+            continue
+        purchased_qty_map[itm.id] += net_qty
+        bd = itm.bidhaa
+        ratio = Decimal(bd.idadi_jum or 1) if bd else Decimal('1')
+        if not ratio:
+            ratio = Decimal('1')
+        unit_price = Decimal(itm.Bei_kununua or 0) / ratio
+        supplier = ''
+        if bill and bill.supplier_id_id and bill.supplier_id:
+            supplier = (bill.supplier_id.jina or '').strip()
+        purchase_tx.append({
+            'date': bill.tarehe if bill else None,
+            'item': (bd.bidhaa_jina if bd else '') or '',
+            'units': (bd.vipimo if bd else '') or '',
+            'qty': net_qty,
+            'price': unit_price,
+            'total': net_qty * unit_price,
+            'supplier': supplier or '—',
+            'recorded_by': staff_display_name(bill.By) if bill else '',
+            'ref': f'PU-{bill.code}' if bill and bill.code else '',
+        })
 
     live_items = list(
         bidhaa_stoku.objects.filter(
@@ -2575,6 +2938,11 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
             p_qty = purchased_qty_map[iid]
             s_qty = sold_qty_map[iid]
             r_qty = reduction_qty_map[iid]
+            used_qty = reason_qty_maps['used'][iid]
+            damaged_qty = reason_qty_maps['damaged'][iid]
+            expired_qty = reason_qty_maps['expired'][iid]
+            waste_qty = reason_qty_maps['waste'][iid]
+            others_qty = reason_qty_maps['others'][iid]
             t_qty = transferred_qty_map[iid]
             rc_qty = received_qty_map[iid]
             rt_qty = returned_qty_map[iid]
@@ -2617,6 +2985,26 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
             buckets['reduction_qty'] += r_qty
             buckets['reduction_value'] += r_val
             buckets['reduction_worth'] += r_worth
+            u_val, u_worth = _money(used_qty, buy_price, sales_price, ratio)
+            d_val, d_worth = _money(damaged_qty, buy_price, sales_price, ratio)
+            e_val, e_worth = _money(expired_qty, buy_price, sales_price, ratio)
+            w_val, w_worth = _money(waste_qty, buy_price, sales_price, ratio)
+            o_val, o_worth = _money(others_qty, buy_price, sales_price, ratio)
+            buckets['used_qty'] += used_qty
+            buckets['used_value'] += u_val
+            buckets['used_worth'] += u_worth
+            buckets['damaged_qty'] += damaged_qty
+            buckets['damaged_value'] += d_val
+            buckets['damaged_worth'] += d_worth
+            buckets['expired_qty'] += expired_qty
+            buckets['expired_value'] += e_val
+            buckets['expired_worth'] += e_worth
+            buckets['waste_qty'] += waste_qty
+            buckets['waste_value'] += w_val
+            buckets['waste_worth'] += w_worth
+            buckets['others_qty'] += others_qty
+            buckets['others_value'] += o_val
+            buckets['others_worth'] += o_worth
             buckets['transferred_qty'] += t_qty
             buckets['transferred_value'] += t_val
             buckets['transferred_worth'] += t_worth
@@ -2694,6 +3082,8 @@ def _assemble_stock_value_panel(duka, starts_at, period_end, before_qty_map, clo
         'optional_groups': stock_optional_groups,
         'stock_now': stock_now,
         'stock_frozen': bool(is_closed),
+        'purchase_tx': purchase_tx,
+        'reduction_tx': reduction_tx,
     }
 
 
@@ -2734,6 +3124,29 @@ def _stock_flow_summary_rows(totals, optional_groups, stock_frozen):
     return out
 
 
+def _pack_stock_tx(rows, extra_keys=()):
+    out = []
+    for r in rows or []:
+        item = {
+            'date': _iso_dt(r.get('date')),
+            'item': r.get('item') or '',
+            'units': r.get('units') or '',
+            'qty': _qty2(r.get('qty')),
+            'price': _qty2(r.get('price')),
+            'total': _qty2(r.get('total')),
+            'recorded_by': r.get('recorded_by') or '—',
+            'ref': r.get('ref') or '',
+        }
+        for key in extra_keys:
+            item[key] = r.get(key) or ''
+        item['search'] = ' '.join(
+            [item['item'], item['units'], item['recorded_by'], item['ref']]
+            + [str(item.get(key) or '') for key in extra_keys]
+        ).lower()
+        out.append(item)
+    return out
+
+
 def _pack_stock_panel_json(panel):
     totals = panel.get('totals') or {}
     optional = panel.get('optional_groups') or {}
@@ -2747,6 +3160,8 @@ def _pack_stock_panel_json(panel):
         }
         for key in STOCK_FLOW_METRIC_KEYS:
             item[key] = _qty2(r.get(key))
+        for reason in STOCK_REDUCTION_REASON_KEYS:
+            item[f'{reason}_qty'] = _qty2(r.get(f'{reason}_qty'))
         rows.append(item)
     packed_totals = {key: _qty2(totals.get(key)) for key in STOCK_FLOW_METRIC_KEYS}
     frozen = bool(panel.get('stock_frozen'))
@@ -2757,6 +3172,11 @@ def _pack_stock_panel_json(panel):
         'stock_frozen': frozen,
         'count': len(rows),
         'summary': _stock_flow_summary_rows(packed_totals, optional, frozen),
+        'purchase_tx': _pack_stock_tx(panel.get('purchase_tx') or [], ('supplier',)),
+        'reduction_tx': _pack_stock_tx(
+            panel.get('reduction_tx') or [],
+            ('reason', 'desc', 'expense', 'recipient'),
+        ),
     }
 
 
@@ -2965,6 +3385,9 @@ def build_shift_report(duka, shift):
     flows = shift_payment_flows(duka, owned_from, period_end, start_exclusive=start_exclusive)
     expenses = flows['expenses']
     deposits = flows['deposits']
+    expense_breakdown = shift_expenses_breakdown(
+        duka, owned_from, period_end, start_exclusive=start_exclusive,
+    )
 
     cash_accounts = PaymentAkaunts.objects.filter(Interprise=duka.id, aina__iexact='Cash').order_by('Akaunt_name')
     opening_cash = shift.opening_cash
@@ -3021,4 +3444,5 @@ def build_shift_report(duka, shift):
         'stock_optional_groups': stock_optional_groups,
         'sales_breakdown_rows': sales_breakdown_rows,
         'sales_breakdown_totals': sales_breakdown_totals,
+        'expense_breakdown': expense_breakdown,
     }

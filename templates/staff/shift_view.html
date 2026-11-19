@@ -75,6 +75,13 @@
             <tr><td>{% if useri.langSet == 0 %}Cash Inayotarajiwa{% else %}Expected Cash{% endif %}</td><td class="text-right">{{ payments.expected_cash|floatformat:2|intcomma }}</td></tr>
             <tr><td>{% if useri.langSet == 0 %}Cash ya Sasa{% else %}Current Cash{% endif %}</td><td class="text-right">{{ payments.current_cash|floatformat:2|intcomma }}</td></tr>
           </table>
+          <p class="text-muted small mb-0 mt-2">
+            {% if useri.langSet == 0 %}
+            Mauzo yaliyokamilika ni jumla ya ankara za shift hii. Cash iliyoingia ni pesa iliyowekwa sasa kwa ankara hizo; malipo ya oda zilizoprintwa kabla ya shift huenda kwenye malipo ya ankara za nyuma, hata kama waiter clearing iliunganishwa na ankara ya sasa.
+            {% else %}
+            Sales (completed) is the invoice total of this shift. Cash received is money deposited now for those invoices; payments for orders printed before this shift go to prior invoice payments, even if waiter clearing was tagged to a current invoice.
+            {% endif %}
+          </p>
         </div>
       </div>
     </div>
@@ -191,6 +198,80 @@
             </tfoot>
           </table>
         </div>
+      </div>
+
+      <div class="mt-4">
+        <h6>{% if useri.langSet == 0 %}Mchanganuo wa Matumizi{% else %}Expense Breakdown{% endif %}</h6>
+        <p class="small text-muted mb-2">
+          {% if useri.langSet == 0 %}
+          Rekodi kutoka ukurasa wa matumizi. Matumizi ya pesa yanatokana na akaunti; ya bidhaa ni gharama ya stoku iliyotumika, si pesa iliyotoka kwenye Cash Summary.
+          {% else %}
+          Records from the expense page. Cash expenses leave a payment account; product expenses are the cost of stock used, not cash leaving the Cash Summary.
+          {% endif %}
+        </p>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered table-striped" id="matumiziBreakdownTable">
+            <thead>
+              <tr>
+                <th class="text-left">{% if useri.langSet == 0 %}Tarehe na muda{% else %}Date and time{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Matumizi{% else %}Expense{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Akaunti ya malipo{% else %}Payment account{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Aliyekabidhiwa{% else %}Received by{% endif %}</th>
+                <th class="text-left">{% if useri.langSet == 0 %}Aliyerekodi{% else %}Recorded by{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in expense_breakdown.rows %}
+              <tr>
+                <td>
+                  {% if row.tarehe %}
+                  <script>document.write(moment('{{ row.tarehe|date:"r" }}').format('DD MMM YYYY HH:mm'));</script>
+                  {% else %}—{% endif %}
+                </td>
+                <td>
+                  {{ row.expense }}
+                  {% if row.is_product %}
+                  <span class="badge badge-light border ml-1">{% if useri.langSet == 0 %}Bidhaa{% else %}Product{% endif %}</span>
+                  {% endif %}
+                </td>
+                <td>{{ row.amount|floatformat:2|intcomma }}</td>
+                <td>{{ row.account }}</td>
+                <td>{{ row.recipient }}</td>
+                <td>{{ row.recorded_by }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-muted">{% if useri.langSet == 0 %}Hakuna matumizi yaliyorekodiwa kwenye shift hii{% else %}No expenses recorded in this shift{% endif %}</td></tr>
+              {% endfor %}
+            </tbody>
+            {% if expense_breakdown.rows %}
+            <tfoot>
+              {% if expense_breakdown.product_total %}
+              <tr>
+                <td></td>
+                <td>{% if useri.langSet == 0 %}Jumla ya pesa{% else %}Cash expenses{% endif %}</td>
+                <td>{{ expense_breakdown.cash_total|floatformat:2|intcomma }}</td>
+                <td colspan="3"></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>{% if useri.langSet == 0 %}Jumla ya bidhaa{% else %}Product expenses{% endif %}</td>
+                <td>{{ expense_breakdown.product_total|floatformat:2|intcomma }}</td>
+                <td colspan="3"></td>
+              </tr>
+              {% endif %}
+              <tr class="font-weight-bold">
+                <td></td>
+                <td>{% if useri.langSet == 0 %}Jumla{% else %}Total{% endif %}</td>
+                <td>{{ expense_breakdown.total|floatformat:2|intcomma }}</td>
+                <td colspan="3"></td>
+              </tr>
+            </tfoot>
+            {% endif %}
+          </table>
+        </div>
+      </div>
+
         {% if can_reconcile %}
         <div class="mt-2 mb-2">
           <button type="button" class="btn btn-outline-primary btn-sm" id="shiftReconToggle" onclick="toggleShiftRecon()">
@@ -253,7 +334,6 @@
           </div>
         </div>
         {% endif %}
-      </div>
   {% if mobile_payments %}
   <div class="row mt-2">
     <div class="col-12">

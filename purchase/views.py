@@ -2222,7 +2222,7 @@ def _next_stock_adj_code(duka):
     return adj_str, adjno
 
 
-def _save_product_expense(todo, matum, bidhaa_id, quantity, rec_datetime, maelezo, request=None):
+def _save_product_expense(todo, matum, bidhaa_id, quantity, rec_datetime, maelezo, request=None, kabidhiwa='', worker_id=None, tin_number=''):
     duka = todo['duka']
     cheo = todo['cheo']
     qty = Decimal(str(quantity or 0))
@@ -2284,6 +2284,15 @@ def _save_product_expense(todo, matum, bidhaa_id, quantity, rec_datetime, maelez
     rec.maelezo = maelezo or ''
     rec.adjst = adj
     rec.expense_kind = 'product'
+    rec.kabidhiwa = (kabidhiwa or '')[:500]
+    rec.tin_number = (tin_number or '')[:50]
+    if worker_id:
+        wk = Workers.objects.filter(pk=int(worker_id), Interprise=duka.id).first()
+        if not wk and duka.owner:
+            wk = Workers.objects.filter(pk=int(worker_id), Interprise__owner=duka.owner.id).first()
+        rec.worker_recipient = wk
+        if wk and not rec.kabidhiwa:
+            rec.kabidhiwa = (wk.jina or '')[:500]
     if matum.tax_group_id:
         rec.tax_group_id = matum.tax_group_id
     rec.save()
@@ -2548,8 +2557,17 @@ def _add_expense_batch(request, todo):
                         raise ValueError('Stock item required')
                     if quantity <= 0:
                         raise ValueError('Quantity must be positive')
+                    kabidhiwa = str(exp.get('receiver_name') or exp.get('recipient') or '').strip()
+                    tin_number = str(exp.get('tin_number') or '').strip()
+                    worker_id = exp.get('staff_id') or exp.get('worker_id')
+                    recipient_type = str(exp.get('recipient_type') or '').lower()
+                    if recipient_type == 'staff' and not worker_id:
+                        raise ValueError('Staff recipient required')
+                    if recipient_type == 'external' and not kabidhiwa:
+                        raise ValueError('Recipient name required')
                     _save_product_expense(
                         todo, matum, bidhaa_id, quantity, rec_datetime, maelezo, request,
+                        kabidhiwa=kabidhiwa, worker_id=worker_id, tin_number=tin_number,
                     )
                     continue
 

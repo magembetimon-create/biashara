@@ -302,6 +302,29 @@
             {% if the_bill.desc %}
             <div class="mt-1">{{ the_bill.desc }}</div>
             {% endif %}
+            {% if not the_bill.Ongezwa %}
+            <div class="mt-2">
+              <strong>{% if useri.langSet == 0 %}Sababu{% else %}Reason{% endif %}:</strong>
+              {% if the_bill.haribika %}
+                <span class="px-2 py-1 ml-1" style="background:#a74017;color:#fff;">{% if useri.langSet == 0 %}Kuharibika{% else %}Damage{% endif %}</span>
+              {% endif %}
+              {% if the_bill.production %}
+                <span class="px-2 py-1 ml-1" style="background:#0b4191;color:#fff;">{% if useri.langSet == 0 %}Kuzalishia{% else %}Production{% endif %}</span>
+              {% endif %}
+              {% if the_bill.expire %}
+                <span class="px-2 py-1 ml-1" style="background:#7e5201;color:#fff;">{% if useri.langSet == 0 %}Kupitwa na muda{% else %}Expired{% endif %}</span>
+              {% endif %}
+              {% if the_bill.tumika %}
+                <span class="px-2 py-1 ml-1" style="background:#91520b;color:#fff;">{% if useri.langSet == 0 %}Matumizi{% else %}Usage{% endif %}</span>
+              {% endif %}
+              {% if the_bill.potea %}
+                <span class="px-2 py-1 ml-1" style="background:#750800;color:#fff;">{% if useri.langSet == 0 %}Kupotea{% else %}Waste{% endif %}</span>
+              {% endif %}
+              {% if the_bill.others %}
+                <span class="px-2 py-1 ml-1" style="background:#555;color:#fff;">{% if useri.langSet == 0 %}Mengineyo{% else %}Others{% endif %}</span>
+              {% endif %}
+            </div>
+            {% endif %}
           </div>
           <div class="col-md-5 text-md-right">
             <h6>ADJ-{{ the_bill.code }}</h6>
@@ -330,5 +353,50 @@
             {% endfor %}
           </tbody>
         </table>
+        {% if expense_rows %}
+        <h6 class="mt-4 mb-2">{% if useri.langSet == 0 %}Tarifa za matumizi{% else %}Expense details{% endif %}</h6>
+        <p class="small text-muted mb-2">
+          {% if useri.langSet == 0 %}
+          Kama ilivyorekodiwa kwenye ukurasa wa matumizi. Kiasi ni gharama ya stoku iliyotumika.
+          {% else %}
+          As recorded on the expense page. Amount is the cost of stock used.
+          {% endif %}
+        </p>
+        <table class="hub-prev-table">
+          <thead>
+            <tr>
+              <th>{% if useri.langSet == 0 %}Tarehe na muda{% else %}Date and time{% endif %}</th>
+              <th>{% if useri.langSet == 0 %}Matumizi{% else %}Expense{% endif %}</th>
+              <th>{% if useri.langSet == 0 %}Kiasi{% else %}Amount{% endif %}</th>
+              {% if show_expense_account %}
+              <th>{% if useri.langSet == 0 %}Akaunti ya malipo{% else %}Payment account{% endif %}</th>
+              {% endif %}
+              <th>{% if useri.langSet == 0 %}Aliyekabidhiwa{% else %}Recipient{% endif %}</th>
+              <th>{% if useri.langSet == 0 %}Aliyerekodi{% else %}Recorded by{% endif %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for exp in expense_rows %}
+            <tr>
+              <td>
+                {% if exp.tarehe %}
+                <span class="nh-local-dt" data-iso="{{ exp.tarehe|date:'c' }}" data-fmt="datetime">{{ exp.tarehe|date:'d/m/Y H:i' }}</span>
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                {{ exp.expense }}
+                {% if exp.note %}<div class="small text-muted">{{ exp.note }}</div>{% endif %}
+              </td>
+              <td>{{ exp.amount|floatformat:2|intcomma }}</td>
+              {% if show_expense_account %}
+              <td>{{ exp.account }}</td>
+              {% endif %}
+              <td>{{ exp.recipient }}</td>
+              <td>{{ exp.recorded_by }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
       {% endif %}
     </div>

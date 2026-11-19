@@ -306,6 +306,9 @@
     opacity: 0.85;
   }
   .sr-sv-print-head { display: none; }
+  #srStockTxWrap { overflow-x: auto; }
+  #srStockTxTable { min-width: 960px; }
+  #srStockTxTable th, #srStockTxTable td { white-space: nowrap; vertical-align: top; }
   .sr-table th, .sr-table td { white-space: nowrap; }
   @media (max-width: 767.98px) {
     .Analytical#general-panel { padding-left: 10px !important; padding-right: 10px !important; }
@@ -401,12 +404,12 @@
     body.sr-print-stock .sr-sv-no-print { display: none !important; }
     body.sr-print-stock #srStockPrint,
     body.sr-print-stock #srStockModal .modal-body,
-    body.sr-print-stock #srStockWrap {
+    body.sr-print-stock #srStockWrap,
+    body.sr-print-stock #srStockTxWrap {
       position: static;
       overflow: visible !important;
       max-height: none !important;
       height: auto !important;
-      display: block !important;
       flex: none !important;
     }
     body.sr-print-stock #srStockTable thead th,
@@ -421,16 +424,21 @@
       background: #fff;
     }
     body.sr-print-stock .sr-sv-print-head { display: block !important; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
-    body.sr-print-stock #srStockTable { width: 100% !important; font-size: 11px; border-collapse: collapse; }
+    body.sr-print-stock #srStockTable,
+    body.sr-print-stock #srStockTxTable { width: 100% !important; font-size: 11px; border-collapse: collapse; }
     body.sr-print-stock #srStockTable th,
-    body.sr-print-stock #srStockTable td {
+    body.sr-print-stock #srStockTable td,
+    body.sr-print-stock #srStockTxTable th,
+    body.sr-print-stock #srStockTxTable td {
       border: 1px solid #444 !important;
       padding: 4px 6px !important;
       color: #000 !important;
       background: #fff !important;
     }
     body.sr-print-stock #srStockTable thead th,
-    body.sr-print-stock #srStockTable tfoot td { background: #eee !important; font-weight: 700; }
+    body.sr-print-stock #srStockTable tfoot td,
+    body.sr-print-stock #srStockTxTable thead th,
+    body.sr-print-stock #srStockTxTable tfoot td { background: #eee !important; font-weight: 700; }
     body.sr-print-breakdown .sr-bd-print-head { display: block !important; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
     body.sr-print-breakdown .sr-breakdown-table { width: 100% !important; font-size: 12px; border-collapse: collapse; }
     body.sr-print-breakdown .sr-breakdown-table th,
@@ -954,6 +962,8 @@
 {{ external_account_in|json_script:"sr-external-account-in" }}
 {{ recon_movements|json_script:"sr-recon-movements" }}
 {{ stock_flow.rows|json_script:"srStockRowsData" }}
+{{ stock_flow.purchase_tx|json_script:"srPurchaseTxData" }}
+{{ stock_flow.reduction_tx|json_script:"srReductionTxData" }}
 
 <div class="modal fade" id="srStockModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog sr-stock-dialog" role="document">
@@ -1035,6 +1045,26 @@
             {% if useri.langSet == 0 %}Zilizopunguzwa{% else %}Reduced{% endif %}
             <span class="sr-stock-move-count" data-stock-move-count="reduced"></span>
           </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="used" data-stock-move-hide>
+            {% if useri.langSet == 0 %}Zilizotumika{% else %}Used{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="used"></span>
+          </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="damaged" data-stock-move-hide>
+            {% if useri.langSet == 0 %}Zilizoharibika{% else %}Damaged{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="damaged"></span>
+          </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="expired" data-stock-move-hide>
+            {% if useri.langSet == 0 %}Zilizopita muda{% else %}Expired{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="expired"></span>
+          </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="waste" data-stock-move-hide>
+            {% if useri.langSet == 0 %}Zilizopotea{% else %}Lost{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="waste"></span>
+          </button>
+          <button type="button" class="sr-unpaid-tab" data-stock-move="others" data-stock-move-hide>
+            {% if useri.langSet == 0 %}Mengineyo{% else %}Others{% endif %}
+            <span class="sr-stock-move-count" data-stock-move-count="others"></span>
+          </button>
         </div>
         <ul id="srCategsList" class="list-unstyled d-flex pt-1 mb-2 sr-sv-no-print"></ul>
         <p class="small text-muted mb-2 sr-sv-no-print">
@@ -1105,7 +1135,7 @@
             </thead>
             <tbody id="srStockBody">
               {% for s in stock_flow.rows %}
-              <tr class="sr-stock-row" data-sv-i="{{ forloop.counter0 }}" data-sv-sold="{{ s.sold_qty|default:0 }}" data-sv-purchased="{{ s.purchased_qty|default:0 }}" data-sv-transferred="{{ s.transferred_qty|default:0 }}" data-sv-received="{{ s.received_qty|default:0 }}" data-sv-added="{{ s.added_qty|default:0 }}" data-sv-reduced="{{ s.reduction_qty|default:0 }}" data-sv-aina="{{ s.aina_id|default:'-1' }}" data-sv-aina-name="{{ s.aina_name|default:'' }}" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }} {{ s.aina_name|default:''|lower }}">
+              <tr class="sr-stock-row" data-sv-i="{{ forloop.counter0 }}" data-sv-sold="{{ s.sold_qty|default:0 }}" data-sv-purchased="{{ s.purchased_qty|default:0 }}" data-sv-transferred="{{ s.transferred_qty|default:0 }}" data-sv-received="{{ s.received_qty|default:0 }}" data-sv-added="{{ s.added_qty|default:0 }}" data-sv-reduced="{{ s.reduction_qty|default:0 }}" data-sv-used="{{ s.used_qty|default:0 }}" data-sv-damaged="{{ s.damaged_qty|default:0 }}" data-sv-expired="{{ s.expired_qty|default:0 }}" data-sv-waste="{{ s.waste_qty|default:0 }}" data-sv-others="{{ s.others_qty|default:0 }}" data-sv-aina="{{ s.aina_id|default:'-1' }}" data-sv-aina-name="{{ s.aina_name|default:'' }}" data-sv-search="{{ s.item_name|default:''|lower }} {{ s.units|default:''|lower }} {{ s.aina_name|default:''|lower }}">
                 <td>{{ forloop.counter }}</td>
                 <td>{{ s.item_name }}</td>
                 <td>{{ s.units|default:'-' }}</td>
@@ -1185,6 +1215,16 @@
               </tr>
             </tfoot>
           </table>
+        </div>
+        <div id="srStockTxWrap" style="display:none;">
+          <p class="small text-muted mb-2" id="srStockTxNote"></p>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover table-bordered" id="srStockTxTable">
+              <thead></thead>
+              <tbody></tbody>
+              <tfoot></tfoot>
+            </table>
+          </div>
         </div>
       </div>
       </div>
@@ -2708,8 +2748,14 @@
     transferred: 'data-sv-transferred',
     received: 'data-sv-received',
     added: 'data-sv-added',
-    reduced: 'data-sv-reduced'
+    reduced: 'data-sv-reduced',
+    used: 'data-sv-used',
+    damaged: 'data-sv-damaged',
+    expired: 'data-sv-expired',
+    waste: 'data-sv-waste',
+    others: 'data-sv-others'
   };
+  var SR_STOCK_MOVE_KEYS = ['purchased', 'transferred', 'received', 'added', 'reduced', 'used', 'damaged', 'expired', 'waste', 'others'];
   function srStockQty(tr, attr) {
     return parseFloat(tr.getAttribute(attr)) || 0;
   }
@@ -2724,12 +2770,12 @@
     return srStockQty(tr, attr) > 0.0000001;
   }
   function updateSrStockMoveCounts() {
-    var map = { all: 0, sold: 0, unsold: 0, purchased: 0, transferred: 0, received: 0, added: 0, reduced: 0 };
+    var map = { all: 0, sold: 0, unsold: 0, purchased: 0, transferred: 0, received: 0, added: 0, reduced: 0, used: 0, damaged: 0, expired: 0, waste: 0, others: 0 };
     document.querySelectorAll('#srStockBody tr.sr-stock-row').forEach(function (tr) {
       map.all += 1;
       if (srStockSoldQty(tr) > 0.0000001) map.sold += 1;
       else map.unsold += 1;
-      ['purchased', 'transferred', 'received', 'added', 'reduced'].forEach(function (k) {
+      SR_STOCK_MOVE_KEYS.forEach(function (k) {
         if (srStockQty(tr, SR_STOCK_QTY_ATTR[k]) > 0.0000001) map[k] += 1;
       });
     });
@@ -2800,6 +2846,120 @@
     var rowsEl = document.getElementById('srStockRowsData');
     SR_STOCK_ROWS = rowsEl ? JSON.parse(rowsEl.textContent || '[]') : [];
   } catch (e) { SR_STOCK_ROWS = []; }
+  var SR_PURCHASE_TX = [];
+  var SR_REDUCTION_TX = [];
+  try {
+    var pEl = document.getElementById('srPurchaseTxData');
+    SR_PURCHASE_TX = pEl ? JSON.parse(pEl.textContent || '[]') : [];
+  } catch (e) { SR_PURCHASE_TX = []; }
+  try {
+    var rEl = document.getElementById('srReductionTxData');
+    SR_REDUCTION_TX = rEl ? JSON.parse(rEl.textContent || '[]') : [];
+  } catch (e) { SR_REDUCTION_TX = []; }
+  var SR_TX_TABS = { purchased: 1, reduced: 1, used: 1, damaged: 1, expired: 1, waste: 1, others: 1 };
+  var SR_REASON_LABEL = {
+    used: lang0 ? 'Matumizi' : 'Usage',
+    damaged: lang0 ? 'Kuharibika' : 'Damage',
+    expired: lang0 ? 'Kupitwa na muda' : 'Expired',
+    waste: lang0 ? 'Kupotea' : 'Lost',
+    others: lang0 ? 'Mengineyo' : 'Others'
+  };
+  function srEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+  function srIsTxMove() { return !!SR_TX_TABS[SR_STOCK_MOVE]; }
+  function srTxRowsForMove() {
+    if (SR_STOCK_MOVE === 'purchased') return SR_PURCHASE_TX;
+    if (!srIsTxMove()) return [];
+    if (SR_STOCK_MOVE === 'reduced') return SR_REDUCTION_TX;
+    return SR_REDUCTION_TX.filter(function (r) { return r.reason === SR_STOCK_MOVE; });
+  }
+  function renderSrStockTx() {
+    var wrap = document.getElementById('srStockTxWrap');
+    var itemWrap = document.getElementById('srStockWrap');
+    var categs = document.getElementById('srCategsList');
+    var txMode = srIsTxMove();
+    if (itemWrap) itemWrap.style.display = txMode ? 'none' : '';
+    if (wrap) wrap.style.display = txMode ? '' : 'none';
+    if (categs) categs.classList.toggle('d-none', txMode);
+    if (!txMode || !wrap) return;
+    var isPurchase = SR_STOCK_MOVE === 'purchased';
+    var showExpense = SR_STOCK_MOVE === 'used' || SR_STOCK_MOVE === 'reduced';
+    var note = document.getElementById('srStockTxNote');
+    if (note) {
+      note.textContent = isPurchase
+        ? (lang0 ? 'Miamala ya manunuzi: tarehe, bidhaa, bei, mahali ilinunuliwa, aliyerekodi na jumla.' : 'Purchase transactions: date, item, price, supplier, recorded by and total.')
+        : (lang0 ? 'Miamala ya kupunguza stoku kutoka kupunguza stoku na matumizi ya bidhaa.' : 'Stock reductions from reduce stock and product expenses.');
+    }
+    var q = ((stockSearch && stockSearch.value) || '').trim().toLowerCase();
+    var rows = srTxRowsForMove().filter(function (r) {
+      return !q || (r.search || '').indexOf(q) !== -1;
+    });
+    var th = [
+      lang0 ? 'Tarehe na muda' : 'Date and time',
+      lang0 ? 'Bidhaa' : 'Item',
+      lang0 ? 'Idadi' : 'Qty',
+      lang0 ? 'Vipimo' : 'Units',
+      lang0 ? 'Bei' : 'Price'
+    ];
+    if (isPurchase) th.push(lang0 ? 'Imenunuliwa wapi' : 'Purchased from');
+    else {
+      th.push(lang0 ? 'Sababu' : 'Reason');
+      th.push(lang0 ? 'Maelezo' : 'Description');
+      if (showExpense) {
+        th.push(lang0 ? 'Aina ya matumizi' : 'Expense type');
+        th.push(lang0 ? 'Aliyekabidhiwa' : 'Recipient');
+      }
+    }
+    th.push(lang0 ? 'Aliyerekodi' : 'Recorded by');
+    th.push(lang0 ? 'Jumla' : 'Total');
+    var thead = wrap.querySelector('thead');
+    var tbody = wrap.querySelector('tbody');
+    var tfoot = wrap.querySelector('tfoot');
+    thead.innerHTML = '<tr>' + th.map(function (h) { return '<th>' + srEsc(h) + '</th>'; }).join('') + '</tr>';
+    var qtySum = 0;
+    var totSum = 0;
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="' + th.length + '" class="text-muted text-center py-3">' +
+        (lang0 ? 'Hakuna miamala.' : 'No transactions.') + '</td></tr>';
+      tfoot.innerHTML = '';
+      return;
+    }
+    tbody.innerHTML = rows.map(function (r) {
+      qtySum += Number(r.qty) || 0;
+      totSum += Number(r.total) || 0;
+      var cells = [
+        srEsc(fmtWhen(r.date)),
+        srEsc(r.item) + (r.ref ? '<div class="small text-muted">' + srEsc(r.ref) + '</div>' : ''),
+        srFmtTot(r.qty),
+        srEsc(r.units || '—'),
+        srFmtTot(r.price)
+      ];
+      if (isPurchase) cells.push(srEsc(r.supplier || '—'));
+      else {
+        cells.push(srEsc(SR_REASON_LABEL[r.reason] || r.reason || '—'));
+        cells.push(srEsc(r.desc || '—'));
+        if (showExpense) {
+          cells.push(srEsc(r.expense || '—'));
+          cells.push(srEsc(r.recipient || '—'));
+        }
+      }
+      cells.push(srEsc(r.recorded_by || '—'));
+      cells.push(srFmtTot(r.total));
+      return '<tr>' + cells.map(function (c, i) {
+        var cls = (i === 2 || i === 4 || i === cells.length - 1) ? ' class="text-right"' : '';
+        return '<td' + cls + '>' + c + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+    tfoot.innerHTML = '<tr>' + th.map(function (_, i) {
+      if (i === 0) return '<td>' + (lang0 ? 'Jumla' : 'Totals') + '</td>';
+      if (i === 2) return '<td class="text-right">' + srFmtTot(qtySum) + '</td>';
+      if (i === th.length - 1) return '<td class="text-right">' + srFmtTot(totSum) + '</td>';
+      return '<td></td>';
+    }).join('') + '</tr>';
+  }
   function srFmtTot(v) {
     return (Number(v) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
@@ -2837,6 +2997,7 @@
     var none = document.getElementById('srStockNoMatch');
     if (none) none.style.display = shown ? 'none' : '';
     updateSrStockTotals();
+    renderSrStockTx();
   }
   updateSrStockMoveCounts();
   renderSrCategories();

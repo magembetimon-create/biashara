@@ -1325,6 +1325,7 @@ def shift_view(request):
             'stock_optional_groups': report.get('stock_optional_groups') or {},
             'sales_breakdown_rows': report['sales_breakdown_rows'],
             'sales_breakdown_totals': report['sales_breakdown_totals'],
+            'expense_breakdown': report.get('expense_breakdown') or {'rows': [], 'cash_total': 0, 'product_total': 0, 'total': 0},
             'recon_rows': recon_rows,
             'recon_recorder_name': staff_display_name(recorder_staff) if recorder_staff else '',
             'recon_pay_summary': {
@@ -1806,6 +1807,7 @@ def print_shift(request):
             'paper_size': paper_size,
             'sales_breakdown_rows': report['sales_breakdown_rows'],
             'sales_breakdown_totals': report['sales_breakdown_totals'],
+            'expense_breakdown': report.get('expense_breakdown') or {'rows': [], 'cash_total': 0, 'product_total': 0, 'total': 0},
         }
 
         return render(request, 'staff/print_shift.html', context)

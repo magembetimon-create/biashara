@@ -302,16 +302,13 @@
     $('#expenseItemWrapper').toggleClass('hidden', isDiscount || isEmpty);
     $('#productStockWrapper, #productQtyWrapper').toggleClass('hidden', !isProduct);
     $('#paymentAccountWrapper').toggleClass('hidden', isEmpty || isProduct);
-    $('#recipientTypeWrapper, #amountWrapper').toggleClass('hidden', isEmpty || isProduct);
+    $('#amountWrapper').toggleClass('hidden', isEmpty || isProduct);
+    $('#recipientTypeWrapper').toggleClass('hidden', isEmpty || isDiscount);
     $('#descWrapper').toggleClass('hidden', isEmpty);
     $('#customerNameWrapper').toggleClass('hidden', !isDiscount);
-    $('#staffWrapper, #externalWrapper, #externalTinWrapper').toggleClass(
-      'hidden',
-      isDiscount || isEmpty || isProduct,
-    );
 
-    if (!isDiscount && !isEmpty && !isProduct) updateRecipient();
-    else if (isDiscount) {
+    if (!isDiscount && !isEmpty) updateRecipient();
+    else {
       $('#staffWrapper, #externalWrapper, #externalTinWrapper').addClass('hidden');
     }
 
@@ -331,6 +328,31 @@
     const isStaff = rt === 'staff';
     $('#staffWrapper').toggleClass('hidden', !isStaff);
     $('#externalWrapper, #externalTinWrapper').toggleClass('hidden', isStaff);
+  }
+
+  function collectRecipient() {
+    const recipientType = $('#recipientType').val() || 'staff';
+    if (recipientType === 'staff') {
+      if (!$('#staffMemberValue').val()) {
+        return { error: lang('Chagua mfanyakazi', 'Select staff') };
+      }
+      return {
+        recipient_type: 'staff',
+        staff_id: $('#staffMemberValue').val(),
+        worker_id: $('#staffMemberValue').val(),
+        receiver_name: ($('#staffMember').val() || '').trim(),
+      };
+    }
+    const nm = ($('#extName').val() || '').trim();
+    const tin = ($('#extTin').val() || '').trim();
+    if (!nm || !tin) {
+      return { error: lang('Jina na TIN vinahitajika', 'Name and TIN required') };
+    }
+    return {
+      recipient_type: 'external',
+      receiver_name: nm,
+      tin_number: tin,
+    };
   }
 
   function getRecycleState() {
@@ -403,6 +425,11 @@
         return null;
       }
       const amount = productLineCost(stockId, quantity);
+      const recipient = collectRecipient();
+      if (recipient.error) {
+        toastr.warning(recipient.error);
+        return null;
+      }
       const payload = {
         category: 'product',
         expense_group_id: $itemVal.val(),
@@ -410,6 +437,7 @@
         stock_item_id: stockId,
         quantity,
         remarks: ($desc.val() || '').trim(),
+        ...recipient,
       };
       const prodLabel = $prodItem.val().trim();
       const itemLabel = `${$item.val()} — ${prodLabel} (${quantity})`;
@@ -417,7 +445,7 @@
         payload,
         display: {
           item: itemLabel,
-          recipient: '—',
+          recipient: payload.receiver_name || '—',
           desc: payload.remarks || '—',
           amount,
         },
@@ -457,24 +485,12 @@
         toastr.warning(lang('Chagua jina la matumizi', 'Select expense name'));
         return null;
       }
-      if ($('#recipientType').val() === 'staff') {
-        if (!$('#staffMemberValue').val()) {
-          toastr.warning(lang('Chagua mfanyakazi', 'Select staff'));
-          return null;
-        }
-        payload.staff_id = $('#staffMemberValue').val();
-        payload.worker_id = payload.staff_id;
-        payload.receiver_name = $('#staffMember').val().trim();
-      } else {
-        const nm = ($('#extName').val() || '').trim();
-        const tin = ($('#extTin').val() || '').trim();
-        if (!nm || !tin) {
-          toastr.warning(lang('Jina na TIN vinahitajika', 'Name and TIN required'));
-          return null;
-        }
-        payload.receiver_name = nm;
-        payload.tin_number = tin;
+      const recipient = collectRecipient();
+      if (recipient.error) {
+        toastr.warning(recipient.error);
+        return null;
       }
+      Object.assign(payload, recipient);
     }
 
     const itemLabel = cat === 'customer_discounts' ? lang('Punguzo', 'Discount') : $item.val();
