@@ -1,4 +1,5 @@
 from django.db.models import Count, Exists, OuterRef, Q
+from django.http import JsonResponse
 
 from management.models import (
     MatumiziReceiptAttachment,
@@ -13,7 +14,9 @@ from management.models import (
 )
 
 
-def is_shop_admin(cheo):
+def is_shop_admin(cheo, duka=None, useri=None):
+    if duka is not None and useri is not None and getattr(duka, 'owner', None) == useri:
+        return True
     if not cheo:
         return False
     return bool(
@@ -21,6 +24,36 @@ def is_shop_admin(cheo):
         or getattr(cheo, 'msaidizi', False)
         or getattr(cheo, 'fullcontrol', False)
     )
+
+
+def _not_view_only(cheo):
+    return bool(cheo) and not getattr(cheo, 'viewi', False)
+
+
+def can_register_staff(cheo, duka=None, useri=None):
+    if is_shop_admin(cheo, duka, useri):
+        return True
+    return _not_view_only(cheo) and bool(getattr(cheo, 'add_staff', False))
+
+
+def can_set_staff_role(cheo, duka=None, useri=None):
+    if is_shop_admin(cheo, duka, useri):
+        return True
+    return _not_view_only(cheo) and bool(getattr(cheo, 'set_staff_role', False))
+
+
+def can_view_staff_page(cheo, duka=None, useri=None):
+    if is_shop_admin(cheo, duka, useri) or can_set_staff_role(cheo, duka, useri):
+        return True
+    return bool(cheo and getattr(cheo, 'view_staff', False))
+
+
+def staff_perm_denied_json():
+    return JsonResponse({
+        'success': False,
+        'msg_swa': 'Hauna ruhusa ya kufanya operesheni hii. Tafadhali wasiliana na uongozi.',
+        'msg_eng': 'You do not have permission to perform this operation. Please contact your administrator.',
+    }, status=403)
 
 
 def _saved_by_admin_q(field):

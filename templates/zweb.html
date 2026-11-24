@@ -18,4 +18,15 @@ sudo -u biashara git -C /home/biashara/app checkout -- requirements.txt
 sudo -u biashara git -C /home/biashara/app pull
 systemctl restart biashara
 
+sudo journalctl -u biashara -f
+
+sudo -u biashara /home/biashara/venv/bin/python /home/biashara/app/manage.py migrate management
+systemctl restart biashara
+
+Ikiwa unataka kuona kwanza migrations za management:
+sudo -u biashara /home/biashara/venv/bin/python /home/biashara/app/manage.py showmigrations management | tail -n 20
+
+Ikiwa unataka kuona kwanza migrations za management:
+sudo -u biashara /home/biashara/venv/bin/python /home/biashara/app/manage.py showmigrations management | tail -n 20
+
 

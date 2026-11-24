@@ -1,3 +1,4 @@
+import logging
 import traceback
 from decimal import Decimal
 from datetime import datetime, time, timedelta
@@ -41,6 +42,13 @@ from management.models import (
     toaCash,
     wekaCash,
     PhoneMailConfirm,
+)
+from accaunts.notification_hub import (
+    can_register_staff,
+    can_set_staff_role,
+    can_view_staff_page,
+    is_shop_admin,
+    staff_perm_denied_json,
 )
 from accaunts.todos import (
     Todos,
@@ -206,6 +214,8 @@ def all_staff(request):
             'workers': workers,
             'worker_ids_with_account': worker_ids_with_account,
             'staff_page': 'all',
+            'can_register_staff': can_register_staff(cheo, duka, todo.get('useri')),
+            'viewer_is_admin': is_shop_admin(cheo, duka, todo.get('useri')),
         })
         return render(request, 'staff/all_staff.html', todo)
     except Exception:
@@ -219,9 +229,8 @@ def create_staff_temp_email(request):
         return JsonResponse({'success': False, 'msg': 'Invalid method'}, status=405)
     try:
         todo = todoFunct(request)
-        allowed, perm_response = _check_admin_or_msaidizi(todo)
-        if not allowed:
-            return perm_response
+        if not can_register_staff(todo.get('cheo'), todo.get('duka'), todo.get('useri')):
+            return staff_perm_denied_json()
 
         raw_name = str(request.POST.get('username') or request.POST.get('name') or '').strip()
         if not raw_name:
@@ -294,10 +303,8 @@ def add_staff(request):
         duka = todo['duka']
         
         if request.method == 'POST':
-            # Permission check: admin or msaidizi only
-            allowed, perm_response = _check_admin_or_msaidizi(todo)
-            if not allowed:
-                return perm_response
+            if not can_set_staff_role(todo.get('cheo'), duka, todo.get('useri')):
+                return staff_perm_denied_json()
             
             staff_id = int(request.POST.get('staff', 0))
             cheo = request.POST.get('staffcheo', '')
@@ -421,6 +428,9 @@ def view_staff(request):
         cheo = todo.get('cheo')
         worker_id = int(request.GET.get('wid', 0))
         
+        if not can_view_staff_page(cheo, duka, todo.get('useri')):
+            return redirect('/staff/all')
+
         worker = Workers.objects.filter(pk=worker_id, Interprise=duka.id).first()
         if not worker and duka.owner == todo.get('useri'):
             worker = Workers.objects.filter(pk=worker_id, Interprise__owner=duka.owner.id).first()
@@ -445,10 +455,9 @@ def view_staff(request):
             ).exists()
 
         perm = InterprisePermissions.objects.filter(fanyakazi=worker.id, Interprise=duka.id).first()
-        # print(f'perm exists {perm is not None}')
-        viewer_can_manage = bool(
-            duka.owner == todo.get('useri') or (cheo and cheo.fullcontrol)
-        )
+        viewer_is_admin = is_shop_admin(cheo, duka, todo.get('useri'))
+        can_set_role = can_set_staff_role(cheo, duka, todo.get('useri'))
+        viewer_can_manage = viewer_is_admin
 
         branches = Interprise.objects.filter(owner=duka.owner,Interprise=True).exclude(id=duka.id).order_by('name') if duka.owner else Interprise.objects.none()
         branch_permission_options = []
@@ -475,6 +484,8 @@ def view_staff(request):
             'deliver': is_delivery_agent,
             'perm': perm,
             'viewer_can_manage': viewer_can_manage,
+            'viewer_is_admin': viewer_is_admin,
+            'can_set_staff_role': can_set_role,
             'staff_page': 'all',
             'branch_permission_options': branch_permission_options,
             'linked_user': linked_user,
@@ -2091,11 +2102,8 @@ def grant_role(request):
     try:
         todo = todoFunct(request)
         duka = todo['duka']
-        
-        # Permission check: admin or msaidizi only
-        allowed, perm_response = _check_admin_or_msaidizi(todo)
-        if not allowed:
-            return perm_response
+        if not can_set_staff_role(todo.get('cheo'), duka, todo.get('useri')):
+            return staff_perm_denied_json()
 
         data = json.loads(request.body)
         worker_id = int(data.get('worker_id', 0))
@@ -2166,17 +2174,32 @@ def update_general_permissions(request):
     try:
         todo = todoFunct(request)
         duka = todo['duka']
-        
-        # Permission check: admin or msaidizi only
-        allowed, perm_response = _check_admin_or_msaidizi(todo)
-        if not allowed:
-            return perm_response
+        cheo = todo.get('cheo')
+        useri = todo.get('useri')
+        viewer_is_admin = is_shop_admin(cheo, duka, useri)
+        if not can_set_staff_role(cheo, duka, useri):
+            return staff_perm_denied_json()
 
         worker_id = int(request.POST.get('worker_id', 0))
         allow = str(request.POST.get('allow', '0')).lower() in ['1', 'true', 'yes', 'on']
         waiter_counter = str(request.POST.get('waiter_counter', '0')).lower() in ['1', 'true', 'yes', 'on']
         cash_deposit_supervisor = str(request.POST.get('cash_deposit_supervisor', '0')).lower() in ['1', 'true', 'yes', 'on']
         branch_permissions_json = request.POST.get('branch_permissions', '{}')
+        if not viewer_is_admin:
+            cash_deposit_supervisor = bool(getattr(
+                InterprisePermissions.objects.filter(
+                    Interprise=duka.id,
+                    fanyakazi=worker_id,
+                ).first(),
+                'cash_deposit_supervisor',
+                False,
+            ))
+            existing_allow = InterprisePermissions.objects.filter(
+                Interprise=duka.id,
+                fanyakazi=worker_id,
+            ).first()
+            allow = bool(existing_allow.Allow) if existing_allow else True
+            branch_permissions_json = '{}'
 
         worker = Workers.objects.filter(pk=worker_id, Interprise__owner=duka.owner.id).first()
         if not worker:
@@ -2204,7 +2227,7 @@ def update_general_permissions(request):
                 waiter_state=waiter_counter,
                 role='allow',
                 admin_user=request.user,
-                added = added
+                added=True,
             )
         if perm is not None:
             perm.Allow = allow

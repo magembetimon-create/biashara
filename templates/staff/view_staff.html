@@ -24,7 +24,7 @@
 
     <div class="row">
       <div class="img-show col-md-2 p-2 p-md-3">
-        <div class="d-flex classic_div justify-content-center align-items-center p-3 btn" data-toggle="modal" style="width:160px;height:160px;-webkit-box-shadow:0px 0px 5px -2px rgba(0,0,0,0.4);box-shadow:0px 0px 5px -2px rgba(0,0,0,0.4);" data-target="#Add-user-img">
+        <div class="d-flex classic_div justify-content-center align-items-center p-3 btn" {% if viewer_is_admin %}data-toggle="modal" data-target="#Add-user-img"{% endif %} style="width:160px;height:160px;-webkit-box-shadow:0px 0px 5px -2px rgba(0,0,0,0.4);box-shadow:0px 0px 5px -2px rgba(0,0,0,0.4);">
           {% if worker.picha %}
           <img src="{{ worker.picha.url }}" style="max-width:100%;max-height:100%" alt="">
           {% else %}
@@ -57,7 +57,7 @@
           <h6 class="text-capitalize classic_div smallFont latoFont row"><span class="col-4 weight600">{% if useri.langSet == 0 %}SIMU 2{% else %}PHONE 2{% endif %}</span><span class="col-8">{{ worker.simu2 }}</span></h6>
           {% endif %}
 
-          {% if viewer_can_manage %}
+          {% if can_set_staff_role %}
           <div class="pt-2">
             {% if worker.diactive and not theUser and duka.Interprise %}
                 <button data-toggle="modal" data-target="#addUser" title="{% if useri.langSet == 0 %}Ongeza mtumiaji kwenye akaunti hii{% else %}Add user to this business account{% endif %}" class="btn btn-light latoFont smallFont btn-sm">
@@ -83,6 +83,7 @@
     </div>
   </div>
 
+  {% if can_set_staff_role %}
   <div class="container-fluid rounded mt-3 whiteBg p-2 p-md-3">
     <h6 class="mb-3">{% if useri.langSet == 0 %}General Permissions{% else %}General Permissions{% endif %}</h6>
     <form id="generalPermissionsForm" class="row">
@@ -90,6 +91,7 @@
       <input type="hidden" name="worker_id" value="{{ worker.id }}">
       <input type="hidden" name="branch_permissions" id="branchPermissionsHidden" value="{}">
 
+      {% if viewer_is_admin %}
       <div class="col-md-4 mb-2">
         <div class="custom-control custom-switch cursor-pointer">
           <input type="checkbox" class="custom-control-input cursor-pointer" id="permAllow" name="allow" {% if perm and perm.Allow %}checked{% endif %} {% if not theUser %}disabled{% endif %}>
@@ -141,13 +143,15 @@
         </div>
         {% endif %}
       </div>
+      {% endif %}
 
+      {% if can_set_staff_role %}
       <div class="col-md-4 mb-2">
         <div class="custom-control custom-switch cursor-pointer">
           <input type="checkbox" class="custom-control-input cursor-pointer" id="permWaiter" name="waiter_counter" {% if perm and perm.waiter_counter %}checked{% endif %} {% if not theUser %}disabled{% endif %}>
           <label class="custom-control-label cursor-pointer" for="permWaiter">Waiter</label>
         </div>
-        {% if viewer_can_manage and branch_permission_options %}
+        {% if viewer_is_admin and branch_permission_options %}
         <button type="button" class="btn btn-link btn-sm p-0 smallFont mt-2" data-toggle="collapse" data-target="#branchPermissionsWaiter" aria-expanded="false" aria-controls="branchPermissionsWaiter">
           {% if useri.langSet == 0 %}Onyesha matawi mengine{% else %}Show Other branches{% endif %}
         </button>
@@ -195,24 +199,28 @@
         </div>
         {% endif %}
       </div>
+      {% endif %}
 
+      {% if viewer_is_admin %}
       <div class="col-md-4 mb-2">
         <div class="custom-control custom-switch cursor-pointer">
           <input type="checkbox" class="custom-control-input cursor-pointer" id="permCashDeposit" name="cash_deposit_supervisor" {% if perm and perm.cash_deposit_supervisor %}checked{% endif %} {% if not theUser %}disabled{% endif %}>
           <label class="custom-control-label cursor-pointer" for="permCashDeposit">Cash deposit supervisor</label>
         </div>
       </div>
+      {% endif %}
 
       <div class="col-12 mt-2">
         {% if not theUser %}
         <small class="text-danger d-block mb-2">{% if useri.langSet == 0 %}Kwanza fanya operation 1 (Add User), ndipo ruhusa 3, 4, 5 zitafunguka.{% else %}Complete operation 1 (Add User) first. Permissions 3, 4, 5 stay disabled until then.{% endif %}</small>
         {% endif %}
-        {% if viewer_can_manage %}
+        {% if can_set_staff_role %}
         <button type="submit" class="btn btn-primary btn-sm" {% if not theUser %}disabled{% endif %}>{% if useri.langSet == 0 %}Hifadhi Ruhusa{% else %}Save Permissions{% endif %}</button>
         {% endif %}
       </div>
     </form>
   </div>
+  {% endif %}
 
   <div class="container-fluid rounded mt-3 mb-5 whiteBg p-2 p-md-3" style="min-height:40vh;">
     <h6 class="p-3">
@@ -251,7 +259,7 @@
     {% endif %}
   </div>
 
-  {% if viewer_can_manage %}
+  {% if can_set_staff_role %}
   <div class="modal fade" id="addUser" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-sm" role="document">
       <div class="modal-content">
@@ -281,7 +289,9 @@
       </div>
     </div>
   </div>
+  {% endif %}
 
+  {% if viewer_is_admin %}
   <div class="modal fade" id="Add-user-img" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">

@@ -20,7 +20,7 @@
     </svg>
     {% if useri.langSet == 0 %}Wafanyakazi Wote{% else %}All Staff{% endif %}
 
-    {% if cheo.msaidizi or duka.owner == useri %}
+    {% if can_register_staff %}
     <button class="btn btn-sm btn-primary float-right latoFont"
       onclick="
         $('#worker-Id').val('');

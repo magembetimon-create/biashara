@@ -26,6 +26,10 @@ from accaunts.notification_hub import (
     info_unread_counts,
     is_info_notification_unread,
     is_shop_admin,
+    can_register_staff,
+    can_set_staff_role,
+    can_view_staff_page,
+    staff_perm_denied_json,
     mark_receive_info_notes_read,
     mark_receive_peer_confirms,
     pending_adjusts_qs,
@@ -2317,13 +2321,11 @@ def addDeliveryAgent(request):
         data={}
 
         try:
-          # Permission check: admin or msaidizi only
           todo = todoFunct(request)
-          allowed, perm_response = _check_admin_or_msaidizi(todo)
-          if not allowed:
-              return perm_response
-          
           duka = todo['duka']
+          if not can_set_staff_role(todo.get('cheo'), duka, todo.get('useri')):
+              return staff_perm_denied_json()
+
           agent= request.POST.get('agent',0) 
           agnt=Workers.objects.get(pk=agent,Interprise__owner=duka.owner.id)
 
@@ -2375,36 +2377,33 @@ def addStaff_form(request):
           }
 
     try:
-      # Permission check: admin or msaidizi only
       todo = todoFunct(request)
-      allowed, perm_response = _check_admin_or_msaidizi(todo)
-      if not allowed:
-          return perm_response
-      
-      staff= request.POST.get('staff',"") 
-      cheo= request.POST.get('staffcheo',"") 
-
       duka = todo['duka']
+      if not can_set_staff_role(todo.get('cheo'), duka, todo.get('useri')):
+          return staff_perm_denied_json()
+
+      staff= request.POST.get('staff',"") 
 
       usr=Workers.objects.get(pk=staff,Interprise__owner=duka.owner.id)
+      if usr.diactive is None or not usr.diactive.where or not usr.diactive.where.owner:
+        return JsonResponse({
+          'success': False,
+          'msg_swa': 'Mfanyakazi huyu hana akaunti ya mfumo.',
+          'msg_eng': 'This worker does not have a system account link.',
+        })
 
-      exist = 0
-      if  InterprisePermissions.objects.filter(fanyakazi=usr.id,Interprise=duka.id).exists():
-        exist = 1
-        data={
-          'success':False,
-          'msg_swa':'Mtumiaji tayari kashaongezwa ',
-          'msg_eng':'User  exists '
-        }
+      existing = InterprisePermissions.objects.filter(fanyakazi=usr.id, Interprise=duka.id).first()
+      if existing is None:
+          existing = InterprisePermissions.objects.filter(
+              Interprise=duka.id,
+              user=usr.diactive.where.owner,
+          ).first()
 
-    
-
-      
-      if todoFunct(request)['cheo'].owner and not exist:          
-       
-
-          entId = todoFunct(request)['cheo']
-
+      if existing:
+        existing.Allow = True
+        existing.fanyakazi = usr
+        existing.save(update_fields=['Allow', 'fanyakazi'])
+      else:
           usrent=user_Interprise()
           usrent.Interprise = usr.diactive.where
           usrent.save()
@@ -2413,31 +2412,21 @@ def addStaff_form(request):
           entp.user = usr.diactive.where.owner
           entp.user_entp=usrent
           entp.owner = False
-          entp.Allow = False
+          entp.Allow = True
           entp.discount = False
           entp.profile = False
           entp.picDescription = False
           entp.codeChange = False
           entp.ProfitView = False
-
           entp.addsupplier = False
           entp.addproduct = False
-          # entp.addparentCat = False
-          # entp.addaina = False
-          # entp.addKampuni = False
-
-          entp.Interprise = entId.Interprise
+          entp.Interprise = duka
           entp.default = False
           entp.cheo = usr.kazi
           entp.admin = request.user.id
           entp.product_edit = False
           entp.fanyakazi = usr
-
           entp.save()
-
-
-
-        
     except:
         data={
           'success':False,
@@ -2532,6 +2521,7 @@ def getstaffdata(request):
       userdetails["assist"]=assistantpresent
       userdetails["waiter_counter"]=bool(todo['duka'].waiter_counter)
       userdetails["shift_management_enabled"]=bool(todo['duka'].shift_management_enabled)
+      userdetails["can_manage_members"]=is_shop_admin(cheo, entId, todo.get('useri'))
 
 
     
@@ -2546,6 +2536,7 @@ def getstaffdata(request):
          "assist":None,
         "waiter_counter":False,
         "shift_management_enabled":False,
+        "can_manage_members":False,
       }
       return JsonResponse(data)  
   else:
@@ -2579,7 +2570,10 @@ def getWorkers(request):
             'success':True,
             'img':pichaZao,
             'isAdmin':cheo.owner,
-            'isHelper':cheo.msaidizi
+            'isHelper':cheo.msaidizi,
+            'can_edit_staff': is_shop_admin(cheo, duka, todo.get('useri')),
+            'can_register_staff': can_register_staff(cheo, duka, todo.get('useri')),
+            'can_view_staff': can_view_staff_page(cheo, duka, todo.get('useri')),
         }
         return JsonResponse(data)
     else:
@@ -2820,6 +2814,8 @@ def updatepermissions(request):
       todo = todoFunct(request)
       duka = todo['duka']
       cheo = todo['cheo']
+      if not is_shop_admin(cheo, duka, todo.get('useri')):
+          return staff_perm_denied_json()
       # print(state,edit)
       
       # print("User Exists 1:", cheo.user.user.username)

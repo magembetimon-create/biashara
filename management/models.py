@@ -292,6 +292,8 @@ class InterprisePermissions(models.Model):
     cash_deposit_record = models.BooleanField(default=False)
     staff_management = models.BooleanField(default=False)
     add_staff = models.BooleanField(default=False)
+    view_staff = models.BooleanField(default=False)
+    set_staff_role = models.BooleanField(default=False)
     open_own_shift = models.BooleanField(default=False)
     close_own_shift = models.BooleanField(default=False)
     def __str__(self):

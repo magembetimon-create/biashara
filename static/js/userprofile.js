@@ -37,6 +37,7 @@ var PICHA = [],
     picha = id => PICHA.find(i=>i.id===id).picha
 
 let WAITER_COUNTER_ACTIVITY = false
+let CAN_MANAGE_MEMBERS = false
 let SHIFT_MANAGEMENT_ENABLED = false
 
 
@@ -196,6 +197,7 @@ class getstaff{
         PICHA =  data.images
         WAITER_COUNTER_ACTIVITY = Boolean(data.waiter_counter)
         SHIFT_MANAGEMENT_ENABLED = Boolean(data.shift_management_enabled)
+        CAN_MANAGE_MEMBERS = Boolean(data.can_manage_members)
         
 
          let udt =``,
@@ -229,7 +231,7 @@ class getstaff{
 
 
              <a  type="button"`
-              if(!ud.owner){
+              if(!ud.owner && CAN_MANAGE_MEMBERS){
                   udt+=`data-toggle="modal" data-target="#user_permi" `
               }
                   
@@ -264,7 +266,7 @@ class getstaff{
              udt+=`</div></a>
               
              <div class="pr-2" >`
-           if(!ud.owner){
+           if(!ud.owner && CAN_MANAGE_MEMBERS){
                udt+= `<div class="onoffswitch mr-5">
              <form action="/updatepermissions" method="POST" data-value=${ud.id} data-change="Allow">`
               
@@ -324,6 +326,9 @@ class getstaff{
 
 $('body').on('click','.user_per', function () {
     
+    if(!CAN_MANAGE_MEMBERS){
+        return;
+    }
     const val=$(this).data('val'),fetch = v=>v.id===val,
           ud = usr_mng.state.find(fetch),
           assist = $(this).data('assist')
@@ -588,6 +593,59 @@ $('body').on('click','.user_per', function () {
             us+=`
 
       </ul>
+      <hr>
+  <h6> ${lang('Usimamizi wa Wafanyakazi','Staff Management')}</h6>
+  <ul class="list-unstyled stafflist px-1 px-md-3" data-view="${ud.viewi}" data-allowed="$${ud.Allow}" `
+    if(!ud.Allow || ud.viewi ){
+            us+=`style="opacity:0.3"`
+        }
+      us+=`>
+      <li class="robotoFont py-1 smallFont">${lang('Kusajili mfanyakazi mpya','Register new staff')} 
+      <span style="float:right;margin-right:3%">
+          <div class="onoffswitch-t2">
+              <form data-toggle="validator" class="togleparentuso" data-value=${ud.id} data-change="add_staff" action="/updatepermissions"  method="POST">
+                   <input type="checkbox" name="onoffswitch-t2" class="onoffswitch-checkbox-t2 changePemit" id="addstaff${ud.id}"` 
+                   if(ud.add_staff) {us+=`checked`}
+                   us+=` tabindex="0">
+                        <label class="onoffswitch-label-t2" for="addstaff${ud.id}">
+                            <span class="onoffswitch-inner-t2"></span>
+                            <span class="onoffswitch-switch-t2"></span>
+                        </label>
+              </form>
+            </div>
+          </span>
+      </li>
+      <li class="robotoFont py-1 smallFont">${lang('Kuona ukurasa wa taarifa za mfanyakazi','View staff details page')} 
+      <span style="float:right;margin-right:3%">
+          <div class="onoffswitch-t2">
+              <form data-toggle="validator" class="togleparentuso" data-value=${ud.id} data-change="view_staff" action="/updatepermissions"  method="POST">
+                   <input type="checkbox" name="onoffswitch-t2" class="onoffswitch-checkbox-t2 changePemit" id="viewstaff${ud.id}"` 
+                   if(ud.view_staff) {us+=`checked`}
+                   us+=` tabindex="0">
+                        <label class="onoffswitch-label-t2" for="viewstaff${ud.id}">
+                            <span class="onoffswitch-inner-t2"></span>
+                            <span class="onoffswitch-switch-t2"></span>
+                        </label>
+              </form>
+            </div>
+          </span>
+      </li>
+      <li class="robotoFont py-1 smallFont">${lang('Kuweka Waiter au Delivery Agent','Set Waiter or Delivery Agent role')} 
+      <span style="float:right;margin-right:3%">
+          <div class="onoffswitch-t2">
+              <form data-toggle="validator" class="togleparentuso" data-value=${ud.id} data-change="set_staff_role" action="/updatepermissions"  method="POST">
+                   <input type="checkbox" name="onoffswitch-t2" class="onoffswitch-checkbox-t2 changePemit" id="setstaffrole${ud.id}"` 
+                   if(ud.set_staff_role) {us+=`checked`}
+                   us+=` tabindex="0">
+                        <label class="onoffswitch-label-t2" for="setstaffrole${ud.id}">
+                            <span class="onoffswitch-inner-t2"></span>
+                            <span class="onoffswitch-switch-t2"></span>
+                        </label>
+              </form>
+            </div>
+          </span>
+      </li>
+  </ul>
       <hr>
 
 

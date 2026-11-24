@@ -32,6 +32,7 @@ timezone.now()
 from django.core.paginator import Paginator,EmptyPage
 
 from accaunts.todos import Todos,updateOrder,shift_operation_block_payload
+from accaunts.notification_hub import can_register_staff, is_shop_admin
 # Create your views here.
 
 
@@ -1951,7 +1952,14 @@ def mfanyakazi(request):
              useri = todo['useri']
              intp = todo['cheo']
 
-             if duka.owner.id == useri.id or (intp.addsupplier and not intp.viewi):  
+             edit=int(request.POST.get('edit') or 0)
+             if edit and not is_shop_admin(intp, duka, useri):
+                 return JsonResponse({
+                     'success': False,
+                     'message_swa': 'Ni admin tu anaweza kuhariri taarifa za mfanyakazi.',
+                     'message_eng': 'Only an admin can edit staff details.',
+                 })
+             if can_register_staff(intp, duka, useri):  
 
                 name=request.POST.get('jina')
                 address=request.POST.get('adress')
@@ -1963,7 +1971,6 @@ def mfanyakazi(request):
                 isActive=request.POST.get('isactive')
                 value=request.POST.get('value')
                 wId=request.POST.get('namba')
-                edit=int(request.POST.get('edit'))
                 wid=int(request.POST.get('valued'))
 
 
