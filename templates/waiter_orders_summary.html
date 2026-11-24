@@ -692,10 +692,14 @@
 
     function applyOrderDetails(data) {
       var order = data.order || {};
-      canDeleteItems = !!data.can_delete;
+      var shiftLocked = !!data.shift_locked;
+      canDeleteItems = !!data.can_delete && !shiftLocked;
       selectedOrderId = Number(order.id || selectedOrderId);
       modalTitle.textContent = '{% if useri.langSet == 0 %}Order{% else %}Order{% endif %} ' + (order.code || '-');
       modalMeta.textContent = '{% if useri.langSet == 0 %}Meza{% else %}Table{% endif %}: ' + (order.table || '-') + ' | {% if useri.langSet == 0 %}Eneo{% else %}Place{% endif %}: ' + (order.place || '-') + ' | {% if useri.langSet == 0 %}Kinachodaiwa{% else %}Amount owed{% endif %}: ' + currencyCode + ' ' + Number(order.amount || 0).toLocaleString();
+      if (shiftLocked) {
+        modalMeta.textContent += ' | {% if useri.langSet == 0 %}Shift imefungwa{% else %}Closed shift{% endif %}' + (data.shift_code ? (' ' + data.shift_code) : '') + '. {% if useri.langSet == 0 %}Hauwezi kufuta wala kurudisha{% else %}Delete and return are blocked{% endif %}';
+      }
       modalContent.innerHTML = renderOrderItems(data.items || [], currencyCode, canDeleteItems);
       deleteBtn.style.display = canDeleteItems ? '' : 'none';
       hideReturnPanel();

@@ -85,6 +85,8 @@ urlpatterns=[
 #Item Categories, Brands and  Groups navigations..........................................................//
     path('bidhaapanel',views.bidhaapanel, name='bidhaapanel'),
     path('bidhaaReg',views.bidhaaReg, name='bidhaaReg'),
+    path('stockRecon',views.stock_recon_adjust, name='stock_recon_adjust'),
+    path('saveStockRecon',views.save_stock_recon_adjust, name='save_stock_recon_adjust'),
     path('aina',views.bidhaaAina, name='aina'),
     path('kundi',views.bidhaaKundi, name='kundi'),
     path('groupedItems',views.groupedItemsPage, name='groupedItems'),

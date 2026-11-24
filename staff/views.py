@@ -84,6 +84,7 @@ from staff.shift_report import (
     recorder_shift_sales_summary,
     _sale_paid_and_debt,
     _sale_remaining_debt,
+    last_closed_shift_for_resume,
 )
 from stoku.stock_consume import consume_bidhaa_qty, stock_out_error, stock_short_messages
 
@@ -1344,12 +1345,28 @@ def shift_view(request):
                 'name': staff_display_name(recorder_staff) if recorder_staff else '',
             },
             'can_reconcile': _can_reconcile_shift(todo, shift),
+            'can_resume_shift': _can_resume_shift(todo, shift),
         })
 
         return render(request, 'staff/shift_view.html', todo)
     except Exception:
         traceback.print_exc()
         return render(request, 'errorpage.html', todoFunct(request))
+
+
+def _can_resume_shift(todo, shift):
+    """Only the most recently closed shift can be reopened, and only if none is open."""
+    if not shift or str(shift.status or '') != 'closed' or not shift.ends_at:
+        return False
+    shop = shift.Interprise or todo.get('duka')
+    last = last_closed_shift_for_resume(shop)
+    if not last or last.id != shift.id:
+        return False
+    cheo = todo.get('cheo')
+    if not cheo:
+        return False
+    is_assigned = ShiftAssignment.objects.filter(shift=shift, staff=cheo, active=True).exists()
+    return bool(getattr(cheo, 'owner', False) or (is_assigned and getattr(cheo, 'close_own_shift', False)))
 
 
 def _can_reconcile_shift(todo, shift):
@@ -1742,6 +1759,59 @@ def close_shift(request):
         )
 
         return JsonResponse({'success': True, 'msg': 'Shift closed successfully'})
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'msg': str(e)}, status=500)
+
+
+@login_required(login_url='login')
+def resume_shift(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'msg': 'Invalid method'}, status=405)
+    try:
+        todo = todoFunct(request)
+        ok, resp = _shift_enabled_or_redirect(todo)
+        if not ok:
+            return JsonResponse({'success': False, 'msg': 'Invalid business context'}, status=403)
+
+        duka = todo['duka']
+        cheo = todo['cheo']
+        sid = int(request.POST.get('sid', 0) or 0)
+        allowed_ids = {ent.id for ent in _shift_report_allowed_dukas(todo)} or {duka.id}
+        shift = ShiftSession.objects.select_related('Interprise').get(pk=sid)
+        if shift.Interprise_id not in allowed_ids:
+            return JsonResponse({'success': False, 'msg': 'Shift not allowed'}, status=403)
+
+        if not _can_resume_shift(todo, shift):
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Unaweza ku-resume tu shift iliyofungwa mwisho, na tu kama hakuna shift nyingine inayoendelea. Pia unahitaji ruhusa ya kufunga/kufungua shift hii.',
+                'msg_eng': 'You can resume only the last closed shift, and only if no other shift is open. You also need permission to close this shift.',
+            }, status=403)
+
+        shift.status = 'open'
+        shift.ends_at = None
+        shift.closed_by = None
+        shift.locked = False
+        shift.save(update_fields=['status', 'ends_at', 'closed_by', 'locked', 'updated_at'])
+
+        ShiftActivity.objects.create(
+            shift=shift,
+            event_type='SHIFT_RESUMED',
+            amount=0,
+            details='Shift resumed after accidental close',
+            by=cheo,
+        )
+
+        return JsonResponse({
+            'success': True,
+            'msg': 'Shift resumed successfully',
+            'msg_swa': 'Shift imeanza tena. Endelea hadi uifunge kwa usahihi.',
+            'msg_eng': 'The shift is open again. Continue until you close it correctly.',
+            'redirect_url': f'/staff/shifts/view?sid={shift.id}',
+        })
+    except ShiftSession.DoesNotExist:
+        return JsonResponse({'success': False, 'msg': 'Shift not found'}, status=404)
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({'success': False, 'msg': str(e)}, status=500)

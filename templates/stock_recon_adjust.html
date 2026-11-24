@@ -1,0 +1,394 @@
+{% extends 'stock.html' %}
+{% load humanize %}
+
+{% block nav-stock %}
+class="c-menu__item  is-active has-submenu showingpop2 "
+{% endblock %}
+{% block active-stock-recon-menu %}class="btn-default btn btn-sm pop2_active_menu"{% endblock %}
+{% block top-nav-recon %} actively {% endblock %}
+
+{% block Stock-keyWord %}
+{% if useri.langSet == 0 %} Uhakiki wa stoku {% else %} Stock reconciliation {% endif %}
+{% endblock %}
+
+{% block dash-mapper %}
+{% if useri.langSet == 0 %}Stoku {% else %} Stock{% endif %}
+{% endblock %}
+
+{% block dash-map %}
+{% if useri.langSet == 0 %} Uhakiki / Reconciliation {% else %} Stock Reconciliation {% endif %}
+{% endblock %}
+
+{% block descriptions %}
+<style>
+  #products_list { display: none !important; }
+  #srCategsList { overflow-x: auto; min-width: 0; flex-wrap: nowrap; align-items: stretch; }
+  #srCategsList li { flex: 0 0 auto; }
+  #srCategsList .categsBtn {
+    white-space: nowrap;
+    min-width: 9rem;
+    height: 100%;
+    text-align: left;
+  }
+  #srCategsList .sr-categ-name { display: block; }
+  #srCategsList .sr-categ-count {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    opacity: 0.85;
+  }
+  #srCategsList .sr-categ-count.is-edited { color: #c79100; opacity: 1; }
+  body.theme-dark #srCategsList .categsBtn { color: #e2e8f0; }
+  body.theme-dark #srCategsList .sr-categ-count.is-edited { color: #ffd666; }
+  .sr-total-box { white-space: nowrap; min-width: 7.5rem; }
+  #srTableWrap { max-height: 62vh; overflow: auto; border: 1px solid #e5e7eb; }
+  #srTable { table-layout: fixed; width: 100% !important; min-width: 0 !important; margin-bottom: 0; }
+  #srTable thead th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; white-space: nowrap; }
+  #srTable th, #srTable td { padding: 0.35rem 0.4rem; vertical-align: middle; }
+  #srTable tbody tr.sr-changed { background: #fff8e6; }
+  #srTable .sr-col-num { width: 2.2rem; }
+  #srTable .sr-col-img { width: 3.4rem; }
+  #srTable .sr-col-namba { width: 5.8rem; }
+  #srTable .sr-col-item { width: auto; }
+  #srTable .sr-col-units { width: 5.4rem; }
+  #srTable .sr-col-stock { width: 7rem; }
+  #srTable .sr-col-diff { width: 4.4rem; }
+  #srTable .sr-item { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #srTable .sr-namba { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; }
+  #srTable .sr-thumb { max-width: 2.6em; max-height: 2.55em; object-fit: contain; display: block; }
+  #srTable .sr-img-ph { width: 2.4em; height: 2.35em; color: #9ca3af; }
+  #srTable .sr-unit { width: 100%; max-width: 100%; min-width: 0; padding: 0.15rem 0.1rem; font-size: 0.78rem; }
+  #srTable input.sr-counted { width: 100%; min-width: 0; padding: 0.2rem 0.35rem; }
+</style>
+{{ recon_rows|json_script:"stockReconData" }}
+<div class="card mt-2">
+  <div class="card-header py-2 d-flex flex-wrap align-items-center justify-content-between">
+    <strong>{% if useri.langSet == 0 %}Linganisha Stoku (Reconciliation Adjustment){% else %}Stock Reconciliation Adjustment{% endif %}</strong>
+    <small class="text-muted">{% if useri.langSet == 0 %}Admin tu{% else %}Admin only{% endif %}</small>
+  </div>
+  <div class="card-body pt-2">
+    <p class="small text-muted mb-2">
+      {% if useri.langSet == 0 %}
+      Jaza idadi halisi iliyopo sasa. Ikiwa ni zaidi, tofauti inaenda Added; ikiwa ni pungufu, inaenda Reduced. Save inarekodi reconciliation adjustment bila kuunda mauzo.
+      {% else %}
+      Enter the actual counted stock. Surplus goes to Added; shortage goes to Reduced. Save records a reconciliation adjustment (not a sale).
+      {% endif %}
+    </p>
+    <div class="d-flex align-items-start mb-2">
+      <ul id="srCategsList" class="list-unstyled d-flex pt-1 mb-0 flex-grow-1"></ul>
+      <div class="pl-3 pt-1 text-right sr-total-box flex-shrink-0">
+        <small class="text-muted d-block">{% if useri.langSet == 0 %}Zilizobadilishwa{% else %}Changed{% endif %}</small>
+        <strong id="srChangedCount">0</strong>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+      <input type="search" class="form-control form-control-sm mb-1" id="srSearch" autocomplete="off"
+        style="max-width:280px"
+        placeholder="{% if useri.langSet == 0 %}Tafuta bidhaa...{% else %}Search item...{% endif %}">
+      <button type="button" class="btn btn-primary btn-sm mb-1" id="srSaveBtn" onclick="saveStockRecon()">
+        {% if useri.langSet == 0 %}Hifadhi tofauti{% else %}Save difference{% endif %}
+      </button>
+    </div>
+    <div class="mb-2">
+      <textarea id="srDesc" rows="2" class="form-control form-control-sm" placeholder="{% if useri.langSet == 0 %}Maelezo (si lazima){% else %}Notes (optional){% endif %}"></textarea>
+    </div>
+    <div class="table-responsive" id="srTableWrap">
+      <table class="table table-sm table-bordered table-hover mb-0 smallFont" id="srTable">
+        <thead>
+          <tr>
+            <th class="sr-col-num">#</th>
+            <th class="sr-col-img">{% if useri.langSet == 0 %}Picha{% else %}Image{% endif %}</th>
+            <th class="sr-col-namba">{% if useri.langSet == 0 %}Namba{% else %}Number{% endif %}</th>
+            <th class="sr-col-item text-left">{% if useri.langSet == 0 %}Bidhaa{% else %}Item{% endif %}</th>
+            <th class="sr-col-units text-left">{% if useri.langSet == 0 %}Vipimo{% else %}Units{% endif %}</th>
+            <th class="sr-col-stock text-left">{% if useri.langSet == 0 %}Stoku ya Sasa{% else %}Current Stock{% endif %}</th>
+            <th class="sr-col-diff text-left">{% if useri.langSet == 0 %}Zilizopunguzwa{% else %}Reduced{% endif %}</th>
+            <th class="sr-col-diff text-left">{% if useri.langSet == 0 %}Zilizongezwa{% else %}Added{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody id="srTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block forItems %}
+<script>
+var SR_UNCATEG = -1;
+var SR_CATEG = 0;
+var SR_ROWS = [];
+
+function srNum(v) {
+  var n = parseFloat(v);
+  return Number.isFinite(n) ? n : 0;
+}
+function srRound(v) {
+  return Math.round(srNum(v) * 10000) / 10000;
+}
+function srFmt(v) {
+  return srRound(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function srSafe(val, fallback) {
+  var text = (val == null || String(val).trim() === '') ? (fallback || '') : String(val);
+  return text.replace(/[&\/\\#,+()$~%"*?<>{}`]/g, '');
+}
+function srImgHtml(row) {
+  var url = String(row.img || '').replace(/"/g, '');
+  if (url) return '<img src="' + url + '" alt="" class="sr-thumb">';
+  return '<svg class="sr-img-ph bi bi-image" viewBox="0 0 17 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.002 2h-12a1 1 0 0 0-1 1v9l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094L15.002 9.5V3a1 1 0 0 0-1-1zm-12-1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm4 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>';
+}
+function loadSrRows() {
+  var el = document.getElementById('stockReconData');
+  if (!el) return [];
+  try { return JSON.parse(el.textContent || '[]'); } catch (e) { return []; }
+}
+function srAinaId(row) {
+  return row.aina_id == null || row.aina_id === '' ? SR_UNCATEG : Number(row.aina_id);
+}
+function srUnitQty(row) {
+  var q = srNum(row.unit_qty);
+  return q > 0 ? q : 1;
+}
+function srShownQty(smallQty, unitQty) {
+  var u = srNum(unitQty) || 1;
+  return srRound(srNum(smallQty) / u);
+}
+function srCounted(row) {
+  if (row.counted == null || row.counted === '') return null;
+  return srNum(row.counted);
+}
+function srDiff(row) {
+  var counted = srCounted(row);
+  if (counted == null) return { reduced: 0, added: 0, edited: false };
+  var u = srUnitQty(row);
+  var countedSmall = srRound(counted * u);
+  var cur = srNum(row.current_qty);
+  var dSmall = srRound(countedSmall - cur);
+  if (Math.abs(dSmall) < 0.0001) return { reduced: 0, added: 0, edited: true };
+  var dShown = srRound(Math.abs(dSmall) / u);
+  if (dSmall > 0) return { reduced: 0, added: dShown, edited: true };
+  return { reduced: dShown, added: 0, edited: true };
+}
+function srUnitSelectHtml(row) {
+  var choices = row.unit_choices || [{ unit: row.units || 'pc', qty: 1 }];
+  var selected = srUnitQty(row);
+  var html = '<select class="sr-unit made-input latoFont">';
+  choices.forEach(function (c) {
+    var q = srNum(c.qty) || 1;
+    html += '<option value="' + q + '"' + (Math.abs(q - selected) < 0.0001 ? ' selected' : '') + '>'
+      + srSafe(c.unit, '-') + '</option>';
+  });
+  html += '</select>';
+  return html;
+}
+function srVisibleRows() {
+  var q = ((document.getElementById('srSearch') || {}).value || '').toLowerCase().trim();
+  return SR_ROWS.filter(function (r) {
+    var ainaId = srAinaId(r);
+    if (Number(SR_CATEG) && Number(SR_CATEG) !== ainaId) return false;
+    if (q && String(r.item_name || '').toLowerCase().indexOf(q) === -1
+      && String(r.namba || '').toLowerCase().indexOf(q) === -1
+      && String(r.units || '').toLowerCase().indexOf(q) === -1
+      && String(r.units_jum || '').toLowerCase().indexOf(q) === -1) return false;
+    return true;
+  });
+}
+function updateSrCategoryCounts() {
+  var all = SR_ROWS.length;
+  var allEdited = 0;
+  var byCat = {};
+  SR_ROWS.forEach(function (r) {
+    var id = srAinaId(r);
+    if (!byCat[id]) byCat[id] = { total: 0, edited: 0 };
+    byCat[id].total += 1;
+    if (srDiff(r).edited) {
+      byCat[id].edited += 1;
+      allEdited += 1;
+    }
+  });
+  document.querySelectorAll('#srCategsList .sr-categ-btn').forEach(function (btn) {
+    var ain = Number(btn.getAttribute('data-aina'));
+    var countEl = btn.querySelector('.sr-categ-count');
+    if (!countEl) return;
+    var edited = 0, total = 0;
+    if (!ain) { edited = allEdited; total = all; }
+    else {
+      var s = byCat[ain] || { total: 0, edited: 0 };
+      edited = s.edited; total = s.total;
+    }
+    countEl.textContent = edited + '/' + total;
+    countEl.classList.toggle('is-edited', edited > 0);
+  });
+  var ch = document.getElementById('srChangedCount');
+  if (ch) ch.textContent = allEdited;
+  var n = document.getElementById('registered-stock-items');
+  if (n) n.textContent = String(all);
+}
+function renderSrCategories() {
+  var list = document.getElementById('srCategsList');
+  if (!list) return;
+  var cats = [];
+  var seen = {};
+  SR_ROWS.forEach(function (r) {
+    var id = srAinaId(r);
+    if (seen[id]) return;
+    seen[id] = true;
+    cats.push({
+      id: id,
+      aina: id === SR_UNCATEG
+        ? '{% if useri.langSet == 0 %}Bila Aina{% else %}Uncategorized{% endif %}'
+        : (r.aina_name || '{% if useri.langSet == 0 %}Bila Aina{% else %}Uncategorized{% endif %}')
+    });
+  });
+  cats.sort(function (a, b) { return String(a.aina).localeCompare(String(b.aina)); });
+  var html = '<li class="py-1 pr-1"><button type="button" data-aina="0" class="btn border categsBtn sr-categ-btn text-left text-capitalize latoFont btn-block btn-default"><span class="sr-categ-name">{% if useri.langSet == 0 %}Aina Zote{% else %}All Categories{% endif %}</span><small class="sr-categ-count">0/0</small></button></li>';
+  cats.forEach(function (c) {
+    html += '<li class="py-1 pr-1"><button type="button" data-aina="' + c.id + '" class="btn border categsBtn sr-categ-btn text-left text-capitalize latoFont btn-block btn-light"><span class="sr-categ-name">' + c.aina + '</span><small class="sr-categ-count">0/0</small></button></li>';
+  });
+  list.innerHTML = html;
+  updateSrCategoryCounts();
+}
+function renderSrTable() {
+  var body = document.getElementById('srTableBody');
+  if (!body) return;
+  var rows = srVisibleRows();
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="8" class="text-muted text-center py-3">{% if useri.langSet == 0 %}Hakuna bidhaa{% else %}No items{% endif %}</td></tr>';
+    updateSrCategoryCounts();
+    return;
+  }
+  body.innerHTML = rows.map(function (r, i) {
+    var d = srDiff(r);
+    var shown = srShownQty(r.current_qty, srUnitQty(r));
+    var counted = r.counted == null || r.counted === '' ? '' : srRound(r.counted);
+    var namba = srSafe(r.namba, '{% if useri.langSet == 0 %}Hakuna{% else %}None{% endif %}');
+    return '<tr data-bidhaa="' + r.bidhaa_id + '"' + (d.edited ? ' class="sr-changed"' : '') + '>'
+      + '<td class="sr-col-num text-muted">' + (i + 1) + '</td>'
+      + '<td class="sr-col-img">' + srImgHtml(r) + '</td>'
+      + '<td class="sr-namba" title="' + namba + '">' + namba + '</td>'
+      + '<td class="sr-item" title="' + srSafe(r.item_name) + '">' + srSafe(r.item_name) + '</td>'
+      + '<td class="sr-col-units">' + srUnitSelectHtml(r) + '</td>'
+      + '<td><div class="small text-muted sr-system">{% if useri.langSet == 0 %}Mfumo{% else %}System{% endif %}: ' + srFmt(shown) + '</div>'
+      + '<input type="number" step="0.0001" min="0" class="form-control form-control-sm sr-counted" value="' + counted + '" placeholder="' + srFmt(shown) + '"></td>'
+      + '<td class="sr-reduced">' + (d.reduced ? srFmt(d.reduced) : '-') + '</td>'
+      + '<td class="sr-added">' + (d.added ? srFmt(d.added) : '-') + '</td>'
+      + '</tr>';
+  }).join('');
+  updateSrCategoryCounts();
+}
+function applySrDiffDisplay(tr, row) {
+  var d = srDiff(row);
+  var shown = srShownQty(row.current_qty, srUnitQty(row));
+  var sys = tr.querySelector('.sr-system');
+  var inp = tr.querySelector('.sr-counted');
+  var red = tr.querySelector('.sr-reduced');
+  var add = tr.querySelector('.sr-added');
+  if (sys) sys.textContent = '{% if useri.langSet == 0 %}Mfumo{% else %}System{% endif %}: ' + srFmt(shown);
+  if (inp) inp.placeholder = srFmt(shown);
+  if (red) red.textContent = d.reduced ? srFmt(d.reduced) : '-';
+  if (add) add.textContent = d.added ? srFmt(d.added) : '-';
+  tr.classList.toggle('sr-changed', d.edited);
+  updateSrCategoryCounts();
+}
+function applySrCount(tr) {
+  var bid = Number(tr.getAttribute('data-bidhaa'));
+  var row = SR_ROWS.find(function (r) { return Number(r.bidhaa_id) === bid; });
+  if (!row) return;
+  var inp = tr.querySelector('.sr-counted');
+  var raw = (inp && inp.value != null) ? String(inp.value).trim() : '';
+  row.counted = raw === '' ? '' : srNum(raw);
+  applySrDiffDisplay(tr, row);
+}
+function applySrUnit(tr) {
+  var bid = Number(tr.getAttribute('data-bidhaa'));
+  var row = SR_ROWS.find(function (r) { return Number(r.bidhaa_id) === bid; });
+  if (!row) return;
+  var sel = tr.querySelector('.sr-unit');
+  var nextQty = srNum(sel && sel.value) || 1;
+  var prevQty = srUnitQty(row);
+  if (row.counted !== '' && row.counted != null) {
+    row.counted = srRound(srNum(row.counted) * prevQty / nextQty);
+    var inp = tr.querySelector('.sr-counted');
+    if (inp) inp.value = row.counted;
+  }
+  row.unit_qty = nextQty;
+  applySrDiffDisplay(tr, row);
+}
+function saveStockRecon() {
+  var items = [];
+  SR_ROWS.forEach(function (r) {
+    var d = srDiff(r);
+    if (!d.edited) return;
+    if (!d.reduced && !d.added) return;
+    items.push({ bidhaa_id: r.bidhaa_id, counted: srCounted(r), unit_qty: srUnitQty(r) });
+  });
+  if (!items.length) {
+    alert('{% if useri.langSet == 0 %}Jaza idadi halisi iliyopo sasa kwenye angalau bidhaa moja.{% else %}Enter actual counted stock on at least one item.{% endif %}');
+    return;
+  }
+  var btn = document.getElementById('srSaveBtn');
+  if (btn) btn.disabled = true;
+  if (typeof $('#loadMe').modal === 'function') $('#loadMe').modal('show');
+  var form = new FormData();
+  form.append('items', JSON.stringify(items));
+  form.append('desc', ((document.getElementById('srDesc') || {}).value || '').trim());
+  fetch('/stoku/saveStockRecon', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+    body: form
+  })
+    .then(function (resp) { return resp.json(); })
+    .then(function (data) {
+      if (typeof $('#loadMe').modal === 'function') $('#loadMe').modal('hide');
+      if (typeof hideLoading === 'function') hideLoading();
+      if (data && data.success) {
+        if (data.redirect_url) window.location = data.redirect_url;
+        else window.location.reload();
+        return;
+      }
+      alert((data && (data.msg_swa || data.msg_eng || data.msg)) || '{% if useri.langSet == 0 %}Imeshindikana kuhifadhi.{% else %}Failed to save.{% endif %}');
+    })
+    .catch(function () {
+      if (typeof $('#loadMe').modal === 'function') $('#loadMe').modal('hide');
+      alert('{% if useri.langSet == 0 %}Hitilafu ya mtandao.{% else %}Network error.{% endif %}');
+    })
+    .finally(function () {
+      if (btn) btn.disabled = false;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  SR_ROWS = loadSrRows();
+  renderSrCategories();
+  renderSrTable();
+  var list = document.getElementById('srCategsList');
+  if (list) {
+    list.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('.sr-categ-btn');
+      if (!btn) return;
+      SR_CATEG = Number(btn.getAttribute('data-aina') || 0);
+      list.querySelectorAll('.sr-categ-btn').forEach(function (b) {
+        b.classList.toggle('btn-default', b === btn);
+        b.classList.toggle('btn-light', b !== btn);
+      });
+      renderSrTable();
+    });
+  }
+  var search = document.getElementById('srSearch');
+  if (search) search.addEventListener('input', renderSrTable);
+  var body = document.getElementById('srTableBody');
+  if (body) {
+    body.addEventListener('input', function (ev) {
+      var tr = ev.target.closest('tr[data-bidhaa]');
+      if (tr && ev.target.classList.contains('sr-counted')) applySrCount(tr);
+    });
+    body.addEventListener('change', function (ev) {
+      var tr = ev.target.closest('tr[data-bidhaa]');
+      if (tr && ev.target.classList.contains('sr-unit')) applySrUnit(tr);
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -44,7 +44,8 @@ from django.core.cache import cache
 # Create your views here.
 
 
-from accaunts.notification_hub import apply_record_admin_flag, exclude_pending_receive_info
+from accaunts.notification_hub import apply_record_admin_flag, exclude_pending_receive_info, is_shop_admin
+from stoku.stock_consume import add_bidhaa_qty, consume_bidhaa_qty, stock_out_error, stock_short_messages
 from accaunts.todos import Todos,updateOrder,shift_operation_block_payload
 from .item_excel import (
     bulk_import_items,
@@ -6607,6 +6608,353 @@ def bidhaaReg(request):
         return redirect('/userdash')
     else: 
         return render(request,'registeredItems.html',todo)
+
+
+def _is_stock_recon_admin(todo, request=None):
+    cheo = todo.get('cheo')
+    duka = todo.get('duka')
+    useri = todo.get('useri')
+    if is_shop_admin(cheo) or int(getattr(cheo, 'admin', 0) or 0) == 1:
+        return True
+    own = getattr(duka, 'owner', None) if duka else None
+    if own and useri and own == useri:
+        return True
+    if own and useri and getattr(own, 'id', None) == getattr(useri, 'id', None):
+        return True
+    req_user = getattr(request, 'user', None) if request else None
+    if own and req_user and getattr(own, 'user_id', None) == getattr(req_user, 'id', None):
+        return True
+    return False
+
+
+def _next_adj_code(duka):
+    last = stokAdjustment.objects.filter(Interprise=duka.id).last()
+    adjno = last.code_num if last and last.code_num else 1
+    if adjno < 10:
+        adj_str = '000' + str(adjno)
+    elif adjno < 100:
+        adj_str = '00' + str(adjno)
+    elif adjno < 1000:
+        adj_str = '0' + str(adjno)
+    else:
+        adj_str = str(adjno)
+    return adjno, adj_str
+
+
+def _create_recon_adjustment(duka, cheo, desc, ongezwa=False):
+    adjno, adj_str = _next_adj_code(duka)
+    adj = stokAdjustment()
+    adj.Interprise = duka
+    adj.date = datetime.datetime.now(tz=timezone.utc)
+    adj.Recodeddate = datetime.datetime.now(tz=timezone.utc).date()
+    adj.code_num = adjno + 1
+    adj.Na = cheo
+    adj.desc = desc
+    adj.op = True
+    adj.recon = True
+    adj.code = adj_str
+    if ongezwa:
+        adj.Ongezwa = True
+    else:
+        adj.others = True
+    adj.save()
+    return adj
+
+
+def _confirm_stock_adj(duka, cheo, adj):
+    for tn in InterprisePermissions.objects.filter(Interprise=duka.id, Allow=True):
+        comf = stockAdjst_confirm()
+        comf.userP = tn
+        comf.adjs = adj
+        comf.save()
+    stockAdjst_confirm.objects.filter(userP=cheo.id, adjs=adj).update(
+        confirmed=True,
+        tarehe=datetime.datetime.now(tz=timezone.utc),
+    )
+
+
+def _recon_unit_choices(row):
+    choices = []
+    small = (row.get('units') or '').strip() or 'pc'
+    choices.append({'unit': small, 'qty': 1.0})
+    try:
+        uw = float(row.get('uwiano') or 1)
+    except (TypeError, ValueError):
+        uw = 1.0
+    jum = (row.get('units_jum') or '').strip()
+    if uw > 1:
+        choices.append({'unit': jum or small, 'qty': uw})
+    seen = {(c['unit'].lower(), round(float(c['qty']), 5)) for c in choices}
+    for extra in row.get('extra_units') or []:
+        name = (extra.get('unit') or '').strip()
+        try:
+            q = float(extra.get('qty') or 0)
+        except (TypeError, ValueError):
+            q = 0.0
+        if q <= 0:
+            continue
+        key = (name.lower(), round(q, 5))
+        if key in seen:
+            continue
+        seen.add(key)
+        choices.append({'unit': name, 'qty': q})
+    return choices
+
+
+def _recon_allowed_unit_qty(row, unit_qty):
+    try:
+        uq = Decimal(str(unit_qty if unit_qty not in (None, '') else '1'))
+    except (TypeError, ValueError, InvalidOperation):
+        return Decimal('1')
+    if uq <= 0:
+        return Decimal('1')
+    for choice in (row.get('unit_choices') or _recon_unit_choices(row)):
+        try:
+            cq = Decimal(str(choice.get('qty') or 1))
+        except (TypeError, ValueError, InvalidOperation):
+            continue
+        if abs(cq - uq) <= Decimal('0.0001'):
+            return cq
+    return Decimal('1')
+
+
+def _stock_recon_rows(duka):
+    # Distinct catalog item (bidhaa_stoku.bidhaa), same grouping as /staff/shifts/view.
+    grouped_qs = (
+        bidhaa_stoku.objects.filter(
+            Interprise=duka.id,
+            is_grouped_item=False,
+            service=False,
+            bidhaa_id__isnull=False,
+            idadi__gt=0,
+        )
+        .values('bidhaa_id')
+        .annotate(
+            item_name=F('bidhaa__bidhaa_jina'),
+            namba=F('bidhaa__namba'),
+            units=F('bidhaa__vipimo'),
+            units_jum=F('bidhaa__vipimo_jum'),
+            uwiano=F('bidhaa__idadi_jum'),
+            aina_id=F('bidhaa__bidhaa_aina_id'),
+            aina_name=F('bidhaa__bidhaa_aina__aina'),
+            current_qty=Sum('idadi'),
+        )
+    )
+    rows = []
+    for g in grouped_qs:
+        aina_id = g.get('aina_id')
+        uw = g.get('uwiano') or 1
+        try:
+            uw = float(uw)
+        except (TypeError, ValueError):
+            uw = 1.0
+        rows.append({
+            'bidhaa_id': g['bidhaa_id'],
+            'item_name': (g.get('item_name') or '') or '',
+            'namba': ((g.get('namba') or '') or '').strip(),
+            'units': (g.get('units') or '') or '',
+            'units_jum': (g.get('units_jum') or '') or '',
+            'uwiano': uw if uw else 1.0,
+            'aina_id': aina_id if aina_id else -1,
+            'aina_name': (g.get('aina_name') or '') or '',
+            'current_qty': Decimal(str(g.get('current_qty') or 0)),
+        })
+    rows = sorted(rows, key=lambda r: (r['item_name'] or '').lower())
+    bidhaa_ids = [r['bidhaa_id'] for r in rows]
+    pics = {}
+    extras = {}
+    if bidhaa_ids:
+        for im in picha_bidhaa.objects.filter(bidhaa_id__in=bidhaa_ids).select_related('picha'):
+            if im.bidhaa_id in pics:
+                continue
+            try:
+                pics[im.bidhaa_id] = im.picha.picha.url if im.picha and im.picha.picha else ''
+            except Exception:
+                pics[im.bidhaa_id] = ''
+        for pr in bei_za_bidhaa.objects.filter(item_id__in=bidhaa_ids):
+            try:
+                qty = float(pr.idadi or 0)
+            except (TypeError, ValueError):
+                qty = 0.0
+            if qty <= 0:
+                continue
+            extras.setdefault(pr.item_id, []).append({
+                'unit': (pr.jina or '').strip(),
+                'qty': qty,
+            })
+    for r in rows:
+        r['current_qty'] = float(r['current_qty'])
+        r['img'] = pics.get(r['bidhaa_id'], '') or ''
+        r['extra_units'] = extras.get(r['bidhaa_id'], [])
+        r['unit_choices'] = _recon_unit_choices(r)
+        r.pop('extra_units', None)
+    return rows
+
+
+@login_required(login_url='login')
+def stock_recon_adjust(request):
+    try:
+        todo = todoFunct(request)
+        duka = todo.get('duka')
+        if not duka or not duka.Interprise:
+            return redirect('/userdash')
+        if not _is_stock_recon_admin(todo, request):
+            return render(request, 'errorpage.html', todo)
+
+        todo.update({
+            'recon_rows': _stock_recon_rows(duka),
+            'staff_page': 'stock_recon',
+        })
+        return render(request, 'stock_recon_adjust.html', todo)
+    except Exception:
+        traceback.print_exc()
+        return render(request, 'errorpage.html', todoFunct(request))
+
+
+@login_required(login_url='login')
+def save_stock_recon_adjust(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'msg': 'Invalid method'}, status=405)
+    try:
+        todo = todoFunct(request)
+        duka = todo.get('duka')
+        cheo = todo.get('cheo')
+        if not duka or not duka.Interprise:
+            return JsonResponse({'success': False, 'msg': 'Invalid business context'}, status=403)
+        if not _is_stock_recon_admin(todo, request):
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Uhakiki huu wa stoku unafanywa na admin tu.',
+                'msg_eng': 'This stock reconciliation is for admin only.',
+            }, status=403)
+
+        try:
+            payload = json.loads(request.POST.get('items', '[]') or '[]')
+        except (TypeError, ValueError, json.JSONDecodeError):
+            payload = []
+        if not isinstance(payload, list) or not payload:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Hakuna bidhaa za kuhifadhi.',
+                'msg_eng': 'No items to save.',
+            })
+
+        desc = (request.POST.get('desc') or '').strip() or 'Stock reconciliation adjustment'
+        live = {row['bidhaa_id']: row for row in _stock_recon_rows(duka)}
+        reduces = []
+        adds = []
+        for item in payload:
+            try:
+                bidhaa_id = int(item.get('bidhaa_id') or 0)
+                counted = Decimal(str(item.get('counted') if item.get('counted') not in (None, '') else '0'))
+            except (TypeError, ValueError, InvalidOperation):
+                continue
+            row = live.get(bidhaa_id)
+            if not row:
+                continue
+            if counted < 0:
+                return JsonResponse({
+                    'success': False,
+                    'msg_swa': f"Idadi ya {row.get('item_name')} haiwezi kuwa chini ya 0.",
+                    'msg_eng': f"Counted qty for {row.get('item_name')} cannot be below 0.",
+                })
+            unit_qty = _recon_allowed_unit_qty(row, item.get('unit_qty'))
+            counted = counted * unit_qty
+            current = Decimal(str(row.get('current_qty') or 0))
+            diff = counted - current
+            if abs(diff) <= Decimal('0.0001'):
+                continue
+            if diff > 0:
+                adds.append((row, diff))
+            else:
+                reduces.append((row, -diff))
+
+        if not reduces and not adds:
+            return JsonResponse({
+                'success': False,
+                'msg_swa': 'Hakuna tofauti ya kuhifadhi. Jaza idadi halisi iliyopo sasa.',
+                'msg_eng': 'No differences to save. Fill the actual counted stock.',
+            })
+
+        with transaction.atomic():
+            reduce_id = None
+            add_id = None
+            if reduces:
+                adj = _create_recon_adjustment(duka, cheo, desc, ongezwa=False)
+                for row, qty in reduces:
+                    used = consume_bidhaa_qty(
+                        duka,
+                        row['bidhaa_id'],
+                        qty,
+                        request,
+                        item_name=row.get('item_name') or '',
+                    )
+                    if not used:
+                        raise stock_out_error(row.get('item_name') or '', qty, 0)
+                    for batch, taken in used:
+                        prc = productChangeRecord()
+                        prc.prod = batch
+                        prc.qty = taken
+                        prc.adjst = adj
+                        prc.save()
+                _confirm_stock_adj(duka, cheo, adj)
+                reduce_id = adj.id
+            if adds:
+                adj = _create_recon_adjustment(duka, cheo, desc, ongezwa=True)
+                for row, qty in adds:
+                    used = add_bidhaa_qty(
+                        duka,
+                        row['bidhaa_id'],
+                        qty,
+                        request,
+                        item_name=row.get('item_name') or '',
+                    )
+                    if not used:
+                        raise ValueError(f"NO_STOCK_LOT|{row.get('item_name') or 'bidhaa'}")
+                    for batch, taken in used:
+                        prc = productChangeRecord()
+                        prc.prod = batch
+                        prc.qty = taken
+                        prc.adjst = adj
+                        prc.save()
+                _confirm_stock_adj(duka, cheo, adj)
+                add_id = adj.id
+
+        view_id = reduce_id or add_id
+        return JsonResponse({
+            'success': True,
+            'reduce_id': reduce_id,
+            'add_id': add_id,
+            'redirect_url': f'/stoku/viewAdjst?item_valued={view_id}' if view_id else '/stoku/AllAdjs',
+            'msg_swa': 'Uhakiki wa stoku umehifadhiwa kama reconciliation adjustment.',
+            'msg_eng': 'Stock count was saved as a reconciliation adjustment.',
+        })
+    except ValueError as exc:
+        short = stock_short_messages(exc)
+        if short:
+            return JsonResponse({'success': False, **short})
+        msg = str(exc)
+        if msg.startswith('NO_STOCK_LOT|'):
+            name = msg.split('|', 1)[1]
+            return JsonResponse({
+                'success': False,
+                'msg_swa': f'Hakuna lot ya kuongezea stoku ya {name}.',
+                'msg_eng': f'No stock lot is available to add quantity for {name}.',
+            })
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'msg_swa': 'Oparesheni haikufanikiwa. Tafadhali jaribu tena.',
+            'msg_eng': 'The operation was not successful. Please try again.',
+        })
+    except Exception:
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'msg_swa': 'Oparesheni haikufanikiwa kutokana na hitilafu. Tafadhali jaribu tena.',
+            'msg_eng': 'The operation failed due to an error. Please try again.',
+        }, status=500)
+
 
 @login_required(login_url='login')
 def bidhaaKundi(request):  

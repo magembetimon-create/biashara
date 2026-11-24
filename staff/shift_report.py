@@ -92,6 +92,98 @@ def _event_shift_id(windows, event_at):
     return matches[0][0]
 
 
+def sale_event_datetime(sale):
+    """Same instant completed_sales_qs uses: waiter print time, otherwise POS tarehe."""
+    if not sale:
+        return None
+    if getattr(sale, 'waiter_order_id', None) and getattr(sale, 'Packed_at', None):
+        return sale.Packed_at
+    return getattr(sale, 'tarehe', None) or getattr(sale, 'Packed_at', None)
+
+
+def owning_shift_for_sale(sale, now=None):
+    """Shift window that currently owns this sale on /staff/shifts/view."""
+    duka = getattr(sale, 'Interprise', None)
+    event_at = sale_event_datetime(sale)
+    if not duka or not event_at:
+        return None
+    shifts = list(
+        ShiftSession.objects.filter(Interprise=duka.id)
+        .exclude(starts_at=None)
+        .order_by('starts_at', 'id')
+    )
+    if not shifts:
+        return None
+    windows = _shift_time_windows(shifts, now=now, duka=duka)
+    sid = _event_shift_id(windows, event_at)
+    if not sid:
+        return None
+    for shift in shifts:
+        if shift.id == sid:
+            return shift
+    return None
+
+
+def sale_locked_to_closed_shift(sale, now=None):
+    """Return the closed owning shift, or None if the sale may still be mutated."""
+    shift = owning_shift_for_sale(sale, now=now)
+    if not shift:
+        return None
+    if str(shift.status or '') == 'closed' and shift.ends_at:
+        return shift
+    return None
+
+
+def closed_shift_sale_json(shift):
+    code = str((shift.code if shift else '') or '')
+    swa = (
+        f'Hauwezi kubadilisha au kurudisha mauzo ya shift {code} kwa sababu shift hiyo imeshafungwa. '
+        'Resume shift iliyofungwa mwisho kwanza kama ilifungwa kimakosa.'
+        if code else
+        'Hauwezi kubadilisha au kurudisha mauzo ya shift iliyofungwa. Resume shift iliyofungwa mwisho kwanza kama ilifungwa kimakosa.'
+    )
+    eng = (
+        f'You cannot change or return sales from shift {code} because that shift is already closed. '
+        'Resume the last closed shift first if it was closed by mistake.'
+        if code else
+        'You cannot change or return sales from a closed shift. Resume the last closed shift first if it was closed by mistake.'
+    )
+    return {
+        'success': False,
+        'swa': swa,
+        'eng': eng,
+        'msg': swa,
+        'msg_swa': swa,
+        'msg_eng': eng,
+        'message_swa': swa,
+        'message_eng': eng,
+        'shift_locked': True,
+        'shift_code': code,
+    }
+
+
+def last_closed_shift_for_resume(duka):
+    """Most recently closed shift, only when no newer/open shift exists."""
+    if not duka:
+        return None
+    shop_id = getattr(duka, 'id', None)
+    if not shop_id:
+        return None
+    if ShiftSession.objects.filter(Interprise=shop_id).exclude(status='closed').exists():
+        return None
+    if ShiftSession.objects.filter(Interprise=shop_id, ends_at__isnull=True).exists():
+        return None
+    return (
+        ShiftSession.objects.filter(
+            Interprise=shop_id,
+            status='closed',
+            ends_at__isnull=False,
+        )
+        .order_by('-ends_at', '-id')
+        .first()
+    )
+
+
 def completed_sales_qs(duka, starts_at, period_end, start_exclusive=False):
     qs = mauzoni.objects.filter(
         Interprise=duka.id,

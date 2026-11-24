@@ -33,6 +33,11 @@
         {% if useri.langSet == 0 %}Maliza Shift{% else %}Finish Shift{% endif %}
       </button>
       {% else %}
+            {% if can_resume_shift %}
+            <button type="button" class="btn btn-warning btn-sm" onclick="resumeClosedShift('{{ shift.id }}')">
+              {% if useri.langSet == 0 %}Resume Shift{% else %}Resume Shift{% endif %}
+            </button>
+            {% endif %}
             <a href="/staff/shifts/new" class="btn btn-primary btn-sm">
                {% if useri.langSet == 0 %}Ongeza Shift{% else %}New Shift{% endif %}
             </a>
@@ -1196,6 +1201,35 @@ function openCloseShiftModal(shiftId) {
   cashInput.value = '';
   cashInput.placeholder = defaultClosingCash;
   $('#closeShiftModal').modal('show');
+}
+
+function resumeClosedShift(shiftId) {
+  if (!shiftId) return;
+  var ok = confirm('{% if useri.langSet == 0 %}Shift hii itafunguliwa tena na kuendelea. Una uhakika uliifunga kimakosa?{% else %}This shift will be reopened and continue. Resume it because it was closed by mistake?{% endif %}');
+  if (!ok) return;
+  $('#loadMe').modal('show');
+  var form = new FormData();
+  form.append('sid', shiftId);
+  fetch('/staff/shifts/resume', {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'},
+    body: form
+  })
+    .then(function(resp) { return resp.json(); })
+    .then(function(data) {
+      $('#loadMe').modal('hide');
+      if (typeof hideLoading === 'function') hideLoading();
+      if (data && data.success) {
+        window.location.reload();
+        return;
+      }
+      alert((data && (data.msg_swa || data.msg_eng || data.msg)) || '{% if useri.langSet == 0 %}Imeshindikana ku-resume shift.{% else %}Failed to resume shift.{% endif %}');
+    })
+    .catch(function() {
+      $('#loadMe').modal('hide');
+      if (typeof hideLoading === 'function') hideLoading();
+      alert('{% if useri.langSet == 0 %}Imeshindikana ku-resume shift.{% else %}Failed to resume shift.{% endif %}');
+    });
 }
 
 function submitCloseShift() {

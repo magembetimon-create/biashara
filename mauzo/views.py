@@ -37,6 +37,7 @@ from django.core.paginator import Paginator,EmptyPage
 
 
 from accaunts.todos import Todos, updateOrder, shift_operation_block_payload
+from staff.shift_report import closed_shift_sale_json, sale_locked_to_closed_shift
 from accaunts.notification_hub import apply_weka_admin_flag, is_shop_admin
 from purchase.guest_compound_utils import (
     compound_guest_orders_qs,
@@ -3744,6 +3745,7 @@ def _waiter_summary_item_rows(sale):
 
 
 def _waiter_summary_sale_payload(sale, can_delete=False):
+      locked_shift = sale_locked_to_closed_shift(sale)
       table_name = '-'
       place_name = '-'
       try:
@@ -3758,8 +3760,10 @@ def _waiter_summary_sale_payload(sale, can_delete=False):
       owed = _sale_owed_amount(remaining_total, sale.ilolipwa or 0)
       return {
             'success': True,
-            'can_delete': bool(can_delete),
+            'can_delete': bool(can_delete) and not bool(locked_shift),
             'deleted_order': False,
+            'shift_locked': bool(locked_shift),
+            'shift_code': str((locked_shift.code if locked_shift else '') or ''),
             'order': {
                   'id': sale.id,
                   'code': sale.code,
@@ -4341,6 +4345,10 @@ def waiter_summary_delete_order(request):
       if not sale:
             return JsonResponse({'success': False, 'msg': 'Order not found'})
 
+      locked_shift = sale_locked_to_closed_shift(sale)
+      if locked_shift:
+            return JsonResponse(closed_shift_sale_json(locked_shift))
+
       with transaction.atomic():
             _restore_stock_for_order(sale)
             mauzoList.objects.filter(mauzo=sale.id).delete()
@@ -4380,6 +4388,9 @@ def waiter_summary_delete_item(request):
             sale = _waiter_summary_open_sale(duka, order_id, lock=True)
             if not sale:
                   return JsonResponse({'success': False, 'msg': 'Order not found'})
+            locked_shift = sale_locked_to_closed_shift(sale)
+            if locked_shift:
+                  return JsonResponse(closed_shift_sale_json(locked_shift))
             line = mauzoList.objects.select_related('produ', 'produ__produced').filter(
                   pk=item_id, mauzo_id=sale.id,
             ).first()
@@ -4431,6 +4442,9 @@ def waiter_summary_return_item_qty(request):
             sale = _waiter_summary_open_sale(duka, order_id, lock=True)
             if not sale:
                   return JsonResponse({'success': False, 'msg': 'Order not found'})
+            locked_shift = sale_locked_to_closed_shift(sale)
+            if locked_shift:
+                  return JsonResponse(closed_shift_sale_json(locked_shift))
             line = mauzoList.objects.select_related('produ', 'produ__produced').filter(
                   pk=item_id, mauzo_id=sale.id,
             ).first()
@@ -6003,6 +6017,10 @@ def waiter_print_order(request):
             if not sale:
                   return JsonResponse({'success': False, 'msg': 'Order not found'})
 
+            locked_shift = sale_locked_to_closed_shift(sale)
+            if locked_shift:
+                  return JsonResponse(closed_shift_sale_json(locked_shift))
+
             first_print = int(sale.printed_number or 0) <= 0
 
             if first_print:
@@ -6773,8 +6791,11 @@ def  itm_return(request):
             elif sale_no >=10000 :
                   return_str =str(sale_no) 
 
+            locked_shift = sale_locked_to_closed_shift(todo.get('the_bill'))
             todo.update({
                   'return_coded':return_str,
+                  'sale_shift_locked': bool(locked_shift),
+                  'sale_shift_code': str((locked_shift.code if locked_shift else '') or ''),
             }) 
             if not todo['duka'].Interprise:
                   return redirect('/userdash')
@@ -6950,6 +6971,9 @@ def  Itm_return_data(request):
       duka = todoFunct(request)['cheo']
 
       uzo = mauzoni.objects.get(pk=intp,Interprise=duka.Interprise.id)
+      locked_shift = sale_locked_to_closed_shift(uzo)
+      if locked_shift:
+            return JsonResponse(closed_shift_sale_json(locked_shift))
  
 
 
@@ -7668,6 +7692,9 @@ def  addInvoice(request):
                
          if edit:
              mauzi=mauzoni.objects.get(pk=bil_val,Interprise=entp.Interprise)
+             locked_shift = sale_locked_to_closed_shift(mauzi)
+             if locked_shift:
+                   return JsonResponse(closed_shift_sale_json(locked_shift))
              kwenye_list=mauzoList.objects.filter(mauzo=mauzi.id)
              if mauzi.online:
                    online = True

@@ -259,7 +259,16 @@
 
                <hr>
 
-       {% if the_bill.confirm_return or not the_bill.user_customer or not the_bill.receved %}     
+       {% if sale_shift_locked %}
+        <div class="alert alert-warning latoFont smallFont mb-3">
+          {% if useri.langSet == 0 %}
+            Mauzo haya ni ya shift {{ sale_shift_code }} ambayo imeshafungwa. Hauwezi kurekodi sales return hadi shift hiyo iresume.
+          {% else %}
+            This sale belongs to closed shift {{ sale_shift_code }}. You cannot record a sales return until that shift is resumed.
+          {% endif %}
+        </div>
+        <div>
+       {% elif the_bill.confirm_return or not the_bill.user_customer or not the_bill.receved %}     
         <form action="{% url 'Itm_return_data' %}" id="saveReturn" method="POST">
        {% else  %}
           <div>
@@ -602,6 +611,14 @@
 
         {% endif %}
 
+        {% if sale_shift_locked %}
+        <p class="text-center pb-5">
+          <button type="button" class="btn btn-secondary btn-lg latoFont" disabled>
+            {% if useri.langSet == 0 %} Shift imefungwa {% else %} Shift closed {% endif %}
+          </button>
+        </p>
+        {% endif %}
+
         <!-- HOLD RETURN DATA AND ACCOUNT INPUT -->
         <input type="number" name="ac_val_" value=0 id="ac_val_" hidden >
         <input type="text" name="rtn_data" id="rtn_data" hidden >
@@ -609,6 +626,7 @@
         
 
             <!-- <form action="/purchase/addBill" method="POST" data-edit=0 data-bill=0 id="save_bill_data"> -->
+        {% if not sale_shift_locked %}
         <p class="text-center pb-5" id="save_the_bill">
         
                 <button type="submit" id="The_save_retn_btn" disabled class="btn btn-success btn-lg latoFont"   >
@@ -616,7 +634,8 @@
                   
             </button>
         
-        </p>    
+        </p>
+        {% endif %} 
    </div>
  {% else %}  
 
@@ -634,7 +653,9 @@
    </div>
  {% endif %}
    
-   {% if the_bill.confirm_return or not the_bill.user_customer or not the_bill.receved %} 
+   {% if sale_shift_locked %}
+    </div>
+   {% elif the_bill.confirm_return or not the_bill.user_customer or not the_bill.receved %} 
     </form> 
 
     <script>

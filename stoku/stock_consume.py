@@ -158,3 +158,34 @@ def consume_bidhaa_qty(duka, bidhaa_id, extra_qty, request, item_name=''):
     if remaining > Decimal('0.0001'):
         raise stock_out_error(item_name, extra_qty, have)
     return used
+
+
+def add_bidhaa_qty(duka, bidhaa_id, extra_qty, request, item_name=''):
+    """Add qty onto one live lot of this product (same batch preference as consume)."""
+    remaining = Decimal(str(extra_qty or 0))
+    used = []
+    if remaining <= 0:
+        return used
+
+    qs = bidhaa_stoku.objects.select_for_update().filter(
+        Interprise_id=_enterprise_id(duka),
+        bidhaa_id=bidhaa_id,
+        is_grouped_item=False,
+        service=False,
+    )
+    live = qs.filter(idadi__gt=0)
+    target = live.filter(inapacha=False).order_by('-idadi', 'id').first()
+    if not target:
+        target = live.order_by('inapacha', '-idadi', 'id').first()
+    if not target:
+        target = qs.filter(inapacha=False).order_by('id').first() or qs.order_by('id').first()
+    if not target:
+        raise ValueError(f'NO_STOCK_LOT|{item_name or "bidhaa"}')
+
+    before = Decimal(str(target.idadi or 0))
+    target.idadi = before + remaining
+    target.save(update_fields=['idadi'])
+    if before <= 0:
+        updateOrder({'itm': target, 'request': request, 'out': False})
+    used.append((target, remaining))
+    return used

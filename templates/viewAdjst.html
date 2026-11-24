@@ -143,7 +143,9 @@
                                  {% if useri.langSet == 0 %} Kupotea{% else %} Waste {% endif %}
                           {% endif %}
 
-                          {% if  invo.ad.others %}
+                          {% if  invo.ad.recon %}
+                                <span class="brown" >{% if useri.langSet == 0 %} Reconciliation{% else %} Reconciliation {% endif %} </span>
+                          {% elif  invo.ad.others %}
             
                                 <span class="brown" >{% if useri.langSet == 0 %} Mengineyo{% else %} Others {% endif %} </span> 
                           {% endif %}
@@ -452,6 +454,11 @@
                               </svg>
                               {% if useri.langSet == 0 %} Kupotea{% else %} Waste {% endif %}
                             </label>
+                        {% endif %}
+                        {% if  the_bill.recon %}
+                          <label for="oda" class="latoFont px-2 py-1 text-light" style="background-color: rgba(11, 65, 145, 0.884);color:#fff" >
+                              {% if useri.langSet == 0 %} Reconciliation{% else %} Reconciliation {% endif %}
+                          </label>
                         {% endif %}
                   </h6>
 
