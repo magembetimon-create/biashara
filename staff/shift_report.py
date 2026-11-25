@@ -1234,6 +1234,131 @@ def period_sales_staff_breakdown(duka, shifts):
     }
 
 
+def _shift_assignee_names(shifts):
+    ids = [s.id for s in shifts if getattr(s, 'id', None)]
+    names = {sid: [] for sid in ids}
+    if not ids:
+        return {}
+    assigns = (
+        ShiftAssignment.objects.filter(shift_id__in=ids, active=True)
+        .select_related(
+            'staff__user__user',
+            'staff__fanyakazi',
+            'staff__user_entp__Interprise',
+        )
+        .order_by('shift_id', 'role', 'assigned_at')
+    )
+    for a in assigns:
+        label = staff_display_name(a.staff)
+        if not label or label == 'Unknown':
+            continue
+        bucket = names.setdefault(a.shift_id, [])
+        if label not in bucket:
+            bucket.append(label)
+    return {sid: ', '.join(parts) if parts else '—' for sid, parts in names.items()}
+
+
+def period_sales_shift_breakdown(duka, shifts):
+    """Sales in the period grouped by existing shifts: qty, amount, paid, debt."""
+    empty = {
+        'count': 0,
+        'qty_total': '0',
+        'total': '0.00',
+        'paid_total': '0.00',
+        'debt_total': '0.00',
+        'rows': [],
+    }
+    windows = _shift_time_windows(shifts)
+    if not windows:
+        return empty
+
+    shift_by_id = {}
+    for shift in shifts:
+        if getattr(shift, 'id', None) is None:
+            continue
+        shift_by_id[shift.id] = shift
+
+    grouped = {}
+    for sid, start, end in windows:
+        shift = shift_by_id.get(sid)
+        src = getattr(shift, 'source_shift', None) or shift
+        grouped[sid] = {
+            'shift_id': sid,
+            'code': (getattr(src, 'code', None) or getattr(shift, 'code', None) or '—'),
+            'assigned': '—',
+            'qty': Decimal('0'),
+            'total': Decimal('0'),
+            'paid': Decimal('0'),
+            'debt': Decimal('0'),
+            'starts_at': getattr(shift, 'starts_at', None) or start,
+        }
+
+    assigned = _shift_assignee_names(list(shift_by_id.values()))
+    for sid, row in grouped.items():
+        row['assigned'] = assigned.get(sid) or '—'
+
+    range_start = min(start for _, start, _ in windows)
+    range_end = max(end for _, _, end in windows)
+
+    for line in completed_sale_lines_qs(duka, range_start, range_end):
+        event_at = getattr(line, 'event_at', None)
+        if not event_at:
+            continue
+        sid = _event_shift_id(windows, event_at)
+        if sid is None or sid not in grouped:
+            continue
+        net_qty = _sale_line_net_qty(line)
+        if net_qty <= 0:
+            continue
+        grouped[sid]['qty'] += net_qty
+
+    sales = completed_sales_qs(duka, range_start, range_end).exclude(full_returned=True).values(
+        'amount', 'ilolipwa', 'event_at',
+    )
+    for row in sales:
+        event_at = row.get('event_at')
+        if not event_at:
+            continue
+        sid = _event_shift_id(windows, event_at)
+        if sid is None or sid not in grouped:
+            continue
+        amount = _dec(row.get('amount'))
+        paid_amt, debt = _sale_paid_and_debt(row.get('amount'), row.get('ilolipwa'))
+        grouped[sid]['total'] += amount
+        grouped[sid]['paid'] += paid_amt
+        grouped[sid]['debt'] += debt
+
+    rows = sorted(
+        grouped.values(),
+        key=lambda r: r['starts_at'] or timezone.now(),
+        reverse=True,
+    )
+    qty_total = sum((r['qty'] for r in rows), Decimal('0'))
+    total = sum((r['total'] for r in rows), Decimal('0'))
+    paid_total = sum((r['paid'] for r in rows), Decimal('0'))
+    debt_total = sum((r['debt'] for r in rows), Decimal('0'))
+    return {
+        'count': len(rows),
+        'qty_total': _qty_str(qty_total),
+        'total': _qty2(total),
+        'paid_total': _qty2(paid_total),
+        'debt_total': _qty2(debt_total),
+        'rows': [
+            {
+                'shift_id': r['shift_id'],
+                'code': r['code'] or '—',
+                'assigned': r['assigned'] or '—',
+                'qty': _qty_str(r['qty']),
+                'total': _qty2(r['total']),
+                'paid': _qty2(r['paid']),
+                'debt': _qty2(r['debt']),
+                'starts_at': r['starts_at'].isoformat() if r['starts_at'] else '',
+            }
+            for r in rows
+        ],
+    }
+
+
 def period_sales_category_breakdown(duka, shifts):
     """Sold amounts grouped by item category (bidhaa_aina)."""
     empty = {

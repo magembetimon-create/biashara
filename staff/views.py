@@ -63,6 +63,7 @@ from staff.shift_report import (
     period_cash_account_breakdowns,
     period_sales_item_breakdown,
     period_sales_staff_breakdown,
+    period_sales_shift_breakdown,
     period_sales_category_breakdown,
     period_sales_time_breakdown,
     coalesce_sales_time_breakdown,
@@ -848,6 +849,7 @@ def enterprise_period_report_context(todo, request, calendar=False):
     account_breakdowns = None
     sales_item_breakdown = None
     sales_staff_breakdown = None
+    sales_shift_breakdown = None
     sales_category_breakdown = None
     sales_time_breakdown = None
     unpaid_breakdown = None
@@ -918,6 +920,9 @@ def enterprise_period_report_context(todo, request, calendar=False):
         sales_staff_breakdown = merge_period_payload(
             sales_staff_breakdown, period_sales_staff_breakdown(shop, shop_shifts),
         )
+        sales_shift_breakdown = merge_period_payload(
+            sales_shift_breakdown, period_sales_shift_breakdown(shop, shop_shifts),
+        )
         sales_category_breakdown = merge_period_payload(
             sales_category_breakdown, period_sales_category_breakdown(shop, shop_shifts),
         )
@@ -958,6 +963,7 @@ def enterprise_period_report_context(todo, request, calendar=False):
     account_breakdowns = account_breakdowns or {}
     sales_item_breakdown = sales_item_breakdown or {}
     sales_staff_breakdown = sales_staff_breakdown or {}
+    sales_shift_breakdown = sales_shift_breakdown or {}
     sales_category_breakdown = sales_category_breakdown or {}
     sales_time_breakdown = coalesce_sales_time_breakdown(
         sales_time_breakdown or {}, time_grain,
@@ -1015,6 +1021,7 @@ def enterprise_period_report_context(todo, request, calendar=False):
         'account_breakdowns': account_breakdowns,
         'sales_item_breakdown': sales_item_breakdown,
         'sales_staff_breakdown': sales_staff_breakdown,
+        'sales_shift_breakdown': sales_shift_breakdown,
         'sales_category_breakdown': sales_category_breakdown,
         'sales_time_breakdown': sales_time_breakdown,
         'unpaid_breakdown': unpaid_breakdown,
